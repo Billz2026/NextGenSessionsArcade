@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { clickCareerContinue } from './helpers/current-ui.js';
 import { startCareerThroughCurrentOnboarding } from './helpers/start-career.js';
+import { openMatchPlan, closeMatchPlan } from './helpers/current-match-plan.js';
 
 test.setTimeout(150000);
 
@@ -68,10 +69,12 @@ test('V4.6 locks matchday presentation and management screens', async ({ page })
   expect(tacticsWidth).toBeGreaterThan(0.8);
   await tactics.locator('[data-close-manager]').first().click();
 
-  await shell.locator('[data-cm4-subs]').click();
-  const subs = page.locator('.v2-sub-dialog[data-cm46-dialog="subs"]');
-  await expect(subs).toBeVisible();
-  await expect(subs.locator('[data-cm46-manager-context]')).toBeVisible();
-  await expect(subs.locator('.cm46-rating')).toHaveCount(await subs.locator('.v2-sub-player').count());
-  await expect(subs.locator('.v2-sub-column').first().locator('.v2-sub-player')).toHaveCount(11);
+  // The V049 Match Plan supersedes the retired V2 substitution dialog.
+  const subs = await openMatchPlan(page, shell);
+  await expect(subs.locator('.flm-v049-context')).toContainText(/\\d+–\\d+/);
+  await expect(subs.locator('[data-v049-out]')).toHaveCount(11);
+  await expect(subs.locator('[data-v049-in]').first()).toBeVisible();
+  await expect(subs.locator('[data-v049-confirm]')).toBeDisabled();
+  await closeMatchPlan(subs);
+
 });
