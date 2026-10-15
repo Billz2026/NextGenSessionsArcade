@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
 
 async function openTransferWindow(page) {
   if (await page.locator('[data-v050-transfer-tab]').count()) return;
-  await page.locator('.flm-cm-sidebar [data-shell-nav="home"]').click();
+  await page.locator('.flm-cm-sidebar [data-career-tab="overview"]').click();
   await clickCareerContinue(page, 'milestone');
   await expect(page.locator('.v054-date-chip')).toContainText('15 JUN 2026');
   await expect(page.locator('[data-v050-transfer-tab]')).toBeVisible();
