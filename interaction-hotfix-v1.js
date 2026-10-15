@@ -80,13 +80,13 @@ function closeGhostProfileModal() {
   const { modal } = modalParts();
   if (!integratedPlayerProfileVisible() || !modal?.classList.contains('is-open')) return false;
 
-  // The legacy career-interactions wrapper reopens the generic modal after the
-  // integrated profile render. If that modal still contains the completed
-  // appointment screen, it is never a legitimate player-profile UI.
-  if (modalContainsCompletedAppointment() || modal.classList.contains('flm-appointment-open')) {
-    return closeSharedModal();
-  }
-  return false;
+  // The legacy career-interactions wrapper can reopen the shared modal after
+  // the integrated profile has rendered, with arbitrary stale modal content.
+  // Never let an unrelated legacy modal obscure the active profile. Preserve
+  // an ongoing first press conference, which requires explicit completion.
+  if (modal.classList.contains('flm-appointment-open') &&
+      modal.querySelector('[data-appointment-v066="press"]')) return false;
+  return closeSharedModal();
 }
 
 function saveAppointmentDismissal(career) {
