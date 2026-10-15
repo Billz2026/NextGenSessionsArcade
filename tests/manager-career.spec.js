@@ -119,38 +119,34 @@ test('Matchday V2 is CM-clear, team-coloured and makes legal substitutions obvio
   await expect(shell.locator('[data-cm4-clock]')).toHaveText('45:00');
 
   await shell.locator('[data-cm4-subs]').click();
-  await expect(page.locator('.v2-sub-shell')).toBeVisible();
-  const confirm = page.locator('[data-apply-sub]');
-  await expect(confirm).toHaveText('CONFIRM SUBSTITUTION');
+  // V049 is the active match-plan screen. Check the user's complete XI,
+  // then make an actual legal outfield substitution and verify it is applied.
+  const plan = page.locator('.flm-match-dialog:has(.flm-v049-match-sheet)');
+  await expect(plan.locator('[data-v049-out]')).toHaveCount(11);
+  const confirm = plan.locator('[data-v049-confirm]');
   await expect(confirm).toBeDisabled();
-  const subStatus = page.locator('.flm-sub-status');
-  const remainingBeforeText = String(await subStatus.textContent() || '');
-  const remainingBeforeMatch = remainingBeforeText.match(/(\d+)\s+of\s+5 substitutions remaining/i);
-  if (!remainingBeforeMatch) throw new Error(`Could not parse substitution status: ${remainingBeforeText}`);
-  const remainingBefore = Number(remainingBeforeMatch[1]);
-  expect(remainingBefore).toBeGreaterThan(0);
+  const status = plan.locator('.flm-v049-status');
+  await expect(status).toContainText('5 SUBSTITUTIONS REMAINING');
 
-  const offColumn = page.locator('.v2-sub-column').nth(0);
-  const inColumn = page.locator('.v2-sub-column').nth(1);
-  const keeperOff = offColumn.locator('.v2-sub-player').filter({ has: page.locator('.pos', { hasText: /^GK$/ }) }).first();
-  if (await keeperOff.count()) {
-    await keeperOff.click();
-    const enabledIncomingPositions = await inColumn.locator('.v2-sub-player:not(:disabled) .pos').allTextContents();
-    expect(enabledIncomingPositions.every(position => position.trim() === 'GK')).toBeTruthy();
-    await expect(confirm).toBeDisabled();
-  }
-
-  const outfield = offColumn.locator('.v2-sub-player').filter({ hasNot: page.locator('.pos', { hasText: /^GK$/ }) }).first();
-  await outfield.click();
+  const gkLabel = plan.locator('.flm-v049-name small', { hasText: /^GK$/ });
+  const outgoing = plan.locator('[data-v049-out]').filter({ hasNot: gkLabel }).first();
+  const incoming = plan.locator('[data-v049-in]').filter({ hasNot: gkLabel }).first();
+  const offId = await outgoing.getAttribute('data-v049-out');
+  const inId = await incoming.getAttribute('data-v049-in');
+  expect(offId).toBeTruthy();
+  expect(inId).toBeTruthy();
+  await outgoing.click();
   await expect(confirm).toBeDisabled();
-  const incoming = inColumn.locator('.v2-sub-player:not(:disabled)').first();
-  await expect(incoming).toBeEnabled();
   await incoming.click();
-  await expect(page.locator('[data-v2-plan]')).toContainText('READY TO CONFIRM');
+  await expect(plan.locator('[data-v049-plan]')).toContainText('READY TO CONFIRM');
   await expect(confirm).toBeEnabled();
   await confirm.click();
-  await expect(subStatus).toContainText(`${remainingBefore - 1} of 5 substitutions remaining`);
-  await page.locator('[data-close-manager]').last().click();
+  await expect(status).toContainText('4 SUBSTITUTIONS REMAINING');
+  const activeAfter = await plan.locator('[data-v049-out]').evaluateAll(rows => rows.map(row => row.dataset.v049Out));
+  expect(activeAfter).not.toContain(offId);
+  expect(activeAfter).toContain(inId);
+  expect(activeAfter).toHaveLength(11);
+  await plan.locator('[data-close-manager]').first().click();
 
   await shell.locator('[data-cm4-pause]').click();
   await finishSecondHalf(page, live, shell, 90000);
