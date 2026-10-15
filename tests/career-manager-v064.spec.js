@@ -52,7 +52,9 @@ test('new career creates a named manager with experience-based reputation and re
     'preseason-programme', 'first-press-conference',
     'squad-number-registration-2026-27'
   ]));
-  await expect(page.locator('[data-manager-strip-v064]')).toContainText('Alex Morgan');
+  // The current compact CM shell hides the legacy manager strip. The manager
+  // identity must remain intact in the authoritative active career and save.
+  await expect.poll(() => page.evaluate(() => window.FLMManager?.activeCareer?.managerName || '')).toBe('Alex Morgan');
 });
 
 test('fixture release briefing lists the opening six while full schedule remains in fixtures', async ({ page }) => {
