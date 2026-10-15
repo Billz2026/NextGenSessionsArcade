@@ -41,6 +41,9 @@ test('V0.6.1 transfer market completes a signing through club and player negotia
   await firstRow.click();
   await expect(page.locator('.v050-detail')).toContainText(firstName);
   await expect(page.locator('.v050-detail')).not.toContainText(/\bCA\b|overall ability/i);
+  // Return to a stable manager view before opening a second player profile:
+  // the transfer market's row selection can still be processing an async redraw.
+  await page.locator('.flm-cm-sidebar [data-career-tab="overview"]').click();
 
   // Rivalry premiums can make a low-value market row unaffordable. Resolve a real target
   // from the live asking-price model instead of assuming list position equals affordability.
