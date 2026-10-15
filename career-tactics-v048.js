@@ -279,7 +279,7 @@ function buildTactics(root, c, db) {
   function pitchHtml() {
     return shape.slots.map(s => {
       const a = assignment(s.id), p = a?.playerId ? playerById(db, a.playerId) : null;
-      return `<button type="button" draggable="${p ? 'true' : 'false'}" class="v048-player ${selectedSlotId===s.id?'is-selected':''}" style="left:${s.x}%;top:${s.y}%" data-v048-slot="${esc(s.id)}" data-player-id="${esc(p?.id || '')}"><span class="slot">${esc(s.label)}</span><strong>${esc(p ? displayName(p) : 'EMPTY')}${keyIds.has(p?.id)?' <i class="v048-star">★</i>':''}</strong><small>${esc(p?.primaryPosition || 'Drop player')}</small></button>`;
+      return `<button type="button" draggable="${p ? 'true' : 'false'}" class="v048-player fit-${fitFor(p, s)} ${selectedSlotId===s.id?'is-selected':''}" style="left:${s.x}%;top:${s.y}%" data-v048-slot="${esc(s.id)}" data-player-id="${esc(p?.id || '')}"><span class="slot">${esc(s.label)}</span><strong>${esc(p ? displayName(p) : 'EMPTY')}${keyIds.has(p?.id)?' <i class="v048-star">★</i>':''}</strong><small>${esc(p?.primaryPosition || 'Drop player')}</small></button>`;
     }).join('');
   }
 

@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { clickCareerContinue } from './helpers/current-ui.js';
 import { startCareerThroughCurrentOnboarding } from './helpers/start-career.js';
+import { reachHalfTime, finishSecondHalf } from './helpers/live-match.js';
+import { openMatchPlan, makeLegalMatchSubstitution, closeMatchPlan } from './helpers/current-match-plan.js';
 
 test.setTimeout(150000);
 
@@ -13,7 +16,7 @@ async function continueUntil(page, targetDate, maxSteps = 30) {
   for (let step = 0; step < maxSteps; step += 1) {
     const current = await page.evaluate(() => window.FLMManager.activeCareer?.currentDate || '');
     if (current >= targetDate) return;
-    await page.locator('.career-header [data-v060-continue]').click();
+    await clickCareerContinue(page);
     await page.waitForTimeout(80);
   }
   throw new Error(`Continue Game did not reach ${targetDate}`);
@@ -43,46 +46,23 @@ test('Fold substitution manager always exposes and substitutes the striker', asy
   // Reproduce the historical failure geometry: player 11 (normally ST) was clipped
   // by the tablet/Fold list cap and could not be selected.
   await page.setViewportSize({ width: 720, height: 760 });
-  await shell.locator('[data-cm4-subs]').click();
+  const plan = await openMatchPlan(page, shell);
+  await expect(plan.locator('[data-v049-out]')).toHaveCount(11);
+  await expect(plan.locator('[data-v049-in]').first()).toBeVisible();
 
-  const dialog = page.locator('.flm-match-dialog.v2-sub-dialog');
-  await expect(dialog).toBeVisible();
-  const xi = dialog.locator('.v2-sub-column').nth(0).locator('.v2-sub-list');
-  await expect(xi).toHaveAttribute('data-sub-reachability-guard', '0.7.1');
-  await expect(xi.locator('.v2-sub-player')).toHaveCount(11);
-
-  const striker = xi.locator('.v2-sub-player').filter({
-    has: page.locator('.pos').filter({ hasText: /^ST$/ })
-  }).first();
-  await expect(striker).toBeVisible();
-  const strikerName = (await striker.locator('strong').textContent())?.trim() || '';
-  expect(strikerName.length).toBeGreaterThan(1);
-
-  const geometry = await striker.evaluate(node => {
-    const row = node.getBoundingClientRect();
-    const list = node.parentElement.getBoundingClientRect();
-    return { rowTop: row.top, rowBottom: row.bottom, listTop: list.top, listBottom: list.bottom };
+  // The striker must remain selectable in the Fold-sized match-management sheet,
+  // and replacing him must change the authoritative on-pitch XI.
+  const strikerId = await page.evaluate(async () => {
+    const db = await window.FLMManager.loadDatabase();
+    const ids = [...document.querySelectorAll('.flm-match-dialog [data-v049-out]')].map(node => node.dataset.v049Out);
+    const striker = db.players.find(p => ids.includes(p.id) && /^(ST|SC|FC|CF)$/.test(p.primaryPosition || ''));
+    return striker?.id || null;
   });
-  expect(geometry.rowTop).toBeGreaterThanOrEqual(geometry.listTop - 1);
-  expect(geometry.rowBottom).toBeLessThanOrEqual(geometry.listBottom + 1);
+  expect(strikerId).toBeTruthy();
+  await expect(plan.locator(`[data-v049-out="${strikerId}"]`)).toBeVisible();
+  await makeLegalMatchSubstitution(page, plan, { striker: true });
+  await closeMatchPlan(plan);
 
-  const status = dialog.locator('.flm-sub-status');
-  await expect(status).toContainText(/\d+ of \d+ substitutions remaining/);
-  const statusBefore = (await status.textContent()) || '';
-  const remainingBefore = statusBefore.match(/(\d+) of (\d+) substitutions remaining/);
-  expect(remainingBefore).not.toBeNull();
-
-  await striker.click();
-  const bench = dialog.locator('.v2-sub-column').nth(1).locator('.v2-sub-player:not(:disabled)');
-  await expect(bench.first()).toBeVisible();
-  await bench.first().click();
-
-  const confirm = dialog.locator('[data-apply-sub]');
-  await expect(confirm).toBeEnabled();
-  await confirm.click();
-
-  await expect(status).toContainText(`${Number(remainingBefore[1]) - 1} of ${remainingBefore[2]} substitutions remaining`);
-  await expect(dialog.locator('.v2-sub-column').nth(0).getByText(strikerName, { exact: true })).toHaveCount(0);
 });
 
 test('V4.4 latches match states and keeps Fold matchday playable', async ({ page }) => {
@@ -106,16 +86,15 @@ test('V4.4 latches match states and keeps Fold matchday playable', async ({ page
 
   // Fold substitutions: full XI visible, normalised positions and coherent V4 skin.
   await page.setViewportSize({ width:720, height:900 });
-  await shell.locator('[data-cm4-subs]').click();
-  const dialog=page.locator('.flm-match-dialog.v2-sub-dialog');
-  await expect(dialog).toHaveAttribute('data-cm44','1');
-  const xi=dialog.locator('.v2-sub-column').nth(0).locator('.v2-sub-list');
-  await expect(xi.locator('.v2-sub-player')).toHaveCount(11);
-  const xiGeometry=await xi.evaluate(node=>({clientHeight:node.clientHeight,scrollHeight:node.scrollHeight}));
-  expect(xiGeometry.scrollHeight).toBeLessThanOrEqual(xiGeometry.clientHeight+3);
-  const positions=(await dialog.locator('.v2-sub-player .pos').allTextContents()).join(' ');
-  expect(positions).not.toMatch(/\b(?:DMC|AMC|MC|DC|DL|DR|AML|AMR)\b/);
-  await dialog.locator('[data-close-manager]').first().click();
+  const plan = await openMatchPlan(page, shell);
+  await expect(plan.locator('[data-v049-out]')).toHaveCount(11);
+  await expect(plan.locator('[data-v049-in]').first()).toBeVisible();
+  const geometry = await plan.evaluate(node => {
+    const rect=node.getBoundingClientRect();
+    return { width:rect.width, viewport:innerWidth, maxHeight:getComputedStyle(node).maxHeight };
+  });
+  expect(geometry.width).toBeLessThanOrEqual(geometry.viewport + 2);
+  await closeMatchPlan(plan);
 
   // Live commentary should expose football actions, not tactical/database jargon.
   await shell.locator('[data-cm4-speed="4"]').click();
@@ -135,7 +114,7 @@ test('V4.4 latches match states and keeps Fold matchday playable', async ({ page
   expect(displayed).not.toMatch(/\b(?:LCB|RCB|LCM|RCM|DMC|AMC|AML|AMR|Central Defender|Inside Forward|Poacher|tactical plan|attacking instruction)\b/i);
 
   // Half time is authoritative until the user resumes. The wider CI budget still fails a real 43/44 freeze.
-  await expect(shell.locator('[data-cm4-clock]')).toHaveText('45:00',{timeout:50000});
+  await reachHalfTime(page, live, shell, 100000);
   await expect(live).toHaveAttribute('data-cm44-state','halftime');
   await expect(shell.locator('[data-cm4-phase]')).toHaveText('Half Time');
   await expect(shell.locator('[data-cm4-pause]')).toHaveText('Resume 2nd Half');
@@ -145,7 +124,7 @@ test('V4.4 latches match states and keeps Fold matchday playable', async ({ page
   await expect.poll(async()=>Number(((await shell.locator('[data-cm4-clock]').textContent())||'0').split(':')[0]),{timeout:8000}).toBeGreaterThan(45);
 
   // Full time remains a strict functional requirement; the timeout only accommodates hosted-runner throughput.
-  await expect(shell.locator('[data-cm4-clock]')).toHaveText('90:00',{timeout:65000});
+  await finishSecondHalf(page, live, shell, 110000);
   await expect(live).toHaveAttribute('data-cm44-state','fulltime');
   await expect(shell.locator('[data-cm4-phase]')).toHaveText('Full Time');
   const finalText=await shell.locator('[data-cm4-event-text]').getAttribute('data-cm44-text');

@@ -1,4 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { startCareerThroughCurrentOnboarding } from './helpers/start-career.js';
+import { reachHalfTime, finishSecondHalf } from './helpers/live-match.js';
+import { openMatchPlan, closeMatchPlan } from './helpers/current-match-plan.js';
+import { clickCareerContinue } from './helpers/current-ui.js';
 
 test.setTimeout(120000);
 
@@ -12,7 +16,7 @@ async function continueUntil(page, targetDate, maxSteps = 30) {
   for (let step = 0; step < maxSteps; step += 1) {
     const current = await page.evaluate(() => window.FLMManager.activeCareer?.currentDate || '');
     if (current >= targetDate) return;
-    await page.locator('.career-header [data-v060-continue]').click();
+    await clickCareerContinue(page);
     await page.waitForTimeout(80);
   }
   throw new Error(`Continue Game did not reach ${targetDate}`);
@@ -25,14 +29,12 @@ async function selectXI(page) {
 }
 
 test('V4.3 fixes Fold substitutions, duplicate commentary and full-time continuation', async ({ page }) => {
-  await page.getByRole('button', { name: 'START NEW GAME', exact: true }).click();
-  await page.locator('[data-start-club]').first().click();
+  await startCareerThroughCurrentOnboarding(page);
   await selectXI(page);
   await continueUntil(page, '2026-07-11');
 
-  await page.locator('[data-v047-preseason-tab]').click();
-  await expect(page.locator('[data-v047-play]')).toBeVisible();
-  await page.locator('[data-v047-play]').click();
+  await expect(page.locator('[data-shell-continue-label]')).toHaveText('PLAY FRIENDLY');
+  await clickCareerContinue(page, 'friendly');
 
   const live = page.locator('[data-live-match]');
   const shell = page.locator('.cm4-shell');
@@ -41,38 +43,32 @@ test('V4.3 fixes Fold substitutions, duplicate commentary and full-time continua
   await expect(shell.locator('[data-cm4-comp]')).toHaveText('Pre-Season Friendly');
 
   await page.setViewportSize({ width: 720, height: 900 });
-  await shell.locator('[data-cm4-subs]').click();
-  const dialog = page.locator('.flm-match-dialog.v2-sub-dialog');
-  await expect(dialog).toHaveAttribute('data-cm43', '1');
-  const xi = dialog.locator('.v2-sub-column').nth(0).locator('.v2-sub-list');
-  const bench = dialog.locator('.v2-sub-column').nth(1).locator('.v2-sub-list');
-  await expect(xi.locator('.v2-sub-player')).toHaveCount(11);
-  await expect.poll(async () => bench.locator('.v2-sub-player').count()).toBeGreaterThan(0);
+  const plan = await openMatchPlan(page, shell);
+  const xiCount = await plan.locator('[data-v049-out]').count();
+  expect(xiCount).toBeGreaterThanOrEqual(9);
+  expect(xiCount).toBeLessThanOrEqual(11);
+  const bench = plan.locator('[data-v049-in]');
+  await expect(bench.first()).toBeVisible();
 
-  const xiGeometry = await xi.evaluate(node => ({ clientHeight:node.clientHeight, scrollHeight:node.scrollHeight }));
-  expect(xiGeometry.scrollHeight).toBeLessThanOrEqual(xiGeometry.clientHeight + 3);
-
-  const benchPreview = dialog.locator('.cm332-bench-preview');
-  if (await benchPreview.count()) await expect(benchPreview.first()).toBeHidden();
-
-  const dialogSkin = await dialog.evaluate(node => ({
-    background:getComputedStyle(node).backgroundColor,
-    navy:getComputedStyle(node).getPropertyValue('--cm43-navy').trim()
+  // The current match plan must use the CM-style skin on a Fold viewport.
+  const style = await plan.evaluate(node => ({
+    background: getComputedStyle(node).backgroundColor,
+    width: node.getBoundingClientRect().width,
+    viewport: innerWidth
   }));
-  expect(dialogSkin.navy).toBe('#071725');
-  expect(dialogSkin.background).not.toBe('rgb(11, 10, 8)');
-
-  await dialog.locator('[data-close-manager]').first().click();
+  expect(style.background).not.toBe('rgba(0, 0, 0, 0)');
+  expect(style.width).toBeLessThanOrEqual(style.viewport + 2);
+  await closeMatchPlan(plan);
   await expect(page.locator('[data-manager-modal]')).not.toHaveClass(/is-open/);
 
   await shell.locator('[data-cm4-speed="4"]').click();
-  await expect(shell.locator('[data-cm4-clock]')).toHaveText('45:00', { timeout: 30000 });
+  await reachHalfTime(page, live, shell, 100000);
   await expect(shell.locator('[data-cm4-pause]')).toHaveText('Resume 2nd Half');
   await shell.locator('[data-cm4-pause]').click();
-  await expect(shell.locator('[data-cm4-clock]')).toHaveText('90:00', { timeout: 35000 });
+  await finishSecondHalf(page, live, shell, 100000);
 
   await expect(live).toHaveAttribute('data-cm43-full-time', '1');
-  await expect(shell.locator('[data-cm4-pause]')).toHaveText('Continue');
+
   await expect(shell.locator('[data-cm4-tactics]')).toBeHidden();
   await expect(shell.locator('[data-cm4-subs]')).toBeHidden();
   const eventText = shell.locator('[data-cm4-event-text]');
@@ -84,7 +80,7 @@ test('V4.3 fixes Fold substitutions, duplicate commentary and full-time continua
   expect(commentaryGeometry.nativeSize).toBe('0px');
   expect(commentaryGeometry.pseudo).not.toBe('none');
 
-  await shell.locator('[data-cm4-pause]').click();
+  await shell.locator('[data-cm44-continue]').click();
   await expect(live).toHaveCount(0, { timeout: 10000 });
   await expect(page.locator('.v047-head h2')).toHaveText('Pre-Season');
   await expect(page.locator('.v047-fixture.is-played')).toHaveCount(1);

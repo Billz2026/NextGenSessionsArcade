@@ -109,6 +109,16 @@ export async function playLiveMatch({root,career,completedCareer,db,reducedMotio
   const renderRatings=()=>{ const lineup=currentUserLineup(state); dialog.innerHTML=`${head('Live Player Ratings')}<div class="flm-player-live-list">${lineup.map(id=>{const p=player(db,id),a=assignmentForPlayer(id),slot=slotFor(id);return `<div class="flm-player-live-row"><span>${esc(slot?.label||p?.primaryPosition||'')}</span><strong>${esc(p?.name||id)}</strong><small class="role">${esc(a?.role||'')}</small><small>${Math.round(state.conditions[id]||100)}% CON</small><b>${rating(state.ratings[id])}</b></div>`}).join('')}</div><div class="flm-dialog-actions"><button class="primary" data-close-manager>CLOSE</button></div>`; bindClose(); };
   const renderOpposition=()=>{ const opp=getOpponentSnapshot(state,db); dialog.innerHTML=`${head(opp.clubName,'OPPOSITION VIEW')}<div class="flm-opp-card"><div class="flm-opp-shape">${Object.entries(opp.tactics).map(([k,v])=>`<div><small>${esc(tacticLabel(k))}</small><strong>${esc(v)}</strong></div>`).join('')}</div><div class="flm-player-live-list">${opp.lineupIds.map(id=>{const p=player(db,id);return `<div class="flm-player-live-row"><span>${esc(p?.primaryPosition||'')}</span><strong>${esc(p?.name||id)}</strong><small class="role">${esc(p?.positionGroup||'')}</small><small></small><b>${opp.redCards?'10 MEN':'XI'}</b></div>`;}).join('')}</div></div><div class="flm-dialog-actions"><button class="primary" data-close-manager>CLOSE</button></div>`; bindClose(); };
 
+  // The visible Match Centre now has separate Tactics and Subs controls.
+  // The native Match Plan trigger is shared with Subs for compatibility, so
+  // expose a separate hidden command for the actual tactics editor.
+  const nativeTacticsCommand = document.createElement('button');
+  nativeTacticsCommand.type = 'button';
+  nativeTacticsCommand.hidden = true;
+  nativeTacticsCommand.dataset.openTacticsPanel = '1';
+  nativeTacticsCommand.addEventListener('click', () => openManager(renderTactics));
+  shell.appendChild(nativeTacticsCommand);
+
   const matchPlanButton=root.querySelector('[data-open-tactics]'); matchPlanButton.addEventListener('click',()=>openManager(renderSubs)); const legacySubsButton=root.querySelector('[data-open-subs]'); if(legacySubsButton&&legacySubsButton!==matchPlanButton) legacySubsButton.addEventListener('click',()=>openManager(renderSubs)); root.querySelector('[data-open-shape]').addEventListener('click',()=>openManager(renderShape)); root.querySelector('[data-open-ratings]').addEventListener('click',()=>openManager(renderRatings)); root.querySelector('[data-open-opposition]').addEventListener('click',()=>openManager(renderOpposition));
   root.querySelectorAll('[data-match-speed]').forEach(control=>control.addEventListener('click',()=>{ if(halfTimeBreak) return; const next=Number(control.dataset.matchSpeed); paused=next===0; if(!paused) speed=next; updateSpeedButtons(); stateLabel.textContent=paused?'PAUSED':'LIVE'; }));
   root.querySelector('[data-resume-second-half]').addEventListener('click',()=>{ if(!halfTimeBreak) return; halfTimeBreak=false; paused=false; shell.classList.remove('is-half-time'); matchStatus.textContent='LIVE'; stateLabel.textContent='SECOND HALF'; updateSpeedButtons(); });

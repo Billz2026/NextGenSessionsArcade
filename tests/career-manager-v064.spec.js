@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickVisibleNewGame } from './helpers/current-ui.js';
 
 test.setTimeout(60000);
 
@@ -9,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('new career creates a named manager with experience-based reputation and respect', async ({ page }) => {
-  await page.locator('[data-action="new-game"]').first().click();
+  await clickVisibleNewGame(page);
   await expect(page.locator('[data-manager-setup-v064="identity"]')).toBeVisible();
 
   await page.locator('[data-mgr-first]').fill('Alex');
@@ -24,6 +25,7 @@ test('new career creates a named manager with experience-based reputation and re
 
   await expect(page.getByRole('heading', { name: 'CHOOSE YOUR CLUB' })).toBeVisible();
   await page.locator('[data-start-club]').filter({ hasText: 'Arsenal' }).click();
+  await page.getByRole('button', { name: /TAKE CONTROL/i }).click();
   await expect(page.locator('.career-app')).toHaveClass(/is-open/);
 
   await expect.poll(async () => page.evaluate(() => window.FLMManager?.activeCareer?.managerProfile?.name || '')).toBe('Alex Morgan');
@@ -41,8 +43,18 @@ test('new career creates a named manager with experience-based reputation and re
   expect(career.managerContract.weeklyWage).toBeGreaterThan(0);
   expect(career.news.items.find(item => item.key === 'welcome')?.body).toContain('contract has been signed until');
   expect(career.news.items.find(item => item.key === 'welcome')?.body).toContain('salary of');
-  expect(career.news.items.filter(item => item.round === 0)).toHaveLength(4);
-  await expect(page.locator('[data-manager-strip-v064]')).toContainText('Alex Morgan');
+  // New careers now include the first press conference and squad-number
+  // registration in addition to the original four onboarding messages.
+  const dayZeroKeys = career.news.items.filter(item => item.round === 0).map(item => item.key);
+  expect(dayZeroKeys).toHaveLength(6);
+  expect(dayZeroKeys).toEqual(expect.arrayContaining([
+    'welcome', 'board-expectation', 'competition-briefing',
+    'preseason-programme', 'first-press-conference',
+    'squad-number-registration-2026-27'
+  ]));
+  // The current compact CM shell hides the legacy manager strip. The manager
+  // identity must remain intact in the authoritative active career and save.
+  await expect.poll(() => page.evaluate(() => window.FLMManager?.activeCareer?.managerName || '')).toBe('Alex Morgan');
 });
 
 test('fixture release briefing lists the opening six while full schedule remains in fixtures', async ({ page }) => {

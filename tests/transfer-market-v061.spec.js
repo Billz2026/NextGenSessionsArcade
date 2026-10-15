@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickCareerContinue } from './helpers/current-ui.js';
 
 test.setTimeout(70000);
 
@@ -8,7 +9,7 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
   await page.getByRole('button', { name: /QUICK START/ }).click();
   await expect(page.locator('.career-app')).toHaveClass(/is-open/);
-  await page.locator('.v060-world-panel [data-v060-continue]').click();
+  await clickCareerContinue(page, 'milestone');
   await expect(page.locator('.v054-date-chip')).toContainText('15 JUN 2026');
 });
 
@@ -49,8 +50,8 @@ test('a player profile can run the full live club negotiation and go straight to
     return { id: picked.player.id, name: picked.player.name, asking: picked.stance.askingPrice };
   });
 
-  await expect(page.locator('#appModal')).toHaveClass(/is-open/);
-  await expect(page.locator('#modalTitle')).toHaveText(target.name);
+  await expect(page.locator('.career-app.is-open [data-flm-instant-profile]')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.FLMPlayerProfile?.activePlayerId)).toBe(target.id);
   await expect(page.locator('[data-v061-profile-bid]')).toBeVisible();
   await page.locator('[data-v061-profile-bid]').click();
   await expect(page.locator('[data-v061-negotiation]')).toBeVisible();

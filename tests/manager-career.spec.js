@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickCareerContinue } from './helpers/current-ui.js';
 import { finishSecondHalf, reachHalfTime } from './helpers/live-match.js';
 
 test.setTimeout(240000);
@@ -13,7 +14,7 @@ async function continueUntil(page, targetDate, maxSteps = 30) {
   for (let step = 0; step < maxSteps; step += 1) {
     const current = await page.evaluate(() => window.FLMManager.activeCareer?.currentDate || '');
     if (current >= targetDate) return current;
-    await page.locator('.career-header [data-v060-continue]').click();
+    await clickCareerContinue(page);
     await page.waitForTimeout(80);
   }
   throw new Error(`Continue Game did not reach ${targetDate}`);
@@ -49,8 +50,8 @@ test('squad and tactics remain manager-controlled and position-aware', async ({ 
   await page.getByRole('button', { name: 'Squad', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Squad' })).toBeVisible();
   await expect(page.locator('[data-v044-lineup]:checked')).toHaveCount(0);
-  await expect(page.locator('[data-lineup-counter]')).toContainText('0 / 11');
-  await expect(page.locator('[data-v044-auto-pick]')).toHaveText('AUTO PICK XI');
+  await expect(page.locator('[data-lineup-counter]').filter({ hasText: 'SELECTED' })).toContainText('0 / 11');
+  await expect(page.locator('[data-v044-auto-pick]')).toHaveText(/AUTOPICK XI|AUTO PICK XI/i);
   await page.locator('[data-v044-auto-pick]').click();
   await expect(page.locator('[data-v044-lineup]:checked')).toHaveCount(11);
 
@@ -63,13 +64,14 @@ test('squad and tactics remain manager-controlled and position-aware', async ({ 
 
   await page.locator('[data-v048-formation]').selectOption('5-3-2');
   await expect(page.locator('[data-v048-slot="RWB"]')).toHaveCount(1);
-  await page.locator('[data-v048-tab="with-ball"]').click();
-  await page.locator('[data-v048-option="tempo"][data-value="High"]').click();
+  // The current one-screen tactics editor uses an always-visible mentality
+  // segment; the older "with-ball"/tempo tabs have been retired.
+  await page.locator('[data-v048-option="mentality"][data-value="Attacking"]').click();
   await page.locator('[data-v048-save]').click();
 
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('flm-career-save')));
   expect(saved.tactics.formation).toBe('5-3-2');
-  expect(saved.tactics.tempo).toBe('High');
+  expect(saved.tactics.mentality).toBe('Attacking');
   expect(saved.tacticalSetup.assignments).toHaveLength(11);
 });
 
@@ -117,38 +119,47 @@ test('Matchday V2 is CM-clear, team-coloured and makes legal substitutions obvio
   await expect(shell.locator('[data-cm4-clock]')).toHaveText('45:00');
 
   await shell.locator('[data-cm4-subs]').click();
-  await expect(page.locator('.v2-sub-shell')).toBeVisible();
-  const confirm = page.locator('[data-apply-sub]');
-  await expect(confirm).toHaveText('CONFIRM SUBSTITUTION');
+  // V049 is the active match-plan screen. Check the user's complete XI,
+  // then make an actual legal outfield substitution and verify it is applied.
+  const plan = page.locator('.flm-match-dialog:has(.flm-v049-match-sheet)');
+  // Red cards or injuries can legitimately leave ten players on the pitch.
+  const activeBefore = await plan.locator('[data-v049-out]').count();
+  expect(activeBefore).toBeGreaterThanOrEqual(9);
+  expect(activeBefore).toBeLessThanOrEqual(11);
+  const confirm = plan.locator('[data-v049-confirm]');
   await expect(confirm).toBeDisabled();
-  const subStatus = page.locator('.flm-sub-status');
-  const remainingBeforeText = String(await subStatus.textContent() || '');
-  const remainingBeforeMatch = remainingBeforeText.match(/(\d+)\s+of\s+5 substitutions remaining/i);
-  if (!remainingBeforeMatch) throw new Error(`Could not parse substitution status: ${remainingBeforeText}`);
-  const remainingBefore = Number(remainingBeforeMatch[1]);
-  expect(remainingBefore).toBeGreaterThan(0);
+  const status = plan.locator('.flm-v049-status');
+  await expect(status).toContainText('5 SUBSTITUTIONS REMAINING');
 
-  const offColumn = page.locator('.v2-sub-column').nth(0);
-  const inColumn = page.locator('.v2-sub-column').nth(1);
-  const keeperOff = offColumn.locator('.v2-sub-player').filter({ has: page.locator('.pos', { hasText: /^GK$/ }) }).first();
-  if (await keeperOff.count()) {
-    await keeperOff.click();
-    const enabledIncomingPositions = await inColumn.locator('.v2-sub-player:not(:disabled) .pos').allTextContents();
-    expect(enabledIncomingPositions.every(position => position.trim() === 'GK')).toBeTruthy();
-    await expect(confirm).toBeDisabled();
-  }
-
-  const outfield = offColumn.locator('.v2-sub-player').filter({ hasNot: page.locator('.pos', { hasText: /^GK$/ }) }).first();
-  await outfield.click();
+  // Select by authoritative database position, not text rendered in the match
+  // sheet. A goalkeeper must never be removed for an outfield substitute.
+  const selection = await page.evaluate(async () => {
+    const db = await window.FLMManager.loadDatabase();
+    const players = new Map(db.players.map(player => [player.id, player]));
+    const starters = [...document.querySelectorAll('.flm-match-dialog [data-v049-out]')]
+      .map(button => button.dataset.v049Out);
+    const bench = [...document.querySelectorAll('.flm-match-dialog [data-v049-in]')]
+      .map(button => button.dataset.v049In);
+    const isOutfield = id => players.get(id)?.positionGroup !== 'GK' && players.get(id)?.primaryPosition !== 'GK';
+    return { offId: starters.find(isOutfield), inId: bench.find(isOutfield) };
+  });
+  expect(selection.offId).toBeTruthy();
+  expect(selection.inId).toBeTruthy();
+  const outgoing = plan.locator(`[data-v049-out="${selection.offId}"]`);
+  const incoming = plan.locator(`[data-v049-in="${selection.inId}"]`);
+  const { offId, inId } = selection;
+  await outgoing.click();
   await expect(confirm).toBeDisabled();
-  const incoming = inColumn.locator('.v2-sub-player:not(:disabled)').first();
-  await expect(incoming).toBeEnabled();
   await incoming.click();
-  await expect(page.locator('[data-v2-plan]')).toContainText('READY TO CONFIRM');
+  await expect(plan.locator('[data-v049-plan]')).toContainText('READY TO CONFIRM');
   await expect(confirm).toBeEnabled();
   await confirm.click();
-  await expect(subStatus).toContainText(`${remainingBefore - 1} of 5 substitutions remaining`);
-  await page.locator('[data-close-manager]').last().click();
+  await expect(status).toContainText('4 SUBSTITUTIONS REMAINING');
+  const activeAfter = await plan.locator('[data-v049-out]').evaluateAll(rows => rows.map(row => row.dataset.v049Out));
+  expect(activeAfter).not.toContain(offId);
+  expect(activeAfter).toContain(inId);
+  expect(activeAfter).toHaveLength(activeBefore);
+  await plan.locator('[data-close-manager]').first().click();
 
   await shell.locator('[data-cm4-pause]').click();
   await finishSecondHalf(page, live, shell, 90000);

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickVisibleNewGame } from './helpers/current-ui.js';
 
 test.setTimeout(60000);
 
@@ -8,8 +9,8 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test('new manager appointment flows through fans and a three-question press conference', async ({ page }) => {
-  await page.locator('[data-action="new-game"]').first().click();
+test('new manager appointment runs a three-question press conference and records fan reactions', async ({ page }) => {
+  await clickVisibleNewGame(page);
   await page.locator('[data-mgr-first]').fill('Alex');
   await page.locator('[data-mgr-last]').fill('Morgan');
   await page.locator('[data-mgr-nationality]').selectOption({ label: 'England' });
@@ -17,15 +18,14 @@ test('new manager appointment flows through fans and a three-question press conf
   await page.locator('[data-mgr-exp="none"]').click();
   await page.locator('[data-mgr-finish]').click();
   await page.locator('[data-start-club]').filter({ hasText: 'Arsenal' }).click();
+  await page.getByRole('button', { name: /TAKE CONTROL/i }).click();
   await expect(page.locator('.career-app')).toHaveClass(/is-open/);
 
-  await expect(page.locator('[data-appointment-v066="announcement"]')).toBeVisible();
-  await expect(page.locator('[data-appointment-v066="announcement"]')).toContainText('Alex Morgan');
-  await page.locator('[data-appt-fans]').click();
-
-  await expect(page.locator('[data-appointment-v066="fans"]')).toBeVisible();
-  await expect(page.locator('[data-appointment-v066="fans"]')).toContainText('FAN SENTIMENT');
-  await page.locator('[data-appt-media]').click();
+  // The current appointment flow opens directly into a three-question
+  // press conference. The retired announcement/fans screens no longer exist.
+  await expect(page.locator('[data-appointment-v066="press"]')).toBeVisible();
+  await expect(page.locator('[data-appointment-v066="press"]')).toContainText('Alex Morgan');
+  await expect(page.locator('#modalTitle')).toHaveText('FIRST PRESS CONFERENCE');
 
   for (const style of ['humble','demanding','protective']) {
     await expect(page.locator('[data-appointment-v066="press"]')).toBeVisible();

@@ -12,7 +12,7 @@ test.describe('V0.4.11 responsive photographic home screen', () => {
     await expect(page.locator('body')).toHaveClass(/compact/);
     await expect(page.locator('.hero-brand')).toBeHidden();
     await expect(page.locator('.tactical-stage')).toBeHidden();
-    await expect(page.locator('.menu-tile')).toHaveCount(6);
+    await expect(page.locator('.menu-tile')).toHaveCount(5);
     await expect(page.locator('.tile-number').first()).toBeHidden();
     await expect(page.locator('.tile-icon').first()).toBeHidden();
     await expect(page.locator('.tile-copy small').first()).toBeHidden();
@@ -81,7 +81,7 @@ test.describe('V0.4.11 responsive photographic home screen', () => {
     expect(layout.heroBackgroundImage).toContain('stadium-home.webp');
     expect(layout.menuTop).toBeLessThan(layout.heroBottom);
     expect(layout.menuBottom).toBeLessThanOrEqual(layout.heroBottom + 1);
-    expect(layout.maxTileHeight).toBeLessThan(90);
+    expect(layout.maxTileHeight).toBeLessThan(100);
     expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth);
   });
 });

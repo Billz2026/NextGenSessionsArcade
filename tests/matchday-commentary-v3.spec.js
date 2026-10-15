@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { startCareerThroughCurrentOnboarding } from './helpers/start-career.js';
+import { clickCareerContinue } from './helpers/current-ui.js';
 
 test.setTimeout(150000);
 
@@ -13,7 +14,7 @@ async function continueUntil(page, targetDate, maxSteps = 30) {
   for (let step = 0; step < maxSteps; step += 1) {
     const current = await page.evaluate(() => window.FLMManager.activeCareer?.currentDate || '');
     if (current >= targetDate) return;
-    await page.locator('.career-header [data-v060-continue]').click();
+    await clickCareerContinue(page);
     await page.waitForTimeout(80);
   }
   throw new Error(`Continue Game did not reach ${targetDate}`);

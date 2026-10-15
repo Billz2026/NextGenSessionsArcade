@@ -1,0 +1,45 @@
+name: Football Lab critical manager interactions
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: football-lab-critical-interactions-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  critical-interactions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install chromium
+      - name: Test live squads, substitutions and transfer negotiations
+        run: >
+          npx playwright test
+          tests/manager-career.spec.js
+          tests/matchday-v070.spec.js
+          tests/transfers.spec.js
+          tests/transfer-market-v061.spec.js
+          tests/interactions-v053.spec.js
+          --config=playwright.ci.config.js
+          --workers=2
+          --reporter=line
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manager-critical-interactions-${{ github.run_id }}
+          path: |
+            test-results/
+          retention-days: 3
+          if-no-files-found: ignore

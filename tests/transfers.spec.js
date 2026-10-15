@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickCareerContinue } from './helpers/current-ui.js';
 
 test.setTimeout(60000);
 
@@ -10,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 async function openTransferWindow(page) {
   await expect(page.locator('.v054-date-chip')).toContainText('5 JUN 2026');
-  await page.locator('[data-v054-advance]').click();
+  await clickCareerContinue(page, 'milestone');
   await expect(page.locator('.v054-date-chip')).toContainText('15 JUN 2026');
   await expect(page.locator('[data-v050-transfer-tab]')).toBeVisible();
 }
@@ -40,6 +41,9 @@ test('V0.6.1 transfer market completes a signing through club and player negotia
   await firstRow.click();
   await expect(page.locator('.v050-detail')).toContainText(firstName);
   await expect(page.locator('.v050-detail')).not.toContainText(/\bCA\b|overall ability/i);
+  // Return to a stable manager view before opening a second player profile:
+  // the transfer market's row selection can still be processing an async redraw.
+  await page.locator('.flm-cm-sidebar [data-career-tab="overview"]').click();
 
   // Rivalry premiums can make a low-value market row unaffordable. Resolve a real target
   // from the live asking-price model instead of assuming list position equals affordability.
@@ -59,8 +63,8 @@ test('V0.6.1 transfer market completes a signing through club and player negotia
     return { id: picked.player.id, name: picked.player.name, asking: picked.stance.askingPrice };
   });
 
-  await expect(page.locator('#appModal')).toHaveClass(/is-open/);
-  await expect(page.locator('#modalTitle')).toContainText(target.name);
+  await expect(page.locator('.career-app.is-open [data-flm-instant-profile]')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.FLMPlayerProfile?.activePlayerId)).toBe(target.id);
   const bidAction = page.locator('[data-v061-profile-bid]');
   await expect(bidAction).toBeVisible();
   await expect(bidAction).toBeEnabled();
@@ -105,7 +109,7 @@ test('V0.6.1 transfer market completes a signing through club and player negotia
   expect(Array.isArray(saved.transfers.rumours)).toBeTruthy();
 
   await page.locator('[data-v061-close]').click();
-  await page.locator('.modal-close').click();
+  await page.locator('[data-flm-profile-back]').click();
   await page.getByRole('button', { name: 'Squad', exact: true }).click();
   await expect(page.locator('.career-content')).toContainText(target.name);
 });
