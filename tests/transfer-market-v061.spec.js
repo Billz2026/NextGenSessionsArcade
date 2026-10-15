@@ -50,8 +50,8 @@ test('a player profile can run the full live club negotiation and go straight to
     return { id: picked.player.id, name: picked.player.name, asking: picked.stance.askingPrice };
   });
 
-  await expect(page.locator('#appModal')).toHaveClass(/is-open/);
-  await expect(page.locator('#modalTitle')).toHaveText(target.name);
+  await expect(page.locator('.career-app.is-open [data-flm-instant-profile]')).toBeVisible();
+  await expect(page.locator('.flm-ip-title h2')).toContainText(target.name);
   await expect(page.locator('[data-v061-profile-bid]')).toBeVisible();
   await page.locator('[data-v061-profile-bid]').click();
   await expect(page.locator('[data-v061-negotiation]')).toBeVisible();
