@@ -59,31 +59,14 @@ export async function openFirstSquadProfile(page) {
       viewport: { width: innerWidth, height: innerHeight }
     };
   });
-  try {
-    await profileButton.click({ timeout: 6000 });
-  } catch (error) {
-    const geometry = await page.evaluate(() => {
-      const node = document.querySelector('.career-app.is-open [data-v044-profile]');
-      const app = document.querySelector('.career-app');
-      const content = document.querySelector('.career-content');
-      if (!node) return { missing: true };
-      const rect = node.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const hit = document.elementFromPoint(cx, cy);
-      const info = element => element ? {
-        tag: element.tagName,
-        className: String(element.className).slice(0, 100),
-        pointerEvents: getComputedStyle(element).pointerEvents,
-        zIndex: getComputedStyle(element).zIndex,
-        position: getComputedStyle(element).position,
-        rect: (() => { const a=element.getBoundingClientRect(); return { top:a.top,left:a.left,bottom:a.bottom,right:a.right,width:a.width,height:a.height }; })()
-      } : null;
-      return { button: info(node), hit: info(hit), app: info(app), content: info(content),
-        viewport: {width:innerWidth,height:innerHeight}, scrollY:scrollY };
-    });
-    throw new Error(`The visible squad profile button is not clickable. Layout before: ${JSON.stringify(before)}; after: ${JSON.stringify(geometry)}; original: ${error.message}`);
-  }
+  // The production interaction guard opens profiles immediately on pointerdown
+  // and removes the squad button before pointerup. Playwright locator.click()
+  // retries the detached node although the user's interaction succeeded.
+  // page.mouse.click sends the actual pointer sequence exactly once.
+  expect(before.hitContainsButton).toBe(true);
+  expect(before.inViewport).toBe(true);
+  await page.mouse.click(before.node.x + before.node.width / 2,
+    before.node.y + before.node.height / 2);
   const profile = page.locator('.career-app.is-open [data-flm-instant-profile]');
   await expect(profile).toBeVisible({ timeout: 10000 });
   return profile;
