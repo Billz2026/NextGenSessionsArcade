@@ -29,7 +29,13 @@ async function resumeShortHandedIfNeeded(page, shell) {
   const notice = page.getByText('No substitutes available. You must continue short-handed.', { exact: false }).last();
   if (!(await notice.count())) return false;
   if (!(await notice.isVisible().catch(() => false))) return false;
-  await shell.locator('[data-cm4-speed="4"]').click();
+  // Old injury notices persist after play resumes and can remain mounted at
+  // full time. Only resume if the engine really is paused and the speed
+  // controls are currently available to a player.
+  if (!(await currentActivePause(page))) return false;
+  const speed = shell.locator('[data-cm4-speed="4"]');
+  if (!(await speed.isVisible())) return false;
+  await speed.click({ timeout: 4000 });
   return true;
 }
 
@@ -71,7 +77,9 @@ async function replaceInjuredPlayer(page, shell, injury) {
 }
 
 async function runMatchToClock(page, live, shell, targetClock, timeout) {
-  await shell.locator('[data-cm4-speed="4"]').click();
+  if (String(await shell.locator('[data-cm4-clock]').textContent() || '').trim() === targetClock) return;
+  await expect(shell.locator('[data-cm4-speed="4"]')).toBeVisible({ timeout: 5000 });
+  await shell.locator('[data-cm4-speed="4"]').click({ timeout: 4000 });
   const deadline = Date.now() + timeout;
 
   while (Date.now() < deadline) {
@@ -89,7 +97,17 @@ async function runMatchToClock(page, live, shell, targetClock, timeout) {
       continue;
     }
     if (pause) {
-      await shell.locator('[data-cm4-speed="4"]').click();
+      const speed = shell.locator('[data-cm4-speed="4"]');
+      if (!(await speed.isVisible())) {
+        const modal = page.locator('[data-manager-modal].is-open');
+        const close = modal.locator('[data-close-manager]').first();
+        if (await close.isVisible().catch(() => false)) {
+          await close.click();
+          continue;
+        }
+        throw new Error(`Match paused at minute ${pause.minute}, but the current Match Centre has no visible speed control`);
+      }
+      await speed.click({ timeout: 4000 });
       await page.waitForTimeout(250);
       continue;
     }
