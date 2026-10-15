@@ -103,9 +103,13 @@ async function renderNegotiation(playerId) {
     return;
   }
 
-  const modalCard = document.querySelector('#appModal .modal-card');
-  if (!modalCard) return;
-  modalCard.style.position = 'relative';
+  // The current player card is an integrated career screen, not a legacy
+  // modal. Mount the negotiation in that live screen; retain modal support for
+  // older callers so saved games and historical UI remain compatible.
+  const integrated = document.querySelector('.career-app.is-open .career-content > .flm-instant-profile');
+  const host = integrated || document.querySelector('#appModal.is-open .modal-card');
+  if (!host) return;
+  host.style.position = 'relative';
   closeNegotiation();
 
   const windowStatus = getTransferWindowStatus(c);
@@ -169,7 +173,7 @@ async function renderNegotiation(playerId) {
         </aside>
       </div>
     </div>`;
-  modalCard.appendChild(shell);
+  host.appendChild(shell);
 }
 
 async function submitBid(shell) {
@@ -222,8 +226,9 @@ async function submitContract(shell) {
 }
 
 async function injectProfileAction() {
-  const profile = document.querySelector('#appModal.is-open .flm-profile');
-  const actions = profile?.querySelector('.flm-profile-actions');
+  const profile = document.querySelector('.career-app.is-open .flm-instant-profile')
+    || document.querySelector('#appModal.is-open .flm-profile');
+  const actions = profile?.querySelector('.flm-ip-summary, .flm-profile-actions');
   const c = career();
   const playerId = window.FLMPlayerProfile?.activePlayerId;
   if (!profile || !actions || !c || !playerId || actions.querySelector('[data-v061-profile-bid]')) return;
