@@ -60,8 +60,8 @@ test('V0.6.1 transfer market completes a signing through club and player negotia
     return { id: picked.player.id, name: picked.player.name, asking: picked.stance.askingPrice };
   });
 
-  await expect(page.locator('#appModal')).toHaveClass(/is-open/);
-  await expect(page.locator('#modalTitle')).toContainText(target.name);
+  await expect(page.locator('.career-app.is-open [data-flm-instant-profile]')).toBeVisible();
+  await expect(page.locator('.flm-ip-title h2')).toContainText(target.name);
   const bidAction = page.locator('[data-v061-profile-bid]');
   await expect(bidAction).toBeVisible();
   await expect(bidAction).toBeEnabled();
@@ -106,7 +106,7 @@ test('V0.6.1 transfer market completes a signing through club and player negotia
   expect(Array.isArray(saved.transfers.rumours)).toBeTruthy();
 
   await page.locator('[data-v061-close]').click();
-  await page.locator('.modal-close').click();
+  await page.locator('[data-flm-profile-back]').click();
   await page.getByRole('button', { name: 'Squad', exact: true }).click();
   await expect(page.locator('.career-content')).toContainText(target.name);
 });
