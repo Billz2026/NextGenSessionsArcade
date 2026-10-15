@@ -663,6 +663,40 @@ function showHallOfFame() {
   });
 }
 
+// Football Database has no active manager or integrated career-content surface.
+// Keep its player inspection explicitly read-only and local to the database modal.
+function showDatabasePlayer(player, db) {
+  if (!player) return;
+  const club = db.clubs.find(item => item.id === player.clubId);
+  const fields = [
+    ['Club', club?.name || 'Unattached'],
+    ['Position', player.primaryPosition || player.positionGroup || '—'],
+    ['Other positions', (player.secondaryPositions || []).join(', ') || '—'],
+    ['Nationality', player.nationality || player.nationalityCode || '—'],
+    ['Age', player.reportedAge ?? '—'],
+    ['Shirt number', player.shirtNumber || '—']
+  ];
+  const card = document.createElement('div');
+  card.className = 'flm-profile flm-database-readonly-profile';
+  card.innerHTML = `
+    <div class="flm-readonly-badge">DATABASE VIEW · READ ONLY</div>
+    <div class="db-summary">${fields.map(([label, value]) => `
+      <div class="db-summary-card"><small>${esc(label)}</small><strong>${esc(value)}</strong></div>
+    `).join('')}</div>
+    <p class="db-warning">This is reference data only. Transfers, selection and contracts are available from an active career.</p>`;
+  openModal({
+    eyebrow: 'FOOTBALL WORLD · PLAYER REFERENCE',
+    title: player.name,
+    copy: 'Imported football database record — no career changes can be made here.',
+    body: card,
+    wide: true,
+    actions: [
+      { label: 'BACK TO DATABASE', onClick: showDatabase },
+      { label: 'CLOSE', onClick: closeModal }
+    ]
+  });
+}
+
 function renderDatabase(browser, db) {
   const realClubs = db.clubs.filter(club => !club.isPlaceholder);
   const realPlayers = db.players.filter(player => !player.isPlaceholder);
@@ -693,7 +727,7 @@ function renderDatabase(browser, db) {
       <div class="db-detail-head"><div><p class="eyebrow">${club.isPlaceholder ? 'DEVELOPMENT CLUB' : 'PLAYABLE CLUB'}</p><h3>${esc(club.name)}</h3><span class="db-club-meta">${squad.length} players loaded</span></div></div>
       <div class="db-squad">${squad.map(player => `<button type="button" class="db-player-row" data-player-profile="${esc(player.id)}"><span class="db-player-pos">${esc(player.primaryPosition)}</span><div><strong>${esc(player.name)}</strong><small>${esc(player.nationalityCode || '—')} · #${esc(player.shirtNumber || '—')}</small></div></button>`).join('')}</div>`;
 
-    detail.querySelectorAll('[data-player-profile]').forEach(control => control.addEventListener('click', () => window.FLMPlayerProfile?.open(control.dataset.playerProfile)));
+    detail.querySelectorAll('[data-player-profile]').forEach(control => control.addEventListener('click', () => showDatabasePlayer(db.players.find(player => player.id === control.dataset.playerProfile), db)));
     list.querySelectorAll('button').forEach(item => item.classList.toggle('is-active', item.dataset.clubId === selectedId));
   };
 
