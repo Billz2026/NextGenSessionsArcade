@@ -725,9 +725,9 @@ function renderDatabase(browser, db) {
 
     detail.innerHTML = `
       <div class="db-detail-head"><div><p class="eyebrow">${club.isPlaceholder ? 'DEVELOPMENT CLUB' : 'PLAYABLE CLUB'}</p><h3>${esc(club.name)}</h3><span class="db-club-meta">${squad.length} players loaded</span></div></div>
-      <div class="db-squad">${squad.map(player => `<button type="button" class="db-player-row" data-player-profile="${esc(player.id)}"><span class="db-player-pos">${esc(player.primaryPosition)}</span><div><strong>${esc(player.name)}</strong><small>${esc(player.nationalityCode || '—')} · #${esc(player.shirtNumber || '—')}</small></div></button>`).join('')}</div>`;
+      <div class="db-squad">${squad.map(player => `<button type="button" class="db-player-row" data-db-readonly-player="${esc(player.id)}"><span class="db-player-pos">${esc(player.primaryPosition)}</span><div><strong>${esc(player.name)}</strong><small>${esc(player.nationalityCode || '—')} · #${esc(player.shirtNumber || '—')}</small></div></button>`).join('')}</div>`;
 
-    detail.querySelectorAll('[data-player-profile]').forEach(control => control.addEventListener('click', () => showDatabasePlayer(db.players.find(player => player.id === control.dataset.playerProfile), db)));
+    detail.querySelectorAll('[data-db-readonly-player]').forEach(control => control.addEventListener('click', () => showDatabasePlayer(db.players.find(player => player.id === control.dataset.dbReadonlyPlayer), db)));
     list.querySelectorAll('button').forEach(item => item.classList.toggle('is-active', item.dataset.clubId === selectedId));
   };
 
