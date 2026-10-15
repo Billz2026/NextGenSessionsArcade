@@ -128,13 +128,23 @@ test('Matchday V2 is CM-clear, team-coloured and makes legal substitutions obvio
   const status = plan.locator('.flm-v049-status');
   await expect(status).toContainText('5 SUBSTITUTIONS REMAINING');
 
-  const gkLabel = plan.locator('.flm-v049-name small', { hasText: /^GK$/ });
-  const outgoing = plan.locator('[data-v049-out]').filter({ hasNot: gkLabel }).first();
-  const incoming = plan.locator('[data-v049-in]').filter({ hasNot: gkLabel }).first();
-  const offId = await outgoing.getAttribute('data-v049-out');
-  const inId = await incoming.getAttribute('data-v049-in');
-  expect(offId).toBeTruthy();
-  expect(inId).toBeTruthy();
+  // Select by authoritative database position, not text rendered in the match
+  // sheet. A goalkeeper must never be removed for an outfield substitute.
+  const selection = await page.evaluate(async () => {
+    const db = await window.FLMManager.loadDatabase();
+    const players = new Map(db.players.map(player => [player.id, player]));
+    const starters = [...document.querySelectorAll('.flm-match-dialog [data-v049-out]')]
+      .map(button => button.dataset.v049Out);
+    const bench = [...document.querySelectorAll('.flm-match-dialog [data-v049-in]')]
+      .map(button => button.dataset.v049In);
+    const isOutfield = id => players.get(id)?.positionGroup !== 'GK' && players.get(id)?.primaryPosition !== 'GK';
+    return { offId: starters.find(isOutfield), inId: bench.find(isOutfield) };
+  });
+  expect(selection.offId).toBeTruthy();
+  expect(selection.inId).toBeTruthy();
+  const outgoing = plan.locator(`[data-v049-out="${selection.offId}"]`);
+  const incoming = plan.locator(`[data-v049-in="${selection.inId}"]`);
+  const { offId, inId } = selection;
   await outgoing.click();
   await expect(confirm).toBeDisabled();
   await incoming.click();
