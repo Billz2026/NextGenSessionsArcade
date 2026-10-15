@@ -35,38 +35,38 @@ async function resumeShortHandedIfNeeded(page, shell) {
 
 async function replaceInjuredPlayer(page, shell, injury) {
   await shell.locator('[data-cm4-subs]').click();
-  const dialog = page.locator('.flm-match-dialog.v2-sub-dialog');
+  const dialog = page.locator('.flm-match-dialog:has(.flm-v049-match-sheet)');
   await expect(dialog).toBeVisible();
+  const outgoing = dialog.locator(`[data-v049-out="${injury.playerId}"]`);
+  await expect(outgoing).toHaveCount(1);
 
-  const option = dialog.locator(`[data-sub-out] option[value="${injury.playerId}"]`);
-  await expect(option).toHaveCount(1);
-  const optionText = await option.textContent();
-  const injuredName = String(optionText || '').split('·')[0].trim();
-  if (!injuredName) throw new Error(`Could not resolve injured player ${injury.playerId}`);
+  // Choose the current squad's legal goalkeeper/outfield replacement using
+  // database positions, never names or outdated hidden V2 select elements.
+  const replacementId = await page.evaluate(async injuredId => {
+    const db = await window.FLMManager.loadDatabase();
+    const positions = new Map(db.players.map(p => [p.id, p.positionGroup]));
+    const keeper = positions.get(injuredId) === 'GK';
+    const ids = [...document.querySelectorAll('.flm-match-dialog [data-v049-in]')].map(node => node.dataset.v049In);
+    return ids.find(id => (positions.get(id) === 'GK') === keeper) || null;
+  }, injury.playerId);
 
-  const outgoing = dialog.locator('[data-v2-out-list] .v2-sub-player').filter({ hasText: injuredName }).first();
-  await expect(outgoing).toBeVisible();
-  await outgoing.click();
-
-  const incoming = dialog.locator('[data-v2-in-list] .v2-sub-player:not(:disabled)').first();
-  if (!(await incoming.count())) {
-    if (await dialog.isVisible()) {
-      await dialog.locator('[data-close-manager]').first().click();
-    }
+  if (!replacementId) {
+    await dialog.locator('[data-close-manager]').first().click();
     await shell.locator('[data-cm4-speed="4"]').click();
     return;
   }
 
-  await expect(incoming).toBeEnabled();
-  await incoming.click();
-
-  const confirm = dialog.locator('[data-apply-sub]');
+  const priorCount = await dialog.locator('[data-v049-out]').count();
+  await outgoing.click();
+  await dialog.locator(`[data-v049-in="${replacementId}"]`).click();
+  const confirm = dialog.locator('[data-v049-confirm]');
   await expect(confirm).toBeEnabled();
   await confirm.click();
-
-  if (await dialog.isVisible()) {
-    await dialog.locator('[data-close-manager]').first().click();
-  }
+  await expect.poll(async () => dialog.locator('[data-v049-out]').evaluateAll(
+    rows => rows.some(row => row.dataset.v049Out === replacementId)
+  ), { timeout: 10000 }).toBe(true);
+  await expect(dialog.locator('[data-v049-out]')).toHaveCount(priorCount);
+  await dialog.locator('[data-close-manager]').first().click();
   await shell.locator('[data-cm4-speed="4"]').click();
 }
 
