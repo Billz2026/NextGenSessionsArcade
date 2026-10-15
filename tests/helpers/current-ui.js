@@ -28,3 +28,30 @@ export async function continueCareerUntil(page, targetDate, maxSteps = 30) {
   }
   throw new Error(`Continue Game did not reach ${targetDate} after ${maxSteps} actions`);
 }
+
+/** The home screen contains hidden responsive duplicates; only click the visible entry. */
+export async function clickVisibleNewGame(page) {
+  const button = page.locator('[data-action="new-game"]:visible').first();
+  await expect(button).toBeVisible();
+  await button.click();
+}
+
+/** Open a real player's profile from the user-visible squad button. */
+export async function openFirstSquadProfile(page) {
+  const profileButton = page.locator('.career-app.is-open [data-v044-profile]:visible').first();
+  await expect(profileButton).toBeVisible();
+  const id = await profileButton.getAttribute('data-v044-profile');
+  expect(id).toBeTruthy();
+  await profileButton.click();
+  const profile = page.locator('.career-app.is-open [data-flm-instant-profile]');
+  await expect(profile).toBeVisible({ timeout: 10000 });
+  return profile;
+}
+
+/** Exit via the visible sidebar, never by mutating DOM state in the test. */
+export async function exitCareer(page) {
+  const button = page.locator('.career-app.is-open [data-shell-exit]');
+  await expect(button).toBeVisible();
+  await button.click();
+  await expect(page.locator('.career-app')).not.toHaveClass(/is-open/);
+}
