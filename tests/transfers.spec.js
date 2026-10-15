@@ -61,7 +61,7 @@ test('V0.6.1 transfer market completes a signing through club and player negotia
   });
 
   await expect(page.locator('.career-app.is-open [data-flm-instant-profile]')).toBeVisible();
-  await expect(page.locator('.flm-ip-title h2')).toContainText(target.name);
+  await expect.poll(() => page.evaluate(() => window.FLMPlayerProfile?.activePlayerId)).toBe(target.id);
   const bidAction = page.locator('[data-v061-profile-bid]');
   await expect(bidAction).toBeVisible();
   await expect(bidAction).toBeEnabled();
