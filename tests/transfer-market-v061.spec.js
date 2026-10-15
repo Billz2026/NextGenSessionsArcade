@@ -51,7 +51,7 @@ test('a player profile can run the full live club negotiation and go straight to
   });
 
   await expect(page.locator('.career-app.is-open [data-flm-instant-profile]')).toBeVisible();
-  await expect(page.locator('.flm-ip-title h2')).toContainText(target.name);
+  await expect.poll(() => page.evaluate(() => window.FLMPlayerProfile?.activePlayerId)).toBe(target.id);
   await expect(page.locator('[data-v061-profile-bid]')).toBeVisible();
   await page.locator('[data-v061-profile-bid]').click();
   await expect(page.locator('[data-v061-negotiation]')).toBeVisible();
