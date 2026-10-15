@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickCareerContinue } from './helpers/current-ui.js';
 import { finishSecondHalf, reachHalfTime } from './helpers/live-match.js';
 
 test.setTimeout(240000);
@@ -13,7 +14,7 @@ async function continueUntil(page, targetDate, maxSteps = 30) {
   for (let step = 0; step < maxSteps; step += 1) {
     const current = await page.evaluate(() => window.FLMManager.activeCareer?.currentDate || '');
     if (current >= targetDate) return current;
-    await page.locator('.career-header [data-v060-continue]').click();
+    await clickCareerContinue(page);
     await page.waitForTimeout(80);
   }
   throw new Error(`Continue Game did not reach ${targetDate}`);
@@ -49,7 +50,7 @@ test('squad and tactics remain manager-controlled and position-aware', async ({ 
   await page.getByRole('button', { name: 'Squad', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Squad' })).toBeVisible();
   await expect(page.locator('[data-v044-lineup]:checked')).toHaveCount(0);
-  await expect(page.locator('[data-lineup-counter]')).toContainText('0 / 11');
+  await expect(page.locator('[data-lineup-counter]').filter({ hasText: 'SELECTED' })).toContainText('0 / 11');
   await expect(page.locator('[data-v044-auto-pick]')).toHaveText('AUTO PICK XI');
   await page.locator('[data-v044-auto-pick]').click();
   await expect(page.locator('[data-v044-lineup]:checked')).toHaveCount(11);
