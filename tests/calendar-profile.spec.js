@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickCareerContinue } from './helpers/current-ui.js';
 
 test.setTimeout(60000);
 
@@ -28,13 +29,13 @@ test('career starts in June, gates transfers and releases fixtures on 19 June', 
   await expect(page.getByRole('heading', { name: 'Fixtures not released yet' })).toBeVisible();
   await expect(page.locator('.v054-locked')).toContainText('FRIDAY 19 JUNE 2026 · 10:00 BST');
 
-  await page.locator('[data-v054-advance]').click();
+  await clickCareerContinue(page, 'milestone');
   await expect(page.locator('.v054-date-chip')).toContainText('15 JUN 2026');
   await expect(transferGate).toHaveCount(0);
   await expect(page.locator('[data-v050-transfer-tab]')).toBeVisible();
 
-  await expect(page.locator('[data-v054-advance]')).toBeVisible();
-  await page.locator('[data-v054-advance]').click();
+  await expect(page.locator('.flm-cm-sidebar [data-shell-continue]')).toBeVisible();
+  await clickCareerContinue(page, 'milestone');
   await expect(page.locator('.v054-date-chip')).toContainText('19 JUN 2026');
   await expect(fixtures).not.toHaveClass(/v054-lock-nav/);
 
