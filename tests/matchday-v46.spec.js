@@ -71,7 +71,7 @@ test('V4.6 locks matchday presentation and management screens', async ({ page })
 
   // The V049 Match Plan supersedes the retired V2 substitution dialog.
   const subs = await openMatchPlan(page, shell);
-  await expect(subs.locator('.flm-v049-context')).toContainText(/\\d+–\\d+/);
+  await expect(subs.locator('.flm-v049-context')).toContainText(/\d+–\d+/);
   await expect(subs.locator('[data-v049-out]')).toHaveCount(11);
   await expect(subs.locator('[data-v049-in]').first()).toBeVisible();
   await expect(subs.locator('[data-v049-confirm]')).toBeDisabled();
