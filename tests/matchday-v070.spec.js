@@ -54,20 +54,20 @@ test('V0.7 keeps the full XI subbable, applies kits and exits full time in one c
   expect(kitVars.awayInk).not.toBe('');
 
   await shell.locator('[data-cm4-subs]').click();
-  const dialog=page.locator('.flm-match-dialog.v2-sub-dialog');
-  const outList=dialog.locator('[data-v2-out-list]');
-  await expect(outList.locator('.v2-sub-player')).toHaveCount(11);
-  await expect.poll(async()=>page.evaluate(()=>{
-    const snapshot=window.__flmLiveStateV332;
-    if(!snapshot)return false;
-    const active=snapshot.userClubId===snapshot.homeClubId?snapshot.homeLineupIds:snapshot.awayLineupIds;
-    const select=document.querySelector('.flm-match-dialog.v2-sub-dialog [data-sub-out]');
-    if(!select)return false;
-    const options=new Set([...select.options].map(option=>option.value));
-    return active.length===11&&active.every(id=>options.has(id));
-  }),{timeout:8000}).toBe(true);
-  const xiGeometry=await outList.evaluate(node=>({clientHeight:node.clientHeight,scrollHeight:node.scrollHeight}));
-  expect(xiGeometry.scrollHeight).toBeLessThanOrEqual(xiGeometry.clientHeight+3);
+  // Current V049 match plan shows the full starting XI and nine-player bench
+  // in one management sheet, rather than the removed V2 substitution columns.
+  const dialog = page.locator('.flm-match-dialog:has(.flm-v049-match-sheet)');
+  await expect(dialog.locator('[data-v049-out]')).toHaveCount(11);
+  await expect(dialog.locator('[data-v049-in]')).toHaveCount(9);
+  await expect(dialog.locator('[data-v049-out]').last()).toBeVisible();
+  await expect(dialog.locator('[data-v049-confirm]')).toBeDisabled();
+  await expect.poll(async () => page.evaluate(() => {
+    const state = window.__flmLiveStateV332;
+    if (!state) return false;
+    const active = state.userClubId === state.homeClubId ? state.homeLineupIds : state.awayLineupIds;
+    const ids = [...document.querySelectorAll('.flm-match-dialog [data-v049-out]')].map(x => x.dataset.v049Out);
+    return active?.length === 11 && ids.length === 11 && active.every(id => ids.includes(id));
+  }), { timeout: 8000 }).toBe(true);
   await dialog.locator('[data-close-manager]').first().click();
 
   await shell.locator('[data-cm4-speed="4"]').click();
