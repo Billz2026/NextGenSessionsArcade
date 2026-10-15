@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickCareerContinue } from './helpers/current-ui.js';
 
 test.setTimeout(60000);
 
@@ -13,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 async function openTransferWindow(page) {
   if (await page.locator('[data-v050-transfer-tab]').count()) return;
   await page.getByRole('button', { name: 'Overview', exact: true }).click();
-  await page.locator('[data-v054-advance]').click();
+  await clickCareerContinue(page, 'milestone');
   await expect(page.locator('.v054-date-chip')).toContainText('15 JUN 2026');
   await expect(page.locator('[data-v050-transfer-tab]')).toBeVisible();
 }
