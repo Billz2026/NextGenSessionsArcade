@@ -43,7 +43,15 @@ test('new career creates a named manager with experience-based reputation and re
   expect(career.managerContract.weeklyWage).toBeGreaterThan(0);
   expect(career.news.items.find(item => item.key === 'welcome')?.body).toContain('contract has been signed until');
   expect(career.news.items.find(item => item.key === 'welcome')?.body).toContain('salary of');
-  expect(career.news.items.filter(item => item.round === 0)).toHaveLength(4);
+  // New careers now include the first press conference and squad-number
+  // registration in addition to the original four onboarding messages.
+  const dayZeroKeys = career.news.items.filter(item => item.round === 0).map(item => item.key);
+  expect(dayZeroKeys).toHaveLength(6);
+  expect(dayZeroKeys).toEqual(expect.arrayContaining([
+    'welcome', 'board-expectation', 'competition-briefing',
+    'preseason-programme', 'first-press-conference',
+    'squad-number-registration-2026-27'
+  ]));
   await expect(page.locator('[data-manager-strip-v064]')).toContainText('Alex Morgan');
 });
 
