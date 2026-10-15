@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clickCareerContinue } from './helpers/current-ui.js';
+import { clickCareerContinue, openFirstSquadProfile } from './helpers/current-ui.js';
 
 test.setTimeout(60000);
 
@@ -27,7 +27,7 @@ test('career starts in June, gates transfers and releases fixtures on 19 June', 
   await expect(fixtures).toHaveClass(/v054-lock-nav/);
   await fixtures.click();
   await expect(page.getByRole('heading', { name: 'Fixtures not released yet' })).toBeVisible();
-  await expect(page.locator('.v054-locked')).toContainText('FRIDAY 19 JUNE 2026 · 10:00 BST');
+  await expect(page.locator('.v054-locked')).toContainText('19 JUN 2026 · 10:00 BST');
 
   await clickCareerContinue(page, 'milestone');
   await expect(page.locator('.v054-date-chip')).toContainText('15 JUN 2026');
