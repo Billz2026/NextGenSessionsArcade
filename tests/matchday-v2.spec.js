@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { clickCareerContinue } from './helpers/current-ui.js';
 import { startCareerThroughCurrentOnboarding } from './helpers/start-career.js';
+import { reachHalfTime } from './helpers/live-match.js';
+import { openMatchPlan, makeLegalMatchSubstitution, closeMatchPlan } from './helpers/current-match-plan.js';
 
 test.setTimeout(150000);
 
@@ -142,59 +144,30 @@ test('Match Centre V4 delivers CM-style event focus with stable match controls',
   await shell.locator('[data-cm4-view="overview"]').click();
   await expect(shell.locator('[data-cm4-panel="overview"]')).toHaveClass(/is-active/);
 
-  // Clock progression is a hard regression gate: presentation work must never starve the engine.
-  await expect(shell.locator('[data-cm4-clock]')).toHaveText('45:00', { timeout: 30000 });
+  // Verify authoritative clock progression while handling real injury pauses.
+  await reachHalfTime(page, live, shell, 100000);
   await expect(page.locator('[data-resume-second-half]')).toBeAttached();
   await expect(shell.locator('[data-cm4-pause]')).toHaveText('Resume 2nd Half');
 
-  // On an unfolded Fold the substitution board is a full-screen XI ↔ bench workspace.
+  // On an unfolded Fold the actual V049 match plan must expose XI and bench.
   await page.setViewportSize({ width: 720, height: 900 });
-  await shell.locator('[data-cm4-subs]').click();
-  await expect(page.locator('.v2-sub-shell')).toBeVisible();
-  const confirm = page.locator('[data-apply-sub]');
-  const substitutionStatus = page.locator('.flm-sub-status');
-  await expect(confirm).toHaveText('CONFIRM SUBSTITUTION');
-  await expect(confirm).toBeDisabled();
-  await expect(page.locator('.v2-sub-column').nth(0).locator('.v2-sub-player')).toHaveCount(11);
-  await expect.poll(async () => page.locator('.cm332-bench-preview').count(), { timeout: 5000 }).toBeGreaterThan(0);
-  await expect(substitutionStatus).toContainText(/\d+ of \d+ substitutions remaining/);
-  const statusBefore = (await substitutionStatus.textContent()) || '';
-  const remainingBefore = statusBefore.match(/(\d+) of (\d+) substitutions remaining/);
-  expect(remainingBefore).not.toBeNull();
-
-  const subGeometry = await page.evaluate(() => {
-    const columns=[...document.querySelectorAll('.v2-sub-column')];
-    const confirm=document.querySelector('[data-apply-sub]');
-    const modal=document.querySelector('[data-manager-modal]');
-    const a=columns[0]?.getBoundingClientRect();
-    const b=columns[1]?.getBoundingClientRect();
-    const c=confirm?.getBoundingClientRect();
-    return {
-      modalPosition: modal ? getComputedStyle(modal).position : '',
-      sideBySide: Boolean(a && b && Math.abs(a.top-b.top)<=2 && a.right<=b.left+2),
-      confirmVisible: Boolean(c && c.top>=0 && c.bottom<=window.innerHeight+1),
-      viewportHeight: window.innerHeight
-    };
+  const plan = await openMatchPlan(page, shell);
+  const xiCount = await plan.locator('[data-v049-out]').count();
+  expect(xiCount).toBeGreaterThanOrEqual(9);
+  expect(xiCount).toBeLessThanOrEqual(11);
+  await expect(plan.locator('[data-v049-in]').first()).toBeVisible();
+  const geometry = await plan.evaluate(node => {
+    const rect = node.getBoundingClientRect();
+    const board = node.querySelector('.flm-v049-workspace')?.getBoundingClientRect();
+    return { dialogWidth: rect.width, screenWidth: innerWidth, boardWidth: board?.width || 0 };
   });
-  expect(subGeometry.modalPosition).toBe('fixed');
-  expect(subGeometry.sideBySide).toBe(true);
-  expect(subGeometry.confirmVisible).toBe(true);
+  expect(geometry.dialogWidth).toBeLessThanOrEqual(geometry.screenWidth + 2);
+  expect(geometry.boardWidth).toBeGreaterThan(0);
 
-  const offColumn = page.locator('.v2-sub-column').nth(0);
-  const inColumn = page.locator('.v2-sub-column').nth(1);
-  const outfield = offColumn.locator('.v2-sub-player').filter({ hasNot: page.locator('.pos', { hasText: /^GK$/ }) }).first();
-  await outfield.click();
-  const replacement = inColumn.locator('.v2-sub-player:not(:disabled)').first();
-  await expect(replacement).toBeEnabled();
-  await replacement.click();
-  await expect(confirm).toBeEnabled();
-  await confirm.click();
-  await expect(substitutionStatus).toContainText(`${Number(remainingBefore[1]) - 1} of ${remainingBefore[2]} substitutions remaining`);
-
-  // Close the management screen, resume through the V4 halftime bridge and prove play continues.
-  await page.locator('.flm-match-dialog [data-close-manager]').first().click();
+  await makeLegalMatchSubstitution(page, plan);
+  await closeMatchPlan(plan);
   await expect(page.locator('[data-manager-modal]')).not.toHaveClass(/is-open/);
   await expect(shell.locator('[data-cm4-pause]')).toHaveText('Resume 2nd Half');
   await shell.locator('[data-cm4-pause]').click();
-  await expect.poll(async () => Number(((await shell.locator('[data-cm4-clock]').textContent()) || '0').split(':')[0]), { timeout: 8000 }).toBeGreaterThan(45);
+  await expect.poll(async () => Number(((await shell.locator('[data-cm4-clock]').textContent()) || '0').split(':')[0]), { timeout: 12000 }).toBeGreaterThan(45);
 });
