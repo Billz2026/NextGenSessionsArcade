@@ -149,7 +149,7 @@ function ensureShell(live){
     live.querySelector(`[data-match-speed="${paused ? '1' : '0'}"]`)?.click();
     queue();
   });
-  shell.querySelector('[data-cm4-tactics]')?.addEventListener('click',() => live.querySelector('[data-open-tactics]')?.click());
+  shell.querySelector('[data-cm4-tactics]')?.addEventListener('click',() => live.querySelector('[data-open-tactics-panel]')?.click());
   shell.querySelector('[data-cm4-subs]')?.addEventListener('click',() => live.querySelector('[data-open-subs]')?.click());
   shell.querySelectorAll('[data-cm4-speed]').forEach(button => button.addEventListener('click',() => {
     live.querySelector(`[data-match-speed="${button.dataset.cm4Speed}"]`)?.click();
