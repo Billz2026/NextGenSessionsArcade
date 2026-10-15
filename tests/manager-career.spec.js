@@ -64,13 +64,14 @@ test('squad and tactics remain manager-controlled and position-aware', async ({ 
 
   await page.locator('[data-v048-formation]').selectOption('5-3-2');
   await expect(page.locator('[data-v048-slot="RWB"]')).toHaveCount(1);
-  await page.locator('[data-v048-tab="with-ball"]').click();
-  await page.locator('[data-v048-option="tempo"][data-value="High"]').click();
+  // The current one-screen tactics editor uses an always-visible mentality
+  // segment; the older "with-ball"/tempo tabs have been retired.
+  await page.locator('[data-v048-option="mentality"][data-value="Attacking"]').click();
   await page.locator('[data-v048-save]').click();
 
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('flm-career-save')));
   expect(saved.tactics.formation).toBe('5-3-2');
-  expect(saved.tactics.tempo).toBe('High');
+  expect(saved.tactics.mentality).toBe('Attacking');
   expect(saved.tacticalSetup.assignments).toHaveLength(11);
 });
 
