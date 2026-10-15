@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clickCareerContinue } from './helpers/current-ui.js';
+import { clickCareerContinue, openFirstSquadProfile } from './helpers/current-ui.js';
 
 test.setTimeout(60000);
 
@@ -19,35 +19,31 @@ async function openTransferWindow(page) {
   await expect(page.locator('[data-v050-transfer-tab]')).toBeVisible();
 }
 
-test('V0.5.3 opens player profiles from career lists and exposes live value plus comparison data', async ({ page }) => {
+test('the integrated player profile exposes live data and persists the shortlist', async ({ page }) => {
   await page.getByRole('button', { name: 'Squad', exact: true }).click();
-  const squadName = page.locator('[data-v044-row] .v044-name strong').first();
-  const squadPlayerName = (await squadName.textContent()).trim().replace('★', '').trim();
-  await squadName.click();
+  const profile = await openFirstSquadProfile(page);
+  await expect(profile.locator('.flm-ip-title h2')).not.toBeEmpty();
+  await expect(profile.locator('.flm-ip-summary')).toContainText('ESTIMATED VALUE');
+  await expect(profile.locator('.flm-ip-summary')).toContainText('PERSONALITY');
+  await expect(profile.locator('.flm-ip-attribute-row')).not.toHaveCount(0);
 
-  await expect(page.locator('#appModal')).toHaveClass(/is-open/);
-  await expect(page.locator('#modalTitle')).toContainText(squadPlayerName.split(' ')[0]);
-  await expect(page.locator('.flm-profile')).toBeVisible();
-  await expect(page.locator('.v053-profile-summary')).toBeVisible();
-  await expect(page.locator('.v053-profile-summary')).toContainText('WAGE');
-  await expect(page.locator('.v053-profile-summary')).toContainText('CONTRACT');
+  const shortlist = profile.locator('[data-flm-shortlist]');
+  await expect(shortlist).toHaveText(/SHORTLIST/);
+  await shortlist.click();
+  await expect(shortlist).toContainText('SHORTLISTED');
+  const savedShortlist = await page.evaluate(() => JSON.parse(localStorage.getItem('flm-shortlist') || '[]'));
+  expect(savedShortlist).toHaveLength(1);
 
-  await page.locator('[data-profile-compare]').click();
-  await expect(page.locator('.v053-compare-summary')).toBeVisible();
-  await expect(page.locator('.v053-compare-card')).toHaveCount(2);
-  await expect(page.locator('.v053-compare-summary')).toContainText('Value');
-  await expect(page.locator('.v053-compare-summary')).toContainText('Apps / Goals / Assists');
-  await page.locator('.modal-close').click();
+  await profile.getByRole('button', { name: 'CONTRACT', exact: true }).click();
+  await expect(profile.locator('[data-flm-profile-panel]')).toContainText('Weekly wage');
+  await expect(profile.locator('[data-flm-profile-panel]')).toContainText('Expiry');
 
-  await openTransferWindow(page);
-  await page.locator('[data-v050-transfer-tab]').click();
-  await expect(page.getByRole('heading', { name: 'Transfers' })).toBeVisible();
-  const marketName = page.locator('[data-v050-player] strong').first();
-  const marketPlayerName = (await marketName.textContent()).trim();
-  await marketName.click();
-  await expect(page.locator('#appModal')).toHaveClass(/is-open/);
-  await expect(page.locator('#modalTitle')).toHaveText(marketPlayerName);
-  await expect(page.locator('.v053-profile-summary')).toContainText('WAGE');
+  await profile.getByRole('button', { name: 'TRANSFER', exact: true }).click();
+  await expect(profile.locator('[data-flm-profile-panel]')).toContainText('TRANSFER STATUS');
+  await expect(profile.locator('[data-flm-profile-panel]')).toContainText('Estimated value');
+
+  await profile.locator('[data-flm-profile-back]').click();
+  await expect(page.getByRole('heading', { name: 'Squad' })).toBeVisible();
 });
 
 async function seedListedOffer(page, serial) {
