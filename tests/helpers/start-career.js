@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { clickVisibleNewGame } from './current-ui.js';
 
 async function appointmentState(page){
   return page.evaluate(()=>{
@@ -60,7 +61,7 @@ async function completeAppointmentExperience(page){
 }
 
 export async function startCareerThroughCurrentOnboarding(page,{clubIndex=0,firstName='Test',lastName='Manager',experience='professional',completeAppointment=true}={}){
-  await page.getByRole('button',{name:'START NEW GAME',exact:true}).click();
+  await clickVisibleNewGame(page);
 
   await expect(page.locator('[data-manager-setup-v064="identity"]')).toBeVisible();
   await page.locator('[data-mgr-first]').fill(firstName);
