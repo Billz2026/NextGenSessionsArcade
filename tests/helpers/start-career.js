@@ -21,7 +21,9 @@ async function completeAppointmentExperience(page){
 
   for(let step=0;step<20;step+=1){
     const state=await appointmentState(page);
-    if(state?.dismissed)break;
+    // The runtime records completion before the visible summary is closed.
+    // Always dismiss the summary with ENTER CAREER instead of stopping on state alone.
+    if(state?.dismissed && !(await appointment.isVisible({timeout:500}).catch(()=>false)))break;
 
     if(!(await appointment.isVisible({timeout:500}).catch(()=>false))){
       await page.evaluate(()=>window.FLMAppointmentMedia?.refresh?.());
