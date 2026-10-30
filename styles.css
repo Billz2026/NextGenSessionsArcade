@@ -163,3 +163,135 @@ a:focus-visible{outline:3px solid var(--gold2);outline-offset:4px}
 /* Noninteractive previews should not imply they are clickable. */
 #categories{scroll-margin-top:118px}
 .tile{cursor:default}
+
+/* V4: Compact, gaming-first dashboard. Games surface immediately after navigation. */
+.header-inner{min-height:72px;gap:22px}
+.brand{width:142px}
+.brand-parent{height:auto;aspect-ratio:1600/663;object-fit:contain}
+.brand .arcade-wordmark{margin-top:-7px;height:auto}
+.intro{grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;padding-top:21px;padding-bottom:15px}
+.intro .eyebrow{margin:0 0 5px;font-size:10px}
+.intro h1{font-size:clamp(43px,4.25vw,61px);white-space:normal;line-height:.95;margin:0 0 8px}
+.intro h1 em{white-space:nowrap}
+.intro-main>p:not(.eyebrow){margin:0;font-size:13px;line-height:1.45;max-width:none}
+.intro-aside{min-height:0;display:flex;align-items:center;gap:11px;padding:12px 15px;border-radius:10px;max-width:370px}
+.intro-aside .pulse{flex:0 0 8px}
+.intro-aside>div{display:flex;flex-direction:column;gap:2px}
+.intro-aside strong{font-size:11px;letter-spacing:.02em;line-height:1.4}
+.intro-aside>div span{font-size:11px;line-height:1.35;color:var(--muted)}
+.intro-status{font-size:10px;font-weight:900;letter-spacing:.06em;color:var(--red-hi);white-space:nowrap;margin-left:8px}
+.library{padding-top:6px;scroll-margin-top:90px}
+.section-heading{margin-bottom:13px;gap:12px}
+.section-heading .eyebrow{font-size:10px;line-height:1.1;margin:0 0 2px}
+.section-heading h2{font-size:36px;line-height:1}
+.library-status{padding:8px 11px;font-size:10px}
+.game-grid{gap:11px}
+.tile{border-radius:12px;transition:border-color .18s,box-shadow .18s}
+.tile-feature{grid-column:span 6;grid-row:auto;display:grid;grid-template-columns:45% 55%;grid-template-rows:auto 1fr;min-height:265px;overflow:hidden}
+.feature-banner{grid-column:1/-1;grid-row:1;padding:10px 14px;font-size:10px;line-height:1.2}
+.featured-star{font-size:13px}
+.feature-stage{grid-column:1;grid-row:2;height:auto;min-height:185px;margin:0 0 12px 12px;border-radius:8px}
+.wheel-back{width:181px;height:181px;top:52%}
+.roulette-wheel{width:162px;height:162px;top:52%;border-width:6px;box-shadow:inset 0 0 0 2px #f3c74f,inset 0 0 0 12px #111,0 8px 26px rgba(0,0,0,.5)}
+.roulette-inner{width:84px;height:84px;border-width:7px;box-shadow:0 0 0 3px #1b1212,0 6px 18px rgba(0,0,0,.4)}
+.roulette-inner span{font-size:18px}.roulette-inner small{font-size:9px}
+.stage-caption{font-size:9px;bottom:8px;right:7px;letter-spacing:.05em}
+.wheel-ball{width:8px;height:8px;top:17%;left:64%}
+.feature-info{grid-column:2;grid-row:2;min-width:0;padding:7px 16px 12px 15px;justify-content:center}
+.feature-eyebrow{font-size:10px;letter-spacing:.075em}
+.feature-info h3{font-size:clamp(39px,3.55vw,58px);margin:8px 0 7px}
+.feature-info p{font-size:12px;line-height:1.5;margin:0 0 8px}
+.tile-bottom{margin-top:auto;padding-top:9px}
+.tile-number,.status-label{font-size:10px}
+.category-tile,.tile-puzzle,.tile-strategy,.tile-sports{grid-column:span 3;min-height:265px;padding:15px 16px}
+.tile-arcade,.tile-reflex{grid-column:span 3}
+.tile-puzzle,.tile-strategy,.tile-sports{grid-column:span 4;min-height:166px}
+.category-art{font-size:104px;right:8px;top:13px}
+.category-art-reflex,.category-art-strategy{font-size:122px;top:0}
+.category-art-puzzle,.category-art-sports{font-size:105px;top:5px}
+.category-copy h3{font-size:35px;margin-bottom:4px}
+.category-copy p{font-size:12px;margin-bottom:7px}
+.category-status{font-size:10px;padding-top:6px}
+.tile-top{font-size:10px}
+.tile-more{font-size:12px;opacity:.55}
+.library-disclaimer{font-size:11px;margin-top:8px}
+.about{margin-top:39px;margin-bottom:38px;padding-top:24px;grid-template-columns:1.2fr .8fr;gap:25px}
+.about h2{font-size:35px;margin:7px 0 8px}
+.about-copy>p:last-child{margin-bottom:0}
+.about-link{padding:16px}
+.footer-inner{padding-top:14px;padding-bottom:14px;min-height:75px}
+.footer-brand{width:105px;min-width:105px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.footer-brand img:first-child{display:block;width:100%;height:auto!important;aspect-ratio:1600/663;object-fit:contain;flex:none;max-height:none}
+.footer-brand .arcade-wordmark{display:block;width:84%;height:auto!important;aspect-ratio:1060/220;object-fit:contain;flex:none;margin-top:-5px}
+.footer-meta{font-size:11px;align-items:center}
+@media(max-width:1050px){
+ .intro{gap:12px}
+ .intro h1{font-size:47px}
+ .intro-aside{max-width:305px}
+ .intro-status{display:none}
+ .category-tile,.tile-arcade,.tile-reflex{grid-column:span 3;min-height:265px}
+ .tile-puzzle,.tile-strategy,.tile-sports{grid-column:span 4;min-height:166px}
+ .tile-feature{grid-column:span 6}
+ .category-copy h3{font-size:31px}
+}
+@media(max-width:850px){
+ .intro{grid-template-columns:1fr;gap:12px;padding-top:20px;padding-bottom:13px}
+ .intro h1{font-size:51px}
+ .intro-aside{max-width:none;padding:10px 12px}
+ .intro-status{display:inline}
+ .game-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+ .tile-feature{grid-column:1/-1;grid-row:auto;min-height:245px;grid-template-columns:43% 57%}
+ .feature-stage{min-height:186px}
+ .category-tile,.tile-arcade,.tile-reflex,.tile-puzzle,.tile-strategy,.tile-sports{grid-column:span 3;min-height:180px}
+ .feature-info h3{font-size:56px}
+ .section-heading{align-items:center;flex-direction:row}
+}
+@media(max-width:600px){
+ .header-inner{min-height:0;gap:6px 12px;padding-top:8px;padding-bottom:9px}
+ .brand{width:118px}.brand .arcade-wordmark{margin-top:-6px}
+ .nav{padding-top:8px}.nav a{font-size:11px}
+ .music-link{font-size:10px;padding:8px 10px}
+ .intro{gap:8px;padding-top:15px;padding-bottom:8px}
+ .intro .eyebrow{font-size:10px}
+ .intro h1{font-size:clamp(40px,10.6vw,55px);margin:2px 0 5px}
+ .intro-main>p:not(.eyebrow){font-size:12px}
+ .intro-aside{gap:9px;padding:9px 11px}
+ .intro-aside strong,.intro-aside>div span,.intro-status{font-size:10px}
+ .section-heading{align-items:flex-start;flex-direction:column;gap:7px;margin-bottom:11px}
+ .section-heading h2{font-size:35px}
+ .library-status{font-size:10px;padding:7px 10px}
+ .game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .tile-feature{grid-column:1/-1;grid-template-columns:41% 59%;min-height:240px}
+ .feature-banner{font-size:9px;padding:9px 11px;gap:6px}
+ .feature-stage{height:auto;min-height:177px;margin:0 0 10px 9px}
+ .feature-info{padding:5px 10px 10px}
+ .feature-info h3{font-size:clamp(34px,9vw,47px)}
+ .feature-info p{font-size:11px;line-height:1.35}
+ .feature-eyebrow{font-size:9px}
+ .wheel-back{width:143px;height:143px}
+ .roulette-wheel{width:133px;height:133px}
+ .roulette-inner{width:69px;height:69px;border-width:6px}
+ .roulette-inner span{font-size:15px}.roulette-inner small{font-size:8px}
+ .wheel-ball{top:18%;left:64%}
+ .stage-caption{font-size:8px;letter-spacing:0}
+ .tile-bottom{padding-top:6px}.tile-number,.status-label{font-size:9px}
+ .category-tile,.tile-arcade,.tile-reflex,.tile-puzzle,.tile-strategy,.tile-sports{grid-column:span 1;min-height:172px;padding:12px}
+ .category-art{font-size:86px;right:2px;top:20px}
+ .category-art-reflex,.category-art-strategy{font-size:103px}
+ .category-copy h3{font-size:28px}
+ .category-copy p{font-size:11px;line-height:1.4}
+ .category-status{font-size:9px}
+ .tile-top{font-size:9px}
+ .about{margin-top:30px;margin-bottom:30px;padding-top:18px;grid-template-columns:1fr}
+ .about h2{font-size:35px}
+ .footer-inner{gap:12px}.footer-brand{width:105px}
+}
+@media(max-width:380px){
+ .intro h1{font-size:39px}
+ .intro-status{display:none}
+ .tile-feature{grid-template-columns:40% 60%}
+ .feature-info h3{font-size:34px}
+ .category-tile,.tile-arcade,.tile-reflex,.tile-puzzle,.tile-strategy,.tile-sports{grid-column:span 1;min-height:177px}
+ .category-copy h3{font-size:27px}
+ .category-art{right:2px;top:25px}
+}

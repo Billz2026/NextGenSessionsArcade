@@ -25,3 +25,6 @@ The redesigned homepage uses a tile-based game-browser layout:
 Previous Football Lab Manager remains in `archive/football-lab-manager-2026-10-30`, but its code is not active.
 
 GitHub Pages: `main` branch, `/(root)`. Website: https://billz2026.github.io/NextGenSessionsArcade/
+
+## Compact gaming dashboard (v4)
+A short welcome strip now leads immediately into the game library. Desktop uses a 6/3/3 feature-and-category layout followed by three equal compact cards. Pre-launch previews remain explicitly noninteractive, and original logo assets are untouched. The footer logo is dimensionally constrained to preserve its natural aspect ratio on all screen sizes.
