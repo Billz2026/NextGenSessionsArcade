@@ -13,3 +13,127 @@
 @media(max-width:800px){.site-header{padding-inline:18px}.shell{width:calc(100% - 28px)}.game-layout{grid-template-columns:1fr}.wheel-area{min-height:395px}.wheel-assembly{width:min(73%,315px)}.controls-panel{gap:13px}.bet-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.stake-bar{flex-direction:row}.stake-actions{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:550px){.site-header{height:66px;padding-inline:12px}.brand{width:108px}.exit-link,.header-button{font-size:10px;padding:9px}.header-actions{gap:5px}.shell{padding-top:13px}.game-title{align-items:start;flex-direction:column;gap:7px}.game-title h1{font-size:53px}.title-note{text-align:left;font-size:9px}.wheel-area{min-height:355px}.wheel-assembly{width:min(83%,290px)}.wheel-halo{top:25px}.stats-grid{grid-template-columns:repeat(2,1fr)}.controls-panel{padding:12px;gap:13px}.bet-grid{grid-template-columns:repeat(2,1fr)}.bet-btn{min-height:50px}.stake-bar{flex-direction:column}.stake-actions{grid-template-columns:repeat(3,1fr)}.action-area{grid-template-columns:1fr 1fr}.spin-btn,.bank-btn{font-size:17px;min-height:58px}.spin-btn span{margin-left:5px;font-size:21px}.game-foot{font-size:10px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+/* Arcade Edition V2 — physical wheel, dramatic but controlled feedback,
+   crisp game HUD and accessible motion handling. All rules remain unchanged. */
+:root{--arcade-glow:rgba(243,199,79,.32);--bezel:#c98a39}
+body{background:
+ radial-gradient(ellipse 30% 40% at 18% 37%,rgba(116,25,34,.18),transparent 100%),
+ radial-gradient(ellipse 44% 55% at 84% 20%,rgba(123,66,28,.11),transparent 100%),#0a0809}
+.site-header{border-bottom-color:rgba(243,199,79,.23);box-shadow:0 2px 20px rgba(0,0,0,.3)}
+.game-title h1{letter-spacing:.006em;text-shadow:0 4px 16px rgba(0,0,0,.4)}
+.game-layout{gap:17px}
+.wheel-panel{position:relative;isolation:isolate;border:1px solid rgba(243,199,79,.42);
+ box-shadow:inset 0 1px 0 rgba(255,221,132,.13),0 18px 45px rgba(0,0,0,.35),0 0 35px rgba(161,35,42,.07)}
+.wheel-panel::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:16px;
+ background:linear-gradient(130deg,rgba(253,224,151,.07),transparent 28%,transparent 76%,rgba(149,35,36,.10));z-index:0}
+.panel-heading{position:relative;z-index:2;background:linear-gradient(90deg,#211514,#161111);border-bottom:1px solid rgba(243,199,79,.23)}
+.wheel-area{isolation:isolate;min-height:460px;background:
+ radial-gradient(circle at 50% 39%,rgba(174,37,44,.22),transparent 55%),
+ repeating-linear-gradient(90deg,transparent 0,transparent 32px,rgba(243,199,79,.019) 33px),
+ linear-gradient(155deg,#1d1315,#0b0a0c 62%)}
+.wheel-halo{top:20px;width:390px;height:390px;
+ box-shadow:0 0 0 21px rgba(243,199,79,.023),0 0 0 42px rgba(243,199,79,.01),
+ inset 0 0 36px rgba(206,80,41,.11),0 0 85px rgba(148,35,43,.16);
+ border:1px solid rgba(243,199,79,.23);background:radial-gradient(circle,transparent 52%,rgba(243,199,79,.027) 90%)}
+.wheel-assembly{width:min(80%,365px);filter:drop-shadow(0 21px 25px rgba(0,0,0,.68)) drop-shadow(0 0 14px rgba(243,199,79,.14))}
+.wheel-rotor{filter:drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+.wheel-rotor canvas{image-rendering:auto}
+.ball{width:14px;height:14px;box-shadow:0 0 0 2px rgba(255,248,212,.18),0 0 14px rgba(255,255,255,.67),0 4px 6px rgba(0,0,0,.6)}
+.top-pointer{top:-11px;border-left-width:12px;border-right-width:12px;border-top-width:25px;filter:drop-shadow(0 4px 3px #000) drop-shadow(0 0 5px rgba(244,202,90,.3))}
+.wheel-hub{position:absolute;z-index:2;left:50%;top:50%;width:31.5%;aspect-ratio:1;border-radius:50%;
+ transform:translate(-50%,-50%);display:flex;flex-direction:column;justify-content:center;align-items:center;
+ border:6px solid #b6843a;background:radial-gradient(circle at 36% 25%,#423137,#130e11 67%,#070709 100%);
+ box-shadow:0 0 0 3px #332012,inset 0 0 0 2px rgba(255,220,134,.24),
+ inset 0 12px 19px rgba(255,243,207,.12),0 12px 20px rgba(0,0,0,.56)}
+.wheel-hub::before{content:"";position:absolute;inset:7px;border-radius:50%;border:1px solid rgba(244,210,131,.25)}
+.wheel-hub span{font:900 clamp(24px,3vw,37px)/1 var(--digital);letter-spacing:-.09em;color:#f3c74f;
+ text-shadow:0 2px 1px #68421c,0 0 13px rgba(243,199,79,.24)}
+.wheel-hub small{font:800 8px var(--digital);letter-spacing:.12em;color:var(--red);margin-top:5px}
+.cabinet-lights{position:absolute;z-index:0;left:50%;top:10px;width:min(84%,430px);height:22px;
+ transform:translateX(-50%);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
+.cabinet-lights span{width:6px;height:6px;border-radius:50%;background:#6a4923;box-shadow:0 0 0 1px rgba(243,199,79,.17)}
+.cabinet-lights span:nth-child(3n+2){background:#aa7330}
+.wheel-impact{position:absolute;z-index:5;top:29%;left:50%;width:100%;transform:translateX(-50%);pointer-events:none;
+ color:var(--gold);font:900 clamp(38px,4vw,59px)/1 var(--font);white-space:nowrap;letter-spacing:.01em;text-align:center;
+ -webkit-text-stroke:1px rgba(64,32,13,.35);text-shadow:0 3px 0 #412719,0 7px 18px rgba(0,0,0,.8),0 0 32px rgba(243,199,79,.3);
+ opacity:0}
+.wheel-panel.is-loss .wheel-impact{color:#ff918d;text-shadow:0 3px 0 #3c1113,0 6px 15px #000}
+.wheel-panel.is-win .wheel-impact,.wheel-panel.is-big-win .wheel-impact,.wheel-panel.is-loss .wheel-impact{
+ animation:score-flash 1.65s ease-out both}
+.wheel-panel.is-big-win .wheel-impact{animation:score-flash 2s ease-out both}
+.wheel-panel.is-win .wheel-halo,.wheel-panel.is-big-win .wheel-halo{animation:rim-reward .85s ease-out 1}
+.wheel-panel.is-big-win .wheel-area{background:
+ radial-gradient(circle at 50% 37%,rgba(243,199,79,.2),transparent 57%),
+ radial-gradient(ellipse at 70% 100%,rgba(176,44,49,.16),transparent 75%),#100c0d}
+.wheel-panel.is-spinning .cabinet-lights span{animation:lamp-run .54s ease-in-out infinite alternate}
+.wheel-panel.is-spinning .cabinet-lights span:nth-child(2n){animation-delay:.22s}
+.wheel-panel.is-spinning .wheel-halo{animation:wheel-breathe 1.1s ease-in-out infinite alternate}
+.wheel-result{min-height:82px;z-index:3}
+.wheel-result strong{font-size:clamp(33px,3.3vw,48px);letter-spacing:.015em;text-shadow:0 4px 15px rgba(0,0,0,.5)}
+.wheel-result.winner strong{color:#f8d66b}
+.wheel-result.loser strong{color:#eeaaa5}
+.wheel-result.winner,.wheel-result.loser{animation:result-pop .4s cubic-bezier(.15,.8,.25,1)}
+.controls-panel{border-color:rgba(243,199,79,.25);background:linear-gradient(145deg,#1b1415,#100e10);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 35px rgba(0,0,0,.22)}
+.stat{position:relative;border-color:rgba(243,199,79,.24);box-shadow:inset 0 1px 0 rgba(255,243,215,.04)}
+.stat-balance{background:linear-gradient(135deg,#47301c,#211713 68%);border-color:rgba(243,199,79,.63);box-shadow:inset 0 1px 0 rgba(255,233,157,.13),0 0 18px rgba(243,199,79,.075)}
+.stat-balance strong{text-shadow:0 0 20px rgba(243,199,79,.2)}
+.stat-streak.is-hot{border-color:rgba(249,101,64,.78);
+ background:linear-gradient(155deg,#4c231f,#251414);box-shadow:0 0 18px rgba(249,79,64,.17)}
+.stat-streak.is-hot strong{color:#ffbf6a}
+.streak-label{position:absolute;right:5px;bottom:4px;font:800 8px var(--digital)!important;letter-spacing:.01em!important;color:#ffb56c!important}
+.streak-label[hidden]{display:none}
+.bet-btn{position:relative;overflow:hidden;border-color:rgba(238,204,169,.25);
+ background:linear-gradient(160deg,#241c1d,#161214);box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+ transition:transform .14s,border-color .14s,box-shadow .14s,background .14s}
+.bet-btn:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(243,199,79,.7);
+ box-shadow:0 3px 12px rgba(0,0,0,.3)}
+.bet-btn.selected{border:2px solid var(--gold);background:linear-gradient(140deg,#533128,#2b1f1c);
+ box-shadow:inset 0 0 0 1px rgba(243,199,79,.15),0 0 16px rgba(243,199,79,.17)}
+.bet-btn.selected::after{content:"";position:absolute;left:17%;right:17%;bottom:0;height:2px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.chip-btn{box-shadow:inset 0 1px 0 rgba(255,255,255,.07);transition:transform .1s,border-color .14s}
+.chip-btn:active:not(:disabled),.bet-btn:active:not(:disabled){transform:translateY(2px) scale(.985)}
+.spin-btn{position:relative;overflow:hidden;color:#180e09;background:linear-gradient(180deg,#fff0ad 0%,#f5ce5b 50%,#d59c32 100%);
+ border:1px solid #ffdc87;box-shadow:inset 0 2px 0 rgba(255,255,255,.64),inset 0 -5px 0 rgba(132,75,23,.36),0 6px 0 #7d4b18,0 11px 20px rgba(0,0,0,.4);
+ text-shadow:0 1px 0 rgba(255,242,206,.33);
+ transition:transform .12s,box-shadow .12s,filter .12s}
+.spin-btn:hover:not(:disabled){background:linear-gradient(180deg,#fff3c4,#f8d36b 56%,#dbad42);filter:brightness(1.04);box-shadow:inset 0 2px 0 rgba(255,255,255,.7),inset 0 -5px 0 rgba(132,75,23,.38),0 6px 0 #7d4b18,0 12px 26px rgba(242,195,68,.13)}
+.spin-btn:active:not(:disabled){transform:translateY(5px);box-shadow:inset 0 2px 4px rgba(108,66,27,.25),0 1px 0 #7d4b18}
+.bank-btn{background:linear-gradient(145deg,#2f1719,#211416);box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+.bank-btn:hover:not(:disabled){border-color:var(--red);background:linear-gradient(145deg,#54252b,#2b171a)}
+.recent-ball{font-variant-numeric:tabular-nums}
+@keyframes score-flash{
+  0%{opacity:0;transform:translate(-50%,32px) scale(.55);filter:blur(7px)}
+  18%{opacity:1;transform:translate(-50%,-8px) scale(1.14);filter:blur(0)}
+  34%{opacity:1;transform:translate(-50%,0) scale(1)}
+  72%{opacity:1;transform:translate(-50%,-10px) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-32px) scale(.93)}
+}
+@keyframes rim-reward{
+  0%{box-shadow:0 0 0 20px rgba(243,199,79,.04),0 0 10px rgba(243,199,79,.2)}
+  35%{box-shadow:0 0 0 20px rgba(243,199,79,.16),0 0 80px rgba(243,199,79,.38)}
+  100%{box-shadow:0 0 0 20px rgba(243,199,79,.02),0 0 24px rgba(243,199,79,.06)}
+}
+@keyframes lamp-run{from{background:#6a4923;box-shadow:0 0 1px #e0a54b}to{background:#ffe091;box-shadow:0 0 9px #ffc558,0 0 14px rgba(243,199,79,.45)}}
+@keyframes wheel-breathe{from{filter:brightness(1)}to{filter:brightness(1.5)}}
+@keyframes result-pop{0%{transform:scale(.88);opacity:.2}100%{transform:scale(1);opacity:1}}
+@media(max-width:800px){
+  .wheel-area{min-height:430px}.wheel-halo{top:17px}
+}
+@media(max-width:550px){
+  .wheel-area{min-height:360px}.wheel-assembly{width:min(83%,290px)}
+  .wheel-halo{width:305px;height:305px;top:20px}
+  .wheel-hub{border-width:4px}.wheel-hub span{font-size:clamp(19px,6vw,29px)}.wheel-hub small{font-size:7px}
+  .cabinet-lights{top:8px}
+  .wheel-impact{font-size:37px;top:27%}
+  .wheel-result{min-height:74px}
+  .streak-label{font-size:8px!important}
+  .spin-btn{box-shadow:inset 0 2px 0 rgba(255,255,255,.6),inset 0 -3px 0 rgba(132,75,23,.35),0 3px 0 #7d4b18}
+}
+@media(prefers-reduced-motion:reduce){
+  .wheel-panel.is-win .wheel-halo,.wheel-panel.is-big-win .wheel-halo,
+  .wheel-panel.is-spinning .wheel-halo,.wheel-panel.is-spinning .cabinet-lights span,
+  .wheel-result.winner,.wheel-result.loser{animation:none!important}
+  .wheel-panel.is-win .wheel-impact,.wheel-panel.is-big-win .wheel-impact,.wheel-panel.is-loss .wheel-impact{animation:none!important;opacity:0}
+  .bet-btn,.chip-btn,.spin-btn{transition:none!important}
+}

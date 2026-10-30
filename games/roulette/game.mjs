@@ -1,7 +1,7 @@
 import {WHEEL,BETS,BET_LABELS,STARTING_CREDITS,pickNumber,colour,resolveBet,applyOutcome,initialRun} from './engine.mjs';
 const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_records_v1';
 const $=id=>document.getElementById(id);
-const el={balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
+const el={balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
 const safeStorage={read(key){try{return JSON.parse(localStorage.getItem(key));}catch{return null;}},write(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch{}}};
 const defaultRecords=()=>({best:0,history:[]});
 function cleanRecords(raw){if(!raw||!Array.isArray(raw.history)||!Number.isSafeInteger(raw.best)||raw.best<0)return defaultRecords();return {best:raw.best,history:raw.history.filter(x=>Number.isSafeInteger(x)&&x>=0).slice(0,20)};}
@@ -22,6 +22,8 @@ function cleanRun(raw){
 let run=cleanRun(safeStorage.read(RUN_KEY));
 let bet='red',selection=7,stake=Math.min(5,run.balance),phase='ready',wheelAngle=0,animationFrame=0,soundEnabled=false,audioContext=null;
 const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+let spinStartTick=0;
+const relaunchAnimation=element=>{element.style.animation='none';void element.offsetWidth;element.style.animation='';};
 function saveRun(){safeStorage.write(RUN_KEY,run);}
 function saveRecords(){safeStorage.write(RECORD_KEY,records);}
 function format(n){return n.toLocaleString('en-GB');}
@@ -31,6 +33,7 @@ function beep(freq=440,duration=.07,type='sine'){
 }
 function updateUI(){
  el.balance.textContent=format(run.balance);el.best.textContent=format(records.best);el.spins.textContent=format(run.spins);el.streak.textContent=format(run.streak);
+ const hot=run.streak>=3;el.streakCard.classList.toggle('is-hot',hot);el.streakLabel.hidden=!hot;el.streakLabel.textContent=run.streak>=5?'ON FIRE!':'HOT STREAK';
  el.stake.textContent=format(stake);el.stakeSummary.textContent=format(stake)+' CREDIT'+(stake===1?'':'S')+' ON '+(bet==='straight'?'NUMBER '+selection:BET_LABELS[bet].toUpperCase());
  el.numberRow.hidden=bet!=='straight';el.numbers.value=String(selection);
  const idle=phase==='ready'&&run.balance>0;
@@ -45,7 +48,17 @@ function updateUI(){
  if(!run.results.length){const s=document.createElement('span');s.className='empty-recent';s.textContent='No spins yet';el.recent.append(s);}
  else for(const row of run.results){const badge=document.createElement('span');badge.className='recent-ball '+colour(row.number);badge.textContent=String(row.number);badge.title=row.number+' '+colour(row.number)+' — '+(row.won?'win':'loss');el.recent.append(badge);}
 }
-function flashResult(kicker,text,sub,tone=''){el.result.className='wheel-result '+tone;el.resultKicker.textContent=kicker;el.resultText.textContent=text;el.resultSub.textContent=sub;}
+function flashResult(kicker,text,sub,tone=''){el.result.className='wheel-result '+tone;el.resultKicker.textContent=kicker;el.resultText.textContent=text;el.resultSub.textContent=sub;relaunchAnimation(el.result);}
+function arcadeImpact(text,tone){
+ el.impact.textContent=text;
+ el.wheelPanel.classList.remove('is-spinning','is-win','is-big-win','is-loss');
+ if(tone)el.wheelPanel.classList.add(tone);
+ relaunchAnimation(el.impact);
+}
+function clearImpact(){
+ el.wheelPanel.classList.remove('is-win','is-big-win','is-loss','is-spinning');
+ el.impact.textContent='';
+}
 function setBet(value){if(phase!=='ready'||run.balance===0||!BETS.includes(value))return;bet=value;beep(510,.04);updateUI();}
 function addStake(amount){if(phase!=='ready'||!Number.isSafeInteger(amount)||amount<0)return;stake=Math.min(run.balance,stake+amount);beep(330,.035);updateUI();}
 function recordScore(score){records.history.unshift(score);records.history=records.history.slice(0,20);const isRecord=score>records.best;records.best=Math.max(records.best,score);saveRecords();return isRecord;}
@@ -60,7 +73,9 @@ function finishRun(busted){
 }
 function onResolved(outcome){
  run=applyOutcome(run,outcome);saveRun();phase='ready';const c=colour(outcome.number).toUpperCase();
- if(outcome.won){flashResult('WINNING NUMBER',outcome.number+' '+c,'+'+format(outcome.net)+' credits · '+run.streak+' in a row','winner');beep(700,.12);}
+ const wonBig=outcome.won&&(outcome.net>=100||outcome.bet==='straight');
+ arcadeImpact(outcome.won?(wonBig?'BIG WIN +'+format(outcome.net):'WIN +'+format(outcome.net)):'−'+format(outcome.stake),outcome.won?(wonBig?'is-big-win':'is-win'):'is-loss');
+ if(outcome.won){flashResult('WINNING NUMBER',outcome.number+' '+c,'+'+format(outcome.net)+' credits · '+run.streak+' win'+(run.streak===1?'':'s')+' in a row','winner');beep(wonBig?880:700,.16,'triangle');}
  else{flashResult('WINNING NUMBER',outcome.number+' '+c,'−'+format(outcome.stake)+' credits','loser');beep(230,.09);}
  if(stake>run.balance)stake=run.balance;
  el.hint.textContent=outcome.won?'Nice result. Play another round or bank your score.':'Choose your next bet or bank your score.';
@@ -73,39 +88,95 @@ function spin(){
  const outcome=resolveBet({balance:run.balance,bet:activeBet,stake:activeStake,selection:activeSelection,number});
  // Save locked outcome before animation. Refresh cannot reroll a losing spin.
  run.pending={bet:activeBet,stake:activeStake,selection:activeSelection,number};saveRun();
- phase='spinning';flashResult('WHEEL IN MOTION','SPINNING…','The result is locked');el.hint.textContent='Spin in progress. Betting is locked.';updateUI();beep(410,.1,'triangle');
+ phase='spinning';clearImpact();el.wheelPanel.classList.add('is-spinning');flashResult('WHEEL IN MOTION','SPINNING…','Watch the ball find its pocket');el.hint.textContent='Spin in progress. Betting is locked.';updateUI();beep(410,.1,'triangle');
+ // The pocket at index i is centred at -90° on the canvas; the fixed pointer
+ // is also at -90°. The final wheel angle is therefore -i * (360/37).
  const index=WHEEL.indexOf(number),step=360/WHEEL.length;
  const remaining=((-index*step-wheelAngle)%360+360)%360;
- const target=wheelAngle+5*360+remaining,duration=reducedMotion?100:3400;
- let start=null;cancelAnimationFrame(animationFrame);
+ const target=wheelAngle+5*360+remaining;
+ const duration=reducedMotion?180:3900;
+ const ballStart=0,ballDistance=6*360;
+ let start=null;cancelAnimationFrame(animationFrame);spinStartTick=0;const ball=el.orbit.firstElementChild;if(ball)ball.style.top='8%';
  const frame=time=>{
   if(start===null)start=time;
-  const p=Math.min(1,(time-start)/duration),easing=1-Math.pow(1-p,4);
-  el.rotor.style.transform='rotate('+(wheelAngle+(target-wheelAngle)*easing)+'deg)';
-  el.orbit.style.transform='rotate('+(-5*360*easing)+'deg)';
-  if(p<1)animationFrame=requestAnimationFrame(frame);
-  else{wheelAngle=target%360;el.rotor.style.transform='rotate('+wheelAngle+'deg)';el.orbit.style.transform='rotate(0deg)';onResolved(outcome);}
+  const p=Math.min(1,(time-start)/duration);
+  const ease=1-Math.pow(1-p,4);
+  const orbitEase=1-Math.pow(1-p,2.8);
+  const rotation=wheelAngle+(target-wheelAngle)*ease;
+  el.rotor.style.transform='rotate('+rotation+'deg)';
+  el.orbit.style.transform='rotate('+(ballStart-ballDistance*orbitEase)+'deg)';
+  // Ball comes inward on the last part of the spin.
+  const settle=Math.max(0,(p-.76)/.24);
+  if(ball)ball.style.top=(8+settle*5)+'%';
+  if(!reducedMotion&&soundEnabled&&p>.64&&p<.95){
+    const tick=Math.floor((p-.64)*23);
+    if(tick>spinStartTick){spinStartTick=tick;beep(300+tick*14,.024,'triangle');}
+  }
+  if(p<1){animationFrame=requestAnimationFrame(frame);}
+  else{
+    wheelAngle=target%360;
+    el.rotor.style.transform='rotate('+wheelAngle+'deg)';
+    el.orbit.style.transform='rotate(0deg)';
+    if(ball)ball.style.top='13%';
+    onResolved(outcome);
+  }
  };
  animationFrame=requestAnimationFrame(frame);
 }
 function bank(){if(phase!=='ready'||run.spins<1||run.balance===0)return;finishRun(false);}
-function startNew(){cancelAnimationFrame(animationFrame);run=initialRun();bet='red';selection=7;stake=5;phase='ready';wheelAngle=0;el.rotor.style.transform='rotate(0deg)';el.orbit.style.transform='rotate(0deg)';saveRun();if(el.dialog.open)el.dialog.close();flashResult('READY TO PLAY','PLACE YOUR BET','Choose a wager and press SPIN');el.hint.textContent='New run started with 100 virtual credits.';updateUI();}
+function startNew(){cancelAnimationFrame(animationFrame);run=initialRun();bet='red';selection=7;stake=5;phase='ready';wheelAngle=0;clearImpact();el.rotor.style.transform='rotate(0deg)';el.orbit.style.transform='rotate(0deg)';if(el.orbit.firstElementChild)el.orbit.firstElementChild.style.top='8%';saveRun();if(el.dialog.open)el.dialog.close();flashResult('READY TO PLAY','PLACE YOUR BET','Choose a wager and press SPIN');el.hint.textContent='New run started with 100 virtual credits.';updateUI();}
 function drawWheel(){
  const cv=el.canvas,ctx=cv.getContext('2d');if(!ctx)return;
- const c=cv.width/2,outer=252,ring=205,step=Math.PI*2/WHEEL.length;
- ctx.clearRect(0,0,cv.width,cv.height);
- const disc=ctx.createRadialGradient(c-50,c-70,15,c,c,260);disc.addColorStop(0,'#eac86e');disc.addColorStop(.65,'#ad7a32');disc.addColorStop(1,'#5c361e');
- ctx.beginPath();ctx.arc(c,c,outer+13,0,Math.PI*2);ctx.fillStyle='#090808';ctx.fill();ctx.strokeStyle='#d6a74c';ctx.lineWidth=5;ctx.stroke();
- ctx.beginPath();ctx.arc(c,c,outer,0,Math.PI*2);ctx.fillStyle=disc;ctx.fill();
+ // Paint a high-resolution, layered wheel without changing the fair game logic.
+ const size=560,c=280,step=Math.PI*2/WHEEL.length;
+ const scale=cv.width/size;ctx.setTransform(scale,0,0,scale,0,0);
+ ctx.clearRect(0,0,size,size);
+ const ring=(radius,fill,stroke,width=1)=>{
+  ctx.beginPath();ctx.arc(c,c,radius,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}
+ };
+ const grad=(stops,radius=265)=>{
+  const g=ctx.createLinearGradient(c-radius,c-radius,c+radius,c+radius);
+  for(const [at,col] of stops)g.addColorStop(at,col);
+  return g;
+ };
+ const gold=grad([[0,'#fff0aa'],[.12,'#ae7938'],[.32,'#3f2412'],[.54,'#f1d17a'],[.77,'#80521e'],[1,'#f4ca61']]);
+ // A physical outer bezel, concentric brushed-gold rails, and deep shadow.
+ ring(278,'#09090a','#5c361d',2);
+ ring(268,gold,'#e5bd60',3);
+ ring(256,'#130f0f','#241810',3);
+ ring(249,gold,'#9e682c',3);
+ ring(241,'#0c0b0d','#dfae55',2);
+ // 37 real European-roulette pockets. Canvas index zero is centred under top pointer.
  WHEEL.forEach((number,i)=>{
-   const angle=-Math.PI/2+i*step;ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,outer-13,angle-step/2,angle+step/2);ctx.closePath();
-   ctx.fillStyle=number===0?'#167b53':colour(number)==='red'?'#b62f35':'#161719';ctx.fill();ctx.strokeStyle='rgba(236,198,113,.45)';ctx.lineWidth=1.3;ctx.stroke();
-   ctx.save();ctx.translate(c,c);ctx.rotate(angle+Math.PI/2);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 16px Arial, sans-serif';ctx.fillStyle='#f9edd6';ctx.fillText(String(number),0,-226);ctx.restore();
+  const a=-Math.PI/2+i*step,inner=195,outer=238;
+  ctx.beginPath();ctx.arc(c,c,outer,a-step/2,a+step/2);
+  ctx.arc(c,c,inner,a+step/2,a-step/2,true);ctx.closePath();
+  const red=number!==0&&colour(number)==='red';
+  ctx.fillStyle=number===0?'#167b50':red?'#b9363d':'#191a1e';ctx.fill();
+  ctx.strokeStyle='rgba(246,199,107,.7)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.save();ctx.translate(c,c);ctx.rotate(a+Math.PI/2);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 15px Arial,sans-serif';
+  ctx.fillStyle='#fff3d9';ctx.shadowColor='#000';ctx.shadowBlur=2;
+  ctx.fillText(String(number),0,-219);ctx.restore();
  });
- ctx.beginPath();ctx.arc(c,c,ring,0,Math.PI*2);ctx.fillStyle='#8d5b24';ctx.fill();ctx.beginPath();ctx.arc(c,c,ring-10,0,Math.PI*2);ctx.fillStyle='#151011';ctx.fill();
- ctx.beginPath();ctx.arc(c,c,129,0,Math.PI*2);ctx.fillStyle=disc;ctx.fill();ctx.beginPath();ctx.arc(c,c,118,0,Math.PI*2);ctx.fillStyle='#171012';ctx.fill();
- ctx.strokeStyle='#b58b42';ctx.lineWidth=4;ctx.beginPath();ctx.arc(c,c,117,0,Math.PI*2);ctx.stroke();
- ctx.fillStyle='#f3c74f';ctx.textAlign='center';ctx.font='900 65px Arial, sans-serif';ctx.fillText('NGS',c,c+15);ctx.font='800 21px Arial,sans-serif';ctx.fillStyle='#ff665b';ctx.fillText('001',c,c+49);
+ ring(193,gold,'#f2cf75',3);
+ ring(184,'#130e0f','#714d25',3);
+ // Brushed curved base and subtle radial spokes suggest a dimensional rotor.
+ const bowl=ctx.createRadialGradient(c-35,c-50,9,c,c,185);
+ bowl.addColorStop(0,'#6d4933');bowl.addColorStop(.22,'#3b2924');bowl.addColorStop(.58,'#171215');bowl.addColorStop(.87,'#100c0e');bowl.addColorStop(1,'#513420');
+ ring(180,bowl,'#c29446',3);
+ for(let i=0;i<18;i++){
+  const a=i*Math.PI/9;
+  ctx.beginPath();ctx.moveTo(c+Math.cos(a)*124,c+Math.sin(a)*124);
+  ctx.lineTo(c+Math.cos(a)*173,c+Math.sin(a)*173);
+  ctx.strokeStyle='rgba(227,180,88,.11)';ctx.lineWidth=3;ctx.stroke();
+ }
+ ring(129,gold,'#d0a352',3);
+ ring(119,'#140e10','#f1c26b',2);
+ const glass=ctx.createRadialGradient(c-22,c-35,5,c,c,115);
+ glass.addColorStop(0,'#473132');glass.addColorStop(.5,'#1c1519');glass.addColorStop(1,'#0e0b0d');
+ ring(109,glass,'#8f6539',2);
+ // The floating HTML hub stays upright, allowing the wheel and logo to read clearly.
 }
 for(let n=0;n<37;n++){const o=document.createElement('option');o.value=String(n);o.textContent=String(n);el.numbers.append(o);}
 el.numbers.value=String(selection);

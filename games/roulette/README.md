@@ -15,3 +15,6 @@ Plain HTML/CSS plus ES modules. `engine.mjs` is side-effect free and tested with
 
 ## Scope / transparency
 All balances are fictional. No real money, purchases, prizes or credits with monetary value. This is a chance-based game, not a test of predictive skill. European roulette's house edge is approximately 2.70%. Scores are device-local and are not suitable for a trusted global leaderboard.
+
+## Visual V2
+A multi-layered metallic roulette wheel with genuine 37-pocket numbering, upright central badge, animated ball track, arcade win burst, streak feedback, cabinet lighting and tactile betting controls. Gameplay probabilities and score persistence are unchanged.
