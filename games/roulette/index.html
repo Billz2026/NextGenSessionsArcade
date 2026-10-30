@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=7"><title>High Roll Run | NextGen Sessions Arcade</title>
+<link rel="stylesheet" href="./game.css?v=8"><title>High Roll Run | NextGen Sessions Arcade</title>
 </head>
 <body>
 <a class="skip-link" href="#game">Skip to game</a><div class="top-line" aria-hidden="true"></div>
@@ -18,6 +18,13 @@
 </header>
 <main id="game" class="shell">
 <div class="game-title"><div><div class="eyebrow">ROULETTE ARCADE / SOLO CHALLENGE</div><h1>HIGH ROLL <em>RUN.</em></h1><p>Build your balance. Bank your score. Beat your best.</p></div><div class="title-note">VIRTUAL CREDITS ONLY <span>•</span> NO PURCHASES OR PRIZES</div></div>
+<section class="mode-selector" aria-label="Choose roulette game mode">
+ <div class="mode-actions" role="group" aria-label="Game modes">
+  <button type="button" class="mode-btn selected" data-mode="classic" aria-pressed="true"><strong>CLASSIC</strong><span>100 CREDITS</span></button>
+  <button type="button" class="mode-btn" data-mode="high" aria-pressed="false"><strong>HIGH ROLLER</strong><span>£25,000 VIRTUAL CASH</span></button>
+ </div>
+ <p id="mode-description">Classic roulette · start with 100 fictional credits.</p>
+</section>
 <section class="game-layout" aria-label="Roulette gameplay">
 <div class="wheel-panel" id="wheel-panel"><div class="panel-heading"><span class="tiny-id">01 / THE WHEEL</span><span class="fair-badge">37 POCKETS <b>•</b> FAIR ODDS</span></div>
 <div class="wheel-area"><div class="wheel-halo" aria-hidden="true"></div><div class="cabinet-lights" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="wheel-assembly">
@@ -27,7 +34,7 @@
 <div class="recent-wrap"><div class="recent-label">LAST SPINS</div><div class="recent-list" id="recent-list" aria-label="Recent roulette results"><span class="empty-recent">No spins yet</span></div></div>
 </div>
 <div class="controls-panel">
-<div class="stats-grid"><div class="stat stat-balance"><span>YOUR CREDITS</span><strong id="balance" aria-live="polite">100</strong></div>
+<div class="stats-grid"><div class="stat stat-balance"><span id="balance-label">YOUR CREDITS</span><strong id="balance" aria-live="polite">100</strong></div>
 <div class="stat"><span>PERSONAL BEST</span><strong id="best-score">0</strong></div>
 <div class="stat"><span>SPINS</span><strong id="spins-count">0</strong></div>
 <div class="stat stat-streak" id="streak-stat"><span>WIN STREAK</span><strong id="streak-count">0</strong><span class="streak-label" id="streak-label" hidden>HOT STREAK</span></div></div>
@@ -45,7 +52,7 @@
 <section class="stake-section" aria-labelledby="stake-heading"><div class="control-heading"><h2 id="stake-heading">02 <span>SET YOUR STAKE</span></h2><span class="muted-small" id="stake-summary">5 CREDITS ON RED</span></div>
 <div class="stake-bar"><div class="stake-value"><span>BET</span><strong id="stake-value">5</strong></div><div class="stake-actions">
 <button type="button" class="chip-btn" data-add="1">+1</button><button type="button" class="chip-btn" data-add="5">+5</button><button type="button" class="chip-btn" data-add="10">+10</button><button type="button" class="chip-btn" data-add="25">+25</button>
-<button type="button" id="all-in" class="chip-btn all-in">ALL IN</button><button type="button" id="clear-bet" class="chip-btn chip-clear">CLEAR</button></div></div></section>
+<button type="button" class="chip-btn" data-add="10000" data-high-only hidden>+10K</button><button type="button" id="half-bet" class="chip-btn chip-half" data-high-only hidden>HALF</button><button type="button" id="all-in" class="chip-btn all-in">ALL IN</button><button type="button" id="clear-bet" class="chip-btn chip-clear">CLEAR</button></div></div></section>
 <section class="run-monitor" aria-label="Current run progress">
  <div class="run-monitor-head"><strong><span aria-hidden="true">✳</span> RUN MONITOR</strong><span id="run-status" class="run-status">NEW RUN</span></div>
  <div class="run-monitor-stats">
@@ -60,8 +67,22 @@
 <div class="help-line" id="game-hint" aria-live="polite">Choose a bet and stake. Every new run starts at 100 credits.</div>
 </div>
 </section>
+<section class="score-chase" aria-label="Arcade achievements and score history">
+  <div class="score-chase-heading"><div><span class="tiny-id">02 / SCORE CHASING</span><h2 id="leaderboard-title">CLASSIC TOP 10</h2></div><p id="leaderboard-caption">Best completed runs on this device</p></div>
+  <div class="milestone-track" id="milestone-track" hidden aria-label="High Roller milestones">
+   <div class="milestone" data-milestone="100000"><small>BRONZE</small><strong>£100K</strong></div>
+   <div class="milestone" data-milestone="500000"><small>SILVER</small><strong>£500K</strong></div>
+   <div class="milestone" data-milestone="1000000"><small>MILLIONAIRE</small><strong>£1M</strong></div>
+   <div class="milestone" data-milestone="5000000"><small>ELITE</small><strong>£5M</strong></div>
+   <div class="milestone" data-milestone="10000000"><small>LEGEND</small><strong>£10M</strong></div>
+  </div>
+  <div id="achievement-toast" class="achievement-toast" role="status" aria-live="polite"></div>
+  <div class="leaderboard-table-head"><span>RANK / BANKED SCORE</span><span>SPINS</span><span>BIGGEST WIN</span></div>
+  <ol class="leaderboard-list" id="leaderboard-list"><li class="leaderboard-empty">No completed runs yet</li></ol>
+  <p class="leaderboard-note">Scores and milestones are fictional and stored only in this browser. No prizes, purchases or cash-outs.</p>
+</section>
 <div class="game-foot"><div><strong>RUN RULES:</strong> Bank your score or play until zero. All 37 European wheel pockets are equally likely (2.7% house edge).</div><div><strong>ARCADE CREDITS:</strong> Fictional only. No purchases or prizes.</div></div>
 </main>
-<dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title"><div class="end-head"><span>GAME 001 / RUN COMPLETE</span><button type="button" id="end-close" class="close-dialog" aria-label="Start a new run">×</button></div><div class="end-body"><div class="end-symbol" aria-hidden="true">✳</div><h2 id="end-title">RUN COMPLETE</h2><p id="end-message">Your score has been banked.</p><div class="end-score"><span>FINAL BANKED SCORE</span><strong id="end-score">0</strong></div><p class="end-record" id="end-record"></p><button type="button" id="new-run" class="new-run-btn">START NEW RUN <span aria-hidden="true">↻</span></button><a href="../../" class="dialog-exit">BACK TO ARCADE ↗</a></div></dialog>
-<script type="module" src="./game.mjs?v=7"></script>
+<dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title"><div class="end-head"><span id="dialog-mode-label">GAME 001 / RUN COMPLETE</span><button type="button" id="end-close" class="close-dialog" aria-label="Start a new run">×</button></div><div class="end-body"><div class="end-symbol" aria-hidden="true">✳</div><h2 id="end-title">RUN COMPLETE</h2><p id="end-message">Your score has been banked.</p><div class="end-score"><span id="end-score-label">FINAL BANKED SCORE</span><strong id="end-score">0</strong></div><p class="end-record" id="end-record"></p><button type="button" id="new-run" class="new-run-btn">START NEW RUN <span aria-hidden="true">↻</span></button><a href="../../" class="dialog-exit">BACK TO ARCADE ↗</a></div></dialog>
+<script type="module" src="./game.mjs?v=8"></script>
 </body></html>

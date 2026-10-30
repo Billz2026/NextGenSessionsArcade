@@ -1,14 +1,34 @@
 import {WHEEL,BETS,BET_LABELS,STARTING_CREDITS,pickNumber,colour,resolveBet,applyOutcome,initialRun} from './engine.mjs';
-const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_records_v1',MOTION_KEY='ngs_arcade_roulette_motion_v2';
+const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_records_v1',HIGH_RUN_KEY='ngs_arcade_roulette_high_run_v1',HIGH_RECORD_KEY='ngs_arcade_roulette_high_records_v1',MODE_KEY='ngs_arcade_roulette_mode_v1',MOTION_KEY='ngs_arcade_roulette_motion_v2';
+const HIGH_START=25000;
+const MILESTONES=[{value:100000,label:'BRONZE · £100K'},{value:500000,label:'SILVER · £500K'},{value:1000000,label:'MILLIONAIRE · £1 MILLION'},{value:5000000,label:'ELITE · £5 MILLION'},{value:10000000,label:'LEGEND · £10 MILLION'}];
 const $=id=>document.getElementById(id);
-const el={balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),motion:$('motion-toggle'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
+const el={modeDesc:$('mode-description'),balanceLabel:$('balance-label'),half:$('half-bet'),leaderboard:$('leaderboard-list'),leaderboardTitle:$('leaderboard-title'),leaderboardCaption:$('leaderboard-caption'),milestoneTrack:$('milestone-track'),toast:$('achievement-toast'),dialogMode:$('dialog-mode-label'),dialogScoreLabel:$('end-score-label'),balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),motion:$('motion-toggle'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
 const safeStorage={read(key){try{return JSON.parse(localStorage.getItem(key));}catch{return null;}},write(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch{}}};
 const defaultRecords=()=>({best:0,history:[]});
-function cleanRecords(raw){if(!raw||!Array.isArray(raw.history)||!Number.isSafeInteger(raw.best)||raw.best<0)return defaultRecords();return {best:raw.best,history:raw.history.filter(x=>Number.isSafeInteger(x)&&x>=0).slice(0,20)};}
-const records=cleanRecords(safeStorage.read(RECORD_KEY));
+// Classic's original history is an array of bare scores. Preserve those
+// records while enriching new entries with spins, biggest profit and peak.
+function cleanRecords(raw){
+ if(!raw||!Array.isArray(raw.history)||!Number.isSafeInteger(raw.best)||raw.best<0)return defaultRecords();
+ const entries=raw.history.map(row=>{
+  if(Number.isSafeInteger(row)&&row>=0)return {score:row,spins:null,biggestWin:null,peak:null,bestStreak:null,date:null};
+  if(!row||!Number.isSafeInteger(row.score)||row.score<0)return null;
+  const safe=x=>Number.isSafeInteger(x)&&x>=0?x:null;
+  return {score:row.score,spins:safe(row.spins),biggestWin:safe(row.biggestWin),peak:safe(row.peak),bestStreak:safe(row.bestStreak),date:safe(row.date)};
+ }).filter(Boolean).slice(0,50);
+ return {best:Math.max(raw.best,...entries.map(row=>row.score),0),history:entries};
+}
+let mode=safeStorage.read(MODE_KEY)==='high'?'high':'classic';
+const isHigh=()=>mode==='high';
+const startBalance=()=>isHigh()?HIGH_START:STARTING_CREDITS;
+const runKey=()=>isHigh()?HIGH_RUN_KEY:RUN_KEY;
+const recordKey=()=>isHigh()?HIGH_RECORD_KEY:RECORD_KEY;
+const initialForMode=()=>({...initialRun(),balance:startBalance(),peak:startBalance()});
+const defaultStake=()=>isHigh()?5000:5;
+let records=cleanRecords(safeStorage.read(recordKey()));
 function cleanRun(raw){
- if(!raw||raw.version!==1||!Number.isSafeInteger(raw.balance)||raw.balance<0||!Number.isSafeInteger(raw.spins)||raw.spins<0||raw.spins>10000000)return initialRun();
- const base=initialRun();
+ if(!raw||raw.version!==1||!Number.isSafeInteger(raw.balance)||raw.balance<0||!Number.isSafeInteger(raw.spins)||raw.spins<0||raw.spins>10000000)return initialForMode();
+ const base=initialForMode();
  for(const key of ['peak','streak','bestStreak','biggestProfit'])if(!Number.isSafeInteger(raw[key])||raw[key]<0)return base;
  if(!Array.isArray(raw.results))return base;
  const results=raw.results.filter(x=>Number.isInteger(x.number)&&x.number>=0&&x.number<=36&&typeof x.won==='boolean'&&Number.isSafeInteger(x.net)).slice(0,10);
@@ -19,8 +39,8 @@ function cleanRun(raw){
  }
  return {...raw,results,pending:null};
 }
-let run=cleanRun(safeStorage.read(RUN_KEY));
-let bet='red',selection=7,stake=Math.min(5,run.balance),phase='ready',wheelAngle=0,animationFrame=0,soundEnabled=false,audioContext=null;
+let run=cleanRun(safeStorage.read(runKey()));
+let bet='red',selection=7,stake=Math.min(defaultStake(),run.balance),phase='ready',wheelAngle=0,animationFrame=0,soundEnabled=false,audioContext=null;
 // Full cinematic spin (3.9s) is the default on ALL devices, including
 // foldables. Previously Android could silently reduce this to 180ms when its
 // "remove animations" accessibility preference was set.
@@ -46,39 +66,89 @@ el.motion.addEventListener('click',()=>{
 syncMotionButton();
 let spinStartTick=0;
 const relaunchAnimation=element=>{element.style.animation='none';void element.offsetWidth;element.style.animation='';};
-function saveRun(){safeStorage.write(RUN_KEY,run);}
-function saveRecords(){safeStorage.write(RECORD_KEY,records);}
+function saveRun(){safeStorage.write(runKey(),run);}
+function saveRecords(){safeStorage.write(recordKey(),records);}
 function format(n){return n.toLocaleString('en-GB');}
+function money(n){return (isHigh()?'£':'')+format(n);}
+function stakeCeiling(){const mul=bet==='straight'?36:['first','second','third'].includes(bet)?3:2;return Math.min(run.balance,Math.max(0,Math.floor((Number.MAX_SAFE_INTEGER-run.balance)/(mul-1))));}
 function beep(freq=440,duration=.07,type='sine'){
  if(!soundEnabled)return;
  try{audioContext??=new (window.AudioContext||window.webkitAudioContext)();const o=audioContext.createOscillator(),g=audioContext.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioContext.currentTime);g.gain.setValueAtTime(.04,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+duration);}catch{}
 }
+function updateLeaderboard(){
+ el.leaderboardTitle.textContent=isHigh()?'HIGH ROLLER TOP 10':'CLASSIC TOP 10';
+ el.leaderboardCaption.textContent=isHigh()?'Best fictional cash scores on this device':'Best completed Classic runs on this device';
+ el.leaderboard.replaceChildren();
+ const ranked=[...records.history].sort((a,b)=>b.score-a.score).slice(0,10);
+ if(!ranked.length){
+  const empty=document.createElement('li');empty.className='leaderboard-empty';
+  empty.textContent='No completed '+(isHigh()?'High Roller':'Classic')+' runs yet';el.leaderboard.append(empty);return;
+ }
+ for(const [i,entry] of ranked.entries()){
+  const li=document.createElement('li');li.className='leaderboard-entry';
+  const score=document.createElement('strong');score.textContent='#'+(i+1)+'  '+money(entry.score);
+  const spins=document.createElement('span');spins.textContent=entry.spins===null?'—':format(entry.spins);
+  const biggest=document.createElement('span');biggest.textContent=entry.biggestWin===null?'—':money(entry.biggestWin);
+  li.append(score,spins,biggest);el.leaderboard.append(li);
+ }
+}
 function updateUI(){
- el.balance.textContent=format(run.balance);el.best.textContent=format(records.best);el.spins.textContent=format(run.spins);el.streak.textContent=format(run.streak);
+ document.documentElement.classList.toggle('high-roller',isHigh());
+ const cap=stakeCeiling();
+ if(stake>cap)stake=cap;
+ el.balance.textContent=money(run.balance);el.best.textContent=money(records.best);
+ el.balanceLabel.textContent=isHigh()?'VIRTUAL CASH':'YOUR CREDITS';
+ el.spins.textContent=format(run.spins);el.streak.textContent=format(run.streak);
+ el.modeDesc.textContent=isHigh()?'High Roller · £25,000 fictional starting cash. Risk it, bank it, or lose the run.':'Classic roulette · start with 100 fictional credits.';
+ document.querySelectorAll('[data-mode]').forEach(button=>{
+  const active=button.dataset.mode===mode;
+  button.classList.toggle('selected',active);
+  button.setAttribute('aria-pressed',String(active));
+  button.disabled=phase==='spinning'||phase==='finished';
+ });
  const hot=run.streak>=3;el.streakCard.classList.toggle('is-hot',hot);el.streakLabel.hidden=!hot;el.streakLabel.textContent=run.streak>=5?'ON FIRE!':'HOT STREAK';
- el.stake.textContent=format(stake);el.stakeSummary.textContent=format(stake)+' CREDIT'+(stake===1?'':'S')+' ON '+(bet==='straight'?'NUMBER '+selection:BET_LABELS[bet].toUpperCase());
+ el.stake.textContent=money(stake);
+ el.stakeSummary.textContent=money(stake)+(isHigh()?' VIRTUAL CASH':' CREDITS')+' ON '+(bet==='straight'?'NUMBER '+selection:BET_LABELS[bet].toUpperCase());
  el.numberRow.hidden=bet!=='straight';el.numbers.value=String(selection);
  const idle=phase==='ready'&&run.balance>0;
- for(const button of document.querySelectorAll('[data-bet]')){const selected=button.dataset.bet===bet;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));button.disabled=!idle;}
- for(const button of document.querySelectorAll('[data-add]'))button.disabled=!idle||stake>=run.balance;
- el.clear.disabled=!idle||stake===0;el.allIn.disabled=!idle||stake===run.balance;el.numbers.disabled=!idle;
- el.spin.disabled=!idle||stake<1||stake>run.balance;
+ for(const button of document.querySelectorAll('[data-bet]')){
+  const selected=button.dataset.bet===bet;
+  button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));button.disabled=!idle;
+ }
+ const chipValues=isHigh()?[100,500,1000,5000,10000]:[1,5,10,25];
+ document.querySelectorAll('[data-add]').forEach((button,i)=>{
+  const val=chipValues[i];const visible=val!==undefined;
+  button.hidden=!visible;
+  if(visible){button.dataset.add=String(val);button.textContent='+'+money(val);}
+  button.disabled=!idle||!visible||stake>=cap;
+ });
+ el.half.hidden=!isHigh();el.half.disabled=!idle||!isHigh();
+ el.clear.disabled=!idle||stake===0;el.allIn.disabled=!idle||stake===cap;el.numbers.disabled=!idle;
+ el.spin.disabled=!idle||stake<1||stake>cap;
  el.motion.disabled=phase==='spinning';
  el.spin.textContent=phase==='spinning'?'SPINNING…':phase==='finished'?'RUN COMPLETE':'SPIN THE WHEEL ↻';
  el.bank.disabled=!idle||run.spins===0;
- el.runPeak.textContent=format(run.peak);el.runBiggest.textContent=format(run.biggestProfit);el.runBestStreak.textContent=format(run.bestStreak);
- const delta=run.balance-STARTING_CREDITS;
- el.runDelta.textContent=delta===0?'EVEN':(delta>0?'+':'−')+format(Math.abs(delta));
+ el.runPeak.textContent=money(run.peak);el.runBiggest.textContent=money(run.biggestProfit);el.runBestStreak.textContent=format(run.bestStreak);
+ const delta=run.balance-startBalance();
+ el.runDelta.textContent=delta===0?'EVEN':(delta>0?'+':'−')+money(Math.abs(delta));
  el.runDelta.className='run-delta '+(delta>0?'positive':delta<0?'negative':'neutral');
- const low=run.balance<=20,active=phase==='ready'&&run.spins>0;
- const status=phase==='spinning'?'SPINNING':phase==='finished'?'RUN ENDED':run.spins===0?'NEW RUN':run.streak>=3?'HOT STREAK':low?'LOW CREDITS':run.balance>records.best?'RECORD IN REACH':'RUN ACTIVE';
+ const low=run.balance<=startBalance()/5,active=phase==='ready'&&run.spins>0;
+ const status=phase==='spinning'?'SPINNING':phase==='finished'?'RUN ENDED':run.spins===0?'NEW RUN':run.streak>=3?'HOT STREAK':low?'LOW BALANCE':isHigh()&&run.balance>=1000000?'MILLIONAIRE':run.balance>records.best?'RECORD IN REACH':'RUN ACTIVE';
  el.runStatus.textContent=status;
  el.runStatus.className='run-status '+(phase==='spinning'?'spinning':run.streak>=3&&active?'hot':low&&active?'low':'');
  el.runPanel.classList.toggle('hot',run.streak>=3&&active);
- el.runCaption.textContent=phase==='spinning'?'OUTCOME LOCKED · WATCH THE WHEEL':phase==='finished'?'RUN COMPLETE':run.spins===0?'START WITH 100 VIRTUAL CREDITS':low?'LOW BALANCE · CHOOSE YOUR STAKE':run.balance>records.best?'BANK NOW TO SET A PERSONAL BEST':'BANK YOUR BALANCE OR SPIN AGAIN';
+ el.runCaption.textContent=phase==='spinning'?'OUTCOME LOCKED · WATCH THE WHEEL':phase==='finished'?'RUN COMPLETE':run.spins===0?'START WITH '+money(startBalance())+' VIRTUAL '+(isHigh()?'CASH':'CREDITS'):low?'LOW BALANCE · CHOOSE YOUR STAKE':run.balance>records.best?'BANK NOW TO SET A PERSONAL BEST':'BANK YOUR BALANCE OR SPIN AGAIN';
  el.recent.replaceChildren();
  if(!run.results.length){const s=document.createElement('span');s.className='empty-recent';s.textContent='No spins yet';el.recent.append(s);}
  else for(const row of run.results){const badge=document.createElement('span');badge.className='recent-ball '+colour(row.number);badge.textContent=String(row.number);badge.title=row.number+' '+colour(row.number)+' — '+(row.won?'win':'loss');el.recent.append(badge);}
+ el.milestoneTrack.hidden=!isHigh();
+ document.querySelectorAll('[data-milestone]').forEach(tile=>{
+  const level=Number(tile.dataset.milestone);
+  const unlocked=isHigh()&&(run.peak>=level||records.history.some(row=>row.peak!==null&&row.peak>=level));
+  tile.classList.toggle('unlocked',unlocked);
+  tile.setAttribute('aria-label',tile.textContent.trim()+(unlocked?' achieved':' locked'));
+ });
+ updateLeaderboard();
 }
 function flashResult(kicker,text,sub,tone=''){el.result.className='wheel-result '+tone;el.resultKicker.textContent=kicker;el.resultText.textContent=text;el.resultSub.textContent=sub;relaunchAnimation(el.result);}
 function arcadeImpact(text,tone){
@@ -92,37 +162,50 @@ function clearImpact(){
  el.wheelPanel.classList.remove('is-win','is-big-win','is-loss','is-spinning','is-landed');
  el.impact.textContent='';
 }
-function setBet(value){if(phase!=='ready'||run.balance===0||!BETS.includes(value))return;bet=value;beep(510,.04);updateUI();}
-function addStake(amount){if(phase!=='ready'||!Number.isSafeInteger(amount)||amount<0)return;stake=Math.min(run.balance,stake+amount);beep(330,.035);updateUI();}
-function recordScore(score){records.history.unshift(score);records.history=records.history.slice(0,20);const isRecord=score>records.best;records.best=Math.max(records.best,score);saveRecords();return isRecord;}
+function setBet(value){if(phase!=='ready'||run.balance===0||!BETS.includes(value))return;bet=value;stake=Math.min(stake,stakeCeiling());beep(510,.04);updateUI();}
+function addStake(amount){if(phase!=='ready'||!Number.isSafeInteger(amount)||amount<0)return;stake=Math.min(stakeCeiling(),stake+amount);beep(330,.035);updateUI();}
+function recordScore(score){
+ records.history.unshift({score,spins:run.spins,biggestWin:run.biggestProfit,peak:run.peak,bestStreak:run.bestStreak,date:Date.now()});
+ records.history=records.history.slice(0,50);
+ const isRecord=score>records.best;records.best=Math.max(records.best,score);saveRecords();return isRecord;
+}
 function finishRun(busted){
  if(phase==='finished')return;
- phase='finished';const banked=busted?0:run.balance,record=recordScore(banked);safeStorage.write(RUN_KEY,null);
+ phase='finished';const banked=busted?0:run.balance,record=recordScore(banked);safeStorage.write(runKey(),null);
  el.dialog.classList.toggle('is-record',record);
- el.dialogTitle.textContent=busted?'OUT OF CREDITS':record?'NEW PERSONAL BEST!':'SCORE BANKED';
- el.dialogMessage.textContent=busted?'Your run is over. Every new run starts fresh with 100 credits.':'Run complete after '+run.spins+' spin'+(run.spins===1?'':'s')+'.';
- el.dialogScore.textContent=format(banked);el.endRecord.textContent=record?'NEW TOP SCORE SAVED TO THIS DEVICE':'Personal best: '+format(records.best);
+ el.dialogMode.textContent='GAME 001 / '+(isHigh()?'HIGH ROLLER':'CLASSIC')+' RUN COMPLETE';
+ el.dialogScoreLabel.textContent=isHigh()?'FINAL VIRTUAL CASH SCORE':'FINAL BANKED SCORE';
+ el.dialogTitle.textContent=busted?(isHigh()?'BANKRUPT':'OUT OF CREDITS'):record?'NEW PERSONAL BEST!':'SCORE BANKED';
+ el.dialogMessage.textContent=busted?'Run over. Your next '+(isHigh()?'High Roller':'Classic')+' run starts with '+money(startBalance())+' fictional '+(isHigh()?'cash.':'credits.'):'Run complete after '+run.spins+' spin'+(run.spins===1?'':'s')+'.';
+ el.dialogScore.textContent=money(banked);el.endRecord.textContent=record?'NEW TOP SCORE SAVED TO THIS DEVICE':'Personal best: '+money(records.best);
  el.hint.textContent=busted?'Balance reached zero. Start a fresh run.':'Your ending balance is now your banked score.';
  updateUI();beep(busted?230:760,.15);if(!el.dialog.open)el.dialog.showModal();
 }
 function onResolved(outcome){
+ const previousPeak=run.peak;
  run=applyOutcome(run,outcome);saveRun();phase='ready';drawWheel(outcome.number);const c=colour(outcome.number).toUpperCase();
- const wonBig=outcome.won&&(outcome.net>=100||outcome.bet==='straight');
- arcadeImpact(outcome.won?(wonBig?'BIG WIN +'+format(outcome.net):'WIN +'+format(outcome.net)):'−'+format(outcome.stake),outcome.won?(wonBig?'is-big-win':'is-win'):'is-loss');
+ const wonBig=outcome.won&&(outcome.net>=startBalance()||outcome.bet==='straight');
+ arcadeImpact(outcome.won?(wonBig?'BIG WIN +'+money(outcome.net):'WIN +'+money(outcome.net)):'−'+money(outcome.stake),outcome.won?(wonBig?'is-big-win':'is-win'):'is-loss');
  if(outcome.won){
   const streakText=run.streak>=3?' · HOT STREAK ×'+run.streak:' · '+run.streak+' win'+(run.streak===1?'':'s')+' in a row';
-  flashResult('WINNING POCKET',outcome.number+' '+c,'+'+format(outcome.net)+' credits'+streakText,'winner');beep(wonBig?880:700,.16,'triangle');
+  flashResult('WINNING POCKET',outcome.number+' '+c,'+'+money(outcome.net)+(isHigh()?' virtual cash':' credits')+streakText,'winner');beep(wonBig?880:700,.16,'triangle');
  }
- else{flashResult('WINNING POCKET',outcome.number+' '+c,'−'+format(outcome.stake)+' credits','loser');beep(230,.09);}
+ else{flashResult('WINNING POCKET',outcome.number+' '+c,'−'+money(outcome.stake)+(isHigh()?' virtual cash':' credits'),'loser');beep(230,.09);}
  if(stake>run.balance)stake=run.balance;
- el.hint.textContent=outcome.won?'Nice result. Play another round or bank your score.':'Choose your next bet or bank your score.';
+ el.hint.textContent=outcome.won?'Play another round or bank your score.':'Choose your next bet or bank your score.';
+ const milestones=isHigh()?MILESTONES.filter(item=>previousPeak<item.value&&run.peak>=item.value):[];
+ if(milestones.length){
+  const reached=milestones[milestones.length-1];
+  el.toast.textContent='✦ '+reached.label+' REACHED · '+money(run.peak)+' PEAK';
+  el.toast.classList.remove('celebrate');void el.toast.offsetWidth;el.toast.classList.add('celebrate');
+ }else{el.toast.classList.remove('celebrate');el.toast.textContent='';}
  updateUI();if(run.balance===0)finishRun(true);
 }
 function spin(){
- if(phase!=='ready'||stake<1||stake>run.balance)return;
+ if(phase!=='ready'||stake<1||stake>stakeCeiling())return;
  let number;try{number=pickNumber();}catch{el.hint.textContent='Secure random selection is unavailable. Please use an up-to-date browser.';return;}
  const activeBet=bet,activeStake=stake,activeSelection=bet==='straight'?selection:null;
- const outcome=resolveBet({balance:run.balance,bet:activeBet,stake:activeStake,selection:activeSelection,number});
+ let outcome;try{outcome=resolveBet({balance:run.balance,bet:activeBet,stake:activeStake,selection:activeSelection,number});}catch{el.hint.textContent='That wager exceeds the supported virtual balance. Lower the stake.';return;}
  // Save locked outcome before animation. Refresh cannot reroll a losing spin.
  run.pending={bet:activeBet,stake:activeStake,selection:activeSelection,number};saveRun();
  phase='spinning';clearImpact();drawWheel();el.wheelPanel.classList.add('is-spinning');flashResult('WHEEL IN MOTION','SPINNING…','Watch the ball find its pocket');el.hint.textContent='Spin in progress. Betting is locked.';updateUI();beep(410,.1,'triangle');
@@ -161,7 +244,40 @@ function spin(){
  animationFrame=requestAnimationFrame(frame);
 }
 function bank(){if(phase!=='ready'||run.spins<1||run.balance===0)return;finishRun(false);}
-function startNew(){cancelAnimationFrame(animationFrame);run=initialRun();bet='red';selection=7;stake=5;phase='ready';wheelAngle=0;clearImpact();drawWheel();el.dialog.classList.remove('is-record');el.rotor.style.transform='rotate(0deg)';el.orbit.style.transform='rotate(0deg)';if(el.orbit.firstElementChild)el.orbit.firstElementChild.style.top='8%';saveRun();if(el.dialog.open)el.dialog.close();flashResult('READY TO PLAY','PLACE YOUR BET','Choose a wager and press SPIN');el.hint.textContent='New run started with 100 virtual credits.';updateUI();}
+function resetWheelForMode(){
+ clearImpact();
+ el.rotor.style.transform='rotate(0deg)';el.orbit.style.transform='rotate(0deg)';
+ wheelAngle=0;
+ if(el.orbit.firstElementChild)el.orbit.firstElementChild.style.top='8%';
+ const last=run.results[0];
+ if(last){
+  const index=WHEEL.indexOf(last.number);
+  wheelAngle=((-index*360/WHEEL.length)%360+360)%360;
+  el.rotor.style.transform='rotate('+wheelAngle+'deg)';
+  if(el.orbit.firstElementChild)el.orbit.firstElementChild.style.top='13%';
+  drawWheel(last.number);el.wheelPanel.classList.add('is-landed');
+  flashResult('LAST WINNING POCKET',last.number+' '+colour(last.number).toUpperCase(),last.won?'Last spin won':'Last spin lost',last.won?'winner':'loser');
+ }else{drawWheel();flashResult('READY TO PLAY','PLACE YOUR BET','Choose a wager and press SPIN');}
+}
+function switchMode(next){
+ if(phase!=='ready'||!['classic','high'].includes(next)||mode===next)return;
+ saveRun();mode=next;safeStorage.write(MODE_KEY,mode);
+ records=cleanRecords(safeStorage.read(recordKey()));
+ run=cleanRun(safeStorage.read(runKey()));
+ if(run.balance===0){run=initialForMode();}
+ bet='red';selection=7;stake=Math.min(defaultStake(),run.balance);
+ phase='ready';el.toast.classList.remove('celebrate');el.toast.textContent='';
+ resetWheelForMode();saveRun();el.hint.textContent=isHigh()?'High Roller ready. All money is fictional; bank or lose your run.':'Classic ready. Your existing credits and personal best are preserved.';
+ updateUI();
+}
+function startNew(){
+ cancelAnimationFrame(animationFrame);run=initialForMode();bet='red';selection=7;stake=defaultStake();phase='ready';wheelAngle=0;
+ el.toast.classList.remove('celebrate');el.toast.textContent='';
+ resetWheelForMode();el.dialog.classList.remove('is-record');saveRun();
+ if(el.dialog.open)el.dialog.close();
+ el.hint.textContent='New '+(isHigh()?'High Roller':'Classic')+' run started with '+money(startBalance())+' fictional '+(isHigh()?'cash.':'credits.');
+ updateUI();
+}
 function drawWheel(highlightNumber=null){
  const cv=el.canvas,ctx=cv.getContext('2d');if(!ctx)return;
  // Paint a high-resolution, layered wheel without changing the fair game logic.
@@ -232,8 +348,10 @@ for(let n=0;n<37;n++){const o=document.createElement('option');o.value=String(n)
 el.numbers.value=String(selection);
 document.querySelectorAll('[data-bet]').forEach(b=>b.addEventListener('click',()=>setBet(b.dataset.bet)));
 document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>addStake(Number(b.dataset.add))));
+document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>switchMode(b.dataset.mode)));
+el.half.addEventListener('click',()=>{if(phase==='ready'&&isHigh()){stake=Math.min(stakeCeiling(),Math.max(1,Math.floor(run.balance/2)));updateUI();beep(350,.04);}});
 el.numbers.addEventListener('change',()=>{selection=Number(el.numbers.value);updateUI();});
-el.allIn.addEventListener('click',()=>{if(phase==='ready'){stake=run.balance;updateUI();beep(330,.04);}});
+el.allIn.addEventListener('click',()=>{if(phase==='ready'){stake=stakeCeiling();updateUI();beep(330,.04);}});
 el.clear.addEventListener('click',()=>{if(phase==='ready'){stake=0;updateUI();}});
 el.spin.addEventListener('click',spin);el.bank.addEventListener('click',bank);el.newRun.addEventListener('click',startNew);
 el.close.addEventListener('click',startNew);
@@ -250,7 +368,7 @@ window.addEventListener?.('resize',()=>{
    drawWheel(phase==='ready'&&last?last.number:null);
  });
 });
-if(run.balance===0){phase='finished';safeStorage.write(RUN_KEY,null);el.hint.textContent='Your last run ended at zero. Start a new run.';el.dialogTitle.textContent='OUT OF CREDITS';el.dialogMessage.textContent='Your run has ended. Start again with 100 virtual credits.';el.dialogScore.textContent='0';el.endRecord.textContent='Personal best: '+format(records.best);el.dialog.showModal();}
+if(run.balance===0){run=initialForMode();el.hint.textContent='Your previous run ended. A new run is ready.';}
 else if(run.spins>0&&run.results.length){
  const last=run.results[0],index=WHEEL.indexOf(last.number);
  if(index!==-1){

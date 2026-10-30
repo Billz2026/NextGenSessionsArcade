@@ -44,3 +44,12 @@ The same JavaScript wheel rotation, 3.9-second standard timing, ball path and po
 - The same roulette wheel rotation, ball path, settled pocket and payout logic are used across devices. The game engine and stored records are unchanged.
 
 The V7 preference uses a fresh `_motion_v2` key so old automatic short-spin settings cannot silently carry over. Every device starts with Full Spin on this release; choosing Short Spin is still saved locally.
+
+## High Roller mode — V8
+Two independent gameplay modes share the fair, unaltered European roulette engine:
+- **Classic:** original 100-credit starting bankroll and original run/records storage keys retained. Classic scores never compete against High Roller scores.
+- **High Roller:** £25,000 **fictional** starting cash, chips £100/£500/£1,000/£5,000/£10,000, HALF and ALL IN. Display uses the £ sign for entertainment only; no monetary value, payouts, purchases, prizes or withdrawal.
+- Switching modes outside an active spin preserves the unfinished run and stored records for each mode. Both recover a locked result after refresh, without rerolls. The mode last selected is remembered.
+- High Roller cumulative peak achievements: £100K Bronze, £500K Silver, £1M Millionaire, £5M Elite and £10M Legend. A win crossing a new milestone triggers a short display; earned milestones persist via completed-run peak history and are not additional credits.
+- A separate top-10 local leaderboard appears for each mode. New entries store the banked score, spin count, biggest single-spin profit, run peak and streak. Classic's old bare numeric records are migrated in memory without deleting the existing personal best.
+- All wagers remain integer virtual units; potentially unsafe JavaScript-integer payouts are prevented. The 37-pocket roulette distribution and standard European payouts are unchanged.
