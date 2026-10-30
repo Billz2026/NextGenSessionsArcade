@@ -1,7 +1,7 @@
 import {WHEEL,BETS,BET_LABELS,STARTING_CREDITS,pickNumber,colour,resolveBet,applyOutcome,initialRun} from './engine.mjs';
-const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_records_v1';
+const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_records_v1',MOTION_KEY='ngs_arcade_roulette_motion_v1';
 const $=id=>document.getElementById(id);
-const el={balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
+const el={balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),motion:$('motion-toggle'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
 const safeStorage={read(key){try{return JSON.parse(localStorage.getItem(key));}catch{return null;}},write(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch{}}};
 const defaultRecords=()=>({best:0,history:[]});
 function cleanRecords(raw){if(!raw||!Array.isArray(raw.history)||!Number.isSafeInteger(raw.best)||raw.best<0)return defaultRecords();return {best:raw.best,history:raw.history.filter(x=>Number.isSafeInteger(x)&&x>=0).slice(0,20)};}
@@ -21,7 +21,26 @@ function cleanRun(raw){
 }
 let run=cleanRun(safeStorage.read(RUN_KEY));
 let bet='red',selection=7,stake=Math.min(5,run.balance),phase='ready',wheelAngle=0,animationFrame=0,soundEnabled=false,audioContext=null;
-const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+const deviceRequestsReducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+// Respect device accessibility by default, while allowing an explicit opt-in
+// for the identical full desktop wheel spin on that device.
+let reducedMotion=deviceRequestsReducedMotion&&safeStorage.read(MOTION_KEY)!=='full';
+function syncMotionButton(){
+ if(!deviceRequestsReducedMotion)return;
+ el.motion.hidden=false;
+ el.motion.textContent=reducedMotion?'ENABLE FULL SPIN':'REDUCE SPIN MOTION';
+ el.motion.setAttribute('aria-label',reducedMotion?'Enable full roulette wheel animation':'Use reduced roulette wheel animation');
+ el.motion.setAttribute('aria-pressed',String(!reducedMotion));
+ document.documentElement.classList.toggle('full-spin-opt-in',!reducedMotion);
+}
+if(deviceRequestsReducedMotion){
+ el.motion.addEventListener('click',()=>{
+   reducedMotion=!reducedMotion;
+   safeStorage.write(MOTION_KEY,reducedMotion?'reduced':'full');
+   syncMotionButton();
+ });
+ syncMotionButton();
+}
 let spinStartTick=0;
 const relaunchAnimation=element=>{element.style.animation='none';void element.offsetWidth;element.style.animation='';};
 function saveRun(){safeStorage.write(RUN_KEY,run);}
@@ -143,6 +162,11 @@ function drawWheel(highlightNumber=null){
  const cv=el.canvas,ctx=cv.getContext('2d');if(!ctx)return;
  // Paint a high-resolution, layered wheel without changing the fair game logic.
  const size=560,c=280,step=Math.PI*2/WHEEL.length;
+ // Fold7's high-density inner display requires a sharper canvas than the
+ // 560px desktop source. Cap at 2x to keep animations smooth on phones.
+ const density=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+ const px=Math.round(size*density);
+ if(cv.width!==px||cv.height!==px){cv.width=px;cv.height=px;}
  const scale=cv.width/size;ctx.setTransform(scale,0,0,scale,0,0);
  ctx.clearRect(0,0,size,size);
  const ring=(radius,fill,stroke,width=1)=>{
@@ -212,6 +236,16 @@ el.close.addEventListener('click',startNew);
 el.sound.addEventListener('click',()=>{soundEnabled=!soundEnabled;el.sound.setAttribute('aria-pressed',String(soundEnabled));el.sound.setAttribute('aria-label',soundEnabled?'Turn sound off':'Turn sound on');el.sound.innerHTML=soundEnabled?'SOUND ON <span aria-hidden="true">♪</span>':'SOUND OFF <span aria-hidden="true">♪</span>';if(soundEnabled)beep(520,.09);});
 el.dialog.addEventListener('cancel',e=>{e.preventDefault();});
 drawWheel();
+// A fold/unfold or orientation change alters pixel density and available width.
+// Redraw the same pocket; never change the locked result or wheel rotation.
+let resizeFrame=0;
+window.addEventListener?.('resize',()=>{
+ cancelAnimationFrame(resizeFrame);
+ resizeFrame=requestAnimationFrame(()=>{
+   const last=run.results[0];
+   drawWheel(phase==='ready'&&last?last.number:null);
+ });
+});
 if(run.balance===0){phase='finished';safeStorage.write(RUN_KEY,null);el.hint.textContent='Your last run ended at zero. Start a new run.';el.dialogTitle.textContent='OUT OF CREDITS';el.dialogMessage.textContent='Your run has ended. Start again with 100 virtual credits.';el.dialogScore.textContent='0';el.endRecord.textContent='Personal best: '+format(records.best);el.dialog.showModal();}
 else if(run.spins>0&&run.results.length){
  const last=run.results[0],index=WHEEL.indexOf(last.number);

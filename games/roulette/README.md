@@ -31,3 +31,9 @@ Checked DOM control bindings, JS parsing, CSS rule balancing, all 37 possible po
 
 ## Foldable layout V4
 The unfolded Galaxy Z Fold7 uses a narrow, near-square CSS viewport (measured Chrome portrait ~749 px wide; landscape ~832 px). At 700–1023 CSS px, the game shows a sticky wheel rail and a compact but readable two-column betting layout; the controls scroll normally and the wheel stays in view. At widths under 700 px (including the Fold7 cover display), the game stacks vertically. This is CSS-only: no change to bets, random selection, records, or the original branding assets. Test the real unfolded device in portrait and landscape in addition to desktop DevTools simulation.
+
+## Fold7 V5 fix
+The V4 narrow two-column layout was rejected: it shrank the wheel to 254–284 CSS pixels and compressed chips. At unfolded portrait widths, V5 stacks a full-size (up to 365px) wheel over desktop-style betting controls; landscape uses a larger side-by-side wheel and readable controls with normal vertical scrolling. No wheel animation maths, ball trajectory, probabilities or records are modified. A real Fold7 check is still required before calling device QA complete.
+
+## Same spin across devices
+The same JavaScript wheel rotation, 3.9-second standard timing, ball path and pocket-resolution logic operate at every screen size. The canvas is rendered at up to 2× device pixel density to preserve numbered-pocket clarity on Fold7. Orientation and fold/unfold redraw without rerolling. If Android requests reduced motion, a visible opt-in button enables full desktop-speed spins without overriding that accessibility preference silently.
