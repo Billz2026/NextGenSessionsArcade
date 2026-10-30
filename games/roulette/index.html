@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0809"><meta name="color-scheme" content="dark">
+<meta name="description" content="High Roll Run — a free-to-play, virtual-credit roulette arcade challenge from NextGen Sessions Arcade. No real money or prizes.">
+<link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./game.css?v=1"><title>High Roll Run | NextGen Sessions Arcade</title>
+</head>
+<body>
+<a class="skip-link" href="#game">Skip to game</a><div class="top-line" aria-hidden="true"></div>
+<header class="site-header">
+<a class="brand" href="../../" aria-label="Back to NextGen Sessions Arcade home"><img src="../../assets/nextgen-header-wordmark-2026.webp" width="1600" height="663" alt=""><img src="../../assets/arcade-wordmark.svg" width="1060" height="220" alt=""></a>
+<div class="header-middle"><span>GAME 001 <i aria-hidden="true">/</i> CHANCE</span><strong>HIGH ROLL RUN</strong></div>
+<div class="header-actions"><button type="button" id="sound-toggle" class="header-button" aria-pressed="false" aria-label="Turn sound on">SOUND OFF <span aria-hidden="true">♪</span></button><a class="exit-link" href="../../">EXIT TO ARCADE <span aria-hidden="true">↗</span></a></div>
+</header>
+<main id="game" class="shell">
+<div class="game-title"><div><div class="eyebrow">ROULETTE ARCADE / SOLO CHALLENGE</div><h1>HIGH ROLL <em>RUN.</em></h1><p>Build your balance. Bank your score. Beat your best.</p></div><div class="title-note">VIRTUAL CREDITS ONLY <span>•</span> NO PURCHASES OR PRIZES</div></div>
+<section class="game-layout" aria-label="Roulette gameplay">
+<div class="wheel-panel"><div class="panel-heading"><span class="tiny-id">01 / THE WHEEL</span><span class="fair-badge">37 POCKETS <b>•</b> FAIR ODDS</span></div>
+<div class="wheel-area"><div class="wheel-halo" aria-hidden="true"></div><div class="wheel-assembly">
+<div class="wheel-rotor" id="wheel-rotor"><canvas id="wheel-canvas" width="560" height="560" role="img" aria-label="European roulette wheel with numbers 0 to 36"></canvas></div>
+<div class="ball-orbit" id="ball-orbit" aria-hidden="true"><span class="ball"></span></div><div class="top-pointer" aria-hidden="true"></div></div>
+<div class="wheel-result" id="wheel-result" aria-live="polite"><span id="result-kicker">READY TO PLAY</span><strong id="result-text">PLACE YOUR BET</strong><small id="result-sub">Choose a wager and press SPIN</small></div></div>
+<div class="recent-wrap"><div class="recent-label">LAST SPINS</div><div class="recent-list" id="recent-list" aria-label="Recent roulette results"><span class="empty-recent">No spins yet</span></div></div>
+</div>
+<div class="controls-panel">
+<div class="stats-grid"><div class="stat stat-balance"><span>YOUR CREDITS</span><strong id="balance" aria-live="polite">100</strong></div>
+<div class="stat"><span>PERSONAL BEST</span><strong id="best-score">0</strong></div>
+<div class="stat"><span>SPINS</span><strong id="spins-count">0</strong></div>
+<div class="stat"><span>WIN STREAK</span><strong id="streak-count">0</strong></div></div>
+<section class="bets-section" aria-labelledby="betting-heading"><div class="control-heading"><h2 id="betting-heading">01 <span>CHOOSE YOUR BET</span></h2><span class="muted-small">ONE BET PER SPIN</span></div>
+<div class="bet-grid" id="bet-grid" role="group" aria-label="Choose bet type">
+<button type="button" data-bet="red" class="bet-btn red selected" aria-pressed="true"><span class="bet-dot red-dot"></span>RED <small>2×</small></button>
+<button type="button" data-bet="black" class="bet-btn black" aria-pressed="false"><span class="bet-dot black-dot"></span>BLACK <small>2×</small></button>
+<button type="button" data-bet="odd" class="bet-btn" aria-pressed="false">ODD <small>2×</small></button><button type="button" data-bet="even" class="bet-btn" aria-pressed="false">EVEN <small>2×</small></button>
+<button type="button" data-bet="first" class="bet-btn" aria-pressed="false">1ST 12 <small>3×</small></button>
+<button type="button" data-bet="second" class="bet-btn" aria-pressed="false">2ND 12 <small>3×</small></button>
+<button type="button" data-bet="third" class="bet-btn" aria-pressed="false">3RD 12 <small>3×</small></button>
+<button type="button" data-bet="straight" class="bet-btn" aria-pressed="false">NUMBER <small>36×</small></button></div>
+<label class="number-row" id="number-row" for="exact-number" hidden>SELECT NUMBER <select id="exact-number" aria-label="Exact roulette number"></select></label>
+</section>
+<section class="stake-section" aria-labelledby="stake-heading"><div class="control-heading"><h2 id="stake-heading">02 <span>SET YOUR STAKE</span></h2><span class="muted-small" id="stake-summary">5 CREDITS ON RED</span></div>
+<div class="stake-bar"><div class="stake-value"><span>BET</span><strong id="stake-value">5</strong></div><div class="stake-actions">
+<button type="button" class="chip-btn" data-add="1">+1</button><button type="button" class="chip-btn" data-add="5">+5</button><button type="button" class="chip-btn" data-add="10">+10</button><button type="button" class="chip-btn" data-add="25">+25</button>
+<button type="button" id="all-in" class="chip-btn all-in">ALL IN</button><button type="button" id="clear-bet" class="chip-btn chip-clear">CLEAR</button></div></div></section>
+<div class="action-area"><button type="button" id="spin-button" class="spin-btn">SPIN THE WHEEL <span aria-hidden="true">↻</span></button><button type="button" id="bank-button" class="bank-btn" disabled>BANK SCORE</button></div>
+<div class="help-line" id="game-hint" aria-live="polite">Choose a bet and stake. Every new run starts at 100 credits.</div>
+</div>
+</section>
+<div class="game-foot"><div><strong>RUN RULES:</strong> A run ends when you bank your score or reach 0. Standard European roulette: 0–36 and a 2.7% house edge.</div><div><strong>YOUR BESTS:</strong> <span id="foot-peak">Peak 100</span> <i aria-hidden="true">/</i> <span id="foot-biggest">Biggest win 0</span> <i aria-hidden="true">/</i> <span id="foot-streak">Best streak 0</span></div></div>
+</main>
+<dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title"><div class="end-head"><span>GAME 001 / RUN COMPLETE</span><button type="button" id="end-close" class="close-dialog" aria-label="Start a new run">×</button></div><div class="end-body"><div class="end-symbol" aria-hidden="true">✳</div><h2 id="end-title">RUN COMPLETE</h2><p id="end-message">Your score has been banked.</p><div class="end-score"><span>FINAL BANKED SCORE</span><strong id="end-score">0</strong></div><p class="end-record" id="end-record"></p><button type="button" id="new-run" class="new-run-btn">START NEW RUN <span aria-hidden="true">↻</span></button><a href="../../" class="dialog-exit">BACK TO ARCADE ↗</a></div></dialog>
+<script type="module" src="./game.mjs?v=1"></script>
+</body></html>

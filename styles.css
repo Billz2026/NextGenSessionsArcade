@@ -146,3 +146,19 @@ a:focus-visible{outline:3px solid var(--gold);outline-offset:4px}::selection{bac
  .category-illustration{width:80%}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+
+/* Playable first game: distinct, keyboard-focusable action. */
+.tile-feature .feature-play{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  border:1px solid var(--gold);border-radius:7px;
+  padding:8px 12px;min-height:36px;white-space:nowrap;
+  font-size:11px;font-weight:950;letter-spacing:.06em;
+  background:var(--gold);color:#160d0b;
+  transition:background .2s,transform .2s;
+}
+.tile-feature .feature-play:hover{background:#ffdf85;transform:translateY(-1px)}
+.tile-feature .feature-play:focus-visible{outline:3px solid var(--red-hi);outline-offset:3px}
+@media(max-width:640px){
+  .tile-feature .feature-play{min-height:34px;padding:6px 8px;font-size:10px}
+  .tile-bottom{flex-wrap:wrap}
+}
