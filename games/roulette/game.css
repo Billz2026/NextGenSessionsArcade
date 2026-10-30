@@ -524,3 +524,33 @@ body{background:
  .achievement-toast.celebrate{animation:none;opacity:1}
  .milestone{transition:none}
 }
+
+
+/* High-value score containment: prevent seven-figure totals from overflowing
+   the wheel, scoreboard or bank dialog at narrow Fold7/phone widths. */
+.high-roller .stat strong{overflow-wrap:anywhere;word-break:normal;line-height:1.05}
+.high-roller .wheel-result small{overflow-wrap:anywhere;max-width:94%;line-height:1.35}
+.high-roller .wheel-impact{
+ font-size:clamp(23px,2.5vw,42px);
+ line-height:1.08;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ padding:0 10px
+}
+.high-roller .end-score strong{
+ font-size:clamp(25px,4.8vw,47px);
+ line-height:1.1;
+ overflow-wrap:anywhere;
+ letter-spacing:-.035em;
+ max-width:100%
+}
+.high-roller .leaderboard-entry strong{overflow-wrap:anywhere}
+@media(max-width:800px){
+ .high-roller .wheel-impact{font-size:clamp(26px,5vw,37px)}
+ .high-roller .end-score strong{font-size:clamp(28px,6vw,43px)}
+}
+@media(max-width:550px){
+ .high-roller .wheel-impact{font-size:clamp(25px,7vw,34px)}
+ .high-roller .end-score strong{font-size:clamp(25px,7.2vw,33px)}
+ .high-roller .run-metric>strong{font-size:clamp(18px,5.5vw,25px)}
+}
