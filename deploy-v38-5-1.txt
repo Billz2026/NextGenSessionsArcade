@@ -1,2 +1,0 @@
-Football Lab V38.5.1 deployment marker
-Keeper weight, depth, lateral dive and landing correction.

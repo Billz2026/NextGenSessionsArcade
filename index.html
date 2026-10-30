@@ -1,174 +1,98 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#061326" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Football Lab Manager" />
-  <meta name="description" content="Football Lab Manager — a fast, focused football management simulation built around tactics, recruitment and long-term careers." />
-  <meta name="application-name" content="Football Lab Manager" />
-  <meta name="author" content="Football Lab Manager" />
-  <meta name="robots" content="index,follow,max-image-preview:large" />
-  <link rel="canonical" href="https://billz2026.github.io/football-lab/index.html" />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Football Lab Manager" />
-  <meta property="og:title" content="Football Lab Manager" />
-  <meta property="og:description" content="Build a career. Shape a squad. Outsmart the opposition." />
-  <meta property="og:url" content="https://billz2026.github.io/football-lab/index.html" />
-
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Football Lab Manager" />
-  <meta name="twitter:description" content="Build a career. Shape a squad. Outsmart the opposition." />
-
-  <title>Football Lab Manager</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=57" />
-  <link rel="icon" href="./icons/football-lab-192.svg?v=57" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="./icons/football-lab-192.svg?v=57" />
-  <link rel="stylesheet" href="./manager.css?v=60.0.3" />
-  <link rel="stylesheet" href="./manager-career.css?v=0.3.9" />
-  <link rel="stylesheet" href="./database.css?v=60.0.0" />
-  <link rel="stylesheet" href="./player-profile.css?v=60.0.1" />
-  <link rel="stylesheet" href="./manager-home-polish.css?v=1.0.4" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080b15">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="NextGen Sessions Arcade is a new home for quick, original browser games. The arcade is taking shape.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="NextGen Sessions Arcade">
+  <meta property="og:title" content="NextGen Sessions Arcade — A new era of play">
+  <meta property="og:description" content="A fresh home for quick, original browser games. Coming soon.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="NextGen Sessions Arcade">
+  <meta name="twitter:description" content="A new era of play. Original browser games are on the way.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <title>NextGen Sessions Arcade — A New Era of Play</title>
+  <script src="./site.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#mainMenu">Skip to main menu</a>
-
-  <div class="page-shell">
-    <header class="topbar">
-      <div class="topbar-title" aria-label="Football Lab Manager">FOOTBALL LAB MANAGER</div>
-
-      <div class="topbar-meta" aria-label="Game status">
-        <div class="build-chip"><span class="live-dot"></span> MANAGER BUILD</div>
-        <div class="version-chip">V0.3</div>
-        <button class="icon-button" type="button" id="headerSettings" aria-label="Open game settings" title="Game settings">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.6A3.4 3.4 0 1 0 12 15.4 3.4 3.4 0 0 0 12 8.6Zm9 3.4-2.15-.82a7.47 7.47 0 0 0-.55-1.33l.94-2.1-2.99-2.99-2.1.94a7.47 7.47 0 0 0-1.33-.55L12 3H8l-.82 2.15c-.46.15-.9.33-1.33.55l-2.1-.94-2.99 2.99.94 2.1c-.22.43-.4.87-.55 1.33L-1 12l2.15.82c.15.46.33.9.55 1.33l-.94 2.1 2.99 2.99 2.1-.94c.43.22.87.4 1.33.55L8 21h4l.82-2.15c.46-.15.9-.33 1.33-.55l2.1.94 2.99-2.99-.94-2.1c.22-.43.4-.87.55-1.33L21 12Z"/></svg>
-        </button>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="site-glow" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="identity" href="./" aria-label="NextGen Sessions Arcade home">
+        <span class="identity-symbol" aria-hidden="true">N<span>✳</span></span>
+        <span class="identity-name"><strong>NEXTGEN SESSIONS</strong><span>ARCADE</span></span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#vision">Our vision</a>
+        <a href="#lineup">The lineup</a>
+        <a href="#roadmap">What's next</a>
+      </nav>
+      <a class="nav-back" href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">NextGen Sessions <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero content-width" aria-labelledby="hero-heading">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="status-dot" aria-hidden="true"></span> INTRODUCING THE NEXT CHAPTER</div>
+        <h1 id="hero-heading">A NEW ERA<br>OF <span class="text-gradient">PLAY.</span></h1>
+        <p class="hero-lede">A new home for quick, original browser games. No giant downloads. No complicated setup. Just good games, built one at a time.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#lineup">See what's coming <span aria-hidden="true">↗</span></a>
+          <a class="button button-secondary" href="#vision">The idea <span aria-hidden="true">↓</span></a>
+        </div>
+        <div class="hero-footnote"><span class="footnote-line" aria-hidden="true"></span> THE ARCADE IS TAKING SHAPE</div>
       </div>
-    </header>
-
-    <main>
-      <section class="hero" aria-labelledby="heroTitle">
-        <div class="hero-brand">
-          <p class="eyebrow">FOOTBALL LAB MANAGER</p>
-          <h1 id="heroTitle">MANAGER CENTRE</h1>
-          <p class="hero-copy">Continue your career or take control of a new club.</p>
+      <div class="hero-art" aria-hidden="true">
+        <div class="arcade-scene">
+          <div class="scene-scan"></div>
+          <div class="ring ring-one"></div>
+          <div class="ring ring-two"></div>
+          <div class="ring ring-three"></div>
+          <div class="scene-star star-one">✳</div>
+          <div class="scene-star star-two">✦</div>
+          <div class="scene-star star-three">✳</div>
+          <div class="core-light"></div>
+          <div class="core-mark"><span>NG</span><small>ARCADE</small></div>
+          <div class="float-tag float-tag-left">PLAY AGAIN <span>↗</span></div>
+          <div class="float-tag float-tag-right">LEVEL UP <span>✦</span></div>
+          <div class="scene-corner scene-corner-tl"></div>
+          <div class="scene-corner scene-corner-br"></div>
         </div>
-
-        <div class="tactical-stage" aria-hidden="true">
-          <div class="stadium-glow"></div>
-          <div class="tactical-board">
-            <div class="pitch-line pitch-half"></div>
-            <div class="pitch-circle"></div>
-            <div class="box box-left"></div>
-            <div class="box box-right"></div>
-            <span class="player p1"></span><span class="player p2"></span><span class="player p3"></span><span class="player p4"></span><span class="player p5"></span>
-            <span class="player p6"></span><span class="player p7"></span><span class="player p8"></span><span class="player p9"></span><span class="player p10"></span><span class="player p11"></span>
-            <svg class="route route-one" viewBox="0 0 180 90"><path d="M8 73 C55 70, 70 18, 160 18"/><path d="m151 11 10 7-11 6"/></svg>
-            <svg class="route route-two" viewBox="0 0 150 85"><path d="M8 16 C48 18, 58 65, 136 66"/><path d="m127 59 10 7-11 6"/></svg>
-          </div>
-          <div class="desk-card desk-card-left"><small>NEXT FIXTURE</small><strong>CAREER START</strong><span>Choose your club</span></div>
-          <div class="desk-card desk-card-right"><small>PHILOSOPHY</small><strong>YOUR WAY</strong><span>Tactics · Transfers · Development</span></div>
-        </div>
-      </section>
-
-      <section class="menu-section" id="mainMenu" aria-labelledby="menuTitle">
-        <div class="section-heading">
-          <div><p class="eyebrow">MAIN MENU</p><h2 id="menuTitle">ENTER THE GAME</h2></div>
-          <p>One decision. Straight into management.</p>
-        </div>
-
-        <div class="menu-grid">
-          <button class="menu-tile tile-load" type="button" data-action="load-game" data-continue-career hidden>
-            <span class="tile-number">01 · CONTINUE</span>
-            <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 3h14l2 2v16H4V3Zm3 2v5h9V5H7Zm0 9v5h10v-5H7Z"/></svg></span>
-            <span class="tile-copy"><strong>CONTINUE CAREER</strong><small>Return directly to your current club and inbox.</small><em>RESUME CAREER →</em></span>
-            <span class="tile-art art-locker" aria-hidden="true"></span>
-          </button>
-
-          <button class="menu-tile tile-new" type="button" data-action="new-game">
-            <span class="tile-number">02 · NEW CAREER</span>
-            <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 4-2 2 3 12H7l3-12-2-2 1-4Zm2.1 6h1.8l.5 2h-2.8l.5-2Z"/></svg></span>
-            <span class="tile-copy"><strong>NEW CAREER</strong><small>Choose your club and build a managerial career from the ground up.</small><em>CHOOSE CLUB →</em></span>
-            <span class="tile-art art-tunnel" aria-hidden="true"></span>
-          </button>
-
-          <button class="menu-tile tile-quick" type="button" data-action="quick-start">
-            <span class="tile-number">03 · FAST TRACK</span>
-            <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 1H9v2h6V1Zm-4 6h2v6.2l4.2 2.5-1 1.7L11 14.2V7Zm1-3a9 9 0 1 0 9 9 9 9 0 0 0-9-9Zm0 16a7 7 0 1 1 7-7 7 7 0 0 1-7 7Z"/></svg></span>
-            <span class="tile-copy"><strong>QUICK START</strong><small>Skip setup and get straight into management.</small><em>START NOW →</em></span>
-            <span class="tile-art art-pitch" aria-hidden="true"></span>
-          </button>
-
-          <button class="menu-tile tile-database" type="button" data-action="database">
-            <span class="tile-number">04 · FOOTBALL WORLD</span>
-            <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm6.9 6h-3a16.7 16.7 0 0 0-1.4-3 8.1 8.1 0 0 1 4.4 3ZM12 4c.9 1 1.6 2.3 2 4h-4c.4-1.7 1.1-3 2-4ZM4.3 14a8.2 8.2 0 0 1 0-4h3.3a18.2 18.2 0 0 0 0 4H4.3Zm.8 2h3a16.7 16.7 0 0 0 1.4 3 8.1 8.1 0 0 1-4.4-3Zm3-8h-3a8.1 8.1 0 0 1 4.4-3 16.7 16.7 0 0 0-1.4 3ZM12 20c-.9-1-1.6-2.3-2-4h4c.4-1.7 1.1-3 2-4Zm2.4-6H9.6a14.7 14.7 0 0 1 0-4h4.8a14.7 14.7 0 0 1 0 4Zm.1 5a16.7 16.7 0 0 0 1.4-3h3a8.1 8.1 0 0 1-4.4 3Zm1.9-5a18.2 18.2 0 0 1 0-4h3.3a8.2 8.2 0 0 1 0 4h-3.3Z"/></svg></span>
-            <span class="tile-copy"><strong>FOOTBALL DATABASE</strong><small>Browse clubs, players, leagues and competitions.</small><em>EXPLORE WORLD →</em></span>
-            <span class="tile-art art-globe" aria-hidden="true"></span>
-          </button>
-
-          <button class="menu-tile tile-settings" type="button" data-action="settings">
-            <span class="tile-number">05 · CONFIGURATION</span>
-            <span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8.5A3.5 3.5 0 1 0 12 15.5 3.5 3.5 0 0 0 12 8.5Zm8.5 4.9-1.8-.7a7.2 7.2 0 0 0 0-1.4l1.8-.7-1.4-3.4-1.8.8a8 8 0 0 0-1-1l.8-1.8-3.4-1.4-.7 1.8a7.2 7.2 0 0 0-1.4 0l-.7-1.8-3.4 1.4.8 1.8a8 8 0 0 0-1 1l-1.8-.8-1.4 3.4 1.8.7a7.2 7.2 0 0 0 0 1.4l-1.8.7 1.4 3.4 1.8-.8a8 8 0 0 0 1 1l-.8 1.8 3.4 1.4.7-1.8a7.2 7.2 0 0 0 1.4 0l.7 1.8 3.4-1.4-.8-1.8a8 8 0 0 0 1-1l1.8.8 1.4-3.4Z"/></svg></span>
-            <span class="tile-copy"><strong>SETTINGS</strong><small>Display, autosave and match experience.</small><em>OPEN SETTINGS →</em></span>
-            <span class="tile-art art-settings" aria-hidden="true"></span>
-          </button>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="footer-status"><span class="live-dot"></span><strong>FOOTBALL LAB MANAGER</strong><span>Player Model v1 active</span></div>
-      <div class="footer-build">V0.3 · PLAYABLE CAREER</div>
-    </footer>
-  </div>
-
-  <div class="modal" id="appModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-backdrop" data-close-modal></div>
-    <div class="modal-card" role="document">
-      <button class="modal-close" type="button" data-close-modal aria-label="Close">×</button>
-      <p class="eyebrow" id="modalEyebrow">FOOTBALL LAB MANAGER</p>
-      <h2 id="modalTitle">MANAGEMENT FOUNDATION</h2>
-      <p class="modal-copy" id="modalCopy"></p>
-      <div class="modal-body" id="modalBody"></div>
-      <div class="modal-actions" id="modalActions"></div>
-    </div>
-  </div>
-
-  <template id="settingsTemplate">
-    <div class="settings-list">
-      <label class="setting-row"><span><strong>AUTOSAVE</strong><small>Automatically protect career progress.</small></span><input type="checkbox" id="settingAutosave" checked /></label>
-      <label class="setting-row"><span><strong>REDUCED MOTION</strong><small>Minimise interface animation.</small></span><input type="checkbox" id="settingMotion" /></label>
-      <label class="setting-row"><span><strong>COMPACT MENU</strong><small>Use denser menu spacing on larger displays.</small></span><input type="checkbox" id="settingCompact" /></label>
-    </div>
-  </template>
-
-  <script>
-    (() => {
-      const syncContinueCareer = () => {
-        const control = document.querySelector('[data-continue-career]');
-        if (!control) return;
-        try {
-          control.hidden = !localStorage.getItem('flm-career-save');
-        } catch {
-          control.hidden = true;
-        }
-      };
-      syncContinueCareer();
-      document.addEventListener('click', event => {
-        if (event.target.closest('[data-exit-career]')) setTimeout(syncContinueCareer, 0);
-      });
-      window.addEventListener('focus', syncContinueCareer);
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) syncContinueCareer();
-      });
-    })();
-  </script>
-  <script type="module" src="./manager.js?v=60.1.18"></script>
-  <script type="module" src="./career-ui-v044.js?v=0.4.9"></script>
+        <div class="art-caption"><span>BUILT FOR THE NEXT ROUND.</span><span>001 / THE BEGINNING</span></div>
+      </div>
+    </section>
+    <div class="marquee" aria-hidden="true"><div>PLAY <b>✳</b> REPLAY <b>✳</b> BEAT YOUR BEST <b>✳</b> NEXTGEN SESSIONS ARCADE <b>✳</b> PLAY <b>✳</b> REPLAY <b>✳</b> BEAT YOUR BEST <b>✳</b></div></div>
+    <section id="vision" class="section content-width" aria-labelledby="vision-heading">
+      <div class="section-intro"><span class="section-index">01 / THE IDEA</span><h2 id="vision-heading">SMALL GAMES.<br><span>BIG ENERGY.</span></h2><p>We're starting fresh. Instead of one oversized game, the plan is a growing collection of simple, satisfying experiences you can jump into whenever you want.</p></div>
+      <div class="values-grid">
+        <article class="value"><div class="value-icon">↗</div><h3>Instant to play</h3><p>Browser-first experiences designed to get straight to the fun.</p></article>
+        <article class="value"><div class="value-icon">✳</div><h3>Something for everyone</h3><p>Room for games of chance, puzzles, reflex challenges and more.</p></article>
+        <article class="value"><div class="value-icon">◎</div><h3>One game at a time</h3><p>Quality first. New games added when they are genuinely ready.</p></article>
+      </div>
+    </section>
+    <section id="lineup" class="section content-width lineup" aria-labelledby="lineup-heading">
+      <div class="section-top"><div><span class="section-index">02 / THE LINEUP</span><h2 id="lineup-heading">FIRST DROP <span>INCOMING.</span></h2></div><span class="upcoming-pill"><span aria-hidden="true"></span> COMING SOON</span></div>
+      <div class="feature">
+        <div class="feature-visual" aria-hidden="true"><span class="feature-line"></span><span class="feature-001">001</span><span class="feature-cross">✳</span><span class="feature-orbit"></span><span class="feature-caption">NEW EXPERIENCE / IN PLANNING</span></div>
+        <div class="feature-copy"><div class="feature-kicker">OUR FIRST GAME</div><h3>One great game.<br>Then the next.</h3><p>The first title is still being planned. We're building the identity and the platform before committing to game mechanics. The goal is something polished, replayable and easy to pick up.</p><span class="feature-state">No games are playable yet — we're just getting started.</span></div>
+      </div>
+    </section>
+    <section id="roadmap" class="section content-width roadmap" aria-labelledby="roadmap-heading">
+      <span class="section-index">03 / BUILDING THE ARCADE</span>
+      <h2 id="roadmap-heading">THE ROAD <span>AHEAD.</span></h2>
+      <div class="roadmap-grid">
+        <article class="roadmap-item current"><div class="roadmap-line"><span>01</span><span class="roadmap-status">CURRENT STAGE</span></div><h3>Fresh foundation</h3><p>New name, visual identity and a clean website. No legacy game systems.</p></article>
+        <article class="roadmap-item"><div class="roadmap-line"><span>02</span><span class="roadmap-status">NEXT</span></div><h3>First game</h3><p>Design, build and properly test the first playable experience.</p></article>
+        <article class="roadmap-item"><div class="roadmap-line"><span>03</span><span class="roadmap-status">FUTURE</span></div><h3>Grow the collection</h3><p>New games, personal bests and more reasons to return.</p></article>
+      </div>
+    </section>
+    <section class="closing content-width"><div class="closing-inner"><span class="section-index">THIS IS ONLY THE START</span><h2>READY FOR<br><span>WHAT'S NEXT?</span></h2><p>NextGen Sessions Arcade. A fresh start. More to come.</p><a class="button button-primary" href="#main">Back to the top <span aria-hidden="true">↑</span></a></div></section>
+  </main>
+  <footer class="footer content-width"><div class="footer-brand">NEXTGEN SESSIONS <span>ARCADE</span></div><div class="footer-bottom"><span>© <span id="copyright-year">2026</span> NextGen Sessions Arcade.</span><span>Original browser games. Coming soon.</span><a href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">Explore NextGen Sessions ↗</a></div></footer>
 </body>
 </html>

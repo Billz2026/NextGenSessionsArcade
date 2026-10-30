@@ -1,37 +1,25 @@
-# Football Lab Manager
+# NextGen Sessions Arcade
 
-Football Lab has pivoted from an arcade football project into **Football Lab Manager** — a fast, focused football management simulation inspired by the immediacy of classic management games.
+A new browser-gaming hub from NextGen Sessions.
 
-## Current public build — V0.3
+This repository's active branch now contains a deliberately small, clean foundation:
+- `index.html`: accessible coming-soon homepage.
+- `styles.css`: responsive site-wide visual identity.
+- `site.js`: removes legacy site service workers/caches where possible.
+- `favicon.svg`: original vector brand mark.
+- `404.html`: branded not-found page.
+- `.nojekyll`: publish static files directly via GitHub Pages.
 
-The GitHub Pages build now presents the manager identity and a playable eight-club career prototype:
+## Current status
 
-1. Start New Game with club selection
-2. Quick Start with Arsenal
-3. Squad and starting-XI selection
-4. Formation, mentality and pressing choices
-5. Deterministic key-events match simulation
-6. Seven rounds of fixtures and a live league table
-7. Local save, autosave and continue support
-8. Settings, Hall of Fame preview and Football Database
+**Brand and website foundation only.** No games, payments, account registration, casino mechanics or online leaderboard are present. Game concepts will be selected and built separately.
 
-The previous arcade gameplay is no longer exposed from the public homepage. Its historical code remains in the repository/history while the manager architecture is built. The V0.3 Invitational freezes the eight currently loaded real clubs so future data imports cannot silently change the demo competition.
+## Previous project
 
-## Product direction
+The complete pre-relaunch repository is retained on the Git branch `archive/football-lab-manager-2026-10-30`. Its files are **not** part of this branch's published site.
 
-The next management milestone will expand the proven V0.3 loop into one complete league and one complete season with:
+## Deployment
 
-- clubs and squads
-- player attributes
-- fixtures and league table
-- tactics and team selection
-- text/simulation match engine
-- transfers and contracts
-- player development
-- local save/load support
+Use GitHub Pages with `main` as the source branch and `/` as the folder. There is no build process.
 
-The priority is a strong core loop before expanding into additional leagues, competitions or secondary systems. Current player identities and broad positions come from the development provider snapshot; Football Lab attributes remain explicitly low-confidence internal baselines.
-
-## Site
-
-https://billz2026.github.io/football-lab/index.html
+The repository name and its GitHub Pages URL may still contain the previous project name until the repository is renamed in GitHub Settings → General. After renaming, verify GitHub Pages settings and the published address. Don't delete the archived branch if rollback might be necessary.

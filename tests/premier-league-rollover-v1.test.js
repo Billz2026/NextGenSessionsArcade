@@ -1,3 +1,0 @@
-import './league-one-world-v1.test.js';
-import './premier-league-rollover-v2.test.js';
-import './rollover-idempotence-v3.test.js';
