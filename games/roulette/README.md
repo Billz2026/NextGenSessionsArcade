@@ -64,3 +64,9 @@ A desktop-only styling pass at 1151px and wider reduces the wheel by roughly 10%
 - Adds a brief **DOUBLE UP**, **HOT STREAK**, **ON FIRE**, or milestone announcement on top of the wheel when its genuine conditions are met. The £100K–£10M milestone remains tracked through the existing High Roller run peak.
 - Optional original synthesised sound cues differentiate a normal win, bigger win, streak, milestone, and bankrupt result. Sound remains off by default and does not affect gameplay.
 - Keeps 37 equally likely outcomes, standard European payouts, the same 3.9-second full spin and its reduced/short-mode option, saved scores, mode switching and Fold7 breakpoints unchanged.
+
+## V11 — final wheel clearance and result typography
+- At desktop widths from 1151px, preserve the existing 422px High Roller / 414px Classic wheel diameter, but position the assembly below a 30px internal clearance with flex-start alignment so the upper bezel and gold pointer are no longer clipped against the heading.
+- The left panel may grow slightly vertically to give the wheel real clearance without shrinking it or overlapping its result.
+- Split winning result subtext into a single amount line and a distinct HOT STREAK / WIN STREAK badge below it. The badge also restores from a saved completed spin; it resets on the next spin, a loss, a new run or mode switch.
+- Keep the Galaxy Z Fold7 responsive wheel sizing and full 3.9-second spin behaviour untouched. No roulette probability, payout, score, or storage format changes.

@@ -3,7 +3,7 @@ const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_recor
 const HIGH_START=25000;
 const MILESTONES=[{value:100000,label:'BRONZE · £100K'},{value:500000,label:'SILVER · £500K'},{value:1000000,label:'MILLIONAIRE · £1 MILLION'},{value:5000000,label:'ELITE · £5 MILLION'},{value:10000000,label:'LEGEND · £10 MILLION'}];
 const $=id=>document.getElementById(id);
-const el={modeDesc:$('mode-description'),balanceLabel:$('balance-label'),half:$('half-bet'),leaderboard:$('leaderboard-list'),leaderboardTitle:$('leaderboard-title'),leaderboardCaption:$('leaderboard-caption'),milestoneTrack:$('milestone-track'),toast:$('achievement-toast'),dialogMode:$('dialog-mode-label'),dialogScoreLabel:$('end-score-label'),balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),motion:$('motion-toggle'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),stageCallout:$('stage-callout'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
+const el={modeDesc:$('mode-description'),balanceLabel:$('balance-label'),half:$('half-bet'),leaderboard:$('leaderboard-list'),leaderboardTitle:$('leaderboard-title'),leaderboardCaption:$('leaderboard-caption'),milestoneTrack:$('milestone-track'),toast:$('achievement-toast'),dialogMode:$('dialog-mode-label'),dialogScoreLabel:$('end-score-label'),balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),resultStreak:$('result-streak'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),motion:$('motion-toggle'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),stageCallout:$('stage-callout'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
 const safeStorage={read(key){try{return JSON.parse(localStorage.getItem(key));}catch{return null;}},write(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch{}}};
 const defaultRecords=()=>({best:0,history:[]});
 // Classic's original history is an array of bare scores. Preserve those
@@ -180,7 +180,20 @@ function updateUI(){
  });
  updateLeaderboard();
 }
-function flashResult(kicker,text,sub,tone=''){el.result.className='wheel-result '+tone;el.resultKicker.textContent=kicker;el.resultText.textContent=text;el.resultSub.textContent=sub;relaunchAnimation(el.result);}
+function flashResult(kicker,text,sub,tone=''){
+ el.result.className='wheel-result '+tone;
+ el.resultKicker.textContent=kicker;
+ el.resultText.textContent=text;
+ el.resultSub.textContent=sub;
+ el.resultStreak.hidden=true;
+ el.resultStreak.textContent='';
+ relaunchAnimation(el.result);
+}
+function showResultStreak(){
+ if(run.streak<2)return;
+ el.resultStreak.textContent=run.streak>=3?'✦ HOT STREAK ×'+format(run.streak):'✦ '+format(run.streak)+' WINS IN A ROW';
+ el.resultStreak.hidden=false;
+}
 function arcadeImpact(text,tone){
  el.impact.textContent=text;
  el.wheelPanel.classList.remove('is-spinning','is-win','is-big-win','is-loss');
@@ -218,8 +231,9 @@ function onResolved(outcome){
  const wonBig=outcome.won&&(outcome.net>=startBalance()||outcome.bet==='straight');
  arcadeImpact(outcome.won?(wonBig?'BIG WIN +'+money(outcome.net):'WIN +'+money(outcome.net)):'−'+money(outcome.stake),outcome.won?(wonBig?'is-big-win':'is-win'):'is-loss');
  if(outcome.won){
-  const streakText=run.streak>=3?' · HOT STREAK ×'+run.streak:' · '+run.streak+' win'+(run.streak===1?'':'s')+' in a row';
-  flashResult('WINNING POCKET',outcome.number+' '+c,'+'+money(outcome.net)+(isHigh()?' virtual cash':' credits')+streakText,'winner');
+  flashResult('WINNING POCKET',outcome.number+' '+c,
+    '+'+money(outcome.net)+(isHigh()?' virtual cash':' credits'),'winner');
+  showResultStreak();
  }
  else{flashResult('WINNING POCKET',outcome.number+' '+c,'−'+money(outcome.stake)+(isHigh()?' virtual cash':' credits'),'loser');}
  if(stake>run.balance)stake=run.balance;
@@ -296,6 +310,7 @@ function resetWheelForMode(){
   if(el.orbit.firstElementChild)el.orbit.firstElementChild.style.top='13%';
   drawWheel(last.number);el.wheelPanel.classList.add('is-landed');
   flashResult('LAST WINNING POCKET',last.number+' '+colour(last.number).toUpperCase(),last.won?'Last spin won':'Last spin lost',last.won?'winner':'loser');
+  if(last.won)showResultStreak();
  }else{drawWheel();flashResult('READY TO PLAY','PLACE YOUR BET','Choose a wager and press SPIN');}
 }
 function switchMode(next){
@@ -428,6 +443,7 @@ else if(run.spins>0&&run.results.length){
   el.wheelPanel.classList.add('is-landed');
  }
  flashResult('LAST WINNING POCKET',last.number+' '+colour(last.number).toUpperCase(),last.won?'Last spin won':'Last spin lost',last.won?'winner':'loser');
+  if(last.won)showResultStreak();
  el.hint.textContent='Your previous run has been restored.';
 }
 updateUI();saveRun();

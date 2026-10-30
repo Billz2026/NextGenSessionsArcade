@@ -765,3 +765,59 @@ body{background:
           drop-shadow(0 0 10px rgba(243,185,83,.17));
  }
 }
+
+
+/* V11: wheel header clearance and two-line result hierarchy.
+   Keep the V10 wheel diameter; move the wheel down to prevent clipping of
+   the bezel and top pointer. Only desktop >=1151px changes wheel placement. */
+.result-details{
+  width:100%;min-width:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;
+}
+.wheel-result .result-details small{
+  display:block;max-width:100%;font-size:12px;line-height:1.35;
+  color:var(--muted);text-align:center;
+}
+.result-streak{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:21px;max-width:100%;
+  padding:3px 10px;border-radius:999px;
+  border:1px solid rgba(255,171,107,.62);
+  background:linear-gradient(90deg,rgba(114,49,27,.65),rgba(65,29,27,.82));
+  box-shadow:inset 0 1px 0 rgba(255,229,159,.10);
+  color:#ffca8b;font:900 10px/1.15 var(--digital);
+  letter-spacing:.045em;text-align:center;
+}
+.result-streak[hidden]{display:none!important}
+.wheel-result.winner .result-details small{color:#e3d3bb}
+@media(min-width:1151px){
+  .high-roller .wheel-area,
+  html:not(.high-roller) .wheel-area{
+    justify-content:flex-start;
+    min-height:552px;
+    padding:30px 10px 5px;
+  }
+  .high-roller .wheel-assembly,
+  html:not(.high-roller) .wheel-assembly{
+    margin-top:0;
+    margin-bottom:0;
+  }
+  .high-roller .wheel-result,
+  html:not(.high-roller) .wheel-result{
+    min-height:82px;
+    margin:4px 10px 6px;
+    padding:0 5px;
+  }
+  .wheel-result .result-details small{
+    white-space:nowrap;
+  }
+}
+@media(max-width:1150px){
+  .wheel-result .result-details small{
+    white-space:normal;overflow-wrap:anywhere;
+  }
+}
+@media(max-width:550px){
+  .result-streak{font-size:9px;padding:4px 8px}
+  .result-details{gap:5px}
+}
