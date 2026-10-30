@@ -215,3 +215,114 @@ body{background:
  .wheel-panel.is-landed .top-pointer::after{animation:none;opacity:0}
  .end-dialog.is-record .end-symbol{animation:none}
 }
+
+
+/* V4 — foldable inner-screen and compact tablet gameplay.
+   Target measured unfolded Fold7 viewports ~749 CSS px portrait / ~832 landscape.
+   Keep the wheel visible alongside controls instead of triggering the generic
+   <=800px stacked-phone layout. Other tablets at this width benefit too. */
+@media (min-width:700px) and (max-width:1023px) {
+  html{scroll-padding-top:12px}
+  .site-header{height:64px;padding:6px 17px;gap:12px}
+  .brand{width:119px}
+  .brand img:last-child{margin-top:-6px}
+  .header-actions{gap:7px}
+  .header-button,.exit-link{font-size:10px;padding:9px 10px;min-height:38px}
+  .shell{width:calc(100% - 24px);padding:10px 0 17px}
+  .game-title{margin-bottom:9px;align-items:center;gap:8px}
+  .game-title h1{font-size:clamp(38px,5vw,48px);margin:3px 0}
+  .game-title p{font-size:11px}
+  .eyebrow{font-size:9px;letter-spacing:.075em}
+  .title-note{font-size:9px;max-width:165px;line-height:1.5}
+  .title-note span{padding:0 3px}
+  .game-layout{
+    display:grid;
+    grid-template-columns:minmax(0,.84fr) minmax(0,1.16fr);
+    align-items:start;
+    gap:9px
+  }
+  .wheel-panel{
+    min-width:0;
+    height:clamp(407px,calc(100svh - 146px),555px);
+    position:sticky;
+    top:10px;
+    align-self:start;
+    border-radius:12px
+  }
+  .panel-heading{padding:10px 9px;gap:5px}
+  .tiny-id,.fair-badge{font-size:9px;letter-spacing:.01em}
+  .wheel-area{flex:1 1 auto;min-height:0}
+  .wheel-assembly{width:min(95%,284px)}
+  .wheel-halo{width:min(100%,295px);height:auto;aspect-ratio:1;top:13px}
+  .cabinet-lights{top:5px;width:85%}
+  .wheel-result{min-height:65px;margin:4px 6px 5px}
+  .wheel-result>span{font-size:9px}
+  .wheel-result strong{font-size:clamp(26px,3.5vw,33px)}
+  .wheel-result small{font-size:10px}
+  .wheel-impact{font-size:35px;top:28%}
+  .wheel-hub{border-width:4px}
+  .wheel-hub span{font-size:clamp(20px,3.2vw,27px)}
+  .wheel-hub small{font-size:7px}
+  .recent-wrap{padding:8px 9px;gap:7px;min-height:41px}
+  .recent-label{font-size:9px}
+  .recent-list{gap:4px}
+  .recent-ball{width:22px;height:22px;font-size:9px}
+  .controls-panel{padding:10px;gap:9px;border-radius:12px}
+  .stats-grid{grid-template-columns:1.35fr 1fr;gap:6px}
+  .stat{min-height:54px;padding:7px 9px;gap:2px}
+  .stat span{font-size:9px;white-space:normal;line-height:1.15}
+  .stat strong{font-size:clamp(21px,3vw,29px)}
+  .streak-label{font-size:8px!important;right:5px;bottom:4px}
+  .control-heading{margin-bottom:6px;gap:5px}
+  .control-heading h2{font-size:11px;white-space:nowrap}
+  .control-heading h2 span{margin-left:4px}
+  .muted-small{font-size:9px}
+  .bet-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  .bet-btn{min-height:45px;padding:5px 2px;gap:3px;font-size:10.5px;border-radius:6px}
+  .bet-btn small{font-size:9px}
+  .bet-dot{width:8px;height:8px}
+  .number-row{font-size:10px}
+  .stake-bar{display:grid;grid-template-columns:70px minmax(0,1fr);gap:6px}
+  .stake-value{min-width:0;padding:6px}
+  .stake-value span{font-size:9px}
+  .stake-value strong{font-size:22px}
+  .stake-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .chip-btn{min-height:37px;padding:4px 2px;font-size:10px}
+  .run-monitor{flex:none;min-height:116px;padding:9px;gap:8px;border-radius:8px}
+  .run-monitor-head>strong{font-size:10px}
+  .run-status{font-size:9px;padding:4px 7px}
+  .run-monitor-stats{gap:4px}
+  .run-metric{padding:2px 5px;gap:4px}
+  .run-metric>span{font-size:8px;line-height:1.2}
+  .run-metric>strong{font-size:21px}
+  .run-monitor-foot{padding-top:7px}
+  .run-monitor-foot>span{font-size:8.5px}
+  .run-delta{font-size:12px}
+  .action-area{grid-template-columns:1.45fr 1fr;gap:6px}
+  .spin-btn,.bank-btn{min-height:54px;font-size:16px;letter-spacing:.035em;border-radius:7px}
+  .spin-btn span{font-size:19px;margin-left:4px}
+  .help-line{font-size:10px;min-height:18px;line-height:1.4}
+  .game-foot{font-size:10px;gap:7px;padding-top:11px}
+}
+
+/* Keep short unfolded landscape views functional without shrunken text. */
+@media (min-width:700px) and (max-width:1023px) and (max-height:620px) {
+  .shell{padding-top:7px}
+  .game-title{margin-bottom:6px}
+  .game-title h1{font-size:37px}
+  .wheel-panel{height:clamp(386px,calc(100svh - 135px),450px)}
+  .wheel-assembly{width:min(87%,254px)}
+  .wheel-halo{width:min(95%,270px)}
+  .wheel-result{min-height:58px}
+  .controls-panel{gap:7px}
+  .run-monitor{min-height:104px}
+}
+
+/* Narrow cover-screen phones use the existing vertically stacked controls.
+   Avoid accidental 1px overflow when the browser resizes while folding. */
+@media (max-width:699px) {
+  .shell{max-width:100%;overflow-x:clip}
+  .game-layout{min-width:0}
+  .wheel-panel,.controls-panel{min-width:0}
+  .bet-btn,.chip-btn{touch-action:manipulation}
+}

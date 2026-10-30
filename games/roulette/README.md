@@ -28,3 +28,6 @@ A multi-layered metallic roulette wheel with genuine 37-pocket numbering, uprigh
 
 ## Validation for V3
 Checked DOM control bindings, JS parsing, CSS rule balancing, all 37 possible pocket resting angles, winning and losing spin flows, a three-win HOT STREAK, personal-best banking, new-run reset, and interrupted-spin recovery.
+
+## Foldable layout V4
+The unfolded Galaxy Z Fold7 uses a narrow, near-square CSS viewport (measured Chrome portrait ~749 px wide; landscape ~832 px). At 700–1023 CSS px, the game shows a sticky wheel rail and a compact but readable two-column betting layout; the controls scroll normally and the wheel stays in view. At widths under 700 px (including the Fold7 cover display), the game stacks vertically. This is CSS-only: no change to bets, random selection, records, or the original branding assets. Test the real unfolded device in portrait and landscape in addition to desktop DevTools simulation.
