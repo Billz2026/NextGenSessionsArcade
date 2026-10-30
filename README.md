@@ -28,3 +28,6 @@ GitHub Pages: `main` branch, `/(root)`. Website: https://billz2026.github.io/Nex
 
 ## Compact gaming dashboard (v4)
 A short welcome strip now leads immediately into the game library. Desktop uses a 6/3/3 feature-and-category layout followed by three equal compact cards. Pre-launch previews remain explicitly noninteractive, and original logo assets are untouched. The footer logo is dimensionally constrained to preserve its natural aspect ratio on all screen sizes.
+
+## Dashboard design polish (v5)
+The site uses a wider (up to 1480px) content column at desktop sizes, enlarged readable tile typography, and original per-category decorative vector motifs. All previews remain non-interactive. The official gold logo and red ARCADE logo files are unchanged. The music site is a sibling brand reference, not a copy of this grid layout.
