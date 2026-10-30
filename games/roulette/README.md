@@ -56,3 +56,11 @@ Two independent gameplay modes share the fair, unaltered European roulette engin
 
 ## V9 desktop High Roller alignment
 A desktop-only styling pass at 1151px and wider reduces the wheel by roughly 10%, tightens stats, bets, Run Monitor and animation controls, moves the Spin/Bank buttons higher, and makes the betting stake a horizontal amount strip with regular chip sizing. At >=1400px, the eight High Roller chip buttons fit one row. HALF no longer resembles an active selection. The responsive Fold7 rules, wheel mechanics, fair odds, saved runs and official branding stay unchanged.
+
+## V10 — Wheel presence and arcade feedback
+- Desktop roulette diameter now reaches up to 422px in High Roller and 414px in Classic, recovering the wheel's visual prominence after V9 had capped High Roller at 330px. The same wheel is still used on the Galaxy Z Fold7, with more restrained shadows for mobile performance.
+- Removes the large decorative circular halo behind the wheel. The backdrop is a soft, dark radial spotlight with a deeper wheel shadow and refined metallic rim reflections.
+- Strengthens the top pointer and winning pocket presentation. A short, decorative six-spark landing burst is rendered after the outcome lands; it is not part of the random result or a simulated near miss.
+- Adds a brief **DOUBLE UP**, **HOT STREAK**, **ON FIRE**, or milestone announcement on top of the wheel when its genuine conditions are met. The £100K–£10M milestone remains tracked through the existing High Roller run peak.
+- Optional original synthesised sound cues differentiate a normal win, bigger win, streak, milestone, and bankrupt result. Sound remains off by default and does not affect gameplay.
+- Keeps 37 equally likely outcomes, standard European payouts, the same 3.9-second full spin and its reduced/short-mode option, saved scores, mode switching and Fold7 breakpoints unchanged.

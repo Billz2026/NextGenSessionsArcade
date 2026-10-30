@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=9"><title>High Roll Run | NextGen Sessions Arcade</title>
+<link rel="stylesheet" href="./game.css?v=10"><title>High Roll Run | NextGen Sessions Arcade</title>
 </head>
 <body>
 <a class="skip-link" href="#game">Skip to game</a><div class="top-line" aria-hidden="true"></div>
@@ -29,8 +29,12 @@
 <div class="wheel-panel" id="wheel-panel"><div class="panel-heading"><span class="tiny-id">01 / THE WHEEL</span><span class="fair-badge">37 POCKETS <b>•</b> FAIR ODDS</span></div>
 <div class="wheel-area"><div class="wheel-halo" aria-hidden="true"></div><div class="cabinet-lights" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="wheel-assembly">
 <div class="wheel-rotor" id="wheel-rotor"><canvas id="wheel-canvas" width="560" height="560" role="img" aria-label="European roulette wheel with numbers 0 to 36"></canvas></div>
-<div class="ball-orbit" id="ball-orbit" aria-hidden="true"><span class="ball"></span></div><div class="wheel-hub" aria-hidden="true"><span>NGS</span><small>ARCADE 001</small></div><div class="top-pointer" aria-hidden="true"></div></div>
-<div class="wheel-impact" id="wheel-impact" aria-hidden="true"></div><div class="wheel-result" id="wheel-result" aria-live="polite"><span id="result-kicker">READY TO PLAY</span><strong id="result-text">PLACE YOUR BET</strong><small id="result-sub">Choose a wager and press SPIN</small></div></div>
+<div class="ball-orbit" id="ball-orbit" aria-hidden="true"><span class="ball"></span></div><div class="wheel-hub" aria-hidden="true"><span>NGS</span><small>ARCADE 001</small></div><div class="top-pointer" aria-hidden="true"></div>
+<div class="landing-sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+<div class="wheel-impact" id="wheel-impact" aria-hidden="true"></div>
+<div class="stage-callout" id="stage-callout" aria-live="polite" aria-atomic="true"></div>
+<div class="wheel-result" id="wheel-result" aria-live="polite"><span id="result-kicker">READY TO PLAY</span><strong id="result-text">PLACE YOUR BET</strong><small id="result-sub">Choose a wager and press SPIN</small></div></div>
 <div class="recent-wrap"><div class="recent-label">LAST SPINS</div><div class="recent-list" id="recent-list" aria-label="Recent roulette results"><span class="empty-recent">No spins yet</span></div></div>
 </div>
 <div class="controls-panel">
@@ -84,5 +88,5 @@
 <div class="game-foot"><div><strong>RUN RULES:</strong> Bank your score or play until zero. All 37 European wheel pockets are equally likely (2.7% house edge).</div><div><strong>ARCADE CREDITS:</strong> Fictional only. No purchases or prizes.</div></div>
 </main>
 <dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title"><div class="end-head"><span id="dialog-mode-label">GAME 001 / RUN COMPLETE</span><button type="button" id="end-close" class="close-dialog" aria-label="Start a new run">×</button></div><div class="end-body"><div class="end-symbol" aria-hidden="true">✳</div><h2 id="end-title">RUN COMPLETE</h2><p id="end-message">Your score has been banked.</p><div class="end-score"><span id="end-score-label">FINAL BANKED SCORE</span><strong id="end-score">0</strong></div><p class="end-record" id="end-record"></p><button type="button" id="new-run" class="new-run-btn">START NEW RUN <span aria-hidden="true">↻</span></button><a href="../../" class="dialog-exit">BACK TO ARCADE ↗</a></div></dialog>
-<script type="module" src="./game.mjs?v=8"></script>
+<script type="module" src="./game.mjs?v=10"></script>
 </body></html>

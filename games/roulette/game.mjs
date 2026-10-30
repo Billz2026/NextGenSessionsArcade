@@ -3,7 +3,7 @@ const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_recor
 const HIGH_START=25000;
 const MILESTONES=[{value:100000,label:'BRONZE · £100K'},{value:500000,label:'SILVER · £500K'},{value:1000000,label:'MILLIONAIRE · £1 MILLION'},{value:5000000,label:'ELITE · £5 MILLION'},{value:10000000,label:'LEGEND · £10 MILLION'}];
 const $=id=>document.getElementById(id);
-const el={modeDesc:$('mode-description'),balanceLabel:$('balance-label'),half:$('half-bet'),leaderboard:$('leaderboard-list'),leaderboardTitle:$('leaderboard-title'),leaderboardCaption:$('leaderboard-caption'),milestoneTrack:$('milestone-track'),toast:$('achievement-toast'),dialogMode:$('dialog-mode-label'),dialogScoreLabel:$('end-score-label'),balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),motion:$('motion-toggle'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
+const el={modeDesc:$('mode-description'),balanceLabel:$('balance-label'),half:$('half-bet'),leaderboard:$('leaderboard-list'),leaderboardTitle:$('leaderboard-title'),leaderboardCaption:$('leaderboard-caption'),milestoneTrack:$('milestone-track'),toast:$('achievement-toast'),dialogMode:$('dialog-mode-label'),dialogScoreLabel:$('end-score-label'),balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),motion:$('motion-toggle'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),stageCallout:$('stage-callout'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
 const safeStorage={read(key){try{return JSON.parse(localStorage.getItem(key));}catch{return null;}},write(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch{}}};
 const defaultRecords=()=>({best:0,history:[]});
 // Classic's original history is an array of bare scores. Preserve those
@@ -74,6 +74,36 @@ function stakeCeiling(){const mul=bet==='straight'?36:['first','second','third']
 function beep(freq=440,duration=.07,type='sine'){
  if(!soundEnabled)return;
  try{audioContext??=new (window.AudioContext||window.webkitAudioContext)();const o=audioContext.createOscillator(),g=audioContext.createGain();o.type=type;o.frequency.setValueAtTime(freq,audioContext.currentTime);g.gain.setValueAtTime(.04,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+duration);}catch{}
+}
+// Original synthesised arcade cues; muted unless the player turns on sound.
+function playCue(kind){
+ if(!soundEnabled)return;
+ const patterns={
+  landing:[[520,0,.045]],
+  win:[[540,0,.09],[730,.095,.11]],
+  big:[[560,0,.1],[740,.095,.12],[960,.21,.2]],
+  streak:[[610,0,.07],[810,.08,.08],[1050,.17,.15]],
+  milestone:[[520,0,.12],[660,.1,.13],[820,.23,.13],[1040,.37,.22]],
+  bust:[[390,0,.1],[285,.12,.18],[185,.3,.22]]
+ };
+ try{
+  audioContext??=new (window.AudioContext||window.webkitAudioContext)();
+  const now=audioContext.currentTime;
+  for(const [freq,at,duration] of patterns[kind]||patterns.landing){
+   const o=audioContext.createOscillator(),g=audioContext.createGain();
+   o.type='triangle';o.frequency.setValueAtTime(freq,now+at);
+   g.gain.setValueAtTime(.0001,now+at);
+   g.gain.linearRampToValueAtTime(.024,now+at+.012);
+   g.gain.exponentialRampToValueAtTime(.0001,now+at+duration);
+   o.connect(g);g.connect(audioContext.destination);
+   o.start(now+at);o.stop(now+at+duration+.012);
+  }
+ }catch{}
+}
+function stageAnnouncement(label,tone=''){
+ el.stageCallout.textContent=label;
+ el.stageCallout.className='stage-callout '+tone;
+ if(label)relaunchAnimation(el.stageCallout);
 }
 function updateLeaderboard(){
  el.leaderboardTitle.textContent=isHigh()?'HIGH ROLLER TOP 10':'CLASSIC TOP 10';
@@ -161,6 +191,7 @@ function arcadeImpact(text,tone){
 function clearImpact(){
  el.wheelPanel.classList.remove('is-win','is-big-win','is-loss','is-spinning','is-landed');
  el.impact.textContent='';
+ el.stageCallout.className='stage-callout';el.stageCallout.textContent='';
 }
 function setBet(value){if(phase!=='ready'||run.balance===0||!BETS.includes(value))return;bet=value;stake=Math.min(stake,stakeCeiling());beep(510,.04);updateUI();}
 function addStake(amount){if(phase!=='ready'||!Number.isSafeInteger(amount)||amount<0)return;stake=Math.min(stakeCeiling(),stake+amount);beep(330,.035);updateUI();}
@@ -179,18 +210,18 @@ function finishRun(busted){
  el.dialogMessage.textContent=busted?'Run over. Your next '+(isHigh()?'High Roller':'Classic')+' run starts with '+money(startBalance())+' fictional '+(isHigh()?'cash.':'credits.'):'Run complete after '+run.spins+' spin'+(run.spins===1?'':'s')+'.';
  el.dialogScore.textContent=money(banked);el.endRecord.textContent=record?'NEW TOP SCORE SAVED TO THIS DEVICE':'Personal best: '+money(records.best);
  el.hint.textContent=busted?'Balance reached zero. Start a fresh run.':'Your ending balance is now your banked score.';
- updateUI();beep(busted?230:760,.15);if(!el.dialog.open)el.dialog.showModal();
+ updateUI();playCue(busted?'bust':record?'milestone':'win');if(!el.dialog.open)el.dialog.showModal();
 }
 function onResolved(outcome){
- const previousPeak=run.peak;
+ const previousPeak=run.peak,previousBalance=run.balance;
  run=applyOutcome(run,outcome);saveRun();phase='ready';drawWheel(outcome.number);const c=colour(outcome.number).toUpperCase();
  const wonBig=outcome.won&&(outcome.net>=startBalance()||outcome.bet==='straight');
  arcadeImpact(outcome.won?(wonBig?'BIG WIN +'+money(outcome.net):'WIN +'+money(outcome.net)):'−'+money(outcome.stake),outcome.won?(wonBig?'is-big-win':'is-win'):'is-loss');
  if(outcome.won){
   const streakText=run.streak>=3?' · HOT STREAK ×'+run.streak:' · '+run.streak+' win'+(run.streak===1?'':'s')+' in a row';
-  flashResult('WINNING POCKET',outcome.number+' '+c,'+'+money(outcome.net)+(isHigh()?' virtual cash':' credits')+streakText,'winner');beep(wonBig?880:700,.16,'triangle');
+  flashResult('WINNING POCKET',outcome.number+' '+c,'+'+money(outcome.net)+(isHigh()?' virtual cash':' credits')+streakText,'winner');
  }
- else{flashResult('WINNING POCKET',outcome.number+' '+c,'−'+money(outcome.stake)+(isHigh()?' virtual cash':' credits'),'loser');beep(230,.09);}
+ else{flashResult('WINNING POCKET',outcome.number+' '+c,'−'+money(outcome.stake)+(isHigh()?' virtual cash':' credits'),'loser');}
  if(stake>run.balance)stake=run.balance;
  el.hint.textContent=outcome.won?'Play another round or bank your score.':'Choose your next bet or bank your score.';
  const milestones=isHigh()?MILESTONES.filter(item=>previousPeak<item.value&&run.peak>=item.value):[];
@@ -198,7 +229,15 @@ function onResolved(outcome){
   const reached=milestones[milestones.length-1];
   el.toast.textContent='✦ '+reached.label+' REACHED · '+money(run.peak)+' PEAK';
   el.toast.classList.remove('celebrate');void el.toast.offsetWidth;el.toast.classList.add('celebrate');
- }else{el.toast.classList.remove('celebrate');el.toast.textContent='';}
+  stageAnnouncement('✦ '+reached.label,'milestone');
+  playCue('milestone');
+ }else{
+  el.toast.classList.remove('celebrate');el.toast.textContent='';
+  if(outcome.won&&run.streak>=5){stageAnnouncement('ON FIRE · '+run.streak+' WINS','streak');playCue('streak');}
+  else if(outcome.won&&run.streak===3){stageAnnouncement('HOT STREAK · 3 WINS','streak');playCue('streak');}
+  else if(outcome.won&&outcome.stake===previousBalance&&['red','black','odd','even'].includes(outcome.bet)){stageAnnouncement('DOUBLE UP','double');playCue('big');}
+  else{stageAnnouncement('', '');playCue(outcome.won?(wonBig?'big':'win'):'landing');}
+ }
  updateUI();if(run.balance===0)finishRun(true);
 }
 function spin(){
@@ -342,6 +381,16 @@ function drawWheel(highlightNumber=null){
  const glass=ctx.createRadialGradient(c-22,c-35,5,c,c,115);
  glass.addColorStop(0,'#473132');glass.addColorStop(.5,'#1c1519');glass.addColorStop(1,'#0e0b0d');
  ring(109,glass,'#8f6539',2);
+ // Specular arcs turn with the gold bezel, never as a static background halo.
+ ctx.save();
+ ctx.lineCap='round';
+ ctx.beginPath();ctx.arc(c,c,265,Math.PI*1.13,Math.PI*1.83);
+ ctx.strokeStyle='rgba(255,242,194,.68)';ctx.lineWidth=3;ctx.stroke();
+ ctx.beginPath();ctx.arc(c,c,253,Math.PI*.09,Math.PI*.52);
+ ctx.strokeStyle='rgba(255,205,112,.31)';ctx.lineWidth=2;ctx.stroke();
+ ctx.beginPath();ctx.arc(c,c,245,Math.PI*.87,Math.PI*1.42);
+ ctx.strokeStyle='rgba(255,241,193,.26)';ctx.lineWidth=1.6;ctx.stroke();
+ ctx.restore();
  // The floating HTML hub stays upright, allowing the wheel and logo to read clearly.
 }
 for(let n=0;n<37;n++){const o=document.createElement('option');o.value=String(n);o.textContent=String(n);el.numbers.append(o);}
