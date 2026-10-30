@@ -1,25 +1,35 @@
 # NextGen Sessions Arcade
 
-A new browser-gaming hub from NextGen Sessions.
+A premium browser-gaming platform from **NextGen Sessions**.
 
-This repository's active branch now contains a deliberately small, clean foundation:
-- `index.html`: accessible coming-soon homepage.
-- `styles.css`: responsive site-wide visual identity.
-- `site.js`: removes legacy site service workers/caches where possible.
-- `favicon.svg`: original vector brand mark.
+## Official brand asset
+
+The file `assets/nextgen-header-wordmark-2026.webp` is a **byte-identical copy** of `assets/nextgen-header-wordmark-2026.webp` from the official `Billz2026/nextgen-sessions` music-site repository. The gold NextGen Sessions logo must never be redrawn, distorted or approximated. The separately rendered red **ARCADE** subtitle is the new gaming-specific lockup.
+
+Brand palette is based on the official music website:
+- Background: `#080808`
+- Warm white: `#f4f0e6`
+- Gold: `#f3c74f`
+- Arcade red: `#e44740`
+
+## Status
+
+This is a **brand-first landing page**. No games are live. Game categories and the first-game feature are explicitly labelled as plans rather than working links.
+
+## Structure
+
+- `index.html`: semantic homepage and complete editorial copy.
+- `styles.css`: responsive design and branded typography.
+- `assets/nextgen-header-wordmark-2026.webp`: exact official brand asset.
+- `favicon.svg`: complementary arcade favicon (not a substitute for the official wordmark).
 - `404.html`: branded not-found page.
-- `.nojekyll`: publish static files directly via GitHub Pages.
-
-## Current status
-
-**Brand and website foundation only.** No games, payments, account registration, casino mechanics or online leaderboard are present. Game concepts will be selected and built separately.
+- `.nojekyll`: static GitHub Pages publishing.
 
 ## Previous project
 
-The complete pre-relaunch repository is retained on the Git branch `archive/football-lab-manager-2026-10-30`. Its files are **not** part of this branch's published site.
+The original Football Lab Manager remains backed up in the historical branch `archive/football-lab-manager-2026-10-30`. It is not part of the active published site.
 
-## Deployment
+## Deploy
 
-Use GitHub Pages with `main` as the source branch and `/` as the folder. There is no build process.
-
-The repository name and its GitHub Pages URL may still contain the previous project name until the repository is renamed in GitHub Settings → General. After renaming, verify GitHub Pages settings and the published address. Don't delete the archived branch if rollback might be necessary.
+GitHub Pages: source `main`, folder `/(root)`.
+URL: https://billz2026.github.io/NextGenSessionsArcade/
