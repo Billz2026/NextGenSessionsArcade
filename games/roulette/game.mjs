@@ -1,5 +1,5 @@
 import {WHEEL,BETS,BET_LABELS,STARTING_CREDITS,pickNumber,colour,resolveBet,applyOutcome,initialRun} from './engine.mjs';
-const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_records_v1',MOTION_KEY='ngs_arcade_roulette_motion_v1';
+const RUN_KEY='ngs_arcade_roulette_run_v1',RECORD_KEY='ngs_arcade_roulette_records_v1',MOTION_KEY='ngs_arcade_roulette_motion_v2';
 const $=id=>document.getElementById(id);
 const el={balance:$('balance'),best:$('best-score'),spins:$('spins-count'),streak:$('streak-count'),stake:$('stake-value'),stakeSummary:$('stake-summary'),spin:$('spin-button'),bank:$('bank-button'),allIn:$('all-in'),clear:$('clear-bet'),result:$('wheel-result'),resultKicker:$('result-kicker'),resultText:$('result-text'),resultSub:$('result-sub'),recent:$('recent-list'),hint:$('game-hint'),numbers:$('exact-number'),numberRow:$('number-row'),rotor:$('wheel-rotor'),orbit:$('ball-orbit'),canvas:$('wheel-canvas'),motion:$('motion-toggle'),wheelPanel:$('wheel-panel'),impact:$('wheel-impact'),streakCard:$('streak-stat'),streakLabel:$('streak-label'),runPanel:document.querySelector('.run-monitor'),runStatus:$('run-status'),runPeak:$('run-peak'),runBiggest:$('run-biggest'),runBestStreak:$('run-best-streak'),runDelta:$('run-delta'),runCaption:$('run-caption'),sound:$('sound-toggle'),dialog:$('end-dialog'),dialogTitle:$('end-title'),dialogMessage:$('end-message'),dialogScore:$('end-score'),endRecord:$('end-record'),newRun:$('new-run'),close:$('end-close')};
 const safeStorage={read(key){try{return JSON.parse(localStorage.getItem(key));}catch{return null;}},write(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch{}}};
@@ -21,26 +21,29 @@ function cleanRun(raw){
 }
 let run=cleanRun(safeStorage.read(RUN_KEY));
 let bet='red',selection=7,stake=Math.min(5,run.balance),phase='ready',wheelAngle=0,animationFrame=0,soundEnabled=false,audioContext=null;
-const deviceRequestsReducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
-// Respect device accessibility by default, while allowing an explicit opt-in
-// for the identical full desktop wheel spin on that device.
-let reducedMotion=deviceRequestsReducedMotion&&safeStorage.read(MOTION_KEY)!=='full';
+// Full cinematic spin (3.9s) is the default on ALL devices, including
+// foldables. Previously Android could silently reduce this to 180ms when its
+// "remove animations" accessibility preference was set.
+// The player explicitly controls a visible Short Spin option. Store the choice.
+const systemRequestsReducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+let reducedMotion=safeStorage.read(MOTION_KEY)==='reduced';
 function syncMotionButton(){
- if(!deviceRequestsReducedMotion)return;
  el.motion.hidden=false;
- el.motion.textContent=reducedMotion?'ENABLE FULL SPIN':'REDUCE SPIN MOTION';
- el.motion.setAttribute('aria-label',reducedMotion?'Enable full roulette wheel animation':'Use reduced roulette wheel animation');
+ el.motion.textContent=reducedMotion?'SHORT SPIN · 0.2 SECONDS':'FULL SPIN · 3.9 SECONDS';
+ el.motion.setAttribute('aria-label',reducedMotion?'Enable full 3.9-second roulette spin':'Switch to short 0.2-second roulette spin');
  el.motion.setAttribute('aria-pressed',String(!reducedMotion));
+ // Full spin deliberately enables matching arcade effects even when Android
+ // reports prefers-reduced-motion. The Short Spin choice restores them off.
  document.documentElement.classList.toggle('full-spin-opt-in',!reducedMotion);
 }
-if(deviceRequestsReducedMotion){
- el.motion.addEventListener('click',()=>{
-   reducedMotion=!reducedMotion;
-   safeStorage.write(MOTION_KEY,reducedMotion?'reduced':'full');
-   syncMotionButton();
- });
+el.motion.addEventListener('click',()=>{
+ if(phase==='spinning')return;
+ reducedMotion=!reducedMotion;
+ safeStorage.write(MOTION_KEY,reducedMotion?'reduced':'full');
  syncMotionButton();
-}
+ el.hint.textContent=reducedMotion?'Short Spin enabled. Select Full Spin for the cinematic wheel.':'Full Spin enabled: wheel and ball now use the 3.9-second desktop animation.';
+});
+syncMotionButton();
 let spinStartTick=0;
 const relaunchAnimation=element=>{element.style.animation='none';void element.offsetWidth;element.style.animation='';};
 function saveRun(){safeStorage.write(RUN_KEY,run);}
@@ -60,6 +63,7 @@ function updateUI(){
  for(const button of document.querySelectorAll('[data-add]'))button.disabled=!idle||stake>=run.balance;
  el.clear.disabled=!idle||stake===0;el.allIn.disabled=!idle||stake===run.balance;el.numbers.disabled=!idle;
  el.spin.disabled=!idle||stake<1||stake>run.balance;
+ el.motion.disabled=phase==='spinning';
  el.spin.textContent=phase==='spinning'?'SPINNING…':phase==='finished'?'RUN COMPLETE':'SPIN THE WHEEL ↻';
  el.bank.disabled=!idle||run.spins===0;
  el.runPeak.textContent=format(run.peak);el.runBiggest.textContent=format(run.biggestProfit);el.runBestStreak.textContent=format(run.bestStreak);

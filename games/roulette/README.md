@@ -37,3 +37,10 @@ The V4 narrow two-column layout was rejected: it shrank the wheel to 254–284 C
 
 ## Same spin across devices
 The same JavaScript wheel rotation, 3.9-second standard timing, ball path and pocket-resolution logic operate at every screen size. The canvas is rendered at up to 2× device pixel density to preserve numbered-pocket clarity on Fold7. Orientation and fold/unfold redraw without rerolling. If Android requests reduced motion, a visible opt-in button enables full desktop-speed spins without overriding that accessibility preference silently.
+
+## Spin animation correction (V7)
+- A Galaxy Fold7 browser reporting `prefers-reduced-motion` formerly shortened the wheel from 3.9 seconds to 0.18 seconds without an obvious explanation. Full Spin (3.9 seconds) is now the default on desktop, Fold7 and other mobile browsers, regardless of that automatic setting.
+- The animation choice is explicit and persistent: a clearly labelled Full Spin / Short Spin control sits directly above Spin. Short Spin remains available for accessibility.
+- The same roulette wheel rotation, ball path, settled pocket and payout logic are used across devices. The game engine and stored records are unchanged.
+
+The V7 preference uses a fresh `_motion_v2` key so old automatic short-spin settings cannot silently carry over. Every device starts with Full Spin on this release; choosing Short Spin is still saved locally.

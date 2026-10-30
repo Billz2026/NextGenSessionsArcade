@@ -7,14 +7,14 @@
 <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=6"><title>High Roll Run | NextGen Sessions Arcade</title>
+<link rel="stylesheet" href="./game.css?v=7"><title>High Roll Run | NextGen Sessions Arcade</title>
 </head>
 <body>
 <a class="skip-link" href="#game">Skip to game</a><div class="top-line" aria-hidden="true"></div>
 <header class="site-header">
 <a class="brand" href="../../" aria-label="Back to NextGen Sessions Arcade home"><img src="../../assets/nextgen-header-wordmark-2026.webp" width="1600" height="663" alt=""><img src="../../assets/arcade-wordmark.svg" width="1060" height="220" alt=""></a>
 <div class="header-middle"><span>GAME 001 <i aria-hidden="true">/</i> CHANCE</span><strong>HIGH ROLL RUN</strong></div>
-<div class="header-actions"><button type="button" id="motion-toggle" class="header-button motion-toggle" hidden aria-pressed="false" aria-label="Enable the full wheel animation">ENABLE FULL SPIN</button><button type="button" id="sound-toggle" class="header-button" aria-pressed="false" aria-label="Turn sound on">SOUND OFF <span aria-hidden="true">♪</span></button><a class="exit-link" href="../../">EXIT TO ARCADE <span aria-hidden="true">↗</span></a></div>
+<div class="header-actions"><button type="button" id="sound-toggle" class="header-button" aria-pressed="false" aria-label="Turn sound on">SOUND OFF <span aria-hidden="true">♪</span></button><a class="exit-link" href="../../">EXIT TO ARCADE <span aria-hidden="true">↗</span></a></div>
 </header>
 <main id="game" class="shell">
 <div class="game-title"><div><div class="eyebrow">ROULETTE ARCADE / SOLO CHALLENGE</div><h1>HIGH ROLL <em>RUN.</em></h1><p>Build your balance. Bank your score. Beat your best.</p></div><div class="title-note">VIRTUAL CREDITS ONLY <span>•</span> NO PURCHASES OR PRIZES</div></div>
@@ -55,6 +55,7 @@
  </div>
  <div class="run-monitor-foot"><span id="run-caption">YOUR RUN STARTS AT 100 CREDITS</span><strong id="run-delta">EVEN</strong></div>
 </section>
+<div class="spin-mode-bar"><span>WHEEL ANIMATION</span><button type="button" id="motion-toggle" class="spin-mode-toggle" aria-pressed="true" aria-label="Switch to short wheel animation">FULL SPIN · 3.9 SECONDS</button></div>
 <div class="action-area"><button type="button" id="spin-button" class="spin-btn">SPIN THE WHEEL <span aria-hidden="true">↻</span></button><button type="button" id="bank-button" class="bank-btn" disabled>BANK SCORE</button></div>
 <div class="help-line" id="game-hint" aria-live="polite">Choose a bet and stake. Every new run starts at 100 credits.</div>
 </div>
@@ -62,5 +63,5 @@
 <div class="game-foot"><div><strong>RUN RULES:</strong> Bank your score or play until zero. All 37 European wheel pockets are equally likely (2.7% house edge).</div><div><strong>ARCADE CREDITS:</strong> Fictional only. No purchases or prizes.</div></div>
 </main>
 <dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title"><div class="end-head"><span>GAME 001 / RUN COMPLETE</span><button type="button" id="end-close" class="close-dialog" aria-label="Start a new run">×</button></div><div class="end-body"><div class="end-symbol" aria-hidden="true">✳</div><h2 id="end-title">RUN COMPLETE</h2><p id="end-message">Your score has been banked.</p><div class="end-score"><span>FINAL BANKED SCORE</span><strong id="end-score">0</strong></div><p class="end-record" id="end-record"></p><button type="button" id="new-run" class="new-run-btn">START NEW RUN <span aria-hidden="true">↻</span></button><a href="../../" class="dialog-exit">BACK TO ARCADE ↗</a></div></dialog>
-<script type="module" src="./game.mjs?v=6"></script>
+<script type="module" src="./game.mjs?v=7"></script>
 </body></html>
