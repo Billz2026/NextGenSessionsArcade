@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=2"><title>High Roll Run | NextGen Sessions Arcade</title>
+<link rel="stylesheet" href="./game.css?v=3"><title>High Roll Run | NextGen Sessions Arcade</title>
 </head>
 <body>
 <a class="skip-link" href="#game">Skip to game</a><div class="top-line" aria-hidden="true"></div>
@@ -46,12 +46,21 @@
 <div class="stake-bar"><div class="stake-value"><span>BET</span><strong id="stake-value">5</strong></div><div class="stake-actions">
 <button type="button" class="chip-btn" data-add="1">+1</button><button type="button" class="chip-btn" data-add="5">+5</button><button type="button" class="chip-btn" data-add="10">+10</button><button type="button" class="chip-btn" data-add="25">+25</button>
 <button type="button" id="all-in" class="chip-btn all-in">ALL IN</button><button type="button" id="clear-bet" class="chip-btn chip-clear">CLEAR</button></div></div></section>
+<section class="run-monitor" aria-label="Current run progress">
+ <div class="run-monitor-head"><strong><span aria-hidden="true">✳</span> RUN MONITOR</strong><span id="run-status" class="run-status">NEW RUN</span></div>
+ <div class="run-monitor-stats">
+  <div class="run-metric"><span>PEAK BALANCE</span><strong id="run-peak">100</strong></div>
+  <div class="run-metric"><span>BIGGEST WIN</span><strong id="run-biggest">0</strong></div>
+  <div class="run-metric"><span>BEST STREAK</span><strong id="run-best-streak">0</strong></div>
+ </div>
+ <div class="run-monitor-foot"><span id="run-caption">YOUR RUN STARTS AT 100 CREDITS</span><strong id="run-delta">EVEN</strong></div>
+</section>
 <div class="action-area"><button type="button" id="spin-button" class="spin-btn">SPIN THE WHEEL <span aria-hidden="true">↻</span></button><button type="button" id="bank-button" class="bank-btn" disabled>BANK SCORE</button></div>
 <div class="help-line" id="game-hint" aria-live="polite">Choose a bet and stake. Every new run starts at 100 credits.</div>
 </div>
 </section>
-<div class="game-foot"><div><strong>RUN RULES:</strong> A run ends when you bank your score or reach 0. Standard European roulette: 0–36 and a 2.7% house edge.</div><div><strong>YOUR BESTS:</strong> <span id="foot-peak">Peak 100</span> <i aria-hidden="true">/</i> <span id="foot-biggest">Biggest win 0</span> <i aria-hidden="true">/</i> <span id="foot-streak">Best streak 0</span></div></div>
+<div class="game-foot"><div><strong>RUN RULES:</strong> Bank your score or play until zero. All 37 European wheel pockets are equally likely (2.7% house edge).</div><div><strong>ARCADE CREDITS:</strong> Fictional only. No purchases or prizes.</div></div>
 </main>
 <dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title"><div class="end-head"><span>GAME 001 / RUN COMPLETE</span><button type="button" id="end-close" class="close-dialog" aria-label="Start a new run">×</button></div><div class="end-body"><div class="end-symbol" aria-hidden="true">✳</div><h2 id="end-title">RUN COMPLETE</h2><p id="end-message">Your score has been banked.</p><div class="end-score"><span>FINAL BANKED SCORE</span><strong id="end-score">0</strong></div><p class="end-record" id="end-record"></p><button type="button" id="new-run" class="new-run-btn">START NEW RUN <span aria-hidden="true">↻</span></button><a href="../../" class="dialog-exit">BACK TO ARCADE ↗</a></div></dialog>
-<script type="module" src="./game.mjs?v=2"></script>
+<script type="module" src="./game.mjs?v=3"></script>
 </body></html>

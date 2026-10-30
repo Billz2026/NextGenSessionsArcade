@@ -18,3 +18,13 @@ All balances are fictional. No real money, purchases, prizes or credits with mon
 
 ## Visual V2
 A multi-layered metallic roulette wheel with genuine 37-pocket numbering, upright central badge, animated ball track, arcade win burst, streak feedback, cabinet lighting and tactile betting controls. Gameplay probabilities and score persistence are unchanged.
+
+## Arcade polish V3
+- The previously empty right-side space now contains a live **Run Monitor** displaying the run's peak balance, biggest single-spin profit, longest winning streak and status.
+- A winning segment is highlighted precisely on the 37-pocket wheel. The stationary pointer and ball align with the displayed outcome. Page refreshes restore the wheel to the last result, including spins recovered from locked, in-progress outcomes.
+- Gold result flashes, a brighter pointer landing effect, visible HOT STREAK status, and NEW PERSONAL BEST modal styling add arcade feedback.
+- The controls keep their existing betting and scoring mechanics. Official NextGen Sessions logo files are unchanged.
+- Respect reduced-motion preferences for decorative bursts and transitions.
+
+## Validation for V3
+Checked DOM control bindings, JS parsing, CSS rule balancing, all 37 possible pocket resting angles, winning and losing spin flows, a three-win HOT STREAK, personal-best banking, new-run reset, and interrupted-spin recovery.

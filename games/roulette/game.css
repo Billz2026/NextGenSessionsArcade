@@ -137,3 +137,81 @@ body{background:
   .wheel-panel.is-win .wheel-impact,.wheel-panel.is-big-win .wheel-impact,.wheel-panel.is-loss .wheel-impact{animation:none!important;opacity:0}
   .bet-btn,.chip-btn,.spin-btn{transition:none!important}
 }
+
+
+/* ARCADE POLISH V3 — run monitor replaces empty space, high-contrast
+   winning-pocket landing and a stronger new-record celebration. */
+.controls-panel{gap:11px}
+.run-monitor{
+  flex:1 1 auto;min-height:154px;display:flex;flex-direction:column;justify-content:center;
+  gap:13px;padding:13px 16px;border:1px solid rgba(243,199,79,.31);
+  border-radius:12px;background:
+  linear-gradient(110deg,rgba(110,61,32,.10),transparent 60%),
+  repeating-linear-gradient(90deg,transparent 0,transparent 44px,rgba(243,199,79,.022) 45px),
+  #191315;box-shadow:inset 0 1px 0 rgba(255,219,139,.055)
+}
+.run-monitor.hot{border-color:rgba(244,111,63,.7);background:radial-gradient(ellipse at 85% 15%,rgba(246,95,57,.16),transparent 60%),#211416}
+.run-monitor-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.run-monitor-head>strong{font:800 12px var(--digital);letter-spacing:.075em;color:var(--gold)}
+.run-monitor-head>strong span{color:var(--red);font-size:16px;margin-right:7px}
+.run-status{display:inline-flex;justify-content:center;align-items:center;max-width:54%;padding:6px 10px;
+ border-radius:5px;border:1px solid rgba(243,199,79,.38);background:rgba(243,199,79,.075);
+ color:#ffe18b;font:800 10px var(--digital);letter-spacing:.04em;text-align:center;white-space:normal}
+.run-status.hot{color:#ffe0b0;border-color:rgba(255,103,70,.6);background:#522922}
+.run-status.low{color:#ffaaaa;border-color:rgba(241,103,89,.55);background:#422024}
+.run-status.spinning{color:var(--cream);border-color:rgba(243,199,79,.2)}
+.run-monitor-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.run-metric{display:flex;flex-direction:column;gap:5px;min-width:0;border-left:2px solid rgba(243,199,79,.33);padding:3px 10px}
+.run-metric:first-child{border-color:var(--gold)}
+.run-metric>span{color:#cbbeb0;font:800 10px var(--digital);letter-spacing:.035em}
+.run-metric>strong{color:var(--cream);font:800 clamp(23px,2.1vw,32px)/1 var(--digital);
+ font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.run-metric:first-child strong{color:var(--gold)}
+.run-monitor-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding-top:9px;border-top:1px solid rgba(243,199,79,.19)}
+.run-monitor-foot>span{color:#bfae9d;font:750 10px var(--digital);letter-spacing:.02em;line-height:1.4}
+.run-delta{font:800 15px var(--digital);white-space:nowrap;font-variant-numeric:tabular-nums}
+.run-delta.positive{color:var(--gold)}.run-delta.negative{color:#ff918c}.run-delta.neutral{color:var(--cream)}
+.action-area{margin-top:0}
+.wheel-panel.is-landed .ball{box-shadow:0 0 0 4px rgba(255,238,158,.34),0 0 22px 7px rgba(255,211,99,.5),0 2px 6px #000}
+.wheel-panel.is-landed .top-pointer{filter:drop-shadow(0 1px 2px #000) drop-shadow(0 0 8px #ffe29a)}
+.wheel-panel.is-landed .top-pointer::after{content:"";position:absolute;left:-20px;top:-20px;
+ width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,231,155,.7);
+ animation:pocket-pulse 1.2s ease-out both;pointer-events:none}
+.wheel-panel.is-landed .wheel-assembly{filter:drop-shadow(0 21px 25px rgba(0,0,0,.68)) drop-shadow(0 0 21px rgba(244,198,92,.22))}
+.end-dialog.is-record{border-color:#ffe28e;box-shadow:0 0 0 2px rgba(243,199,79,.21),0 0 48px rgba(243,199,79,.18),0 30px 95px #000}
+.end-dialog.is-record .end-symbol{animation:record-twinkle .8s ease-in-out 2 alternate}
+.end-dialog.is-record .end-score strong{color:var(--gold);text-shadow:0 0 20px rgba(243,199,79,.22)}
+@keyframes pocket-pulse{
+  0%{opacity:0;transform:scale(.45)}
+  25%{opacity:1;transform:scale(.85)}
+  75%{opacity:.8;transform:scale(1.15)}
+  100%{opacity:0;transform:scale(1.5)}
+}
+@keyframes record-twinkle{0%{transform:scale(1);filter:brightness(1)}100%{transform:scale(1.22);filter:brightness(1.35)}}
+@media(max-width:1150px){
+ .run-monitor{min-height:150px;padding:12px}
+ .run-metric{padding-left:8px}
+ .run-metric>span{font-size:9px}
+ .run-metric>strong{font-size:23px}
+}
+@media(max-width:800px){
+ .run-monitor{flex:none;min-height:135px}
+ .run-metric>span{font-size:10px}
+}
+@media(max-width:550px){
+ .controls-panel{gap:12px}
+ .run-monitor{padding:12px;min-height:130px;gap:10px}
+ .run-monitor-head>strong{font-size:11px}
+ .run-status{font-size:9px;padding:5px 7px}
+ .run-monitor-stats{gap:3px}
+ .run-metric{padding:2px 6px}
+ .run-metric>span{font-size:9px}
+ .run-metric>strong{font-size:21px}
+ .run-monitor-foot>span{font-size:9px}
+ .run-delta{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+ .wheel-panel.is-landed .top-pointer::after{animation:none;opacity:0}
+ .end-dialog.is-record .end-symbol{animation:none}
+}
