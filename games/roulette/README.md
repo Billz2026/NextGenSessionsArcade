@@ -53,3 +53,6 @@ Two independent gameplay modes share the fair, unaltered European roulette engin
 - High Roller cumulative peak achievements: £100K Bronze, £500K Silver, £1M Millionaire, £5M Elite and £10M Legend. A win crossing a new milestone triggers a short display; earned milestones persist via completed-run peak history and are not additional credits.
 - A separate top-10 local leaderboard appears for each mode. New entries store the banked score, spin count, biggest single-spin profit, run peak and streak. Classic's old bare numeric records are migrated in memory without deleting the existing personal best.
 - All wagers remain integer virtual units; potentially unsafe JavaScript-integer payouts are prevented. The 37-pocket roulette distribution and standard European payouts are unchanged.
+
+## V9 desktop High Roller alignment
+A desktop-only styling pass at 1151px and wider reduces the wheel by roughly 10%, tightens stats, bets, Run Monitor and animation controls, moves the Spin/Bank buttons higher, and makes the betting stake a horizontal amount strip with regular chip sizing. At >=1400px, the eight High Roller chip buttons fit one row. HALF no longer resembles an active selection. The responsive Fold7 rules, wheel mechanics, fair odds, saved runs and official branding stay unchanged.

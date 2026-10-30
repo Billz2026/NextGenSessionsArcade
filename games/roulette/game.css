@@ -554,3 +554,57 @@ body{background:
  .high-roller .end-score strong{font-size:clamp(25px,7.2vw,33px)}
  .high-roller .run-metric>strong{font-size:clamp(18px,5.5vw,25px)}
 }
+
+
+/* V9 desktop-only High Roller alignment pass.
+   The Fold7 mobile and unfolded viewports (<1024 CSS px) are intentionally
+   unchanged. No JS, betting, animation or run-storage changes. */
+@media (min-width:1151px) {
+  .high-roller .game-layout{gap:15px}
+  .high-roller .wheel-panel{min-height:0}
+  .high-roller .wheel-area{min-height:395px}
+  .high-roller .wheel-assembly{width:min(74%,330px)}
+  .high-roller .wheel-halo{width:356px;height:356px;top:18px}
+  .high-roller .cabinet-lights{width:min(76%,385px)}
+  .high-roller .wheel-result{min-height:66px;margin:5px 10px 7px}
+  .high-roller .wheel-result strong{font-size:39px}
+  .high-roller .recent-wrap{min-height:49px;padding:9px 15px}
+  .high-roller .controls-panel{padding:11px 15px;gap:8px}
+  .high-roller .stats-grid{gap:8px}
+  .high-roller .stat{padding:8px 11px;min-height:67px;gap:4px}
+  .high-roller .stat strong{font-size:clamp(26px,2.3vw,34px)}
+  .high-roller .stat-balance strong{font-size:clamp(25px,2.4vw,35px)}
+  .high-roller .control-heading{margin-bottom:6px}
+  .high-roller .bet-grid{gap:7px}
+  .high-roller .bet-btn{min-height:48px}
+  .high-roller .stake-bar{display:flex;flex-direction:column;gap:7px}
+  .high-roller .stake-value{width:100%;min-width:0;min-height:40px;flex:none;
+    flex-direction:row;align-items:center;justify-content:space-between;padding:6px 12px}
+  .high-roller .stake-value strong{font-size:23px}
+  .high-roller .stake-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;flex:none}
+  .high-roller .chip-btn{min-height:39px;font-size:11px;border-radius:7px;padding:5px 3px}
+  .high-roller .run-monitor{flex:0 0 auto;min-height:99px;padding:10px 14px;gap:7px}
+  .high-roller .run-monitor-head>strong{font-size:11px}
+  .high-roller .run-monitor-stats{gap:6px}
+  .high-roller .run-metric{gap:4px;padding:2px 8px}
+  .high-roller .run-metric>span{font-size:9px}
+  .high-roller .run-metric>strong{font-size:clamp(22px,1.85vw,29px)}
+  .high-roller .run-monitor-foot{padding-top:7px}
+  .high-roller .spin-mode-bar{padding:5px 10px;min-height:40px}
+  .high-roller .spin-mode-toggle{min-height:34px;padding:6px 10px}
+  .high-roller .action-area{margin-top:0;gap:9px}
+  .high-roller .spin-btn,.high-roller .bank-btn{min-height:55px;font-size:20px}
+  .high-roller .spin-btn span{font-size:24px}
+  .high-roller .help-line{min-height:18px;font-size:11px;line-height:1.4}
+}
+
+/* Full-size desktops can fit all eight High Roller chips on one clean row. */
+@media (min-width:1400px) {
+  .high-roller .stake-actions{grid-template-columns:repeat(8,minmax(0,1fr))}
+  .high-roller .chip-btn{font-size:10px;min-height:42px;padding:6px 2px}
+  .high-roller .stake-value{min-height:42px}
+}
+
+/* Half is a one-shot staking action, not a selected bet. */
+.chip-btn.chip-half{color:#e5d2bb;border-color:#56423c;background:#241d1c}
+.chip-btn.chip-half:hover:not(:disabled){border-color:var(--gold);background:#3a2b25;color:var(--gold)}
