@@ -70,3 +70,13 @@ A desktop-only styling pass at 1151px and wider reduces the wheel by roughly 10%
 - The left panel may grow slightly vertically to give the wheel real clearance without shrinking it or overlapping its result.
 - Split winning result subtext into a single amount line and a distinct HOT STREAK / WIN STREAK badge below it. The badge also restores from a saved completed spin; it resets on the next spin, a loss, a new run or mode switch.
 - Keep the Galaxy Z Fold7 responsive wheel sizing and full 3.9-second spin behaviour untouched. No roulette probability, payout, score, or storage format changes.
+
+## V12 release-quality audit (30 October 2026)
+- Relabelled **PERSONAL BEST** to **BEST BANKED**, with a short explanatory note beside local scores. The record only changes after a run is banked or completed; it does not track an unbanked current balance.
+- Saved result and refresh recovery now show the exact signed virtual winnings/losses from the stored `net` result rather than only "Last spin won/lost". These results are not rerolled.
+- Fixed an interrupted *all-in loss* recovery edge case: a locked zero-balance result is recorded as a finished £0 run and shown in the BANKRUPT dialog. The completed run is cleared from storage and is not re-recorded after the new-run action or another reload.
+- Added `tests/roulette-audit.test.mjs`: exhaustive 37-pocket × all-bet matrix (including all 37 exact-number selections), standard payout multipliers, zero handling, >£10m progression and safe-integer boundaries.
+- Added `tests/roulette-ui.test.mjs`: simulated DOM/control, banked-record migration, Android reduced-motion full spin, interrupted-win / interrupted-loss recovery, score banking and streak badge persistence.
+- Existing 12 roulette tests and new 10 tests passed through an in-process JS harness (**22 tests, 6,757 assertions**). A GitHub Actions Node 22 job independently runs `node --test tests/*.test.mjs` for continued regression coverage.
+- The wheel graphics, Fold7 layout breakpoints, 3.9-second full spin, secure random number selection, standard roulette payouts and all previous localStorage keys are preserved.
+- **Still requires physical QA:** check the actual Galaxy Z Fold7 inner screen portrait/landscape, folded cover screen, touch and viewport scrolling. A simulation and static inspection cannot certify hardware-specific visual layout.

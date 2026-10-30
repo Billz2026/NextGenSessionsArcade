@@ -167,7 +167,7 @@ function updateUI(){
  el.runStatus.textContent=status;
  el.runStatus.className='run-status '+(phase==='spinning'?'spinning':run.streak>=3&&active?'hot':low&&active?'low':'');
  el.runPanel.classList.toggle('hot',run.streak>=3&&active);
- el.runCaption.textContent=phase==='spinning'?'OUTCOME LOCKED · WATCH THE WHEEL':phase==='finished'?'RUN COMPLETE':run.spins===0?'START WITH '+money(startBalance())+' VIRTUAL '+(isHigh()?'CASH':'CREDITS'):low?'LOW BALANCE · CHOOSE YOUR STAKE':run.balance>records.best?'BANK NOW TO SET A PERSONAL BEST':'BANK YOUR BALANCE OR SPIN AGAIN';
+ el.runCaption.textContent=phase==='spinning'?'OUTCOME LOCKED · WATCH THE WHEEL':phase==='finished'?'RUN COMPLETE':run.spins===0?'START WITH '+money(startBalance())+' VIRTUAL '+(isHigh()?'CASH':'CREDITS'):low?'LOW BALANCE · CHOOSE YOUR STAKE':run.balance>records.best?'BANK THIS RUN TO SET A NEW BEST':'BANK YOUR BALANCE OR SPIN AGAIN';
  el.recent.replaceChildren();
  if(!run.results.length){const s=document.createElement('span');s.className='empty-recent';s.textContent='No spins yet';el.recent.append(s);}
  else for(const row of run.results){const badge=document.createElement('span');badge.className='recent-ball '+colour(row.number);badge.textContent=String(row.number);badge.title=row.number+' '+colour(row.number)+' — '+(row.won?'win':'loss');el.recent.append(badge);}
@@ -188,6 +188,10 @@ function flashResult(kicker,text,sub,tone=''){
  el.resultStreak.hidden=true;
  el.resultStreak.textContent='';
  relaunchAnimation(el.result);
+}
+function savedResultAmount(last){
+ const prefix=last.net<0?'−':'+';
+ return prefix+money(Math.abs(last.net))+(isHigh()?' virtual cash':' credits');
 }
 function showResultStreak(){
  if(run.streak<2)return;
@@ -221,7 +225,7 @@ function finishRun(busted){
  el.dialogScoreLabel.textContent=isHigh()?'FINAL VIRTUAL CASH SCORE':'FINAL BANKED SCORE';
  el.dialogTitle.textContent=busted?(isHigh()?'BANKRUPT':'OUT OF CREDITS'):record?'NEW PERSONAL BEST!':'SCORE BANKED';
  el.dialogMessage.textContent=busted?'Run over. Your next '+(isHigh()?'High Roller':'Classic')+' run starts with '+money(startBalance())+' fictional '+(isHigh()?'cash.':'credits.'):'Run complete after '+run.spins+' spin'+(run.spins===1?'':'s')+'.';
- el.dialogScore.textContent=money(banked);el.endRecord.textContent=record?'NEW TOP SCORE SAVED TO THIS DEVICE':'Personal best: '+money(records.best);
+ el.dialogScore.textContent=money(banked);el.endRecord.textContent=record?'NEW TOP SCORE SAVED TO THIS DEVICE':'Best banked: '+money(records.best);
  el.hint.textContent=busted?'Balance reached zero. Start a fresh run.':'Your ending balance is now your banked score.';
  updateUI();playCue(busted?'bust':record?'milestone':'win');if(!el.dialog.open)el.dialog.showModal();
 }
@@ -309,7 +313,7 @@ function resetWheelForMode(){
   el.rotor.style.transform='rotate('+wheelAngle+'deg)';
   if(el.orbit.firstElementChild)el.orbit.firstElementChild.style.top='13%';
   drawWheel(last.number);el.wheelPanel.classList.add('is-landed');
-  flashResult('LAST WINNING POCKET',last.number+' '+colour(last.number).toUpperCase(),last.won?'Last spin won':'Last spin lost',last.won?'winner':'loser');
+  flashResult('LAST WINNING POCKET',last.number+' '+colour(last.number).toUpperCase(),savedResultAmount(last),last.won?'winner':'loser');
   if(last.won)showResultStreak();
  }else{drawWheel();flashResult('READY TO PLAY','PLACE YOUR BET','Choose a wager and press SPIN');}
 }
@@ -432,8 +436,7 @@ window.addEventListener?.('resize',()=>{
    drawWheel(phase==='ready'&&last?last.number:null);
  });
 });
-if(run.balance===0){run=initialForMode();el.hint.textContent='Your previous run ended. A new run is ready.';}
-else if(run.spins>0&&run.results.length){
+if(run.spins>0&&run.results.length){
  const last=run.results[0],index=WHEEL.indexOf(last.number);
  if(index!==-1){
   wheelAngle=((-index*360/WHEEL.length)%360+360)%360;
@@ -442,8 +445,16 @@ else if(run.spins>0&&run.results.length){
   drawWheel(last.number);
   el.wheelPanel.classList.add('is-landed');
  }
- flashResult('LAST WINNING POCKET',last.number+' '+colour(last.number).toUpperCase(),last.won?'Last spin won':'Last spin lost',last.won?'winner':'loser');
-  if(last.won)showResultStreak();
+ flashResult('LAST WINNING POCKET',last.number+' '+colour(last.number).toUpperCase(),savedResultAmount(last),last.won?'winner':'loser');
+ if(last.won)showResultStreak();
  el.hint.textContent='Your previous run has been restored.';
 }
-updateUI();saveRun();
+// A spin may have been locked and finished as an all-in loss while the
+// tab was closed. The outcome is resolved once in cleanRun(); record its
+// bust and show the end-run dialog rather than silently discarding it.
+if(run.balance===0){
+ if(run.spins>0)finishRun(true);
+ else{run=initialForMode();el.hint.textContent='Your previous run ended. A new run is ready.';}
+}
+updateUI();
+if(phase==='ready')saveRun();

@@ -1,0 +1,29 @@
+name: Roulette quality checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'games/roulette/**'
+      - 'tests/**'
+      - '.github/workflows/roulette-qa.yml'
+  pull_request:
+    paths:
+      - 'games/roulette/**'
+      - 'tests/**'
+      - '.github/workflows/roulette-qa.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  roulette-tests:
+    name: Roulette engine and browser-state regressions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run roulette unit and state-recovery tests
+        run: node --test tests/*.test.mjs

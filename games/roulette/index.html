@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=11"><title>High Roll Run | NextGen Sessions Arcade</title>
+<link rel="stylesheet" href="./game.css?v=12"><title>High Roll Run | NextGen Sessions Arcade</title>
 </head>
 <body>
 <a class="skip-link" href="#game">Skip to game</a><div class="top-line" aria-hidden="true"></div>
@@ -39,7 +39,7 @@
 </div>
 <div class="controls-panel">
 <div class="stats-grid"><div class="stat stat-balance"><span id="balance-label">YOUR CREDITS</span><strong id="balance" aria-live="polite">100</strong></div>
-<div class="stat"><span>PERSONAL BEST</span><strong id="best-score">0</strong></div>
+<div class="stat stat-best" title="Best Banked is your highest completed run. Your current balance only counts after you bank it."><span>BEST BANKED</span><strong id="best-score">0</strong></div>
 <div class="stat"><span>SPINS</span><strong id="spins-count">0</strong></div>
 <div class="stat stat-streak" id="streak-stat"><span>WIN STREAK</span><strong id="streak-count">0</strong><span class="streak-label" id="streak-label" hidden>HOT STREAK</span></div></div>
 <section class="bets-section" aria-labelledby="betting-heading"><div class="control-heading"><h2 id="betting-heading">01 <span>CHOOSE YOUR BET</span></h2><span class="muted-small">ONE BET PER SPIN</span></div>
@@ -83,10 +83,10 @@
   <div id="achievement-toast" class="achievement-toast" role="status" aria-live="polite"></div>
   <div class="leaderboard-table-head"><span>RANK / BANKED SCORE</span><span>SPINS</span><span>BIGGEST WIN</span></div>
   <ol class="leaderboard-list" id="leaderboard-list"><li class="leaderboard-empty">No completed runs yet</li></ol>
-  <p class="leaderboard-note">Scores and milestones are fictional and stored only in this browser. No prizes, purchases or cash-outs.</p>
+  <p class="leaderboard-note"><strong>BEST BANKED</strong> updates only when you bank a completed run; losing all your cash records £0. Scores are fictional and stored only in this browser. No prizes, purchases or cash-outs.</p>
 </section>
 <div class="game-foot"><div><strong>RUN RULES:</strong> Bank your score or play until zero. All 37 European wheel pockets are equally likely (2.7% house edge).</div><div><strong>ARCADE CREDITS:</strong> Fictional only. No purchases or prizes.</div></div>
 </main>
 <dialog id="end-dialog" class="end-dialog" aria-labelledby="end-title"><div class="end-head"><span id="dialog-mode-label">GAME 001 / RUN COMPLETE</span><button type="button" id="end-close" class="close-dialog" aria-label="Start a new run">×</button></div><div class="end-body"><div class="end-symbol" aria-hidden="true">✳</div><h2 id="end-title">RUN COMPLETE</h2><p id="end-message">Your score has been banked.</p><div class="end-score"><span id="end-score-label">FINAL BANKED SCORE</span><strong id="end-score">0</strong></div><p class="end-record" id="end-record"></p><button type="button" id="new-run" class="new-run-btn">START NEW RUN <span aria-hidden="true">↻</span></button><a href="../../" class="dialog-exit">BACK TO ARCADE ↗</a></div></dialog>
-<script type="module" src="./game.mjs?v=11"></script>
+<script type="module" src="./game.mjs?v=12"></script>
 </body></html>
