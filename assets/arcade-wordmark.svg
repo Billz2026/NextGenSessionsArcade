@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 220" role="img" aria-labelledby="title">
+<title id="title">ARCADE</title><defs>
+<linearGradient id="face" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffab8a"/><stop offset=".14" stop-color="#ff6d5b"/><stop offset=".5" stop-color="#ec3635"/><stop offset=".56" stop-color="#cf272c"/><stop offset="1" stop-color="#921721"/></linearGradient>
+<filter id="soft" x="-25%" y="-45%" width="150%" height="190%"><feGaussianBlur stdDeviation="7"/></filter>
+<g id="letters" fill-rule="evenodd">
+<path d="M0 169 54 20H118L171 169H127L115 131H58L46 169ZM72 95H101L86 54Z"/>
+<path d="M199 169V20H302L326 42V92L307 113 346 169H296L257 115H241V169ZM241 57V81H281L285 76V62L280 57Z"/>
+<path d="M499 40 474 20H391L366 45V144L391 169H474L499 147V112H456V129H412L408 125V65L412 60H456V77H499Z"/>
+<path d="M520 169 574 20H638L691 169H647L635 131H578L566 169ZM592 95H621L606 54Z"/>
+<path d="M719 169V20H817L853 54V135L817 169ZM762 59V129H799L810 118V70L799 59Z"/>
+<path d="M883 20H1035V60H926V75H1016V110H926V129H1035V169H883Z"/>
+</g></defs>
+<use href="#letters" transform="translate(0 15)" fill="#31090e" stroke="#180305" stroke-width="4" stroke-linejoin="bevel" opacity=".94"/>
+<use href="#letters" transform="translate(0 7)" fill="#751c24" stroke="#400d15" stroke-width="3" stroke-linejoin="bevel"/>
+<use href="#letters" transform="translate(0 4)" fill="#e95e50" opacity=".26" filter="url(#soft)"/>
+<use href="#letters" fill="url(#face)" stroke="#9e252b" stroke-width="3" stroke-linejoin="bevel"/>
+<use href="#letters" fill="none" stroke="#ffb09b" stroke-width="2.7" stroke-linejoin="bevel" opacity=".95" transform="translate(0 -1)"/>
+<path d="M23 26H115M222 26H296M392 26H466M541 26H637M740 26H813M904 26H1020" stroke="#fff2d6" stroke-width="3" opacity=".77" stroke-linecap="square"/>
+<path d="M1 196H1035" stroke="#b3232e" stroke-width="2" opacity=".8"/>
+<path d="M398 201H630" stroke="#f3c74f" stroke-width="3" opacity=".92"/>
+<path d="M1 201H380M647 201H1035" stroke="#f3c74f" stroke-opacity=".28" stroke-width="1"/>
+<path d="M3 185V197H22M1032 185V197H1014" stroke="#f3c74f" stroke-opacity=".55" stroke-width="2" fill="none"/></svg>

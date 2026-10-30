@@ -4,7 +4,7 @@ A premium browser-gaming platform from **NextGen Sessions**.
 
 ## Official brand asset
 
-The file `assets/nextgen-header-wordmark-2026.webp` is a **byte-identical copy** of `assets/nextgen-header-wordmark-2026.webp` from the official `Billz2026/nextgen-sessions` music-site repository. The gold NextGen Sessions logo must never be redrawn, distorted or approximated. The separately rendered red **ARCADE** subtitle is the new gaming-specific lockup.
+The file `assets/nextgen-header-wordmark-2026.webp` is a **byte-identical copy** of `assets/nextgen-header-wordmark-2026.webp` from the official `Billz2026/nextgen-sessions` music-site repository. The gold NextGen Sessions logo must never be redrawn, distorted or approximated. The red **ARCADE** element is an original vector wordmark at `assets/arcade-wordmark.svg`, featuring custom geometric letterforms and a dimensional finish. The header, hero and footer use the same two-part lockup. The parent gold image is unchanged.
 
 Brand palette is based on the official music website:
 - Background: `#080808`
