@@ -1,33 +1,21 @@
 # NextGen Sessions Arcade
 
-A gaming-first browser arcade from NextGen Sessions, starting with an intentionally small, polished pre-launch library.
+A compact, gaming-first browser arcade branded as a division of NextGen Sessions.
 
 ## Branding
-The parent brand artwork at `assets/nextgen-header-wordmark-2026.webp` was copied byte-for-byte from the official `Billz2026/nextgen-sessions` music website. The custom red `assets/arcade-wordmark.svg` is the separate arcade extension. **Do not alter either asset when changing site layout.**
+The gold NextGen Sessions wordmark at `assets/nextgen-header-wordmark-2026.webp` is an exact, unmodified copy of the official music-site artwork. The red `assets/arcade-wordmark.svg` is the dedicated Arcade sub-brand. These assets have not been modified.
 
 ## Homepage
-The redesigned homepage uses a tile-based game-browser layout:
-- Compact introduction and launch status.
-- Large **Roulette** concept tile (first idea, not an announced title).
-- Five category tiles (Arcade, Reflex, Puzzle, Strategy, Sports) that are clearly indicated as future concepts.
-- Short editorial content about the platform and the NextGen Sessions music network.
+- Single-screen **desktop dashboard** targeted at standard desktop viewports, with a compact header, one welcome heading, an instantly visible six-tile library and slim footer.
+- Featured Roulette concept and five category previews (Arcade, Reflex, Puzzle, Strategy, Sports).
+- Browser-credit games remain in planning only, without purchases, real-money stakes or prizes.
+- Cards are not interactive until a game exists.
+- On mobile and small screens, the layout reflows into a scrollable grid for legibility. It is not possible to fit all tiles onto every device size without sacrificing usability.
 
-**No games are playable yet.** Game/category preview tiles are semantic articles, not misleading links or broken Play buttons. The first concept uses fictional credits, with no real money or prizes.
+## Technical
+- Static HTML and CSS; no build step.
+- CSS was rewritten cleanly, rather than stacking additional conflicting override blocks.
+- HTML: `index.html`; CSS: `styles.css`; art: `assets/`.
+- GitHub Pages: `main` branch, `/(root)`, at `https://billz2026.github.io/NextGenSessionsArcade/`.
 
-## Files
-- `index.html`: tile-based homepage and editorial copy.
-- `styles.css`: responsive tile layout and design tokens.
-- `assets/nextgen-header-wordmark-2026.webp`: exact official music-site logo.
-- `assets/arcade-wordmark.svg`: custom arcade logo.
-- `favicon.svg`, `404.html`, `.nojekyll`: static site assets and GitHub Pages support.
-
-## Prior project
-Previous Football Lab Manager remains in `archive/football-lab-manager-2026-10-30`, but its code is not active.
-
-GitHub Pages: `main` branch, `/(root)`. Website: https://billz2026.github.io/NextGenSessionsArcade/
-
-## Compact gaming dashboard (v4)
-A short welcome strip now leads immediately into the game library. Desktop uses a 6/3/3 feature-and-category layout followed by three equal compact cards. Pre-launch previews remain explicitly noninteractive, and original logo assets are untouched. The footer logo is dimensionally constrained to preserve its natural aspect ratio on all screen sizes.
-
-## Dashboard design polish (v5)
-The site uses a wider (up to 1480px) content column at desktop sizes, enlarged readable tile typography, and original per-category decorative vector motifs. All previews remain non-interactive. The official gold logo and red ARCADE logo files are unchanged. The music site is a sibling brand reference, not a copy of this grid layout.
+The former Football Lab Manager is archived on the `archive/football-lab-manager-2026-10-30` branch and not part of the active site.

@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=5">
+  <link rel="stylesheet" href="./styles.css?v=6">
   <title>NextGen Sessions Arcade | Your Next Game Starts Here</title>
 </head>
 <body>
@@ -39,21 +39,21 @@
   </div>
 </header>
 <main id="main">
-  <section class="intro container" aria-labelledby="intro-title">
-    <div class="intro-main">
-      <p class="eyebrow">THE NEXTGEN SESSIONS GAMING DIVISION</p>
+  <section class="dashboard-head" aria-labelledby="intro-title">
+    <div class="dashboard-copy">
+      <p class="eyebrow">NEXTGEN SESSIONS / THE GAMING DIVISION</p>
       <h1 id="intro-title">PICK YOUR <em>NEXT GAME.</em></h1>
-      <p>Original games. Quick rounds. The next high score starts here.</p>
+      <p>Original browser games. Quick rounds. High scores.</p>
     </div>
-    <div class="intro-aside" aria-label="Arcade launch status">
-      <span class="pulse" aria-hidden="true"></span>
-      <div><strong>NEW ARCADE / COMING SOON</strong><span>First title in planning.</span></div>
+    <div class="launch-state" role="status">
+      <span class="state-dot" aria-hidden="true"></span>
+      <div><strong>THE ARCADE IS TAKING SHAPE</strong><span>First game in planning · No titles live yet</span></div>
     </div>
   </section>
   <section id="games" class="library container" aria-labelledby="games-heading">
-    <div class="section-heading">
-      <div><p class="eyebrow">01 / BROWSE THE ARCADE</p><h2 id="games-heading">GAME <span>LIBRARY.</span></h2></div>
-      <span class="library-status">CONCEPT PREVIEWS <span aria-hidden="true">/</span> 01 FEATURED</span>
+    <div class="library-heading">
+      <h2 id="games-heading">GAME <span>LIBRARY</span></h2>
+      <span class="library-count">01 FEATURED CONCEPT <i aria-hidden="true">/</i> FIVE FUTURE CATEGORIES</span>
     </div>
     <div class="game-grid">
       <article class="tile tile-feature" aria-labelledby="feature-title">
@@ -117,22 +117,15 @@
         <div class="category-copy"><h3 id="sports-heading">SPORTS</h3><p>Sports challenges, reimagined.</p><span class="category-status">FUTURE GAMES</span></div>
       </article>
     </div>
-    <p class="library-disclaimer">Game and category previews only. No playable titles yet — we’ll open each game when it’s ready.</p>
+    <p class="library-disclaimer">Previews only — the first game is in development.</p>
   </section>
 
-  <section id="about" class="about container" aria-labelledby="about-heading">
-    <div class="about-copy">
-      <p class="eyebrow">02 / THE PLATFORM</p>
-      <h2 id="about-heading">ONE BRAND.<br><span>MORE WAYS TO PLAY.</span></h2>
-      <p>The gaming arm of NextGen Sessions, built around simple, original browser experiences. One polished game at a time.</p>
-    </div>
-    <a class="about-link" href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer"><span>PART OF THE NEXTGEN SESSIONS WORLD</span><strong>Explore the music platform <span aria-hidden="true">↗</span></strong></a>
-  </section>
 </main>
-<footer class="footer">
+<footer class="footer" id="about">
   <div class="footer-inner container">
-    <a class="footer-brand" href="./" aria-label="NextGen Sessions Arcade home"><img src="./assets/nextgen-header-wordmark-2026.webp" width="1600" height="663" alt=""><img class="arcade-wordmark" src="./assets/arcade-wordmark.svg" width="1060" height="220" alt=""></a>
-    <div class="footer-meta"><span>© 2026 NextGen Sessions Arcade</span><span>Independent gaming platform · In development</span><a href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">NextGen Sessions Music ↗</a></div>
+    <span class="footer-name">NEXTGEN SESSIONS <strong>ARCADE</strong></span>
+    <span class="footer-description">Original games, developed one title at a time. Virtual credits only. No real-money play.</span>
+    <div class="footer-links"><span>© 2026 NextGen Sessions Arcade</span><a href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">Explore the music site ↗</a></div>
   </div>
 </footer>
 </body>
