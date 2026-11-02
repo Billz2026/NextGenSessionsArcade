@@ -6,6 +6,16 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3L — clarity and cabinet identity
+
+- **Unified 3D sign:** the old pair of stretched glowing labels was replaced with one 2048×560 texture on the 3D marquee, containing warm-cream NEXTGEN SESSIONS, large coral NEON TILT, a deliberate dark stroke, brass rules and a dark enamel background. There is no blurred lettering.
+- **Readable 2D fallback:** the same clear NEON TILT treatment, without spaced-out letters or baked blur, is applied to the classic Canvas table.
+- **Clear playfield zones:** removed large faint ghost letters and purple haze; repainted an original navy/indigo enamel background with restrained circuit motifs and physically plausible printed scoring regions.
+- **Legible shot and lower-table callouts:** high-contrast printed areas for POWER GRID, ORBIT, RAMP, TARGET BANK, NIGHT RIDE and BALL SAVE, plus separate backed 3D plaques for JACKPOT, RAMP, ORBIT, FRENZY and BALL SAVE.
+- **HUD hierarchy:** strengthened the score contrast, small labels, mission rows and Start/Restart buttons without changing HUD section heights or keyboard controls.
+- **3D QA:** renderer smoke-tested constructing 475 meshes, rendering two frames and verifying a single high-resolution sign and the key zone labels. All 42 gameplay and DMD tests passed in the current test harness.
+- **Still required:** live Chrome 100%-zoom desktop and Samsung Fold screenshots, text legibility and full gameplay evaluation. No new mechanics or changes to the no-scroll desktop contract.
+
 ## Phase 3K — gameplay fairness and clear lettering
 
 - **Tuned ball response:** gravity reduced from 920 to 780 playfield units/s², physical flipper length increased from 65 to 71, with a slightly more forgiving bat contact radius. The 3D paddle geometry was lengthened to match the actual physics.
