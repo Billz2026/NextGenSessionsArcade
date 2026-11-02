@@ -207,16 +207,25 @@ function drawLower(c,engine){
  rect(c,370,656,25,27,7,G(c,371,658,390,681,[[0,'#fff4d6'],[.35,'#b7a7a4'],[1,'#72545b']]),'#322a33',2);
  if(engine.ball?.mode==='shooter')text(c,Math.round(engine.charge*100)+'%',380,458,11,'#ffe8c0');
 }
+let cachedStatic=null;
+function baseArtwork(){
+ if(cachedStatic)return cachedStatic;
+ const layer=document.createElement('canvas');
+ const detail=2;layer.width=BOARD.width*detail;layer.height=BOARD.height*detail;
+ const c=layer.getContext('2d');c.setTransform(detail,0,0,detail,0,0);
+ drawBase(c,0);
+ drawBackglass(c,0);
+ drawOrbits(c);
+ drawSlings(c);
+ drawWalls(c);
+ cachedStatic=layer;return layer;
+}
 export function renderTable(ctx,engine,{reducedMotion=false}={}){
  const anim=reducedMotion?0:performance.now()/1000;
  ctx.save();ctx.clearRect(0,0,BOARD.width,BOARD.height);
- drawBase(ctx,anim);
- drawBackglass(ctx,anim);
- drawOrbits(ctx);
+ ctx.drawImage(baseArtwork(),0,0,BOARD.width,BOARD.height);
  drawTargets(ctx,engine);
  drawBumpers(ctx,engine,anim,reducedMotion);
- drawSlings(ctx);
- drawWalls(ctx);
  drawLower(ctx,engine);
  drawFlippers(ctx,engine);
  drawBall(ctx,engine);
