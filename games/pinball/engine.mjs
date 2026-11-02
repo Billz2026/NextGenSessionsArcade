@@ -46,6 +46,7 @@ export const SLINGS=Object.freeze([
  {x1:119,y1:502,x2:163,y2:535,score:100},
  {x1:301,y1:502,x2:257,y2:535,score:100}
 ]);
+export const ARCADE_MODES=Object.freeze({skillWindow:6,comboWindow:7,hurryWindow:18,overdriveWindow:14,powerShots:3,spinThreshold:5});
 const MIN_LAUNCH=1050, MAX_LAUNCH=1450;
 const clip=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const len=(x,y)=>Math.hypot(x,y);
@@ -69,6 +70,10 @@ export class PinballEngine{
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
+  this.skillShotPending=false;this.skillShotUntil=0;
+  this.comboCount=0;this.comboUntil=0;
+  this.powerCharges=0;this.hurryUpUntil=0;
+  this.overdriveUntil=0;this.nextOverdriveAt=ARCADE_MODES.spinThreshold;
  }
  emit(type,detail={}){this.events.push({type,...detail});}
  consumeEvents(){const a=this.events.splice(0);return a;}
@@ -82,6 +87,10 @@ export class PinballEngine{
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
+  this.skillShotPending=false;this.skillShotUntil=0;
+  this.comboCount=0;this.comboUntil=0;
+  this.powerCharges=0;this.hurryUpUntil=0;
+  this.overdriveUntil=0;this.nextOverdriveAt=ARCADE_MODES.spinThreshold;
   for(const f of this.flippers){f.a=.4;f.omega=0;}
   this.spawnBall();this.emit('start');
  }
@@ -89,6 +98,8 @@ export class PinballEngine{
   this.ball={x:382,y:582,vx:0,vy:0,r:BOARD.radius,mode:'shooter',trail:[]};
   this.charging=false;this.charge=.26;
   this.ballSaveUntil=0;this.ballLaunchedAt=null;this.ballSaveUsed=false;
+  this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
+  this.powerCharges=0;this.hurryUpUntil=0;this.overdriveUntil=0;
   this.emit('ball',{ball:this.ballNumber});
  }
  holdLaunch(held){
@@ -102,6 +113,8 @@ export class PinballEngine{
   this.ball.vy=-(MIN_LAUNCH+(MAX_LAUNCH-MIN_LAUNCH)*p);
   this.ball.vx=-18;this.ball.mode='live';this.charging=false;
   this.ballLaunchedAt=this.time;this.ballSaveUntil=this.time+11;
+  this.skillShotPending=!this.ballSaveUsed;
+  this.skillShotUntil=this.time+ARCADE_MODES.skillWindow;
   this.emit('launch',{power:p});return true;
  }
  setFlipper(side,held){if(side==='left')this.leftHeld=Boolean(held);if(side==='right')this.rightHeld=Boolean(held);}
@@ -194,6 +207,7 @@ export class PinballEngine{
   const value=points*multiplier;
   this.score+=value;this.bonus+=Math.floor(value/10);
   this.emit('award',{score:value,label,total:this.score});
+  return value;
  }
  mission(name,headline,points=0){
   if(this.missions[name])return;
@@ -214,9 +228,28 @@ export class PinballEngine{
    this.emit('frenzy',{until:this.frenzyUntil});
   }
  }
+ expireArcadeModes(){
+  if(this.skillShotPending && this.time>=this.skillShotUntil)
+   this.skillShotPending=false;
+  if(this.comboCount>0 && this.time>=this.comboUntil)
+   this.comboCount=0;
+  if(this.hurryUpUntil>0 && this.time>=this.hurryUpUntil){
+   this.hurryUpUntil=0;this.powerCharges=1;
+   this.emit('hurryMiss',{remaining:1});
+  }
+  if(this.overdriveUntil>0 && this.time>=this.overdriveUntil){
+   this.overdriveUntil=0;
+   this.emit('modeend',{mode:'overdrive'});
+  }
+ }
  activateLane(i){
   if(this.lanes.has(i))return;
   this.lanes.add(i);this.scoreHit(750,'lane'+i);
+  if(this.skillShotPending && this.time<=this.skillShotUntil){
+   this.skillShotPending=false;
+   const points=this.addPoints(12000,'SKILL SHOT');
+   this.emit('skillshot',{points,lane:i});
+  }
   this.emit('lane',{index:i,count:this.lanes.size});
   if(this.lanes.size===3){
    this.lanes.clear();this.multiplierUntil=this.time+20;
@@ -235,12 +268,29 @@ export class PinballEngine{
  }
  activateShot(kind){
   const shot=SHOTS[kind];
+  if(!shot||this.state!=='playing'||!this.ball||this.ball.mode!=='live')return;
+  this.expireArcadeModes();
   this.shots++;this.addPoints(shot.points,kind==='ramp'?'RAMP SHOT':'LEFT ORBIT');
   this.emit('shot',{kind,points:shot.points});
+  const chained=this.lastShot && this.time-this.lastShot.at<ARCADE_MODES.comboWindow;
+  this.comboCount=chained?Math.min(5,Math.max(1,this.comboCount)+1):1;
+  this.comboUntil=this.time+ARCADE_MODES.comboWindow;
+  if(this.comboCount>=2){
+   const points=this.addPoints((this.comboCount-1)*5000,'NEON COMBO');
+   this.emit('combo',{count:this.comboCount,points});
+  }
   if(this.lastShot && this.lastShot.kind!==kind && this.time-this.lastShot.at<8){
    this.mission('ride','NIGHT RIDE JACKPOT',40000);
   }
   this.lastShot={kind,at:this.time};
+  if(!this.hurryUpUntil){
+   this.powerCharges=Math.min(ARCADE_MODES.powerShots,this.powerCharges+1);
+   this.emit('power',{charges:this.powerCharges,needed:ARCADE_MODES.powerShots});
+   if(this.powerCharges===ARCADE_MODES.powerShots){
+    this.hurryUpUntil=this.time+ARCADE_MODES.hurryWindow;
+    this.emit('hurryup',{until:this.hurryUpUntil});
+   }
+  }
   const b=this.ball;
   b.mode='travel';b.travel={kind,t:0,duration:kind==='ramp'?.95:.8,from:{x:b.x,y:b.y}};
  }
@@ -272,13 +322,26 @@ export class PinballEngine{
    this.cooldowns.set('spinner',this.time);
    this.spinnerTurns++;
    this.spinnerAngle+=Math.PI*1.5;
-   this.addPoints(SPINNER.points,'SPINNER');
-   this.emit('spinner',{turns:this.spinnerTurns});
+   const points=this.addPoints(SPINNER.points,'SPINNER');
+   this.emit('spinner',{turns:this.spinnerTurns,points});
+   if(this.spinnerTurns>=this.nextOverdriveAt && this.time>=this.overdriveUntil){
+    this.nextOverdriveAt=this.spinnerTurns+ARCADE_MODES.spinThreshold;
+    this.overdriveUntil=this.time+ARCADE_MODES.overdriveWindow;
+    this.emit('overdrive',{until:this.overdriveUntil});
+   }else if(this.time<this.overdriveUntil){
+    const bonus=this.addPoints(3000,'OVERDRIVE SPINNER');
+    this.emit('superSpinner',{points:bonus,turns:this.spinnerTurns});
+   }
   }
   const sd=Math.hypot(b.x-SCOOP.x,b.y-SCOOP.y);
   if(sd<SCOOP.r-2 && b.vy< -180 && this.time-this.lastScoopTime>2){
    this.lastScoopTime=this.time;this.scoopHits++;
    this.addPoints(SCOOP.points,'NEON SCOOP');
+   if(this.hurryUpUntil>this.time){
+    const points=this.addPoints(50000,'NEON RUSH JACKPOT');
+    this.emit('jackpot',{points});
+    this.powerCharges=0;this.hurryUpUntil=0;
+   }
    b.mode='scoop';b.scoopTimer=SCOOP.hold;
    b.x=SCOOP.x;b.y=SCOOP.y;b.vx=0;b.vy=0;
    this.emit('scoop',{count:this.scoopHits});
@@ -336,6 +399,7 @@ export class PinballEngine{
    b.x=382;b.y=582;b.vx=0;b.vy=0;return;
   }
   this.time+=dt;
+  this.expireArcadeModes();
   if(b.mode==='travel'){this.updateTravel(dt);return;}
   if(b.mode==='scoop'){
    b.scoopTimer-=dt;
@@ -378,6 +442,8 @@ export class PinballEngine{
     this.ballSaveUsed=true; // preserve single-use guard after spawnBall
     this.emit('ballsave');return;
    }
+   this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
+   this.hurryUpUntil=0;this.powerCharges=0;this.overdriveUntil=0;
    const endBonus=this.bonus;
    if(endBonus>0){
     this.score+=endBonus;this.emit('award',{score:endBonus,label:'END-OF-BALL BONUS',total:this.score});
