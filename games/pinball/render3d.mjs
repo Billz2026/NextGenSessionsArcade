@@ -488,13 +488,19 @@ export async function create3DTable(host){
  // A luminous 16-lamp circular Power Core, in the same structural position
  // as the centre feature in a classic arcade pinball table.
  const powerX=X(210),powerY=Y(460);
- cyl(powerX,powerY,.205,.80,.09,metal('#192644',.46,.08),48);
- cyl(powerX,powerY,.31,.63,.07,metal('#285a86',.3,.12),48);
- ring(powerX,powerY,.37,.74,.074,metal('#be7696',.37,.23));
+ cyl(powerX,powerY,.205,.96,.10,metal('#192644',.46,.08),56);
+ cyl(powerX,powerY,.31,.77,.08,metal('#285a86',.3,.12),56);
+ ring(powerX,powerY,.37,.89,.078,metal('#be7696',.37,.23));
+ const coreHaloMaterial=new T.MeshStandardMaterial({
+   color:'#72c7f2',emissive:'#389ce5',emissiveIntensity:.40,
+   roughness:.3,metalness:.1
+ });
+ ring(powerX,powerY,.43,.68,.038,coreHaloMaterial);
+ // Core rings are raised, but sit below the moving ball so no shot is hidden.
  const coreLightMaterials=[];
  for(let i=0;i<16;i++){
   const angle=i*TAU/16-PI/2;
-  const xx=powerX+Math.cos(angle)*.74,yy=powerY+Math.sin(angle)*.74;
+  const xx=powerX+Math.cos(angle)*.88,yy=powerY+Math.sin(angle)*.88;
   const mat=new T.MeshStandardMaterial({color:i%4?'#83b8ef':'#ffd89a',
    emissive:i%4?'#397dd0':'#ffb25b',emissiveIntensity:.2,
    roughness:.38});
@@ -507,12 +513,52 @@ export async function create3DTable(host){
    emissive:'#ff743e',emissiveIntensity:.15,roughness:.3});
   cyl(X(xx),Y(yy),.43,.13,.06,mat,18);powerLampMat.push(mat);
  }
+ // Phase 4B: a real top rollover lamp bank and two restrained
+ // bumper-side light runs. The upper bumper faces remain unobstructed.
+ const upperBankLights=[];
+ for(let i=0;i<9;i++){
+   const px=72+i*34,py=131;
+   const material=new T.MeshStandardMaterial({
+     color:i%3===0?'#fce2a5':'#94b8ec',
+     emissive:i%3===0?'#e89c5a':'#387fbb',
+     emissiveIntensity:.15,roughness:.32,metalness:.05
+   });
+   cyl(X(px),Y(py),.31,.085,.055,material,14);
+   upperBankLights.push(material);
+ }
+ const bumperSideLights=[];
+ for(const [px,py,index] of [
+   [109,235,0],[111,269,0],[306,235,1],[307,269,1],
+   [165,335,2],[245,335,2]
+ ]){
+   const mat=new T.MeshStandardMaterial({
+     color:'#ffbe87',emissive:'#e86b61',emissiveIntensity:.22,
+     roughness:.36,metalness:.05
+   });
+   cyl(X(px),Y(py),.30,.086,.06,mat,14);
+   bumperSideLights.push({mat,index});
+ }
  const rightBankLights=[];
  for(let i=0;i<8;i++){
   const mat=new T.MeshStandardMaterial({color:'#f4b287',
    emissive:'#ff9062',emissiveIntensity:.2,roughness:.3});
   box(X(365),Y(143+i*31),.45,.2,.24,.08,mat);
   rightBankLights.push(mat);
+ }
+ // Lower slingshots get coordinated flush insert lamps; unlike decorative
+ // steel rails, these are local scoring and ball-save indicators.
+ const slingInsertMaterials=[];
+ for(const [px,py,side] of [
+   [106,537,0],[122,565,0],[161,548,0],
+   [314,537,1],[298,565,1],[259,548,1]
+ ]){
+   const mat=new T.MeshStandardMaterial({
+     color:side?'#a9dcff':'#ffbfc0',
+     emissive:side?'#6fb8ed':'#ef6480',emissiveIntensity:.20,
+     metalness:.04,roughness:.35
+   });
+   cyl(X(px),Y(py),.34,.12,.055,mat,18);
+   slingInsertMaterials.push({mat,side});
  }
  // The jackpot scoop has a physical horseshoe guard and a thicker metal rim.
  const jackpotGuard=metal('#b79eaa',.25,.79);
@@ -644,6 +690,35 @@ export async function create3DTable(host){
   // Controlled states: slow attract chase, shot guiding, mode illumination,
   // brief full-table celebration. Reduced motion shows steady lamps.
   const chase=Math.floor(now/(reducedMotion?100000:155));
+  const upperChase=Math.floor(now/(reducedMotion?100000:220));
+  const launchChase=engine.state==='playing'&&engine.ball?.mode==='live'&&
+    engine.ballLaunchedAt!==null&&engine.time-engine.ballLaunchedAt<2.5;
+  for(let i=0;i<upperBankLights.length;i++){
+    const slot=Math.floor(i/3);
+    const marked=engine.lanes.has(slot)||engine.missions.lanes;
+    const chaseOn=idleMode?i===upperChase%upperBankLights.length:
+      launchChase?i===upperChase%upperBankLights.length:false;
+    upperBankLights[i].emissiveIntensity=eventFlash?2.7:
+      marked?1.9:chaseOn?1.6:.22;
+  }
+  for(const {mat,index} of bumperSideLights){
+    const hit=bumperFlash?.index===index&&bumperFlash.until>now;
+    mat.emissiveIntensity=hit?3.9:
+      frenzyActive?1.85*(reducedMotion?1:beat):
+      idleMode?.35:.30;
+  }
+  const saveLight=engine.state==='playing'&&
+    engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&
+    engine.time<engine.ballSaveUntil;
+  for(const {mat,side} of slingInsertMaterials){
+    mat.emissiveIntensity=eventFlash?2.45:
+      saveLight?(reducedMotion?1.65:1.15+beat*.8):
+      idleMode?.45:(side===0?.30:.22);
+  }
+  coreHaloMaterial.emissiveIntensity=eventFlash?3:
+    rush?2.4*(reducedMotion?1:beat):
+    engine.powerCharges>0?1+engine.powerCharges*.3:
+    idleMode?(reducedMotion?.7:.65+.25*Math.sin(now*.002)):.65;
   for(let i=0;i<coreLightMaterials.length;i++){
    const current=engine.powerCharges>0&&i<engine.powerCharges*5;
    const travel=i===chase%16||i===(chase+1)%16;
