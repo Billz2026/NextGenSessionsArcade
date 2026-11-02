@@ -1,4 +1,4 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,PinballEngine} from './engine.mjs';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -6,15 +6,23 @@ const ui={
  scoreFlash:$('score-flash'),scoreState:$('score-state'),ball:$('ball-number'),
  best:$('best-score'),status:$('status-indicator'),power:$('power-fill'),
  powerLabel:$('power-label'),start:$('start'),reset:$('reset'),
- launch:$('launch'),left:$('flipper-left'),right:$('flipper-right'),sound:$('sound')
+ launch:$('launch'),left:$('flipper-left'),right:$('flipper-right'),sound:$('sound'),
+ multi:$('multiplier'),ballSave:$('ball-save'),modeName:$('mode-name'),
+ modeTimer:$('mode-timer'),missionMessage:$('mission-message'),
+ extraStatus:$('extra-status'),shots:$('shots-counter'),leaderboard:$('leaderboard'),
+ mission:{lanes:$('mission-lanes'),frenzy:$('mission-frenzy'),targets:$('mission-targets'),ride:$('mission-ride')},
+ progress:{lanes:$('progress-lanes'),frenzy:$('progress-frenzy'),targets:$('progress-targets'),ride:$('progress-ride')}
 };
 const ctx=ui.canvas.getContext('2d',{alpha:false});
 const engine=new PinballEngine();
-const STORAGE_KEY='ngs_pinball_proto_best_v1';
+const STORAGE_KEY='ngs_pinball_proto_best_v1', TOP_KEY='ngs_pinball_top5_v2';
 const safeRead=()=>{try{return Number(localStorage.getItem(STORAGE_KEY))||0}catch{return 0}};
 const safeWrite=n=>{try{localStorage.setItem(STORAGE_KEY,String(n))}catch{}};
 let best=safeRead(),soundOn=false,audio=null,lastTime=0,particles=[],touchPointers=new Map();
-let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1;
+let topScores=[];try{const v=JSON.parse(localStorage.getItem(TOP_KEY)||'[]');if(Array.isArray(v))topScores=v.filter(n=>Number.isSafeInteger(n)&&n>=0).slice(0,5)}catch{}
+best=Math.max(best,...topScores,0);
+let lastModeMessage='PRESS START TO PLAY',messageUntil=0,announcedGameOver=false;
+let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='';
 const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const fmt=n=>Math.max(0,Math.floor(n)).toLocaleString('en-GB');
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
@@ -34,8 +42,38 @@ function syncHUD(){
  if(lastBest!==best){ui.best.textContent=fmt(best);lastBest=best;}
  ui.launch.disabled=!(state==='playing'&&engine.ball?.mode==='shooter');
  ui.start.disabled=state==='playing'||state==='between';
- ui.start.innerHTML=state==='gameover'?'PLAY AGAIN <span aria-hidden="true">↻</span>':'START GAME <span aria-hidden="true">↻</span>';
+ if(lastStatusText!==state){ui.start.textContent=state==='gameover'?'PLAY AGAIN ↻':'START GAME ↻';lastStatusText=state;}
  ui.reset.disabled=state==='ready';
+ const activeMulti=engine.time<engine.multiplierUntil;
+ ui.multi.textContent=activeMulti?'2×':'1×';
+ ui.ballSave.textContent=state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
+   ?Math.ceil(engine.ballSaveUntil-engine.time)+'s':'OFF';
+ for(const name of Object.keys(engine.missions)){ui.mission[name].classList.toggle('completed',engine.missions[name]);}
+ ui.progress.lanes.textContent=engine.missions.lanes?'DONE':engine.lanes.size+' / 3';
+ ui.progress.frenzy.textContent=engine.missions.frenzy?'DONE':Math.min(10,engine.bumperHits)+' / 10';
+ ui.progress.targets.textContent=engine.missions.targets?'DONE':engine.targets.size+' / 4';
+ ui.progress.ride.textContent=engine.missions.ride?'DONE':'RAMP + ORBIT';
+ ui.extraStatus.textContent=engine.extraAwarded?'EXTRA BALL EARNED ✓':'EXTRA BALL: COMPLETE ALL FOUR MISSIONS';
+ ui.shots.textContent=engine.shots+' SHOTS';
+ const remaining=Math.max(engine.multiplierUntil,engine.frenzyUntil)-engine.time;
+ ui.modeName.textContent=state==='ready'?'ATTRACT MODE':state==='gameover'?'RUN COMPLETE':
+  engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
+  engine.lastShot&&engine.time-engine.lastShot.at<8?'COMBO CHASE':'NEON TILT';
+ ui.modeTimer.textContent=state==='ready'?'NEON TILT / GAME 002':remaining>0?Math.ceil(remaining)+' SECONDS REMAIN':'RAMP · ORBIT · TARGETS · LANES';
+ if(performance.now()>messageUntil){
+  ui.missionMessage.textContent=state==='gameover'?'GAME OVER · PLAY AGAIN':state==='playing'?
+   engine.ball?.mode==='shooter'?'CHARGE YOUR PLUNGER':'CHASE THE NIGHT RIDE JACKPOT':
+   state==='between'?'NEXT BALL READY SOON':'PRESS START TO PLAY';
+ }
+}
+function arcadeMessage(message){
+ lastModeMessage=message;messageUntil=performance.now()+2400;
+ ui.missionMessage.textContent=message;
+}
+function renderLeaderboard(){
+ ui.leaderboard.replaceChildren();
+ if(!topScores.length){const li=document.createElement('li');li.textContent='NO RECORDS YET — SET THE FIRST SCORE';ui.leaderboard.append(li);return;}
+ topScores.forEach((s,i)=>{const li=document.createElement('li');const rank=document.createElement('span');rank.textContent='#'+String(i+1).padStart(2,'0');const score=document.createElement('strong');score.textContent=fmt(s);li.append(rank,score);ui.leaderboard.append(li);});
 }
 function sound(freq=500,duration=.07,kind='triangle'){
  if(!soundOn)return;
@@ -55,7 +93,15 @@ function processEvents(){
    ui.overlay.hidden=true;ui.scoreFlash.textContent='BALL '+e.ball+' READY';
    if(e.ball>1)sound(480,.12);
   }
-  if(e.type==='launch'){ui.scoreFlash.textContent='BALL LAUNCHED';sound(360,.15,'sawtooth');}
+  if(e.type==='launch'){ui.scoreFlash.textContent='BALL LAUNCHED';arcadeMessage('SKILL SHOTS LIVE');sound(360,.15,'sawtooth');}
+  if(e.type==='shot'){arcadeMessage(e.kind==='ramp'?'RAMP SHOT! +7,500':'LEFT ORBIT! +5,000');ui.scoreFlash.textContent=e.kind.toUpperCase()+' SHOT';sound(760,.14);}
+  if(e.type==='mission'){arcadeMessage(e.headline);ui.scoreFlash.textContent='MISSION COMPLETE';sound(980,.22);}
+  if(e.type==='award'){ui.scoreFlash.textContent=e.label+' · +'+fmt(e.score);}
+  if(e.type==='ballsave'){ui.overlay.hidden=true;arcadeMessage('BALL SAVED! LAUNCH AGAIN');sound(720,.18);}
+  if(e.type==='extra'){arcadeMessage('EXTRA BALL UNLOCKED!');sound(1060,.22);}
+  if(e.type==='multiplier'){arcadeMessage('2× MULTIPLIER · 20 SECONDS');}
+  if(e.type==='frenzy'){arcadeMessage('BUMPER FRENZY · 15 SECONDS');}
+
   if(e.type==='hit'){
    ui.scoreFlash.textContent='+'+fmt(e.score);
    sound(e.target.startsWith('bumper')?650:560,.055);
@@ -66,18 +112,21 @@ function processEvents(){
   }
   if(e.type==='drain'){
    overlay('BALL '+e.ball+' LOST',e.ball===3?'FINAL BALL':'GET READY','Ball drained. '+(e.ball===3?'Calculating final score…':'Next ball loading…'));
-   ui.scoreFlash.textContent='BALL DRAINED';sound(260,.23,'sawtooth');
+   ui.scoreFlash.textContent='BALL DRAINED';arcadeMessage('BALL '+e.ball+' DRAINED');sound(260,.23,'sawtooth');
   }
   if(e.type==='gameover'){
    const record=e.score>best;
    if(record){best=e.score;safeWrite(best);}
-   overlay('THREE BALLS COMPLETE',record?'NEW PERSONAL BEST!':'GAME OVER',fmt(e.score)+' POINTS · PRESS PLAY AGAIN');
+   topScores=[...topScores,e.score].sort((a,b)=>b-a).slice(0,5);
+   try{localStorage.setItem(TOP_KEY,JSON.stringify(topScores))}catch{}
+   renderLeaderboard();
+   overlay('RUN COMPLETE',record?'NEW PERSONAL BEST!':'GAME OVER',fmt(e.score)+' POINTS · '+engine.shots+' SHOTS · PRESS PLAY AGAIN');
    ui.scoreFlash.textContent='SCORE BANKED';sound(360,.2);
   }
  }
 }
 function startGame(){
- engine.releaseControls();engine.start();particles=[];ui.scoreFlash.textContent='BALL 1 READY';syncHUD();processEvents();
+ engine.releaseControls();engine.start();particles=[];announcedGameOver=false;messageUntil=0;ui.scoreFlash.textContent='BALL 1 READY';syncHUD();processEvents();
 }
 ui.start.addEventListener('click',startGame);
 ui.reset.addEventListener('click',startGame);
@@ -265,4 +314,4 @@ function loop(now){
  }
  requestAnimationFrame(loop);
 }
-resize();syncHUD();requestAnimationFrame(loop);
+resize();renderLeaderboard();syncHUD();requestAnimationFrame(loop);
