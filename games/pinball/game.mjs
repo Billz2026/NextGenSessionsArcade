@@ -67,6 +67,22 @@ if(modeButton)modeButton.addEventListener('click',()=>{
  if(prefer3d&&!view3d)activate3D();
 });
 activate3D();
+// Optional browser fullscreen, independent of game mechanics and zoom.
+const immersiveButton=document.getElementById('immersive');
+if(immersiveButton){
+ immersiveButton.addEventListener('click',async()=>{
+  try{
+   if(document.fullscreenElement)await document.exitFullscreen();
+   else await document.documentElement.requestFullscreen();
+  }catch(error){console.warn('Fullscreen unavailable in this browser.',error);}
+ });
+ document.addEventListener('fullscreenchange',()=>{
+  const active=Boolean(document.fullscreenElement);
+  immersiveButton.setAttribute('aria-pressed',String(active));
+  immersiveButton.textContent=active?'EXIT FULLSCREEN':'FULLSCREEN ⛶';
+  view3d?.resize();
+ });
+}
 const fmt=n=>Math.max(0,Math.floor(n)).toLocaleString('en-GB');
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 function overlay(kicker,title,sub){
