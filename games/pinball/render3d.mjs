@@ -10,7 +10,6 @@ const cold=(a,b)=>Math.max(a,Math.min(b,1));
 export async function create3DTable(host){
  const T=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
  if(!host || !T.WebGLRenderer)throw Error('3D canvas unavailable');
- const {buildMechanicalTable}=await import('./hardware3d.mjs?v=3');
  const scene=new T.Scene();
  scene.background=new T.Color('#080a11');
  const camera=new T.PerspectiveCamera(33,0.6,.1,120);
@@ -136,7 +135,7 @@ export async function create3DTable(host){
  box(0,0,-.38,boardW+.72,boardH+.72,.88,metal('#352633',.35,.55));
  box(0,0,-.12,boardW+.16,boardH+.16,.34,gold);
  box(0,0,.05,boardW,boardH,.20,enamel);
- // Phase 3L: contrast-led original playfield printing. The important
+ // Phase 4: clear classic arcade zones with original Neon Tilt artwork. The important
  // scoring zones are distinct; no more ghost NEON lettering or purple haze.
  const paint=document.createElement('canvas');
  paint.width=840;paint.height=1400;
@@ -147,54 +146,94 @@ export async function create3DTable(host){
  bg.addColorStop(.70,'#191a32');
  bg.addColorStop(1,'#171626');
  p.fillStyle=bg;p.fillRect(0,0,840,1400);
- // Crisp zone borders that survive the camera's projected resolution.
- p.fillStyle='rgba(69,96,136,.17)';p.fillRect(96,175,648,520);
- p.fillStyle='rgba(70,49,85,.24)';p.fillRect(96,712,648,267);
- p.fillStyle='rgba(37,42,70,.32)';p.fillRect(96,996,648,310);
- p.lineWidth=4;p.strokeStyle='rgba(222,163,118,.42)';
- for(const y of [706,983]){
-  p.beginPath();p.moveTo(139,y);p.lineTo(698,y);p.stroke();
+
+ // Original Space Cadet-influenced visual hierarchy: distinct upper devices,
+ // asymmetric side plastics, a central light-core and clear lower flipper play.
+ // Everything is painted in one pass *under* the working machine hardware.
+ function shape(points,fill,stroke='#0000',lw=3){
+  p.beginPath();p.moveTo(points[0][0],points[0][1]);
+  for(let i=1;i<points.length;i++)p.lineTo(points[i][0],points[i][1]);
+  p.closePath();p.fillStyle=fill;p.fill();
+  if(stroke!=='#0000'){p.strokeStyle=stroke;p.lineWidth=lw;p.stroke();}
  }
- // Fine circuit motifs complement hardware instead of competing with it.
- p.lineWidth=2;p.strokeStyle='rgba(140,159,190,.17)';
- for(let i=0;i<7;i++){
-  const y=300+i*88;
-  p.beginPath();p.moveTo(171,y);p.lineTo(267,y-12);
-  p.moveTo(573,y-12);p.lineTo(664,y);p.stroke();
+ // Upper star-map: clean original light paths with muted mid-blue graphic ink.
+ p.strokeStyle='rgba(105,158,216,.23)';p.lineWidth=3;
+ for(let i=0;i<5;i++){
+  p.beginPath();p.moveTo(170,300+i*55);
+  p.bezierCurveTo(340,282+i*55,525,304+i*52,660,310+i*48);
+  p.stroke();
  }
- p.strokeStyle='rgba(230,176,133,.55)';p.lineWidth=6;
- p.beginPath();p.moveTo(135,350);p.bezierCurveTo(103,475,122,665,164,752);p.stroke();
- p.beginPath();p.moveTo(701,350);p.bezierCurveTo(733,475,714,665,672,752);p.stroke();
- p.strokeStyle='rgba(123,176,220,.5)';p.lineWidth=3;
- p.beginPath();p.moveTo(148,363);p.bezierCurveTo(118,478,137,632,174,714);p.stroke();
- p.beginPath();p.moveTo(688,363);p.bezierCurveTo(718,478,699,632,662,714);p.stroke();
- // Printed labels use dedicated dark ink plaques, not translucent lettering
- // thrown across the art. All dimensions are at 2x engine coordinates.
- function inkLabel(text,x,y,width,accent='#f7d6b2'){
-  p.fillStyle='#101522';p.fillRect(x-width/2,y-26,width,51);
-  p.lineWidth=3;p.strokeStyle='#ac7c64';p.strokeRect(x-width/2,y-26,width,51);
-  p.fillStyle=accent;p.textAlign='center';p.textBaseline='middle';
-  p.font='900 34px "Barlow Condensed",Impact,"Arial Narrow",sans-serif';
-  p.fillText(text,x,y,width-16);
+ // Right bank: warm coral segmented moulded plastic, never chrome rails.
+ shape([[690,215],[746,202],[762,254],[755,874],[705,884],[711,475]],
+   '#612e3f','#d16c61',9);
+ p.fillStyle='#ac4853';p.fillRect(716,270,26,530);
+ for(let i=0;i<9;i++){
+  const y=273+i*63;
+  p.fillStyle=i%3===0?'#ffe191':'#ff906d';
+  p.fillRect(722,y,25,23);
+  p.fillStyle='#301e39';p.fillRect(724,y+5,21,6);
  }
- inkLabel('POWER GRID',420,681,244,'#e6b98c');
- inkLabel('ORBIT',162,790,144,'#d6e5ff');
- inkLabel('RAMP',674,790,144,'#ffc6b8');
- inkLabel('TARGET BANK',420,894,265,'#ffdeae');
- inkLabel('NIGHT RIDE',420,986,250,'#e5c4fb');
- inkLabel('BALL SAVE',420,1140,220,'#ffe2a4');
- // Lower flipper return-lane guides remain separate from the main artwork.
+ // Left feature: flowing acrylic shield, target cluster and broad original
+ // purple panels, inspired by the reference's use of visual mass.
+ shape([[93,382],[124,328],[181,312],[232,332],[212,412],[180,456],
+  [164,569],[143,611],[100,611],[112,488]],'#683c82','#ad78cb',8);
+ shape([[116,390],[150,354],[198,361],[184,422],[157,478],[142,565],
+  [119,558]],'#9863a3','#e1b8ef',4);
+ for(let i=0;i<4;i++){
+  p.fillStyle=i%2?'#ffa66a':'#ffe48f';
+  p.fillRect(112+i*12,410+i*40,14,24);
+ }
+ // Visible left loop and right ramp are flat playfield ink with clear arrows.
+ function route(coords,color,dark){
+  p.beginPath();p.moveTo(coords[0][0]*2,coords[0][1]*2);
+  for(let i=1;i<coords.length;i++)p.lineTo(coords[i][0]*2,coords[i][1]*2);
+  p.lineWidth=22;p.strokeStyle=dark;p.lineCap='round';p.lineJoin='round';p.stroke();
+  p.lineWidth=10;p.strokeStyle=color;p.stroke();
+  p.lineWidth=3;p.strokeStyle='rgba(255,243,211,.62)';p.stroke();
+ }
+ route(ORBIT_PATH,'#f9b875','#563949');
+ route(RAMP_PATH,'#ff8d98','#572943');
+ // Centre and Skyline are *thin dashed markings*, not additional overhead
+ // pipes. They don't conceal bumpers or compete with the Power Core.
+ for(const [path,color] of [[CENTER_PATH,'#8dd8f6'],[SKYLINE_PATH,'#e3a1fa']]){
+  p.setLineDash([9,15]);p.lineWidth=6;p.strokeStyle=color;p.beginPath();
+  path.forEach(([x,y],i)=>i?p.lineTo(x*2,y*2):p.moveTo(x*2,y*2));
+  p.stroke();p.setLineDash([]);
+ }
+ // Power Core, centre feature: vivid circular ring with 16 live 3D inserts
+ // on top added below. The printed core itself stays dark and uncluttered.
+ const coreX=420,coreY=944;
+ const radial=p.createRadialGradient(coreX,coreY,10,coreX,coreY,108);
+ radial.addColorStop(0,'#254d7f');radial.addColorStop(.5,'#173762');
+ radial.addColorStop(.77,'#121b3b');radial.addColorStop(1,'#11182c');
+ p.beginPath();p.arc(coreX,coreY,106,0,Math.PI*2);p.fillStyle='#14182a';p.fill();
+ p.lineWidth=11;p.strokeStyle='#b77481';p.stroke();
+ p.beginPath();p.arc(coreX,coreY,88,0,Math.PI*2);p.fillStyle=radial;p.fill();
+ p.lineWidth=5;p.strokeStyle='#447baa';p.stroke();
+ p.beginPath();p.arc(coreX,coreY,48,0,Math.PI*2);p.strokeStyle='#5c9bcd';p.lineWidth=4;p.stroke();
+ // Symmetric lower flipper zones: strongly graphic like a classic arcade game.
  for(const side of [-1,1]){
   p.save();p.translate(420,1200);p.scale(side,1);
-  p.lineWidth=10;p.strokeStyle='rgba(189,108,133,.68)';
-  p.beginPath();p.moveTo(98,-85);p.lineTo(210,23);p.stroke();
-  p.lineWidth=4;p.strokeStyle='#f0c9ac';
-  p.beginPath();p.moveTo(102,-96);p.lineTo(224,25);p.stroke();
-  p.fillStyle='#f3d7bc';
-  p.beginPath();p.moveTo(168,-40);p.lineTo(194,-26);p.lineTo(171,-14);
-  p.closePath();p.fill();
+  shape([[74,-170],[222,-90],[235,18],[180,20]],'#492f5b','#d07894',5);
+  shape([[92,-139],[177,-104],[205,-18],[179,-7]],'#292f57','#95bdd8',4);
+  p.strokeStyle='#ffbc8d';p.lineWidth=7;p.beginPath();
+  p.moveTo(83,-160);p.lineTo(197,-8);p.stroke();
   p.restore();
  }
+ // Device labels occupy dark areas, without blocking shots or covering rings.
+ function inkLabel(text,x,y,width,color='#ffe0ad'){
+  p.fillStyle='#121625';p.fillRect(x-width/2,y-19,width,38);
+  p.strokeStyle='#ae777c';p.lineWidth=2;p.strokeRect(x-width/2,y-19,width,38);
+  p.font='900 26px Impact,"Arial Black",sans-serif';
+  p.fillStyle=color;p.textAlign='center';p.textBaseline='middle';
+  p.fillText(text,x,y,width-10);
+ }
+ inkLabel('NEON LANES',420,365,176);
+ inkLabel('TARGETS',417,827,170);
+ inkLabel('POWER CORE',420,1098,210,'#a9d9ff');
+ inkLabel('ORBIT',120,738,105);
+ inkLabel('RAMP',656,738,105);
+ inkLabel('BALL SAVE',420,1184,166);
  const floorTexture=new T.CanvasTexture(paint);floorTexture.colorSpace=T.SRGBColorSpace;floorTexture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);floorTexture.minFilter=T.LinearMipmapLinearFilter;
  plane(0,0,.166,boardW,boardH,new T.MeshStandardMaterial({map:floorTexture,roughness:.3,metalness:.18}));
  // Brushed steel side rails and body sidewalls.
@@ -221,12 +260,8 @@ export async function create3DTable(host){
  }
  // Side-depth panels frame, rather than cover, the printed title.
  for(const x of [-3.18,3.18])box(x,5.48,.26,.14,2.05,.52,darkChrome);
- // Mechanical wall wires are mapped to actual collision segments, not decorative outlines.
- for(let i=0;i<WALLS.length;i++){
-  const [x1,y1,x2,y2]=WALLS[i];
-  linear(x1,y1,x2,y2,.064,darkChrome,.36);
-  linear(x1,y1,x2,y2,.022,chrome,.42);
- }
+ // Collision walls stay in engine.mjs. The Space Cadet-inspired visual
+ // treatment replaces metal wall wires with painted enamel / plastic edges.
  for(const point of POSTS){
   cyl(X(point.x),Y(point.y),.45,.14,.54,chrome);
   cyl(X(point.x),Y(point.y),.74,.17,.09,darkChrome);
@@ -262,25 +297,9 @@ export async function create3DTable(host){
   const face=box(x,y,.53,.24,.34,.12,cherry);targetLamps.push(face);
   box(x,y-.39,.24,.31,.12,.16,nickel);
  }
- // Real tubular overpasses with stainless supports and translucent plastic lanes.
- const orbitPath=ORBIT_PATH,rampPath=RAMP_PATH;
- const setRamp=(path,color)=>{
-  tube(path,.12,darkChrome);
-  tube(path.map(([x,y,z])=>[x,y,z+.13]),.065,nickel);
-  const side=path.map(([x,y,z])=>[x-13,y,z+.12]);
-  tube(side,.035,chrome);
-  const side2=path.map(([x,y,z])=>[x+13,y,z+.12]);
-  tube(side2,.035,chrome);
-  for(const [x,y,z] of path.slice(1,-1).filter((_,i)=>i%2===0)){
-   linear(x,y,x,y+10,.06,gold,z);
-   const post=box(X(x),Y(y),z*.5,.09,.09,z,chrome);post.position.z=z*.5;
-  }
- };
- setRamp(orbitPath,'#ecb98d');setRamp(rampPath,'#f3a6ba');
- setRamp(CENTER_PATH,'#cad8ff');setRamp(SKYLINE_PATH,'#efb5cd');
- // Purpose-built raised decking, translucent guards and mechanical brackets.
- // These align with existing physical playfield landmarks without changing collisions.
- const detailedHardware=buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,BUMPERS});
+ // No raised rails or wireforms. Four engine routes are illustrated by
+ // flat, illuminated lane markings on the playfield artwork below.
+ // The ball follows their existing authoritative engine trajectories.
  // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
   const x=i===0?136:284,y=520;
@@ -291,15 +310,10 @@ export async function create3DTable(host){
   shape.closePath();
   const cover=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:.18,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.025,bevelThickness:.035}),plastic);
   cover.position.z=.27;cover.castShadow=true;group.add(cover);
-  linear(s.x1,s.y1,s.x2,s.y2,.053,chrome,.57);
+  // Slingshot contact rubber follows existing collision segments.
  }
- // Inlanes and outlanes, more compact than the classic Windows table, but original.
- for(const pts of [
-  [[77,562,.4],[101,588,.42],[119,625,.43]],
-  [[344,562,.4],[320,588,.42],[301,625,.43]],
-  [[112,585,.4],[127,613,.41]],
-  [[309,585,.4],[291,613,.41]]
- ])tube(pts,.055,chrome);
+ // Inlane/outlane returns are painted on the enamel rather than tubes.
+ // Physical lower slings and pivot posts remain present.
  // Shooter lane geometry and plunger hardware.
  box(X(382),Y(575),.2,.53,4.0,.18,black);
  for(let y=540;y<660;y+=11)linear(373,y,391,y+5,.029,gold,.42);
@@ -540,7 +554,7 @@ export async function create3DTable(host){
   const b=engine.ball;
   ball.visible=Boolean(b);
   if(b){
-   ball.position.set(X(b.x),Y(b.y),b.mode==='travel'?(b.travelHeight??.8)+.2:.62);
+   ball.position.set(X(b.x),Y(b.y),b.mode==='scoop'?.31:.62);
    if(b.mode==='shooter')ball.position.z=.55;
    if(b.mode==='scoop')ball.position.z=.31;
   }
@@ -665,7 +679,6 @@ export async function create3DTable(host){
   if(disposed)return;
   disposed=true;
   scene.traverse(o=>{if(o.isMesh)o.geometry?.dispose();});
-  detailedHardware.dispose();
   releaseStudio();
   renderer.dispose();renderer.domElement.remove();
  }
