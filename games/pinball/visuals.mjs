@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP} from './engine.mjs?v=5';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP} from './engine.mjs?v=6';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -309,6 +309,18 @@ function drawNewFeatures(c,engine,reducedMotion=false){
  disk(c,sc.x,sc.y,14,on?'#f48770':'#3a152a','#edbc85',2);
  disk(c,sc.x,sc.y,8,on?'#fff0c0':'#120c17');
  text(c,'SCOOP',sc.x,sc.y+28,9,'#ffdfb2');
+ // 2D fallback reflects the same real Power Grid and Overdrive engine state.
+ rect(c,162,465,92,23,5,'#191724','#c4a18d',2);
+ text(c,'POWER GRID',208,459,9,'#ffe2ad','Barlow Condensed',900);
+ for(let i=0;i<3;i++){
+  const lit=engine.powerCharges>i,rush=engine.hurryUpUntil>engine.time;
+  disk(c,180+i*28,476,6,lit?(rush?'#ff67aa':'#ffbd6b'):'#41333d',
+   lit?'#fff4cf':'#816a69',1.5);
+ }
+ const rush=engine.hurryUpUntil>engine.time,overdrive=engine.overdriveUntil>engine.time;
+ if(rush){disk(c,sc.x,sc.y,23,null,'#ff70b1',3);text(c,'JACKPOT',sc.x,sc.y-32,11,'#ffe0a4');}
+ if(overdrive)text(c,'OVERDRIVE!',sx,sy-32,11,'#fff0b1');
+
  if(!reducedMotion){
   const t=performance.now()/1000;
   const active=engine.time<engine.frenzyUntil||engine.state==='ready';
