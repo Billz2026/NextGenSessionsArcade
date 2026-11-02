@@ -190,15 +190,15 @@ export async function create3DTable(host){
  }
  // Power Core, centre feature: vivid circular ring with 16 live 3D inserts
  // on top added below. The printed core itself stays dark and uncluttered.
- const coreX=420,coreY=944;
- const radial=p.createRadialGradient(coreX,coreY,10,coreX,coreY,108);
+ const coreX=420,coreY=920;
+ const radial=p.createRadialGradient(coreX,coreY,10,coreX,coreY,91);
  radial.addColorStop(0,'#254d7f');radial.addColorStop(.5,'#173762');
  radial.addColorStop(.77,'#121b3b');radial.addColorStop(1,'#11182c');
- p.beginPath();p.arc(coreX,coreY,106,0,Math.PI*2);p.fillStyle='#14182a';p.fill();
+ p.beginPath();p.arc(coreX,coreY,90,0,Math.PI*2);p.fillStyle='#14182a';p.fill();
  p.lineWidth=11;p.strokeStyle='#b77481';p.stroke();
- p.beginPath();p.arc(coreX,coreY,88,0,Math.PI*2);p.fillStyle=radial;p.fill();
+ p.beginPath();p.arc(coreX,coreY,77,0,Math.PI*2);p.fillStyle=radial;p.fill();
  p.lineWidth=5;p.strokeStyle='#447baa';p.stroke();
- p.beginPath();p.arc(coreX,coreY,48,0,Math.PI*2);p.strokeStyle='#5c9bcd';p.lineWidth=4;p.stroke();
+ p.beginPath();p.arc(coreX,coreY,43,0,Math.PI*2);p.strokeStyle='#5c9bcd';p.lineWidth=4;p.stroke();
  // Decorative pinball target graphics: original Neon Tilt arrowhead motif.
  // These are paint only; live targets and ball collision remain above them.
  for(const [x,y,rot,col] of [
@@ -487,14 +487,14 @@ export async function create3DTable(host){
   [356,397],[350,304]],rightAcrylic,.26);
  // A luminous 16-lamp circular Power Core, in the same structural position
  // as the centre feature in a classic arcade pinball table.
- const powerX=X(210),powerY=Y(472);
- cyl(powerX,powerY,.205,.93,.09,metal('#192644',.46,.08),48);
- cyl(powerX,powerY,.31,.74,.07,metal('#285a86',.3,.12),48);
- ring(powerX,powerY,.37,.86,.074,metal('#be7696',.37,.23));
+ const powerX=X(210),powerY=Y(460);
+ cyl(powerX,powerY,.205,.80,.09,metal('#192644',.46,.08),48);
+ cyl(powerX,powerY,.31,.63,.07,metal('#285a86',.3,.12),48);
+ ring(powerX,powerY,.37,.74,.074,metal('#be7696',.37,.23));
  const coreLightMaterials=[];
  for(let i=0;i<16;i++){
   const angle=i*TAU/16-PI/2;
-  const xx=powerX+Math.cos(angle)*.84,yy=powerY+Math.sin(angle)*.84;
+  const xx=powerX+Math.cos(angle)*.74,yy=powerY+Math.sin(angle)*.74;
   const mat=new T.MeshStandardMaterial({color:i%4?'#83b8ef':'#ffd89a',
    emissive:i%4?'#397dd0':'#ffb25b',emissiveIntensity:.2,
    roughness:.38});
@@ -502,7 +502,7 @@ export async function create3DTable(host){
   cell.scale.z=.4;coreLightMaterials.push(mat);
  }
  const powerLampMat=[];
- for(const [xx,yy] of [[190,473],[210,447],[230,473]]){
+ for(const [xx,yy] of [[190,462],[210,445],[230,462]]){
   const mat=new T.MeshStandardMaterial({color:'#f0c697',
    emissive:'#ff743e',emissiveIntensity:.15,roughness:.3});
   cyl(X(xx),Y(yy),.43,.13,.06,mat,18);powerLampMat.push(mat);
