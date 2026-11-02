@@ -10,7 +10,7 @@ const cold=(a,b)=>Math.max(a,Math.min(b,1));
 export async function create3DTable(host){
  const T=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
  if(!host || !T.WebGLRenderer)throw Error('3D canvas unavailable');
- const {buildMechanicalTable}=await import('./hardware3d.mjs?v=1');
+ const {buildMechanicalTable}=await import('./hardware3d.mjs?v=2');
  const scene=new T.Scene();
  scene.background=new T.Color('#080a11');
  const camera=new T.PerspectiveCamera(33,0.6,.1,120);
