@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,BUMPERS,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,BUMPERS,SHOTS,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -44,7 +44,7 @@ test('draining all three balls ends a run',()=>{
  for(let i=1;i<=3;i++){
   g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vx=0;g.ball.vy=140;
   g.advance(BOARD.step);assert.equal(g.state,'between');
-  steps(g,.8);
+  steps(g,1.25);
   if(i<3){assert.equal(g.ballNumber,i+1);assert.equal(g.ball.mode,'shooter');}
  }
  assert.equal(g.state,'gameover');
@@ -88,4 +88,78 @@ test('held flippers produce upward impulse at the bat face',()=>{
   for(let i=0;i<15;i++){g.advance(BOARD.step);strongest=Math.min(strongest,g.ball.vy);}
   assert.ok(strongest < -400,side+' bat lacked lift');
  }
+});
+
+
+test('three N-G-S rollover lanes trigger the 20-second 2x multiplier',()=>{
+ const g=new PinballEngine();g.start();
+ for(let i=0;i<3;i++)g.activateLane(i);
+ assert.equal(g.missions.lanes,true);
+ assert.equal(g.multiplierUntil,g.time+20);
+ const before=g.score;g.scoreHit(250,'target-test');
+ assert.equal(g.score-before,500);
+});
+test('four physical targets complete Target Bank mission',()=>{
+ const g=new PinballEngine();g.start();
+ for(let i=0;i<4;i++)g.activateTarget(i);
+ assert.equal(g.missions.targets,true);
+ assert.ok(g.score>=4*1500+25000);
+});
+test('bumper frenzy starts after ten hits and enhances bumper points',()=>{
+ const g=new PinballEngine();g.start();
+ for(let i=0;i<10;i++)g.bumper();
+ assert.equal(g.missions.frenzy,true);
+ assert.equal(g.frenzyUntil,15);
+ const before=g.score;g.scoreHit(250,'bumper0');
+ assert.equal(g.score-before,500);
+});
+test('ramp and orbit combo unlocks the Night Ride jackpot',()=>{
+ const g=new PinballEngine();g.start();
+ g.activateShot('ramp');g.time+=2;g.activateShot('orbit');
+ assert.equal(g.missions.ride,true);
+ assert.ok(g.score>=5000+7500+40000);
+});
+test('all four missions award one extra ball only once',()=>{
+ const g=new PinballEngine();g.start();
+ for(let i=0;i<3;i++)g.activateLane(i);
+ for(let i=0;i<4;i++)g.activateTarget(i);
+ for(let i=0;i<10;i++)g.bumper();
+ g.activateShot('orbit');g.activateShot('ramp');
+ assert.equal(g.extraBalls,1);assert.equal(g.extraAwarded,true);
+ g.checkExtraBall();assert.equal(g.extraBalls,1);
+ for(let i=0;i<3;i++){
+   g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vx=0;g.ball.vy=150;
+   g.advance(BOARD.step);steps(g,1.25);
+ }
+ assert.equal(g.state,'playing');
+ assert.equal(g.playingExtraBall,true);
+ assert.equal(g.ballNumber,3);
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=150;
+ g.advance(BOARD.step);steps(g,1.25);
+ assert.equal(g.state,'gameover');
+});
+test('ball save works once and requires a real launch',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ g.ball.x=210;g.ball.y=697;g.ball.vy=140;g.advance(BOARD.step);
+ assert.equal(g.state,'playing');assert.equal(g.ball.mode,'shooter');
+ assert.equal(g.ballSaveUsed,true);
+ g.launch();g.ball.x=210;g.ball.y=697;g.ball.vy=140;
+ g.advance(BOARD.step);assert.equal(g.state,'between');
+});
+test('end-of-ball bonus is added once, not repeated on subsequent frames',()=>{
+ const g=new PinballEngine();g.start();g.scoreHit(1000,'test');
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=140;
+ g.advance(BOARD.step);assert.equal(g.score,1100);
+ steps(g,.5);assert.equal(g.score,1100);
+});
+test('ramp crossing moves ball into animated return lane',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';
+ g.ball.x=SHOTS.ramp.x;g.ball.y=SHOTS.ramp.y+3;g.ball.vy=-1000;
+ g.checkSensors({x:g.ball.x,y:SHOTS.ramp.y+10});
+ // Crossing condition uses the new ball Y: set it past the threshold.
+ g.ball.y=SHOTS.ramp.y-2;
+ g.checkSensors({x:g.ball.x,y:SHOTS.ramp.y+8});
+ assert.equal(g.ball.mode,'travel');
+ assert.equal(g.shots,1);
+ steps(g,1.1);assert.equal(g.ball.mode,'live');
 });
