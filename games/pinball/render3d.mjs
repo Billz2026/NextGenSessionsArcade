@@ -442,12 +442,16 @@ export async function create3DTable(host){
  // Tiny raised plaques identify the actual scoring devices.
  plane(spX,spY+.53,.29,.96,.22,label('SPIN','#f9d39a',61,220,90));
  plane(scx,scy+.58,.29,1.13,.23,label('SCOOP','#ffc2a5',57,250,90));
+ // Separate screen-printed control plaques from busy mechanical hardware.
+ // Dark backing plates protect the words from nearby insert glows.
+ const plaqueBacking=new T.MeshBasicMaterial({color:'#111522',side:T.DoubleSide});
  for(const [txt,x,y,w] of [
-  ['JACKPOT',205,492,1.65],['RAMP',315,410,1.04],
-  ['ORBIT',80,411,1.04],['BALL SAVE',208,565,1.24],
-  ['FRENZY',206,351,1.23]
+  ['JACKPOT',205,492,1.75],['RAMP',315,410,1.10],
+  ['ORBIT',80,411,1.10],['BALL SAVE',208,565,1.65],
+  ['FRENZY',206,351,1.42]
  ]){
-  plane(X(x),Y(y),.239,w,.25,label(txt,'#ffd0a5',48,260,80));
+  plane(X(x),Y(y),.241,w+.20,.35,plaqueBacking);
+  plane(X(x),Y(y),.245,w,.29,label(txt,'#ffe1b2',64,512,144,true));
  }
  // Backglass lightbars animate independently from the scrolling playfield.
  const backboxBars=[];
