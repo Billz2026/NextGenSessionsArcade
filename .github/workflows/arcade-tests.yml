@@ -1,0 +1,26 @@
+name: Arcade physics tests
+on:
+  push:
+    paths:
+      - 'games/pinball/**'
+      - 'tests/pinball-engine.test.mjs'
+      - 'games/roulette/engine.mjs'
+      - 'tests/roulette-engine.test.mjs'
+      - '.github/workflows/arcade-tests.yml'
+  pull_request:
+    paths:
+      - 'games/pinball/**'
+      - 'tests/pinball-engine.test.mjs'
+      - 'games/roulette/engine.mjs'
+      - 'tests/roulette-engine.test.mjs'
+      - '.github/workflows/arcade-tests.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run roulette and pinball physics regression tests
+        run: node --test tests/roulette-engine.test.mjs tests/pinball-engine.test.mjs
