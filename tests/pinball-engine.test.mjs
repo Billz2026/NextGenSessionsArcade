@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -231,4 +231,60 @@ test('guided ramp and orbit shots remain aligned with the physical raised paths'
   assert.ok(Math.abs(b.y-ey)<1.2,kind+' y deviated from raised rail');
   assert.ok(b.travelHeight>=.35,kind+' failed to track physical height');
  }
+});
+
+test('longer physical flippers and paired outlane posts provide recoverable lower-playfield coverage',()=>{
+ const g=new PinballEngine();g.start();
+ assert.equal(GRAVITY,780);
+ assert.ok(g.flippers.every(f=>f.length>=70));
+ assert.ok(POSTS.some(p=>p.x===130&&p.y===641));
+ assert.ok(POSTS.some(p=>p.x===290&&p.y===641));
+});
+test('ball save lasts 11 seconds from launch but can be claimed only once per ball',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ assert.ok(Math.abs(g.ballSaveUntil-g.ballLaunchedAt-11)<1e-8);
+ g.time=g.ballSaveUntil-.1;
+ g.ball.x=210;g.ball.y=697;g.ball.vy=180;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'playing');
+ assert.equal(g.ball.mode,'shooter');
+ assert.equal(g.ballSaveUsed,true);
+ g.launch();
+ assert.equal(g.ballSaveUsed,true);
+ g.ball.x=210;g.ball.y=697;g.ball.vy=180;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'between');
+});
+test('an expired ball-save window does not prevent a genuine drain',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ g.time=g.ballSaveUntil+.1;
+ g.ball.x=210;g.ball.y=697;g.ball.vy=180;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'between');
+});
+test('unattended flippers eventually drain instead of permanently trapping the ball',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ let saveCount=0,drains=0;
+ for(let i=0;i<32/BOARD.step&&!drains;i++){
+  if(g.ball?.mode==='shooter')g.launch();
+  g.singleStep(BOARD.step);
+  for(const e of g.consumeEvents()){
+   if(e.type==='ballsave')saveCount++;
+   if(e.type==='drain')drains++;
+  }
+ }
+ assert.equal(saveCount,1);
+ assert.equal(drains,1);
+});
+test('responsive flipper play keeps the first ball active beyond initial short-drain window',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ for(let i=0;i<12/BOARD.step;i++){
+  const t=i*BOARD.step;
+  g.setFlipper('left',Math.sin(t*2.5)>-.15);
+  g.setFlipper('right',Math.cos(t*2.8)>-.2);
+  if(g.ball?.mode==='shooter')g.launch();
+  g.singleStep(BOARD.step);
+ }
+ assert.equal(g.state,'playing');
+ assert.equal(g.ballNumber,1);
 });
