@@ -1,5 +1,5 @@
 import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=8';
-import {renderTable} from './visuals.mjs?v=12';
+import {renderTable} from './visuals.mjs?v=13';
 import {createDotMatrix} from './dmd.mjs?v=7';
 const $=id=>document.getElementById(id);
 const ui={
