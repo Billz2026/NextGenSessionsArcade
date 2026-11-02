@@ -340,7 +340,7 @@ export class PinballEngine{
   if(speed>max){b.vx*=max/speed;b.vy*=max/speed;}
   b.x+=b.vx*dt;b.y+=b.vy*dt;
   this.checkSensors(previous);
-  if(b.mode==='travel')return;
+  if(b.mode!=='live')return;
   // The shooter lane starts below the open top: once the ball crosses over the divider
   // on the way down it enters the main table.
   for(let pass=0;pass<2;pass++){
