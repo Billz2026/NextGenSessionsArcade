@@ -214,7 +214,7 @@ function drawTargets(c,engine){
   bolt(c,t.x,t.y+17,2.4);
  }
 }
-function drawBumpers(c,engine,anim,reducedMotion){
+function drawBumpers(c,engine,anim,reducedMotion,bumperFlash=null){
  for(let i=0;i<BUMPERS.length;i++){
   const b=BUMPERS[i],active=engine.time<engine.frenzyUntil;
   c.save();c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=16;c.shadowOffsetY=11;
@@ -226,6 +226,14 @@ function drawBumpers(c,engine,anim,reducedMotion){
   c.save();c.globalAlpha=.32+flash*.65;c.shadowColor='#ffb66a';c.shadowBlur=active?17:6;
   disk(c,b.x,b.y-5,b.r*.49,'#f9c377','#fff5d3',2);c.restore();
   disk(c,b.x-6,b.y-11,4,'rgba(255,255,255,.72)');
+  const hit=!reducedMotion&&bumperFlash?.index===i&&bumperFlash.until>performance.now();
+  if(hit){
+   const intensity=Math.max(0,Math.min(1,(bumperFlash.until-performance.now())/210));
+   c.save();c.globalAlpha=intensity;c.shadowBlur=28;c.shadowColor='#fff0b2';
+   disk(c,b.x,b.y,b.r+12,null,'#ffeab3',3);
+   disk(c,b.x,b.y-4,b.r*.45,'#fff2bc');
+   c.restore();
+  }
   text(c,'0'+(i+1),b.x,b.y+47,9,'#ceb9ac');
  }
 }
@@ -310,12 +318,12 @@ function baseArtwork(){
  drawWalls(c);
  cachedStatic=layer;return layer;
 }
-export function renderTable(ctx,engine,{reducedMotion=false}={}){
+export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}){
  const anim=reducedMotion?0:performance.now()/1000;
  ctx.save();ctx.clearRect(0,0,BOARD.width,BOARD.height);
  ctx.drawImage(baseArtwork(),0,0,BOARD.width,BOARD.height);
  drawTargets(ctx,engine);
- drawBumpers(ctx,engine,anim,reducedMotion);
+ drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
  drawWorkingInserts(ctx,engine,anim,reducedMotion);
  drawLower(ctx,engine);
  drawFlippers(ctx,engine);
