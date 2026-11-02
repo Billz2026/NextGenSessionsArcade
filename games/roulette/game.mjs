@@ -46,7 +46,9 @@ let bet='red',selection=7,stake=Math.min(defaultStake(),run.balance),phase='read
 // "remove animations" accessibility preference was set.
 // The player explicitly controls a visible Short Spin option. Store the choice.
 const systemRequestsReducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
-let reducedMotion=safeStorage.read(MOTION_KEY)==='reduced';
+const savedMotionChoice=safeStorage.read(MOTION_KEY);
+// Respect the OS preference unless the player previously chose Full Spin.
+let reducedMotion=savedMotionChoice==='reduced'||(savedMotionChoice!=='full'&&systemRequestsReducedMotion);
 function syncMotionButton(){
  el.motion.hidden=false;
  el.motion.textContent=reducedMotion?'SHORT SPIN · 0.2 SECONDS':'FULL SPIN · 3.9 SECONDS';
@@ -156,7 +158,8 @@ function updateUI(){
  el.clear.disabled=!idle||stake===0;el.allIn.disabled=!idle||stake===cap;el.numbers.disabled=!idle;
  el.spin.disabled=!idle||stake<1||stake>cap;
  el.motion.disabled=phase==='spinning';
- el.spin.textContent=phase==='spinning'?'SPINNING…':phase==='finished'?'RUN COMPLETE':'SPIN THE WHEEL ↻';
+ el.spin.textContent=phase==='spinning'?'SPINNING…':phase==='finished'?'RUN COMPLETE':'SPIN THE WHEEL';
+  if(phase==='ready'){const spinGlyph=document.createElement('span');spinGlyph.setAttribute('aria-hidden','true');spinGlyph.textContent='↻';el.spin.append(spinGlyph);}
  el.bank.disabled=!idle||run.spins===0;
  el.runPeak.textContent=money(run.peak);el.runBiggest.textContent=money(run.biggestProfit);el.runBestStreak.textContent=format(run.bestStreak);
  const delta=run.balance-startBalance();
