@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP} from './engine.mjs?v=6';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=7';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -92,6 +92,28 @@ function drawBackglass(c,anim){
  }
 }
 function drawOrbits(c){
+ // New real guided crossover/skyline rails, aligned to engine geometry.
+ // The dark underpass and twin chrome highlights make the raised paths
+ // distinguishable even when the fallback Canvas renderer is selected.
+ for(const [path,color,title,dx] of [
+  [CENTER_PATH,'#c8d4fa','CROSS',0],
+  [SKYLINE_PATH,'#f2b3b3','SKYLINE',-2]
+ ]){
+  const pts=path.map(p=>[p[0],p[1]]);
+  chromeRail(c,pts,8,color);
+  const secondary=path.map(p=>[p[0]+dx+8,p[1]]);
+  chromeRail(c,secondary,3,'#eff0f2');
+  for(const [i,p] of path.entries()){
+   if(i>0&&i<path.length-1&&i%3===0){
+    bolt(c,p[0]-12,p[1]+4,3);
+    bolt(c,p[0]+12,p[1]+4,3);
+   }
+  }
+  const [sx,sy]=pts[0];
+  rect(c,sx-29,sy+12,58,22,5,'#121824','#ecbc9e',2);
+  text(c,title,sx,sy+23,10,'#fff2cf','Barlow Condensed',900);
+ }
+
  // Ramped half-tubes: broad dark extrusion underneath, translucent top rails.
  const orbit=[[85,394],[57,361],[49,303],[49,235],[60,186],[86,164]];
  chromeRail(c,orbit,11,'#e7b79b');
