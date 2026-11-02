@@ -25,6 +25,14 @@ best=Math.max(best,...topScores,0);
 let lastModeMessage='PRESS START TO PLAY',messageUntil=0,announcedGameOver=false;
 let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='';
 const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+const fitButton=document.getElementById('table-size');
+if(fitButton){
+ fitButton.addEventListener('click',()=>{
+  const enabled=document.documentElement.classList.toggle('fit-table');
+  fitButton.setAttribute('aria-pressed',String(enabled));
+  fitButton.innerHTML=enabled?'LARGE TABLE <span aria-hidden="true">⛶</span>':'FIT TABLE <span aria-hidden="true">⛶</span>';
+ });
+}
 const fmt=n=>Math.max(0,Math.floor(n)).toLocaleString('en-GB');
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 function overlay(kicker,title,sub){
