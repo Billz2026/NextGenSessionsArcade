@@ -951,3 +951,59 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  html:fullscreen .flipper-controls{height:38px;min-height:38px;flex:0 0 38px;margin-top:4px}
  html:fullscreen .flipper-control{height:38px;min-height:38px}
 }
+
+
+/* Phase 3L — clean hierarchy. Bright text stays readable on the actual
+   390px desktop console without making sections taller or hiding controls. */
+.hud{color:#f2dcc3}
+.hud .score-panel{border-color:#a98778}
+.hud .score-number{color:#ffd4a3;text-shadow:0 0 10px #e59a6855}
+.hud .hud-stat{border-color:#63515c}
+.hud .hud-stat strong{color:#ffe0aa}
+.hud .mission-grid>div{
+ color:#e9d7c9;border-color:#5a414f;
+ background:linear-gradient(130deg,#2b202d,#201c2a);
+}
+.hud .mission-grid>div b{color:#f8d59b}
+.hud .mission-grid>div span:not(.mission-icon){font-weight:800;letter-spacing:.015em}
+.hud .game-banner strong{letter-spacing:.01em;color:#ffdcaf}
+.hud .action-panel>button{
+ border:1px solid #8f7170;border-radius:7px;
+ text-shadow:none;letter-spacing:.018em;
+}
+.hud .start-button{
+ background:linear-gradient(180deg,#ffe0a6,#d8ab7f 65%,#a97462);
+ color:#281722;border-color:#f3ce9e;
+ box-shadow:inset 0 1px #fff6d8,0 2px 0 #68474a;
+}
+.hud .reset-button{background:linear-gradient(180deg,#47303a,#32222e)}
+.hud .reset-button:disabled{opacity:.55}
+.hud .launch-button{
+ background:linear-gradient(180deg,#6a424e,#4b303e);
+ border:1px solid #a67a7e;color:#fff0d9
+}
+.hud .launch-button:disabled{opacity:.52}
+.hud .dmd-header{letter-spacing:.045em}
+@media(min-width:1121px){
+ .hud .panel-label,.hud .score-bottom,.hud .hud-header>span{font-size:9px}
+ .hud .hud-stat span{font-size:9px;letter-spacing:0}
+ .hud .section-title span{font-size:10px}
+ .hud .section-title small{font-size:8px;letter-spacing:.005em}
+ .hud .mission-grid>div{font-size:9px}
+ .hud .mission-grid>div b{font-size:9px}
+ .hud .mission-icon{font-size:10px}
+ .hud .mission-footer{font-size:8px}
+ .hud .power-row{font-size:9px}
+ .hud .score-number{font-weight:900}
+ .hud .action-panel>button{font-size:14px}
+}
+@media(min-width:1121px) and (max-height:720px){
+ .hud .section-title span{font-size:9px}
+ .hud .hud-stat span,.hud .mission-grid>div,
+ .hud .mission-grid>div b{font-size:8px}
+ .hud .action-panel>button{font-size:13px}
+}
+@media(max-width:1120px){
+ .hud .mission-grid>div span:not(.mission-icon){font-size:clamp(10px,2.2vw,12px)}
+ .hud .action-panel>button{font-weight:900}
+}
