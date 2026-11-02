@@ -369,7 +369,7 @@ export async function create3DTable(host){
   [87,346,'orbit',0],[74,399,'orbit',1],[96,447,'orbit',2],
   [330,340,'ramp',0],[324,388,'ramp',1],[316,466,'ramp',2],
   [139,390,'target',0],[276,392,'target',1],
-  [207,342,'center',3],[210,316,'center',1],
+  [207,423,'center',3],[206,395,'center',1],
   [128,376,'skyline',2],[112,341,'skyline',1],
   [153,457,'mission',0],[207,460,'mission',1],[261,457,'mission',2],
   [126,487,'mission',0],[286,486,'mission',1],
@@ -400,7 +400,7 @@ export async function create3DTable(host){
   [315,308,'ramp',.30],[318,354,'ramp',.18],
   [180,384,'spinner',0],[229,383,'spinner',0],
   [174,480,'mission',0],[247,480,'mission',0],
-  [207,331,'center',0],[125,350,'skyline',-.14],
+  [207,418,'center',0],[125,350,'skyline',-.14],
   [136,568,'lower',0],[282,568,'lower',0]
  ];
  for(let i=0;i<arrowPositions.length;i++){
@@ -466,7 +466,7 @@ export async function create3DTable(host){
   ['JACKPOT',205,492,1.75],['RAMP',315,410,1.10],
   ['ORBIT',80,411,1.10],['BALL SAVE',208,565,1.65],
   ['FRENZY',206,351,1.42],
-  ['CROSS',205,327,1.28],['SKY',127,406,1.04]
+  ['CROSS',205,443,1.28],['SKY',127,406,1.04]
  ]){
   plane(X(x),Y(y),.241,w+.20,.35,plaqueBacking);
   plane(X(x),Y(y),.245,w,.29,label(txt,'#ffe1b2',64,512,144,true));
