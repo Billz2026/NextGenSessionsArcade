@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=6">
+<link rel="stylesheet" href="./game.css?v=7">
 </head>
 <body>
 <a href="#game" class="skip">Skip to pinball game</a>
@@ -34,7 +34,7 @@
     <div><span class="eyebrow">NEXTGEN SESSIONS ARCADE / ORIGINAL TABLE 001</span>
     <h1>NEXTGEN PINBALL <em>NEON TILT.</em></h1>
     <p>A full neon arcade table. Ramps, orbits, missions and big-score jackpots.</p></div>
-    <span class="prototype-label"><i aria-hidden="true"></i> 3D ARCADE TABLE / EARLY BUILD</span>
+    <span class="prototype-label"><i aria-hidden="true"></i> 3D ARCADE TABLE / FEATURE PROTOTYPE</span>
   </div>
   <div class="game-layout">
     <section class="machine" aria-label="Playable pinball table">
@@ -88,7 +88,9 @@
           <div id="mission-targets"><span class="mission-icon">◆</span><span>TARGET BANK</span><b id="progress-targets">0 / 4</b></div>
           <div id="mission-ride"><span class="mission-icon">↗</span><span>NIGHT RIDE</span><b id="progress-ride">RAMP + ORBIT</b></div>
         </div>
-        <div class="mission-footer"><span id="extra-status">EXTRA BALL: COMPLETE ALL FOUR MISSIONS</span><strong id="shots-counter">0 SHOTS</strong></div>
+        <div class="mission-footer"><span id="extra-status">EXTRA BALL: COMPLETE ALL FOUR MISSIONS</span>
+          <span class="hardware-counts"><strong id="spinner-count">0 SPINS</strong><strong id="scoop-count">0 SCOOPS</strong></span>
+          <strong id="shots-counter">0 SHOTS</strong></div>
       </div>
       <div class="leaderboard-card">
         <div class="section-title"><span>03 / ARCADE TOP 5</span><small>ON THIS DEVICE</small></div>
@@ -105,6 +107,6 @@
   <div class="development-note"><strong>REAL-TIME 3D PREVIEW:</strong> Original 3D geometry, metallic materials and dynamic lighting. The physics still runs in 2D and guided ramp/orbit paths remain simplified. A 2D fallback is available. No prizes, purchases or real-money play.</div>
 </main>
 <footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · 3D TABLE PREVIEW</span><a href="../../">BACK TO ARCADE ↗</a></footer>
-<script type="module" src="./game.mjs?v=6"></script>
+<script type="module" src="./game.mjs?v=7"></script>
 </body>
 </html>
