@@ -15,8 +15,8 @@ export async function create3DTable(host){
  scene.background=new T.Color('#080a11');
  const camera=new T.PerspectiveCamera(33,0.6,.1,120);
  // Frame almost the entire physical playfield while keeping the outer rails visible.
- camera.position.set(0,-1.35,26.0);
- camera.lookAt(0,0,.28);
+ camera.position.set(1.05,-2.0,26.25);
+ camera.lookAt(0,0,.22);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
  const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
@@ -29,12 +29,24 @@ export async function create3DTable(host){
  renderer.domElement.setAttribute('aria-hidden','true');
  renderer.domElement.style.touchAction='none';
  host.append(renderer.domElement);
- const metal=(color,roughness=.28,metalness=.9)=>new T.MeshStandardMaterial({color,roughness,metalness});
- const enamel=new T.MeshPhysicalMaterial({color:'#17213a',roughness:.2,metalness:.17,clearcoat:.98,clearcoatRoughness:.07});
- const black=metal('#11151f',.32,.4),nickel=metal('#aebdc9',.19,.91),chrome=metal('#e6e7e9',.13,1);
- const darkChrome=metal('#414953',.27,.88),gold=metal('#e0ad72',.21,.93);
+ let releaseStudio=()=>{};
+ try{
+  const {createStudioEnvironment}=await import('./studio3d.mjs?v=1');
+  releaseStudio=createStudioEnvironment(T,renderer,scene);
+ }catch(error){
+  console.warn('Using direct arcade lighting without optional studio reflections.',error);
+ }
+ const metal=(color,roughness=.28,metalness=.9)=>new T.MeshPhysicalMaterial({
+  color,roughness,metalness,clearcoat:.18,clearcoatRoughness:.12,envMapIntensity:1.35
+ });
+ const enamel=new T.MeshPhysicalMaterial({color:'#1d263f',roughness:.29,metalness:.12,clearcoat:.95,clearcoatRoughness:.12,envMapIntensity:.8});
+ const black=metal('#15131c',.47,.28),nickel=metal('#b4b7bd',.25,.85),chrome=metal('#c9d0d8',.18,.94);
+ const darkChrome=metal('#606373',.34,.8),gold=metal('#c79b76',.24,.75);
  const rubber=new T.MeshStandardMaterial({color:'#bd6773',roughness:.55,metalness:.02});
- const rose=metal('#aa4059',.21,.52),plastic=new T.MeshPhysicalMaterial({color:'#9d6876',metalness:.07,roughness:.27,transparent:true,opacity:.85,side:T.DoubleSide,depthWrite:false});
+ const rose=metal('#bc596d',.29,.48),plastic=new T.MeshPhysicalMaterial({
+  color:'#9b7184',metalness:.06,roughness:.22,clearcoat:1,clearcoatRoughness:.12,
+  transparent:true,opacity:.8,side:T.DoubleSide,depthWrite:false,envMapIntensity:1
+ });
  const lampMaterial=(hex)=>new T.MeshStandardMaterial({color:hex,emissive:hex,emissiveIntensity:.35,roughness:.3,metalness:.15});
  const cherry=lampMaterial('#ff715e'),amber=lampMaterial('#ffc77c'),cyan=lampMaterial('#a3d0fa'),green=lampMaterial('#b2ddc4');
  const add=(geometry,material,x=0,y=0,z=0,shadow=true)=>{
@@ -502,6 +514,7 @@ export async function create3DTable(host){
   disposed=true;
   scene.traverse(o=>{if(o.isMesh)o.geometry?.dispose();});
   detailedHardware.dispose();
+  releaseStudio();
   renderer.dispose();renderer.domElement.remove();
  }
  return {update,resize,dispose,canvas:renderer.domElement};
