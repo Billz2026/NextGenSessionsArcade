@@ -13,7 +13,8 @@ export async function create3DTable(host){
  const scene=new T.Scene();
  scene.background=new T.Color('#080a11');
  const camera=new T.PerspectiveCamera(33,0.6,.1,120);
- camera.position.set(0,-4.4,27.15);
+ // Frame almost the entire physical playfield while keeping the outer rails visible.
+ camera.position.set(0,-3.2,25.8);
  camera.lookAt(0,0,.12);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
  const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
