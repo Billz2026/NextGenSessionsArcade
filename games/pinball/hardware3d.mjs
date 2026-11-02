@@ -5,14 +5,14 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_
  const physically=(color,roughness=.28,metalness=.7,extra={})=>new T.MeshPhysicalMaterial({
   color,roughness,metalness,clearcoat:.82,clearcoatRoughness:.16,...extra
  });
- const steel=physically('#a8b6c9',.2,.91);
- const chrome=physically('#e5e5e7',.13,.96);
- const anodised=physically('#4b405e',.29,.64);
- const brass=physically('#d3a36c',.22,.83);
+ const steel=physically('#c0c2c9',.24,.84);
+ const chrome=physically('#c5ccd4',.19,.91);
+ const anodised=physically('#56465f',.37,.57);
+ const brass=physically('#bf946b',.25,.7);
  const darkRubber=physically('#332633',.72,.03);
- const transparent=physically('#9a729d',.2,.08,{transparent:true,opacity:.63,depthWrite:false,side:T.DoubleSide});
- const blue=physically('#7f91cb',.22,.18,{transparent:true,opacity:.8,depthWrite:false,side:T.DoubleSide});
- const red=physically('#d1607a',.24,.22,{transparent:true,opacity:.78,depthWrite:false,side:T.DoubleSide});
+ const transparent=physically('#ac8ebc',.24,.03,{transparent:true,opacity:.64,depthWrite:false,side:T.DoubleSide});
+ const blue=physically('#88a4c7',.29,.07,{transparent:true,opacity:.72,depthWrite:false,side:T.DoubleSide});
+ const red=physically('#d56c8a',.28,.07,{transparent:true,opacity:.76,depthWrite:false,side:T.DoubleSide});
  const add=(geo,mat,x=0,y=0,z=0,shadow=true)=>{
   const o=new T.Mesh(geo,mat);o.position.set(x,y,z);
   o.castShadow=shadow;o.receiveShadow=true;scene.add(o);return o;
@@ -36,16 +36,35 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_
  // This provides parallax and visible side walls rather than a drawing of a ramp.
  function rampDeck(path,halfWidth,material){
   const spline=new T.CatmullRomCurve3(path.map(([x,y,z])=>new T.Vector3(X(x),Y(y),z)));
-  const vertices=[],indices=[],steps=36,edge=halfWidth;
+  // Four vertices per station: two on the top deck, two underneath.
+  // Unlike a flat plane, this produces a true visible deck thickness and
+  // chrome-edged side walls that respond to angled lights.
+  const vertices=[],indices=[],steps=48,edge=halfWidth;
   for(let i=0;i<=steps;i++){
    const q=spline.getPoint(i/steps);
    const tangent=spline.getTangent(i/steps).normalize();
    const nx=-tangent.y,ny=tangent.x;
-   for(const v of [-edge,edge])vertices.push(q.x+v*nx,q.y+v*ny,q.z-.09);
-   if(i<steps){const j=i*2;indices.push(j,j+1,j+2,j+1,j+3,j+2);}
+   for(const v of [-edge,edge]){
+    vertices.push(q.x+v*nx,q.y+v*ny,q.z-.045);
+    vertices.push(q.x+v*nx,q.y+v*ny,q.z-.205);
+   }
+   if(i<steps){
+    const j=i*4,k=j+4;
+    // Top, bottom and both side rails use consistent winding.
+    indices.push(j,j+2,k,j+2,k+2,k);
+    indices.push(j+1,k+1,j+3,j+3,k+1,k+3);
+    indices.push(j,j+4,j+1,j+1,j+4,j+5);
+    indices.push(j+2,j+3,k+2,j+3,k+3,k+2);
+   }
   }
-  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();
-  add(geo,material,0,0,0,true);
+  const geo=new T.BufferGeometry();
+  geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+  geo.setIndex(indices);geo.computeVertexNormals();
+  const deck=add(geo,material,0,0,0,true);
+  deck.material.side=T.DoubleSide;
+  // Deck spine supports appear below the raised channel.
+  const spine=path.map(([x,y,z])=>[x,y,z-.21]);
+  rod(spine,.055,anodised);
   // Structural beams and rail joins align to this exact deck geometry.
   for(let i=1;i<path.length-1;i+=2){
    const [x,y,z]=path[i];
@@ -60,6 +79,27 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_
   const right=path.map(([x,y,z])=>[x+halfWidth*40,y,z+.10]);
   rod(left,.035,chrome);rod(right,.035,chrome);
  }
+
+ // Bumper skirts: concentric outer rubber ring and metallic mounting collars.
+ // Visual components stay below the engine's existing bumper collision caps.
+ for(const [x,y] of [[169,290],[249,288],[210,335]]){
+  const px=X(x),py=Y(y);
+  const ring1=add(new T.TorusGeometry(.47,.07,10,36),darkRubber,px,py,.32);
+  ring1.receiveShadow=true;
+  const ring2=add(new T.TorusGeometry(.36,.035,10,36),brass,px,py,.39);
+  ring2.receiveShadow=true;
+  for(const d of [[-.5,0],[.5,0],[0,-.5],[0,.5]])
+   fastener(x+d[0]/.020,y+d[1]/.020,.43,.52);
+ }
+ // Flipper base plates are separately cast metal with rubber collars.
+ for(const [x,y] of [[144,613],[276,613]]){
+  const base=add(new T.CylinderGeometry(.36,.36,.12,24),anodised,X(x),Y(y),.31);
+  base.rotation.x=Math.PI/2;
+  const collar=add(new T.TorusGeometry(.285,.075,10,28),darkRubber,X(x),Y(y),.42);
+  collar.receiveShadow=true;
+  fastener(x,y,.58,.84);
+ }
+
  const rightPath=RAMP_PATH,leftPath=ORBIT_PATH;
  rampDeck(rightPath,.27,transparent);
  rampDeck(leftPath,.18,blue);
