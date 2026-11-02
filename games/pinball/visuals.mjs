@@ -79,9 +79,10 @@ function drawBackglass(c,anim){
  c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
  c.font='900 14px "Barlow Condensed",Impact,sans-serif';
  c.fillStyle='#fff0d7';c.fillText('NEXTGEN SESSIONS',213,66,220);
- c.font='900 33px "Barlow Condensed",Impact,sans-serif';
- c.lineWidth=3.5;c.strokeStyle='#251522';c.strokeText('NEON TILT',213,101,220);
- c.fillStyle='#ffa18b';c.fillText('NEON TILT',213,101,220);
+ c.font='900 34px "Arial Black",Impact,Arial,sans-serif';
+ c.lineWidth=4.5;c.strokeStyle='#130d18';c.strokeText('NEON TILT',213,101,226);
+ c.fillStyle='#ffe6cc';c.fillText('NEON TILT',213,99,226);
+ c.fillStyle='#ff835e';c.fillText('NEON TILT',213,97,226);
  c.restore();
  for(const x of [101,324])bolt(c,x,52,3);
  // Top crown lamps run automatically in attract mode.
