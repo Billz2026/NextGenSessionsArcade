@@ -1,7 +1,7 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH} from './engine.mjs?v=6';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=7';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -116,10 +116,13 @@ export async function create3DTable(host){
   c.lineWidth=5;c.strokeStyle='#11141d';
   c.strokeText('NEXTGEN SESSIONS',1024,157,790);
   c.fillStyle='#fff0d7';c.fillText('NEXTGEN SESSIONS',1024,157,790);
-  c.font='900 270px "Barlow Condensed",Impact,"Arial Narrow",sans-serif';
-  c.lineWidth=18;c.strokeStyle='#210f1a';
-  c.strokeText('NEON TILT',1024,352,1810);
-  c.fillStyle='#ff9d83';c.fillText('NEON TILT',1024,352,1810);
+  c.font='900 292px "Arial Black",Impact,Arial,sans-serif';
+  c.lineWidth=25;c.strokeStyle='#140a13';
+  c.strokeText('NEON TILT',1024,346,1880);
+  // Offset underprint and bright cream cap make a chunky embossed, backlit sign.
+  c.fillStyle='#85384b';c.fillText('NEON TILT',1024,365,1880);
+  c.fillStyle='#ffe0bf';c.fillText('NEON TILT',1024,341,1880);
+  c.fillStyle='#ff825f';c.fillText('NEON TILT',1024,335,1880);
   c.fillStyle='#e9b27d';c.fillRect(360,495,1328,9);
   const texture=new T.CanvasTexture(canvas);
   texture.colorSpace=T.SRGBColorSpace;
@@ -264,9 +267,10 @@ export async function create3DTable(host){
   }
  };
  setRamp(orbitPath,'#ecb98d');setRamp(rampPath,'#f3a6ba');
+ setRamp(CENTER_PATH,'#cad8ff');setRamp(SKYLINE_PATH,'#efb5cd');
  // Purpose-built raised decking, translucent guards and mechanical brackets.
  // These align with existing physical playfield landmarks without changing collisions.
- const detailedHardware=buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,BUMPERS});
+ const detailedHardware=buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,BUMPERS});
  // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
   const x=i===0?136:284,y=520;
@@ -292,7 +296,7 @@ export async function create3DTable(host){
  const plungerHandle=box(X(382),Y(660),.46,.44,.3,.56,nickel);
  // Flippers: full 3D paddle capsule (as opposed to flat rendered strokes).
  const flipperMeshes=[],flipperHeads=[];
- for(const f of [{side:'left',x:144,y:613,length:65},{side:'right',x:276,y:613,length:65}]){
+ for(const f of [{side:'left',x:144,y:613,length:71},{side:'right',x:276,y:613,length:71}]){
   const paddle=add(new T.CapsuleGeometry(.18,1.06,5,12),new T.MeshPhysicalMaterial({
    color:'#e4c3af',metalness:.64,roughness:.26,clearcoat:.7,clearcoatRoughness:.12
   }),X(f.x),Y(f.y),.57);
@@ -355,6 +359,8 @@ export async function create3DTable(host){
   [87,346,'orbit',0],[74,399,'orbit',1],[96,447,'orbit',2],
   [330,340,'ramp',0],[324,388,'ramp',1],[316,466,'ramp',2],
   [139,390,'target',0],[276,392,'target',1],
+  [207,342,'center',3],[210,316,'center',1],
+  [128,376,'skyline',2],[112,341,'skyline',1],
   [153,457,'mission',0],[207,460,'mission',1],[261,457,'mission',2],
   [126,487,'mission',0],[286,486,'mission',1],
   [109,552,'lower',0],[155,554,'lower',1],
@@ -362,7 +368,7 @@ export async function create3DTable(host){
   [98,607,'lower',1],[321,607,'lower',2],
   [170,586,'lower',0],[249,586,'lower',1]
  ];
- const insertModes={top:0,bumper:1,orbit:2,ramp:3,target:4,mission:5,lower:6,save:7};
+ const insertModes={top:0,bumper:1,orbit:2,ramp:3,target:4,mission:5,lower:6,save:7,center:8,skyline:9};
  const insertMeshes=[],insertColors=['#ffc66e','#fa6377','#66d9ff','#ff93d2'];
  for(let i=0;i<insertSpecs.length;i++){
   const [x,y,group,phase]=insertSpecs[i],cx=X(x),cy=Y(y);
@@ -384,6 +390,7 @@ export async function create3DTable(host){
   [315,308,'ramp',.30],[318,354,'ramp',.18],
   [180,384,'spinner',0],[229,383,'spinner',0],
   [174,480,'mission',0],[247,480,'mission',0],
+  [207,331,'center',0],[125,350,'skyline',-.14],
   [136,568,'lower',0],[282,568,'lower',0]
  ];
  for(let i=0;i<arrowPositions.length;i++){
@@ -448,7 +455,8 @@ export async function create3DTable(host){
  for(const [txt,x,y,w] of [
   ['JACKPOT',205,492,1.75],['RAMP',315,410,1.10],
   ['ORBIT',80,411,1.10],['BALL SAVE',208,565,1.65],
-  ['FRENZY',206,351,1.42]
+  ['FRENZY',206,351,1.42],
+  ['CROSS',205,327,1.28],['SKY',127,406,1.04]
  ]){
   plane(X(x),Y(y),.241,w+.20,.35,plaqueBacking);
   plane(X(x),Y(y),.245,w,.29,label(txt,'#ffe1b2',64,512,144,true));
@@ -564,6 +572,8 @@ export async function create3DTable(host){
    let active=false;
    if(ins.group==='bumper')active=frenzyActive;
    if(ins.group==='ramp')active=rampActive||engine.hurryUpUntil>engine.time;
+   if(ins.group==='center')active=engine.lastShot?.kind==='center' && engine.time-engine.lastShot.at<6;
+   if(ins.group==='skyline')active=engine.lastShot?.kind==='skyline' && engine.time-engine.lastShot.at<6;
    if(ins.group==='orbit')active=orbitActive||engine.comboCount>=2;
    if(ins.group==='target')active=engine.missions.targets;
    if(ins.group==='mission')active=multiplierActive||engine.missions.ride||engine.powerCharges>0;
@@ -602,6 +612,8 @@ export async function create3DTable(host){
   rushRing.opacity=rush?.89*beat:engine.state==='ready'?.18:.12;
   for(const a of arrowMesh){
    const on=a.group==='ramp'?rampActive:a.group==='orbit'?orbitActive:
+    a.group==='center'?engine.lastShot?.kind==='center':
+    a.group==='skyline'?engine.lastShot?.kind==='skyline':
     a.group==='spinner'?(overdrive||engine.spinnerTurns>0):
     a.group==='mission'?engine.missions.ride:
     engine.state==='playing';
