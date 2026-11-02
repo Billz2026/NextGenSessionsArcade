@@ -6,6 +6,15 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3G — mechanical 3D and pinball dot-matrix display
+
+- **3D structural detailing:** original procedural meshes for raised ramp decking, physically separate plastic covers, wire supports, guide hardware, cast-metal fasteners, lane gates, brackets, rubber posts, target bank shielding and shooter-lane safety cover. All the hardware remains three-dimensional in Three.js.
+- **Aligned ball and track geometry:** physics now exports shared `RAMP_PATH` and `ORBIT_PATH` arrays, which the Three.js wireforms, elevated decks and guided travelling ball all consume. The ball's render height follows the same path to prevent clipping through high ramps.
+- **Dot-matrix display:** a live 80×22 LED-style canvas in the former empty mission panel. It shows score, ball readiness, jackpots, missions, spinner/scoop hits and end-of-game messages. Higher-priority events take precedence over ordinary hits.
+- **Desktop viewport:** the no-scroll 100dvh desktop cockpit is retained; on mobile/Fold the DMD becomes a short landscape display below missions. It hides on extremely short desktop browser windows rather than compressing the flipper controls.
+- **Tests:** 26 pinball physics/shot tests plus 3 DMD logic tests, with the CI workflow expanded accordingly; Three.js and hardware construction also pass a mocked 3D runtime smoke test.
+- **Scope boundary:** the detailed components are procedural Three.js meshes, not externally authored Blender/glTF assets. Guided 3D ramp visuals now align better with the simplified 2D game engine, but the ball is not yet running a true 3D rigid-body physics simulation. GPU performance and realistic lighting still need actual browser/desktop/Fold checks before a public launch.
+
 ## Phase 3F — Bigger / Flashier / Full Screen Presence
 
 - **Large-table desktop pass:** tighter header, cabinet and flipper controls, allowing the full playfield to claim more of the available browser height while preserving the no-scroll contract at desktop widths.
