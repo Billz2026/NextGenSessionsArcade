@@ -807,3 +807,21 @@ html:not(.high-roller) .wheel-result{
  .bank-btn{font-size:16px}
  .game-title h1{letter-spacing:-.015em}
 }
+
+/* Phase 2 — Short Spin also suppresses decorative effects on devices without an OS reduced-motion preference. */
+html:not(.full-spin-opt-in) .wheel-panel.is-spinning .cabinet-lights span,
+html:not(.full-spin-opt-in) .wheel-panel.is-landed .landing-sparks i,
+html:not(.full-spin-opt-in) .wheel-panel.is-landed .top-pointer::after,
+html:not(.full-spin-opt-in) .wheel-panel.is-win .wheel-impact,
+html:not(.full-spin-opt-in) .wheel-panel.is-big-win .wheel-impact,
+html:not(.full-spin-opt-in) .wheel-panel.is-loss .wheel-impact,
+html:not(.full-spin-opt-in) .wheel-result.winner,
+html:not(.full-spin-opt-in) .wheel-result.loser,
+html:not(.full-spin-opt-in) .stage-callout,
+html:not(.full-spin-opt-in) .achievement-toast.celebrate{
+ animation:none!important;
+}
+html:not(.full-spin-opt-in) .wheel-panel.is-win .wheel-impact,
+html:not(.full-spin-opt-in) .wheel-panel.is-big-win .wheel-impact,
+html:not(.full-spin-opt-in) .wheel-panel.is-loss .wheel-impact,
+html:not(.full-spin-opt-in) .stage-callout{opacity:0}
