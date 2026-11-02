@@ -182,7 +182,7 @@ export async function create3DTable(host){
  // Shooter lane geometry and plunger hardware.
  box(X(382),Y(575),.2,.53,4.0,.18,black);
  for(let y=540;y<660;y+=11)linear(373,y,391,y+5,.029,gold,.42);
- box(X(382),Y(660),.46,.44,.3,.56,nickel);
+ const plungerHandle=box(X(382),Y(660),.46,.44,.3,.56,nickel);
  // Flippers: full 3D paddle capsule (as opposed to flat rendered strokes).
  const flipperMeshes=[],flipperHeads=[];
  for(const f of [{side:'left',x:144,y:613,length:65},{side:'right',x:276,y:613,length:65}]){
@@ -384,7 +384,7 @@ export async function create3DTable(host){
   const stageTime=reducedMotion?0:engine.time;
   for(const ins of insertMeshes){
    const phase=stageTime*3.2-ins.phase*.8-ins.i*.45;
-   const chasing=idleMode?.5+.5*Math.sin(now*.005-ins.i*.56):.27+.18*Math.sin(phase);
+   const chasing=reducedMotion?.75:idleMode?.5+.5*Math.sin(now*.005-ins.i*.56):.27+.18*Math.sin(phase);
    let active=false;
    if(ins.group==='bumper')active=frenzyActive;
    if(ins.group==='ramp')active=rampActive;
@@ -409,13 +409,15 @@ export async function create3DTable(host){
   previousFrame=now;
   if(reducedMotion)renderedSpin=engine.spinnerAngle;
   else renderedSpin+=Math.min(Math.max(0,engine.spinnerAngle-renderedSpin),spinDelta*22);
+  if(engine.spinnerAngle<renderedSpin)renderedSpin=engine.spinnerAngle;
   spinnerPivot.rotation.x=renderedSpin;
+  plungerHandle.position.y=Y(660)-(engine.charging?Math.max(0,engine.charge-.26)*.27:0);
   const scoopActive=engine.ball?.mode==='scoop';
   scoopLens.material.emissiveIntensity=scoopActive?3.5:
    idleMode?1+.65*Math.sin(now*.004):.55;
   for(let i=0;i<backboxBars.length;i++){
    const m=backboxBars[i].material;
-   m.emissiveIntensity=idleMode?.5+2*(.5+.5*Math.sin(now*.004-i*.8)):
+   m.emissiveIntensity=reducedMotion?.8:idleMode?.5+2*(.5+.5*Math.sin(now*.004-i*.8)):
      engine.missions.ride?2.5:.5+1.1*(.5+.5*Math.sin(now*.006-i*.85));
   }
 
