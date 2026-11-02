@@ -60,7 +60,7 @@ function processEvents(){
    ui.scoreFlash.textContent='+'+fmt(e.score);
    sound(e.target.startsWith('bumper')?650:560,.055);
    if(!reducedMotion){
-    const p=e.target.startsWith('bumper')?BUMPERS[Number(e.target.slice(-1))]:e.target==='sling0'?{x:143,y:545}:{x:277,y:545};
+    const p=e.target.startsWith('bumper')?BUMPERS[Number(e.target.slice(-1))]:e.target==='sling0'?{x:143,y:522}:{x:277,y:522};
     if(p)for(let i=0;i<8;i++){const a=i*Math.PI/4;particles.push({x:p.x,y:p.y,vx:Math.cos(a)*70,vy:Math.sin(a)*70,life:.42});}
    }
   }
@@ -187,7 +187,7 @@ function drawBoard(){
  // Matching left/right playfield slings
  for(const [idx,s] of SLINGS.entries()){
   ctx.beginPath();ctx.moveTo(s.x1,s.y1);ctx.lineTo(s.x2,s.y2);
-  ctx.lineTo(idx===0?132:288,579);ctx.closePath();
+  ctx.lineTo(idx===0?132:288,549);ctx.closePath();
   ctx.fillStyle=idx===0?'rgba(202,51,59,.52)':'rgba(184,53,67,.52)';ctx.fill();
   ctx.strokeStyle='#e9a260';ctx.lineWidth=2.5;ctx.stroke();
  }
