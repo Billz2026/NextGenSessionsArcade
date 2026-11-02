@@ -75,12 +75,27 @@ export async function create3DTable(host){
   object.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),vec.normalize());
   return object;
  }
- function label(text,color='#ffddaa',size=64,w=512,h=130){
+ function label(text,color='#ffddaa',size=64,w=512,h=130,sharp=false){
   const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
-  const c=canvas.getContext('2d');c.clearRect(0,0,w,h);c.font='900 '+size+'px Impact,"Arial Narrow",sans-serif';
-  c.textAlign='center';c.textBaseline='middle';c.shadowColor=color;c.shadowBlur=15;c.fillStyle=color;c.fillText(text,w/2,h/2,w-16);
-  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
-  return new T.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,side:T.DoubleSide});
+  const c=canvas.getContext('2d');c.clearRect(0,0,w,h);
+  c.textAlign='center';c.textBaseline='middle';
+  c.font='900 '+size+'px Impact,"Arial Narrow",Arial,sans-serif';
+  c.lineJoin='round';c.fillStyle=color;
+  // Avoid blurred lettering: the light comes from the 3D frame, not from a
+  // 15-pixel shadow baked into a low-resolution canvas texture.
+  c.shadowBlur=sharp?0:2;
+  if(sharp&&c.strokeText){
+   c.lineWidth=Math.max(3,Math.round(size*.038));
+   c.strokeStyle='#311b27';
+   c.strokeText(text,w/2,h/2,w-30);
+  }
+  c.fillText(text,w/2,h/2,w-30);
+  const texture=new T.CanvasTexture(canvas);
+  texture.colorSpace=T.SRGBColorSpace;
+  texture.anisotropy=Math.min(renderer.capabilities?.getMaxAnisotropy?.()||4,8);
+  texture.minFilter=T.LinearMipmapLinearFilter;
+  texture.magFilter=T.LinearFilter;
+  return new T.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,side:T.DoubleSide,toneMapped:false});
  }
  // Backbox and lacquered hardwood body, with truly modelled thickness.
  const boardW=BOARD.width*SCALE,boardH=BOARD.height*SCALE;
@@ -144,8 +159,8 @@ export async function create3DTable(host){
  // Billboard sign: original logo displayed on textured top panel, not lifted website heading.
  box(0,5.48,.3,6.25,1.95,.22,metal('#161322',.18,.62));
  box(0,5.48,.46,5.93,1.70,.03,metal('#070d20',.17,.23));
- plane(0,5.84,.51,5.55,.76,label('NEXTGEN SESSIONS','#f9d39e',52));
- plane(0,5.2,.51,5.77,1.0,label('NEON TILT','#ff8e7d',100));
+ plane(0,5.84,.52,5.55,.76,label('NEXTGEN SESSIONS','#ffe5be',85,1024,192,true));
+ plane(0,5.2,.52,5.77,1.0,label('NEON TILT','#ffad94',168,1024,256,true));
  // Mechanical wall wires are mapped to actual collision segments, not decorative outlines.
  for(let i=0;i<WALLS.length;i++){
   const [x1,y1,x2,y2]=WALLS[i];
@@ -231,7 +246,7 @@ export async function create3DTable(host){
  // Flippers: full 3D paddle capsule (as opposed to flat rendered strokes).
  const flipperMeshes=[],flipperHeads=[];
  for(const f of [{side:'left',x:144,y:613,length:65},{side:'right',x:276,y:613,length:65}]){
-  const paddle=add(new T.CapsuleGeometry(.18,.94,5,12),new T.MeshPhysicalMaterial({
+  const paddle=add(new T.CapsuleGeometry(.18,1.06,5,12),new T.MeshPhysicalMaterial({
    color:'#e4c3af',metalness:.64,roughness:.26,clearcoat:.7,clearcoatRoughness:.12
   }),X(f.x),Y(f.y),.57);
   // Capsule's long axis is +Y; rotate around screen-normal Z to match the bat.
