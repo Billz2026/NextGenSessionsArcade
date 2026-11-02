@@ -1,7 +1,7 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP} from './engine.mjs';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH} from './engine.mjs';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -146,8 +146,7 @@ export async function create3DTable(host){
   box(x,y-.39,.24,.31,.12,.16,nickel);
  }
  // Real tubular overpasses with stainless supports and translucent plastic lanes.
- const orbitPath=[[77,375,.3],[59,315,.38],[57,245,.52],[73,196,.63],[95,177,.64],[137,152,.68]];
- const rampPath=[[310,371,.43],[326,330,.62],[320,290,.93],[286,244,1.2],[285,203,1.43],[311,170,1.28],[291,150,.95]];
+ const orbitPath=ORBIT_PATH,rampPath=RAMP_PATH;
  const setRamp=(path,color)=>{
   tube(path,.12,darkChrome);
   tube(path.map(([x,y,z])=>[x,y,z+.13]),.065,nickel);
@@ -163,7 +162,7 @@ export async function create3DTable(host){
  setRamp(orbitPath,'#ecb98d');setRamp(rampPath,'#f3a6ba');
  // Purpose-built raised decking, translucent guards and mechanical brackets.
  // These align with existing physical playfield landmarks without changing collisions.
- const detailedHardware=buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP});
+ const detailedHardware=buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH});
  // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
   const x=i===0?136:284,y=520;
@@ -390,7 +389,7 @@ export async function create3DTable(host){
   const b=engine.ball;
   ball.visible=Boolean(b);
   if(b){
-   ball.position.set(X(b.x),Y(b.y),b.mode==='travel'?.96:.62);
+   ball.position.set(X(b.x),Y(b.y),b.mode==='travel'?(b.travelHeight??.8)+.2:.62);
    if(b.mode==='shooter')ball.position.z=.55;
    if(b.mode==='scoop')ball.position.z=.31;
   }
