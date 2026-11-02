@@ -6,6 +6,17 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3D — immersive 3D desktop build
+
+- **No-scroll desktop game view:** at desktop widths (1121 CSS px and above), the page uses the actual 100dvh browser viewport. The machine, flippers, score, plunger, mission display and personal scores fit inside a single screen at normal zoom. Short laptop viewport heights use an additional compact layout.
+- **Pinball-first composition:** the title area and long help/footer are hidden on desktop so the physical table and score console dominate. Smaller screens still allow normal scrolling for accessible touch controls.
+- **Actual 3D rendering:** Three.js WebGL scene with 3D lacquered cabinet, metal wall rails, raised-looking tube ramps, physically modelled bumper assemblies, plastic slings, steel inlanes, stand-up targets, rotating 3D flippers, spherical chrome ball and real-time lights.
+- **Game state remains unchanged:** the existing deterministic two-dimensional engine still provides the ball position, flipper angles, targets, scores, missions and drain rules. 3D visuals do not imply 3D ball or ramp physics.
+- **Graceful fallback:** the prior 2D Canvas renderer remains usable if WebGL or the Three.js module cannot load. The 3D/2D switch allows comparing them. Touch input passes to an invisible input canvas behind the pointer-transparent WebGL canvas.
+- **Performance:** lower resolution and shadow-map settings on screens at or below 1120 CSS px.
+- **Dependency:** the 3D view imports pinned Three.js 0.180.0 from jsDelivr at runtime. Offline play uses the existing 2D fallback, but a first offline load of game scripts still requires the site files to be cached.
+- **Release status:** this is a 3D visual prototype with a simplified 2D physics engine. It has not yet been visually tested on a real Samsung Fold 7 or validated for professional-grade physical realism.
+
 ## Phase 3C improvements
 - **Desktop cockpit:** roughly 60/40 machine-to-HUD columns, capped at 1,450 CSS pixels for better composition.
 - **Larger playfield:** original desktop table cap raised from 438px to as much as 585px depending on viewport, with separate narrower-laptop rules.
