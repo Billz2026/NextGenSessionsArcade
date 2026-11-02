@@ -149,3 +149,23 @@ test('the DMD shows context-sensitive ball and game-over status',()=>{
  assert.deepEqual(getDmdStatus({state:'between'},9500),
   ['BALL DRAINED','NEXT BALL READY']);
 });
+
+test('Phase 3M DMD announces real bonuses and special modes',()=>{
+ assert.deepEqual(
+  [describeDmdEvent({type:'skillshot',points:12000}).headline,
+   describeDmdEvent({type:'combo',count:3,points:10000}).sub,
+   describeDmdEvent({type:'hurryup'}).headline,
+   describeDmdEvent({type:'jackpot',points:50000}).sub],
+  ['SKILL SHOT!','+10,000','JACKPOT LIT!','+50,000']);
+ assert.equal(describeDmdEvent({type:'overdrive'}).priority,4);
+ assert.equal(describeDmdEvent({type:'superSpinner',points:3000}).sub,'+3,000');
+ assert.equal(describeDmdEvent({type:'hurryMiss'}).sub,'RECHARGE GRID');
+});
+test('DMD displays timer-driven jackpot and Overdrive objectives',()=>{
+ const base={state:'playing',ball:{mode:'live'},ballNumber:2,score:17000,time:12,
+  frenzyUntil:0,multiplierUntil:0,powerCharges:3,overdriveUntil:0,hurryUpUntil:26};
+ assert.deepEqual(getDmdStatus(base,7000),['NEON RUSH JACKPOT','SCOOP · 14 SECONDS']);
+ assert.deepEqual(getDmdStatus({...base,hurryUpUntil:0,overdriveUntil:22},7000),
+  ['SPINNER OVERDRIVE','SPIN FOR BONUS']);
+});
+
