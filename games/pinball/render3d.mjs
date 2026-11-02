@@ -1,7 +1,7 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS} from './engine.mjs';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP} from './engine.mjs';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -13,14 +13,14 @@ export async function create3DTable(host){
  const scene=new T.Scene();
  scene.background=new T.Color('#080a11');
  const camera=new T.PerspectiveCamera(33,0.6,.1,120);
- camera.position.set(0,-6.0,29.5);
+ camera.position.set(0,-4.4,27.15);
  camera.lookAt(0,0,.12);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
  const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.7;
+ renderer.toneMappingExposure=1.9;
  renderer.shadowMap.enabled=true;
  renderer.shadowMap.type=T.PCFSoftShadowMap;
  renderer.domElement.className='webgl-table';
@@ -201,6 +201,129 @@ export async function create3DTable(host){
   const light=new T.PointLight(i%2?'#9fc4ff':'#ffc18d',.38,1.8);
   light.position.set(X(pos[0]),Y(pos[1]),.85);scene.add(light);goldLamps.push(g);
  }
+
+ // Phase 3E — incandescent-style lamp field (actual mesh bezels, lenses and
+ // emissive materials; the moving ball remains in front of the inserts).
+ const insertSpecs=[
+  [80,209,'top',0],[125,202,'top',1],[172,180,'top',2],
+  [246,180,'top',0],[302,208,'top',1],[332,213,'top',2],
+  [107,268,'bumper',0],[191,236,'bumper',1],[305,268,'bumper',2],
+  [157,345,'bumper',0],[248,340,'bumper',1],[209,346,'bumper',2],
+  [87,346,'orbit',0],[74,399,'orbit',1],[96,447,'orbit',2],
+  [330,340,'ramp',0],[324,388,'ramp',1],[316,466,'ramp',2],
+  [139,390,'target',0],[276,392,'target',1],
+  [153,457,'mission',0],[207,460,'mission',1],[261,457,'mission',2],
+  [126,487,'mission',0],[286,486,'mission',1],
+  [109,552,'lower',0],[155,554,'lower',1],
+  [209,544,'save',0],[258,554,'lower',2],[315,552,'lower',0],
+  [98,607,'lower',1],[321,607,'lower',2],
+  [170,586,'lower',0],[249,586,'lower',1]
+ ];
+ const insertModes={top:0,bumper:1,orbit:2,ramp:3,target:4,mission:5,lower:6,save:7};
+ const insertMeshes=[],insertColors=['#ffbc72','#f27c7b','#9cd8ed','#eac091'];
+ for(let i=0;i<insertSpecs.length;i++){
+  const [x,y,group,phase]=insertSpecs[i],cx=X(x),cy=Y(y);
+  const bezel=metal('#8d7d8a',.26,.82);
+  cyl(cx,cy,.205,.145,.058,bezel,16);
+  const color=insertColors[(phase+i)%insertColors.length];
+  const material=new T.MeshStandardMaterial({
+   color,emissive:color,emissiveIntensity:.22,roughness:.28,metalness:.06
+  });
+  const lens=cyl(cx,cy,.245,.106,.048,material,20);
+  insertMeshes.push({lens,material,group,phase,i});
+ }
+ // Directional arrows with true geometric arrow-head inserts.
+ const arrowMesh=[];
+ const arrowPositions=[
+  [92,319,'orbit',-.22],[93,361,'orbit',-.12],
+  [315,308,'ramp',.30],[318,354,'ramp',.18],
+  [180,384,'spinner',0],[229,383,'spinner',0],
+  [174,480,'mission',0],[247,480,'mission',0],
+  [136,568,'lower',0],[282,568,'lower',0]
+ ];
+ for(let i=0;i<arrowPositions.length;i++){
+  const [x,y,group,rot]=arrowPositions[i];
+  const shape=new T.Shape();
+  shape.moveTo(0,.22);shape.lineTo(.20,-.07);shape.lineTo(.09,-.07);
+  shape.lineTo(.09,-.24);shape.lineTo(-.09,-.24);
+  shape.lineTo(-.09,-.07);shape.lineTo(-.20,-.07);shape.closePath();
+  const material=new T.MeshStandardMaterial({
+   color:i%2?'#c97b81':'#a99fcc',
+   emissive:i%2?'#ff887a':'#a6c2ee',emissiveIntensity:.22,
+   metalness:.18,roughness:.24,side:T.DoubleSide
+  });
+  const arrow=add(new T.ShapeGeometry(shape),material,X(x),Y(y),.235,false);
+  arrow.rotation.z=rot;arrowMesh.push({arrow,material,group,i});
+ }
+ // Stacked translucent guide plastics and metal hardware strengthen the
+ // impression of a physically assembled cabinet.
+ const shroudMat=new T.MeshPhysicalMaterial({color:'#583f70',metalness:.2,roughness:.24,clearcoat:.9,transparent:true,opacity:.82,side:T.DoubleSide,depthWrite:false});
+ for(const side of [-1,1]){
+  const x=side===-1?104:315;
+  box(X(x),Y(509),.38,.95,.40,.14,shroudMat);
+  for(const px of [x-18,x+18]){
+   cyl(X(px),Y(525),.39,.10,.3,chrome,12);
+   const top=cyl(X(px),Y(525),.55,.15,.07,black,14);
+   top.castShadow=true;
+  }
+  const cover=box(X(x),Y(589),.31,.84,.22,.12,shroudMat);
+  cover.rotation.z=side*.33;
+ }
+ // A spinner has a metal pivot, thin rotating leaf and an observable shaft.
+ const spX=X(SPINNER.x),spY=Y(SPINNER.y);
+ const spinnerPivot=new T.Group();
+ spinnerPivot.position.set(spX,spY,.65);scene.add(spinnerPivot);
+ for(const offset of [-.56,.56]){
+  box(spX+offset,spY,.60,.10,.32,.55,nickel);
+  cyl(spX+offset,spY,.9,.11,.12,chrome,12);
+ }
+ const spinnerAxle=add(new T.CylinderGeometry(.055,.055,1.13,12),chrome,spX,spY,.79);
+ spinnerAxle.rotation.z=PI/2;
+ const spinnerPaddle=new T.Mesh(
+  new T.BoxGeometry(.77,.58,.067),
+  new T.MeshPhysicalMaterial({color:'#d4a66f',metalness:.72,roughness:.24,clearcoat:.7})
+ );
+ spinnerPaddle.position.set(0,0,0);spinnerPivot.add(spinnerPaddle);
+ // The scoop is a recessed ring with an illuminated red inner cup.
+ const scx=X(SCOOP.x),scy=Y(SCOOP.y);
+ cyl(scx,scy,.205,.45,.055,black,32);
+ ring(scx,scy,.270,.31,.09,chrome);
+ const scoopLens=add(new T.CylinderGeometry(.23,.23,.04,32),
+  new T.MeshStandardMaterial({color:'#481d32',emissive:'#d53f6a',emissiveIntensity:.23,roughness:.6}),scx,scy,.235);
+ scoopLens.rotation.x=PI/2;
+ for(const dx of [-.44,.44]){
+  box(scx+dx,scy,.45,.08,.75,.39,darkChrome);
+ }
+ // Tiny raised plaques identify the actual scoring devices.
+ plane(spX,spY+.53,.29,.96,.22,label('SPIN','#f9d39a',61,220,90));
+ plane(scx,scy+.58,.29,1.13,.23,label('SCOOP','#ffc2a5',57,250,90));
+ for(const [txt,x,y,w] of [
+  ['JACKPOT',205,492,1.65],['RAMP',315,410,1.04],
+  ['ORBIT',80,411,1.04],['BALL SAVE',208,565,1.24],
+  ['FRENZY',206,351,1.23]
+ ]){
+  plane(X(x),Y(y),.239,w,.25,label(txt,'#ffd0a5',48,260,80));
+ }
+ // Backglass lightbars animate independently from the scrolling playfield.
+ const backboxBars=[];
+ for(let i=0;i<9;i++){
+  const x=-2.55+i*.64;
+  const bar=box(x,4.50,.54,.43,.065,.04,
+   new T.MeshStandardMaterial({color:'#ff9872',emissive:'#f07165',emissiveIntensity:.4}));
+  backboxBars.push(bar);
+ }
+ // Edge LEDs give the cabinet a cohesive arcade glow.
+ const cabinetLEDs=[];
+ for(const side of [-1,1]){
+  for(let i=0;i<10;i++){
+   const y=5.3-i*1.15;
+   const dot=add(new T.SphereGeometry(.06,10,8),
+    new T.MeshStandardMaterial({color:'#ffc08a',emissive:'#f67d6b',emissiveIntensity:.8}),
+    side*4.33,y,.77,false);
+   cabinetLEDs.push(dot);
+  }
+ }
+
  // Warm overhead LED bank, white soft fill and red cabinet-edge glow.
  scene.add(new T.AmbientLight('#a4b4de',1.35));
  const key=new T.DirectionalLight('#ffdcbd',4.0);key.position.set(-5,4,13);
@@ -227,6 +350,7 @@ export async function create3DTable(host){
   if(b){
    ball.position.set(X(b.x),Y(b.y),b.mode==='travel'?.96:.62);
    if(b.mode==='shooter')ball.position.z=.55;
+   if(b.mode==='scoop')ball.position.z=.31;
   }
   for(let i=0;i<engine.flippers.length;i++){
    const f=engine.flippers[i],sgn=f.side==='left'?1:-1;
@@ -249,6 +373,45 @@ export async function create3DTable(host){
    bumperLights[i].intensity=hit?6:frenzy?3.1:.65;
    bumperTops[i].material=hit?chrome:amber;
   }
+
+  const idleMode=engine.state==='ready'||engine.state==='gameover';
+  const rampActive=engine.lastShot?.kind==='ramp'&&engine.time-engine.lastShot.at<2;
+  const orbitActive=engine.lastShot?.kind==='orbit'&&engine.time-engine.lastShot.at<2;
+  const frenzyActive=engine.time<engine.frenzyUntil;
+  const multiplierActive=engine.time<engine.multiplierUntil;
+  const ballSaveActive=engine.state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil;
+  const stageTime=reducedMotion?0:engine.time;
+  for(const ins of insertMeshes){
+   const phase=stageTime*3.2-ins.phase*.8-ins.i*.45;
+   const chasing=idleMode?.5+.5*Math.sin(now*.005-ins.i*.56):.27+.18*Math.sin(phase);
+   let active=false;
+   if(ins.group==='bumper')active=frenzyActive;
+   if(ins.group==='ramp')active=rampActive;
+   if(ins.group==='orbit')active=orbitActive;
+   if(ins.group==='target')active=engine.missions.targets;
+   if(ins.group==='mission')active=multiplierActive||engine.missions.ride;
+   if(ins.group==='save')active=ballSaveActive;
+   if(ins.group==='top')active=engine.missions.lanes||engine.lanes.size>0;
+   ins.material.emissiveIntensity=active?2.8:(idleMode?.55+1.35*chasing:.40+.48*chasing);
+  }
+  for(const a of arrowMesh){
+   const on=a.group==='ramp'?rampActive:a.group==='orbit'?orbitActive:
+    a.group==='spinner'?engine.spinnerTurns>0:
+    a.group==='mission'?engine.missions.ride:
+    engine.state==='playing';
+   const pulse=reducedMotion?1:(.6+.4*Math.sin(now*.009-a.i*.5));
+   a.material.emissiveIntensity=on?2.2*pulse:(idleMode?.6+.5*pulse:.22);
+  }
+  spinnerPivot.rotation.x=engine.spinnerAngle;
+  const scoopActive=engine.ball?.mode==='scoop';
+  scoopLens.material.emissiveIntensity=scoopActive?3.5:
+   idleMode?1+.65*Math.sin(now*.004):.55;
+  for(let i=0;i<backboxBars.length;i++){
+   const m=backboxBars[i].material;
+   m.emissiveIntensity=idleMode?.5+2*(.5+.5*Math.sin(now*.004-i*.8)):
+     engine.missions.ride?2.5:.5+1.1*(.5+.5*Math.sin(now*.006-i*.85));
+  }
+
   const idle=engine.state==='ready'||engine.state==='gameover';
   sparkle.intensity=idle&&!reducedMotion?13+Math.sin(now*.002)*4:13;
   renderer.render(scene,camera);
