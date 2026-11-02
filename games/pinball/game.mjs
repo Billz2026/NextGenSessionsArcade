@@ -103,7 +103,28 @@ function syncHUD(){
    ui.scoreState.textContent=state==='ready'?'PRESS START':state==='playing'?(engine.ball?.mode==='shooter'?'CHARGE LAUNCH':'KEEP THE BALL ALIVE'):state==='between'?'NEXT BALL':'RUN COMPLETE';
    lastBall=ball;lastStatus=state;
  }
- if(lastPower!==power){ui.power.style.width=power+'%';ui.powerLabel.textContent=power+'%';lastPower=power;}
+ const shooterReady=state==='playing'&&engine.ball?.mode==='shooter';
+ const ballLive=state==='playing'&&engine.ball?.mode!=='shooter';
+ const saveRemaining=ballLive&&!engine.ballSaveUsed&&engine.ballLaunchedAt!==null?
+  Math.max(0,engine.ballSaveUntil-engine.time):0;
+ const progress=shooterReady?power:saveRemaining>0?
+  Math.round(Math.min(1,saveRemaining/11)*100):0;
+ ui.launcherPanel.classList.toggle('is-ball-live',ballLive);
+ ui.launchTitle.textContent=ballLive?'01 / IN PLAY':'01 / LAUNCH';
+ ui.launchHint.textContent=shooterReady?'HOLD TO CHARGE - RELEASE TO FIRE':
+  ballLive?'USE FLIPPERS TO KEEP THE BALL ALIVE':
+  state==='between'?'NEXT BALL PREPARING':'START GAME TO LAUNCH';
+ ui.powerTitle.textContent=shooterReady?'PLUNGER POWER':
+  ballLive?'EARLY BALL SAVE':'LAUNCH STATUS';
+ ui.powerLabel.textContent=shooterReady?power+'%':ballLive?
+  (saveRemaining>0?Math.ceil(saveRemaining)+'s':'OFF'):
+  state==='ready'?'READY':state==='between'?'WAIT':'-';
+ if(lastPower!==progress){ui.power.style.width=progress+'%';lastPower=progress;}
+ const launchMessage=shooterReady?'HOLD AND RELEASE TO LAUNCH':
+  ballLive?'BALL IN PLAY - USE FLIPPERS':
+  state==='between'?'NEXT BALL READY SOON':
+  state==='gameover'?'GAME OVER - PLAY AGAIN':'START GAME TO LAUNCH';
+ if(ui.launch.textContent!==launchMessage)ui.launch.textContent=launchMessage;
  if(lastBest!==best){ui.best.textContent=fmt(best);lastBest=best;}
  ui.scoreState.textContent=state==='ready'?'PRESS START':state==='playing'?(engine.ball?.mode==='shooter'?'CHARGE LAUNCH':'KEEP THE BALL ALIVE'):state==='between'?'NEXT BALL':'RUN COMPLETE';
  ui.launch.disabled=!(state==='playing'&&engine.ball?.mode==='shooter');
