@@ -6,7 +6,7 @@ const FMT=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString('en-GB');
 export const ATTRACT_MESSAGES=Object.freeze([
  Object.freeze(['PRESS START','PLAYER ONE READY']),
  Object.freeze(['3 BALL ARCADE','CHASE JACKPOTS']),
- Object.freeze(['LIGHT THE TABLE','RAMP + ORBIT']),
+ Object.freeze(['FOUR BALL ROUTES','CHASE THE JACKPOT']),
  Object.freeze(['HIGH SCORE RUN','OWN THE NIGHT'])
 ]);
 const ATTRACT_MS=3800,STATUS_MS=4500;
@@ -33,7 +33,7 @@ export function getDmdStatus(game,now=0){
  return [
   ['SCORE '+FMT(game.score),'BALL '+ball+' / 3'],
   ['TARGET BANK '+targets+'/4','NEON LANES '+lanes+'/3'],
-  ['POWER GRID '+(game.powerCharges||0)+'/3','RAMP + ORBIT'],
+  ['POWER GRID '+(game.powerCharges||0)+'/3','FOUR ROUTES LIVE'],
   ['SPINS '+(game.spinnerTurns||0),'SCOOPS '+(game.scoopHits||0)]
  ][frame];
 }
@@ -46,7 +46,10 @@ export function describeDmdEvent(event,game=null){
   case 'ball':return {headline:'BALL '+(event.ball||1)+' READY',sub:'CHARGE PLUNGER',priority:3,duration:1500};
   case 'launch':return {headline:'BALL IN PLAY',sub:'CHASE JACKPOTS',priority:2,duration:1100};
   case 'shot':return {
-   headline:event.kind==='ramp'?'RAMP SHOT':'ORBIT SHOT',
+   headline:({
+    ramp:'RAMP SHOT',orbit:'ORBIT SHOT',
+    center:'CROSSOVER!',skyline:'SKYLINE LOOP'
+   })[event.kind]||'SHOT COMPLETE',
    sub:bonus(event.points||0,game),
    priority:3,duration:1900
   };
