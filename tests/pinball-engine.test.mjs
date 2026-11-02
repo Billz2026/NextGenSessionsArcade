@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,BUMPERS,SHOTS,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,BUMPERS,SHOTS,SPINNER,SCOOP,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -162,4 +162,53 @@ test('ramp crossing moves ball into animated return lane',()=>{
  assert.equal(g.ball.mode,'travel');
  assert.equal(g.shots,1);
  steps(g,1.1);assert.equal(g.ball.mode,'live');
+});
+
+test('spinner awards points once when crossed at speed',()=>{
+ const g=new PinballEngine();g.start();g.time=5;g.ball.mode='live';
+ g.ball.x=SPINNER.x;g.ball.y=SPINNER.y+2;g.ball.vy=400;g.ball.vx=10;
+ g.checkSensors({x:SPINNER.x,y:SPINNER.y-10});
+ assert.equal(g.spinnerTurns,1);
+ assert.equal(g.score,SPINNER.points);
+ assert.equal(g.consumeEvents().some(e=>e.type==='spinner'),true);
+});
+test('spinner cooldown prevents accidental duplicate scoring',()=>{
+ const g=new PinballEngine();g.start();g.time=4;g.ball.mode='live';
+ g.ball.x=SPINNER.x;g.ball.y=SPINNER.y+2;g.ball.vy=380;
+ g.checkSensors({x:g.ball.x,y:SPINNER.y-10});
+ g.time+=.09;g.ball.y=SPINNER.y-1;g.ball.vy=-380;
+ g.checkSensors({x:g.ball.x,y:SPINNER.y+9});
+ assert.equal(g.spinnerTurns,1);
+});
+test('scoop captures and ejects a real ball without losing a turn',()=>{
+ const g=new PinballEngine();g.start();g.time=4;g.ball.mode='live';
+ g.ball.x=SCOOP.x;g.ball.y=SCOOP.y;g.ball.vy=-350;g.ball.vx=20;
+ g.checkSensors({x:SCOOP.x,y:SCOOP.y+10});
+ assert.equal(g.ball.mode,'scoop');
+ assert.equal(g.scoopHits,1);
+ assert.equal(g.score,SCOOP.points);
+ steps(g,SCOOP.hold+.12,BOARD.step);
+ assert.equal(g.ball.mode,'live');
+ assert.ok(g.ball.vy<0);
+ assert.equal(g.ballNumber,1);
+});
+test('scoop cannot recapture ball instantly after eject',()=>{
+ const g=new PinballEngine();g.start();g.time=10;g.ball.mode='live';
+ g.ball.x=SCOOP.x;g.ball.y=SCOOP.y;g.ball.vy=-320;
+ g.checkSensors({x:SCOOP.x,y:SCOOP.y+10});
+ steps(g,SCOOP.hold+.05,BOARD.step);
+ const initial=g.score;
+ g.ball.x=SCOOP.x;g.ball.y=SCOOP.y;g.ball.vy=-330;
+ g.checkSensors({x:SCOOP.x,y:SCOOP.y+10});
+ assert.equal(g.scoopHits,1);
+ assert.equal(g.score,initial);
+});
+test('new game resets spinner and scoop stats',()=>{
+ const g=new PinballEngine();g.start();
+ g.spinnerTurns=9;g.spinnerAngle=23;g.scoopHits=3;g.lastScoopTime=22;
+ g.start();
+ assert.equal(g.spinnerTurns,0);
+ assert.equal(g.spinnerAngle,0);
+ assert.equal(g.scoopHits,0);
+ assert.ok(g.lastScoopTime<0);
 });
