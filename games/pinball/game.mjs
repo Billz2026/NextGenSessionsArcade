@@ -1,5 +1,6 @@
 import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs';
 import {renderTable} from './visuals.mjs';
+import {createDotMatrix} from './dmd.mjs';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -26,6 +27,7 @@ best=Math.max(best,...topScores,0);
 let lastModeMessage='PRESS START TO PLAY',messageUntil=0,announcedGameOver=false;
 let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='';
 const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+const dmd=createDotMatrix(document.getElementById('dmd-screen'),{reducedMotion});
 // A physically modelled Three.js scene is the preferred renderer. 2D Canvas
 // is retained as an immediate, offline-safe fallback on unsupported systems.
 const stage=document.getElementById('table-stage');
@@ -47,7 +49,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=2');
+  const {create3DTable}=await import('./render3d.mjs?v=3');
   const result=await create3DTable(stage);
   view3d=result;
   result.canvas.addEventListener('webglcontextlost',event=>{
@@ -152,6 +154,7 @@ function sound(freq=500,duration=.07,kind='triangle'){
 }
 function processEvents(){
  for(const e of engine.consumeEvents()){
+  dmd.notify(e);
   if(['shot','mission','extra','scoop','spinner','frenzy','multiplier'].includes(e.type)){
    const duration=e.type==='extra'?1050:e.type==='mission'?900:550;
    tableFlash={kind:e.type,until:performance.now()+duration,duration};
@@ -334,7 +337,7 @@ function resize(){
 function loop(now){
  const dt=lastTime?Math.min(.05,(now-lastTime)/1000):0;lastTime=now;
  if(!document.hidden){
-  engine.advance(dt);processEvents();syncHUD();
+  engine.advance(dt);processEvents();syncHUD();dmd.update(engine,now);
   if(prefer3d&&view3d){
    try{view3d.update(engine,{bumperFlash,tableFlash,reducedMotion});}
    catch(error){
