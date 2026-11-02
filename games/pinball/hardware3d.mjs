@@ -1,7 +1,7 @@
 // Neon Tilt — bespoke 3D mechanical detailing, Phase 3G.
 // All dimensions are Three.js world-space; table landmarks use the shared
 // 420 × 700 physics coordinate map passed in by render3d.mjs.
-export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,BUMPERS}){
+export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,BUMPERS}){
  const physically=(color,roughness=.28,metalness=.7,extra={})=>new T.MeshPhysicalMaterial({
   color,roughness,metalness,clearcoat:.82,clearcoatRoughness:.16,...extra
  });
@@ -28,7 +28,7 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_
   const m=add(new T.BoxGeometry(w,h,d),mat,X(x),Y(y),z);
   m.rotation.z=rotation;return m;
  }
- function rod(points,rad=.045,mat=chrome){
+ function rod(points,rad=.075,mat=chrome){
   const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(X(p[0]),Y(p[1]),p[2])));
   return add(new T.TubeGeometry(curve,Math.max(20,points.length*12),rad,8,false),mat);
  }
@@ -64,20 +64,30 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_
   deck.material.side=T.DoubleSide;
   // Deck spine supports appear below the raised channel.
   const spine=path.map(([x,y,z])=>[x,y,z-.21]);
-  rod(spine,.055,anodised);
+  rod(spine,.105,anodised);
   // Structural beams and rail joins align to this exact deck geometry.
   for(let i=1;i<path.length-1;i+=2){
    const [x,y,z]=path[i];
    const length=Math.max(.16,z-.23);
-   const post=add(new T.CylinderGeometry(.065,.082,length,12),brass,X(x),Y(y),.23+length/2);
+   const post=add(new T.CylinderGeometry(.095,.11,length,16),brass,X(x),Y(y),.23+length/2);
    post.rotation.x=Math.PI/2;
    fastener(x,y,z+.08,.85);
-   beam(x,y,z-.06,.8,.09,.11,anodised);
+   beam(x,y,z-.06,1.12,.16,.19,anodised);
   }
   // The outer curled edge reads like moulded plastic in side lighting.
   const left=path.map(([x,y,z])=>[x-halfWidth*40,y,z+.10]);
   const right=path.map(([x,y,z])=>[x+halfWidth*40,y,z+.10]);
-  rod(left,.035,chrome);rod(right,.035,chrome);
+  // Double reinforced steel rails with heavy polished outer guard.
+  rod(left,.092,steel);rod(right,.092,steel);
+  rod(left.map(([x,y,z])=>[x,y,z+.12]),.044,chrome);
+  rod(right.map(([x,y,z])=>[x,y,z+.12]),.044,chrome);
+  // Stainless entry collars and crossbeams hold the rail assembly together.
+  for(const i of [0,Math.floor(path.length/2),path.length-1]){
+   const [x,y,z]=path[i];
+   const brace=beam(x,y,z-.14,halfWidth*2.7,.14,.20,brass);
+   brace.castShadow=true;
+   fastener(x,y,z+.12,.8);
+  }
  }
 
  // Bumper skirts: concentric outer rubber ring and metallic mounting collars.
@@ -101,8 +111,26 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_
  }
 
  const rightPath=RAMP_PATH,leftPath=ORBIT_PATH;
- rampDeck(rightPath,.27,transparent);
- rampDeck(leftPath,.18,blue);
+ rampDeck(rightPath,.32,transparent);
+ rampDeck(leftPath,.24,blue);
+ // Additional *playable* elevated lanes: a centre crossover above the middle
+ // bumper, and a Skyline return down the left inlane. Both are engine paths.
+ rampDeck(CENTER_PATH,.26,transparent);
+ rampDeck(SKYLINE_PATH,.25,red);
+ // Four open-mouthed shot entrances anchor the routes visually to gameplay.
+ for(const [path,color,sign] of [
+  [RAMP_PATH,brass,'RAMP'],[ORBIT_PATH,steel,'ORBIT'],
+  [CENTER_PATH,brass,'CROSS'],[SKYLINE_PATH,steel,'SKY']
+ ]){
+  const [x,y,z]=path[0];
+  beam(x,y,z+.05,1.08,.26,.18,color);
+  for(const dx of [-18,18]){
+   const p=add(new T.CylinderGeometry(.09,.10,.39,14),steel,
+    X(x+dx),Y(y-9),z+.21);
+   p.rotation.x=Math.PI/2;
+   fastener(x+dx,y-9,z+.44,.78);
+  }
+ }
  // Shaped plastic covers around slings, all lifted above the playfield.
  const slings=[
   {points:[[101,500],[152,523],[165,546],[130,551],[103,530]],mat:red},
@@ -141,10 +169,23 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_
   }
  }
  // Cast-metal ramp entrances, grounded in real shot sensors.
- for(const [x,y,mirror] of [[77,373,-1],[311,372,1]]){
+ for(const [x,y,mirror] of [[77,373,-1],[311,372,1],[207,354,0],[124,380,-1]]){
   beam(x,y,.42,1.04,.22,.25,anodised,mirror*.26);
-  rod([[x-23,y+15,.38],[x,y-.03,.52],[x+23,y-15,.65]],.075,chrome);
+  rod([[x-23,y+15,.38],[x,y-.03,.52],[x+23,y-15,.65]],.105,chrome);
   fastener(x-16,y+7,.57,.7);fastener(x+16,y-7,.57,.7);
+ }
+ // Heavy return-lane guides and rubber-capped safety posts in the lower third.
+ for(const group of [
+  [[91,548,.45],[113,572,.48],[132,602,.5],[139,629,.45]],
+  [[329,548,.45],[307,572,.48],[288,602,.5],[281,629,.45]],
+  [[142,506,.43],[145,538,.50],[158,563,.47]],
+  [[279,506,.43],[276,538,.50],[262,563,.47]]
+ ]){
+  rod(group,.085,steel);
+  for(const idx of [0,group.length-1]){
+   const [x,y,z]=group[idx];
+   fastener(x,y,z+.12,.86);
+  }
  }
  // Shooter lane spring casing, screws and transparent safety guide.
  beam(381,580,.56,.49,3.5,.06,transparent);
