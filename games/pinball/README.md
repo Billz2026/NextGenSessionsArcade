@@ -6,6 +6,16 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 4 — classic arcade playfield redesign (no metal wireforms)
+
+- **Reference and identity:** uses the supplied Windows 3D Pinball: Space Cadet screenshot for structural inspiration, without copying its art or branding. All colours, typography, geometry and graphic details remain original Neon Tilt assets.
+- **Wireform removal:** the 3D renderer no longer imports or constructs the old mechanical-hardware module, raised ramp tube meshes, long inlane chrome wireforms or duplicate silver wall lines. The unused tube and rail constructors were removed. Canvas fallback likewise replaces its raised chrome routes and wall wires with painted enamel/plastic lane strips.
+- **Re-established playfield hierarchy:** three unobstructed upper bumpers and rollovers; left sculpted violet acrylic feature; bold coral/yellow segmented right outer lane; four painted, engine-aligned shot indicators; central circular Power Core and lower matching slings, flippers, ball save and shooter lane.
+- **New coordinated lighting:** the central Power Core's 16 3D insert lamps and three scoring lamps animate with attract chases, charging, mode activation and brief scoring flashes. The right-side insert sequence follows the same state. Reduced-motion play uses steady inserts. Exposure and global lights are moderated so emissive inserts remain vivid without washing out the playfield.
+- **Layout remains responsive:** the same desktop 100%-zoom no-scroll cabinet and score console are retained; no new panels or scrolling sections.
+- **Physics and scoring compatibility:** all four previously added route sensors, combo rules, rush jackpot and skill shot are preserved. Guided route balls now appear close to the playing surface rather than floating above an invisible raised rail. True three-dimensional rolling physics is **not** claimed.
+- **QA:** 58 engine/DMD regressions pass; source syntax, imports, DOM references, cache versions and complete visual wireform removal checked. A mocked Three.js construction smoke test ran through the main renderer. Published Chrome and Fold 7 appearance/performance still require review.
+
 ## Phase 3O — DMD legibility correction
 
 - **Verified root cause:** the display previously rasterised two rows of text at 11px / 9px into an 80×22 bitmap, then enlarged each pixel into an LED. At around 350px screen width the letters became indistinct.
