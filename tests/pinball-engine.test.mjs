@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,ARCADE_MODES,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -287,4 +287,82 @@ test('responsive flipper play keeps the first ball active beyond initial short-d
  }
  assert.equal(g.state,'playing');
  assert.equal(g.ballNumber,1);
+});
+
+test('first upper rollover after launch awards one real skill-shot bonus',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ g.time=3;g.activateLane(0);
+ assert.equal(g.score,12750);
+ assert.equal(g.skillShotPending,false);
+ assert.equal(g.consumeEvents().filter(e=>e.type==='skillshot').length,1);
+ g.activateLane(1);assert.equal(g.consumeEvents().filter(e=>e.type==='skillshot').length,0);
+});
+test('skill shot cannot be earned late or again after a saved launch',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ g.time=ARCADE_MODES.skillWindow+.1;g.activateLane(0);
+ assert.equal(g.consumeEvents().some(e=>e.type==='skillshot'),false);
+ g.ballSaveUsed=true;g.ball.mode='shooter';g.launch();
+ g.activateLane(1);
+ assert.equal(g.consumeEvents().some(e=>e.type==='skillshot'),false);
+});
+test('real shot combos pay escalating bonuses and reset after timeout',()=>{
+ const g=new PinballEngine();g.start();
+ g.activateShot('ramp');g.time+=2;g.activateShot('orbit');
+ g.time+=2;g.activateShot('ramp');
+ assert.equal(g.comboCount,3);
+ const events=g.consumeEvents().filter(e=>e.type==='combo');
+ assert.equal(events.length,2);assert.equal(events[0].points,5000);
+ assert.equal(events[1].points,10000);
+ g.time+=ARCADE_MODES.comboWindow+1;g.expireArcadeModes();
+ assert.equal(g.comboCount,0);
+ g.activateShot('ramp');assert.equal(g.comboCount,1);
+});
+test('three ramp/orbit shots charge a timed jackpot that is claimed at the scoop',()=>{
+ const g=new PinballEngine();g.start();
+ for(let i=0;i<3;i++){g.time+=1.5;g.activateShot(i%2?'orbit':'ramp');}
+ assert.equal(g.powerCharges,3);
+ assert.ok(g.hurryUpUntil>g.time);
+ assert.equal(g.consumeEvents().filter(e=>e.type==='hurryup').length,1);
+ g.ball.mode='live';g.ball.x=SCOOP.x;g.ball.y=SCOOP.y;
+ g.ball.vy=-350;g.time+=1;
+ const pre=g.score;g.checkSensors({x:SCOOP.x,y:SCOOP.y+8});
+ assert.equal(g.powerCharges,0);assert.equal(g.hurryUpUntil,0);
+ assert.equal(g.score-pre,58000);
+ assert.equal(g.consumeEvents().filter(e=>e.type==='jackpot').length,1);
+});
+test('unclaimed jackpot hurry-up expires once without phantom awards',()=>{
+ const g=new PinballEngine();g.start();
+ for(let i=0;i<3;i++){g.time+=1;g.activateShot('ramp');}
+ assert.ok(g.hurryUpUntil>0);
+ const score=g.score;
+ g.time=g.hurryUpUntil+.01;g.expireArcadeModes();
+ assert.equal(g.hurryUpUntil,0);assert.equal(g.powerCharges,1);
+ assert.equal(g.score,score);
+ assert.equal(g.consumeEvents().filter(e=>e.type==='hurryMiss').length,1);
+ g.expireArcadeModes();
+ assert.equal(g.consumeEvents().filter(e=>e.type==='hurryMiss').length,0);
+});
+test('five spinner crossings start Overdrive and subsequent spins award bonus',()=>{
+ const g=new PinballEngine();g.start();g.time=5;g.ball.mode='live';
+ for(let i=0;i<6;i++){
+  g.ball.x=SPINNER.x;g.ball.y=SPINNER.y+2;g.ball.vy=420;
+  g.time+=.3;g.checkSensors({x:SPINNER.x,y:SPINNER.y-7});
+ }
+ assert.equal(g.spinnerTurns,6);
+ assert.ok(g.overdriveUntil>g.time);
+ const ev=g.consumeEvents();
+ assert.equal(ev.filter(e=>e.type==='overdrive').length,1);
+ assert.equal(ev.filter(e=>e.type==='superSpinner').length,1);
+ assert.equal(g.score,6*SPINNER.points+3000);
+});
+test('special arcade modes reset on drain and on a fresh game',()=>{
+ const g=new PinballEngine();g.start();
+ g.powerCharges=2;g.hurryUpUntil=99;g.comboCount=4;g.overdriveUntil=99;
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=200;
+ g.singleStep(BOARD.step);
+ assert.equal(g.hurryUpUntil,0);assert.equal(g.powerCharges,0);
+ assert.equal(g.comboCount,0);assert.equal(g.overdriveUntil,0);
+ g.start();
+ assert.equal(g.nextOverdriveAt,ARCADE_MODES.spinThreshold);
+ assert.equal(g.skillShotPending,false);
 });
