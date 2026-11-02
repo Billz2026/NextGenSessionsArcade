@@ -41,7 +41,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
 }
 .chrome-button:hover,.exit-button:hover{background:#2f212a;border-color:#dbb98b}
 .chrome-button span,.exit-button span{margin-left:7px;color:#f4c987}
-.shell{width:min(1640px,calc(100% - 34px));margin:0 auto;padding:14px 0 16px}
+.shell{width:min(1450px,calc(100% - 34px));margin:0 auto;padding:14px 0 16px}
 .intro{display:flex;align-items:center;justify-content:space-between;gap:13px;margin-bottom:11px}
 .eyebrow{font:800 9px var(--display);letter-spacing:.14em;color:#ecc88b}
 .intro h1{font:900 clamp(41px,3.8vw,57px)/.96 var(--heading);margin:4px 0 3px;letter-spacing:.005em}
@@ -279,7 +279,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
    Keep the machine as the visual focus. At narrow widths stack rather than
    allowing the flipper controls or playfield to shrink into unusability. */
 @media(min-width:1121px){
- .shell{max-width:1640px;padding-top:11px}
+ .shell{max-width:1450px;padding-top:11px}
  .intro{margin-bottom:9px}
  .intro h1{font-size:clamp(37px,3.4vw,54px)}
  .game-layout{grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:12px;align-items:start}
@@ -343,4 +343,33 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  .cabinet{width:100%;max-width:520px}
  .playfield-wrap{width:100%;max-width:492px}
  .hud{gap:9px}
+}
+
+/* Cabinet-side hardware & realistic monitor proportions. */
+.machine{position:relative;isolation:isolate}
+@media(min-width:1121px){
+ .machine::before,.machine::after{
+  content:"";position:absolute;top:85px;bottom:104px;width:18px;border-radius:7px;
+  pointer-events:none;opacity:.8;z-index:0;
+  background:
+   repeating-linear-gradient(0deg,transparent 0 10px,rgba(244,211,180,.24) 11px,transparent 12px 24px),
+   linear-gradient(90deg,#100c14,#65515b 24%,#312631 46%,#1a151d 100%);
+  border:1px solid rgba(230,198,166,.18);box-shadow:inset 0 0 8px #08070a;
+ }
+ .machine::before{left:23px}
+ .machine::after{right:23px;transform:scaleX(-1)}
+ .machine-top,.cabinet,.machine-note{position:relative;z-index:1}
+ .view-switch{display:inline-flex}
+ .fit-table .playfield-wrap{width:min(100%,max(300px,calc(60dvh - 150px)))}
+ .fit-table .cabinet{width:min(100%,max(340px,calc(60dvh - 107px)))}
+ .fit-table .machine{min-height:0}
+ .fit-table .machine::before,.fit-table .machine::after{opacity:.4}
+}
+@media(max-width:1120px){
+ .view-switch{display:none!important}
+}
+@media(min-width:1121px) and (max-width:1320px){
+ .machine::before,.machine::after{width:10px;opacity:.48}
+ .machine::before{left:13px}
+ .machine::after{right:13px}
 }
