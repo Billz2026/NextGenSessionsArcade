@@ -1,7 +1,7 @@
 // Neon Tilt — bespoke 3D mechanical detailing, Phase 3G.
 // All dimensions are Three.js world-space; table landmarks use the shared
 // 420 × 700 physics coordinate map passed in by render3d.mjs.
-export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP}){
+export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH}){
  const physically=(color,roughness=.28,metalness=.7,extra={})=>new T.MeshPhysicalMaterial({
   color,roughness,metalness,clearcoat:.82,clearcoatRoughness:.16,...extra
  });
@@ -60,14 +60,7 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP}){
   const right=path.map(([x,y,z])=>[x+halfWidth*40,y,z+.10]);
   rod(left,.035,chrome);rod(right,.035,chrome);
  }
- const rightPath=[
-  [311,378,.40],[327,337,.65],[321,288,.91],
-  [284,245,1.26],[287,199,1.45],[310,172,1.26],[293,151,.94]
- ];
- const leftPath=[
-  [76,375,.39],[59,321,.50],[56,250,.66],
-  [71,204,.79],[94,176,.85],[136,152,.90]
- ];
+ const rightPath=RAMP_PATH,leftPath=ORBIT_PATH;
  rampDeck(rightPath,.27,transparent);
  rampDeck(leftPath,.18,blue);
  // Shaped plastic covers around slings, all lifted above the playfield.
