@@ -216,162 +216,6 @@ body{background:
  .end-dialog.is-record .end-symbol{animation:none}
 }
 
-
-
-/* V5: Samsung Galaxy Z Fold7 / foldable adaptive layout.
-   Crucial: the wheel is never compressed just to force a no-scroll dashboard.
-   Its rotor/ball/pointer use the same sizing and spin transforms as desktop.
-   Portrait unfolded = large full-width wheel + desktop-width controls.
-   Landscape unfolded = side-by-side wheel and controls with page scrolling.
-   Cover screen = existing stacked mobile layout.
-*/
-@media (min-width:700px) and (max-width:1023px) {
-  html{scroll-padding-top:12px}
-  body{min-width:0}
-  .site-header{height:71px;padding:7px 17px;gap:12px}
-  .brand{width:124px}
-  .brand img:last-child{margin-top:-6px}
-  .header-actions{gap:7px}
-  .header-button,.exit-link{font-size:11px;padding:10px 11px;min-height:44px}
-  .shell{width:calc(100% - 28px);padding:12px 0 18px}
-  .game-title{margin-bottom:12px;align-items:center;gap:12px}
-  .game-title h1{font-size:clamp(44px,6vw,56px);margin:4px 0}
-  .game-title p{font-size:12px}
-  .eyebrow{font-size:10px;letter-spacing:.09em}
-  .title-note{font-size:10px;max-width:195px;line-height:1.5}
-  .title-note span{padding:0 4px}
-  .game-layout{display:grid;gap:13px;align-items:start}
-  .wheel-panel{position:relative;top:auto;height:auto;min-width:0;border-radius:15px}
-  .panel-heading{padding:12px 14px;gap:8px}
-  .tiny-id,.fair-badge{font-size:10px;letter-spacing:.04em}
-  .wheel-area{min-height:475px;padding:17px 0}
-  .wheel-assembly{width:min(84%,365px);max-width:365px}
-  .wheel-halo{width:390px;max-width:96%;height:auto;aspect-ratio:1;top:20px}
-  .cabinet-lights{top:10px;width:min(82%,430px)}
-  .wheel-hub{border-width:6px}
-  .wheel-hub span{font-size:clamp(27px,4vw,37px)}
-  .wheel-hub small{font-size:8px}
-  .wheel-result{min-height:78px;margin:8px 10px 7px}
-  .wheel-result>span{font-size:10px}
-  .wheel-result strong{font-size:clamp(36px,5vw,47px)}
-  .wheel-result small{font-size:12px}
-  .wheel-impact{font-size:clamp(38px,5vw,59px);top:29%}
-  .recent-wrap{padding:11px 14px;gap:10px;min-height:49px}
-  .recent-label{font-size:10px}
-  .recent-list{gap:6px}
-  .recent-ball{width:27px;height:27px;font-size:10px}
-  .controls-panel{padding:15px;gap:12px;border-radius:15px}
-  .stats-grid{gap:8px}
-  .stat{min-height:65px;padding:10px;gap:5px}
-  .stat span{font-size:10px;white-space:normal;line-height:1.2}
-  .stat strong{font-size:clamp(24px,3.1vw,36px)}
-  .control-heading{margin-bottom:8px;gap:8px}
-  .control-heading h2{font-size:12px}
-  .control-heading h2 span{margin-left:6px}
-  .muted-small{font-size:10px}
-  .bet-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-  .bet-btn{min-height:48px;padding:6px 4px;gap:4px;font-size:12px;border-radius:7px}
-  .bet-btn small{font-size:10px}
-  .bet-dot{width:9px;height:9px}
-  .number-row{font-size:11px}
-  .stake-value{min-width:88px;padding:8px}
-  .stake-value strong{font-size:24px}
-  .stake-actions{gap:6px}
-  .chip-btn{min-height:46px;padding:6px 3px;font-size:11px}
-  .run-monitor{min-height:138px;padding:13px;gap:11px}
-  .run-monitor-head>strong{font-size:11px}
-  .run-status{font-size:10px;padding:5px 8px}
-  .run-monitor-stats{gap:6px}
-  .run-metric{padding:3px 8px;gap:5px}
-  .run-metric>span{font-size:10px}
-  .run-metric>strong{font-size:25px}
-  .run-monitor-foot{padding-top:9px}
-  .run-monitor-foot>span{font-size:10px}
-  .run-delta{font-size:14px}
-  .action-area{grid-template-columns:1.6fr 1fr;gap:9px}
-  .spin-btn,.bank-btn{min-height:61px;font-size:19px;letter-spacing:.04em}
-  .spin-btn span{font-size:23px;margin-left:7px}
-  .help-line{font-size:11px;min-height:25px}
-  .game-foot{font-size:11px;gap:10px;padding-top:12px}
-}
-
-/* Unfolded portrait: retain a proper arcade-sized wheel and spacious controls. */
-@media (min-width:700px) and (max-width:1023px) and (orientation:portrait) {
-  .game-layout{grid-template-columns:minmax(0,1fr)}
-  .wheel-area{min-height:460px}
-  .wheel-panel{max-width:none}
-  .wheel-assembly{width:min(70%,365px)}
-  .controls-panel{width:100%}
-  .stats-grid{grid-template-columns:2fr repeat(3,1fr)}
-  .stake-bar{display:flex;flex-direction:row}
-  .stake-actions{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));flex:1}
-  .run-monitor{min-height:138px}
-}
-
-/* Unfolded landscape: desktop-like two panels, *not* a tiny 254px wheel. */
-@media (min-width:700px) and (max-width:1023px) and (orientation:landscape) {
-  .game-layout{grid-template-columns:minmax(0,.98fr) minmax(0,1.02fr);gap:12px}
-  .wheel-panel{position:sticky;top:8px}
-  .wheel-area{min-height:440px;padding:10px 0}
-  .wheel-assembly{width:min(96%,365px)}
-  .wheel-halo{width:390px;max-width:100%;top:15px}
-  .controls-panel{gap:11px;padding:13px}
-  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .stat{min-height:58px}
-  .bet-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-  .bet-btn{min-height:46px;font-size:11px;padding:5px 1px}
-  .stake-bar{display:flex;flex-direction:column;gap:7px}
-  .stake-value{min-height:42px}
-  .stake-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-  .chip-btn{min-height:44px}
-  .run-monitor{min-height:125px;gap:8px;padding:11px}
-  .run-metric{padding:2px 6px}
-  .run-metric>span{font-size:9px}
-  .run-metric>strong{font-size:23px}
-  .run-monitor-foot>span{font-size:9px}
-  .action-area{grid-template-columns:1.5fr 1fr;gap:7px}
-  .spin-btn,.bank-btn{font-size:16px;min-height:56px}
-  .wheel-result{min-height:66px}
-  .wheel-result strong{font-size:34px}
-}
-
-/* Short landscape still uses desktop-style wheel spin and scrollable controls. */
-@media (min-width:700px) and (max-width:1023px) and (orientation:landscape) and (max-height:620px) {
-  .game-title{margin-bottom:7px}
-  .wheel-area{min-height:388px}
-  .wheel-assembly{width:min(95%,345px)}
-  .wheel-result{min-height:60px}
-}
-
-/* Folded cover and narrow phones: natural vertical layout, no horizontal clipping. */
-@media (max-width:699px) {
-  .shell{max-width:100%;overflow-x:clip}
-  .game-layout{min-width:0}
-  .wheel-panel,.controls-panel{min-width:0}
-  .bet-btn,.chip-btn{touch-action:manipulation}
-}
-
-
-/* Full desktop spin is optional when Android accessibility requests reduced
-   motion; an explicit opt-in brings back the same visual effects. */
-.motion-toggle[hidden]{display:none!important}
-@media (min-width:700px) and (max-width:1023px) {
-  .motion-toggle{font-size:10px;min-height:44px;padding:8px 9px}
-}
-@media(max-width:699px) {
-  .header-actions{flex-wrap:wrap;justify-content:flex-end}
-  .motion-toggle{font-size:10px;padding:7px}
-}
-@media(prefers-reduced-motion:reduce) {
-  html.full-spin-opt-in .wheel-panel.is-spinning .cabinet-lights span {animation:lamp-run .54s ease-in-out infinite alternate!important}
-  html.full-spin-opt-in .wheel-panel.is-spinning .wheel-halo {animation:wheel-breathe 1.1s ease-in-out infinite alternate!important}
-  html.full-spin-opt-in .wheel-panel.is-win .wheel-impact,
-  html.full-spin-opt-in .wheel-panel.is-big-win .wheel-impact,
-  html.full-spin-opt-in .wheel-panel.is-loss .wheel-impact {animation:score-flash 1.65s ease-out both!important}
-  html.full-spin-opt-in .wheel-panel.is-landed .top-pointer::after {animation:pocket-pulse 1.2s ease-out both!important}
-}
-
-
 /* V7: Explicit, persistent spin animation mode, identical on all devices.
    Full Spin is the default even when Android reports reduced-motion; players
    can choose a short animation via this visible in-game control. */
@@ -554,61 +398,6 @@ body{background:
  .high-roller .end-score strong{font-size:clamp(25px,7.2vw,33px)}
  .high-roller .run-metric>strong{font-size:clamp(18px,5.5vw,25px)}
 }
-
-
-/* V9 desktop-only High Roller alignment pass.
-   The Fold7 mobile and unfolded viewports (<1024 CSS px) are intentionally
-   unchanged. No JS, betting, animation or run-storage changes. */
-@media (min-width:1151px) {
-  .high-roller .game-layout{gap:15px}
-  .high-roller .wheel-panel{min-height:0}
-  .high-roller .wheel-area{min-height:395px}
-  .high-roller .wheel-assembly{width:min(74%,330px)}
-  .high-roller .wheel-halo{width:356px;height:356px;top:18px}
-  .high-roller .cabinet-lights{width:min(76%,385px)}
-  .high-roller .wheel-result{min-height:66px;margin:5px 10px 7px}
-  .high-roller .wheel-result strong{font-size:39px}
-  .high-roller .recent-wrap{min-height:49px;padding:9px 15px}
-  .high-roller .controls-panel{padding:11px 15px;gap:8px}
-  .high-roller .stats-grid{gap:8px}
-  .high-roller .stat{padding:8px 11px;min-height:67px;gap:4px}
-  .high-roller .stat strong{font-size:clamp(26px,2.3vw,34px)}
-  .high-roller .stat-balance strong{font-size:clamp(25px,2.4vw,35px)}
-  .high-roller .control-heading{margin-bottom:6px}
-  .high-roller .bet-grid{gap:7px}
-  .high-roller .bet-btn{min-height:48px}
-  .high-roller .stake-bar{display:flex;flex-direction:column;gap:7px}
-  .high-roller .stake-value{width:100%;min-width:0;min-height:40px;flex:none;
-    flex-direction:row;align-items:center;justify-content:space-between;padding:6px 12px}
-  .high-roller .stake-value strong{font-size:23px}
-  .high-roller .stake-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;flex:none}
-  .high-roller .chip-btn{min-height:39px;font-size:11px;border-radius:7px;padding:5px 3px}
-  .high-roller .run-monitor{flex:0 0 auto;min-height:99px;padding:10px 14px;gap:7px}
-  .high-roller .run-monitor-head>strong{font-size:11px}
-  .high-roller .run-monitor-stats{gap:6px}
-  .high-roller .run-metric{gap:4px;padding:2px 8px}
-  .high-roller .run-metric>span{font-size:9px}
-  .high-roller .run-metric>strong{font-size:clamp(22px,1.85vw,29px)}
-  .high-roller .run-monitor-foot{padding-top:7px}
-  .high-roller .spin-mode-bar{padding:5px 10px;min-height:40px}
-  .high-roller .spin-mode-toggle{min-height:34px;padding:6px 10px}
-  .high-roller .action-area{margin-top:0;gap:9px}
-  .high-roller .spin-btn,.high-roller .bank-btn{min-height:55px;font-size:20px}
-  .high-roller .spin-btn span{font-size:24px}
-  .high-roller .help-line{min-height:18px;font-size:11px;line-height:1.4}
-}
-
-/* Full-size desktops can fit all eight High Roller chips on one clean row. */
-@media (min-width:1400px) {
-  .high-roller .stake-actions{grid-template-columns:repeat(8,minmax(0,1fr))}
-  .high-roller .chip-btn{font-size:10px;min-height:42px;padding:6px 2px}
-  .high-roller .stake-value{min-height:42px}
-}
-
-/* Half is a one-shot staking action, not a selected bet. */
-.chip-btn.chip-half{color:#e5d2bb;border-color:#56423c;background:#241d1c}
-.chip-btn.chip-half:hover:not(:disabled){border-color:var(--gold);background:#3a2b25;color:var(--gold)}
-
 
 /* V10 — hero wheel. The old oversize decorative circular halo is removed:
    only the actual roulette bezel defines the circle. */
@@ -820,4 +609,341 @@ body{background:
 @media(max-width:550px){
   .result-streak{font-size:9px;padding:4px 8px}
   .result-details{gap:5px}
+}
+
+
+/* PHASE 2 — unified gaming presentation. Intentional breakpoints:
+   >=1200 desktop cockpit; 700–1199 tablet / unfolded Fold; <=699 phone.
+   Rules below are authoritative over the earlier base design. */
+:root{
+ --bg:#09090c;--panel:#141115;--soft:#1c1519;--line:rgba(245,200,95,.22);
+ --cream:#f8f3e8;--gold:#f4ce69;--red:#ff5e55;--muted:#c2b8b0;
+ --control-border:rgba(246,205,124,.21);
+}
+html{scroll-padding-top:16px}
+body{
+ background:
+  radial-gradient(ellipse 45% 48% at 4% 10%,rgba(124,25,45,.15),transparent 75%),
+  radial-gradient(ellipse 44% 65% at 98% 8%,rgba(150,85,30,.08),transparent 70%),
+  #09090c;
+}
+button,select{touch-action:manipulation}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #ffdf85;outline-offset:3px}
+button[hidden],.number-row[hidden],.result-streak[hidden]{display:none!important}
+.site-header{
+ min-height:74px;height:auto;gap:20px;
+ padding:9px clamp(16px,3.5vw,56px);
+ background:#0b0a0d;border-bottom:1px solid rgba(244,205,107,.19);
+}
+.brand{width:145px}
+.header-middle{align-items:center;gap:12px}
+.header-middle strong{font-size:24px}
+.header-actions{flex-wrap:wrap;justify-content:flex-end}
+.header-button,.exit-link{
+ min-height:40px;display:inline-flex;align-items:center;justify-content:center;
+ border-radius:8px;border-color:rgba(243,199,79,.30);
+ background:#191419;padding:9px 13px;line-height:1.1;
+}
+.header-button:hover,.exit-link:hover{border-color:var(--gold);background:#261a1c}
+.shell{width:min(1510px,calc(100% - 52px));padding:18px 0 24px}
+.game-title{margin-bottom:13px;align-items:center}
+.game-title h1{font-size:clamp(48px,4.9vw,71px);margin:2px 0 5px;letter-spacing:.006em}
+.game-title p{font-size:13px}
+.title-note{line-height:1.55}
+.mode-selector{
+ min-width:0;padding:9px 11px;margin-bottom:13px;
+ border:1px solid rgba(243,199,79,.26);border-radius:11px;
+ background:linear-gradient(110deg,#241816,#151115 72%);
+}
+.mode-actions{gap:8px;flex-shrink:0}
+.mode-btn{
+ min-width:170px;min-height:47px;padding:7px 13px;
+ border-radius:8px;background:#1b1718;border:1px solid #544138;
+}
+.mode-btn strong{font-size:17px}
+.mode-btn.selected{
+ background:linear-gradient(125deg,#4c3020,#271b1b);
+ box-shadow:inset 0 0 0 1px rgba(255,224,142,.12);
+}
+.mode-selector p{max-width:470px;text-align:right;font-size:11px}
+.game-layout{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);
+ align-items:stretch;gap:14px;
+}
+.wheel-panel,.controls-panel{
+ border-radius:15px;border:1px solid rgba(243,199,79,.30);
+ background:linear-gradient(154deg,#1c1419,#100d11 78%);
+ box-shadow:0 18px 40px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,241,197,.045);
+}
+.wheel-panel{min-width:0;position:relative;overflow:hidden}
+.wheel-panel::before{border-radius:15px}
+.panel-heading{padding:11px 16px;min-height:42px}
+.panel-heading .tiny-id{letter-spacing:.12em}
+.wheel-halo{display:none!important}
+.wheel-area,
+.high-roller .wheel-area,
+html:not(.high-roller) .wheel-area{
+ min-height:505px;padding:19px 12px 10px;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ overflow:hidden;
+ background:
+  radial-gradient(ellipse 67% 63% at 50% 43%,rgba(144,68,31,.21),transparent 75%),
+  repeating-linear-gradient(90deg,transparent 0,transparent 43px,rgba(249,203,117,.014) 44px),
+  linear-gradient(145deg,#1c1218 0%,#100d12 70%,#0a090d 100%);
+}
+.wheel-area::before{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:radial-gradient(ellipse 65% 52% at 50% 88%,rgba(0,0,0,.54),transparent 70%);
+}
+.wheel-assembly,
+.high-roller .wheel-assembly,
+html:not(.high-roller) .wheel-assembly{
+ position:relative;flex:0 0 auto;
+ width:min(82%,405px);max-width:405px;
+ margin:0;aspect-ratio:1;z-index:2;
+ filter:drop-shadow(0 15px 13px rgba(0,0,0,.72)) drop-shadow(0 24px 20px rgba(0,0,0,.38));
+}
+.wheel-assembly::before{
+ inset:-4px;border:2px solid rgba(237,178,83,.81);
+ box-shadow:0 0 0 2px #170f10,0 0 23px rgba(224,167,80,.13);
+}
+.wheel-rotor canvas{width:100%;height:100%;display:block}
+.wheel-hub{border-width:5px}
+.top-pointer{top:-13px}
+.ball{width:13px;height:13px}
+.cabinet-lights{top:6px;width:min(87%,460px);opacity:.72}
+.wheel-result,
+.high-roller .wheel-result,
+html:not(.high-roller) .wheel-result{
+ position:relative;flex:0 0 auto;
+ margin:10px 6px 1px;min-height:75px;padding:0 6px;
+ width:calc(100% - 12px);
+}
+.wheel-result strong,
+.high-roller .wheel-result strong{
+ font-size:clamp(35px,3vw,45px);
+ margin:4px 0 3px;line-height:1.04;
+ overflow-wrap:anywhere;
+}
+.wheel-result .result-details small{
+ white-space:normal!important;line-height:1.32;
+ overflow-wrap:anywhere;font-size:12px;
+}
+.recent-wrap{padding:9px 15px;min-height:49px;flex-wrap:wrap}
+.recent-ball{width:26px;height:26px}
+.controls-panel,
+.high-roller .controls-panel{padding:12px 14px;gap:9px}
+.stats-grid{grid-template-columns:1.65fr 1.2fr .8fr .9fr;gap:7px}
+.stat,.high-roller .stat{
+ min-height:68px;padding:9px 9px;gap:5px;
+ border-radius:9px;background:linear-gradient(155deg,#251c20,#141115);
+}
+.stat-balance{background:linear-gradient(145deg,#42301d,#22171a)}
+.stat span{font-size:9px;white-space:normal;line-height:1.2}
+.stat strong,.high-roller .stat strong{font-size:clamp(22px,2.3vw,33px);line-height:1.07;overflow-wrap:anywhere}
+.stat-balance strong,.high-roller .stat-balance strong{color:#ffe08c}
+.control-heading{margin-bottom:6px}
+.control-heading h2{font-size:12px}
+.muted-small{font-size:9px;line-height:1.35}
+.bet-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.bet-btn{
+ min-height:47px;padding:7px 4px;gap:5px;line-height:1.1;
+ border-radius:8px;border-color:rgba(245,209,146,.26);
+ font-size:12px;white-space:normal;
+}
+.bet-btn.selected{border:2px solid var(--gold);background:linear-gradient(145deg,#533122,#291c1e)}
+.bet-btn small{font-size:10px}
+.number-row{margin-top:8px}
+.stake-bar,.high-roller .stake-bar{
+ display:flex;flex-direction:column;gap:7px;align-items:stretch;
+}
+.stake-value,.high-roller .stake-value{
+ width:100%;min-width:0;min-height:39px;flex:0 0 auto;display:flex;
+ flex-direction:row;align-items:center;justify-content:space-between;
+ padding:6px 12px;border-radius:8px;
+}
+.stake-value strong,.high-roller .stake-value strong{
+ font-size:clamp(19px,2vw,25px);line-height:1.2;overflow-wrap:anywhere;
+}
+.stake-actions,.high-roller .stake-actions{
+ display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;min-width:0;
+}
+.high-roller .stake-actions{grid-template-columns:repeat(8,minmax(0,1fr))}
+.chip-btn,.high-roller .chip-btn{
+ min-width:0;min-height:39px;padding:6px 2px;
+ border:1px solid #5b453c;border-radius:7px;
+ font-size:11px;font-weight:800;
+}
+.run-monitor,.high-roller .run-monitor{
+ flex:0 0 auto;min-height:108px;gap:7px;padding:10px 13px;
+ border-radius:10px;
+}
+.run-monitor-head>strong{font-size:11px}
+.run-status{padding:5px 8px;font-size:9px}
+.run-monitor-stats{gap:7px}
+.run-metric{padding:2px 8px;gap:4px}
+.run-metric>span{font-size:9px;line-height:1.25}
+.run-metric>strong,.high-roller .run-metric>strong{font-size:clamp(20px,1.9vw,28px);line-height:1.08;overflow-wrap:anywhere}
+.run-monitor-foot{padding-top:6px}
+.run-monitor-foot>span{font-size:9px}
+.run-delta{font-size:13px;overflow-wrap:anywhere}
+.spin-mode-bar{min-height:36px;padding:4px 9px}
+.spin-mode-toggle{min-height:34px;padding:6px 10px}
+.action-area{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:9px;margin-top:0}
+.spin-btn,.bank-btn,.high-roller .spin-btn,.high-roller .bank-btn{
+ min-height:56px;font-size:20px;line-height:1.05;letter-spacing:.055em;
+}
+.spin-btn{background:linear-gradient(180deg,#fff3b9,#edc34c 65%,#cf8f27)}
+.bank-btn{background:linear-gradient(145deg,#391f24,#1b1318);border-color:rgba(252,114,91,.64)}
+.bank-btn:disabled{opacity:.45}
+.help-line{min-height:17px;font-size:11px;line-height:1.4}
+.score-chase{margin-top:13px}
+.game-foot{padding-top:11px}
+.end-dialog{max-height:calc(100dvh - 30px);overflow-y:auto}
+.end-score strong{overflow-wrap:anywhere}
+.high-roller .end-score strong{font-size:clamp(29px,4vw,50px)}
+/* Landscape laptops: keep both primary action buttons comfortably available. */
+@media(min-width:1200px) and (max-height:820px){
+ .shell{padding-top:10px}
+ .game-title{margin-bottom:8px}
+ .game-title h1{font-size:53px;margin:1px 0 3px}
+ .mode-selector{margin-bottom:9px;padding:6px 9px}
+ .mode-btn{min-height:43px}
+ .wheel-area,.high-roller .wheel-area,html:not(.high-roller) .wheel-area{
+   min-height:465px;padding:16px 8px 7px;
+ }
+ .wheel-assembly,.high-roller .wheel-assembly,html:not(.high-roller) .wheel-assembly{
+   width:min(78%,362px);max-width:362px;
+ }
+ .controls-panel,.high-roller .controls-panel{gap:7px;padding:10px 12px}
+ .stat,.high-roller .stat{min-height:62px;padding:8px}
+ .bet-btn{min-height:42px}
+ .chip-btn,.high-roller .chip-btn{min-height:36px}
+ .run-monitor,.high-roller .run-monitor{min-height:94px;gap:5px;padding:8px 11px}
+ .run-metric>strong,.high-roller .run-metric>strong{font-size:22px}
+ .spin-btn,.bank-btn,.high-roller .spin-btn,.high-roller .bank-btn{min-height:51px}
+}
+/* Standard tablets and Samsung Fold unfolded: do not cram two narrow panels. */
+@media(max-width:1199px){
+ .header-middle{display:none}
+ .shell{width:min(860px,calc(100% - 32px));padding-top:13px}
+ .game-layout{grid-template-columns:minmax(0,1fr);gap:12px}
+ .wheel-panel,.controls-panel{position:relative;top:auto}
+ .wheel-area,.high-roller .wheel-area,html:not(.high-roller) .wheel-area{
+   min-height:465px;padding:18px 12px 10px;
+ }
+ .wheel-assembly,.high-roller .wheel-assembly,html:not(.high-roller) .wheel-assembly{
+   width:min(60%,385px);max-width:385px;
+ }
+ .stats-grid,.high-roller .stats-grid{grid-template-columns:1.55fr 1.15fr .8fr .85fr}
+ .stat strong,.high-roller .stat strong{font-size:clamp(25px,3vw,34px)}
+ .stake-actions,.high-roller .stake-actions{grid-template-columns:repeat(8,minmax(0,1fr))}
+ .mode-selector{gap:11px}
+ .mode-selector p{font-size:10px}
+ .score-chase{margin-top:12px}
+}
+/* Tablet portrait and Fold inner screen portrait */
+@media(min-width:700px) and (max-width:1199px){
+ .mode-actions{flex:0 0 auto}
+ .mode-btn{min-width:150px}
+ .controls-panel{padding:15px}
+ .bet-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .bet-btn{min-height:52px}
+ .action-area{grid-template-columns:1.5fr 1fr}
+ .run-monitor{min-height:112px}
+}
+/* Folded phones and narrow mobile browser windows. Scroll vertically, never squeeze. */
+@media(max-width:699px){
+ .site-header{min-height:66px;gap:8px;padding:8px 12px}
+ .brand{width:109px}
+ .header-actions{gap:6px}
+ .header-button,.exit-link{padding:7px 8px;font-size:9px;min-height:39px}
+ .header-button span,.exit-link span{margin-left:4px}
+ .shell{width:calc(100% - 22px);padding:12px 0 20px}
+ .game-title{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-bottom:10px}
+ .game-title h1{font-size:clamp(46px,12vw,62px);margin:2px 0 5px}
+ .game-title p{font-size:12px}
+ .eyebrow{font-size:9px;letter-spacing:.08em}
+ .title-note{font-size:9px;text-align:left}
+ .mode-selector{flex-direction:column;align-items:stretch;gap:8px;padding:9px;margin-bottom:10px}
+ .mode-actions{display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .mode-btn{min-width:0;min-height:49px;align-items:center;text-align:center;padding:6px 4px}
+ .mode-btn strong{font-size:16px}
+ .mode-btn span{font-size:8px}
+ .mode-selector p{text-align:center;max-width:100%;font-size:10px}
+ .game-layout{gap:10px}
+ .panel-heading{padding:10px 12px;gap:6px}
+ .tiny-id,.fair-badge{font-size:9px}
+ .wheel-area,.high-roller .wheel-area,html:not(.high-roller) .wheel-area{
+   min-height:365px;padding:16px 6px 7px;
+ }
+ .wheel-assembly,.high-roller .wheel-assembly,html:not(.high-roller) .wheel-assembly{
+   width:min(82%,284px);max-width:284px;
+   filter:drop-shadow(0 10px 11px rgba(0,0,0,.67));
+ }
+ .wheel-hub{border-width:4px}
+ .wheel-hub span{font-size:clamp(21px,6vw,29px)}
+ .wheel-hub small{font-size:7px}
+ .top-pointer{top:-10px;border-left-width:11px;border-right-width:11px;border-top-width:23px}
+ .wheel-result,.high-roller .wheel-result,html:not(.high-roller) .wheel-result{
+   min-height:67px;margin:10px 4px 0;
+ }
+ .wheel-result strong,.high-roller .wheel-result strong{font-size:clamp(33px,9vw,43px)}
+ .wheel-result .result-details small{font-size:11px}
+ .cabinet-lights{top:4px}
+ .recent-wrap{padding:9px 10px;gap:8px}
+ .controls-panel,.high-roller .controls-panel{padding:11px;gap:11px}
+ .stats-grid,.high-roller .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .stat,.high-roller .stat{min-height:65px;padding:9px}
+ .stat strong,.high-roller .stat strong{font-size:clamp(23px,7vw,31px)}
+ .control-heading{align-items:start}
+ .control-heading h2{font-size:11px}
+ .muted-small{font-size:9px;max-width:44%}
+ .bet-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .bet-btn{min-height:47px;font-size:12px}
+ .stake-actions,.high-roller .stake-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+ .chip-btn,.high-roller .chip-btn{min-height:42px;font-size:11px}
+ .run-monitor,.high-roller .run-monitor{min-height:124px;padding:10px;gap:9px}
+ .run-metric{padding-left:7px;padding-right:4px}
+ .run-metric>span{font-size:8px}
+ .run-metric>strong,.high-roller .run-metric>strong{font-size:clamp(18px,5.6vw,24px)}
+ .spin-mode-bar{padding:6px 8px}
+ .spin-mode-bar>span{font-size:9px}
+ .spin-mode-toggle{min-height:42px;max-width:70%;font-size:10px;padding:7px 6px}
+ .action-area{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:7px}
+ .spin-btn,.bank-btn,.high-roller .spin-btn,.high-roller .bank-btn{
+   min-height:59px;font-size:clamp(16px,4.9vw,20px);letter-spacing:.015em;padding:6px;
+ }
+ .help-line{min-height:20px}
+ .score-chase{padding:12px}
+ .score-chase-heading{align-items:flex-start}
+ .milestone-track{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}
+ .milestone{min-height:52px;padding:4px 2px}
+ .milestone small{font-size:7px}
+ .milestone strong{font-size:13px}
+ .leaderboard-table-head,.leaderboard-entry{
+   grid-template-columns:minmax(0,1.6fr) 40px minmax(78px,1fr);gap:6px;
+ }
+ .leaderboard-entry{padding:9px 5px;font-size:10px}
+ .leaderboard-entry strong{font-size:11px}
+ .leaderboard-table-head{font-size:8px;padding:8px 5px}
+ .game-foot{font-size:10px}
+}
+@media(max-width:370px){
+ .site-header{gap:4px}
+ .brand{width:94px}
+ .header-button,.exit-link{padding:7px 6px;font-size:8px}
+ .panel-heading{padding:8px}
+ .wheel-area,.high-roller .wheel-area,html:not(.high-roller) .wheel-area{min-height:350px}
+ .wheel-assembly,.high-roller .wheel-assembly,html:not(.high-roller) .wheel-assembly{width:min(81%,270px)}
+ .game-title h1{font-size:43px}
+ .run-metric>strong,.high-roller .run-metric>strong{font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){
+ html:not(.full-spin-opt-in) .wheel-panel.is-spinning .cabinet-lights span,
+ html:not(.full-spin-opt-in) .wheel-panel.is-landed .landing-sparks i,
+ html:not(.full-spin-opt-in) .stage-callout{animation:none!important}
+ html:not(.full-spin-opt-in) .wheel-panel.is-win .wheel-impact,
+ html:not(.full-spin-opt-in) .wheel-panel.is-big-win .wheel-impact,
+ html:not(.full-spin-opt-in) .wheel-panel.is-loss .wheel-impact{animation:none!important;opacity:0}
 }
