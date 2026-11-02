@@ -6,6 +6,15 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 4B / pass 1 — coordinated lighting and live-ball clarity
+
+- Added 9 upper rollover marquee lamps, 6 bumper-zone light inserts and 6 lower sling / ball-save lamps to the actual 3D table. They react to attract mode, launch activity, bumper hits, Frenzy and save status; reduced-motion play uses steady lamps.
+- Enlarged the original central Power Core's layered physical insert rings, added an inner electric-blue illuminated ring and enhanced 16 insert bulbs. The core reacts to charged Power Grid progress, Neon Rush and scoring celebrations without covering the targets, bumpers or flippers.
+- Updated the Canvas fallback with the same new light zones and a more prominent circular Power Core. No metal wireforms or extra rail layers were reintroduced.
+- Fixed the HUD's stale plunger-percentage display: plunger charge is shown only when a ball is in the shooter lane; once launched, the same-size panel displays remaining early ball-save time or OFF and prompts the player to use the flippers. No new desktop panels or scrolling.
+- Verification: 60 original gameplay, DMD and real-frame Canvas tests plus 3 new HUD-state regressions all passed (63/63). A mocked 3D construction check built 311 meshes, updated two frames, confirmed the new ring and a visibly nonblank frame.
+- Next visual checkpoint: review the published screenshot in Chrome at 100% desktop zoom. Final art polish, physical lighting balance and human gameplay enjoyment remain unverified. Scoring and ball collision physics were deliberately left unchanged.
+
 ## Phase 4 — classic arcade playfield redesign (no metal wireforms)
 
 - **Reference and identity:** uses the supplied Windows 3D Pinball: Space Cadet screenshot for structural inspiration, without copying its art or branding. All colours, typography, geometry and graphic details remain original Neon Tilt assets.
