@@ -6,6 +6,17 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3M — real arcade gameplay modes and table spectacle
+
+- **Upper-lane skill shot:** first N/G/S upper rollover within six simulated seconds of a genuine launch scores a one-time 12,000-point bonus; saved-ball relaunches do not yield duplicate skill shots.
+- **Shot combos:** consecutive ramp or orbit hits within seven seconds build a chain (maximum five); the second onward earn 5,000/10,000/15,000/20,000 points before existing scoring multipliers. Chain expires with inactivity or a drain.
+- **Power Grid:** each ramp/orbit hit charges one of three physically represented insert lamps. Three hits activate an 18-second NEON RUSH hurry-up; hit the actual scoop sensor within time for a 50,000-point jackpot (plus its standard 8,000-point scoop value). Missing the deadline resets charges to one, so players can rebuild momentum.
+- **Spinner Overdrive:** five qualifying spinner crossings activate a 14-second mode; further spinner crossings earn an extra 3,000 points on top of each normal hit. All scoring goes through the existing authoritative game engine and persists to the existing high scores.
+- **Table reacts visibly:** three new raised chrome/gold Power Grid lamp sockets, a fortified scoop guard and a jackpot glow ring communicate active targets. Ramp/orbit inserts and spinner arrows respond to mode/chain states. A 2D fallback renders the same progress.
+- **DMD and score panel:** actual events announce SKILL SHOT, COMBO, JACKPOT LIT, NEON RUSH, OVERDRIVE and timeouts with priority-based flashing; a new mission-header indicator shows Grid charge or remaining mode seconds; mode status and sound effects are updated.
+- **Testing:** all 38 engine and 13 DMD regression tests pass (51 total). A mocked 3D construction test built 488 meshes, including all three Power Grid lamps, and exercised normal and reduced-motion frames.
+- **Honest scope boundary:** this is a mode-driven scoring and visual-feedback upgrade; *true multiball is not implemented*. It requires an actual multi-ball collision/simulation subsystem and should not be simulated with fictitious messages. Live Chrome/Fold visuals and play balance still need human validation.
+
 ## Phase 3L — clarity and cabinet identity
 
 - **Unified 3D sign:** the old pair of stretched glowing labels was replaced with one 2048×560 texture on the 3D marquee, containing warm-cream NEXTGEN SESSIONS, large coral NEON TILT, a deliberate dark stroke, brass rules and a dark enamel background. There is no blurred lettering.
