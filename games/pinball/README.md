@@ -6,6 +6,16 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3N — four real routes, reinforced steel hardware and marquee identity
+
+- **Two additional playable shots:** a centre crossover and a Skyline loop now join the existing left orbit and right ramp. Both have sensor-triggered scores (4,500 / 6,000 before multipliers), exact authoritative raised waypoints, per-route travel durations, moving 3D ball height and distinct return feeds to flipper approaches. All four charge the existing Power Grid and contribute to combo scoring.
+- **Reachability correction:** real physics simulations showed the first centre entrance was practically unreachable. Moving its inlet to (207, 426) with a 33-pixel catch width makes it consistently reachable with timed flipper play; a dedicated regression checks actual play rather than merely injecting a sensor event. The Skyline route already appeared in ordinary simulations.
+- **Mechanical detailing:** rebuilt raised channels use heavy dual stainless rails, thicker bases, cast-brass joins, real cross-braces, bolted stanchions, entrance gates and anchored lower return rails. The 3D table now has four distinct raised decks, not merely painted lines. The Canvas fallback includes those two extra physical routes and matching scoring entrances.
+- **Sign treatment:** the high-resolution NEON TILT panel now uses an extra-heavy Arial Black / Impact face, a dark stroke, bright coral and cream front layers, simulated embossing, a raised metallic perimeter and physical corner rivets. Canvas fallback uses equivalent non-blurred lettering.
+- **Gameplay visibility:** independent, lighted centre/Skyline shot arrows and inserts, their own score/DMD callouts, updated HUD explanations and a clear four-route aim system.
+- **Regression checks:** 43 pinball engine tests plus 13 DMD tests, including route sensors, scored returns, reachable centre channel and no phantom scoring. A mocked Three.js construction pass previously assembled four ramp decks and 644 meshes. Latest viewport, material realism and GPU performance require Chrome / Samsung Fold device testing.
+- **Scope remains honest:** ball travel on elevated routes is guided motion on a deterministic engine rather than true 3D rigid-body physics, and multiball is not yet present. Decorative brackets are non-colliding except for original authoritative physics posts/walls.
+
 ## Phase 3M — real arcade gameplay modes and table spectacle
 
 - **Upper-lane skill shot:** first N/G/S upper rollover within six simulated seconds of a genuine launch scores a one-time 12,000-point bonus; saved-ball relaunches do not yield duplicate skill shots.
