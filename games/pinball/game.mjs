@@ -34,9 +34,10 @@ const stage=document.getElementById('table-stage');
 const renderStatus=document.getElementById('render-status');
 const modeButton=document.getElementById('render-mode');
 let view3d=null,prefer3d=true,loading3d=false,threeFailed=false;
+let webglValidated=false,webglBlankFrames=0;
 function updateRenderUI(){
  if(!stage)return;
- const active=prefer3d&&Boolean(view3d);
+ const active=prefer3d&&Boolean(view3d)&&webglValidated;
  stage.classList.toggle('has-webgl',active);
  if(modeButton){
   modeButton.disabled=threeFailed;
@@ -49,12 +50,13 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=14');
+  const {create3DTable}=await import('./render3d.mjs?v=15');
   const result=await create3DTable(stage);
   view3d=result;
+  webglValidated=false;webglBlankFrames=0;
   result.canvas.addEventListener('webglcontextlost',event=>{
    event.preventDefault();
-   prefer3d=false;threeFailed=true;
+   prefer3d=false;threeFailed=true;webglValidated=false;
    updateRenderUI();
   });
  }catch(error){
@@ -403,10 +405,26 @@ function loop(now){
  if(!document.hidden){
   engine.advance(dt);processEvents();syncHUD();dmd.update(engine,now);
   if(prefer3d&&view3d){
-   try{view3d.update(engine,{bumperFlash,tableFlash,reducedMotion});}
-   catch(error){
-    console.warn('3D rendering stopped; restoring 2D table.',error);
-    prefer3d=false;threeFailed=true;updateRenderUI();
+   try{
+    view3d.update(engine,{bumperFlash,tableFlash,reducedMotion});
+    if(!webglValidated){
+     if(view3d.isFrameVisible?.()){
+      webglValidated=true;
+      updateRenderUI();
+     }else if(++webglBlankFrames>=5){
+      console.warn('Neon Tilt 3D produced no visible playfield; keeping the playable 2D table.');
+      prefer3d=false;threeFailed=true;webglValidated=false;
+      view3d.dispose();view3d=null;updateRenderUI();
+     }
+     // The 2D table stays visibly painted until a real 3D frame passes
+     // the visibility check; a failed WebGL init never creates a black game.
+     resize();drawBoard();drawParticles(dt);
+    }
+   }catch(error){
+    console.warn('3D rendering stopped; restoring playable 2D table.',error);
+    prefer3d=false;threeFailed=true;webglValidated=false;
+    try{view3d?.dispose()}catch{}
+    view3d=null;updateRenderUI();
     resize();drawBoard();drawParticles(dt);
    }
   }else{resize();drawBoard();drawParticles(dt);}
