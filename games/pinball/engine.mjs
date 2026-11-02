@@ -38,7 +38,8 @@ export const ORBIT_PATH=Object.freeze([
 ].map(p=>Object.freeze(p)));
 // Phase 3N routes are shared by physics, the 3D hardware and 2D fallback.
 export const CENTER_PATH=Object.freeze([
- [207,354,.37],[207,323,.87],[208,289,1.50],[208,266,1.58],
+ [207,426,.37],[207,397,.53],[207,363,.75],[207,323,1.14],
+ [208,289,1.50],[208,266,1.58],
  [204,220,1.48],[226,183,1.43],[259,165,1.41],
  [272,205,1.24],[270,273,1.12],[251,349,.84],
  [241,415,.58],[260,505,.34]
@@ -55,7 +56,7 @@ export const TRAVEL_PATHS=Object.freeze({
 export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
  ramp:{x:311,y:372,r:27,points:7500},
- center:{x:207,y:354,r:16,points:4500},
+ center:{x:207,y:426,r:33,points:4500},
  skyline:{x:124,y:380,r:18,points:6000}
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
