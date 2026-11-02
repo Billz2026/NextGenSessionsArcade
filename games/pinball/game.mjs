@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=5';
-import {renderTable} from './visuals.mjs?v=6';
-import {createDotMatrix} from './dmd.mjs?v=4';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=6';
+import {renderTable} from './visuals.mjs?v=7';
+import {createDotMatrix} from './dmd.mjs?v=5';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -49,7 +49,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=8');
+  const {create3DTable}=await import('./render3d.mjs?v=9');
   const result=await create3DTable(stage);
   view3d=result;
   result.canvas.addEventListener('webglcontextlost',event=>{
@@ -121,14 +121,27 @@ function syncHUD(){
  ui.shots.textContent=engine.shots+' SHOTS';
  if(spinnerCount)spinnerCount.textContent=engine.spinnerTurns+' SPINS';
  if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
- const remaining=Math.max(engine.multiplierUntil,engine.frenzyUntil)-engine.time;
+ const rushActive=engine.hurryUpUntil>engine.time;
+ const overdriveActive=engine.overdriveUntil>engine.time;
+ const remaining=rushActive?engine.hurryUpUntil-engine.time:
+  overdriveActive?engine.overdriveUntil-engine.time:
+  Math.max(engine.multiplierUntil,engine.frenzyUntil)-engine.time;
  ui.modeName.textContent=state==='ready'?'ATTRACT MODE':state==='gameover'?'RUN COMPLETE':
+  rushActive?'NEON RUSH · JACKPOT LIT':
+  overdriveActive?'SPINNER OVERDRIVE':
   engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
-  engine.lastShot&&engine.time-engine.lastShot.at<8?'COMBO CHASE':'NEON TILT';
- ui.modeTimer.textContent=state==='ready'?'NEON TILT / GAME 002':remaining>0?Math.ceil(remaining)+' SECONDS REMAIN':'RAMP · ORBIT · TARGETS · LANES';
+  engine.comboCount>=2?'COMBO X'+engine.comboCount:
+  'POWER GRID '+engine.powerCharges+'/3';
+ ui.modeTimer.textContent=state==='ready'?'NEON TILT / GAME 002':
+  remaining>0?Math.ceil(remaining)+' SECONDS · '+(rushActive?'HIT SCOOP':overdriveActive?'SPIN FOR BONUS':'MODE LIVE'):
+  engine.state==='playing'?'3 SHOTS CHARGE JACKPOT · SCOOP TO COLLECT':'RAMP · ORBIT · TARGETS · LANES';
  if(performance.now()>messageUntil){
   ui.missionMessage.textContent=state==='gameover'?'GAME OVER · PLAY AGAIN':state==='playing'?
-   engine.ball?.mode==='shooter'?'CHARGE YOUR PLUNGER':'CHASE THE NIGHT RIDE JACKPOT':
+   engine.ball?.mode==='shooter'?'CHARGE YOUR PLUNGER':
+   rushActive?'NEON RUSH! HIT THE SCOOP':
+   overdriveActive?'OVERDRIVE! HIT THE SPINNER':
+   engine.powerCharges>0?'POWER GRID '+engine.powerCharges+'/3 · RAMP + ORBIT':
+   'CHAIN SHOTS TO CHARGE JACKPOT':
    state==='between'?'NEXT BALL READY SOON':'PRESS START TO PLAY';
  }
 }
@@ -155,8 +168,11 @@ function sound(freq=500,duration=.07,kind='triangle'){
 function processEvents(){
  for(const e of engine.consumeEvents()){
   dmd.notify(e,performance.now(),engine);
-  if(['shot','mission','extra','scoop','spinner','frenzy','multiplier'].includes(e.type)){
-   const duration=e.type==='extra'?1050:e.type==='mission'?900:550;
+  if(['shot','mission','extra','scoop','spinner','frenzy','multiplier',
+      'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave'].includes(e.type)){
+   const duration=e.type==='jackpot'||e.type==='extra'?1250:
+    e.type==='hurryup'||e.type==='overdrive'||e.type==='skillshot'?950:
+    e.type==='mission'?900:550;
    tableFlash={kind:e.type,until:performance.now()+duration,duration};
   }
   if(e.type==='start'){ui.overlay.hidden=true;ui.scoreFlash.textContent='BALL 1 READY';sound(490,.10);}
@@ -180,8 +196,42 @@ function processEvents(){
    arcadeMessage('SCOOP EJECT · KEEP IT ALIVE');
    sound(820,.13);
   }
+  if(e.type==='skillshot'){
+   arcadeMessage('SKILL SHOT! +'+fmt(e.points));ui.scoreFlash.textContent='SKILL SHOT';
+   sound(1120,.19,'sawtooth');
+  }
+  if(e.type==='combo'){
+   arcadeMessage('NEON COMBO X'+e.count+' · +'+fmt(e.points));
+   ui.scoreFlash.textContent='COMBO X'+e.count;
+   sound(780+e.count*75,.17,'square');
+  }
+  if(e.type==='power'){
+   if(e.charges<e.needed && !engine.hurryUpUntil)
+    ui.scoreFlash.textContent='POWER GRID '+e.charges+'/'+e.needed;
+  }
+  if(e.type==='hurryup'){
+   arcadeMessage('JACKPOT LIT! · HIT THE SCOOP');
+   ui.scoreFlash.textContent='NEON RUSH ACTIVE';
+   sound(1100,.25,'sawtooth');
+  }
+  if(e.type==='jackpot'){
+   arcadeMessage('NEON RUSH JACKPOT! +'+fmt(e.points));
+   ui.scoreFlash.textContent='JACKPOT +'+fmt(e.points);
+   sound(1300,.36,'square');
+  }
+  if(e.type==='hurryMiss')arcadeMessage('JACKPOT EXPIRED · RECHARGE');
+  if(e.type==='overdrive'){
+   arcadeMessage('SPINNER OVERDRIVE · 14 SECONDS');
+   sound(1150,.27,'sawtooth');
+  }
+  if(e.type==='superSpinner'){
+   ui.scoreFlash.textContent='SUPER SPINNER +'+fmt(e.points);
+   sound(1080,.12,'triangle');
+  }
   if(e.type==='mission'){arcadeMessage(e.headline);ui.scoreFlash.textContent='MISSION COMPLETE';sound(980,.22);}
-  if(e.type==='award'){ui.scoreFlash.textContent=e.label+' · +'+fmt(e.score);}
+  if(e.type==='award'&&!['SKILL SHOT','NEON COMBO','NEON RUSH JACKPOT','OVERDRIVE SPINNER'].includes(e.label)){
+   ui.scoreFlash.textContent=e.label+' · +'+fmt(e.score);
+  }
   if(e.type==='ballsave'){ui.overlay.hidden=true;arcadeMessage('BALL SAVED! LAUNCH AGAIN');sound(720,.18);}
   if(e.type==='extra'){arcadeMessage('EXTRA BALL UNLOCKED!');sound(1060,.22);}
   if(e.type==='multiplier'){arcadeMessage('2× MULTIPLIER · 20 SECONDS');}
