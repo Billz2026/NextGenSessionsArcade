@@ -1,5 +1,5 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs';
-import {renderTable} from './visuals.mjs';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=5';
+import {renderTable} from './visuals.mjs?v=5';
 import {createDotMatrix} from './dmd.mjs?v=4';
 const $=id=>document.getElementById(id);
 const ui={
@@ -49,7 +49,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=6');
+  const {create3DTable}=await import('./render3d.mjs?v=7');
   const result=await create3DTable(stage);
   view3d=result;
   result.canvas.addEventListener('webglcontextlost',event=>{
