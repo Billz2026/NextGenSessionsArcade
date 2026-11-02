@@ -104,7 +104,7 @@ export class PinballEngine{
   const last=this.cooldowns.get(key)??-100;
   if(this.time-last<delay)return false;
   this.cooldowns.set(key,this.time);this.scoreHit(score,type);
-  if(type.startsWith('bumper'))this.bump();
+  if(type.startsWith('bumper'))this.bumper();
   return true;
  }
  collideCircle(obj,impulse=1.07,key='circle',score=0){
