@@ -11,7 +11,7 @@ const ui={
  launch:$('launch'),left:$('flipper-left'),right:$('flipper-right'),sound:$('sound'),
  multi:$('multiplier'),ballSave:$('ball-save'),modeName:$('mode-name'),
  modeTimer:$('mode-timer'),missionMessage:$('mission-message'),
- extraStatus:$('extra-status'),shots:$('shots-counter'),leaderboard:$('leaderboard'),
+ extraStatus:$('extra-status'),gridStatus:$('grid-status'),shots:$('shots-counter'),leaderboard:$('leaderboard'),
  mission:{lanes:$('mission-lanes'),frenzy:$('mission-frenzy'),targets:$('mission-targets'),ride:$('mission-ride')},
  progress:{lanes:$('progress-lanes'),frenzy:$('progress-frenzy'),targets:$('progress-targets'),ride:$('progress-ride')}
 };
@@ -118,6 +118,13 @@ function syncHUD(){
  ui.progress.targets.textContent=engine.missions.targets?'DONE':engine.targets.size+' / 4';
  ui.progress.ride.textContent=engine.missions.ride?'DONE':'RAMP + ORBIT';
  ui.extraStatus.textContent=engine.extraAwarded?'EXTRA BALL EARNED ✓':'EXTRA BALL: COMPLETE ALL FOUR MISSIONS';
+ if(ui.gridStatus){
+  ui.gridStatus.textContent=engine.hurryUpUntil>engine.time?
+   'JACKPOT LIT · '+Math.ceil(engine.hurryUpUntil-engine.time)+'s TO SCOOP':
+   engine.overdriveUntil>engine.time?
+   'OVERDRIVE · '+Math.ceil(engine.overdriveUntil-engine.time)+'s':
+   'POWER GRID '+engine.powerCharges+'/3 · CHAIN SHOTS';
+ }
  ui.shots.textContent=engine.shots+' SHOTS';
  if(spinnerCount)spinnerCount.textContent=engine.spinnerTurns+' SPINS';
  if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
