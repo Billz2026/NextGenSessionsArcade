@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,BUMPERS,SHOTS,SPINNER,SCOOP,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -211,4 +211,24 @@ test('new game resets spinner and scoop stats',()=>{
  assert.equal(g.spinnerAngle,0);
  assert.equal(g.scoopHits,0);
  assert.ok(g.lastScoopTime<0);
+});
+
+test('guided ramp and orbit shots remain aligned with the physical raised paths',()=>{
+ for(const [kind,path] of [['ramp',RAMP_PATH],['orbit',ORBIT_PATH]]){
+  const g=new PinballEngine();g.start();g.ball.mode='live';
+  g.ball.x=path[0][0];g.ball.y=path[0][1];
+  g.activateShot(kind);
+  const duration=g.ball.travel.duration;
+  // Sample one fixed-step tick near the midpoint of the guided shot.
+  steps(g,duration/2,BOARD.step);
+  const b=g.ball;
+  assert.equal(b.mode,'travel');
+  const q=b.travel.t/duration*(path.length-1),i=Math.min(path.length-2,Math.floor(q));
+  const mix=q-i;
+  const ex=path[i][0]+(path[i+1][0]-path[i][0])*mix;
+  const ey=path[i][1]+(path[i+1][1]-path[i][1])*mix;
+  assert.ok(Math.abs(b.x-ex)<1.2,kind+' x deviated from raised rail');
+  assert.ok(Math.abs(b.y-ey)<1.2,kind+' y deviated from raised rail');
+  assert.ok(b.travelHeight>=.35,kind+' failed to track physical height');
+ }
 });
