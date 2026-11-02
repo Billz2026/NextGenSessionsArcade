@@ -595,3 +595,31 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  .hardware-counts{font-size:9px;gap:5px}
  .mission-footer{flex-wrap:wrap}
 }
+
+/* Phase 3E: prevent the launcher and START buttons from colliding on desktop. */
+@media(min-width:1121px){
+ .hud{
+  grid-template-rows:26px 82px 58px 58px 97px 46px minmax(94px,1fr) 55px;
+ }
+ .launcher-section{display:flex;flex-direction:column;padding:7px 10px;gap:0;overflow:hidden}
+ .launcher-section .section-title{margin-bottom:3px;flex:0 0 auto}
+ .launcher-section .power-row{flex:0 0 auto;line-height:1.15}
+ .launcher-section .power-track{height:7px;margin:4px 0 6px;flex:0 0 7px}
+ .launcher-section .launch-button{min-height:29px;flex:1 1 auto;max-height:36px}
+ .action-panel{align-items:stretch}
+ .action-panel>button{max-height:46px}
+}
+@media(min-width:1121px) and (max-height:700px){
+ .hud{grid-template-rows:24px 69px 53px 50px 82px 39px minmax(75px,1fr) 42px}
+ .launcher-section{padding:5px 8px}
+ .launcher-section .section-title{margin-bottom:2px}
+ .launcher-section .power-track{height:5px;flex-basis:5px;margin:2px 0 4px}
+ .launcher-section .launch-button{min-height:25px;max-height:30px;padding:2px;font-size:12px}
+}
+@media(min-width:1121px) and (max-height:590px){
+ .hud{grid-template-rows:22px 58px 40px 43px 65px 36px minmax(68px,1fr)}
+ .launcher-section{padding:3px 7px}
+ .launcher-section .section-title{margin-bottom:1px}
+ .launcher-section .power-track{height:4px;flex-basis:4px;margin:2px 0 3px}
+ .launcher-section .launch-button{min-height:22px;max-height:25px;font-size:11px}
+}
