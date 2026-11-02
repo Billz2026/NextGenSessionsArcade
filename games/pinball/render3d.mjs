@@ -133,49 +133,66 @@ export async function create3DTable(host){
  box(0,0,-.38,boardW+.72,boardH+.72,.88,metal('#352633',.35,.55));
  box(0,0,-.12,boardW+.16,boardH+.16,.34,gold);
  box(0,0,.05,boardW,boardH,.20,enamel);
- // Original table artwork is an enamel print underneath mechanical fixtures.
- const paint=document.createElement('canvas');paint.width=840;paint.height=1400;
- const p=paint.getContext('2d'),bg=p.createLinearGradient(0,0,840,1400);
- bg.addColorStop(0,'#304064');bg.addColorStop(.34,'#242d53');
- bg.addColorStop(.7,'#271e49');bg.addColorStop(1,'#4a2440');
+ // Phase 3L: contrast-led original playfield printing. The important
+ // scoring zones are distinct; no more ghost NEON lettering or purple haze.
+ const paint=document.createElement('canvas');
+ paint.width=840;paint.height=1400;
+ const p=paint.getContext('2d');
+ const bg=p.createLinearGradient(0,0,0,1400);
+ bg.addColorStop(0,'#152238');
+ bg.addColorStop(.37,'#161d34');
+ bg.addColorStop(.70,'#191a32');
+ bg.addColorStop(1,'#171626');
  p.fillStyle=bg;p.fillRect(0,0,840,1400);
- p.strokeStyle='rgba(237,170,133,.23)';p.lineWidth=2;
- for(let i=0;i<13;i++){p.beginPath();p.moveTo(135,230+i*82);p.quadraticCurveTo(425,195+i*78,710,245+i*77);p.stroke();}
- p.textAlign='center';
- p.fillStyle='rgba(240,133,116,.20)';p.font='900 96px Impact,sans-serif';p.fillText('NEON',416,1020);
- p.fillStyle='rgba(202,162,232,.23)';p.font='900 108px Impact,sans-serif';p.fillText('TILT',416,1115);
- for(let i=0;i<36;i++){const x=80+(i*71)%680,y=120+(i*153)%1170;p.fillStyle=i%3===0?'#705e7d':'#545873';p.fillRect(x,y,4,4);}
-
- // Screen-printed graphics beneath the clear lacquer. Distinct zones help
- // players read the ramp, bumper cluster and flipper return lanes.
- p.save();
- p.lineWidth=6;p.strokeStyle='rgba(251,182,111,.4)';
- p.beginPath();p.moveTo(110,280);p.bezierCurveTo(70,355,70,560,135,680);p.stroke();
- p.beginPath();p.moveTo(692,282);p.bezierCurveTo(750,355,750,575,655,690);p.stroke();
- p.lineWidth=2;p.strokeStyle='rgba(167,211,250,.38)';
- for(let i=0;i<5;i++){
-  p.beginPath();p.moveTo(235+i*4,578+i*16);
-  p.bezierCurveTo(350,595+i*14,480,581+i*10,572-i*4,577+i*16);p.stroke();
+ // Crisp zone borders that survive the camera's projected resolution.
+ p.fillStyle='rgba(69,96,136,.17)';p.fillRect(96,175,648,520);
+ p.fillStyle='rgba(70,49,85,.24)';p.fillRect(96,712,648,267);
+ p.fillStyle='rgba(37,42,70,.32)';p.fillRect(96,996,648,310);
+ p.lineWidth=4;p.strokeStyle='rgba(222,163,118,.42)';
+ for(const y of [706,983]){
+  p.beginPath();p.moveTo(139,y);p.lineTo(698,y);p.stroke();
  }
- p.fillStyle='rgba(252,209,160,.58)';
- p.font='900 30px Impact,sans-serif';
- p.fillText('NIGHT RIDE',415,823);
- p.font='900 23px Impact,sans-serif';
- p.fillText('ORBIT',160,795);p.fillText('RAMP',650,795);
- p.font='900 20px Impact,sans-serif';
- p.fillStyle='rgba(195,207,245,.52)';
- p.fillText('TARGET BANK',415,895);
- // Symmetrical enamel striping beneath the slingshot and lane hardware.
+ // Fine circuit motifs complement hardware instead of competing with it.
+ p.lineWidth=2;p.strokeStyle='rgba(140,159,190,.17)';
+ for(let i=0;i<7;i++){
+  const y=300+i*88;
+  p.beginPath();p.moveTo(171,y);p.lineTo(267,y-12);
+  p.moveTo(573,y-12);p.lineTo(664,y);p.stroke();
+ }
+ p.strokeStyle='rgba(230,176,133,.55)';p.lineWidth=6;
+ p.beginPath();p.moveTo(135,350);p.bezierCurveTo(103,475,122,665,164,752);p.stroke();
+ p.beginPath();p.moveTo(701,350);p.bezierCurveTo(733,475,714,665,672,752);p.stroke();
+ p.strokeStyle='rgba(123,176,220,.5)';p.lineWidth=3;
+ p.beginPath();p.moveTo(148,363);p.bezierCurveTo(118,478,137,632,174,714);p.stroke();
+ p.beginPath();p.moveTo(688,363);p.bezierCurveTo(718,478,699,632,662,714);p.stroke();
+ // Printed labels use dedicated dark ink plaques, not translucent lettering
+ // thrown across the art. All dimensions are at 2x engine coordinates.
+ function inkLabel(text,x,y,width,accent='#f7d6b2'){
+  p.fillStyle='#101522';p.fillRect(x-width/2,y-26,width,51);
+  p.lineWidth=3;p.strokeStyle='#ac7c64';p.strokeRect(x-width/2,y-26,width,51);
+  p.fillStyle=accent;p.textAlign='center';p.textBaseline='middle';
+  p.font='900 34px "Barlow Condensed",Impact,"Arial Narrow",sans-serif';
+  p.fillText(text,x,y,width-16);
+ }
+ inkLabel('POWER GRID',420,681,244,'#e6b98c');
+ inkLabel('ORBIT',162,790,144,'#d6e5ff');
+ inkLabel('RAMP',674,790,144,'#ffc6b8');
+ inkLabel('TARGET BANK',420,894,265,'#ffdeae');
+ inkLabel('NIGHT RIDE',420,986,250,'#e5c4fb');
+ inkLabel('BALL SAVE',420,1140,220,'#ffe2a4');
+ // Lower flipper return-lane guides remain separate from the main artwork.
  for(const side of [-1,1]){
-  p.save();p.translate(420,1040);p.scale(side,1);
-  p.strokeStyle='rgba(252,127,139,.36)';p.lineWidth=8;
-  p.beginPath();p.moveTo(95,-22);p.lineTo(218,86);p.stroke();
-  p.strokeStyle='rgba(251,222,179,.51)';p.lineWidth=3;
-  p.beginPath();p.moveTo(94,-34);p.lineTo(225,79);p.stroke();
+  p.save();p.translate(420,1200);p.scale(side,1);
+  p.lineWidth=10;p.strokeStyle='rgba(189,108,133,.68)';
+  p.beginPath();p.moveTo(98,-85);p.lineTo(210,23);p.stroke();
+  p.lineWidth=4;p.strokeStyle='#f0c9ac';
+  p.beginPath();p.moveTo(102,-96);p.lineTo(224,25);p.stroke();
+  p.fillStyle='#f3d7bc';
+  p.beginPath();p.moveTo(168,-40);p.lineTo(194,-26);p.lineTo(171,-14);
+  p.closePath();p.fill();
   p.restore();
  }
- p.restore();
- const floorTexture=new T.CanvasTexture(paint);floorTexture.colorSpace=T.SRGBColorSpace;floorTexture.anisotropy=8;
+ const floorTexture=new T.CanvasTexture(paint);floorTexture.colorSpace=T.SRGBColorSpace;floorTexture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);floorTexture.minFilter=T.LinearMipmapLinearFilter;
  plane(0,0,.166,boardW,boardH,new T.MeshStandardMaterial({map:floorTexture,roughness:.3,metalness:.18}));
  // Brushed steel side rails and body sidewalls.
  for(const px of [-4.34,4.34]){
