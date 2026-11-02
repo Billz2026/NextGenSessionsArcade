@@ -656,7 +656,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  .machine::after{right:clamp(20px,calc(50% - 257px),38%)}
  .machine-top{height:16px;min-height:16px;flex-basis:16px;padding:1px 5px 2px}
  .cabinet{
-   --table-height:clamp(220px,calc(100dvh - 137px),940px);
+   --table-height:clamp(220px,calc(100dvh - 142px),940px);
    width:calc(var(--table-height)*.6 + 25px);
    padding:4px 6px 5px;border-width:4px;border-radius:10px;
    max-height:calc(100% - 17px);
@@ -667,7 +667,7 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  .cabinet-lights span{height:5px;width:5px;background:#ffcc8e;box-shadow:0 0 8px #ffb65a,0 0 15px #fa6e68}
  .playfield-wrap{
    height:var(--table-height);width:calc(var(--table-height)*.6);
-   max-height:calc(100dvh - 137px);
+   max-height:calc(100dvh - 142px);
    border-width:2px;border-radius:5px;
    box-shadow:0 0 0 2px #17121b,0 0 0 3px #b48a76,0 0 20px #e26c6240;
  }
@@ -689,14 +689,14 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  .score-number{text-shadow:0 0 15px #faba899e,0 0 34px #ff70465c}
 }
 @media(min-width:1121px) and (max-height:700px){
- .cabinet{--table-height:clamp(210px,calc(100dvh - 130px),700px)}
- .playfield-wrap{max-height:calc(100dvh - 130px)}
+ .cabinet{--table-height:clamp(210px,calc(100dvh - 147px),700px)}
+ .playfield-wrap{max-height:calc(100dvh - 147px)}
  .machine::before,.machine::after{top:30px;bottom:44px}
  .hud .mission-card::after{display:none}
 }
 @media(min-width:1121px) and (max-height:590px){
- .cabinet{--table-height:clamp(180px,calc(100dvh - 123px),580px)}
- .playfield-wrap{max-height:calc(100dvh - 123px)}
+ .cabinet{--table-height:clamp(180px,calc(100dvh - 147px),580px)}
+ .playfield-wrap{max-height:calc(100dvh - 147px)}
  .flipper-controls{height:32px;flex-basis:32px}
  .flipper-control{height:32px;min-height:32px}
  .machine::before,.machine::after{width:11px}
