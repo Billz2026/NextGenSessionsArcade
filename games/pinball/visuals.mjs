@@ -43,7 +43,7 @@ function plastic(c,path,color,glow){
  c.beginPath();path(c);c.fillStyle=color;c.fill();c.lineWidth=2;c.strokeStyle=glow;c.stroke();
 }
 function drawBase(c,anim){
- const bg=G(c,0,0,420,700,[[0,'#292839'],[.28,'#171829'],[.64,'#10131f'],[1,'#332638']]);
+ const bg=G(c,0,0,420,700,[[0,'#172238'],[.28,'#151d33'],[.64,'#17192e'],[1,'#1c1829']]);
  c.fillStyle=bg;c.fillRect(0,0,BOARD.width,BOARD.height);
  // Worn enamel / star-fleck artwork with stable deterministic placements.
  const rand=seed=>{const n=Math.sin(seed*127.1+67.45)*43758.5453;return n-Math.floor(n)};
@@ -61,9 +61,9 @@ function drawBase(c,anim){
  line(c,[[30,64],[32,622]],'rgba(255,249,206,.54)',2);
  line(c,[[388,56],[387,630]],'rgba(255,245,215,.48)',2);
  // Underlay city / star-map silhouettes preserve original branding identity.
- c.save();c.globalAlpha=.22;
- text(c,'N E X T G E N',208,466,33,'#bf6b77','Barlow Condensed',900);
- text(c,'AFTER DARK',210,493,12,'#d7ae83','Oxanium',800);
+ // Keep the lower playfield free of unreadable ghost lettering.
+ c.save();c.globalAlpha=.67;
+ text(c,'BALL SAVE',210,565,11,'#f1d4ad','Barlow Condensed',900);
  c.restore();
  // Brass enamel edge screws.
  for(const [x,y] of [[23,32],[397,32],[19,263],[400,263],[19,524],[402,524],[30,671],[389,671]])bolt(c,x,y,4);
@@ -74,11 +74,15 @@ function drawBackglass(c,anim){
  rect(c,79,32,269,108,11,'#17131c','#876d5a',5);c.restore();
  rect(c,83,35,261,103,10,G(c,90,35,320,139,[[0,'#b6a18b'],[.07,'#4c4447'],[.37,'#161622'],[.82,'#2d2939'],[1,'#ae7e69']]),'#ddc09e',2.5);
  rect(c,91,43,244,86,7,G(c,94,44,331,126,[[0,'#181b2f'],[.55,'#070e22'],[1,'#29172c']]),'rgba(243,201,134,.46)',1.2);
- c.save();c.shadowBlur=11;c.shadowColor='#e45c70';
- text(c,'NEXTGEN SESSIONS',213,65,13,'#ffe1ab','Oxanium',900);
- text(c,'N E O N  T I L T',213,95,26,'#ff846e','Barlow Condensed',900);
+ c.save();
+ c.shadowBlur=0;
+ c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+ c.font='900 14px "Barlow Condensed",Impact,sans-serif';
+ c.fillStyle='#fff0d7';c.fillText('NEXTGEN SESSIONS',213,66,220);
+ c.font='900 33px "Barlow Condensed",Impact,sans-serif';
+ c.lineWidth=3.5;c.strokeStyle='#251522';c.strokeText('NEON TILT',213,101,220);
+ c.fillStyle='#ffa18b';c.fillText('NEON TILT',213,101,220);
  c.restore();
- text(c,'THE NIGHT SHIFT / GAME 002',213,117,8,'#dbb39f');
  for(const x of [101,324])bolt(c,x,52,3);
  // Top crown lamps run automatically in attract mode.
  for(let i=0;i<3;i++){
