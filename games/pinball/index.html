@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=5">
+<link rel="stylesheet" href="./game.css?v=6">
 </head>
 <body>
 <a href="#game" class="skip">Skip to pinball game</a>
@@ -24,6 +24,7 @@
   <div class="header-label"><span>GAME 002 <b> / </b> CLASSIC ARCADE</span><strong>NEON TILT</strong></div>
   <div class="header-actions">
     <button type="button" id="render-mode" class="chrome-button view-switch" aria-pressed="true" title="Switch between live 3D table and classic 2D fallback">3D VIEW <span aria-hidden="true">◈</span></button>
+    <button type="button" id="immersive" class="chrome-button fullscreen-button" aria-pressed="false" title="Enter browser fullscreen arcade mode">FULLSCREEN <span aria-hidden="true">⛶</span></button>
     <button type="button" id="sound" class="chrome-button" aria-pressed="false">SOUND OFF <span aria-hidden="true">♪</span></button>
     <a href="../../" class="exit-button">EXIT TO ARCADE <span aria-hidden="true">↗</span></a>
   </div>
@@ -104,6 +105,6 @@
   <div class="development-note"><strong>REAL-TIME 3D PREVIEW:</strong> Original 3D geometry, metallic materials and dynamic lighting. The physics still runs in 2D and guided ramp/orbit paths remain simplified. A 2D fallback is available. No prizes, purchases or real-money play.</div>
 </main>
 <footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · 3D TABLE PREVIEW</span><a href="../../">BACK TO ARCADE ↗</a></footer>
-<script type="module" src="./game.mjs?v=5"></script>
+<script type="module" src="./game.mjs?v=6"></script>
 </body>
 </html>
