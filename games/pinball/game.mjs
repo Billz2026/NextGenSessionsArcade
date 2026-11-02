@@ -26,14 +26,47 @@ best=Math.max(best,...topScores,0);
 let lastModeMessage='PRESS START TO PLAY',messageUntil=0,announcedGameOver=false;
 let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='';
 const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
-const fitButton=document.getElementById('table-size');
-if(fitButton){
- fitButton.addEventListener('click',()=>{
-  const enabled=document.documentElement.classList.toggle('fit-table');
-  fitButton.setAttribute('aria-pressed',String(enabled));
-  fitButton.innerHTML=enabled?'LARGE TABLE <span aria-hidden="true">⛶</span>':'FIT TABLE <span aria-hidden="true">⛶</span>';
- });
+// A physically modelled Three.js scene is the preferred renderer. 2D Canvas
+// is retained as an immediate, offline-safe fallback on unsupported systems.
+const stage=document.getElementById('table-stage');
+const renderStatus=document.getElementById('render-status');
+const modeButton=document.getElementById('render-mode');
+let view3d=null,prefer3d=true,loading3d=false,threeFailed=false;
+function updateRenderUI(){
+ if(!stage)return;
+ const active=prefer3d&&Boolean(view3d);
+ stage.classList.toggle('has-webgl',active);
+ if(modeButton){
+  modeButton.disabled=threeFailed;
+  modeButton.setAttribute('aria-pressed',String(active));
+  modeButton.textContent=active?'3D TABLE · ON':threeFailed?'2D FALLBACK':'2D TABLE · ON';
+ }
+ if(renderStatus)renderStatus.textContent=active?'REAL-TIME 3D':threeFailed?'2D MODE · 3D UNAVAILABLE':loading3d?'LOADING 3D…':'CLASSIC 2D VIEW';
 }
+async function activate3D(){
+ if(!stage||view3d||loading3d||threeFailed)return;
+ loading3d=true;updateRenderUI();
+ try{
+  const {create3DTable}=await import('./render3d.mjs?v=1');
+  const result=await create3DTable(stage);
+  view3d=result;
+  result.canvas.addEventListener('webglcontextlost',event=>{
+   event.preventDefault();
+   prefer3d=false;threeFailed=true;
+   updateRenderUI();
+  });
+ }catch(error){
+  console.warn('Neon Tilt 3D unavailable; keeping playable 2D table.',error);
+  threeFailed=true;
+ }finally{loading3d=false;updateRenderUI();}
+}
+if(modeButton)modeButton.addEventListener('click',()=>{
+ if(threeFailed)return;
+ prefer3d=!prefer3d;
+ updateRenderUI();
+ if(prefer3d&&!view3d)activate3D();
+});
+activate3D();
 const fmt=n=>Math.max(0,Math.floor(n)).toLocaleString('en-GB');
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 function overlay(kicker,title,sub){
@@ -264,7 +297,14 @@ function loop(now){
  const dt=lastTime?Math.min(.05,(now-lastTime)/1000):0;lastTime=now;
  if(!document.hidden){
   engine.advance(dt);processEvents();syncHUD();
-  resize();drawBoard();drawParticles(dt);
+  if(prefer3d&&view3d){
+   try{view3d.update(engine,{bumperFlash,reducedMotion});}
+   catch(error){
+    console.warn('3D rendering stopped; restoring 2D table.',error);
+    prefer3d=false;threeFailed=true;updateRenderUI();
+    resize();drawBoard();drawParticles(dt);
+   }
+  }else{resize();drawBoard();drawParticles(dt);}
  }
  requestAnimationFrame(loop);
 }
