@@ -757,3 +757,63 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
 @media(max-width:690px){
  .dmd-display{height:119px}
 }
+
+/* PHASE 3H — cinema-quality table framing and readable hardware display. */
+.dmd-display{
+ border:2px solid #c58c61;
+ background:linear-gradient(145deg,#1c0b0d,#060407 54%,#251111);
+ box-shadow:inset 0 1px #ffdc9d55,inset 0 0 14px #000,0 0 15px #ef94523b;
+}
+#dmd-screen{
+ width:100%;height:100%;flex:1 1 auto;min-height:0;
+ object-fit:fill;
+ filter:drop-shadow(0 0 8px #ffb85a6b);
+}
+.dmd-header{color:#f7c88e}
+@media(min-width:1121px){
+ .machine::before,.machine::after{opacity:.45;filter:saturate(.7)}
+ .cabinet{box-shadow:0 0 0 1px #e8be9b,0 0 0 3px #291720,0 0 21px #e77a5a47,0 12px 25px #000,inset 0 1px #fff0d08a}
+ .playfield-wrap{
+   border-color:#af9a99;
+   box-shadow:0 0 0 2px #121017,0 0 0 3px #d2aa87,0 0 14px #e68c7a57,inset 0 0 11px #0009;
+ }
+ .dmd-display{margin-top:6px;min-height:56px}
+ .hud .mission-card{min-height:0}
+}
+@media(min-width:1121px) and (max-height:730px){
+ .dmd-display{min-height:39px;margin-top:4px}
+}
+@media(min-width:1121px) and (max-height:620px){
+ .dmd-display{display:none}
+}
+/* A browser-supported fullscreen session is deliberately different from
+   opening the page in a normal Chrome tab: true cabinet-first presentation. */
+@media(min-width:1121px){
+ html:fullscreen,html:fullscreen body{height:100dvh;overflow:hidden;background:#050509}
+ html:fullscreen .site-header,html:fullscreen .top-rule{display:none!important}
+ html:fullscreen .shell{
+  height:100dvh;max-width:1650px;width:min(100%,1650px);
+  padding:3px 8px;flex:1;min-height:0;
+ }
+ html:fullscreen .game-layout{
+  grid-template-columns:minmax(0,1.8fr) minmax(320px,.82fr);
+  gap:8px;
+ }
+ html:fullscreen .machine{border-radius:8px;padding:2px 5px}
+ html:fullscreen .machine-top{flex-basis:14px;height:14px;min-height:14px}
+ html:fullscreen .cabinet{
+  --table-height:clamp(240px,calc(100dvh - 91px),1040px);
+  max-height:calc(100% - 16px);
+ }
+ html:fullscreen .playfield-wrap{
+  height:var(--table-height);max-height:calc(100dvh - 91px);
+ }
+ html:fullscreen .machine::before,html:fullscreen .machine::after{opacity:.22}
+ html:fullscreen .hud{background:linear-gradient(135deg,#191019,#080911)}
+ html:fullscreen .dmd-display{min-height:70px}
+}
+@media(min-width:1121px) and (max-height:700px){
+ html:fullscreen .cabinet{--table-height:clamp(210px,calc(100dvh - 100px),580px)}
+ html:fullscreen .playfield-wrap{max-height:calc(100dvh - 100px)}
+ html:fullscreen .dmd-display{min-height:38px}
+}
