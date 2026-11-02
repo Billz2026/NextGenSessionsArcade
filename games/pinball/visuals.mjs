@@ -93,49 +93,26 @@ function drawBackglass(c,anim){
  }
 }
 function drawOrbits(c){
- // New real guided crossover/skyline rails, aligned to engine geometry.
- // The dark underpass and twin chrome highlights make the raised paths
- // distinguishable even when the fallback Canvas renderer is selected.
- for(const [path,color,title,dx] of [
-  [CENTER_PATH,'#c8d4fa','CROSS',0],
-  [SKYLINE_PATH,'#f2b3b3','SKYLINE',-2]
+ // Four playable routes, printed onto the playfield. No metal wireforms.
+ for(const [path,col] of [
+  [ORBIT_PATH,'#ffbc83'],[RAMP_PATH,'#ff8796'],
+  [CENTER_PATH,'#89d8f7'],[SKYLINE_PATH,'#dfa6eb']
  ]){
-  const pts=path.map(p=>[p[0],p[1]]);
-  chromeRail(c,pts,8,color);
-  const secondary=path.map(p=>[p[0]+dx+8,p[1]]);
-  chromeRail(c,secondary,3,'#eff0f2');
-  for(const [i,p] of path.entries()){
-   if(i>0&&i<path.length-1&&i%3===0){
-    bolt(c,p[0]-12,p[1]+4,3);
-    bolt(c,p[0]+12,p[1]+4,3);
-   }
-  }
-  const [sx,sy]=pts[0];
-  rect(c,sx-29,sy+12,58,22,5,'#121824','#ecbc9e',2);
-  text(c,title,sx,sy+23,10,'#fff2cf','Barlow Condensed',900);
+  const pts=path.map(([x,y])=>[x,y]);
+  const dashed=path===CENTER_PATH||path===SKYLINE_PATH;
+  c.save();c.setLineDash(dashed?[4,9]:[]);
+  line(c,pts,'#2b2035',dashed?7:13);
+  line(c,pts,col,dashed?3:6);
+  c.restore();
  }
-
- // Ramped half-tubes: broad dark extrusion underneath, translucent top rails.
- const orbit=[[85,394],[57,361],[49,303],[49,235],[60,186],[86,164]];
- chromeRail(c,orbit,11,'#e7b79b');
- line(c,[[93,392],[69,338],[68,270],[79,202],[97,181]],'#301725',5);
- line(c,[[93,392],[69,338],[68,270],[79,202],[97,181]],'rgba(255,137,109,.8)',2.2);
- const ramp=[[315,406],[335,379],[343,332],[322,279],[296,241],[290,203],[313,173]];
- chromeRail(c,ramp,15,'#cab4c6');
- line(c,[[298,399],[318,366],[321,332],[304,293],[278,255],[270,202]],'#533a59',6);
- line(c,[[298,399],[318,366],[321,332],[304,293],[278,255],[270,202]],'#ffad92',2.3);
- // Ramp's raised bridge spans in an offset alignment with its collision sensor.
- for(const [x,y] of [[336,336],[308,260],[306,197]]){
-  c.save();c.shadowColor='#050409';c.shadowBlur=8;c.shadowOffsetY=8;
-  rect(c,x-20,y-7,40,14,4,G(c,x-20,y-10,x+20,y+10,[[0,'#eee0d1'],[.42,'#a58c95'],[1,'#4e4853']]),'#e9beab',1.5);c.restore();
-  for(const b of [-14,14])bolt(c,x+b,y,2);
+ for(const [label,x,y,color] of [
+  ['ORBIT',78,372,'#ffdfb4'],['RAMP',315,372,'#ffd4bb'],
+  ['CROSS',208,438,'#bcecff'],['SKY',122,404,'#e5c8ff']
+ ]){
+  rect(c,x-26,y-11,52,22,4,'#151b30','#bd8b87',1.4);
+  text(c,label,x,y,11,color,'Barlow Condensed',900);
  }
- rect(c,46,354,70,31,6,'#1d1825','#e3ae83',2);
- text(c,'ORBIT',81,370,13,'#ffe5b0','Barlow Condensed',900);
- rect(c,279,356,73,31,6,'#211924','#eeb899',2);
- text(c,'RAMP',315,372,14,'#ffdaaf','Barlow Condensed',900);
 }
-
 /* Phase 3C: printed enamel, moulded plastics, ball guides and working inserts.
    Decorative lamps follow existing mechanic state; they do not create fake targets. */
 function drawEnamelDetails(c){
@@ -147,8 +124,7 @@ function drawEnamelDetails(c){
   c.bezierCurveTo(153,382+i*7,253,372-i*7,297-i*3,355-i*6);c.stroke();
  }
  text(c,'POWER GRID',210,360,10,'rgba(255,226,173,.57)','Oxanium',900);
- text(c,'NEON CITY',210,470,29,'rgba(209,99,120,.27)','Barlow Condensed',900);
- text(c,'HIGH VOLTAGE',211,493,10,'rgba(137,179,241,.33)','Oxanium',800);
+ // The former ghost lettering is replaced by a clear central power insert.
  // A restrained 3D-effect skyline is printed onto the playfield, not a prop.
  for(let i=0;i<14;i++){
   const bx=106+i*14,h=12+(i*7)%24;
@@ -167,12 +143,10 @@ function drawEnamelDetails(c){
   p.moveTo(338,423);p.bezierCurveTo(350,409,357,406,362,395);
   p.lineTo(374,445);p.lineTo(346,457);p.lineTo(326,431);p.closePath();
  },G(c,326,406,369,462,[[0,'#9b7b89'],[.46,'#403746'],[1,'#1c1a2a']]),'#e3bca1');
- // Lifted lanes and compact steel gate frames near the upper rollovers.
+ // Upper rollovers use moulded acrylic slots, not steel gate frames.
  for(const lane of LANES){
-  const x=lane.x;
-  chromeRail(c,[[x-22,187],[x-22,207]],2.4,'#e6d6d0');
-  chromeRail(c,[[x+22,187],[x+22,207]],2.4,'#e6d6d0');
-  for(const offset of [-22,22])bolt(c,x+offset,201,2);
+  rect(c,lane.x-24,183,48,23,5,'#2c254b','#bf89c4',2);
+  text(c,lane.label,lane.x,193,12,'#ffe5ba','Barlow Condensed',900);
  }
  // Dense recessed incandescent insert clusters, like a physical playfield.
  const inserts=[
@@ -279,14 +253,16 @@ function drawSlings(c){
  }
 }
 function drawWalls(c){
- // Collision-linked walls. Thin silver rails are located exactly on the colliders.
+ // Outer boundaries, slings and inlanes use painted acrylic sidewalls.
+ // Real collisions remain in engine.mjs, independent from the artwork.
  for(const w of WALLS){
-  const [[x1,y1],[x2,y2]]=[[w[0],w[1]],[w[2],w[3]]];
-  chromeRail(c,[[x1,y1],[x2,y2]],3.4,'#cbc7c2');
+  const pts=[[w[0],w[1]],[w[2],w[3]]];
+  line(c,pts,'#241e37',7);
+  line(c,pts,'rgba(205,122,156,.55)',3);
  }
- for(const x of [91,329]){
-  const left=x<200;
-  chromeRail(c,[[x,510],[left?122:298,545]],5,'#f0d1b0');
+ for(const [x,left] of [[91,true],[329,false]]){
+  line(c,[[x,510],[left?122:298,545]],'#794f8c',8);
+  line(c,[[x,510],[left?122:298,545]],'#d893ae',3);
  }
 }
 function drawFlippers(c,engine){
@@ -332,13 +308,20 @@ function drawNewFeatures(c,engine,reducedMotion=false){
  disk(c,sc.x,sc.y,14,on?'#f48770':'#3a152a','#edbc85',2);
  disk(c,sc.x,sc.y,8,on?'#fff0c0':'#120c17');
  text(c,'SCOOP',sc.x,sc.y+28,9,'#ffdfb2');
- // 2D fallback reflects the same real Power Grid and Overdrive engine state.
- rect(c,162,465,92,23,5,'#191724','#c4a18d',2);
- text(c,'POWER GRID',208,459,9,'#ffe2ad','Barlow Condensed',900);
- for(let i=0;i<3;i++){
-  const lit=engine.powerCharges>i,rush=engine.hurryUpUntil>engine.time;
-  disk(c,180+i*28,476,6,lit?(rush?'#ff67aa':'#ffbd6b'):'#41333d',
-   lit?'#fff4cf':'#816a69',1.5);
+ // Sculpted centre Power Core plus 16 real state-driven score lamps.
+ const coreX=210,coreY=472,litGrid=engine.powerCharges||0;
+ disk(c,coreX,coreY,50,'#151b34','#c07691',5);
+ disk(c,coreX,coreY,40,R(c,coreX,coreY,42,[
+  [0,'#3a70a9'],[.57,'#203964'],[1,'#111e39']]),'#78b0df',3);
+ for(let i=0;i<16;i++){
+  const a=(i/16)*TAU-Math.PI/2;
+  const x=coreX+Math.cos(a)*43,y=coreY+Math.sin(a)*43;
+  const on=engine.hurryUpUntil>engine.time||i<litGrid*5||
+   engine.state==='ready'&&i===Math.floor(performance.now()/170)%16;
+  disk(c,x,y,4,on?'#ffe59b':'#547caa',on?'#fff7d2':'#293e68',1);
+ }
+ for(const [i,pos] of [[190,473],[210,447],[230,473]].entries()){
+  disk(c,pos[0],pos[1],5,litGrid>i?'#ffc36d':'#443649','#f0be99',1.2);
  }
  const rush=engine.hurryUpUntil>engine.time,overdrive=engine.overdriveUntil>engine.time;
  if(rush){disk(c,sc.x,sc.y,23,null,'#ff70b1',3);text(c,'JACKPOT',sc.x,sc.y-32,11,'#ffe0a4');}
