@@ -22,6 +22,10 @@ export function getDmdStatus(game,now=0){
  const ball=game.ballNumber||1;
  if(game.ball?.mode==='shooter')return ['BALL '+ball+' READY','CHARGE PLUNGER'];
  if(game.ball?.mode==='scoop')return ['SCOOP CAPTURED','WAIT FOR EJECT'];
+ if(game.hurryUpUntil>game.time)
+  return ['NEON RUSH JACKPOT','SCOOP · '+Math.ceil(game.hurryUpUntil-game.time)+' SECONDS'];
+ if(game.overdriveUntil>game.time)
+  return ['SPINNER OVERDRIVE','SPIN FOR BONUS'];
  if(game.time<game.frenzyUntil)return ['BUMPER FRENZY','2X BUMPER POINTS'];
  if(game.time<game.multiplierUntil)return ['2X SCORING','CHASE JACKPOTS'];
  const targets=game.targets?.size||0,lanes=game.lanes?.size||0;
@@ -29,7 +33,7 @@ export function getDmdStatus(game,now=0){
  return [
   ['SCORE '+FMT(game.score),'BALL '+ball+' / 3'],
   ['TARGET BANK '+targets+'/4','NEON LANES '+lanes+'/3'],
-  ['RAMP + ORBIT','CHASE JACKPOTS'],
+  ['POWER GRID '+(game.powerCharges||0)+'/3','RAMP + ORBIT'],
   ['SPINS '+(game.spinnerTurns||0),'SCOOPS '+(game.scoopHits||0)]
  ][frame];
 }
@@ -46,6 +50,16 @@ export function describeDmdEvent(event,game=null){
    sub:bonus(event.points||0,game),
    priority:3,duration:1900
   };
+  case 'skillshot':return {headline:'SKILL SHOT!',sub:'+'+FMT(event.points),priority:4,duration:2300};
+  case 'combo':return {headline:'COMBO X'+(event.count||2),sub:'+'+FMT(event.points),priority:3,duration:1550};
+  case 'power':return {headline:'POWER GRID',sub:(event.charges||0)+' / '+(event.needed||3)+' CHARGED',priority:1,duration:900};
+  case 'hurryup':return {headline:'JACKPOT LIT!',sub:'HIT THE SCOOP',priority:4,duration:2650};
+  case 'jackpot':return {headline:'NEON RUSH!',sub:'+'+FMT(event.points),priority:5,duration:3350};
+  case 'hurryMiss':return {headline:'JACKPOT EXPIRED',sub:'RECHARGE GRID',priority:2,duration:1350};
+  case 'overdrive':return {headline:'OVERDRIVE!',sub:'SUPER SPINNER',priority:4,duration:2750};
+  case 'superSpinner':return {headline:'SUPER SPINNER',sub:'+'+FMT(event.points),priority:3,duration:1200};
+  case 'modeend':return event.mode==='overdrive'?
+   {headline:'OVERDRIVE ENDED',sub:'SPIN TO RECHARGE',priority:1,duration:1200}:null;
   case 'spinner':return {
    headline:'SPINNER · '+(event.turns||1),
    sub:bonus(1250,game),priority:2,duration:1050
