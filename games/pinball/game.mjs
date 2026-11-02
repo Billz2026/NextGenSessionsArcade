@@ -20,7 +20,7 @@ const STORAGE_KEY='ngs_pinball_proto_best_v1', TOP_KEY='ngs_pinball_top5_v2';
 const safeRead=()=>{try{return Number(localStorage.getItem(STORAGE_KEY))||0}catch{return 0}};
 const safeWrite=n=>{try{localStorage.setItem(STORAGE_KEY,String(n))}catch{}};
 let best=safeRead(),soundOn=false,audio=null,lastTime=0,particles=[],touchPointers=new Map();
-let bumperFlash=null;
+let bumperFlash=null,tableFlash=null;
 let topScores=[];try{const v=JSON.parse(localStorage.getItem(TOP_KEY)||'[]');if(Array.isArray(v))topScores=v.filter(n=>Number.isSafeInteger(n)&&n>=0).slice(0,5)}catch{}
 best=Math.max(best,...topScores,0);
 let lastModeMessage='PRESS START TO PLAY',messageUntil=0,announcedGameOver=false;
@@ -47,7 +47,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=1');
+  const {create3DTable}=await import('./render3d.mjs?v=2');
   const result=await create3DTable(stage);
   view3d=result;
   result.canvas.addEventListener('webglcontextlost',event=>{
@@ -152,6 +152,10 @@ function sound(freq=500,duration=.07,kind='triangle'){
 }
 function processEvents(){
  for(const e of engine.consumeEvents()){
+  if(['shot','mission','extra','scoop','spinner','frenzy','multiplier'].includes(e.type)){
+   const duration=e.type==='extra'?1050:e.type==='mission'?900:550;
+   tableFlash={kind:e.type,until:performance.now()+duration,duration};
+  }
   if(e.type==='start'){ui.overlay.hidden=true;ui.scoreFlash.textContent='BALL 1 READY';sound(490,.10);}
   if(e.type==='ball'){
    ui.overlay.hidden=true;ui.scoreFlash.textContent='BALL '+e.ball+' READY';
@@ -332,7 +336,7 @@ function loop(now){
  if(!document.hidden){
   engine.advance(dt);processEvents();syncHUD();
   if(prefer3d&&view3d){
-   try{view3d.update(engine,{bumperFlash,reducedMotion});}
+   try{view3d.update(engine,{bumperFlash,tableFlash,reducedMotion});}
    catch(error){
     console.warn('3D rendering stopped; restoring 2D table.',error);
     prefer3d=false;threeFailed=true;updateRenderUI();
