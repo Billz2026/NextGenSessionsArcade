@@ -97,6 +97,37 @@ export async function create3DTable(host){
   texture.magFilter=T.LinearFilter;
   return new T.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,side:T.DoubleSide,toneMapped:false});
  }
+ // The marquee is one cohesive high-resolution printed sign, not two
+ // independently stretched low-resolution glow labels. Native text strokes
+ // remain readable at small desktop table sizes.
+ function cabinetMarquee(){
+  const canvas=document.createElement('canvas');canvas.width=2048;canvas.height=560;
+  const c=canvas.getContext('2d');
+  c.fillStyle='#0b101e';c.fillRect(0,0,2048,560);
+  c.fillStyle='#12182a';c.fillRect(34,30,1980,500);
+  c.strokeStyle='#e3af79';c.lineWidth=12;c.strokeRect(29,26,1990,508);
+  c.strokeStyle='#5d3a40';c.lineWidth=4;c.strokeRect(51,49,1945,462);
+  // Slim horizontal rules keep the real-world sign feel without a halo.
+  c.fillStyle='#d7a16c';
+  c.fillRect(285,158,320,5);c.fillRect(1443,158,320,5);
+  c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+  c.shadowBlur=0;c.shadowOffsetX=0;c.shadowOffsetY=0;
+  c.font='900 90px "Barlow Condensed",Impact,"Arial Narrow",sans-serif';
+  c.lineWidth=5;c.strokeStyle='#11141d';
+  c.strokeText('NEXTGEN SESSIONS',1024,157,790);
+  c.fillStyle='#fff0d7';c.fillText('NEXTGEN SESSIONS',1024,157,790);
+  c.font='900 270px "Barlow Condensed",Impact,"Arial Narrow",sans-serif';
+  c.lineWidth=18;c.strokeStyle='#210f1a';
+  c.strokeText('NEON TILT',1024,352,1810);
+  c.fillStyle='#ff9d83';c.fillText('NEON TILT',1024,352,1810);
+  c.fillStyle='#e9b27d';c.fillRect(360,495,1328,9);
+  const texture=new T.CanvasTexture(canvas);
+  texture.colorSpace=T.SRGBColorSpace;
+  texture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);
+  texture.minFilter=T.LinearMipmapLinearFilter;
+  texture.magFilter=T.LinearFilter;
+  return new T.MeshBasicMaterial({map:texture,toneMapped:false,side:T.DoubleSide});
+ }
  // Backbox and lacquered hardwood body, with truly modelled thickness.
  const boardW=BOARD.width*SCALE,boardH=BOARD.height*SCALE;
  box(0,0,-.38,boardW+.72,boardH+.72,.88,metal('#352633',.35,.55));
@@ -159,8 +190,7 @@ export async function create3DTable(host){
  // Billboard sign: original logo displayed on textured top panel, not lifted website heading.
  box(0,5.48,.3,6.25,1.95,.22,metal('#161322',.18,.62));
  box(0,5.48,.46,5.93,1.70,.03,metal('#070d20',.17,.23));
- plane(0,5.84,.52,5.55,.76,label('NEXTGEN SESSIONS','#ffe5be',85,1024,192,true));
- plane(0,5.2,.52,5.77,1.0,label('NEON TILT','#ffad94',168,1024,256,true));
+ plane(0,5.48,.535,5.79,1.58,cabinetMarquee());
  // Mechanical wall wires are mapped to actual collision segments, not decorative outlines.
  for(let i=0;i<WALLS.length;i++){
   const [x1,y1,x2,y2]=WALLS[i];
