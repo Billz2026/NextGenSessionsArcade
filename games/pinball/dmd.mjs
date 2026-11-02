@@ -14,9 +14,9 @@ const EVENT_TEXT={
  multiplier:['NEON LANES','2X SCORING'],
  scoop:['NEON SCOOP','8,000 POINTS'],
  spinner:['SPINNER','KEEP IT SPINNING'],
- mission:['MISSION COMPLETE','JACKPOT LIT'],
+ mission:['MISSION','COMPLETE'],
  shot:['RAMP / ORBIT','NICE SHOT'],
- award:['BONUS AWARDED','KEEP GOING']
+ award:['BONUS','KEEP GOING']
 };
 export function createDotMatrix(canvas,{reducedMotion=false}={}){
  if(!canvas?.getContext)return {notify(){},update(){},dispose(){}};
@@ -47,13 +47,20 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
    event.type==='shot'||event.type==='scoop'?2:1;
   if(active?.until>now && active.priority>priority)return;
   let headline=lines[0],sub=lines[1];
-  if(event.type==='mission'&&event.headline)headline=String(event.headline).slice(0,22);
+  if(event.type==='mission'&&event.headline){
+   const full=String(event.headline).toUpperCase();
+   headline=full.includes('TARGET')?'TARGET BANK':
+    full.includes('NIGHT')?'NIGHT RIDE':
+    full.includes('LANE')?'NEON LANES':
+    full.includes('FRENZY')?'BUMPER FRENZY':'MISSION';
+   sub='COMPLETE!';
+  }
   if(event.type==='shot')headline=event.kind==='ramp'?'RAMP SHOT':'ORBIT SHOT';
   if(event.type==='spinner')sub=String(event.turns)+' TURNS';
   if(event.type==='award'&&event.score)sub='+'+FMT(event.score);
   if(event.type==='gameover')sub='SCORE '+FMT(event.score);
   if(event.type==='ball')headline='BALL '+event.ball+' READY';
-  active={headline,sub,priority,until:now+(priority>=3?2600:1550)};
+  active={headline,sub,priority,started:now,until:now+(priority>=3?2850:1800)};
   lastFrame=-Infinity;
  }
  function draw(game,now){
@@ -65,26 +72,40 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
   p.fillStyle='#000';p.fillRect(0,0,cols,rows);
   p.textBaseline='middle';p.textAlign='center';
   p.fillStyle='#fff';
-  p.font='bold 8px monospace';
-  p.fillText(String(mode[0]).toUpperCase(),cols/2,7,76);
-  p.font='bold 7px monospace';
-  p.fillText(String(mode[1]).toUpperCase(),cols/2,17,76);
+  // Enlarged two-line type. Long messages get a deliberate width limit
+  // rather than unreadable font-size reductions across the whole display.
+  p.font='900 11px monospace';
+  p.fillText(String(mode[0]).toUpperCase(),cols/2,6.8,76);
+  p.font='900 9px monospace';
+  p.fillText(String(mode[1]).toUpperCase(),cols/2,17.2,77);
   const pixels=p.getImageData(0,0,cols,rows).data;
   ctx.fillStyle='#080505';ctx.fillRect(0,0,560,162);
   // DMD glass tint + physical grid of inactive lamps.
   for(let row=0;row<rows;row++){
    for(let col=0;col<cols;col++){
-    const i=(row*cols+col)*4,lit=pixels[i]>100;
+    const i=(row*cols+col)*4;
+    const reveal=(!reducedMotion&&active?.until>now)?
+      Math.min(cols,Math.floor(((now-active.started)/340)*cols)):cols;
+    const lit=pixels[i]>85&&col<reveal;
     const x=ox+col*pitch,y=oy+row*pitch;
     ctx.beginPath();ctx.arc(x,y,2.45,0,Math.PI*2);
     if(lit){
      const flicker=reducedMotion?1:.92+.08*Math.sin(now*.009+col*.23);
-     ctx.fillStyle=flicker>.95?'#ffd88a':'#ed9a45';
-    }else ctx.fillStyle='#27110b';
+     ctx.fillStyle=flicker>.95?'#fff0b6':'#ffb45e';
+    }else ctx.fillStyle='#2d160e';
     ctx.fill();
    }
   }
-  ctx.strokeStyle='#7d4a27';ctx.lineWidth=2;ctx.strokeRect(1,1,558,160);
+  // Warm, restrained glass bloom around the LED matrix.
+  if(typeof ctx.drawImage==='function'&&typeof ctx.save==='function'){
+   ctx.save();
+   ctx.globalCompositeOperation='screen';
+   ctx.globalAlpha=.16;
+   ctx.filter='blur(6px)';
+   ctx.drawImage(canvas,0,0,560,162);
+   ctx.restore();
+  }
+  ctx.strokeStyle='#be7847';ctx.lineWidth=2;ctx.strokeRect(1,1,558,160);
  }
  return {notify,update:draw,dispose(){disposed=true}};
 }
