@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDotMatrix,DMD_COLS,DMD_ROWS} from '../games/pinball/dmd.mjs';
 function mockScreen(){
- const calls={dots:0,frames:0,labels:0};
+ const calls={dots:0,frames:0,labels:0,text:[]};
  const pixels=new Uint8ClampedArray(DMD_COLS*DMD_ROWS*4);
  for(let i=0;i<DMD_COLS*DMD_ROWS;i+=9)pixels[i*4]=255;
- const paper={fillRect(){},fillText(){calls.labels++},getImageData(){return{data:pixels}}};
+ const paper={fillRect(){},fillText(txt){calls.labels++;calls.text.push(txt)},getImageData(){return{data:pixels}}};
  const screen={fillRect(){calls.frames++},beginPath(){calls.dots++},arc(){},fill(){},strokeRect(){}};
  const old=globalThis.document;
  globalThis.document={createElement(){return{width:0,height:0,getContext(){return paper}}}};
@@ -44,10 +44,11 @@ test('high priority celebration cannot be displaced by low priority spinner',()=
   const g={state:'playing',ball:{mode:'live'},ballNumber:1,score:100,time:3,frenzyUntil:0,multiplierUntil:0};
   dmd.notify({type:'extra'},1000);
   dmd.update(g,1001);
-  const after=m.calls.dots;
+  const firstHeadline=m.calls.text.at(-2);
   dmd.notify({type:'spinner',turns:4},1020);
-  dmd.update(g,1050);
-  assert.equal(m.calls.dots,after,'lower priority announcement should be ignored');
+  dmd.update(g,1100);
+  assert.equal(m.calls.text.at(-2),firstHeadline,'lower priority event replaced EXTRA BALL');
+  assert.equal(firstHeadline,'EXTRA BALL');
   dmd.dispose();
  }finally{m.restore()}
 });
