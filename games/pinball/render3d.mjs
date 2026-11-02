@@ -14,7 +14,7 @@ export async function create3DTable(host){
  scene.background=new T.Color('#080a11');
  const camera=new T.PerspectiveCamera(33,0.6,.1,120);
  // Frame almost the entire physical playfield while keeping the outer rails visible.
- camera.position.set(0,-3.2,25.8);
+ camera.position.set(0,-3.1,26.7);
  camera.lookAt(0,0,.12);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
  const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
@@ -334,7 +334,7 @@ export async function create3DTable(host){
  const rim=new T.PointLight('#ff4e64',23,14);rim.position.set(3,3,5);scene.add(rim);
  const sparkle=new T.PointLight('#ffbb6b',14,10);sparkle.position.set(-4,-2,4);scene.add(sparkle);
  // The rendered canvas inherits the parent aspect ratio, not the browser width.
- let lastW=0,lastH=0,disposed=false;
+ let lastW=0,lastH=0,disposed=false,renderedSpin=0,previousFrame=0;
  function resize(){
   const rect=host.getBoundingClientRect(),w=Math.max(2,Math.round(rect.width)),h=Math.max(2,Math.round(rect.height));
   if(w===lastW&&h===lastH)return;
@@ -403,7 +403,13 @@ export async function create3DTable(host){
    const pulse=reducedMotion?1:(.6+.4*Math.sin(now*.009-a.i*.5));
    a.material.emissiveIntensity=on?2.2*pulse:(idleMode?.6+.5*pulse:.22);
   }
-  spinnerPivot.rotation.x=engine.spinnerAngle;
+  // Animate the mechanical spinner through each full rotation, rather than
+  // jumping directly to its event-driven final angle.
+  const spinDelta=previousFrame?Math.max(0,Math.min(.05,(now-previousFrame)/1000)):0;
+  previousFrame=now;
+  if(reducedMotion)renderedSpin=engine.spinnerAngle;
+  else renderedSpin+=Math.min(Math.max(0,engine.spinnerAngle-renderedSpin),spinDelta*22);
+  spinnerPivot.rotation.x=renderedSpin;
   const scoopActive=engine.ball?.mode==='scoop';
   scoopLens.material.emissiveIntensity=scoopActive?3.5:
    idleMode?1+.65*Math.sin(now*.004):.55;
