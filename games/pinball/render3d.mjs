@@ -453,6 +453,31 @@ export async function create3DTable(host){
   plane(X(x),Y(y),.241,w+.20,.35,plaqueBacking);
   plane(X(x),Y(y),.245,w,.29,label(txt,'#ffe1b2',64,512,144,true));
  }
+ // Power Grid has real raised illuminated three-lamp metalwork, not a fake HUD.
+ // These lamps are mounted just above the target bank and register each
+ // successful ramp/orbit hit. The scoop's illuminated bezel is the jackpot.
+ const powerBezel=metal('#b68a6f',.22,.76),powerLampMat=[];
+ box(X(208),Y(472),.32,2.15,.65,.15,darkChrome);
+ const powerLampMeshes=[];
+ for(let i=0;i<3;i++){
+  const x=X(179+i*29),y=Y(471);
+  cyl(x,y,.46,.22,.16,powerBezel,18);
+  const mat=new T.MeshStandardMaterial({
+   color:'#f4b878',emissive:'#ff743e',emissiveIntensity:.15,roughness:.24,metalness:.08
+  });
+  const lens=cyl(x,y,.585,.135,.06,mat,18);
+  powerLampMeshes.push(lens);powerLampMat.push(mat);
+ }
+ plane(X(208),Y(491),.28,1.73,.23,
+  label('POWER GRID','#ffe2ae',64,512,128,true));
+ // The jackpot scoop has a physical horseshoe guard and a thicker metal rim.
+ const jackpotGuard=metal('#b79eaa',.25,.79);
+ for(const side of [-1,1]){
+  const px=SCOOP.x+side*22;
+  box(X(px),Y(SCOOP.y-7),.51,.085,.95,.27,jackpotGuard);
+  cyl(X(px),Y(SCOOP.y+15),.55,.11,.22,chrome,14);
+ }
+ const rushRing=halo(scx,scy,.61,1.85,'#ff539f',.23);
  // Backglass lightbars animate independently from the scrolling playfield.
  const backboxBars=[];
  for(let i=0;i<9;i++){
@@ -538,10 +563,10 @@ export async function create3DTable(host){
    const chasing=reducedMotion?.75:idleMode?.5+.5*Math.sin(now*.005-ins.i*.56):.27+.18*Math.sin(phase);
    let active=false;
    if(ins.group==='bumper')active=frenzyActive;
-   if(ins.group==='ramp')active=rampActive;
-   if(ins.group==='orbit')active=orbitActive;
+   if(ins.group==='ramp')active=rampActive||engine.hurryUpUntil>engine.time;
+   if(ins.group==='orbit')active=orbitActive||engine.comboCount>=2;
    if(ins.group==='target')active=engine.missions.targets;
-   if(ins.group==='mission')active=multiplierActive||engine.missions.ride;
+   if(ins.group==='mission')active=multiplierActive||engine.missions.ride||engine.powerCharges>0;
    if(ins.group==='save')active=ballSaveActive;
    if(ins.group==='top')active=engine.missions.lanes||engine.lanes.size>0;
    ins.material.emissiveIntensity=active?3.4:(idleMode?.9+2.1*chasing:.65+.85*chasing);
@@ -566,9 +591,18 @@ export async function create3DTable(host){
       idleMode?.6+.26*Math.sin(now*.005):.52;
    }
   }
+  // Fixed mechanical lamps show charge, hurry-up and spinner mode.
+  const rush=engine.hurryUpUntil>engine.time;
+  const overdrive=engine.overdriveUntil>engine.time;
+  const beat=reducedMotion?1:(.65+.35*Math.sin(now*.014));
+  for(let i=0;i<powerLampMat.length;i++){
+   const lit=engine.powerCharges>i;
+   powerLampMat[i].emissiveIntensity=lit?(rush?3.7*beat:2.35):.11;
+  }
+  rushRing.opacity=rush?.89*beat:engine.state==='ready'?.18:.12;
   for(const a of arrowMesh){
    const on=a.group==='ramp'?rampActive:a.group==='orbit'?orbitActive:
-    a.group==='spinner'?engine.spinnerTurns>0:
+    a.group==='spinner'?(overdrive||engine.spinnerTurns>0):
     a.group==='mission'?engine.missions.ride:
     engine.state==='playing';
    const pulse=reducedMotion?1:(.6+.4*Math.sin(now*.009-a.i*.5));
@@ -584,8 +618,8 @@ export async function create3DTable(host){
   spinnerPivot.rotation.x=renderedSpin;
   plungerHandle.position.y=Y(660)-(engine.charging?Math.max(0,engine.charge-.26)*.27:0);
   const scoopActive=engine.ball?.mode==='scoop';
-  scoopLens.material.emissiveIntensity=scoopActive?3.5:
-   idleMode?1+.65*Math.sin(now*.004):.55;
+  scoopLens.material.emissiveIntensity=rush?3.9*beat:
+   scoopActive?3.5:idleMode?1+.65*Math.sin(now*.004):.55;
   for(let i=0;i<cabinetLEDs.length;i++){
    const m=cabinetLEDs[i].material;
    const phase=(now*.007-i*.42);
