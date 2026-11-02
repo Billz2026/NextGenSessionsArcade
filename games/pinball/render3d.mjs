@@ -14,14 +14,14 @@ export async function create3DTable(host){
  scene.background=new T.Color('#080a11');
  const camera=new T.PerspectiveCamera(33,0.6,.1,120);
  // Frame almost the entire physical playfield while keeping the outer rails visible.
- camera.position.set(0,-3.1,26.7);
- camera.lookAt(0,0,.12);
+ camera.position.set(0,-1.35,26.0);
+ camera.lookAt(0,0,.28);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
  const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.9;
+ renderer.toneMappingExposure=1.72;
  renderer.shadowMap.enabled=true;
  renderer.shadowMap.type=T.PCFSoftShadowMap;
  renderer.domElement.className='webgl-table';
@@ -77,8 +77,8 @@ export async function create3DTable(host){
  // Original table artwork is an enamel print underneath mechanical fixtures.
  const paint=document.createElement('canvas');paint.width=840;paint.height=1400;
  const p=paint.getContext('2d'),bg=p.createLinearGradient(0,0,840,1400);
- bg.addColorStop(0,'#25334f');bg.addColorStop(.35,'#161a36');
- bg.addColorStop(.7,'#1a1832');bg.addColorStop(1,'#392437');
+ bg.addColorStop(0,'#304064');bg.addColorStop(.34,'#242d53');
+ bg.addColorStop(.7,'#271e49');bg.addColorStop(1,'#4a2440');
  p.fillStyle=bg;p.fillRect(0,0,840,1400);
  p.strokeStyle='rgba(237,170,133,.23)';p.lineWidth=2;
  for(let i=0;i<13;i++){p.beginPath();p.moveTo(135,230+i*82);p.quadraticCurveTo(425,195+i*78,710,245+i*77);p.stroke();}
@@ -203,6 +203,41 @@ export async function create3DTable(host){
   light.position.set(X(pos[0]),Y(pos[1]),.85);scene.add(light);goldLamps.push(g);
  }
 
+
+ // Phase 3F — soft additive luminous haloes. Emissive materials alone do NOT
+ // bloom in normal Three.js; a procedurally generated radial texture supplies
+ // the visible halo without a costly multi-pass postprocessing chain.
+ const glowCanvas=document.createElement('canvas');
+ glowCanvas.width=128;glowCanvas.height=128;
+ const gc=glowCanvas.getContext('2d');
+ const gradient=gc.createRadialGradient(64,64,1,64,64,63);
+ gradient.addColorStop(0,'rgba(255,255,255,1)');
+ gradient.addColorStop(.13,'rgba(255,255,255,.92)');
+ gradient.addColorStop(.33,'rgba(255,255,255,.34)');
+ gradient.addColorStop(.68,'rgba(255,255,255,.08)');
+ gradient.addColorStop(1,'rgba(255,255,255,0)');
+ gc.fillStyle=gradient;gc.fillRect(0,0,128,128);
+ const glowTexture=new T.CanvasTexture(glowCanvas);
+ glowTexture.colorSpace=T.SRGBColorSpace;
+ const halos=[];
+ function halo(px,py,z,size,color,base=.55){
+  const material=new T.MeshBasicMaterial({
+   color,map:glowTexture,transparent:true,opacity:base,
+   blending:T.AdditiveBlending,depthWrite:false,depthTest:true,
+   side:T.DoubleSide,toneMapped:false
+  });
+  const mesh=plane(px,py,z,size,size,material);
+  mesh.renderOrder=4;
+  halos.push({mesh,material,base});
+  return material;
+ }
+ // Bulb glows are behind the 3D ball but remain visible over playfield enamel.
+ for(const b of BUMPERS)halo(X(b.x),Y(b.y),.99,1.52,'#ff7a5b',.5);
+ for(const l of LANES)halo(X(l.x),Y(l.y),.67,.78,'#ffc879',.45);
+ for(const t of TARGETS)halo(X(t.x),Y(t.y),.70,.62,'#ff7b8e',.33);
+ halo(X(SPINNER.x),Y(SPINNER.y),.72,1.2,'#ffd38d',.46);
+ halo(X(SCOOP.x),Y(SCOOP.y),.52,1.4,'#ff4a9b',.62);
+
  // Phase 3E — incandescent-style lamp field (actual mesh bezels, lenses and
  // emissive materials; the moving ball remains in front of the inserts).
  const insertSpecs=[
@@ -221,7 +256,7 @@ export async function create3DTable(host){
   [170,586,'lower',0],[249,586,'lower',1]
  ];
  const insertModes={top:0,bumper:1,orbit:2,ramp:3,target:4,mission:5,lower:6,save:7};
- const insertMeshes=[],insertColors=['#ffbc72','#f27c7b','#9cd8ed','#eac091'];
+ const insertMeshes=[],insertColors=['#ffc66e','#fa6377','#66d9ff','#ff93d2'];
  for(let i=0;i<insertSpecs.length;i++){
   const [x,y,group,phase]=insertSpecs[i],cx=X(x),cy=Y(y);
   const bezel=metal('#8d7d8a',.26,.82);
@@ -231,7 +266,9 @@ export async function create3DTable(host){
    color,emissive:color,emissiveIntensity:.22,roughness:.28,metalness:.06
   });
   const lens=cyl(cx,cy,.245,.106,.048,material,20);
-  insertMeshes.push({lens,material,group,phase,i});
+  // Each insert is a small real 3D light source with a larger additive aura.
+  const glowMat=halo(cx,cy,.39,.53,color,.22);
+  insertMeshes.push({lens,material,glowMat,group,phase,i});
  }
  // Directional arrows with true geometric arrow-head inserts.
  const arrowMesh=[];
@@ -393,7 +430,27 @@ export async function create3DTable(host){
    if(ins.group==='mission')active=multiplierActive||engine.missions.ride;
    if(ins.group==='save')active=ballSaveActive;
    if(ins.group==='top')active=engine.missions.lanes||engine.lanes.size>0;
-   ins.material.emissiveIntensity=active?2.8:(idleMode?.55+1.35*chasing:.40+.48*chasing);
+   ins.material.emissiveIntensity=active?3.4:(idleMode?.9+2.1*chasing:.65+.85*chasing);
+   ins.glowMat.opacity=active?.82:(idleMode?.18+.56*chasing:.18+.3*chasing);
+  }
+  // Halos over the three pop bumpers, upper rollover lanes, four targets,
+  // spinner and scoop reflect player action and attract-mode light sequences.
+  for(let i=0;i<halos.length;i++){
+   if(i<3){
+    const hit=bumperFlash?.index===i&&bumperFlash.until>now;
+    halos[i].material.opacity=hit?1:frenzyActive?.88:idleMode?.45+.22*Math.sin(now*.004+i*2):.43;
+   }else if(i<6){
+    const laneIndex=i-3;
+    halos[i].material.opacity=engine.lanes.has(laneIndex)||engine.missions.lanes?.92:
+      idleMode?.3+.36*(.5+.5*Math.sin(now*.005-i)): .28;
+   }else if(i<10){
+    halos[i].material.opacity=engine.targets.has(i-6)||engine.missions.targets?.81:.33;
+   }else if(i===10){
+    halos[i].material.opacity=engine.spinnerTurns>0?.75:idleMode?.38+.24*Math.sin(now*.006):.35;
+   }else if(i===11){
+    halos[i].material.opacity=engine.ball?.mode==='scoop'?1:
+      idleMode?.6+.26*Math.sin(now*.005):.52;
+   }
   }
   for(const a of arrowMesh){
    const on=a.group==='ramp'?rampActive:a.group==='orbit'?orbitActive:
@@ -415,9 +472,16 @@ export async function create3DTable(host){
   const scoopActive=engine.ball?.mode==='scoop';
   scoopLens.material.emissiveIntensity=scoopActive?3.5:
    idleMode?1+.65*Math.sin(now*.004):.55;
+  for(let i=0;i<cabinetLEDs.length;i++){
+   const m=cabinetLEDs[i].material;
+   const phase=(now*.007-i*.42);
+   m.emissiveIntensity=reducedMotion?.9:
+     idleMode?.6+2.8*(.5+.5*Math.sin(phase)):
+       frenzyActive?3.8:.9+1.35*(.5+.5*Math.sin(phase));
+  }
   for(let i=0;i<backboxBars.length;i++){
    const m=backboxBars[i].material;
-   m.emissiveIntensity=reducedMotion?.8:idleMode?.5+2*(.5+.5*Math.sin(now*.004-i*.8)):
+   m.emissiveIntensity=reducedMotion?1:idleMode?.8+4*(.5+.5*Math.sin(now*.005-i*.85)):
      engine.missions.ride?2.5:.5+1.1*(.5+.5*Math.sin(now*.006-i*.85));
   }
 
