@@ -10,6 +10,7 @@ const cold=(a,b)=>Math.max(a,Math.min(b,1));
 export async function create3DTable(host){
  const T=await import('https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js');
  if(!host || !T.WebGLRenderer)throw Error('3D canvas unavailable');
+ const {buildMechanicalTable}=await import('./hardware3d.mjs?v=1');
  const scene=new T.Scene();
  scene.background=new T.Color('#080a11');
  const camera=new T.PerspectiveCamera(33,0.6,.1,120);
@@ -160,6 +161,9 @@ export async function create3DTable(host){
   }
  };
  setRamp(orbitPath,'#ecb98d');setRamp(rampPath,'#f3a6ba');
+ // Purpose-built raised decking, translucent guards and mechanical brackets.
+ // These align with existing physical playfield landmarks without changing collisions.
+ const detailedHardware=buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP});
  // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
   const x=i===0?136:284,y=520;
@@ -498,6 +502,7 @@ export async function create3DTable(host){
   if(disposed)return;
   disposed=true;
   scene.traverse(o=>{if(o.isMesh)o.geometry?.dispose();});
+  detailedHardware.dispose();
   renderer.dispose();renderer.domElement.remove();
  }
  return {update,resize,dispose,canvas:renderer.domElement};
