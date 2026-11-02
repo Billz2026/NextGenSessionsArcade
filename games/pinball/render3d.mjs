@@ -380,7 +380,7 @@ export async function create3DTable(host){
   camera.updateProjectionMatrix();
   renderer.setSize(w,h,false);
  }
- function update(engine,{bumperFlash=null,reducedMotion=false}={}){
+ function update(engine,{bumperFlash=null,tableFlash=null,reducedMotion=false}={}){
   if(disposed)return;
   resize();
   const b=engine.ball;
@@ -405,6 +405,9 @@ export async function create3DTable(host){
    targetLamps[i].material=engine.targets.has(i)||engine.missions.targets?amber:cherry;
   }
   const now=performance.now();
+  const eventFlash=tableFlash?.until>now&&!reducedMotion
+    ?Math.max(0,(tableFlash.until-now)/(tableFlash.duration||600))
+    :0;
   for(let i=0;i<bumperLights.length;i++){
    const hit=bumperFlash?.index===i && bumperFlash.until>now;
    const frenzy=engine.time<engine.frenzyUntil;
@@ -431,7 +434,7 @@ export async function create3DTable(host){
    if(ins.group==='save')active=ballSaveActive;
    if(ins.group==='top')active=engine.missions.lanes||engine.lanes.size>0;
    ins.material.emissiveIntensity=active?3.4:(idleMode?.9+2.1*chasing:.65+.85*chasing);
-   ins.glowMat.opacity=active?.82:(idleMode?.18+.56*chasing:.18+.3*chasing);
+   ins.glowMat.opacity=Math.min(1,(active?.82:(idleMode?.18+.56*chasing:.18+.3*chasing))+eventFlash*.36);
   }
   // Halos over the three pop bumpers, upper rollover lanes, four targets,
   // spinner and scoop reflect player action and attract-mode light sequences.
@@ -481,12 +484,14 @@ export async function create3DTable(host){
   }
   for(let i=0;i<backboxBars.length;i++){
    const m=backboxBars[i].material;
-   m.emissiveIntensity=reducedMotion?1:idleMode?.8+4*(.5+.5*Math.sin(now*.005-i*.85)):
-     engine.missions.ride?2.5:.5+1.1*(.5+.5*Math.sin(now*.006-i*.85));
+   m.emissiveIntensity=(reducedMotion?1:idleMode?.8+4*(.5+.5*Math.sin(now*.005-i*.85)):
+     engine.missions.ride?2.5:.5+1.1*(.5+.5*Math.sin(now*.006-i*.85)))+eventFlash*4;
   }
 
   const idle=engine.state==='ready'||engine.state==='gameover';
-  sparkle.intensity=idle&&!reducedMotion?13+Math.sin(now*.002)*4:13;
+  sparkle.intensity=(idle&&!reducedMotion?13+Math.sin(now*.002)*4:13)+eventFlash*16;
+  rim.intensity=23+eventFlash*17;
+  fill.intensity=2+eventFlash*1.2;
   renderer.render(scene,camera);
  }
  function dispose(){
