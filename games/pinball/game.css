@@ -562,3 +562,36 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  .flipper-controls{height:35px;flex-basis:35px}
  .flipper-control{height:35px;min-height:35px}
 }
+
+/* PHASE 3E — larger table with the same one-screen desktop contract. */
+.hardware-counts{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.hardware-counts strong{color:#f3c88e}
+@media(min-width:1121px){
+ .shell{max-width:1300px;width:min(1300px,calc(100% - 18px));padding-inline:0}
+ .game-layout{grid-template-columns:minmax(0,1.56fr) minmax(340px,.95fr);gap:9px}
+ .machine{padding-inline:7px}
+ .machine-top{font-size:9px}
+ .cabinet{
+  --table-height:clamp(275px,calc(100dvh - 163px),860px);
+  width:calc(var(--table-height)*.6 + 28px);
+  padding-left:7px;padding-right:7px;
+ }
+ .playfield-wrap{max-height:calc(100dvh - 163px)}
+ .hud{gap:5px}
+ .mission-footer{flex-wrap:wrap;row-gap:2px;justify-content:space-between}
+ .hardware-counts{font-size:8px}
+}
+@media(min-width:1121px) and (max-height:700px){
+ .cabinet{--table-height:clamp(246px,calc(100dvh - 158px),580px)}
+ .playfield-wrap{max-height:calc(100dvh - 158px)}
+ .hardware-counts{gap:4px;font-size:7px}
+}
+@media(min-width:1121px) and (max-height:590px){
+ .cabinet{--table-height:clamp(210px,calc(100dvh - 148px),460px)}
+ .playfield-wrap{max-height:calc(100dvh - 148px)}
+ .hardware-counts{display:none}
+}
+@media(max-width:1120px){
+ .hardware-counts{font-size:9px;gap:5px}
+ .mission-footer{flex-wrap:wrap}
+}
