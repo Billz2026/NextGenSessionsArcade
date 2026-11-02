@@ -376,21 +376,15 @@ export async function create3DTable(host){
  // Phase 3E — incandescent-style lamp field (actual mesh bezels, lenses and
  // emissive materials; the moving ball remains in front of the inserts).
  const insertSpecs=[
-  [80,209,'top',0],[125,202,'top',1],[172,180,'top',2],
-  [246,180,'top',0],[302,208,'top',1],[332,213,'top',2],
-  [107,268,'bumper',0],[191,236,'bumper',1],[305,268,'bumper',2],
-  [157,345,'bumper',0],[248,340,'bumper',1],[209,346,'bumper',2],
-  [87,346,'orbit',0],[74,399,'orbit',1],[96,447,'orbit',2],
-  [330,340,'ramp',0],[324,388,'ramp',1],[316,466,'ramp',2],
+  [80,209,'top',0],[172,180,'top',1],[246,180,'top',2],[332,213,'top',0],
+  [107,268,'bumper',0],[305,268,'bumper',1],
+  [87,346,'orbit',0],[96,447,'orbit',1],
+  [330,340,'ramp',0],[316,466,'ramp',1],
   [139,390,'target',0],[276,392,'target',1],
-  [207,423,'center',3],[206,395,'center',1],
-  [128,376,'skyline',2],[112,341,'skyline',1],
-  [153,457,'mission',0],[207,460,'mission',1],[261,457,'mission',2],
-  [126,487,'mission',0],[286,486,'mission',1],
-  [109,552,'lower',0],[155,554,'lower',1],
-  [209,544,'save',0],[258,554,'lower',2],[315,552,'lower',0],
-  [98,607,'lower',1],[321,607,'lower',2],
-  [170,586,'lower',0],[249,586,'lower',1]
+  [207,423,'center',1],[128,376,'skyline',2],
+  [153,456,'mission',0],[261,456,'mission',2],
+  [109,552,'lower',0],[209,558,'save',0],[315,552,'lower',1],
+  [98,607,'lower',1],[321,607,'lower',2]
  ];
  const insertModes={top:0,bumper:1,orbit:2,ramp:3,target:4,mission:5,lower:6,save:7,center:8,skyline:9};
  const insertMeshes=[],insertColors=['#ffc66e','#fa6377','#66d9ff','#ff93d2'];
@@ -410,11 +404,9 @@ export async function create3DTable(host){
  // Directional arrows with true geometric arrow-head inserts.
  const arrowMesh=[];
  const arrowPositions=[
-  [92,319,'orbit',-.22],[93,361,'orbit',-.12],
-  [315,308,'ramp',.30],[318,354,'ramp',.18],
-  [180,384,'spinner',0],[229,383,'spinner',0],
-  [174,480,'mission',0],[247,480,'mission',0],
-  [207,418,'center',0],[125,350,'skyline',-.14],
+  [93,346,'orbit',-.18],[321,350,'ramp',.22],
+  [204,386,'spinner',0],[208,416,'center',0],
+  [125,360,'skyline',-.14],
   [136,568,'lower',0],[282,568,'lower',0]
  ];
  for(let i=0;i<arrowPositions.length;i++){
@@ -470,38 +462,55 @@ export async function create3DTable(host){
  for(const dx of [-.44,.44]){
   box(scx+dx,scy,.45,.08,.75,.39,darkChrome);
  }
- // Tiny raised plaques identify the actual scoring devices.
- plane(spX,spY+.53,.29,.96,.22,label('SPIN','#f9d39a',61,220,90));
- plane(scx,scy+.58,.29,1.13,.23,label('SCOOP','#ffc2a5',57,250,90));
- // Separate screen-printed control plaques from busy mechanical hardware.
- // Dark backing plates protect the words from nearby insert glows.
- const plaqueBacking=new T.MeshBasicMaterial({color:'#111522',side:T.DoubleSide});
- for(const [txt,x,y,w] of [
-  ['JACKPOT',205,492,1.75],['RAMP',315,410,1.10],
-  ['ORBIT',80,411,1.10],['BALL SAVE',208,565,1.65],
-  ['FRENZY',206,351,1.42],
-  ['CROSS',205,443,1.28],['SKY',127,406,1.04]
- ]){
-  plane(X(x),Y(y),.241,w+.20,.35,plaqueBacking);
-  plane(X(x),Y(y),.245,w,.29,label(txt,'#ffe1b2',64,512,144,true));
+ // Moulded original left and right acrylic panels, not metal tube rails.
+ const leftAcrylic=new T.MeshPhysicalMaterial({color:'#8c4db3',metalness:0,
+  roughness:.26,clearcoat:.96,transparent:true,opacity:.86,
+  side:T.DoubleSide,depthWrite:false});
+ const rightAcrylic=new T.MeshPhysicalMaterial({color:'#b74461',metalness:0,
+  roughness:.28,clearcoat:.96,side:T.DoubleSide});
+ function molded(points,material,z=.34){
+  const shape=new T.Shape();
+  for(let i=0;i<points.length;i++){
+   const [px,py]=points[i];
+   if(i)shape.lineTo(X(px),Y(py));else shape.moveTo(X(px),Y(py));
+  }
+  shape.closePath();
+  return add(new T.ExtrudeGeometry(shape,{depth:.1,bevelEnabled:true,
+   bevelThickness:.03,bevelSize:.02,bevelSegments:2}),material,0,0,z);
  }
- // Power Grid has real raised illuminated three-lamp metalwork, not a fake HUD.
- // These lamps are mounted just above the target bank and register each
- // successful ramp/orbit hit. The scoop's illuminated bezel is the jackpot.
- const powerBezel=metal('#b68a6f',.22,.76),powerLampMat=[];
- box(X(208),Y(472),.32,2.15,.65,.15,darkChrome);
- const powerLampMeshes=[];
- for(let i=0;i<3;i++){
-  const x=X(179+i*29),y=Y(471);
-  cyl(x,y,.46,.22,.16,powerBezel,18);
-  const mat=new T.MeshStandardMaterial({
-   color:'#f4b878',emissive:'#ff743e',emissiveIntensity:.15,roughness:.24,metalness:.08
-  });
-  const lens=cyl(x,y,.585,.135,.06,mat,18);
-  powerLampMeshes.push(lens);powerLampMat.push(mat);
+ molded([[47,193],[62,161],[96,156],[120,180],[106,224],
+  [87,258],[76,304],[48,304],[57,244]],leftAcrylic);
+ molded([[348,109],[369,100],[378,128],[374,377],
+  [356,397],[350,304]],rightAcrylic,.26);
+ // A luminous 16-lamp circular Power Core, in the same structural position
+ // as the centre feature in a classic arcade pinball table.
+ const powerX=X(210),powerY=Y(472);
+ cyl(powerX,powerY,.205,.93,.09,metal('#192644',.46,.08),48);
+ cyl(powerX,powerY,.31,.74,.07,metal('#285a86',.3,.12),48);
+ ring(powerX,powerY,.37,.86,.074,metal('#be7696',.37,.23));
+ const coreLightMaterials=[];
+ for(let i=0;i<16;i++){
+  const angle=i*TAU/16-PI/2;
+  const xx=powerX+Math.cos(angle)*.84,yy=powerY+Math.sin(angle)*.84;
+  const mat=new T.MeshStandardMaterial({color:i%4?'#83b8ef':'#ffd89a',
+   emissive:i%4?'#397dd0':'#ffb25b',emissiveIntensity:.2,
+   roughness:.38});
+  const cell=add(new T.SphereGeometry(.085,12,10),mat,xx,yy,.42,false);
+  cell.scale.z=.4;coreLightMaterials.push(mat);
  }
- plane(X(208),Y(491),.28,1.73,.23,
-  label('POWER GRID','#ffe2ae',64,512,128,true));
+ const powerLampMat=[];
+ for(const [xx,yy] of [[190,473],[210,447],[230,473]]){
+  const mat=new T.MeshStandardMaterial({color:'#f0c697',
+   emissive:'#ff743e',emissiveIntensity:.15,roughness:.3});
+  cyl(X(xx),Y(yy),.43,.13,.06,mat,18);powerLampMat.push(mat);
+ }
+ const rightBankLights=[];
+ for(let i=0;i<8;i++){
+  const mat=new T.MeshStandardMaterial({color:'#f4b287',
+   emissive:'#ff9062',emissiveIntensity:.2,roughness:.3});
+  box(X(365),Y(143+i*31),.45,.2,.24,.08,mat);
+  rightBankLights.push(mat);
+ }
  // The jackpot scoop has a physical horseshoe guard and a thicker metal rim.
  const jackpotGuard=metal('#b79eaa',.25,.79);
  for(const side of [-1,1]){
@@ -629,6 +638,23 @@ export async function create3DTable(host){
   const rush=engine.hurryUpUntil>engine.time;
   const overdrive=engine.overdriveUntil>engine.time;
   const beat=reducedMotion?1:(.65+.35*Math.sin(now*.014));
+  // Controlled states: slow attract chase, shot guiding, mode illumination,
+  // brief full-table celebration. Reduced motion shows steady lamps.
+  const chase=Math.floor(now/(reducedMotion?100000:155));
+  for(let i=0;i<coreLightMaterials.length;i++){
+   const current=engine.powerCharges>0&&i<engine.powerCharges*5;
+   const travel=i===chase%16||i===(chase+1)%16;
+   coreLightMaterials[i].emissiveIntensity=eventFlash?3.2*beat:
+    rush?2.8*beat:frenzyActive?2*beat:current?1.7:
+    idleMode&&travel?2.2:(idleMode?.3:.55);
+  }
+  for(let i=0;i<rightBankLights.length;i++){
+   const active=idleMode?i===Math.floor(now/240)%8:
+    rush?i%2===Math.floor(now/240)%2:
+    i<Math.min(8,engine.powerCharges*2+1);
+   rightBankLights[i].emissiveIntensity=eventFlash?3.0:
+    active?(reducedMotion?1.3:2*beat):.2;
+  }
   for(let i=0;i<powerLampMat.length;i++){
    const lit=engine.powerCharges>i;
    powerLampMat[i].emissiveIntensity=lit?(rush?3.7*beat:2.35):.11;
