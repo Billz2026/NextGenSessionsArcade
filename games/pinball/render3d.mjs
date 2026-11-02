@@ -187,7 +187,7 @@ export async function create3DTable(host){
   const paddle=add(new T.CapsuleGeometry(.18,.94,5,12),new T.MeshPhysicalMaterial({
    color:'#e4c3af',metalness:.64,roughness:.26,clearcoat:.7,clearcoatRoughness:.12
   }),X(f.x),Y(f.y),.57);
-  paddle.rotation.x=PI/2;
+  // Capsule's long axis is +Y; rotate around screen-normal Z to match the bat.
   flipperMeshes.push(paddle);
   cyl(X(f.x),Y(f.y),.45,.26,.26,darkChrome,32);
   const pivot=cyl(X(f.x),Y(f.y),.73,.18,.14,chrome,32);flipperHeads.push(pivot);
@@ -233,7 +233,7 @@ export async function create3DTable(host){
    flipperMeshes[i].position.set(X(f.x)+dx/2,Y(f.y)+dy/2,.59);
    // Capsule is modelled on the Y axis, rotated into XY; model orientation is
    // rotated only around screen-normal Z for correct left/right bat movement.
-   flipperMeshes[i].rotation.set(PI/2,0,Math.atan2(dy,dx)-PI/2);
+   flipperMeshes[i].rotation.set(0,0,Math.atan2(dy,dx)-PI/2);
   }
   for(let i=0;i<laneLamps.length;i++){
    laneLamps[i].material=engine.lanes.has(i)||engine.missions.lanes?amber:rubber;
