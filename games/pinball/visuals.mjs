@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=7';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
