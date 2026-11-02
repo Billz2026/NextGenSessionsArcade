@@ -83,6 +83,8 @@ if(immersiveButton){
   view3d?.resize();
  });
 }
+const spinnerCount=document.getElementById('spinner-count');
+const scoopCount=document.getElementById('scoop-count');
 const fmt=n=>Math.max(0,Math.floor(n)).toLocaleString('en-GB');
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 function overlay(kicker,title,sub){
@@ -115,6 +117,8 @@ function syncHUD(){
  ui.progress.ride.textContent=engine.missions.ride?'DONE':'RAMP + ORBIT';
  ui.extraStatus.textContent=engine.extraAwarded?'EXTRA BALL EARNED ✓':'EXTRA BALL: COMPLETE ALL FOUR MISSIONS';
  ui.shots.textContent=engine.shots+' SHOTS';
+ if(spinnerCount)spinnerCount.textContent=engine.spinnerTurns+' SPINS';
+ if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
  const remaining=Math.max(engine.multiplierUntil,engine.frenzyUntil)-engine.time;
  ui.modeName.textContent=state==='ready'?'ATTRACT MODE':state==='gameover'?'RUN COMPLETE':
   engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
@@ -155,6 +159,20 @@ function processEvents(){
   }
   if(e.type==='launch'){ui.scoreFlash.textContent='BALL LAUNCHED';arcadeMessage('SKILL SHOTS LIVE');sound(360,.15,'sawtooth');}
   if(e.type==='shot'){arcadeMessage(e.kind==='ramp'?'RAMP SHOT! +7,500':'LEFT ORBIT! +5,000');ui.scoreFlash.textContent=e.kind.toUpperCase()+' SHOT';sound(760,.14);}
+  if(e.type==='spinner'){
+   arcadeMessage('SPINNER! · '+e.turns+' TURNS');
+   ui.scoreFlash.textContent='SPINNER +1,250';
+   sound(980,.11,'sawtooth');
+  }
+  if(e.type==='scoop'){
+   arcadeMessage('NEON SCOOP! · +8,000');
+   ui.scoreFlash.textContent='SCOOP CAPTURED';
+   sound(570,.18);
+  }
+  if(e.type==='scoopRelease'){
+   arcadeMessage('SCOOP EJECT · KEEP IT ALIVE');
+   sound(820,.13);
+  }
   if(e.type==='mission'){arcadeMessage(e.headline);ui.scoreFlash.textContent='MISSION COMPLETE';sound(980,.22);}
   if(e.type==='award'){ui.scoreFlash.textContent=e.label+' · +'+fmt(e.score);}
   if(e.type==='ballsave'){ui.overlay.hidden=true;arcadeMessage('BALL SAVED! LAUNCH AGAIN');sound(720,.18);}
