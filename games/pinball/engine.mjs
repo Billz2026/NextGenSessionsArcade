@@ -29,6 +29,8 @@ export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
  ramp:{x:311,y:372,r:27,points:7500}
 });
+export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
+export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
 export const SLINGS=Object.freeze([
  {x1:119,y1:502,x2:163,y2:535,score:100},
  {x1:301,y1:502,x2:257,y2:535,score:100}
@@ -55,6 +57,7 @@ export class PinballEngine{
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
+  this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
  }
  emit(type,detail={}){this.events.push({type,...detail});}
  consumeEvents(){const a=this.events.splice(0);return a;}
@@ -67,6 +70,7 @@ export class PinballEngine{
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
+  this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
   for(const f of this.flippers){f.a=.4;f.omega=0;}
   this.spawnBall();this.emit('start');
  }
@@ -250,6 +254,25 @@ export class PinballEngine{
      this.activateTarget(i);
    }
   }
+  // Spinner and scoop are physical scoring features located in free lanes.
+  if(Math.abs(b.x-SPINNER.x)<SPINNER.halfWidth &&
+     ((previous.y<SPINNER.y&&b.y>=SPINNER.y) || (previous.y>SPINNER.y&&b.y<=SPINNER.y)) &&
+     Math.abs(b.vy)>170 && this.time-(this.cooldowns.get('spinner')??-100)>.19){
+   this.cooldowns.set('spinner',this.time);
+   this.spinnerTurns++;
+   this.spinnerAngle+=Math.PI*1.5;
+   this.addPoints(SPINNER.points,'SPINNER');
+   this.emit('spinner',{turns:this.spinnerTurns});
+  }
+  const sd=Math.hypot(b.x-SCOOP.x,b.y-SCOOP.y);
+  if(sd<SCOOP.r-2 && b.vy< -180 && this.time-this.lastScoopTime>2){
+   this.lastScoopTime=this.time;this.scoopHits++;
+   this.addPoints(SCOOP.points,'NEON SCOOP');
+   b.mode='scoop';b.scoopTimer=SCOOP.hold;
+   b.x=SCOOP.x;b.y=SCOOP.y;b.vx=0;b.vy=0;
+   this.emit('scoop',{count:this.scoopHits});
+   return;
+  }
   for(const kind of ['orbit','ramp']){
    const s=SHOTS[kind];
    if(b.vy<-300&&previous.y>=s.y&&b.y<s.y&&Math.abs(b.x-s.x)<s.r){
@@ -298,6 +321,17 @@ export class PinballEngine{
   }
   this.time+=dt;
   if(b.mode==='travel'){this.updateTravel(dt);return;}
+  if(b.mode==='scoop'){
+   b.scoopTimer-=dt;
+   b.x=SCOOP.x;b.y=SCOOP.y;b.vx=0;b.vy=0;
+   if(b.scoopTimer<=0){
+    b.mode='live';b.scoopTimer=0;
+    b.x=SCOOP.x-12;b.y=SCOOP.y-18;
+    b.vx=-320;b.vy=-560;
+    this.emit('scoopRelease');
+   }
+   return;
+  }
   const previous={x:b.x,y:b.y};
   b.vy+=GRAVITY*dt;
   // Gentle air drag and speed cap. Four sub-pixel slices near top speed prevent tunnelling.
