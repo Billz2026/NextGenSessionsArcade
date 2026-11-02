@@ -22,7 +22,7 @@ export async function create3DTable(host){
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.72;
+ renderer.toneMappingExposure=1.48;
  renderer.shadowMap.enabled=true;
  renderer.shadowMap.type=T.PCFSoftShadowMap;
  renderer.domElement.className='webgl-table';
@@ -37,7 +37,7 @@ export async function create3DTable(host){
   console.warn('Using direct arcade lighting without optional studio reflections.',error);
  }
  const metal=(color,roughness=.28,metalness=.9)=>new T.MeshPhysicalMaterial({
-  color,roughness,metalness,clearcoat:.18,clearcoatRoughness:.12,envMapIntensity:1.35
+  color,roughness,metalness,clearcoat:.18,clearcoatRoughness:.12,envMapIntensity:1.1
  });
  const enamel=new T.MeshPhysicalMaterial({color:'#1d263f',roughness:.29,metalness:.12,clearcoat:.95,clearcoatRoughness:.12,envMapIntensity:.8});
  const black=metal('#15131c',.47,.28),nickel=metal('#b4b7bd',.25,.85),chrome=metal('#c9d0d8',.18,.94);
@@ -408,13 +408,13 @@ export async function create3DTable(host){
  }
 
  // Warm overhead LED bank, white soft fill and red cabinet-edge glow.
- scene.add(new T.AmbientLight('#a4b4de',1.35));
- const key=new T.DirectionalLight('#ffdcbd',4.0);key.position.set(-5,4,13);
+ scene.add(new T.AmbientLight('#a4b4de',1.05));
+ const key=new T.DirectionalLight('#ffdcbd',3.2);key.position.set(-5,4,13);
  key.castShadow=true;key.shadow.mapSize.set(compact?512:1024,compact?512:1024);key.shadow.camera.left=-9;key.shadow.camera.right=9;
  key.shadow.camera.top=11;key.shadow.camera.bottom=-11;key.shadow.bias=-.0008;scene.add(key);
- const fill=new T.DirectionalLight('#b5c6ff',2.0);fill.position.set(5,-6,11);scene.add(fill);
- const rim=new T.PointLight('#ff4e64',23,14);rim.position.set(3,3,5);scene.add(rim);
- const sparkle=new T.PointLight('#ffbb6b',14,10);sparkle.position.set(-4,-2,4);scene.add(sparkle);
+ const fill=new T.DirectionalLight('#b5c6ff',1.4);fill.position.set(5,-6,11);scene.add(fill);
+ const rim=new T.PointLight('#ff4e64',13.5,14);rim.position.set(3,3,5);scene.add(rim);
+ const sparkle=new T.PointLight('#ffbb6b',9.5,10);sparkle.position.set(-4,-2,4);scene.add(sparkle);
  // The rendered canvas inherits the parent aspect ratio, not the browser width.
  let lastW=0,lastH=0,disposed=false,renderedSpin=0,previousFrame=0;
  function resize(){
@@ -534,9 +534,9 @@ export async function create3DTable(host){
   }
 
   const idle=engine.state==='ready'||engine.state==='gameover';
-  sparkle.intensity=(idle&&!reducedMotion?13+Math.sin(now*.002)*4:13)+eventFlash*16;
-  rim.intensity=23+eventFlash*17;
-  fill.intensity=2+eventFlash*1.2;
+  sparkle.intensity=(idle&&!reducedMotion?9.5+Math.sin(now*.002)*2.3:9.5)+eventFlash*10;
+  rim.intensity=13.5+eventFlash*10;
+  fill.intensity=1.4+eventFlash*.8;
   renderer.render(scene,camera);
  }
  function dispose(){
