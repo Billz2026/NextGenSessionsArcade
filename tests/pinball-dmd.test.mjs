@@ -2,22 +2,30 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDotMatrix,DMD_COLS,DMD_ROWS,getDmdStatus,describeDmdEvent,ATTRACT_MESSAGES} from '../games/pinball/dmd.mjs';
 function mockScreen(){
- const calls={dots:0,frames:0,labels:0,text:[],fonts:[]};
- const pixels=new Uint8ClampedArray(DMD_COLS*DMD_ROWS*4);
- for(let i=0;i<DMD_COLS*DMD_ROWS;i+=9)pixels[i*4]=255;
- const paper={fillRect(){},fillText(txt){calls.labels++;calls.text.push(txt);calls.fonts.push(this.font)},getImageData(){return{data:pixels}}};
- const screen={fillRect(){calls.frames++},beginPath(){calls.dots++},arc(){},fill(){},strokeRect(){}};
- const old=globalThis.document;
- globalThis.document={createElement(){return{width:0,height:0,getContext(){return paper}}}};
- return {calls,canvas:{getContext(){return screen}},restore(){globalThis.document=old}};
+ const calls={dots:0,frames:0,labels:0,text:[],fonts:[],strokes:[],size:null};
+ const screen={
+  setTransform(...a){calls.size=a},save(){},restore(){},
+  beginPath(){},rect(){},clip(){},
+  fillRect(x,y,w,h){
+   if(x===0&&y===0&&w===560&&h===162)calls.frames++;
+   if(w===1.8&&h===1.8)calls.dots++;
+  },
+  fillText(txt){calls.labels++;calls.text.push(txt);calls.fonts.push(this.font)},
+  strokeText(txt){calls.strokes.push(txt)},
+  measureText(txt){const size=Number(this.font?.match(/(\d+)px/)?.[1]||30);return{width:txt.length*size*.62}},
+  strokeRect(){}
+ };
+ return {calls,canvas:{getContext(){return screen}},restore(){}};
 }
-test('dot-matrix display fits all 80 × 22 LED cells in 560 × 162 pixels',()=>{
+
+test('high-resolution dot-matrix lettering overlays all 80 × 22 physical LED accents',()=>{
  const m=mockScreen();
  try{
   const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
   const game={state:'ready',score:0};
   dmd.update(game,1000);
-  assert.equal(m.canvas.width,560);assert.equal(m.canvas.height,162);
+  assert.equal(m.canvas.width,1120);assert.equal(m.canvas.height,324);
+  assert.deepEqual(m.calls.size,[2,0,0,2,0,0]);
   assert.equal(m.calls.dots,DMD_COLS*DMD_ROWS);
   assert.equal(m.calls.labels,2);
   dmd.dispose();
@@ -53,7 +61,7 @@ test('high priority celebration cannot be displaced by low priority spinner',()=
  }finally{m.restore()}
 });
 
-test('mission announcements remain readable with prominent 11px/9px dot-matrix type',()=>{
+test('mission announcements use large sharp 51px/35px text rather than 11px bitmap glyphs',()=>{
  const m=mockScreen();
  try{
   const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
@@ -62,8 +70,10 @@ test('mission announcements remain readable with prominent 11px/9px dot-matrix t
   dmd.update(game,1010);
   assert.equal(m.calls.text.at(-2),'TARGET BANK');
   assert.equal(m.calls.text.at(-1),'COMPLETE!');
-  assert.match(m.calls.fonts.at(-2),/11px/);
-  assert.match(m.calls.fonts.at(-1),/9px/);
+  assert.ok(parseInt(m.calls.fonts.at(-2).match(/(\d+)px/)[1])>=34);
+  assert.ok(parseInt(m.calls.fonts.at(-1).match(/(\d+)px/)[1])>=26);
+  assert.deepEqual(m.calls.strokes.at(-2),'TARGET BANK');
+  assert.deepEqual(m.calls.strokes.at(-1),'COMPLETE!');
   dmd.dispose();
  }finally{m.restore()}
 });
@@ -169,3 +179,31 @@ test('DMD displays timer-driven jackpot and Overdrive objectives',()=>{
   ['SPINNER OVERDRIVE','SPIN FOR BONUS']);
 });
 
+
+test('long display messages fit with readable minimum type sizes',()=>{
+ const m=mockScreen();
+ try{
+  const display=createDotMatrix(m.canvas,{reducedMotion:true});
+  const game={state:'playing',ball:{mode:'live'},score:350000,ballNumber:2,time:10,
+   hurryUpUntil:25,frenzyUntil:0,multiplierUntil:0};
+  display.update(game,5000);
+  assert.equal(m.calls.text.at(-2),'NEON RUSH JACKPOT');
+  assert.equal(m.calls.text.at(-1),'SCOOP · 15 SECONDS');
+  const sizes=m.calls.fonts.slice(-2).map(f=>parseInt(f.match(/(\d+)px/)[1]));
+  assert.ok(sizes[0]>=34&&sizes[1]>=26);
+  assert.equal(m.calls.strokes.at(-2),'NEON RUSH JACKPOT');
+  display.dispose();
+ }finally{m.restore()}
+});
+test('sharp DMD uses no sampled low-res bitmap or blurred lettering',()=>{
+ const m=mockScreen();
+ try{
+  const display=createDotMatrix(m.canvas,{reducedMotion:true});
+  display.update({state:'ready'},1000);
+  assert.equal(m.calls.labels,2);
+  assert.equal(m.calls.strokes.length,2);
+  assert.equal(m.calls.frames,1);
+  assert.equal(m.calls.dots,DMD_COLS*DMD_ROWS);
+  display.dispose();
+ }finally{m.restore()}
+});
