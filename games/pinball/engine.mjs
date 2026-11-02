@@ -1,7 +1,7 @@
 // Neon Tilt prototype physics: deterministic fixed-step ball and flipper simulation.
 // Coordinates are pixels in a 420 × 700 playfield, +Y points down.
 export const BOARD = Object.freeze({width:420,height:700,radius:8,step:1/240});
-export const GRAVITY=920;
+export const GRAVITY=780;
 export const BUMPERS=Object.freeze([
  {x:150,y:240,r:24,score:250},
  {x:259,y:240,r:24,score:250},
@@ -10,6 +10,7 @@ export const BUMPERS=Object.freeze([
 export const POSTS=Object.freeze([
  {x:112,y:585,r:9},{x:308,y:585,r:9},
  {x:135,y:635,r:6},{x:285,y:635,r:6},
+ {x:130,y:641,r:9},{x:290,y:641,r:9}, // outlane rebound posts
  {x:340,y:132,r:9}
 ]);
 export const WALLS=Object.freeze([
@@ -58,8 +59,8 @@ export class PinballEngine{
  constructor(){
   this.state='ready';this.score=0;this.best=0;this.ballNumber=0;
   this.ball=null;this.leftHeld=false;this.rightHeld=false;
-  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:65},
-                 {side:'right',x:276,y:613,a:.40,omega:0,length:65}];
+  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:71},
+                 {side:'right',x:276,y:613,a:.40,omega:0,length:71}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
   this.lanes=new Set();this.targets=new Set();this.bumperHits=0;
@@ -100,7 +101,7 @@ export class PinballEngine{
   const p=clip(this.charge,.12,1);
   this.ball.vy=-(MIN_LAUNCH+(MAX_LAUNCH-MIN_LAUNCH)*p);
   this.ball.vx=-18;this.ball.mode='live';this.charging=false;
-  this.ballLaunchedAt=this.time;this.ballSaveUntil=this.time+4;
+  this.ballLaunchedAt=this.time;this.ballSaveUntil=this.time+11;
   this.emit('launch',{power:p});return true;
  }
  setFlipper(side,held){if(side==='left')this.leftHeld=Boolean(held);if(side==='right')this.rightHeld=Boolean(held);}
@@ -173,7 +174,7 @@ export class PinballEngine{
    const w=f.omega*sx;
    return {x:-w*ry,y:w*rx};
   };
-  const contacted=this.collideSegment(f.x,f.y,tip.x,tip.y,8,.60,'flipper',0,bodyVelocity);
+  const contacted=this.collideSegment(f.x,f.y,tip.x,tip.y,11,.65,'flipper',0,bodyVelocity);
   if(contacted){
    const held=f.side==='left'?this.leftHeld:this.rightHeld;
    const last=this.cooldowns.get('bat-'+f.side)??-100;
