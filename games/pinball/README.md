@@ -6,6 +6,18 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3I — machine presence and readability correction
+
+- **Compact cabinet-and-console desktop layout:** the whole existing cabinet is framed in a narrow dedicated stage instead of a huge left-hand website panel. Machine occupies most of its immediate container while the right score panel is capped at 390 CSS pixels. No gameplay or table collision dimensions are changed.
+- **Larger visible machine:** reclaimed desktop header height, removed the small machine heading and nonfunctional miniature cabinet lights, reduced cabinet padding and increased the playfield height allowance to roughly `100dvh - 108px` (with separate short-screen rules).
+- **No detached lighting towers:** floating pseudo-element light bars are hidden. Controlled edge reflections and trim belong to the physical cabinet itself.
+- **No playfield start overlay on desktop:** the table remains unobstructed in attract mode; START GAME and the animated DMD already show what to do. The pre-existing mobile touch flow is kept.
+- **Less washed-out 3D:** lowered excessive point, ambient and direct lighting intensities and reduced exposure, keeping event-driven flashes while restoring depth in chrome and plastics.
+- **Sharp DMD:** removed the old renderer's blur-over-itself pass and prevented stretched canvas scaling in the desktop mission panel. LED dots and text remain a native 80×22 grid.
+- **No-scroll contract preserved:** desktop continues to use a 100dvh game viewport. Basic size arithmetic was checked for representative desktop viewport widths/heights, but actual Chrome/Fold visual screenshots are still required.
+- **Testing:** all 30 gameplay and DMD regression tests pass; no new gameplay missions or collision zones added.
+- **Scope:** this is a refinement of the current Three.js model, **not** a claim that it now matches the Windows Space Cadet table or that final real-device QA is complete.
+
 ## Phase 3H — realistic materials, DMD clarity, immersive cabinet
 
 - **Studio PBR reflections:** a new original procedural equirectangular softbox environment is converted into a PMREM reflection map at runtime. Chrome, brushed nickel, gold, clear-coat enamel and plastic respond to reflected lighting rather than relying solely on flat gradients. No third-party photographs or copyrighted table artwork.
