@@ -138,9 +138,14 @@ export class PinballEngine{
   const contacted=this.collideSegment(f.x,f.y,tip.x,tip.y,8,.60,'flipper',0,bodyVelocity);
   if(contacted){
    const held=f.side==='left'?this.leftHeld:this.rightHeld;
-   if(held && f.omega<-.1 && this.ball.y<f.y+10){
-    // A slight minimum lift compensates for frictional losses at the bat face.
-    this.ball.vy=Math.min(this.ball.vy,-200);
+   const last=this.cooldowns.get('bat-'+f.side)??-100;
+   if(held && this.ball.y<f.y+14 && this.time-last>.085){
+    // A stationary held bat still needs an upward collision response.
+    // The kick is stronger while its motor is actively rotating into the ball.
+    const lift=470+Math.min(320,Math.abs(f.omega)*24);
+    this.ball.vy=Math.min(this.ball.vy,-lift);
+    this.ball.vx+=(f.side==='left'?1:-1)*(90+Math.min(90,Math.abs(f.omega)*7));
+    this.cooldowns.set('bat-'+f.side,this.time);
    }
   }
  }
