@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=4">
+<link rel="stylesheet" href="./game.css?v=5">
 </head>
 <body>
 <a href="#game" class="skip">Skip to pinball game</a>
@@ -23,7 +23,7 @@
   </a>
   <div class="header-label"><span>GAME 002 <b> / </b> CLASSIC ARCADE</span><strong>NEON TILT</strong></div>
   <div class="header-actions">
-    <button type="button" id="table-size" class="chrome-button view-switch" aria-pressed="false" title="Fit the full pinball table on a shorter desktop display">FIT TABLE <span aria-hidden="true">⛶</span></button>
+    <button type="button" id="render-mode" class="chrome-button view-switch" aria-pressed="true" title="Switch between live 3D table and classic 2D fallback">3D VIEW <span aria-hidden="true">◈</span></button>
     <button type="button" id="sound" class="chrome-button" aria-pressed="false">SOUND OFF <span aria-hidden="true">♪</span></button>
     <a href="../../" class="exit-button">EXIT TO ARCADE <span aria-hidden="true">↗</span></a>
   </div>
@@ -33,14 +33,14 @@
     <div><span class="eyebrow">NEXTGEN SESSIONS ARCADE / ORIGINAL TABLE 001</span>
     <h1>NEXTGEN PINBALL <em>NEON TILT.</em></h1>
     <p>A full neon arcade table. Ramps, orbits, missions and big-score jackpots.</p></div>
-    <span class="prototype-label"><i aria-hidden="true"></i> TABLE REBUILD / PLAYABLE PREVIEW</span>
+    <span class="prototype-label"><i aria-hidden="true"></i> 3D ARCADE TABLE / EARLY BUILD</span>
   </div>
   <div class="game-layout">
     <section class="machine" aria-label="Playable pinball table">
-      <div class="machine-top"><span>✦ ORIGINAL ARCADE TABLE</span><span>NEON TILT / 002</span></div>
+      <div class="machine-top"><span>✦ NEXTGEN ARCADE MACHINE</span><span id="render-status">LOADING 3D TABLE</span></div>
       <div class="cabinet">
         <div class="cabinet-lights" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-        <div class="playfield-wrap">
+        <div class="playfield-wrap" id="table-stage">
           <canvas id="playfield" width="420" height="700" role="img" aria-label="Neon Tilt pinball playfield with flippers, red and gold bumpers, four stand-up targets, a right ramp and left orbit. Use the controls below to play."></canvas>
           <div class="screen-overlay" id="screen-overlay" aria-live="polite">
             <span id="overlay-kicker">WELCOME TO NEON TILT</span>
@@ -53,7 +53,7 @@
           <button type="button" id="flipper-right" class="flipper-control" aria-label="Hold right flipper"><span class="control-icon">↗</span><strong>RIGHT FLIPPER</strong><small>D / →</small></button>
         </div>
       </div>
-      <p class="machine-note"><span class="live-led" aria-hidden="true"></span> FULL ARCADE TABLE ACTIVE <span>·</span> CONTROLS SUPPORT SIMULTANEOUS TOUCH</p>
+      <p class="machine-note"><span class="live-led" aria-hidden="true"></span> ARCADE MACHINE 002 <span>·</span> FULL TABLE IN VIEW</p>
     </section>
     <aside class="hud" aria-label="Pinball score and controls">
       <div class="hud-header"><span>PLAYER ONE</span><strong>NEON TILT</strong><span id="status-indicator">STANDBY</span></div>
@@ -101,9 +101,9 @@
       </div>
     </aside>
   </div>
-  <div class="development-note"><strong>ARCADE TABLE REBUILD IN PROGRESS:</strong> New mechanical-style artwork and integrated machine layout. Guided ramp/orbit travel and simplified physics remain; multiball and final tuning are not yet implemented. No purchases, prizes or real-money play.</div>
+  <div class="development-note"><strong>REAL-TIME 3D PREVIEW:</strong> Original 3D geometry, metallic materials and dynamic lighting. The physics still runs in 2D and guided ramp/orbit paths remain simplified. A 2D fallback is available. No prizes, purchases or real-money play.</div>
 </main>
-<footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · ARCADE TABLE REBUILD</span><a href="../../">BACK TO ARCADE ↗</a></footer>
-<script type="module" src="./game.mjs?v=4"></script>
+<footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · 3D TABLE PREVIEW</span><a href="../../">BACK TO ARCADE ↗</a></footer>
+<script type="module" src="./game.mjs?v=5"></script>
 </body>
 </html>
