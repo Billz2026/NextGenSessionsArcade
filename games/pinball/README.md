@@ -6,6 +6,14 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3O — DMD legibility correction
+
+- **Verified root cause:** the display previously rasterised two rows of text at 11px / 9px into an 80×22 bitmap, then enlarged each pixel into an LED. At around 350px screen width the letters became indistinct.
+- **New sharp scoreboard:** rendering uses a 1120×324 physical canvas (2× 560×162 logical size), solid bold high-contrast amber/cream arcade characters, dark non-glowing outlines and adaptive text fitting. Native glyphs are no longer sampled through the 80×22 grid. The smaller LED cells remain as unobtrusive surrounding hardware texture.
+- **Animations preserved:** event priority, celebration border flash, left-to-right 260ms reveal and reduced-motion static messages still operate without text blur.
+- **Layout preserved:** the scoreboard's CSS aspect ratio and parent height were kept; the older full-canvas blur and forced stretching were removed, and cabinet display-header contrast was improved.
+- **Regression status:** 43 physics/gameplay tests and 15 DMD tests passed (58 combined). Native-resolution dimensions, text minimum size, actual stroke rendering, timing, priority and cache-busted script versions are all checked. Live browser visual verification remains necessary.
+
 ## Phase 3N — four real routes, reinforced steel hardware and marquee identity
 
 - **Two additional playable shots:** a centre crossover and a Skyline loop now join the existing left orbit and right ramp. Both have sensor-triggered scores (4,500 / 6,000 before multipliers), exact authoritative raised waypoints, per-route travel durations, moving 3D ball height and distinct return feeds to flipper approaches. All four charge the existing Power Grid and contribute to combo scoring.
