@@ -16,7 +16,8 @@ export async function create3DTable(host){
  camera.position.set(0,-6.0,29.5);
  camera.lookAt(0,0,.12);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
- renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));
+ const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;
  renderer.toneMappingExposure=1.7;
@@ -203,7 +204,7 @@ export async function create3DTable(host){
  // Warm overhead LED bank, white soft fill and red cabinet-edge glow.
  scene.add(new T.AmbientLight('#a4b4de',1.35));
  const key=new T.DirectionalLight('#ffdcbd',4.0);key.position.set(-5,4,13);
- key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-9;key.shadow.camera.right=9;
+ key.castShadow=true;key.shadow.mapSize.set(compact?512:1024,compact?512:1024);key.shadow.camera.left=-9;key.shadow.camera.right=9;
  key.shadow.camera.top=11;key.shadow.camera.bottom=-11;key.shadow.bias=-.0008;scene.add(key);
  const fill=new T.DirectionalLight('#b5c6ff',2.0);fill.position.set(5,-6,11);scene.add(fill);
  const rim=new T.PointLight('#ff4e64',23,14);rim.position.set(3,3,5);scene.add(rim);
