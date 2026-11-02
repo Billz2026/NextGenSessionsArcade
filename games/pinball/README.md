@@ -1,10 +1,20 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 3C — desktop layout and mechanical-playfield polish (playable preview)
+**Current stage:** Phase 3K — fair-play physics and sharp cabinet lettering (playable 3D prototype)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 3K — gameplay fairness and clear lettering
+
+- **Tuned ball response:** gravity reduced from 920 to 780 playfield units/s², physical flipper length increased from 65 to 71, with a slightly more forgiving bat contact radius. The 3D paddle geometry was lengthened to match the actual physics.
+- **Outlane protection:** two symmetric physical rebound posts at (130, 641) and (290, 641) now reduce unavoidable lower-playfield escapes. These are real collision objects and also appear in the 3D and fallback artwork.
+- **Ball-save fairness:** initial save window increased from 4 to 11 seconds after each launch; it remains **one use per ball**, so a player can still lose through missed flipper shots. Existing game-over, extra ball and scoring rules remain unchanged.
+- **No endless trapping:** testing showed the old stationary bats could hold a ball at the centre indefinitely. With the revised bats and lower posts, an unattended game eventually drains, while active flipper timing keeps the ball alive noticeably longer.
+- **Sharp table branding:** the 3D NEON TILT sign and NEXTGEN SESSIONS wordmark use high-resolution, high-contrast raster textures with no baked shadow blur, better texture filtering and an outline for readability.
+- **Verification:** 31 gameplay tests plus 11 DMD tests pass, including explicit timed ball-save, no-trap and sustained-play checks. A mocked Three.js runtime successfully built the revised 3D table and verified sharp, unblurred sign labels.
+- **Quality boundary:** automated simulations demonstrate an improvement but are not a replacement for actual full-game Chrome/Fold playtests. The table remains a prototype with 2D physics and guided raised ramp travel.
 
 ## Phase 3J — reactive dot-matrix show controller
 
