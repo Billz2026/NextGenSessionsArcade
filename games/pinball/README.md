@@ -6,6 +6,17 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3F — Bigger / Flashier / Full Screen Presence
+
+- **Large-table desktop pass:** tighter header, cabinet and flipper controls, allowing the full playfield to claim more of the available browser height while preserving the no-scroll contract at desktop widths.
+- **Illuminated cabinet side towers:** the unused dark side areas of the landscape desktop cockpit now contain softly chasing red/amber cabinet lighting rather than empty blocks.
+- **Tighter 3D framing:** less wasted black space inside the WebGL view, without intentionally cropping the upper or lower table. The table is portrait-oriented, so the maximum size is ultimately constrained by browser viewport height; browser Fullscreen produces a greater size increase.
+- **Visible additive light bloom:** a shared, procedurally generated radial glow texture adds soft haloes to the 34 table inserts, upper rollovers, bumper caps, scoop and spinner; this avoids an expensive multi-pass postprocessor.
+- **More vivid original playfield art:** richer blue-violet enamel base, warm copper/plastic accents and brighter cyan/pink/amber inserts.
+- **Event-driven light choreography:** significant shots, missions, scoops, frenzy and extra-ball events trigger short cabinet light bursts; no fake score or mechanical events are introduced.
+- **Reduced motion:** suppresses moving patterns and event bursts while leaving static gameplay-readable lamps in place.
+- **Current limitation:** Code tests and a mocked WebGL renderer pass, but live browser layout, GPU performance and brightness have **not** been independently verified. Request fresh 100%-zoom desktop and unfolded Fold 7 screenshots before declaring the build polished.
+
 ## Phase 3E — full and reactive arcade-table pass
 
 - **More screen presence:** moved the 3D camera closer, reduced unused view margins, and kept the whole table and essential controls inside the no-scroll desktop cockpit.
