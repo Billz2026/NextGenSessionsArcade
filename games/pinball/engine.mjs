@@ -36,9 +36,27 @@ export const ORBIT_PATH=Object.freeze([
  [77,373,.39],[59,321,.52],[56,250,.67],[71,204,.78],
  [94,176,.86],[136,152,.9],[214,150,.82],[300,150,.69]
 ].map(p=>Object.freeze(p)));
+// Phase 3N routes are shared by physics, the 3D hardware and 2D fallback.
+export const CENTER_PATH=Object.freeze([
+ [207,354,.37],[207,323,.87],[208,289,1.50],[208,266,1.58],
+ [204,220,1.48],[226,183,1.43],[259,165,1.41],
+ [272,205,1.24],[270,273,1.12],[251,349,.84],
+ [241,415,.58],[260,505,.34]
+].map(p=>Object.freeze(p)));
+export const SKYLINE_PATH=Object.freeze([
+ [124,380,.38],[102,341,.63],[94,304,.92],[94,254,1.23],
+ [119,207,1.43],[158,173,1.53],[196,152,1.60],
+ [178,219,1.38],[156,283,1.05],[141,360,.76],
+ [134,428,.52],[159,508,.33]
+].map(p=>Object.freeze(p)));
+export const TRAVEL_PATHS=Object.freeze({
+ ramp:RAMP_PATH,orbit:ORBIT_PATH,center:CENTER_PATH,skyline:SKYLINE_PATH
+});
 export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
- ramp:{x:311,y:372,r:27,points:7500}
+ ramp:{x:311,y:372,r:27,points:7500},
+ center:{x:207,y:354,r:16,points:4500},
+ skyline:{x:124,y:380,r:18,points:6000}
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
@@ -270,7 +288,11 @@ export class PinballEngine{
   const shot=SHOTS[kind];
   if(!shot||this.state!=='playing'||!this.ball)return;
   this.expireArcadeModes();
-  this.shots++;this.addPoints(shot.points,kind==='ramp'?'RAMP SHOT':'LEFT ORBIT');
+  this.shots++;const shotName={
+   ramp:'RAMP SHOT',orbit:'LEFT ORBIT',
+   center:'CENTER CROSSOVER',skyline:'SKYLINE LOOP'
+  }[kind];
+  this.addPoints(shot.points,shotName);
   this.emit('shot',{kind,points:shot.points});
   const chained=this.lastShot && this.time-this.lastShot.at<ARCADE_MODES.comboWindow;
   this.comboCount=chained?Math.min(5,Math.max(1,this.comboCount)+1):1;
@@ -292,7 +314,8 @@ export class PinballEngine{
    }
   }
   const b=this.ball;
-  b.mode='travel';b.travel={kind,t:0,duration:kind==='ramp'?.95:.8,from:{x:b.x,y:b.y}};
+  const durations={ramp:.95,orbit:.8,center:1.24,skyline:1.18};
+  b.mode='travel';b.travel={kind,t:0,duration:durations[kind],from:{x:b.x,y:b.y}};
  }
  checkSensors(previous){
   const b=this.ball;if(!b||b.mode!=='live')return;
@@ -347,7 +370,7 @@ export class PinballEngine{
    this.emit('scoop',{count:this.scoopHits});
    return;
   }
-  for(const kind of ['orbit','ramp']){
+  for(const kind of ['orbit','ramp','center','skyline']){
    const s=SHOTS[kind];
    if(b.vy<-300&&previous.y>=s.y&&b.y<s.y&&Math.abs(b.x-s.x)<s.r){
     this.activateShot(kind);return;
@@ -357,7 +380,7 @@ export class PinballEngine{
  updateTravel(dt){
   const b=this.ball,tr=b.travel;if(!tr){b.mode='live';return;}
   tr.t+=dt;
-  const path=tr.kind==='ramp'?RAMP_PATH:ORBIT_PATH;
+  const path=TRAVEL_PATHS[tr.kind];
   const progress=Math.min(1,tr.t/tr.duration);
   const pos=progress*(path.length-1);
   const i=Math.min(path.length-2,Math.floor(pos));
@@ -370,7 +393,10 @@ export class PinballEngine{
   b.travelHeight=path[i][2]+(path[i+1][2]-path[i][2])*f;
   if(progress>=1){
    b.mode='live';b.travel=null;
-   b.vx=tr.kind==='ramp'?-170:-260;b.vy=230;
+   // Each elevated return feeds a different flipper approach.
+   const exits={ramp:[-170,230],orbit:[-260,230],
+    center:[-140,260],skyline:[175,250]};
+   [b.vx,b.vy]=exits[tr.kind];
    b.travelHeight=0;b.trail=[];
   }
  }
