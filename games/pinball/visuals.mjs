@@ -137,7 +137,12 @@ function drawEnamelDetails(c){
   p.moveTo(338,423);p.bezierCurveTo(350,409,357,406,362,395);
   p.lineTo(374,445);p.lineTo(346,457);p.lineTo(326,431);p.closePath();
  },G(c,326,406,369,462,[[0,'#9b7b89'],[.46,'#403746'],[1,'#1c1a2a']]),'#e3bca1');
- // Upper rollovers use moulded acrylic slots, not steel gate frames.
+ // Retro upper-playfield inserts and sculpted rollover plastics.
+ // Devices remain visible; no rail or elevated structure is painted over them.
+ for(let i=0;i<9;i++){
+  const x=72+i*34,y=131;
+  disk(c,x,y,4,'#21253c','#756680',1);
+ }
  for(const lane of LANES){
   rect(c,lane.x-24,183,48,23,5,'#2c254b','#bf89c4',2);
   text(c,lane.label,lane.x,193,12,'#ffe5ba','Barlow Condensed',900);
@@ -302,22 +307,64 @@ function drawNewFeatures(c,engine,reducedMotion=false){
  disk(c,sc.x,sc.y,14,on?'#f48770':'#3a152a','#edbc85',2);
  disk(c,sc.x,sc.y,8,on?'#fff0c0':'#120c17');
  text(c,'SCOOP',sc.x,sc.y+28,9,'#ffdfb2');
- // Sculpted centre Power Core plus 16 real state-driven score lamps.
+ // Signature circular Power Core: concentric illuminated plastic layers.
  const coreX=210,coreY=460,litGrid=engine.powerCharges||0;
- disk(c,coreX,coreY,43,'#151b34','#c07691',5);
- disk(c,coreX,coreY,35,R(c,coreX,coreY,37,[
-  [0,'#3a70a9'],[.57,'#203964'],[1,'#111e39']]),'#78b0df',3);
+ const rushActive=engine.hurryUpUntil>engine.time;
+ const pulse=reducedMotion?1:.65+.35*Math.sin(performance.now()*.013);
+ disk(c,coreX,coreY,49,'#121629','#a66a83',5);
+ disk(c,coreX,coreY,43,R(c,coreX,coreY,45,[
+  [0,rushActive?'#c67176':'#3d79b2'],
+  [.56,'#274a79'],[1,'#121f3c']]),rushActive?'#ffb085':'#75b2df',4);
+ disk(c,coreX,coreY,25,'#192947',rushActive?'#ffc3a0':'#447eaf',3);
+ disk(c,coreX,coreY,17,'#316499','#95cdee',2);
+ if(rushActive)disk(c,coreX,coreY,10,'#ffbb73','#ffe8b0',2);
  for(let i=0;i<16;i++){
   const a=(i/16)*TAU-Math.PI/2;
-  const x=coreX+Math.cos(a)*37,y=coreY+Math.sin(a)*37;
-  const on=engine.hurryUpUntil>engine.time||i<litGrid*5||
-   engine.state==='ready'&&i===Math.floor(performance.now()/170)%16;
-  disk(c,x,y,4,on?'#ffe59b':'#547caa',on?'#fff7d2':'#293e68',1);
+  const x=coreX+Math.cos(a)*44,y=coreY+Math.sin(a)*44;
+  const chase=engine.state==='ready'&&i===Math.floor(performance.now()/170)%16;
+  const on=rushActive||i<litGrid*5||chase;
+  disk(c,x,y,on?4.9:3.8,on?'#ffe0a1':'#497cac',
+   on?'#fff5dc':'#28476f',1.3);
+ }
+ // The subtle inner progression gives the Core identity even when no
+ // mission is running; during a rush the centre pulses instead of strobing.
+ if(litGrid||rushActive){
+  c.beginPath();c.arc(coreX,coreY,31,-Math.PI/2,
+    -Math.PI/2+TAU*(rushActive?1:litGrid/3));
+  c.lineWidth=4;c.strokeStyle=rushActive?'#ffba7d':'#8bcdf6';c.stroke();
  }
  for(const [i,pos] of [[190,462],[210,445],[230,462]].entries()){
   disk(c,pos[0],pos[1],5,litGrid>i?'#ffc36d':'#443649','#f0be99',1.2);
  }
  const rush=engine.hurryUpUntil>engine.time,overdrive=engine.overdriveUntil>engine.time;
+ // Live light cues in the same zones as the 3D display.
+ const now=performance.now(),upperStep=Math.floor(now/220);
+ const launchChase=engine.state==='playing'&&engine.ballLaunchedAt!==null&&
+  engine.time-engine.ballLaunchedAt<2.5;
+ for(let i=0;i<9;i++){
+  const lane=Math.floor(i/3);
+  const lit=engine.lanes.has(lane)||engine.missions.lanes||
+   (engine.state==='ready'||launchChase)&&
+    (reducedMotion?i===0:i===upperStep%9);
+  disk(c,72+i*34,131,4,lit?'#ffe4a7':'#425673',
+   lit?'#fff5d5':'#283448',1);
+ }
+ for(const [x,y,index] of [
+  [109,235,0],[111,269,0],[306,235,1],[307,269,1],
+  [165,335,2],[245,335,2]
+ ]){
+  const lit=engine.time<engine.frenzyUntil;
+  disk(c,x,y,4,lit?'#ffd7a0':'#653e55',
+   lit?'#fff1c1':'#9c6577',1);
+ }
+ const ballSave=engine.state==='playing'&&engine.ballLaunchedAt!==null&&
+   !engine.ballSaveUsed&&engine.time<engine.ballSaveUntil;
+ for(const [x,y] of [[106,537],[122,565],[161,548],
+                       [314,537],[298,565],[259,548]]){
+  const shine=ballSave&&(reducedMotion||Math.sin(now*.009+x*.1)>-.2);
+  disk(c,x,y,5,shine?'#ffdfad':'#473c59',
+   shine?'#fff5d5':'#a27f92',1.2);
+ }
  if(rush){disk(c,sc.x,sc.y,23,null,'#ff70b1',3);text(c,'JACKPOT',sc.x,sc.y-32,11,'#ffe0a4');}
  if(overdrive)text(c,'OVERDRIVE!',sx,sy-32,11,'#fff0b1');
 
