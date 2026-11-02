@@ -415,3 +415,17 @@ test('new routes add honest combos and Power Grid charges without free repeat po
  for(let i=0;i<200;i++)g.singleStep(BOARD.step);
  assert.equal(g.score,total,'travel itself should not mint repeated score');
 });
+
+test('centre crossover is reachable during real flipper play, not just sensor injection',()=>{
+ const g=new PinballEngine();g.start();let centre=0;
+ for(let i=0;i<12/BOARD.step;i++){
+  if(g.ball?.mode==='shooter')g.launch();
+  const t=i*BOARD.step;
+  g.setFlipper('left',Math.sin(t*2.2)>-.22);
+  g.setFlipper('right',Math.cos(t*2.9)>-.08);
+  g.singleStep(BOARD.step);
+  for(const event of g.consumeEvents())
+   if(event.type==='shot'&&event.kind==='center')centre++;
+ }
+ assert.ok(centre>=1,'centre channel must be reachable in ordinary responsive play');
+});
