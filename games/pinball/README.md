@@ -6,6 +6,16 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3J — reactive dot-matrix show controller
+
+- **Rotating attract-mode messages:** PRESS START / PLAYER ONE READY, 3 BALL ARCADE / CHASE JACKPOTS, LIGHT THE TABLE / RAMP + ORBIT, and HIGH SCORE RUN / OWN THE NIGHT. Branding is no longer pointlessly repeated inside the LED screen.
+- **Live gameplay status:** score and ball number, target and lane progress, ramp/orbit objectives, spinner/scoop totals, ball launch readiness, 2× scoring and Bumper Frenzy. The baseline display alternates every 4.5 seconds and automatically gives way to live events.
+- **Event-linked celebrations:** ramp and orbit shots display actual awarded points (including 2× multiplier), spinner, scoop, target bank, lanes, missions, jackpot, frenzy, ball save, extra ball, ball drain and game over each have succinct message pairs.
+- **Priority-based interruptions:** important game milestones override lesser messages, generic point awards do not obscure objectives, ordinary bumper hits are rate-limited, and a new game immediately clears an old game-over banner.
+- **Controlled arcade presentation:** major scoring events receive a short bright amber LED pulse, border flash and left-to-right reveal; reduced-motion users see sharp static messages with no reveal or strobe.
+- **QA:** 37 physics and DMD regression checks, including new cases for attract rotation, live mission/score information, 2× point awards, message priority and game reset. No scoring or physics rules altered.
+- **Release constraint:** changes are committed but the published appearance and long-session gameplay have not been personally verified in Chrome or on Samsung Fold.
+
 ## Phase 3I — machine presence and readability correction
 
 - **Compact cabinet-and-console desktop layout:** the whole existing cabinet is framed in a narrow dedicated stage instead of a huge left-hand website panel. Machine occupies most of its immediate container while the right score panel is capped at 390 CSS pixels. No gameplay or table collision dimensions are changed.
