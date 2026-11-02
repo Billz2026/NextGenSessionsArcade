@@ -3,26 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#080808">
+  <meta name="theme-color" content="#08090d">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="NextGen Sessions Arcade — a growing collection of original browser games. Browse our upcoming game concepts and see what's next.">
+  <meta name="description" content="NextGen Sessions Arcade — original free-to-play browser games. Play High Roll Run roulette now, chase your best score and discover more games coming soon.">
   <link rel="canonical" href="https://billz2026.github.io/NextGenSessionsArcade/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="NextGen Sessions Arcade">
-  <meta property="og:title" content="NextGen Sessions Arcade | Your Next Game Starts Here">
-  <meta property="og:description" content="Original browser games. One premium arcade. Our first title is in planning.">
+  <meta property="og:title" content="NextGen Sessions Arcade | Play. Compete. Repeat.">
+  <meta property="og:description" content="High Roll Run is playable now. Take on roulette with fictional credits, bank your best score and explore the next wave of arcade games.">
   <meta property="og:url" content="https://billz2026.github.io/NextGenSessionsArcade/">
   <meta property="og:image" content="https://billz2026.github.io/NextGenSessionsArcade/assets/nextgen-header-wordmark-2026.webp">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=7">
-  <title>NextGen Sessions Arcade | Your Next Game Starts Here</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css?v=8">
+  <title>NextGen Sessions Arcade | Play. Compete. Repeat.</title>
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to content</a>
+<a class="skip-link" href="#main">Skip to games</a>
 <div class="top-rule" aria-hidden="true"></div>
 <header class="site-header">
   <div class="header-inner container">
@@ -31,101 +31,90 @@
       <img class="arcade-wordmark" src="./assets/arcade-wordmark.svg" width="1060" height="220" alt="">
     </a>
     <nav class="nav" aria-label="Main navigation">
-      <a href="#games" aria-current="page">Games</a>
-      <a href="#categories">Categories</a>
-      <a href="#about">About</a>
+      <a class="nav-active" href="#games" aria-current="page">GAME SELECT</a>
+      <a href="#upcoming">COMING SOON</a>
     </nav>
-    <a class="music-link" href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">Music site <span aria-hidden="true">↗</span></a>
+    <div class="header-actions">
+      <span class="header-live"><span class="online-dot" aria-hidden="true"></span>01 GAME LIVE</span>
+      <a class="music-link" href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">MUSIC SITE <span aria-hidden="true">↗</span></a>
+    </div>
   </div>
 </header>
-<main id="main">
+<main id="main" class="container">
   <section class="dashboard-head" aria-labelledby="intro-title">
     <div class="dashboard-copy">
-      <p class="eyebrow">NEXTGEN SESSIONS / THE GAMING DIVISION</p>
-      <h1 id="intro-title">PICK YOUR <em>NEXT GAME.</em></h1>
-      <p>Original browser games. Quick rounds. High scores.</p>
+      <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">✳</span> NEXTGEN SESSIONS <span class="eyebrow-divider">/</span> THE GAMING DIVISION</p>
+      <h1 id="intro-title">PLAY. COMPETE. <em>REPEAT.</em></h1>
+      <p>Original browser games. Instant action. Your next high score starts here.</p>
     </div>
-    <div class="launch-state" role="status">
-      <span class="state-dot" aria-hidden="true"></span>
-      <div><strong>GAME 001 IS NOW PLAYABLE</strong><span>Roulette beta available · More games to follow</span></div>
+    <div class="dashboard-numbers" aria-label="Arcade status">
+      <div><strong>01</strong><span>PLAYABLE<br>NOW</span></div>
+      <i aria-hidden="true"></i>
+      <div><strong>05</strong><span>FUTURE<br>CATEGORIES</span></div>
     </div>
   </section>
-  <section id="games" class="library container" aria-labelledby="games-heading">
+  <section id="games" class="library" aria-labelledby="games-heading">
     <div class="library-heading">
-      <h2 id="games-heading">GAME <span>LIBRARY</span></h2>
-      <span class="library-count">01 PLAYABLE BETA <i aria-hidden="true">/</i> FIVE FUTURE CATEGORIES</span>
+      <div class="library-title"><span class="section-line" aria-hidden="true"></span><h2 id="games-heading">CHOOSE YOUR <em>GAME</em></h2></div>
+      <p><span class="section-online" aria-hidden="true"></span> <strong>001</strong> READY TO PLAY <span class="library-separator">/</span> MORE ON THE WAY</p>
     </div>
     <div class="game-grid">
-      <article class="tile tile-feature" aria-labelledby="feature-title">
-        <div class="feature-banner"><span><span class="featured-star" aria-hidden="true">✳</span> FEATURED GAME / PLAYABLE BETA</span><span>001 / BETA</span></div>
-        <div class="feature-stage" aria-hidden="true">
-          <div class="stage-grid"></div>
-          <div class="wheel-back"></div>
-          <div class="roulette-wheel"><div class="roulette-inner"><span>NGS</span><small>01</small></div></div>
-          <div class="wheel-ball"></div>
-          <div class="stage-caption">VIRTUAL CREDITS ONLY</div>
+      <article class="game-card feature-card" aria-labelledby="feature-title">
+        <div class="feature-noise" aria-hidden="true"></div>
+        <div class="feature-topline"><span><span class="feature-spark" aria-hidden="true">✳</span> FEATURED GAME <span class="feature-slash">/</span> 001</span><span class="live-badge"><span aria-hidden="true"></span> LIVE BETA</span></div>
+        <div class="feature-content">
+          <div class="feature-copy">
+            <span class="game-type">ROULETTE <span>/</span> SOLO CHALLENGE</span>
+            <h3 id="feature-title">HIGH ROLL<br><em>RUN.</em></h3>
+            <p>Spin the wheel. Build your balance. Bank your highest score before it all disappears.</p>
+            <div class="feature-chips"><span>CLASSIC</span><span>HIGH ROLLER</span></div>
+            <a class="play-button" href="./games/roulette/" aria-label="Play High Roll Run roulette"><span class="play-symbol" aria-hidden="true">▶</span> PLAY NOW <span class="play-arrow" aria-hidden="true">↗</span></a>
+          </div>
+          <div class="wheel-art" aria-hidden="true">
+            <div class="wheel-glow"></div>
+            <img src="./assets/roulette-wheel-art.svg" width="420" height="420" alt="">
+          </div>
         </div>
-        <div class="feature-info">
-          <div class="feature-eyebrow">CHANCE / GAME 001</div>
-          <h3 id="feature-title">ROULETTE<span class="red-point">.</span></h3>
-          <p>Play European roulette with 100 fictional credits. Bank your final score or go bust. No real money or prizes.</p>
-          <div class="tile-bottom"><span class="status-label">READY TO PLAY</span><a class="feature-play" href="./games/roulette/" aria-label="Play High Roll Run roulette">PLAY GAME ↗</a></div>
-        </div>
+        <div class="feature-bottomline"><span>VIRTUAL CREDITS ONLY</span><span>NO PURCHASES OR PRIZES</span></div>
       </article>
-
-      <article id="categories" class="tile category-tile tile-arcade" aria-labelledby="arcade-heading">
-        <div class="tile-top"><span>02 / CATEGORY</span><span class="tile-more" aria-hidden="true">●</span></div>
-        <svg class="category-illustration" viewBox="0 0 160 160" fill="none" aria-hidden="true">
-<path d="M45 87h70c11 0 18 7 22 20l6 18c4 12-5 21-16 17l-25-13H58l-25 13c-11 4-20-5-16-17l6-18c4-13 11-20 22-20Z" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>
-<path d="M49 111h26M62 98v26" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="106" cy="106" r="6" fill="currentColor"/><circle cx="122" cy="121" r="6" fill="currentColor"/>
-<path d="M80 88V38" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="80" cy="30" r="16" stroke="currentColor" stroke-width="7"/>
-</svg>
-        <div class="category-copy"><h3 id="arcade-heading">ARCADE</h3><p>Fast rounds. Big scores.</p><span class="category-status">FUTURE GAMES</span></div>
+      <div id="upcoming" class="upcoming-anchor" aria-hidden="true"></div>
+      <article class="game-card category-card arcade-card" aria-labelledby="arcade-title">
+        <div class="card-head"><span>02 <i>/</i> CATEGORY</span><span class="coming-label">COMING SOON</span></div>
+        <svg class="category-art" viewBox="0 0 160 160" fill="none" aria-hidden="true">
+          <path d="M45 87h70c11 0 18 7 22 20l6 18c4 12-5 21-16 17l-25-13H58l-25 13c-11 4-20-5-16-17l6-18c4-13 11-20 22-20Z" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>
+          <path d="M49 111h26M62 98v26" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="106" cy="106" r="6" fill="currentColor"/><circle cx="122" cy="121" r="6" fill="currentColor"/><path d="M80 88V38" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="80" cy="30" r="16" stroke="currentColor" stroke-width="7"/>
+        </svg>
+        <div class="category-copy"><p>QUICK FIRE ACTION</p><h3 id="arcade-title">ARCADE<span>.</span></h3><span>Fast rounds. Big scores.</span></div>
       </article>
-
-      <article class="tile category-tile tile-reflex" aria-labelledby="reflex-heading">
-        <div class="tile-top"><span>03 / CATEGORY</span><span class="tile-more" aria-hidden="true">●</span></div>
-        <svg class="category-illustration" viewBox="0 0 160 160" fill="none" aria-hidden="true">
-<path d="M91 15 38 89h44l-17 56 59-81H78l13-49Z" stroke="currentColor" stroke-width="8" stroke-linejoin="bevel"/>
-<path d="M16 49h28M13 71h18M117 105h28M126 125h18" stroke="currentColor" stroke-width="5" stroke-linecap="round" opacity=".65"/>
-</svg>
-        <div class="category-copy"><h3 id="reflex-heading">REFLEX</h3><p>Speed, timing, precision.</p><span class="category-status">FUTURE GAMES</span></div>
+      <article class="game-card category-card reflex-card" aria-labelledby="reflex-title">
+        <div class="card-head"><span>03 <i>/</i> CATEGORY</span><span class="coming-label">COMING SOON</span></div>
+        <svg class="category-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><path d="M91 15 38 89h44l-17 56 59-81H78l13-49Z" stroke="currentColor" stroke-width="8" stroke-linejoin="bevel"/><path d="M16 49h28M13 71h18M117 105h28M126 125h18" stroke="currentColor" stroke-width="5" stroke-linecap="round" opacity=".65"/></svg>
+        <div class="category-copy"><p>TEST YOUR REACTIONS</p><h3 id="reflex-title">REFLEX<span>.</span></h3><span>Every millisecond counts.</span></div>
       </article>
-
-      <article class="tile category-tile tile-puzzle" aria-labelledby="puzzle-heading">
-        <div class="tile-top"><span>04 / CATEGORY</span><span class="tile-more" aria-hidden="true">●</span></div>
-        <svg class="category-illustration" viewBox="0 0 160 160" fill="none" aria-hidden="true">
-<path d="M30 29h35v13a12 12 0 1 0 24 0V29h41v39h-13a12 12 0 1 0 0 24h13v39H92v-13a12 12 0 1 0-24 0v13H30V90h13a12 12 0 1 0 0-24H30V29Z" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>
-</svg>
-        <div class="category-copy"><h3 id="puzzle-heading">PUZZLE</h3><p>Think fast. Solve smart.</p><span class="category-status">FUTURE GAMES</span></div>
+      <article class="game-card category-card puzzle-card" aria-labelledby="puzzle-title">
+        <div class="card-head"><span>04 <i>/</i> CATEGORY</span><span class="coming-label">COMING SOON</span></div>
+        <svg class="category-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><path d="M30 29h35v13a12 12 0 1 0 24 0V29h41v39h-13a12 12 0 1 0 0 24h13v39H92v-13a12 12 0 1 0-24 0v13H30V90h13a12 12 0 1 0 0-24H30V29Z" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/></svg>
+        <div class="category-copy"><p>THINK DIFFERENT</p><h3 id="puzzle-title">PUZZLE<span>.</span></h3><span>Smart moves win.</span></div>
       </article>
-
-      <article class="tile category-tile tile-strategy" aria-labelledby="strategy-heading">
-        <div class="tile-top"><span>05 / CATEGORY</span><span class="tile-more" aria-hidden="true">●</span></div>
-        <svg class="category-illustration" viewBox="0 0 160 160" fill="none" aria-hidden="true">
-<path d="M45 29h20v18h30V29h20v38l-15 16 9 38H51l9-38-15-16V29Z" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>
-<path d="M42 121h76v16H42zM57 67h46" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/>
-</svg>
-        <div class="category-copy"><h3 id="strategy-heading">STRATEGY</h3><p>The next move matters.</p><span class="category-status">FUTURE GAMES</span></div>
+      <article class="game-card category-card strategy-card" aria-labelledby="strategy-title">
+        <div class="card-head"><span>05 <i>/</i> CATEGORY</span><span class="coming-label">COMING SOON</span></div>
+        <svg class="category-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><path d="M45 29h20v18h30V29h20v38l-15 16 9 38H51l9-38-15-16V29Z" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><path d="M42 121h76v16H42zM57 67h46" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/></svg>
+        <div class="category-copy"><p>PLAY THE LONG GAME</p><h3 id="strategy-title">STRATEGY<span>.</span></h3><span>Every choice matters.</span></div>
       </article>
-
-      <article class="tile category-tile tile-sports" aria-labelledby="sports-heading">
-        <div class="tile-top"><span>06 / CATEGORY</span><span class="tile-more" aria-hidden="true">●</span></div>
-        <svg class="category-illustration" viewBox="0 0 160 160" fill="none" aria-hidden="true">
-<circle cx="80" cy="80" r="56" stroke="currentColor" stroke-width="7"/><path d="m80 55 23 16-9 27H66l-9-27 23-16ZM57 71 39 54M103 71l18-17M66 98l-10 24M94 98l10 24" stroke="currentColor" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
-</svg>
-        <div class="category-copy"><h3 id="sports-heading">SPORTS</h3><p>Sports challenges, reimagined.</p><span class="category-status">FUTURE GAMES</span></div>
+      <article class="game-card category-card sports-card" aria-labelledby="sports-title">
+        <div class="card-head"><span>06 <i>/</i> CATEGORY</span><span class="coming-label">COMING SOON</span></div>
+        <svg class="category-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><circle cx="80" cy="80" r="56" stroke="currentColor" stroke-width="7"/><path d="m80 55 23 16-9 27H66l-9-27 23-16ZM57 71 39 54M103 71l18-17M66 98l-10 24M94 98l10 24" stroke="currentColor" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        <div class="category-copy"><p>TAKE THE CHALLENGE</p><h3 id="sports-title">SPORTS<span>.</span></h3><span>Bring your A-game.</span></div>
       </article>
     </div>
-    <p class="library-disclaimer">Roulette is playable in beta. The other five tiles preview future game categories.</p>
+    <p class="library-note"><span aria-hidden="true">ⓘ</span> High Roll Run is the only playable game at present. The other tiles preview future categories.</p>
   </section>
-
 </main>
 <footer class="footer" id="about">
   <div class="footer-inner container">
     <span class="footer-name">NEXTGEN SESSIONS <strong>ARCADE</strong></span>
-    <span class="footer-description">One game live in beta. Virtual credits only. No purchases or real-money prizes.</span>
-    <div class="footer-links"><span>© 2026 NextGen Sessions Arcade</span><a href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">Explore the music site ↗</a></div>
+    <span class="footer-description">FREE BROWSER GAMES <span aria-hidden="true">•</span> NO REAL-MONEY GAMBLING</span>
+    <div class="footer-links"><span>© 2026 NEXTGEN SESSIONS</span><a href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">MUSIC ↗</a></div>
   </div>
 </footer>
 </body>
