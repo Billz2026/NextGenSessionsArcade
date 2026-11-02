@@ -33,13 +33,14 @@ function syncHUD(){
  const state=engine.state,score=engine.score,ball=engine.ballNumber,power=Math.round(engine.charge*100);
  if(lastScore!==score){ui.score.textContent=fmt(score).padStart(7,'0');lastScore=score;}
  if(lastBall!==ball||lastStatus!==state){
-   ui.ball.textContent=ball?ball+' / 3':'— / 3';
+   ui.ball.textContent=ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
    ui.status.textContent=state==='ready'?'STANDBY':state==='playing'?'BALL LIVE':state==='between'?'BALL DRAINED':'GAME OVER';
    ui.scoreState.textContent=state==='ready'?'PRESS START':state==='playing'?(engine.ball?.mode==='shooter'?'CHARGE LAUNCH':'KEEP THE BALL ALIVE'):state==='between'?'NEXT BALL':'RUN COMPLETE';
    lastBall=ball;lastStatus=state;
  }
  if(lastPower!==power){ui.power.style.width=power+'%';ui.powerLabel.textContent=power+'%';lastPower=power;}
  if(lastBest!==best){ui.best.textContent=fmt(best);lastBest=best;}
+ ui.scoreState.textContent=state==='ready'?'PRESS START':state==='playing'?(engine.ball?.mode==='shooter'?'CHARGE LAUNCH':'KEEP THE BALL ALIVE'):state==='between'?'NEXT BALL':'RUN COMPLETE';
  ui.launch.disabled=!(state==='playing'&&engine.ball?.mode==='shooter');
  ui.start.disabled=state==='playing'||state==='between';
  if(lastStatusText!==state){ui.start.textContent=state==='gameover'?'PLAY AGAIN ↻':'START GAME ↻';lastStatusText=state;}
@@ -106,7 +107,10 @@ function processEvents(){
    ui.scoreFlash.textContent='+'+fmt(e.score);
    sound(e.target.startsWith('bumper')?650:560,.055);
    if(!reducedMotion){
-    const p=e.target.startsWith('bumper')?BUMPERS[Number(e.target.slice(-1))]:e.target==='sling0'?{x:143,y:522}:{x:277,y:522};
+    const p=e.target.startsWith('bumper')?BUMPERS[Number(e.target.slice(-1))]:
+      e.target.startsWith('target')?TARGETS[Number(e.target.slice(-1))]:
+      e.target.startsWith('lane')?LANES[Number(e.target.slice(-1))]:
+      e.target==='sling0'?{x:143,y:522}:e.target==='sling1'?{x:277,y:522}:null;
     if(p)for(let i=0;i<8;i++){const a=i*Math.PI/4;particles.push({x:p.x,y:p.y,vx:Math.cos(a)*70,vy:Math.sin(a)*70,life:.42});}
    }
   }
@@ -145,7 +149,7 @@ function bindHold(button,down,up){
   e.preventDefault();button.setPointerCapture?.(e.pointerId);down();
  });
  button.addEventListener('pointerup',e=>{e.preventDefault();up();});
- button.addEventListener('pointercancel',up);
+ button.addEventListener('pointercancel',()=>{if(button===ui.launch){engine.cancelLaunchCharge();ui.launch.classList.remove('pressed')}else up()});
  button.addEventListener('lostpointercapture',up);
  button.addEventListener('contextmenu',e=>e.preventDefault());
 }
@@ -186,6 +190,7 @@ function releaseTouch(id){
 }
 ui.canvas.addEventListener('pointerup',e=>releaseTouch(e.pointerId));
 ui.canvas.addEventListener('pointercancel',e=>releaseTouch(e.pointerId));
+ui.canvas.addEventListener('lostpointercapture',e=>releaseTouch(e.pointerId));
 function loseFocus(){
  touchPointers.clear();ui.left.classList.remove('active');ui.right.classList.remove('active');
  ui.launch.classList.remove('pressed');
