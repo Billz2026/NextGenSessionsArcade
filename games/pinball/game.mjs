@@ -7,7 +7,7 @@ const ui={
  overlayTitle:$('overlay-title'),overlaySub:$('overlay-sub'),score:$('score'),
  scoreFlash:$('score-flash'),scoreState:$('score-state'),ball:$('ball-number'),
  best:$('best-score'),status:$('status-indicator'),power:$('power-fill'),
- powerLabel:$('power-label'),start:$('start'),reset:$('reset'),
+ powerLabel:$('power-label'),powerTitle:$('power-title'),launchTitle:$('launch-title'),launchHint:$('launch-hint'),launcherPanel:$('launcher-section'),start:$('start'),reset:$('reset'),
  launch:$('launch'),left:$('flipper-left'),right:$('flipper-right'),sound:$('sound'),
  multi:$('multiplier'),ballSave:$('ball-save'),modeName:$('mode-name'),
  modeTimer:$('mode-timer'),missionMessage:$('mission-message'),
