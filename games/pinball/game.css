@@ -623,3 +623,93 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  .launcher-section .power-track{height:4px;flex-basis:4px;margin:2px 0 3px}
  .launcher-section .launch-button{min-height:22px;max-height:25px;font-size:11px}
 }
+
+
+/* PHASE 3F — full-height stage and cabinet show lighting.
+   Portrait aspect remains exact; unused horizontal space becomes cabinet
+   ambience instead of stretching the physics coordinates. */
+@media(min-width:1121px){
+ .site-header{flex-basis:41px;height:41px;min-height:41px}
+ .shell{height:calc(100dvh - 43px);padding:4px 0 5px;max-width:1360px;width:min(1360px,calc(100% - 12px))}
+ .game-layout{grid-template-columns:minmax(0,1.6fr) minmax(335px,.95fr);gap:8px}
+ .machine{
+   padding:3px 5px 4px;
+   border-color:rgba(246,204,145,.75);
+   background:
+     radial-gradient(ellipse 40% 72% at 50% 43%,rgba(237,89,113,.16),transparent 78%),
+     radial-gradient(ellipse 32% 48% at 26% 50%,rgba(178,94,173,.09),transparent 80%),
+     radial-gradient(ellipse 32% 48% at 74% 50%,rgba(177,110,54,.11),transparent 80%),
+     linear-gradient(112deg,#261820,#080911 48%,#2d1c23);
+   box-shadow:inset 0 1px rgba(255,229,185,.24),0 12px 37px #0009,0 0 31px #d9506040;
+ }
+ .machine::before,.machine::after{
+   display:block;content:"";pointer-events:none;position:absolute;
+   z-index:0;top:36px;bottom:49px;width:18px;border-radius:11px;
+   background:
+     radial-gradient(circle at 50% 12px,#fff3c6 0 2px,#ff817a 3px 5px,transparent 7px) center top/100% 41px repeat-y,
+     linear-gradient(90deg,#0d0c16,#583346 35%,#dda47b 52%,#532e44 65%,#0d0c16);
+   border:1px solid #aa647d;
+   box-shadow:0 0 14px #ea666978,inset 0 0 7px #ffe1aa66,0 0 28px #f2655140;
+   opacity:.98;
+ }
+ .machine::before{left:clamp(20px,calc(50% - 257px),38%)}
+ .machine::after{right:clamp(20px,calc(50% - 257px),38%)}
+ .machine-top{height:16px;min-height:16px;flex-basis:16px;padding:1px 5px 2px}
+ .cabinet{
+   --table-height:clamp(220px,calc(100dvh - 137px),940px);
+   width:calc(var(--table-height)*.6 + 25px);
+   padding:4px 6px 5px;border-width:4px;border-radius:10px;
+   max-height:calc(100% - 17px);
+   box-shadow:0 0 0 1px #f2cb9a,0 0 0 3px #2b151f,0 0 24px #ed736863,0 12px 26px #000,
+       inset 0 1px #fff0d088;
+ }
+ .cabinet-lights{height:6px;flex-basis:6px;margin:0 0 3px}
+ .cabinet-lights span{height:5px;width:5px;background:#ffcc8e;box-shadow:0 0 8px #ffb65a,0 0 15px #fa6e68}
+ .playfield-wrap{
+   height:var(--table-height);width:calc(var(--table-height)*.6);
+   max-height:calc(100dvh - 137px);
+   border-width:2px;border-radius:5px;
+   box-shadow:0 0 0 2px #17121b,0 0 0 3px #b48a76,0 0 20px #e26c6240;
+ }
+ .flipper-controls{height:36px;flex-basis:36px;margin-top:4px;gap:5px}
+ .flipper-control{height:36px;min-height:36px;padding:2px 5px;gap:5px}
+ .flipper-control strong{font-size:13px}
+ .flipper-control small{font-size:8px}
+ .flipper-control .control-icon{font-size:15px}
+ .hud{gap:5px;padding:7px}
+ .hud .mission-card{
+   background:linear-gradient(180deg,#241b27,#0f1019);
+ }
+ .hud .mission-card::after{
+   content:"";display:block;margin:9px auto 0;width:88%;height:7px;border-radius:30px;
+   background:repeating-linear-gradient(90deg,#f2bf8240 0 6px,transparent 7px 19px);
+   box-shadow:0 0 12px #e9745e24;
+ }
+ .game-banner{background:radial-gradient(ellipse at 70% 30%,#7c293c75,transparent 75%),#1c1521}
+ .score-number{text-shadow:0 0 15px #faba899e,0 0 34px #ff70465c}
+}
+@media(min-width:1121px) and (max-height:700px){
+ .cabinet{--table-height:clamp(210px,calc(100dvh - 130px),700px)}
+ .playfield-wrap{max-height:calc(100dvh - 130px)}
+ .machine::before,.machine::after{top:30px;bottom:44px}
+ .hud .mission-card::after{display:none}
+}
+@media(min-width:1121px) and (max-height:590px){
+ .cabinet{--table-height:clamp(180px,calc(100dvh - 123px),580px)}
+ .playfield-wrap{max-height:calc(100dvh - 123px)}
+ .flipper-controls{height:32px;flex-basis:32px}
+ .flipper-control{height:32px;min-height:32px}
+ .machine::before,.machine::after{width:11px}
+}
+@media(min-width:1121px) and (max-width:1300px){
+ .machine::before{left:clamp(6px,calc(50% - 245px),35%)}
+ .machine::after{right:clamp(6px,calc(50% - 245px),35%)}
+}
+@media(prefers-reduced-motion:no-preference){
+ .machine::before,.machine::after{animation:ng-cabinet-chase 2.6s linear infinite}
+ .machine::after{animation-delay:-1.3s}
+}
+@keyframes ng-cabinet-chase{
+ 0%,100%{filter:brightness(.68);box-shadow:0 0 10px #e95a6f65,inset 0 0 7px #ffe1aa66}
+ 50%{filter:brightness(1.3);box-shadow:0 0 21px #ef797ab0,inset 0 0 10px #fff1c9a0}
+}
