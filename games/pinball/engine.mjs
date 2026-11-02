@@ -23,6 +23,12 @@ export const WALLS=Object.freeze([
  [329,496,300,526],[300,526,278,542],
  [53,366,83,419],[336,420,357,365]
 ]);
+export const LANES=Object.freeze([{x:101,y:173,label:'N'},{x:210,y:169,label:'G'},{x:314,y:174,label:'S'}]);
+export const TARGETS=Object.freeze([{x:165,y:410,r:12},{x:194,y:405,r:12},{x:223,y:405,r:12},{x:252,y:410,r:12}]);
+export const SHOTS=Object.freeze({
+ orbit:{x:77,y:373,r:26,points:5000},
+ ramp:{x:311,y:372,r:27,points:7500}
+});
 export const SLINGS=Object.freeze([
  {x1:119,y1:502,x2:163,y2:535,score:100},
  {x1:301,y1:502,x2:257,y2:535,score:100}
@@ -44,6 +50,11 @@ export class PinballEngine{
                  {side:'right',x:276,y:613,a:.40,omega:0,length:65}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
+  this.lanes=new Set();this.targets=new Set();this.bumperHits=0;
+  this.missions={lanes:false,frenzy:false,targets:false,ride:false};
+  this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
+  this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
+  this.ballLaunchedAt=null;this.bonus=0;this.shots=0;
  }
  emit(type,detail={}){this.events.push({type,...detail});}
  consumeEvents(){const a=this.events.splice(0);return a;}
@@ -51,12 +62,18 @@ export class PinballEngine{
   this.state='playing';this.score=0;this.ballNumber=1;
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.accumulator=0;this.cooldowns.clear();
+  this.lanes.clear();this.targets.clear();this.bumperHits=0;
+  this.missions={lanes:false,frenzy:false,targets:false,ride:false};
+  this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
+  this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
+  this.ballLaunchedAt=null;this.bonus=0;this.shots=0;
   for(const f of this.flippers){f.a=.4;f.omega=0;}
   this.spawnBall();this.emit('start');
  }
  spawnBall(){
   this.ball={x:382,y:582,vx:0,vy:0,r:BOARD.radius,mode:'shooter',trail:[]};
   this.charging=false;this.charge=.26;
+  this.ballSaveUntil=0;this.ballLaunchedAt=null;this.ballSaveUsed=false;
   this.emit('ball',{ball:this.ballNumber});
  }
  holdLaunch(held){
@@ -69,6 +86,7 @@ export class PinballEngine{
   const p=clip(this.charge,.12,1);
   this.ball.vy=-(MIN_LAUNCH+(MAX_LAUNCH-MIN_LAUNCH)*p);
   this.ball.vx=-18;this.ball.mode='live';this.charging=false;
+  this.ballLaunchedAt=this.time;this.ballSaveUntil=this.time+4;
   this.emit('launch',{power:p});return true;
  }
  setFlipper(side,held){if(side==='left')this.leftHeld=Boolean(held);if(side==='right')this.rightHeld=Boolean(held);}
@@ -76,12 +94,18 @@ export class PinballEngine{
  cancelLaunchCharge(){this.charging=false;if(this.ball?.mode==='shooter')this.charge=.26;}
  scoreHit(score,type){
   if(this.state!=='playing')return;
-  this.score+=score;this.emit('hit',{score,target:type,total:this.score});
+  const active=this.time<this.multiplierUntil?2:1;
+  const frenzy=type.startsWith('bumper')&&this.time<this.frenzyUntil?2:1;
+  const awarded=score*active*frenzy;
+  this.score+=awarded;this.bonus+=Math.floor(awarded/10);
+  this.emit('hit',{score:awarded,target:type,total:this.score});
  }
  cooldownHit(key,delay,score,type){
   const last=this.cooldowns.get(key)??-100;
   if(this.time-last<delay)return false;
-  this.cooldowns.set(key,this.time);this.scoreHit(score,type);return true;
+  this.cooldowns.set(key,this.time);this.scoreHit(score,type);
+  if(type.startsWith('bumper'))this.bump();
+  return true;
  }
  collideCircle(obj,impulse=1.07,key='circle',score=0){
   const b=this.ball,dx=b.x-obj.x,dy=b.y-obj.y;
@@ -149,12 +173,118 @@ export class PinballEngine{
    }
   }
  }
+ // All sensors and scoring run in fixed simulation time, not per render frame.
+ addPoints(points,label){
+  const multiplier=this.time<this.multiplierUntil?2:1;
+  const value=points*multiplier;
+  this.score+=value;this.bonus+=Math.floor(value/10);
+  this.emit('award',{score:value,label,total:this.score});
+ }
+ mission(name,headline,points=0){
+  if(this.missions[name])return;
+  this.missions[name]=true;
+  if(points)this.addPoints(points,headline);
+  this.emit('mission',{name,headline});
+  this.checkExtraBall();
+ }
+ checkExtraBall(){
+  if(this.extraAwarded||!Object.values(this.missions).every(Boolean))return;
+  this.extraAwarded=true;this.extraBalls++;this.emit('extra',{count:this.extraBalls});
+ }
+ bumper(){
+  this.bumperHits++;
+  if(this.bumperHits===10){
+   this.frenzyUntil=this.time+15;
+   this.mission('frenzy','BUMPER FRENZY',7500);
+   this.emit('frenzy',{until:this.frenzyUntil});
+  }
+ }
+ activateLane(i){
+  if(this.lanes.has(i))return;
+  this.lanes.add(i);this.scoreHit(750,'lane'+i);
+  this.emit('lane',{index:i,count:this.lanes.size});
+  if(this.lanes.size===3){
+   this.lanes.clear();this.multiplierUntil=this.time+20;
+   this.mission('lanes','NEON LANES · 2× SCORING',10000);
+   this.emit('multiplier',{until:this.multiplierUntil});
+  }
+ }
+ activateTarget(i){
+  if(this.targets.has(i))return;
+  this.targets.add(i);this.scoreHit(1500,'target'+i);
+  this.emit('target',{index:i,count:this.targets.size});
+  if(this.targets.size===4){
+   this.targets.clear();
+   this.mission('targets','TARGET BANK COMPLETE',25000);
+  }
+ }
+ activateShot(kind){
+  const shot=SHOTS[kind];
+  this.shots++;this.addPoints(shot.points,kind==='ramp'?'RAMP SHOT':'LEFT ORBIT');
+  this.emit('shot',{kind,points:shot.points});
+  if(this.lastShot && this.lastShot.kind!==kind && this.time-this.lastShot.at<8){
+   this.mission('ride','NIGHT RIDE JACKPOT',40000);
+  }
+  this.lastShot={kind,at:this.time};
+  const b=this.ball;
+  b.mode='travel';b.travel={kind,t:0,duration:kind==='ramp'?.95:.8,from:{x:b.x,y:b.y}};
+ }
+ checkSensors(previous){
+  const b=this.ball;if(!b||b.mode!=='live')return;
+  // Crossing guards prevent repeated scoring when balls rest against a target.
+  for(let i=0;i<LANES.length;i++){
+   const lane=LANES[i];
+   if(b.vy< -80&&previous.y>=lane.y&&b.y<lane.y&&Math.abs(b.x-lane.x)<21)
+    this.activateLane(i);
+  }
+  for(let i=0;i<TARGETS.length;i++){
+   const t=TARGETS[i],dx=b.x-t.x,dy=b.y-t.y;
+   const distance=Math.hypot(dx,dy);
+   if(distance<t.r+b.r && (Math.abs(b.vx)+Math.abs(b.vy))>110 &&
+       (this.cooldowns.get('target'+i)??-100)<this.time-.38){
+     this.cooldowns.set('target'+i,this.time);
+     const nx=distance>1?dx/distance:0,ny=distance>1?dy/distance:-1;
+     b.x=t.x+nx*(t.r+b.r+.5);b.y=t.y+ny*(t.r+b.r+.5);
+     const toward=b.vx*nx+b.vy*ny;
+     if(toward<0){b.vx-=(1.6)*toward*nx;b.vy-=(1.6)*toward*ny;}
+     this.activateTarget(i);
+   }
+  }
+  for(const kind of ['orbit','ramp']){
+   const s=SHOTS[kind];
+   if(b.vy<-300&&previous.y>=s.y&&b.y<s.y&&Math.abs(b.x-s.x)<s.r){
+    this.activateShot(kind);return;
+   }
+  }
+ }
+ updateTravel(dt){
+  const b=this.ball,tr=b.travel;if(!tr){b.mode='live';return;}
+  tr.t+=dt;const p=Math.min(1,tr.t/tr.duration),s=Math.sin(Math.PI*p);
+  if(tr.kind==='ramp'){
+   b.x=tr.from.x+(180-tr.from.x)*p+35*s;
+   b.y=tr.from.y+(205-tr.from.y)*p-55*s;
+  }else{
+   b.x=tr.from.x+(300-tr.from.x)*p-24*s;
+   b.y=tr.from.y+(150-tr.from.y)*p-80*s;
+  }
+  if(p>=1){
+   b.mode='live';b.travel=null;
+   b.vx=tr.kind==='ramp'?-170:-260;b.vy=230;
+   b.trail=[];
+  }
+ }
  singleStep(dt){
   if(this.state==='between'){
    this.between-=dt;
    if(this.between<=0){
-    if(this.ballNumber>=3){this.state='gameover';this.ball=null;this.emit('gameover',{score:this.score});}
-    else{this.ballNumber++;this.state='playing';this.spawnBall();}
+    if(this.ballNumber>=3 && this.extraBalls===0){
+      this.state='gameover';this.ball=null;this.emit('gameover',{score:this.score,bonus:this.bonus,shots:this.shots});
+    }
+    else{
+      if(this.ballNumber>=3)this.extraBalls--;
+      else this.ballNumber++;
+      this.state='playing';this.spawnBall();
+    }
    }
    return;
   }
@@ -167,12 +297,16 @@ export class PinballEngine{
    b.x=382;b.y=582;b.vx=0;b.vy=0;return;
   }
   this.time+=dt;
+  if(b.mode==='travel'){this.updateTravel(dt);return;}
+  const previous={x:b.x,y:b.y};
   b.vy+=GRAVITY*dt;
   // Gentle air drag and speed cap. Four sub-pixel slices near top speed prevent tunnelling.
   b.vx*=1-.09*dt;b.vy*=1-.04*dt;
   const speed=len(b.vx,b.vy),max=1670;
   if(speed>max){b.vx*=max/speed;b.vy*=max/speed;}
   b.x+=b.vx*dt;b.y+=b.vy*dt;
+  this.checkSensors(previous);
+  if(b.mode==='travel')return;
   // The shooter lane starts below the open top: once the ball crosses over the divider
   // on the way down it enters the main table.
   for(let pass=0;pass<2;pass++){
@@ -189,8 +323,13 @@ export class PinballEngine{
    for(const f of this.flippers)this.collideFlipper(f);
   }
   if(b.y>695||b.x< -35||b.x>455){
+   if(!this.ballSaveUsed && this.ballLaunchedAt!==null && this.time<this.ballSaveUntil){
+    this.ballSaveUsed=true;this.ball=null;this.spawnBall();
+    this.ballSaveUsed=true; // preserve single-use guard after spawnBall
+    this.emit('ballsave');return;
+   }
    this.ball=null;this.state='between';this.between=.75;
-   this.emit('drain',{ball:this.ballNumber});
+   this.emit('drain',{ball:this.ballNumber,bonus:this.bonus});
   }
  }
  advance(seconds){
