@@ -25,12 +25,6 @@ function bolt(c,x,y,r=4){
  line(c,[[x-r*.52,y+r*.37],[x+r*.52,y-r*.37]],'#38353b',1);
  c.restore();
 }
-function chromeRail(c,pts,w=7,tint='#e2bbc3'){
- c.save();c.shadowColor='rgba(0,0,0,.78)';c.shadowBlur=6;c.shadowOffsetY=5;
- line(c,pts,'#181924',w+12);c.restore();
- line(c,pts,'#41414b',w+6);line(c,pts,G(c,pts[0][0],pts[0][1],pts.at(-1)[0],pts.at(-1)[1],[[0,'#9998a5'],[.4,tint],[1,'#584c54']]),w+2);
- line(c,pts,'rgba(255,252,222,.86)',Math.max(1,w*.25));
-}
 function neonInsert(c,x,y,label,lit=false,color='#f7ca7a'){
  c.save();c.shadowBlur=lit?18:2;c.shadowColor=color;
  rect(c,x-17,y-10,34,23,5,'#171821','#5b5554',1.7);
@@ -309,18 +303,18 @@ function drawNewFeatures(c,engine,reducedMotion=false){
  disk(c,sc.x,sc.y,8,on?'#fff0c0':'#120c17');
  text(c,'SCOOP',sc.x,sc.y+28,9,'#ffdfb2');
  // Sculpted centre Power Core plus 16 real state-driven score lamps.
- const coreX=210,coreY=472,litGrid=engine.powerCharges||0;
- disk(c,coreX,coreY,50,'#151b34','#c07691',5);
- disk(c,coreX,coreY,40,R(c,coreX,coreY,42,[
+ const coreX=210,coreY=460,litGrid=engine.powerCharges||0;
+ disk(c,coreX,coreY,43,'#151b34','#c07691',5);
+ disk(c,coreX,coreY,35,R(c,coreX,coreY,37,[
   [0,'#3a70a9'],[.57,'#203964'],[1,'#111e39']]),'#78b0df',3);
  for(let i=0;i<16;i++){
   const a=(i/16)*TAU-Math.PI/2;
-  const x=coreX+Math.cos(a)*43,y=coreY+Math.sin(a)*43;
+  const x=coreX+Math.cos(a)*37,y=coreY+Math.sin(a)*37;
   const on=engine.hurryUpUntil>engine.time||i<litGrid*5||
    engine.state==='ready'&&i===Math.floor(performance.now()/170)%16;
   disk(c,x,y,4,on?'#ffe59b':'#547caa',on?'#fff7d2':'#293e68',1);
  }
- for(const [i,pos] of [[190,473],[210,447],[230,473]].entries()){
+ for(const [i,pos] of [[190,462],[210,445],[230,462]].entries()){
   disk(c,pos[0],pos[1],5,litGrid>i?'#ffc36d':'#443649','#f0be99',1.2);
  }
  const rush=engine.hurryUpUntil>engine.time,overdrive=engine.overdriveUntil>engine.time;
