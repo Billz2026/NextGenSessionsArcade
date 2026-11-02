@@ -268,7 +268,7 @@ export class PinballEngine{
  }
  activateShot(kind){
   const shot=SHOTS[kind];
-  if(!shot||this.state!=='playing'||!this.ball||this.ball.mode!=='live')return;
+  if(!shot||this.state!=='playing'||!this.ball)return;
   this.expireArcadeModes();
   this.shots++;this.addPoints(shot.points,kind==='ramp'?'RAMP SHOT':'LEFT ORBIT');
   this.emit('shot',{kind,points:shot.points});
