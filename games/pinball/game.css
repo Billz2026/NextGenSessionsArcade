@@ -1028,3 +1028,9 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
 @media (min-width:1121px) and (max-height:730px){
  .dmd-header{font-size:8px}
 }
+
+/* Phase 4B: same-height launcher becomes a ball-in-play indicator. */
+.launcher-section.is-ball-live .power-track{background:#142638;border-color:#477c91}
+.launcher-section.is-ball-live #power-fill{background:linear-gradient(90deg,#5aabc6,#9bdcd0);box-shadow:0 0 8px #5aabc64d}
+.launcher-section.is-ball-live .power-row{color:#c7f0e8}
+.launcher-section.is-ball-live .launch-button:disabled{opacity:1;background:#1e303f;color:#9fc6c9;border-color:#45677a;cursor:default}
