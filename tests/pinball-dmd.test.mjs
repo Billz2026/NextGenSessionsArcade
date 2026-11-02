@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createDotMatrix,DMD_COLS,DMD_ROWS} from '../games/pinball/dmd.mjs';
+import {createDotMatrix,DMD_COLS,DMD_ROWS,getDmdStatus,describeDmdEvent,ATTRACT_MESSAGES} from '../games/pinball/dmd.mjs';
 function mockScreen(){
  const calls={dots:0,frames:0,labels:0,text:[],fonts:[]};
  const pixels=new Uint8ClampedArray(DMD_COLS*DMD_ROWS*4);
@@ -66,4 +66,86 @@ test('mission announcements remain readable with prominent 11px/9px dot-matrix t
   assert.match(m.calls.fonts.at(-1),/9px/);
   dmd.dispose();
  }finally{m.restore()}
+});
+
+test('attract sequence rotates through four distinct arcade messages without repeating branding',()=>{
+ const g={state:'ready',score:0};
+ const first=ATTRACT_MESSAGES.map((_,i)=>getDmdStatus(g,i*3800));
+ assert.deepEqual(first,[
+  ['PRESS START','PLAYER ONE READY'],
+  ['3 BALL ARCADE','CHASE JACKPOTS'],
+  ['LIGHT THE TABLE','RAMP + ORBIT'],
+  ['HIGH SCORE RUN','OWN THE NIGHT']
+ ]);
+ assert.deepEqual(getDmdStatus(g,4*3800),first[0]);
+});
+test('normal play alternates live score, target progress and game objectives',()=>{
+ const g={state:'playing',ball:{mode:'live'},ballNumber:2,score:16720,
+  time:10,frenzyUntil:0,multiplierUntil:0,
+  targets:new Set([0,2]),lanes:new Set([1]),spinnerTurns:5,scoopHits:1};
+ assert.deepEqual(getDmdStatus(g,0),['SCORE 16,720','BALL 2 / 3']);
+ assert.deepEqual(getDmdStatus(g,4500),['TARGET BANK 2/4','NEON LANES 1/3']);
+ assert.deepEqual(getDmdStatus(g,9000),['RAMP + ORBIT','CHASE JACKPOTS']);
+ assert.deepEqual(getDmdStatus(g,13500),['SPINS 5','SCOOPS 1']);
+});
+test('shot and scoop point announcements respect the live multiplier',()=>{
+ const g={time:6,multiplierUntil:10};
+ assert.equal(describeDmdEvent({type:'shot',kind:'ramp',points:7500},g).sub,'+15,000');
+ assert.equal(describeDmdEvent({type:'shot',kind:'orbit',points:5000},g).sub,'+10,000');
+ assert.equal(describeDmdEvent({type:'scoop'},g).sub,'+16,000');
+ assert.equal(describeDmdEvent({type:'spinner',turns:3},g).sub,'+2,500');
+ assert.equal(describeDmdEvent({type:'shot',kind:'orbit',points:5000},
+  {time:11,multiplierUntil:10}).sub,'+5,000');
+});
+test('major events override minor hit messages, but never the other way around',()=>{
+ const m=mockScreen();
+ try{
+  const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
+  const g={state:'playing',ball:{mode:'live'},score:0,ballNumber:1,time:2,frenzyUntil:0,multiplierUntil:0};
+  dmd.notify({type:'hit',target:'bumper0',score:150},1000,g);
+  dmd.update(g,1010);
+  assert.equal(m.calls.text.at(-2),'BUMPER HIT');
+  dmd.notify({type:'shot',kind:'ramp',points:7500},1200,g);
+  dmd.update(g,1210);
+  assert.equal(m.calls.text.at(-2),'RAMP SHOT');
+  dmd.notify({type:'hit',target:'bumper1',score:150},1300,g);
+  dmd.update(g,1400);
+  assert.equal(m.calls.text.at(-2),'RAMP SHOT');
+  dmd.notify({type:'extra'},1450,g);
+  dmd.update(g,1500);
+  assert.equal(m.calls.text.at(-2),'EXTRA BALL');
+  dmd.notify({type:'shot',kind:'orbit',points:5000},1600,g);
+  dmd.update(g,1700);
+  assert.equal(m.calls.text.at(-2),'EXTRA BALL');
+  dmd.dispose();
+ }finally{m.restore()}
+});
+test('start event clears prior gameover celebration without waiting for timeout',()=>{
+ const m=mockScreen();
+ try{
+  const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
+  const g={state:'ready',score:0};
+  dmd.notify({type:'gameover',score:65000},1000,g);
+  dmd.update(g,1010);
+  assert.equal(m.calls.text.at(-2),'GAME OVER');
+  dmd.notify({type:'start'},1020,g);
+  dmd.update(g,1100);
+  assert.equal(m.calls.text.at(-2),'PLAYER ONE');
+  dmd.dispose();
+ }finally{m.restore()}
+});
+test('random scoring award events do not displace key DMD callouts',()=>{
+ assert.equal(describeDmdEvent({type:'award',score:125,label:'NORMAL TARGET'}),null);
+ assert.equal(describeDmdEvent({type:'award',score:2500,label:'END-OF-BALL BONUS'}).sub,'+2,500');
+ assert.equal(describeDmdEvent({type:'hit',target:'sling0',score:100}),null);
+ assert.equal(describeDmdEvent({type:'ballsave'}).priority,4);
+ assert.equal(describeDmdEvent({type:'gameover',score:50000}).priority,5);
+});
+test('the DMD shows context-sensitive ball and game-over status',()=>{
+ assert.deepEqual(getDmdStatus({state:'playing',ball:{mode:'shooter'},ballNumber:3},9000),
+  ['BALL 3 READY','CHARGE PLUNGER']);
+ assert.deepEqual(getDmdStatus({state:'gameover',score:42180},9500),
+  ['GAME OVER','FINAL 42,180']);
+ assert.deepEqual(getDmdStatus({state:'between'},9500),
+  ['BALL DRAINED','NEXT BALL READY']);
 });
