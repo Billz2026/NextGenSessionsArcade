@@ -1,6 +1,6 @@
 import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs';
 import {renderTable} from './visuals.mjs';
-import {createDotMatrix} from './dmd.mjs?v=3';
+import {createDotMatrix} from './dmd.mjs?v=4';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -154,7 +154,7 @@ function sound(freq=500,duration=.07,kind='triangle'){
 }
 function processEvents(){
  for(const e of engine.consumeEvents()){
-  dmd.notify(e);
+  dmd.notify(e,performance.now(),engine);
   if(['shot','mission','extra','scoop','spinner','frenzy','multiplier'].includes(e.type)){
    const duration=e.type==='extra'?1050:e.type==='mission'?900:550;
    tableFlash={kind:e.type,until:performance.now()+duration,duration};
