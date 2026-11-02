@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,ARCADE_MODES,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -365,4 +365,52 @@ test('special arcade modes reset on drain and on a fresh game',()=>{
  g.start();
  assert.equal(g.nextOverdriveAt,ARCADE_MODES.spinThreshold);
  assert.equal(g.skillShotPending,false);
+});
+
+test('all four routes have independent scoring sensors and shared physical paths',()=>{
+ assert.equal(Object.keys(TRAVEL_PATHS).length,4);
+ for(const kind of ['orbit','ramp','center','skyline']){
+  const g=new PinballEngine();g.start();
+  const shot=SHOTS[kind];
+  g.ball.mode='live';g.ball.x=shot.x;g.ball.y=shot.y-2;
+  g.ball.vy=-500;g.time=1;
+  g.checkSensors({x:shot.x,y:shot.y+6});
+  assert.equal(g.ball.mode,'travel',kind+' sensor not triggered');
+  assert.equal(g.ball.travel.kind,kind);
+  assert.ok(g.score>=shot.points,kind+' did not pay scoring points');
+  assert.ok(TRAVEL_PATHS[kind].length>=7);
+ }
+});
+test('centre crossover travels above middle bumper and returns towards right flipper',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';
+ g.activateShot('center');
+ const route=CENTER_PATH;
+ const midway=g.ball.travel.duration*.5;
+ steps(g,midway,BOARD.step);
+ assert.equal(g.ball.mode,'travel');
+ assert.ok(g.ball.travelHeight>1.0,'centre channel not elevated');
+ steps(g,1,BOARD.step);
+ assert.equal(g.ball.mode,'live');
+ assert.ok(g.ball.vx<0&&g.ball.vy>0);
+ assert.ok(g.ball.x>40&&g.ball.x<BOARD.width);
+});
+test('skyline loop guides ball into left return lane with positive exit velocity',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';
+ g.activateShot('skyline');steps(g,.65,BOARD.step);
+ assert.equal(g.ball.mode,'travel');
+ assert.ok(g.ball.travelHeight>.4);
+ steps(g,.7,BOARD.step);
+ assert.equal(g.ball.mode,'live');
+ assert.ok(g.ball.vx>0&&g.ball.vy>0);
+ assert.ok(g.ball.x>35&&g.ball.x<BOARD.width);
+});
+test('new routes add honest combos and Power Grid charges without free repeat points',()=>{
+ const g=new PinballEngine();g.start();
+ g.activateShot('skyline');g.time+=2;g.activateShot('center');
+ assert.equal(g.powerCharges,2);
+ assert.equal(g.comboCount,2);
+ const total=g.score;
+ g.ball.mode='travel';
+ for(let i=0;i<200;i++)g.singleStep(BOARD.step);
+ assert.equal(g.score,total,'travel itself should not mint repeated score');
 });
