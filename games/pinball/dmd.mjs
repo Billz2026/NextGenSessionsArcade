@@ -88,23 +88,17 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
       Math.min(cols,Math.floor(((now-active.started)/340)*cols)):cols;
     const lit=pixels[i]>85&&col<reveal;
     const x=ox+col*pitch,y=oy+row*pitch;
-    ctx.beginPath();ctx.arc(x,y,2.45,0,Math.PI*2);
+    ctx.beginPath();ctx.arc(x,y,2.55,0,Math.PI*2);
     if(lit){
      const flicker=reducedMotion?1:.92+.08*Math.sin(now*.009+col*.23);
-     ctx.fillStyle=flicker>.95?'#fff0b6':'#ffb45e';
+     ctx.fillStyle=flicker>.95?'#ffe7a8':'#ffaa50';
     }else ctx.fillStyle='#2d160e';
     ctx.fill();
    }
   }
-  // Warm, restrained glass bloom around the LED matrix.
-  if(typeof ctx.drawImage==='function'&&typeof ctx.save==='function'){
-   ctx.save();
-   ctx.globalCompositeOperation='screen';
-   ctx.globalAlpha=.16;
-   ctx.filter='blur(6px)';
-   ctx.drawImage(canvas,0,0,560,162);
-   ctx.restore();
-  }
+  // Keep each dot sharp. Blurring the canvas over itself made letters illegible
+  // at normal desktop zoom, especially when scaled into a narrow score panel.
+  // The CSS bezel provides the glow without touching the lit pixels.
   ctx.strokeStyle='#be7847';ctx.lineWidth=2;ctx.strokeRect(1,1,558,160);
  }
  return {notify,update:draw,dispose(){disposed=true}};
