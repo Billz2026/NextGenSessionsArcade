@@ -1,4 +1,4 @@
-// NEON TILT — responsive, event-driven 80 × 22 physical-style DMD.
+// NEON TILT — readable high-resolution DMD with a subdued 80 × 22 LED backing grid.
 // No external sprites or timers: transitions depend on the frame clock and
 // deterministic engine events. Reduced motion uses static, legible messages.
 export const DMD_COLS=80,DMD_ROWS=22;
@@ -94,70 +94,98 @@ export function describeDmdEvent(event,game=null){
   default:return null;
  }
 }
+export const DMD_WIDTH=1120,DMD_HEIGHT=324;
+// Native-resolution lettering instead of the old 80x22 rasterised words:
+// LED cells remain as physical background detail, not as the typeface.
 export function createDotMatrix(canvas,{reducedMotion=false}={}){
  const noop={notify(){},update(){},dispose(){}};
  if(!canvas?.getContext)return noop;
  const ctx=canvas.getContext('2d',{alpha:false});
  if(!ctx)return noop;
- canvas.width=560;canvas.height=162;
- const cols=DMD_COLS,rows=DMD_ROWS,pitch=7,ox=3.5,oy=4.5;
- const paper=document.createElement('canvas');
- paper.width=cols;paper.height=rows;
- const p=paper.getContext('2d',{willReadFrequently:true});
- if(!p)return noop;
+ const width=560,height=162;
+ canvas.width=DMD_WIDTH;canvas.height=DMD_HEIGHT;
+ ctx.setTransform?.(2,0,0,2,0,0);
+ const fontFace='"Arial Black","Barlow Condensed",Impact,Arial,sans-serif';
  let active=null,lastFrame=-Infinity,disposed=false,lastBumperAt=-Infinity;
  function notify(event,now=performance.now(),game=null){
   if(disposed||!event)return;
   const info=describeDmdEvent(event,game);
   if(!info)return;
-  if(event.type==='start')active=null; // New run clears an old GAME OVER banner.
+  if(event.type==='start')active=null;
   if(info.priority===0){
    if(now-lastBumperAt<850)return;
    lastBumperAt=now;
   }
   if(active?.until>now){
    if(active.priority>info.priority)return;
-   // A stream of equally important ordinary events should not hold the DMD
-   // hostage. Higher-priority achievements can always take over immediately.
    if(active.priority===info.priority&&active.priority<3&&now-active.started<420)return;
   }
   active={...info,started:now,until:now+info.duration};
   lastFrame=-Infinity;
+ }
+ function fitFont(value,preferred,minimum,maxWidth){
+  let size=preferred;
+  for(;size>minimum;size-=1){
+   ctx.font='900 '+size+'px '+fontFace;
+   const measured=ctx.measureText?ctx.measureText(value).width:value.length*size*.68;
+   if(measured<=maxWidth)break;
+  }
+  ctx.font='900 '+size+'px '+fontFace;
+  return size;
+ }
+ function printLine(value,y,preferred,min,color){
+  const str=String(value??'').toUpperCase();
+  fitFont(str,preferred,min,512);
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.lineJoin='round';
+  // Raised, solid LED-style amber typography with a hard edge—not a
+  // low-resolution sampled bitmap or a blurry glow filter.
+  ctx.shadowBlur=0;
+  ctx.lineWidth=2.3;
+  ctx.strokeStyle='#261208';
+  ctx.strokeText(str,width/2,y,515);
+  ctx.fillStyle=color;
+  ctx.fillText(str,width/2,y,515);
  }
  function update(game,now=performance.now()){
   if(disposed||!game||now-lastFrame<65)return;
   lastFrame=now;
   const showing=active?.until>now?active:null;
   const lines=showing?[showing.headline,showing.sub]:getDmdStatus(game,now);
-  p.fillStyle='#000';p.fillRect(0,0,cols,rows);
-  p.textBaseline='middle';p.textAlign='center';p.fillStyle='#fff';
-  p.font='900 11px monospace';
-  p.fillText(String(lines[0]).toUpperCase(),cols/2,6.8,76);
-  p.font='900 9px monospace';
-  p.fillText(String(lines[1]).toUpperCase(),cols/2,17.2,77);
-  const pixels=p.getImageData(0,0,cols,rows).data;
   const elapsed=showing?Math.max(0,now-showing.started):Infinity;
   const celebration=Boolean(showing&&showing.priority>=4);
   const flash=celebration&&!reducedMotion&&elapsed<950&&Math.floor(elapsed/180)%2===0;
-  const reveal=showing&&!reducedMotion?
-   Math.min(cols,Math.floor(elapsed/280*cols)):cols;
-  ctx.fillStyle='#080505';ctx.fillRect(0,0,canvas.width,canvas.height);
-  for(let row=0;row<rows;row++){
-   for(let col=0;col<cols;col++){
-    const i=(row*cols+col)*4;
-    const lit=pixels[i]>85&&col<reveal;
-    const x=ox+col*pitch,y=oy+row*pitch;
-    ctx.beginPath();ctx.arc(x,y,2.55,0,Math.PI*2);
-    if(lit){
-     const shimmer=reducedMotion?1:.94+.06*Math.sin(now*.009+col*.23);
-     ctx.fillStyle=flash?'#fff5c8':shimmer>.97?'#ffe7a8':'#ffaa50';
-    }else ctx.fillStyle=flash?'#47251b':'#29150e';
-    ctx.fill();
+  // Dark machine recess and small physical LEDs remain visible at the edges.
+  ctx.fillStyle='#070505';
+  ctx.fillRect(0,0,width,height);
+  for(let row=0;row<DMD_ROWS;row++){
+   for(let col=0;col<DMD_COLS;col++){
+    const x=3.5+col*7,y=4.5+row*7;
+    ctx.fillStyle=flash?'#382015':'#29160d';
+    ctx.fillRect(x,y,1.8,1.8);
    }
   }
-  ctx.strokeStyle=celebration?(flash?'#ffe2a3':'#d49455'):'#986344';
+  // Opaque lettering bands cover the dot texture behind the glyphs.
+  // This matters most when the whole canvas is displayed around 350px wide.
+  ctx.fillStyle='#0a0707';
+  ctx.fillRect(10,10,540,67);
+  ctx.fillRect(10,83,540,69);
+  ctx.fillStyle='#6e4228';
+  ctx.fillRect(13,80,534,1);
+  // A short left-to-right reveal preserves arcade feedback, while whole
+  // glyphs are crisp and fully visible once the 260ms entrance completes.
+  const reveal=showing&&!reducedMotion?Math.min(1,elapsed/260):1;
+  ctx.save?.();
+  ctx.beginPath?.();
+  ctx.rect?.(10,11,540*reveal,141);
+  ctx.clip?.();
+  printLine(lines[0],46,51,34,flash?'#fff4d3':'#ffe7b7');
+  printLine(lines[1],116,35,26,flash?'#ffe8ba':'#ffbd7b');
+  ctx.restore?.();
+  ctx.strokeStyle=celebration?(flash?'#ffe2a3':'#cf9258'):'#a16b46';
   ctx.lineWidth=celebration?3:2;
-  ctx.strokeRect(1.5,1.5,canvas.width-3,canvas.height-3);
+  ctx.strokeRect(2,2,width-4,height-4);
  }
  return {notify,update,dispose(){disposed=true}};
 }
