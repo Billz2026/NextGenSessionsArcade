@@ -1,7 +1,7 @@
 // Neon Tilt — bespoke 3D mechanical detailing, Phase 3G.
 // All dimensions are Three.js world-space; table landmarks use the shared
 // 420 × 700 physics coordinate map passed in by render3d.mjs.
-export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH}){
+export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,BUMPERS}){
  const physically=(color,roughness=.28,metalness=.7,extra={})=>new T.MeshPhysicalMaterial({
   color,roughness,metalness,clearcoat:.82,clearcoatRoughness:.16,...extra
  });
@@ -82,7 +82,7 @@ export function buildMechanicalTable(T,scene,{X,Y,SPINNER,SCOOP,RAMP_PATH,ORBIT_
 
  // Bumper skirts: concentric outer rubber ring and metallic mounting collars.
  // Visual components stay below the engine's existing bumper collision caps.
- for(const [x,y] of [[169,290],[249,288],[210,335]]){
+ for(const {x,y} of BUMPERS){
   const px=X(x),py=Y(y);
   const ring1=add(new T.TorusGeometry(.47,.07,10,36),darkRubber,px,py,.32);
   ring1.receiveShadow=true;
