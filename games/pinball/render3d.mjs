@@ -704,6 +704,26 @@ export async function create3DTable(host){
   fill.intensity=1.15+eventFlash*.7;
   renderer.render(scene,camera);
  }
+ // Don't present a blank WebGL canvas as a successfully loaded pinball table.
+ // Probe the rendered framebuffer before hiding the 2D playfield underneath.
+ function isFrameVisible(){
+  if(disposed||lastW<10||lastH<10)return false;
+  try{
+   const gl=renderer.getContext();
+   if(!gl||!gl.readPixels)return false;
+   const pixel=new Uint8Array(4);
+   // Board, cabinet and nearby lamps should have contrast well above
+   // the near-black background. Several points avoid a dark material sample.
+   for(const [fx,fy] of [[.5,.5],[.32,.4],[.68,.4],[.5,.28],
+     [.23,.64],[.77,.64],[.5,.78]]){
+    gl.readPixels(Math.floor(lastW*fx),Math.floor(lastH*fy),1,1,
+     gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+    if(Math.max(pixel[0],pixel[1],pixel[2])>37 &&
+       pixel[0]+pixel[1]+pixel[2]>95)return true;
+   }
+  }catch(error){console.warn('Pinball 3D frame probe unavailable.',error);}
+  return false;
+ }
  function dispose(){
   if(disposed)return;
   disposed=true;
@@ -711,5 +731,5 @@ export async function create3DTable(host){
   releaseStudio();
   renderer.dispose();renderer.domElement.remove();
  }
- return {update,resize,dispose,canvas:renderer.domElement};
+ return {update,resize,dispose,isFrameVisible,canvas:renderer.domElement};
 }
