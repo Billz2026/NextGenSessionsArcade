@@ -54,7 +54,7 @@ export class PinballEngine{
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
-  this.ballLaunchedAt=null;this.bonus=0;this.shots=0;
+  this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
  }
  emit(type,detail={}){this.events.push({type,...detail});}
  consumeEvents(){const a=this.events.splice(0);return a;}
@@ -66,7 +66,7 @@ export class PinballEngine{
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
-  this.ballLaunchedAt=null;this.bonus=0;this.shots=0;
+  this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   for(const f of this.flippers){f.a=.4;f.omega=0;}
   this.spawnBall();this.emit('start');
  }
@@ -281,8 +281,8 @@ export class PinballEngine{
       this.state='gameover';this.ball=null;this.emit('gameover',{score:this.score,bonus:this.bonus,shots:this.shots});
     }
     else{
-      if(this.ballNumber>=3)this.extraBalls--;
-      else this.ballNumber++;
+      if(this.ballNumber>=3){this.extraBalls--;this.playingExtraBall=true;}
+      else{this.ballNumber++;this.playingExtraBall=false;}
       this.state='playing';this.spawnBall();
     }
    }
@@ -328,8 +328,13 @@ export class PinballEngine{
     this.ballSaveUsed=true; // preserve single-use guard after spawnBall
     this.emit('ballsave');return;
    }
-   this.ball=null;this.state='between';this.between=.75;
-   this.emit('drain',{ball:this.ballNumber,bonus:this.bonus});
+   const endBonus=this.bonus;
+   if(endBonus>0){
+    this.score+=endBonus;this.emit('award',{score:endBonus,label:'END-OF-BALL BONUS',total:this.score});
+   }
+   this.bonus=0;
+   this.ball=null;this.state='between';this.between=1.1;
+   this.emit('drain',{ball:this.ballNumber,bonus:endBonus});
   }
  }
  advance(seconds){
