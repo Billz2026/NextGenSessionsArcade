@@ -67,3 +67,25 @@ test('hit events preserve their type and target',()=>{
 test('renderer geometry constants retain declared playfield bounds',()=>{
  assert.equal(BOARD.width,420);assert.equal(BOARD.height,700);assert.equal(BOARD.step,1/240);
 });
+
+
+test('charged plunger routes the ball into the main table',()=>{
+ const g=new PinballEngine();g.start();g.charge=.5;g.launch();
+ let entered=false;
+ for(let i=0;i<600&&g.state==='playing';i++){
+   if(g.ball.x<355)entered=true;
+   g.advance(1/60);
+ }
+ assert.equal(entered,true);
+});
+test('held flippers produce upward impulse at the bat face',()=>{
+ for(const side of ['left','right']){
+  const g=new PinballEngine();g.start();g.setFlipper(side,true);steps(g,.2,BOARD.step);
+  const f=g.flippers.find(flipper=>flipper.side===side),tip=g.flipperTip(f);
+  g.ball.mode='live';g.ball.x=(f.x+tip.x)/2;g.ball.y=(f.y+tip.y)/2-18;
+  g.ball.vx=0;g.ball.vy=550;
+  let strongest=0;
+  for(let i=0;i<15;i++){g.advance(BOARD.step);strongest=Math.min(strongest,g.ball.vy);}
+  assert.ok(strongest < -400,side+' bat lacked lift');
+ }
+});
