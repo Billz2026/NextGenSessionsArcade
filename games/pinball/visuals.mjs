@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS} from './engine.mjs';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP} from './engine.mjs';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -288,6 +288,33 @@ function drawBall(c,engine){
  disk(c,b.x,b.y,b.r,R(c,b.x,b.y,b.r,[[0,'#fff'],[.2,'#f4f5f5'],[.49,'#dad9d5'],[.74,'#898994'],[1,'#464651']]),'#e5e0d8',.8);
  c.restore();disk(c,b.x-3,b.y-3,2,'#fff');
 }
+
+function drawNewFeatures(c,engine,reducedMotion=false){
+ const sx=SPINNER.x,sy=SPINNER.y;
+ // Steel spinner pivot and hinged amber plate, animated from the engine angle.
+ rect(c,sx-27,sy-15,54,30,6,'#24242b','#e4bc8d',2);
+ for(const x of [sx-24,sx+24])disk(c,x,sy,5,'#c4b3ae','#fff1d3',2);
+ c.save();c.translate(sx,sy);
+ c.scale(1,Math.max(.18,Math.abs(Math.cos(engine.spinnerAngle))));
+ rect(c,-17,-13,34,26,4,'#e9a96c','#fff0c4',2);
+ c.restore();
+ text(c,'SPIN',sx,sy+26,9,'#ffd5a4');
+ // Recessed scoop, chrome lip and bright catch light, same coordinates as 3D.
+ const sc=SCOOP,on=engine.ball?.mode==='scoop';
+ disk(c,sc.x,sc.y,20,'#211823','#d7b9ae',3);
+ disk(c,sc.x,sc.y,14,on?'#f48770':'#3a152a','#edbc85',2);
+ disk(c,sc.x,sc.y,8,on?'#fff0c0':'#120c17');
+ text(c,'SCOOP',sc.x,sc.y+28,9,'#ffdfb2');
+ if(!reducedMotion){
+  const t=performance.now()/1000;
+  const active=engine.time<engine.frenzyUntil||engine.state==='ready';
+  for(const [i,pos] of [[104,262],[300,262],[112,349],[309,348],[120,481],[297,480],[164,570],[255,570]].entries()){
+   const lit=active&&Math.sin(t*5-i*.8)>.08;
+   disk(c,pos[0],pos[1],5,lit?'#ffde99':'#65424e',lit?'#fff5d5':'#ab8b78',1);
+  }
+ }
+}
+
 function drawLower(c,engine){
  rect(c,75,571,61,20,4,'#302331','#aa8582',1);
  rect(c,286,571,61,20,4,'#302331','#aa8582',1);
@@ -325,6 +352,7 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  drawTargets(ctx,engine);
  drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
  drawWorkingInserts(ctx,engine,anim,reducedMotion);
+ drawNewFeatures(ctx,engine,reducedMotion);
  drawLower(ctx,engine);
  drawFlippers(ctx,engine);
  drawBall(ctx,engine);
