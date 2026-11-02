@@ -6,6 +6,17 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3E — full and reactive arcade-table pass
+
+- **More screen presence:** moved the 3D camera closer, reduced unused view margins, and kept the whole table and essential controls inside the no-scroll desktop cockpit.
+- **Busy 3D playfield:** added 34 recessed, individually emissive circular lamp assemblies, 10 3D shot arrows, new lane/plastic guides, post hardware, detailed side guards, lighted score labels, 9 backbox chase bars and cabinet-side LEDs.
+- **True gameplay-linked lighting:** top/target indicators, orbit and ramp lights, spinner and scoop hardware, active ball save, timed multiplier, Frenzy, jackpots, and ready-state attract effects all reflect actual engine state.
+- **Signature working features:** metal spinner gate at y=365 awards 1,250 points per qualifying crossing and rotates; right-hand scoop at (316,444) captures a rising ball, awards 8,000 points and ejects it after a 0.67-second delay. Both use fixed simulation time and retain anti-repeat guards.
+- **More convincing mechanical feedback:** the plunger handle moves with charge, ball enters the scoop cup, and bumper lamps react to registered impacts.
+- **Fallback parity:** 2D Canvas also draws the spinner and scoop so gameplay remains understandable when the 3D library cannot be loaded.
+- **Regression coverage:** physics tests extended from 20 to 25 scenarios including new scoring, cooldowns, capture/eject and state reset.
+- **Quality boundary:** real 3D geometry and responsive effects are implemented, but ramp/orbit simulation still uses the older guided motion. This remains a beta, pending desktop and Samsung Fold real-device playtests.
+
 ## Phase 3D — immersive 3D desktop build
 
 - **No-scroll desktop game view:** at desktop widths (1121 CSS px and above), the page uses the actual 100dvh browser viewport. The machine, flippers, score, plunger, mission display and personal scores fit inside a single screen at normal zoom. Short laptop viewport heights use an additional compact layout.
