@@ -21,7 +21,7 @@ export async function create3DTable(host){
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.48;
+ renderer.toneMappingExposure=1.35;
  renderer.shadowMap.enabled=true;
  renderer.shadowMap.type=T.PCFSoftShadowMap;
  renderer.domElement.className='webgl-table';
@@ -62,18 +62,6 @@ export async function create3DTable(host){
   const o=add(new T.TorusGeometry(major,tube,10,40),mat,x,y,z);
   return o;
  };
- function tube(coords,r,mat){
-  const points=coords.map(([x,y,z=.4])=>new T.Vector3(X(x),Y(y),z));
-  const curve=new T.CatmullRomCurve3(points);
-  return add(new T.TubeGeometry(curve,Math.max(16,coords.length*8),r,9,false),mat);
- }
- function linear(x1,y1,x2,y2,r,mat,z=.35){
-  const start=new T.Vector3(X(x1),Y(y1),z),end=new T.Vector3(X(x2),Y(y2),z);
-  const vec=new T.Vector3().subVectors(end,start),length=vec.length();
-  const object=add(new T.CylinderGeometry(r,r,length,10),mat,...start.clone().add(end).multiplyScalar(.5).toArray());
-  object.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),vec.normalize());
-  return object;
- }
  function label(text,color='#ffddaa',size=64,w=512,h=130,sharp=false){
   const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
   const c=canvas.getContext('2d');c.clearRect(0,0,w,h);
@@ -211,6 +199,21 @@ export async function create3DTable(host){
  p.beginPath();p.arc(coreX,coreY,88,0,Math.PI*2);p.fillStyle=radial;p.fill();
  p.lineWidth=5;p.strokeStyle='#447baa';p.stroke();
  p.beginPath();p.arc(coreX,coreY,48,0,Math.PI*2);p.strokeStyle='#5c9bcd';p.lineWidth=4;p.stroke();
+ // Decorative pinball target graphics: original Neon Tilt arrowhead motif.
+ // These are paint only; live targets and ball collision remain above them.
+ for(const [x,y,rot,col] of [
+  [280,520,-.55,'#f68178'],[560,520,.55,'#f68178'],
+  [275,770,-.2,'#ffcb88'],[570,770,.2,'#ffcb88']
+ ]){
+  p.save();p.translate(x,y);p.rotate(rot);
+  shape([[-24,32],[0,-37],[24,32],[8,17],[-8,17]],col,'#1f2342',5);
+  p.restore();
+ }
+ // A restrained cyan constellation guides the eye towards the Power Core.
+ p.fillStyle='rgba(108,171,225,.72)';
+ for(const [x,y] of [[320,740],[360,720],[480,720],[520,740],[345,1010],[495,1010]]){
+  p.beginPath();p.arc(x,y,5,0,Math.PI*2);p.fill();
+ }
  // Symmetric lower flipper zones: strongly graphic like a classic arcade game.
  for(const side of [-1,1]){
   p.save();p.translate(420,1200);p.scale(side,1);
@@ -316,7 +319,7 @@ export async function create3DTable(host){
  // Physical lower slings and pivot posts remain present.
  // Shooter lane geometry and plunger hardware.
  box(X(382),Y(575),.2,.53,4.0,.18,black);
- for(let y=540;y<660;y+=11)linear(373,y,391,y+5,.029,gold,.42);
+ for(let y=540;y<660;y+=13)box(X(382),Y(y),.35,.32,.05,.02,gold);
  const plungerHandle=box(X(382),Y(660),.46,.44,.3,.56,nickel);
  // Flippers: full 3D paddle capsule (as opposed to flat rendered strokes).
  const flipperMeshes=[],flipperHeads=[];
@@ -540,13 +543,13 @@ export async function create3DTable(host){
  }
 
  // Warm overhead LED bank, white soft fill and red cabinet-edge glow.
- scene.add(new T.AmbientLight('#a4b4de',1.05));
- const key=new T.DirectionalLight('#ffdcbd',3.2);key.position.set(-5,4,13);
+ scene.add(new T.AmbientLight('#a4b4de',.85));
+ const key=new T.DirectionalLight('#ffdcbd',2.7);key.position.set(-5,4,13);
  key.castShadow=true;key.shadow.mapSize.set(compact?512:1024,compact?512:1024);key.shadow.camera.left=-9;key.shadow.camera.right=9;
  key.shadow.camera.top=11;key.shadow.camera.bottom=-11;key.shadow.bias=-.0008;scene.add(key);
- const fill=new T.DirectionalLight('#b5c6ff',1.4);fill.position.set(5,-6,11);scene.add(fill);
- const rim=new T.PointLight('#ff4e64',13.5,14);rim.position.set(3,3,5);scene.add(rim);
- const sparkle=new T.PointLight('#ffbb6b',9.5,10);sparkle.position.set(-4,-2,4);scene.add(sparkle);
+ const fill=new T.DirectionalLight('#b5c6ff',1.15);fill.position.set(5,-6,11);scene.add(fill);
+ const rim=new T.PointLight('#ff4e64',8,14);rim.position.set(3,3,5);scene.add(rim);
+ const sparkle=new T.PointLight('#ffbb6b',6,10);sparkle.position.set(-4,-2,4);scene.add(sparkle);
  // The rendered canvas inherits the parent aspect ratio, not the browser width.
  let lastW=0,lastH=0,disposed=false,renderedSpin=0,previousFrame=0;
  function resize(){
@@ -696,9 +699,9 @@ export async function create3DTable(host){
   }
 
   const idle=engine.state==='ready'||engine.state==='gameover';
-  sparkle.intensity=(idle&&!reducedMotion?9.5+Math.sin(now*.002)*2.3:9.5)+eventFlash*10;
-  rim.intensity=13.5+eventFlash*10;
-  fill.intensity=1.4+eventFlash*.8;
+  sparkle.intensity=(idle&&!reducedMotion?6+Math.sin(now*.002)*1.3:6)+eventFlash*8;
+  rim.intensity=8+eventFlash*8;
+  fill.intensity=1.15+eventFlash*.7;
   renderer.render(scene,camera);
  }
  function dispose(){
