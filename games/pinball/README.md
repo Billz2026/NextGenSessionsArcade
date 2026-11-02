@@ -6,6 +6,17 @@
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
 
+## Phase 3H — realistic materials, DMD clarity, immersive cabinet
+
+- **Studio PBR reflections:** a new original procedural equirectangular softbox environment is converted into a PMREM reflection map at runtime. Chrome, brushed nickel, gold, clear-coat enamel and plastic respond to reflected lighting rather than relying solely on flat gradients. No third-party photographs or copyrighted table artwork.
+- **Better dimensional depth:** ramp decks now include proper thickness with top, side and underside faces, supported spines and real fastener details. Bumper skirts use the same positions as collision geometry; rubber collars and flipper base plates have distinct materials.
+- **Camera and printed artwork:** a subtle off-axis camera improves material parallax without cropping the table. Original playfield printing marks ramp/orbit regions, target bank, night ride and lower return paths.
+- **Larger physical DMD:** the 80×22 LED screen now uses more readable 11px/9px bitmap typography, shortened mission callouts and a restrained warm-light reveal. The responsive panel fills more width.
+- **Immersive fullscreen:** hides site header and top border, expands the cabinet inside the viewport, and gives the score console a dedicated fullscreen layout; no scrolling for desktop players. Browser fullscreen requires a user click.
+- **Accessibility/performance:** motion reveals respect reduced-motion settings; if PMREM setup fails, the 3D game retains direct lights. If Three.js fails altogether, the original 2D game stays playable.
+- **Tests:** the 29 existing engine/DMD checks are retained with an additional typography test. Mocked 3D construction also verified the revised ramp decks and optional reflection environment.
+- **Still a prototype:** the model is custom procedural Three.js geometry, not an externally sculpted Blender/glTF asset; ball physics still uses a deterministic 2D solver with elevated guided ramp travel. Live Chrome/Fold visuals, GPU performance and full session playtesting remain release blockers.
+
 ## Phase 3G — mechanical 3D and pinball dot-matrix display
 
 - **3D structural detailing:** original procedural meshes for raised ramp decking, physically separate plastic covers, wire supports, guide hardware, cast-metal fasteners, lane gates, brackets, rubber posts, target bank shielding and shooter-lane safety cover. All the hardware remains three-dimensional in Three.js.
