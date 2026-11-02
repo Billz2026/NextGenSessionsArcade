@@ -20,6 +20,7 @@ const STORAGE_KEY='ngs_pinball_proto_best_v1', TOP_KEY='ngs_pinball_top5_v2';
 const safeRead=()=>{try{return Number(localStorage.getItem(STORAGE_KEY))||0}catch{return 0}};
 const safeWrite=n=>{try{localStorage.setItem(STORAGE_KEY,String(n))}catch{}};
 let best=safeRead(),soundOn=false,audio=null,lastTime=0,particles=[],touchPointers=new Map();
+let bumperFlash=null;
 let topScores=[];try{const v=JSON.parse(localStorage.getItem(TOP_KEY)||'[]');if(Array.isArray(v))topScores=v.filter(n=>Number.isSafeInteger(n)&&n>=0).slice(0,5)}catch{}
 best=Math.max(best,...topScores,0);
 let lastModeMessage='PRESS START TO PLAY',messageUntil=0,announcedGameOver=false;
@@ -114,6 +115,9 @@ function processEvents(){
 
   if(e.type==='hit'){
    ui.scoreFlash.textContent='+'+fmt(e.score);
+   if(e.target.startsWith('bumper')){
+    bumperFlash={index:Number(e.target.slice(-1)),until:performance.now()+210};
+   }
    sound(e.target.startsWith('bumper')?650:560,.055);
    if(!reducedMotion){
     const p=e.target.startsWith('bumper')?BUMPERS[Number(e.target.slice(-1))]:
@@ -242,7 +246,7 @@ function rail(points,thickness=9,color='#dfac6a'){
  ctx.strokeStyle='rgba(255,251,211,.65)';ctx.lineWidth=1.5;ctx.stroke();
  ctx.restore();
 }
-function drawBoard(){renderTable(ctx,engine,{reducedMotion});}
+function drawBoard(){renderTable(ctx,engine,{reducedMotion,bumperFlash});}
 function drawParticles(dt){
  if(reducedMotion)return;
  for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;circle(p.x,p.y,2.6,'rgba(255,209,112,'+clamp(p.life/.42,0,1)+')');}
