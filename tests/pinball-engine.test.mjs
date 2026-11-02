@@ -389,7 +389,8 @@ test('centre crossover travels above middle bumper and returns towards right fli
  steps(g,midway,BOARD.step);
  assert.equal(g.ball.mode,'travel');
  assert.ok(g.ball.travelHeight>1.0,'centre channel not elevated');
- steps(g,1,BOARD.step);
+ // Stop on the exact simulation tick that releases the guided ball.
+ while(g.ball.mode==='travel')g.singleStep(BOARD.step);
  assert.equal(g.ball.mode,'live');
  assert.ok(g.ball.vx<0&&g.ball.vy>0);
  assert.ok(g.ball.x>40&&g.ball.x<BOARD.width);
