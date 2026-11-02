@@ -25,6 +25,16 @@ export const WALLS=Object.freeze([
 ]);
 export const LANES=Object.freeze([{x:101,y:173,label:'N'},{x:210,y:169,label:'G'},{x:314,y:174,label:'S'}]);
 export const TARGETS=Object.freeze([{x:165,y:410,r:12},{x:194,y:405,r:12},{x:223,y:405,r:12},{x:252,y:410,r:12}]);
+// Single source of truth for guided-ball motion and the raised 3D rail paths.
+// [x, y, 3D height] coordinates; collision physics elsewhere stays 2D.
+export const RAMP_PATH=Object.freeze([
+ [311,372,.40],[327,333,.65],[320,290,.94],[286,244,1.23],
+ [285,203,1.45],[311,170,1.28],[291,150,.95]
+].map(p=>Object.freeze(p)));
+export const ORBIT_PATH=Object.freeze([
+ [77,373,.39],[59,321,.52],[56,250,.67],[71,204,.78],
+ [94,176,.86],[136,152,.9],[214,150,.82],[300,150,.69]
+].map(p=>Object.freeze(p)));
 export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
  ramp:{x:311,y:372,r:27,points:7500}
@@ -282,20 +292,25 @@ export class PinballEngine{
  }
  updateTravel(dt){
   const b=this.ball,tr=b.travel;if(!tr){b.mode='live';return;}
-  tr.t+=dt;const p=Math.min(1,tr.t/tr.duration),s=Math.sin(Math.PI*p);
-  if(tr.kind==='ramp'){
-   b.x=tr.from.x+(180-tr.from.x)*p+35*s;
-   b.y=tr.from.y+(205-tr.from.y)*p-55*s;
-  }else{
-   b.x=tr.from.x+(300-tr.from.x)*p-24*s;
-   b.y=tr.from.y+(150-tr.from.y)*p-80*s;
-  }
-  if(p>=1){
+  tr.t+=dt;
+  const path=tr.kind==='ramp'?RAMP_PATH:ORBIT_PATH;
+  const progress=Math.min(1,tr.t/tr.duration);
+  const pos=progress*(path.length-1);
+  const i=Math.min(path.length-2,Math.floor(pos));
+  const f=Math.max(0,Math.min(1,pos-i));
+  const entryBlend=Math.max(0,1-progress*8);
+  b.x=path[i][0]+(path[i+1][0]-path[i][0])*f+
+    (tr.from.x-path[0][0])*entryBlend;
+  b.y=path[i][1]+(path[i+1][1]-path[i][1])*f+
+    (tr.from.y-path[0][1])*entryBlend;
+  b.travelHeight=path[i][2]+(path[i+1][2]-path[i][2])*f;
+  if(progress>=1){
    b.mode='live';b.travel=null;
    b.vx=tr.kind==='ramp'?-170:-260;b.vy=230;
-   b.trail=[];
+   b.travelHeight=0;b.trail=[];
   }
  }
+
  singleStep(dt){
   if(this.state==='between'){
    this.between-=dt;
