@@ -99,6 +99,36 @@ export async function create3DTable(host){
  p.fillStyle='rgba(240,133,116,.20)';p.font='900 96px Impact,sans-serif';p.fillText('NEON',416,1020);
  p.fillStyle='rgba(202,162,232,.23)';p.font='900 108px Impact,sans-serif';p.fillText('TILT',416,1115);
  for(let i=0;i<36;i++){const x=80+(i*71)%680,y=120+(i*153)%1170;p.fillStyle=i%3===0?'#705e7d':'#545873';p.fillRect(x,y,4,4);}
+
+ // Screen-printed graphics beneath the clear lacquer. Distinct zones help
+ // players read the ramp, bumper cluster and flipper return lanes.
+ p.save();
+ p.lineWidth=6;p.strokeStyle='rgba(251,182,111,.4)';
+ p.beginPath();p.moveTo(110,280);p.bezierCurveTo(70,355,70,560,135,680);p.stroke();
+ p.beginPath();p.moveTo(692,282);p.bezierCurveTo(750,355,750,575,655,690);p.stroke();
+ p.lineWidth=2;p.strokeStyle='rgba(167,211,250,.38)';
+ for(let i=0;i<5;i++){
+  p.beginPath();p.moveTo(235+i*4,578+i*16);
+  p.bezierCurveTo(350,595+i*14,480,581+i*10,572-i*4,577+i*16);p.stroke();
+ }
+ p.fillStyle='rgba(252,209,160,.58)';
+ p.font='900 30px Impact,sans-serif';
+ p.fillText('NIGHT RIDE',415,823);
+ p.font='900 23px Impact,sans-serif';
+ p.fillText('ORBIT',160,795);p.fillText('RAMP',650,795);
+ p.font='900 20px Impact,sans-serif';
+ p.fillStyle='rgba(195,207,245,.52)';
+ p.fillText('TARGET BANK',415,895);
+ // Symmetrical enamel striping beneath the slingshot and lane hardware.
+ for(const side of [-1,1]){
+  p.save();p.translate(420,1040);p.scale(side,1);
+  p.strokeStyle='rgba(252,127,139,.36)';p.lineWidth=8;
+  p.beginPath();p.moveTo(95,-22);p.lineTo(218,86);p.stroke();
+  p.strokeStyle='rgba(251,222,179,.51)';p.lineWidth=3;
+  p.beginPath();p.moveTo(94,-34);p.lineTo(225,79);p.stroke();
+  p.restore();
+ }
+ p.restore();
  const floorTexture=new T.CanvasTexture(paint);floorTexture.colorSpace=T.SRGBColorSpace;floorTexture.anisotropy=8;
  plane(0,0,.166,boardW,boardH,new T.MeshStandardMaterial({map:floorTexture,roughness:.3,metalness:.18}));
  // Brushed steel side rails and body sidewalls.
