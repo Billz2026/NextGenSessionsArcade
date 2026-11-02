@@ -19,13 +19,13 @@ export const WALLS=Object.freeze([
  [365,156,365,590], // launch lane divider; upper opening lets ball enter playfield
  [24,566,95,644],[95,644,116,674],
  [365,566,325,639],[325,639,305,674],
- [91,516,120,548],[120,548,142,569],
- [329,516,300,548],[300,548,278,569],
+ [91,496,120,526],[120,526,142,542],
+ [329,496,300,526],[300,526,278,542],
  [53,366,83,419],[336,420,357,365]
 ]);
 export const SLINGS=Object.freeze([
- {x1:119,y1:528,x2:163,y2:565,score:100},
- {x1:301,y1:528,x2:257,y2:565,score:100}
+ {x1:119,y1:502,x2:163,y2:535,score:100},
+ {x1:301,y1:502,x2:257,y2:535,score:100}
 ]);
 const MIN_LAUNCH=1050, MAX_LAUNCH=1450;
 const clip=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
