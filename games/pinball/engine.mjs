@@ -72,10 +72,11 @@ export class PinballEngine{
   this.emit('launch',{power:p});return true;
  }
  setFlipper(side,held){if(side==='left')this.leftHeld=Boolean(held);if(side==='right')this.rightHeld=Boolean(held);}
- releaseControls(){this.leftHeld=false;this.rightHeld=false;this.holdLaunch(false);}
+ releaseControls(){this.leftHeld=false;this.rightHeld=false;this.cancelLaunchCharge();}
+ cancelLaunchCharge(){this.charging=false;if(this.ball?.mode==='shooter')this.charge=.26;}
  scoreHit(score,type){
   if(this.state!=='playing')return;
-  this.score+=score;this.emit('hit',{score,type,total:this.score});
+  this.score+=score;this.emit('hit',{score,target:type,total:this.score});
  }
  cooldownHit(key,delay,score,type){
   const last=this.cooldowns.get(key)??-100;
