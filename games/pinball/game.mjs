@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=6';
-import {renderTable} from './visuals.mjs?v=7';
-import {createDotMatrix} from './dmd.mjs?v=5';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=7';
+import {renderTable} from './visuals.mjs?v=8';
+import {createDotMatrix} from './dmd.mjs?v=6';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -49,7 +49,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=9');
+  const {create3DTable}=await import('./render3d.mjs?v=10');
   const result=await create3DTable(stage);
   view3d=result;
   result.canvas.addEventListener('webglcontextlost',event=>{
@@ -141,13 +141,13 @@ function syncHUD(){
   'POWER GRID '+engine.powerCharges+'/3';
  ui.modeTimer.textContent=state==='ready'?'NEON TILT / GAME 002':
   remaining>0?Math.ceil(remaining)+' SECONDS · '+(rushActive?'HIT SCOOP':overdriveActive?'SPIN FOR BONUS':'MODE LIVE'):
-  engine.state==='playing'?'3 SHOTS CHARGE JACKPOT · SCOOP TO COLLECT':'RAMP · ORBIT · TARGETS · LANES';
+  engine.state==='playing'?'4 ROUTES · 3 SHOTS CHARGE JACKPOT':'RAMP · ORBIT · CROSSOVER · SKYLINE';
  if(performance.now()>messageUntil){
   ui.missionMessage.textContent=state==='gameover'?'GAME OVER · PLAY AGAIN':state==='playing'?
    engine.ball?.mode==='shooter'?'CHARGE YOUR PLUNGER':
    rushActive?'NEON RUSH! HIT THE SCOOP':
    overdriveActive?'OVERDRIVE! HIT THE SPINNER':
-   engine.powerCharges>0?'POWER GRID '+engine.powerCharges+'/3 · RAMP + ORBIT':
+   engine.powerCharges>0?'POWER GRID '+engine.powerCharges+'/3 · FOUR ROUTES':
    'CHAIN SHOTS TO CHARGE JACKPOT':
    state==='between'?'NEXT BALL READY SOON':'PRESS START TO PLAY';
  }
@@ -188,7 +188,14 @@ function processEvents(){
    if(e.ball>1)sound(480,.12);
   }
   if(e.type==='launch'){ui.scoreFlash.textContent='BALL LAUNCHED';arcadeMessage('SKILL SHOTS LIVE');sound(360,.15,'sawtooth');}
-  if(e.type==='shot'){arcadeMessage(e.kind==='ramp'?'RAMP SHOT! +7,500':'LEFT ORBIT! +5,000');ui.scoreFlash.textContent=e.kind.toUpperCase()+' SHOT';sound(760,.14);}
+  if(e.type==='shot'){
+   const names={ramp:'RAMP SHOT',orbit:'LEFT ORBIT',
+     center:'CENTER CROSSOVER',skyline:'SKYLINE LOOP'};
+   const label=names[e.kind]||'SHOT';
+   arcadeMessage(label+'! +'+fmt(e.points));
+   ui.scoreFlash.textContent=label;
+   sound(e.kind==='center'?900:e.kind==='skyline'?1020:760,.16);
+  }
   if(e.type==='spinner'){
    arcadeMessage('SPINNER! · '+e.turns+' TURNS');
    ui.scoreFlash.textContent='SPINNER +1,250';
