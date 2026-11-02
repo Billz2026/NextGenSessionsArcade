@@ -85,7 +85,7 @@ test('normal play alternates live score, target progress and game objectives',()
   targets:new Set([0,2]),lanes:new Set([1]),spinnerTurns:5,scoopHits:1};
  assert.deepEqual(getDmdStatus(g,0),['SCORE 16,720','BALL 2 / 3']);
  assert.deepEqual(getDmdStatus(g,4500),['TARGET BANK 2/4','NEON LANES 1/3']);
- assert.deepEqual(getDmdStatus(g,9000),['RAMP + ORBIT','CHASE JACKPOTS']);
+ assert.deepEqual(getDmdStatus(g,9000),['POWER GRID 0/3','RAMP + ORBIT']);
  assert.deepEqual(getDmdStatus(g,13500),['SPINS 5','SCOOPS 1']);
 });
 test('shot and scoop point announcements respect the live multiplier',()=>{
