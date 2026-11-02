@@ -108,6 +108,95 @@ function drawOrbits(c){
  rect(c,279,356,73,31,6,'#211924','#eeb899',2);
  text(c,'RAMP',315,372,14,'#ffdaaf','Barlow Condensed',900);
 }
+
+/* Phase 3C: printed enamel, moulded plastics, ball guides and working inserts.
+   Decorative lamps follow existing mechanic state; they do not create fake targets. */
+function drawEnamelDetails(c){
+ c.save();
+ // Printed under-glass lightning arcs & retro arcade scoring ladder.
+ c.strokeStyle='rgba(140,156,227,.2)';c.lineWidth=1.15;
+ for(let i=0;i<5;i++){
+  c.beginPath();c.moveTo(116+i*3,355-i*6);
+  c.bezierCurveTo(153,382+i*7,253,372-i*7,297-i*3,355-i*6);c.stroke();
+ }
+ text(c,'POWER GRID',210,360,10,'rgba(255,226,173,.57)','Oxanium',900);
+ text(c,'NEON CITY',210,470,29,'rgba(209,99,120,.27)','Barlow Condensed',900);
+ text(c,'HIGH VOLTAGE',211,493,10,'rgba(137,179,241,.33)','Oxanium',800);
+ // A restrained 3D-effect skyline is printed onto the playfield, not a prop.
+ for(let i=0;i<14;i++){
+  const bx=106+i*14,h=12+(i*7)%24;
+  rect(c,bx,510-h,11,h,1,'rgba(97,99,141,.19)',null);
+  for(let y=515-h;y<501;y+=6)for(let x=bx+3;x<bx+10;x+=5){
+   disk(c,x,y,.6,'rgba(249,198,141,.14)');
+  }
+ }
+ // Two matte dark plastic sculpted returns, away from the ball's actual
+ // top-level collision walls and aligned to shooter guides.
+ plastic(c,p=>{
+  p.moveTo(42,429);p.bezierCurveTo(54,423,63,410,71,396);
+  p.lineTo(91,426);p.lineTo(75,457);p.lineTo(42,453);p.closePath();
+ },G(c,40,420,91,460,[[0,'#7b6f95'],[.45,'#39374e'],[1,'#171728']]),'#bda5bb');
+ plastic(c,p=>{
+  p.moveTo(338,423);p.bezierCurveTo(350,409,357,406,362,395);
+  p.lineTo(374,445);p.lineTo(346,457);p.lineTo(326,431);p.closePath();
+ },G(c,326,406,369,462,[[0,'#9b7b89'],[.46,'#403746'],[1,'#1c1a2a']]),'#e3bca1');
+ // Lifted lanes and compact steel gate frames near the upper rollovers.
+ for(const lane of LANES){
+  const x=lane.x;
+  chromeRail(c,[[x-22,187],[x-22,207]],2.4,'#e6d6d0');
+  chromeRail(c,[[x+22,187],[x+22,207]],2.4,'#e6d6d0');
+  for(const offset of [-22,22])bolt(c,x+offset,201,2);
+ }
+ // Dense recessed incandescent insert clusters, like a physical playfield.
+ const inserts=[
+  [109,338,6,'#eb8d7d'],[128,362,5,'#e3b26d'],
+  [283,343,6,'#e3ba85'],[307,331,5,'#a3b8eb'],
+  [98,474,5,'#bcb0f7'],[126,468,5,'#e8a078'],
+  [292,466,5,'#d4bbec'],[320,472,5,'#e8ba8a'],
+  [180,539,4,'#a4afe3'],[240,539,4,'#a4afe3'],
+  [109,571,5,'#e2bb84'],[312,571,5,'#e2bb84']
+ ];
+ for(const [x,y,r,col] of inserts){
+  c.save();c.shadowColor=col;c.shadowBlur=7;
+  disk(c,x,y,r+2,'#12101a','#a18d8b',1.2);
+  disk(c,x,y,r,R(c,x,y,r,[[0,'#fff2dc'],[.3,col],[1,'#463442']]));
+  c.restore();
+ }
+ // Lateral traffic/switch markings follow real left orbit and right ramp.
+ for(let i=0;i<4;i++){
+  text(c,'▸',93,286+i*19,11,'rgba(250,185,143,.72)','Oxanium',800);
+  text(c,'◂',316,288+i*19,11,'rgba(195,188,239,.68)','Oxanium',800);
+ }
+}
+function drawWorkingInserts(c,engine,anim,reducedMotion){
+ const pulse=reducedMotion?1:.76+.24*Math.sin(anim*5.2);
+ const multi=engine.time<engine.multiplierUntil;
+ const frenzy=engine.time<engine.frenzyUntil;
+ const active=[
+  {x:142,y:369,label:'2×',on:multi,color:'#ffe29a'},
+  {x:275,y:369,label:'2×',on:multi,color:'#ffe29a'},
+  {x:123,y:449,label:'FRNZ',on:frenzy,color:'#ff9998'},
+  {x:298,y:450,label:'FRNZ',on:frenzy,color:'#ff9998'},
+  {x:168,y:480,label:'RAMP',on:engine.missions.ride,color:'#bad0ff'},
+  {x:251,y:480,label:'ORBIT',on:engine.missions.ride,color:'#bad0ff'}
+ ];
+ for(const ins of active){
+  c.save();c.globalAlpha=ins.on?pulse:1;
+  c.shadowBlur=ins.on?13:0;c.shadowColor=ins.color;
+  rect(c,ins.x-19,ins.y-8,38,18,5,ins.on?ins.color:'#2b2532',ins.on?'#fff8d6':'#605361',1.2);
+  c.restore();
+  text(c,ins.label,ins.x,ins.y+1,8,ins.on?'#2b1826':'#ab90a0','Oxanium',900);
+ }
+ // Target-bank illumination is driven only by targets that have registered.
+ for(const [i,target] of TARGETS.entries()){
+  const on=engine.targets.has(i)||engine.missions.targets;
+  const x=target.x,y=target.y+44;
+  c.save();c.shadowBlur=on?13:0;c.shadowColor='#ffe9ac';
+  disk(c,x,y,5,on?'#ffe5a8':'#503b4a',on?'#fff8d7':'#927b75',1.3);
+  c.restore();
+ }
+}
+
 function drawTargets(c,engine){
  for(let i=0;i<LANES.length;i++){
   const l=LANES[i],on=engine.lanes.has(i)||engine.missions.lanes;
@@ -216,6 +305,7 @@ function baseArtwork(){
  drawBase(c,0);
  drawBackglass(c,0);
  drawOrbits(c);
+ drawEnamelDetails(c);
  drawSlings(c);
  drawWalls(c);
  cachedStatic=layer;return layer;
@@ -226,6 +316,7 @@ export function renderTable(ctx,engine,{reducedMotion=false}={}){
  ctx.drawImage(baseArtwork(),0,0,BOARD.width,BOARD.height);
  drawTargets(ctx,engine);
  drawBumpers(ctx,engine,anim,reducedMotion);
+ drawWorkingInserts(ctx,engine,anim,reducedMotion);
  drawLower(ctx,engine);
  drawFlippers(ctx,engine);
  drawBall(ctx,engine);
