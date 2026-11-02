@@ -211,6 +211,16 @@ export async function create3DTable(host){
  box(0,5.48,.3,6.25,1.95,.22,metal('#161322',.18,.62));
  box(0,5.48,.46,5.93,1.70,.03,metal('#070d20',.17,.23));
  plane(0,5.48,.535,5.79,1.58,cabinetMarquee());
+ // A physically raised cast-metal marquee frame reads as a real backlit
+ // cabinet assembly even without the expensive glyph-extrusion font loader.
+ for(const y of [4.63,6.33])box(0,y,.62,6.14,.13,.15,gold);
+ for(const x of [-3.02,3.02])box(x,5.48,.62,.13,1.75,.15,gold);
+ for(const x of [-2.99,2.99])for(const y of [4.64,6.31]){
+  const screw=add(new T.SphereGeometry(.085,14,10),chrome,x,y,.74);
+  screw.scale.z=.55;
+ }
+ // Side-depth panels frame, rather than cover, the printed title.
+ for(const x of [-3.18,3.18])box(x,5.48,.26,.14,2.05,.52,darkChrome);
  // Mechanical wall wires are mapped to actual collision segments, not decorative outlines.
  for(let i=0;i<WALLS.length;i++){
   const [x1,y1,x2,y2]=WALLS[i];
