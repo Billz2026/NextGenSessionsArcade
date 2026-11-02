@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a090d">
 <meta name="color-scheme" content="dark">
-<meta name="description" content="NextGen Pinball: Neon Tilt — a playable physics prototype for Game 002 at NextGen Sessions Arcade. Real flippers, launcher, bumpers and three-ball sessions.">
+<meta name="description" content="NextGen Pinball: Neon Tilt — a premium pinball game featuring ramps, missions and high-score challenges at NextGen Sessions Arcade. Real flippers, launcher, bumpers and three-ball sessions.">
 <title>Neon Tilt — NextGen Pinball | NextGen Sessions Arcade</title>
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./game.css?v=1">
+<link rel="stylesheet" href="./game.css?v=2">
 </head>
 <body>
 <a href="#game" class="skip">Skip to pinball game</a>
@@ -31,8 +31,8 @@
   <div class="intro">
     <div><span class="eyebrow">NEXTGEN SESSIONS ARCADE / ORIGINAL TABLE 001</span>
     <h1>NEXTGEN PINBALL <em>NEON TILT.</em></h1>
-    <p>Three balls. Real flippers. Chase the high score.</p></div>
-    <span class="prototype-label"><i aria-hidden="true"></i> PHASE 3A — PHYSICS PROTOTYPE</span>
+    <p>A full neon arcade table. Ramps, orbits, missions and big-score jackpots.</p></div>
+    <span class="prototype-label"><i aria-hidden="true"></i> PHASE 3B — PREMIUM TABLE BETA</span>
   </div>
   <div class="game-layout">
     <section class="machine" aria-label="Playable pinball table">
@@ -40,7 +40,7 @@
       <div class="cabinet">
         <div class="cabinet-lights" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
         <div class="playfield-wrap">
-          <canvas id="playfield" width="420" height="700" role="img" aria-label="Neon Tilt pinball playfield showing the ball, flippers, bumpers, shooter lane and scoring objects. Use the controls below to play."></canvas>
+          <canvas id="playfield" width="420" height="700" role="img" aria-label="Neon Tilt pinball playfield with flippers, red and gold bumpers, four stand-up targets, a right ramp and left orbit. Use the controls below to play."></canvas>
           <div class="screen-overlay" id="screen-overlay" aria-live="polite">
             <span id="overlay-kicker">WELCOME TO NEON TILT</span>
             <strong id="overlay-title">READY TO PLAY?</strong>
@@ -52,7 +52,7 @@
           <button type="button" id="flipper-right" class="flipper-control" aria-label="Hold right flipper"><span class="control-icon">↗</span><strong>RIGHT FLIPPER</strong><small>D / →</small></button>
         </div>
       </div>
-      <p class="machine-note"><span class="live-led" aria-hidden="true"></span> PLAYFIELD PHYSICS ACTIVE <span>·</span> CONTROLS SUPPORT SIMULTANEOUS TOUCH</p>
+      <p class="machine-note"><span class="live-led" aria-hidden="true"></span> FULL ARCADE TABLE ACTIVE <span>·</span> CONTROLS SUPPORT SIMULTANEOUS TOUCH</p>
     </section>
     <aside class="hud" aria-label="Pinball score and controls">
       <div class="hud-header"><span>PLAYER ONE</span><strong>NEON TILT</strong><span id="status-indicator">STANDBY</span></div>
@@ -61,9 +61,12 @@
         <strong class="score-number" id="score" aria-live="off">000,000</strong>
         <div class="score-bottom"><span><i class="score-led"></i><span id="score-state">PRESS START</span></span><span id="score-flash" role="status" aria-live="polite">READY</span></div>
       </div>
+      <div class="game-banner" aria-live="polite"><span id="mode-name">ATTRACT MODE</span><strong id="mission-message">PRESS START TO PLAY</strong><small id="mode-timer">NEON TILT / GAME 002</small></div>
       <div class="hud-stats">
         <div class="hud-stat"><span>BALL</span><strong id="ball-number">— / 3</strong></div>
         <div class="hud-stat"><span>PERSONAL BEST</span><strong id="best-score">0</strong></div>
+        <div class="hud-stat"><span>MULTIPLIER</span><strong id="multiplier">1×</strong></div>
+        <div class="hud-stat"><span>BALL SAVE</span><strong id="ball-save">OFF</strong></div>
       </div>
       <div class="launcher-section">
         <div class="section-title"><span>01 / LAUNCH</span><small>HOLD TO CHARGE · RELEASE TO FIRE</small></div>
@@ -76,25 +79,30 @@
         <button id="reset" class="reset-button" type="button" disabled>RESTART</button>
       </div>
       <div class="mission-card">
-        <div class="section-title"><span>02 / PLAYFIELD TEST</span><small>PHASE 3A</small></div>
+        <div class="section-title"><span>02 / MISSIONS</span><small>LIGHT THE TABLE · CHASE JACKPOTS</small></div>
         <div class="mission-grid">
-          <div><span class="mission-icon">●</span><span>3 POP BUMPERS</span><b>250 PTS</b></div>
-          <div><span class="mission-icon">◆</span><span>SLINGSHOTS</span><b>100 PTS</b></div>
-          <div><span class="mission-icon">↗</span><span>MOTORIZED FLIPPERS</span><b>ACTIVE</b></div>
-          <div><span class="mission-icon">◎</span><span>3-BALL GAME</span><b>ACTIVE</b></div>
+          <div id="mission-lanes"><span class="mission-icon">N·G·S</span><span>NEON LANES</span><b id="progress-lanes">0 / 3</b></div>
+          <div id="mission-frenzy"><span class="mission-icon">✦</span><span>BUMPER FRENZY</span><b id="progress-frenzy">0 / 10</b></div>
+          <div id="mission-targets"><span class="mission-icon">◆</span><span>TARGET BANK</span><b id="progress-targets">0 / 4</b></div>
+          <div id="mission-ride"><span class="mission-icon">↗</span><span>NIGHT RIDE</span><b id="progress-ride">RAMP + ORBIT</b></div>
         </div>
+        <div class="mission-footer"><span id="extra-status">EXTRA BALL: COMPLETE ALL FOUR MISSIONS</span><strong id="shots-counter">0 SHOTS</strong></div>
+      </div>
+      <div class="leaderboard-card">
+        <div class="section-title"><span>03 / ARCADE TOP 5</span><small>ON THIS DEVICE</small></div>
+        <ol id="leaderboard" class="highscore-list"><li>NO RECORDS YET — SET THE FIRST SCORE</li></ol>
       </div>
       <div class="help-card">
         <strong>HOW TO PLAY</strong>
-        <p>Press Start Game, then hold and release Launch. Keep the ball alive using both flippers. Score points from bumpers and slingshots. The game ends after ball three drains.</p>
+        <p>Hold and release Launch, then aim using both flippers. Complete N-G-S lanes for 2× scoring, hit ten bumpers for Frenzy, clear four targets and connect ramp with orbit for a jackpot. Finish all missions to earn an extra ball.</p>
         <div><span>DESKTOP</span><strong>← / A &nbsp; · &nbsp; → / D &nbsp; · &nbsp; SPACE</strong></div>
         <div><span>PHONE / FOLD</span><strong>ON-SCREEN BUTTONS</strong></div>
       </div>
     </aside>
   </div>
-  <div class="development-note"><strong>PROTOTYPE BUILD:</strong> Core physics and input only. Ramps, full missions, multiball, achievements and final cabinet artwork will follow in later phases. No credits, purchases or prizes.</div>
+  <div class="development-note"><strong>PHASE 3B PREMIUM TABLE BETA:</strong> Original arcade artwork, playable ramp and orbit, four missions, bonuses, extra ball and local scores. Ramp/orbit travel is simplified and multiball is not included. No purchases, prizes or real-money play.</div>
 </main>
-<footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · PHYSICS PROTOTYPE</span><a href="../../">BACK TO ARCADE ↗</a></footer>
-<script type="module" src="./game.mjs?v=1"></script>
+<footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · PREMIUM TABLE BETA</span><a href="../../">BACK TO ARCADE ↗</a></footer>
+<script type="module" src="./game.mjs?v=2"></script>
 </body>
 </html>
