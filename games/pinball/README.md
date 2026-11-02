@@ -1,6 +1,6 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 3B — Premium Table Beta
+**Current stage:** Visual rebuild preview (after Phase 3B)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
@@ -8,7 +8,7 @@ An original red, amber and gold browser arcade pinball table inspired by the *fe
 
 ## Implemented
 
-- A detailed, hand-rendered 420 × 700 playfield with dimensional rails, raised-looking ramp, left orbit, target bank, rollover lane indicators, bumper rings, flippers, lane lamps and ball trails.
+- A rebuilt, hand-rendered 420 × 700 playfield with a cached 2× mechanical background, enamel cabinet edges, detailed metal rails, glass reflections, dimensional-looking ramps, recessed lamps, layered bumpers, chrome flippers and ball trails.
 - 240 Hz fixed-step ball physics: manual motor-driven flippers, hold-and-release plunger, wall/post collisions, bumpers and slingshots.
 - Three standard balls, four-second single-use ball-save window per ball, and one earnable extra ball.
 - N-G-S upper lanes: complete all three for a 20-second 2× multiplier.
@@ -31,9 +31,9 @@ An original red, amber and gold browser arcade pinball table inspired by the *fe
 
 ## Technical details and limitations
 
-The ramp/orbit traversal currently uses a time-based guided ball path and is **not** yet a full 3D rigid-body ramp simulation. The game is a **premium table beta**, not a validated commercial-quality pinball simulation. Multiball, physical device tuning, shot accessibility balancing and a complete cross-browser/manual QA pass are still pending.
+The ramp/orbit traversal currently uses a time-based guided ball path and is **not** yet a full 3D rigid-body ramp simulation. The layered Canvas artwork simulates mechanical depth but is **not** a 3D scene or a photographic/pre-rendered table. The game is an early playable visual rebuild, not a validated commercial-quality pinball simulation. Multiball, physical device tuning, shot accessibility balancing and a complete cross-browser/manual QA pass are still pending.
 
-Don't present this as the finished public launch until real play sessions on desktop, narrow smartphones and Samsung Fold are verified.
+Do not claim this meets the visual target of the old Windows Space Cadet table until it has been visually compared in a browser and the user has approved its presentation. Real play sessions on desktop, narrow smartphones and Samsung Fold are required.
 
 ## Tests
 
