@@ -58,9 +58,9 @@ function processEvents(){
   if(e.type==='launch'){ui.scoreFlash.textContent='BALL LAUNCHED';sound(360,.15,'sawtooth');}
   if(e.type==='hit'){
    ui.scoreFlash.textContent='+'+fmt(e.score);
-   sound(e.type.startsWith('bumper')?650:560,.055);
+   sound(e.target.startsWith('bumper')?650:560,.055);
    if(!reducedMotion){
-    const p=e.type.startsWith('bumper')?BUMPERS[Number(e.type.slice(-1))]:e.type==='sling0'?{x:143,y:545}:{x:277,y:545};
+    const p=e.target.startsWith('bumper')?BUMPERS[Number(e.target.slice(-1))]:e.target==='sling0'?{x:143,y:545}:{x:277,y:545};
     if(p)for(let i=0;i<8;i++){const a=i*Math.PI/4;particles.push({x:p.x,y:p.y,vx:Math.cos(a)*70,vy:Math.sin(a)*70,life:.42});}
    }
   }
@@ -69,8 +69,9 @@ function processEvents(){
    ui.scoreFlash.textContent='BALL DRAINED';sound(260,.23,'sawtooth');
   }
   if(e.type==='gameover'){
-   if(e.score>best){best=e.score;safeWrite(best);}
-   overlay('THREE BALLS COMPLETE',e.score>=best&&e.score>0?'NEW PERSONAL BEST!':'GAME OVER',fmt(e.score)+' POINTS · PRESS PLAY AGAIN');
+   const record=e.score>best;
+   if(record){best=e.score;safeWrite(best);}
+   overlay('THREE BALLS COMPLETE',record?'NEW PERSONAL BEST!':'GAME OVER',fmt(e.score)+' POINTS · PRESS PLAY AGAIN');
    ui.scoreFlash.textContent='SCORE BANKED';sound(360,.2);
   }
  }
