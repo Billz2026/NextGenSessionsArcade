@@ -5,8 +5,8 @@ import {renderLedLine} from './dmd-lettering.mjs?v=1';
 export const DMD_COLS=80,DMD_ROWS=22;
 const FMT=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString('en-GB');
 export const ATTRACT_MESSAGES=Object.freeze([
- Object.freeze(['PRESS START','PLAYER ONE READY']),
- Object.freeze(['NEON TILT','SET A NEW RECORD']),
+ Object.freeze(['PLAYER ONE READY','THREE BALL CHALLENGE']),
+ Object.freeze(['NEON TILT','HIGH SCORE RUN']),
  Object.freeze(['FLIPPERS READY','A / D OR ARROWS'])
 ]);
 const ATTRACT_MS=3800,STATUS_MS=4000;

@@ -83,8 +83,8 @@ test('attract sequence rotates through four distinct arcade messages without rep
  const g={state:'ready',score:0};
  const first=ATTRACT_MESSAGES.map((_,i)=>getDmdStatus(g,i*3800));
  assert.deepEqual(first,[
-  ['PRESS START','PLAYER ONE READY'],
-  ['NEON TILT','SET A NEW RECORD'],
+  ['PLAYER ONE READY','THREE BALL CHALLENGE'],
+  ['NEON TILT','HIGH SCORE RUN'],
   ['FLIPPERS READY','A / D OR ARROWS']
  ]);
  assert.deepEqual(getDmdStatus(g,3*3800),first[0]);
@@ -277,4 +277,9 @@ test('red and amber LED cells are drawn over the native readable text',()=>{
  assert.equal(m.calls.labels,2,'faint contrast underlay retained');
  assert.ok(m.calls.dots>=DMD_COLS*DMD_ROWS);
  dmd.dispose();
+});
+
+test('attract messages never duplicate the main Start button',()=>{
+ assert.equal(ATTRACT_MESSAGES.some(lines=>lines.join(' ').includes('PRESS START')),false);
+ assert.deepEqual(getDmdStatus({state:'ready'},0),['PLAYER ONE READY','THREE BALL CHALLENGE']);
 });

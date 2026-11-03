@@ -1,13 +1,13 @@
 import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=8';
 import {renderTable} from './visuals.mjs?v=14';
-import {createDotMatrix} from './dmd.mjs?v=9';
+import {createDotMatrix} from './dmd.mjs?v=10';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
  overlayTitle:$('overlay-title'),overlaySub:$('overlay-sub'),score:$('score'),
  scoreFlash:$('score-flash'),scoreState:$('score-state'),ball:$('ball-number'),
  best:$('best-score'),status:$('status-indicator'),power:$('power-fill'),
- powerLabel:$('power-label'),powerTitle:$('power-title'),launchTitle:$('launch-title'),launchHint:$('launch-hint'),launcherPanel:$('launcher-section'),start:$('start'),reset:$('reset'),
+ powerLabel:$('power-label'),powerTitle:$('power-title'),launchTitle:$('launch-title'),launchHint:$('launch-hint'),launcherPanel:$('launcher-section'),actionPanel:$('primary-action'),start:$('start'),reset:$('reset'),
  launch:$('launch'),left:$('flipper-left'),right:$('flipper-right'),sound:$('sound'),
  multi:$('multiplier'),ballSave:$('ball-save'),modeName:$('mode-name'),
  modeTimer:$('mode-timer'),missionMessage:$('mission-message'),
@@ -24,7 +24,7 @@ let best=safeRead(),soundOn=false,audio=null,lastTime=0,particles=[],touchPointe
 let bumperFlash=null,tableFlash=null;
 let topScores=[];try{const v=JSON.parse(localStorage.getItem(TOP_KEY)||'[]');if(Array.isArray(v))topScores=v.filter(n=>Number.isSafeInteger(n)&&n>=0).slice(0,5)}catch{}
 best=Math.max(best,...topScores,0);
-let lastModeMessage='PRESS START TO PLAY',messageUntil=0,announcedGameOver=false;
+let lastModeMessage='',messageUntil=0,announcedGameOver=false;
 let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='';
 const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const dmd=createDotMatrix(document.getElementById('dmd-screen'),{reducedMotion});
@@ -97,40 +97,35 @@ function overlay(kicker,title,sub){
 function syncHUD(){
  const state=engine.state,score=engine.score,ball=engine.ballNumber,power=Math.round(engine.charge*100);
  if(lastScore!==score){ui.score.textContent=fmt(score).padStart(7,'0');lastScore=score;}
- if(lastBall!==ball||lastStatus!==state){
-   ui.ball.textContent=ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
-   ui.status.textContent=state==='ready'?'STANDBY':state==='playing'?'BALL LIVE':state==='between'?'BALL DRAINED':'GAME OVER';
-   ui.scoreState.textContent=state==='ready'?'PRESS START':state==='playing'?(engine.ball?.mode==='shooter'?'CHARGE LAUNCH':'KEEP THE BALL ALIVE'):state==='between'?'NEXT BALL':'RUN COMPLETE';
-   lastBall=ball;lastStatus=state;
- }
+ const isReady=state==='ready',isOver=state==='gameover';
  const shooterReady=state==='playing'&&engine.ball?.mode==='shooter';
- const ballLive=state==='playing'&&engine.ball?.mode!=='shooter';
+ const ballLive=state==='playing'&&!shooterReady;
  const saveRemaining=ballLive&&!engine.ballSaveUsed&&engine.ballLaunchedAt!==null?
   Math.max(0,engine.ballSaveUntil-engine.time):0;
- const progress=shooterReady?power:saveRemaining>0?
-  Math.round(Math.min(1,saveRemaining/11)*100):0;
- ui.launcherPanel.classList.toggle('is-ball-live',ballLive);
- ui.launchTitle.textContent=ballLive?'01 / IN PLAY':'01 / LAUNCH';
- ui.launchHint.textContent=shooterReady?'HOLD TO CHARGE - RELEASE TO FIRE':
-  ballLive?'USE FLIPPERS TO KEEP THE BALL ALIVE':
-  state==='between'?'NEXT BALL PREPARING':'START GAME TO LAUNCH';
- ui.powerTitle.textContent=shooterReady?'PLUNGER POWER':
-  ballLive?'EARLY BALL SAVE':'LAUNCH STATUS';
- ui.powerLabel.textContent=shooterReady?power+'%':ballLive?
-  (saveRemaining>0?Math.ceil(saveRemaining)+'s':'OFF'):
-  state==='ready'?'READY':state==='between'?'WAIT':'-';
+ if(lastBall!==ball||lastStatus!==state){
+  ui.ball.textContent=ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
+  ui.status.textContent=isReady?'STANDBY':shooterReady?'BALL READY':
+   ballLive?'BALL LIVE':state==='between'?'BETWEEN BALLS':'GAME OVER';
+  lastBall=ball;lastStatus=state;
+ }
+ ui.actionPanel.hidden=!(isReady||isOver||shooterReady);
+ ui.start.hidden=!(isReady||isOver);
+ ui.start.disabled=!(isReady||isOver);
+ ui.launch.hidden=!shooterReady;
+ ui.launch.disabled=!shooterReady;
+ ui.reset.disabled=isReady;
+ ui.launcherPanel.hidden=!(shooterReady||saveRemaining>0);
+ ui.launcherPanel.classList.toggle('is-ball-live',saveRemaining>0);
+ ui.launchTitle.textContent=shooterReady?'PLUNGER POWER':'BALL SAVE';
+ ui.launchHint.textContent=shooterReady?'SHOOTER LANE':'EARLY DRAIN PROTECTION';
+ ui.powerTitle.textContent=shooterReady?'CHARGE':'TIME REMAINING';
+ ui.powerLabel.textContent=shooterReady?power+'%':Math.ceil(saveRemaining)+'s';
+ const progress=shooterReady?power:saveRemaining>0?Math.round(Math.min(1,saveRemaining/11)*100):0;
  if(lastPower!==progress){ui.power.style.width=progress+'%';lastPower=progress;}
- const launchMessage=shooterReady?'HOLD AND RELEASE TO LAUNCH':
-  ballLive?'BALL IN PLAY - USE FLIPPERS':
-  state==='between'?'NEXT BALL READY SOON':
-  state==='gameover'?'GAME OVER - PLAY AGAIN':'START GAME TO LAUNCH';
- if(ui.launch.textContent!==launchMessage)ui.launch.textContent=launchMessage;
  if(lastBest!==best){ui.best.textContent=fmt(best);lastBest=best;}
- ui.scoreState.textContent=state==='ready'?'PRESS START':state==='playing'?(engine.ball?.mode==='shooter'?'CHARGE LAUNCH':'KEEP THE BALL ALIVE'):state==='between'?'NEXT BALL':'RUN COMPLETE';
- ui.launch.disabled=!(state==='playing'&&engine.ball?.mode==='shooter');
- ui.start.disabled=state==='playing'||state==='between';
- if(lastStatusText!==state){ui.start.textContent=state==='gameover'?'PLAY AGAIN ↻':'START GAME ↻';lastStatusText=state;}
- ui.reset.disabled=state==='ready';
+ ui.scoreState.textContent=isReady?'READY':shooterReady?'BALL READY':
+  ballLive?'IN PLAY':state==='between'?'BALL COMPLETE':'RUN COMPLETE';
+ if(lastStatusText!==state){ui.start.textContent=isOver?'PLAY AGAIN':'START GAME';lastStatusText=state;}
  const activeMulti=engine.time<engine.multiplierUntil;
  ui.multi.textContent=activeMulti?'2×':'1×';
  ui.ballSave.textContent=state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
@@ -141,43 +136,37 @@ function syncHUD(){
  ui.progress.targets.textContent=engine.missions.targets?'DONE':engine.targets.size+' / 4';
  ui.progress.ride.textContent=engine.missions.ride?'DONE':'RAMP + ORBIT';
  ui.extraStatus.textContent=engine.extraAwarded?'EXTRA BALL EARNED ✓':'EXTRA BALL: COMPLETE ALL FOUR MISSIONS';
- if(ui.gridStatus){
-  ui.gridStatus.textContent=engine.hurryUpUntil>engine.time?
-   'JACKPOT LIT · '+Math.ceil(engine.hurryUpUntil-engine.time)+'s TO SCOOP':
-   engine.overdriveUntil>engine.time?
-   'OVERDRIVE · '+Math.ceil(engine.overdriveUntil-engine.time)+'s':
-   'POWER GRID '+engine.powerCharges+'/3 · CHAIN SHOTS';
- }
- ui.shots.textContent=engine.shots+' SHOTS';
- if(spinnerCount)spinnerCount.textContent=engine.spinnerTurns+' SPINS';
- if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
- const rushActive=engine.hurryUpUntil>engine.time;
- const overdriveActive=engine.overdriveUntil>engine.time;
+ const rushActive=engine.hurryUpUntil>engine.time,overdriveActive=engine.overdriveUntil>engine.time;
  const remaining=rushActive?engine.hurryUpUntil-engine.time:
   overdriveActive?engine.overdriveUntil-engine.time:
   Math.max(engine.multiplierUntil,engine.frenzyUntil)-engine.time;
- ui.modeName.textContent=state==='ready'?'ATTRACT MODE':state==='gameover'?'RUN COMPLETE':
-  rushActive?'NEON RUSH · JACKPOT LIT':
-  overdriveActive?'SPINNER OVERDRIVE':
-  engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
-  engine.comboCount>=2?'COMBO X'+engine.comboCount:
+ ui.gridStatus.textContent=isReady?'3-BALL CLASSIC':isOver?'FINAL SCORE':
+  state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'UPPER LANES · SKILL SHOT':
+  rushActive?'JACKPOT · '+Math.ceil(engine.hurryUpUntil-engine.time)+'s':
+  overdriveActive?'OVERDRIVE · '+Math.ceil(engine.overdriveUntil-engine.time)+'s':
   'POWER GRID '+engine.powerCharges+'/3';
- ui.modeTimer.textContent=state==='ready'?'NEON TILT / GAME 002':
+ ui.shots.textContent=engine.shots+' SHOTS';
+ if(spinnerCount)spinnerCount.textContent=engine.spinnerTurns+' SPINS';
+ if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
+ ui.modeName.textContent=isReady?'TABLE STATUS':isOver?'RUN COMPLETE':
+  state==='between'?'BETWEEN BALLS':shooterReady?'SKILL SHOT':
+  rushActive?'NEON RUSH · JACKPOT LIT':overdriveActive?'SPINNER OVERDRIVE':
+  engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
+  engine.comboCount>=2?'COMBO X'+engine.comboCount:'CURRENT OBJECTIVE';
+ ui.modeTimer.textContent=isReady?'FOUR ROUTES · ONE HIGH SCORE':isOver?'YOUR BEST '+fmt(best):
+  state==='between'?'NEXT BALL PREPARING':shooterReady?'HIT AN UPPER N-G-S LANE':
   remaining>0?Math.ceil(remaining)+' SECONDS · '+(rushActive?'HIT SCOOP':overdriveActive?'SPIN FOR BONUS':'MODE LIVE'):
-  engine.state==='playing'?'4 ROUTES · 3 SHOTS CHARGE JACKPOT':'RAMP · ORBIT · CROSSOVER · SKYLINE';
- if(performance.now()>messageUntil){
-  ui.missionMessage.textContent=state==='gameover'?'GAME OVER · PLAY AGAIN':state==='playing'?
-   engine.ball?.mode==='shooter'?'CHARGE YOUR PLUNGER':
-   rushActive?'NEON RUSH! HIT THE SCOOP':
-   overdriveActive?'OVERDRIVE! HIT THE SPINNER':
-   engine.powerCharges>0?'POWER GRID '+engine.powerCharges+'/3 · FOUR ROUTES':
-   'CHAIN SHOTS TO CHARGE JACKPOT':
-   state==='between'?'NEXT BALL READY SOON':'PRESS START TO PLAY';
- }
+  'RAMP · ORBIT · CROSSOVER · SKYLINE';
+ ui.missionMessage.textContent=isReady?'TABLE ONLINE':isOver?'FINAL SCORE '+fmt(score):
+  state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'SKILL SHOT AVAILABLE':
+  rushActive?'SHOOT THE SCOOP':overdriveActive?'HIT THE SPINNER':
+  engine.powerCharges===2?'ONE MORE ROUTE FOR JACKPOT':
+  engine.powerCharges>0?'CHARGE THE POWER GRID':'SHOOT RAMP OR ORBIT';
+
 }
 function arcadeMessage(message){
  lastModeMessage=message;messageUntil=performance.now()+2400;
- ui.missionMessage.textContent=message;
+ // Hardware event announcements are exclusive to the dynamic DMD.
 }
 function renderLeaderboard(){
  ui.leaderboard.replaceChildren();

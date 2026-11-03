@@ -9,7 +9,7 @@ test('critical game HUD stays available with Table Intel collapsed',()=>{
  assert.ok(cutoff>0);
  for(const id of ['score','ball-number','status-indicator','dmd-screen','mode-name','grid-status',
  'mission-message','best-score','multiplier','ball-save','launch','power-fill','power-label',
- 'start','reset']){
+ 'start']){
   const pos=sidebar.indexOf('id="'+id+'"');
   assert.ok(pos>=0&&pos<cutoff,id+' must stay visible');
  }
@@ -19,7 +19,7 @@ test('missions, personal records and instructions remain accessible',()=>{
  assert.match(details,/<summary>/);
  for(const id of ['mission-lanes','mission-frenzy','mission-targets','mission-ride',
  'progress-lanes','progress-frenzy','progress-targets','progress-ride','extra-status',
- 'shots-counter','spinner-count','scoop-count','leaderboard']){
+ 'shots-counter','spinner-count','scoop-count','leaderboard','reset']){
   assert.ok(details.includes('id="'+id+'"'),id+' preserved');
  }
  assert.match(details,/HOW TO PLAY/);
@@ -27,7 +27,7 @@ test('missions, personal records and instructions remain accessible',()=>{
  assert.equal(new Set(ids).size,ids.length,'IDs stay unique');
 });
 test('isolated stylesheet is linked, with desktop drawer and mobile flow',()=>{
- assert.ok(html.includes('console.css?v=3'));
+ assert.ok(html.includes('console.css?v=4'));
  assert.ok(css.includes('.hud.hud-v2'));
  assert.ok(css.includes('max-height:min(62dvh,470px)'));
  assert.ok(css.includes('@media(max-width:1120px)'));
@@ -58,4 +58,13 @@ test('updated decorative labels preserve primary game IDs',()=>{
  assert.ok(html.includes('id="mission-message"'));
  assert.ok(html.includes('MISSION CONTROL'));
  assert.ok(html.includes('TABLE INTEL'));
+});
+
+test('exactly one contextual primary action and no repeated idle start copy',()=>{
+ assert.ok(sidebar.includes('id="primary-action"'));
+ assert.ok(sidebar.includes('id="launcher-section" hidden'));
+ assert.ok(sidebar.indexOf('id="reset"')>sidebar.indexOf('id="console-more"'));
+ assert.ok(!sidebar.includes('PRESS START TO PLAY'));
+ assert.ok(!sidebar.includes('START GAME TO LAUNCH'));
+ assert.ok(css.includes('.action-panel>button[hidden]{display:none!important}'));
 });
