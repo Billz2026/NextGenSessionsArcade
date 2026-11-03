@@ -156,7 +156,7 @@ export function createDmdTimeline(){
   // messages can resume later, but never after an entire ball has changed.
   if(info.priority>active.priority && info.priority>=3){
    if(active.priority>=3 && active.until-now>650 &&
-      !['drain','gameover','start','ball'].includes(active.eventKey))
+      !['drain','gameover','start','ball'].includes(active.eventKey.split(':')[0]))
     enqueue({...active,duration:Math.min(1700,active.until-now)},now);
    start(item,now);
   }else if(info.priority>=2)enqueue(item,now);

@@ -139,7 +139,7 @@ test('start event clears prior gameover celebration without waiting for timeout'
   assert.equal(m.calls.text.at(-2),'GAME OVER');
   dmd.notify({type:'start'},1020,g);
   dmd.update(g,1100);
-  assert.equal(m.calls.text.at(-2),'PLAYER ONE');
+  assert.equal(m.calls.text.at(-2),'PLAYER ONE READY');
   dmd.dispose();
  }finally{m.restore()}
 });
@@ -248,4 +248,12 @@ test('live timers only show real active mode and ball-save windows',()=>{
  assert.deepEqual(getDmdStatus({...g,hurryUpUntil:14,time:12},4000),['JACKPOT LIT','SCOOP · 2 SEC']);
  assert.equal(describeDmdEvent({type:'launch'},{skillShotPending:true}).headline,'SKILL SHOT LIT');
  assert.equal(describeDmdEvent({type:'launch'},{skillShotPending:false}).headline,'BALL IN PLAY');
+});
+
+test('drained-ball messages are never replayed from a pre-empted queue',()=>{
+ const timeline=createDmdTimeline();
+ timeline.notify({type:'drain',ball:1},1000,{score:12000});
+ timeline.notify({type:'extra'},1100);
+ assert.equal(timeline.current(1120).headline,'EXTRA BALL');
+ assert.equal(timeline.current(4450),null);
 });
