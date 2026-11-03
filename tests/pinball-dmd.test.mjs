@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDotMatrix,DMD_COLS,DMD_ROWS,getDmdStatus,describeDmdEvent,ATTRACT_MESSAGES,createDmdTimeline} from '../games/pinball/dmd.mjs';
+import {measureLedLine,LED_GLYPHS} from '../games/pinball/dmd-lettering.mjs';
 function mockScreen(){
  const calls={dots:0,frames:0,labels:0,text:[],fonts:[],strokes:[],size:null};
  const screen={
@@ -256,4 +257,24 @@ test('drained-ball messages are never replayed from a pre-empted queue',()=>{
  timeline.notify({type:'extra'},1100);
  assert.equal(timeline.current(1120).headline,'EXTRA BALL');
  assert.equal(timeline.current(4450),null);
+});
+
+test('original seven-row LED glyphs fit the display and support scoring punctuation',()=>{
+ for(const [char,rows] of Object.entries(LED_GLYPHS)){
+  assert.equal(rows.length,7,char);
+  assert.ok(rows.every(row=>row.length===5),char);
+ }
+ for(const value of ['BALL 2 READY','NEON RUSH JACKPOT','+250,000','SCOOP · 15 SEC']){
+  const layout=measureLedLine(value);
+  assert.ok(layout.width<=518,value+' must fit the DMD');
+  assert.ok(layout.litPoints>50);
+ }
+});
+test('red and amber LED cells are drawn over the native readable text',()=>{
+ const m=mockScreen();
+ const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
+ dmd.update({state:'playing',ball:{mode:'shooter'},ballNumber:2},1000);
+ assert.equal(m.calls.labels,2,'faint contrast underlay retained');
+ assert.ok(m.calls.dots>=DMD_COLS*DMD_ROWS);
+ dmd.dispose();
 });

@@ -1,10 +1,19 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4F — authentic live-event dot-matrix controller (playable 3D beta)
+**Current stage:** Phase 4G — neon-red authentic LED typography (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4G — red/amber physical LED typography
+
+- The mission display now uses an original, font-independent 5×7 dot-matrix alphabet drawn as lit circular LEDs: neon-red headlines and warm amber score/instruction lines.
+- A faint solid underlay supports legibility at the approximate 390px display width seen in Chrome; the actual visible lettering is made from luminous dots.
+- Scales long announcements to the physical display width and retains priority-based live updates and bounded event messages.
+- No full-panel strobe. High-priority events use a brief slow LED highlight; reduced-motion users receive a static display.
+- The cabinet bezel is now red-tinted while the rest of the console retains its functional cyan, violet and gold accents.
+- Physics, table, scoring, controls and game mechanics are unchanged. Real desktop / Fold visual checks remain outstanding.
 
 ## Phase 4F — dynamic, priority-driven arcade dot-matrix display
 

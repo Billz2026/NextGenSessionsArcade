@@ -1,3 +1,4 @@
+import {renderLedLine} from './dmd-lettering.mjs?v=1';
 // NEON TILT — readable high-resolution DMD with a subdued 80 × 22 LED backing grid.
 // No external sprites or timers: transitions depend on the frame clock and
 // deterministic engine events. Reduced motion uses static, legible messages.
@@ -165,8 +166,8 @@ export function createDmdTimeline(){
  return {notify,current,clear(){active=null;queue=[];lastBumperAt=-Infinity}};
 }
 export const DMD_WIDTH=1120,DMD_HEIGHT=324;
-// Native-resolution lettering instead of the old 80x22 rasterised words:
-// LED cells remain as physical background detail, not as the typeface.
+// Original 5x7 red LED cells sit over a faint solid-letter contrast underlay.
+// Event queue and timing remain unchanged.
 export function createDotMatrix(canvas,{reducedMotion=false}={}){
  const noop={notify(){},update(){},dispose(){}};
  if(!canvas?.getContext)return noop;
@@ -201,12 +202,15 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
   ctx.lineJoin='round';
   // Raised, solid LED-style amber typography with a hard edge—not a
   // low-resolution sampled bitmap or a blurry glow filter.
+  ctx.save?.();
+  ctx.globalAlpha=.065;
   ctx.shadowBlur=0;
   ctx.lineWidth=2.3;
   ctx.strokeStyle='#261208';
   ctx.strokeText(str,width/2,y,515);
   ctx.fillStyle=color;
   ctx.fillText(str,width/2,y,515);
+  ctx.restore?.();
  }
  function update(game,now=performance.now()){
   if(disposed||!game||now-lastFrame<65)return;
@@ -215,23 +219,23 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
   const lines=showing?[showing.headline,showing.sub]:getDmdStatus(game,now);
   const elapsed=showing?Math.max(0,now-showing.started):Infinity;
   const celebration=Boolean(showing&&showing.priority>=4);
-  const flash=celebration&&!reducedMotion&&elapsed<950&&Math.floor(elapsed/180)%2===0;
+  const flash=celebration&&!reducedMotion&&elapsed<780&&Math.floor(elapsed/350)%2===0;
   // Dark machine recess and small physical LEDs remain visible at the edges.
-  ctx.fillStyle='#070505';
+  ctx.fillStyle='#070508';
   ctx.fillRect(0,0,width,height);
   for(let row=0;row<DMD_ROWS;row++){
    for(let col=0;col<DMD_COLS;col++){
     const x=3.5+col*7,y=4.5+row*7;
-    ctx.fillStyle=flash?'#382015':'#29160d';
+    ctx.fillStyle=flash?'#42202a':'#30141e';
     ctx.fillRect(x,y,1.8,1.8);
    }
   }
   // Opaque lettering bands cover the dot texture behind the glyphs.
   // This matters most when the whole canvas is displayed around 350px wide.
-  ctx.fillStyle='#0a0707';
+  ctx.fillStyle='#0a060b';
   ctx.fillRect(10,10,540,67);
   ctx.fillRect(10,83,540,69);
-  ctx.fillStyle='#6e4228';
+  ctx.fillStyle='#792b40';
   ctx.fillRect(13,80,534,1);
   // A short left-to-right reveal preserves arcade feedback, while whole
   // glyphs are crisp and fully visible once the 260ms entrance completes.
@@ -240,10 +244,12 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
   ctx.beginPath?.();
   ctx.rect?.(10,11,540*reveal,141);
   ctx.clip?.();
-  printLine(lines[0],46,51,34,flash?'#fff4d3':'#ffe7b7');
-  printLine(lines[1],116,35,26,flash?'#ffe8ba':'#ffbd7b');
+  printLine(lines[0],46,51,34,'#ff546e');
+  printLine(lines[1],116,35,26,'#ffb775');
+  renderLedLine(ctx,lines[0],{y:46,headline:true,celebration,flash});
+  renderLedLine(ctx,lines[1],{y:116,headline:false,celebration,flash});
   ctx.restore?.();
-  ctx.strokeStyle=celebration?(flash?'#ffe2a3':'#cf9258'):'#a16b46';
+  ctx.strokeStyle=celebration?(flash?'#ffb39c':'#e45160'):'#b84959';
   ctx.lineWidth=celebration?3:2;
   ctx.strokeRect(2,2,width-4,height-4);
  }

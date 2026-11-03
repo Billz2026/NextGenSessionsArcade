@@ -1,6 +1,6 @@
 import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=8';
 import {renderTable} from './visuals.mjs?v=14';
-import {createDotMatrix} from './dmd.mjs?v=8';
+import {createDotMatrix} from './dmd.mjs?v=9';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
