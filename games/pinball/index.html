@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./game.css?v=15">
-<link rel="stylesheet" href="./console.css?v=1">
+<link rel="stylesheet" href="./console.css?v=2">
 </head>
 <body>
 <a href="#game" class="skip">Skip to pinball game</a>
@@ -60,12 +60,12 @@
     <aside class="hud hud-v2" aria-label="Pinball score and controls">
 <div class="hud-header"><span>PLAYER ONE</span><strong>NEON TILT</strong><span id="status-indicator">STANDBY</span></div>
 <div class="score-panel">
-        <div class="panel-label"><span>YOUR SCORE</span><span>HIGH SCORE RUN</span></div>
+        <div class="panel-label"><span>YOUR SCORE</span><span>★ ARCADE SCORE ★</span></div>
         <strong class="score-number" id="score" aria-live="off">000,000</strong>
         <div class="score-bottom"><span><i class="score-led"></i><span id="score-state">PRESS START</span></span><span id="score-flash" role="status" aria-live="polite">READY</span></div>
       </div>
 <div class="dmd-display" aria-label="Animated pinball dot-matrix score display">
-          <div class="dmd-header"><span>NEON TILT · DOT MATRIX</span><span>HIGH VOLTAGE DISPLAY</span></div>
+          <div class="dmd-header"><span>NEON TILT <i aria-hidden="true">✦</i> MISSION CONTROL</span><span>LIVE ARCADE FEED</span></div>
           <canvas id="dmd-screen" width="560" height="162" aria-hidden="true"></canvas>
         </div>
 <div class="game-banner" aria-live="polite"><div class="mode-topline"><span id="mode-name">ATTRACT MODE</span><small id="grid-status">POWER GRID 0/3 · CHAIN SHOTS</small></div><strong id="mission-message">PRESS START TO PLAY</strong><small id="mode-timer">NEON TILT / GAME 002</small></div>
@@ -86,7 +86,7 @@
         <button id="reset" class="reset-button" type="button" disabled>RESTART</button>
       </div>
 <details class="console-more" id="console-more">
-<summary><span class="console-more-title">TABLE INTEL</span><span class="console-more-hint">MISSIONS · SCORES · HELP</span><span class="console-chevron" aria-hidden="true">⌄</span></summary>
+<summary><span class="console-more-title">✦ TABLE INTEL</span><span class="console-more-hint">MISSIONS · RECORDS · HELP</span><span class="console-chevron" aria-hidden="true">⌄</span></summary>
 <div class="console-more-content">
 <div class="mission-card">
         <div class="section-title"><span>02 / MISSIONS</span><small>FOUR ROUTES · CHASE JACKPOTS</small></div>

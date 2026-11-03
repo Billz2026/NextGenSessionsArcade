@@ -27,10 +27,35 @@ test('missions, personal records and instructions remain accessible',()=>{
  assert.equal(new Set(ids).size,ids.length,'IDs stay unique');
 });
 test('isolated stylesheet is linked, with desktop drawer and mobile flow',()=>{
- assert.ok(html.includes('console.css?v=1'));
+ assert.ok(html.includes('console.css?v=2'));
  assert.ok(css.includes('.hud.hud-v2'));
  assert.ok(css.includes('max-height:min(62dvh,470px)'));
  assert.ok(css.includes('@media(max-width:1120px)'));
  assert.ok(css.includes('position:static'));
  assert.ok(css.includes('prefers-reduced-motion'));
+});
+
+test('console has purposeful multicolour arcade hierarchy without hiding important information',()=>{
+ for(const tone of ['--nt-red:', '--nt-gold:', '--nt-cyan:', '--nt-violet:', '--nt-mint:']){
+  assert.ok(css.includes(tone),tone+' defined');
+ }
+ assert.ok(css.includes('.hud-stat:nth-child(1)'));
+ assert.ok(css.includes('.hud-stat:nth-child(4)'));
+ assert.ok(css.includes('.launcher-section.is-ball-live'));
+ assert.ok(css.includes('.hud-v2 .dmd-display'));
+ assert.ok(css.includes('.console-more[open]'));
+});
+test('active objective supports a second line instead of clipping at desktop width',()=>{
+ const rule=css.match(/\.hud-v2 \.game-banner strong\{([^}]*)\}/)?.[1]||'';
+ assert.ok(rule.includes('white-space:normal'));
+ assert.ok(rule.includes('-webkit-line-clamp:2'));
+ assert.ok(rule.includes('overflow-wrap:break-word'));
+ assert.ok(!rule.includes('white-space:nowrap'));
+});
+test('updated decorative labels preserve primary game IDs',()=>{
+ assert.ok(html.includes('id="score"'));
+ assert.ok(html.includes('id="dmd-screen"'));
+ assert.ok(html.includes('id="mission-message"'));
+ assert.ok(html.includes('MISSION CONTROL'));
+ assert.ok(html.includes('TABLE INTEL'));
 });
