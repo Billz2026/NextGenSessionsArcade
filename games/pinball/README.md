@@ -1,10 +1,20 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4E — premium arcade console colour and legibility pass (playable 3D beta)
+**Current stage:** Phase 4F — authentic live-event dot-matrix controller (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4F — dynamic, priority-driven arcade dot-matrix display
+
+- Replaced the old promotional attract messages with original machine-style **PRESS START / PLAYER ONE READY**, Neon Tilt high-score challenge and flipper hints.
+- The display now reacts to real events: launches and skill shots, combos, Power Grid progress, timed jackpots and Overdrive, mission completions, ball saves, drains, extra balls, game-over and newly recorded personal bests.
+- Live countdowns derive from real engine timers, not decorative fake values. The idle loop rotates concise real status (score, shot progress, target bank, spinner); no invented multiball, danger warning or ranks.
+- Bounded priority queue (five items) coalesces repeated events, expires stale messages and preserves meaningful shots behind higher-priority celebrations. Ball transitions, game-over and fresh starts clear stale messages.
+- Uses the Oxanium arcade-tech font in the native-resolution DMD. The physical backing-dot grid and sharp text remain, including reduced-motion-safe updates.
+- Only display logic and the wiring for genuine personal-best detection changed. No pinball physics, scoring payouts or 3D geometry changed.
+- Source-level and regression checks cover priority, timer windows, clear/reset, event persistence and DMD typography. Chrome and Fold 7 visual review is still required.
 
 ## Phase 4E — premium neon arcade console and readability
 

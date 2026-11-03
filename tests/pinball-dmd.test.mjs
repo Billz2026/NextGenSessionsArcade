@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createDotMatrix,DMD_COLS,DMD_ROWS,getDmdStatus,describeDmdEvent,ATTRACT_MESSAGES} from '../games/pinball/dmd.mjs';
+import {createDotMatrix,DMD_COLS,DMD_ROWS,getDmdStatus,describeDmdEvent,ATTRACT_MESSAGES,createDmdTimeline} from '../games/pinball/dmd.mjs';
 function mockScreen(){
  const calls={dots:0,frames:0,labels:0,text:[],fonts:[],strokes:[],size:null};
  const screen={
@@ -83,20 +83,19 @@ test('attract sequence rotates through four distinct arcade messages without rep
  const first=ATTRACT_MESSAGES.map((_,i)=>getDmdStatus(g,i*3800));
  assert.deepEqual(first,[
   ['PRESS START','PLAYER ONE READY'],
-  ['3 BALL ARCADE','CHASE JACKPOTS'],
-  ['FOUR BALL ROUTES','CHASE THE JACKPOT'],
-  ['HIGH SCORE RUN','OWN THE NIGHT']
+  ['NEON TILT','SET A NEW RECORD'],
+  ['FLIPPERS READY','A / D OR ARROWS']
  ]);
- assert.deepEqual(getDmdStatus(g,4*3800),first[0]);
+ assert.deepEqual(getDmdStatus(g,3*3800),first[0]);
 });
 test('normal play alternates live score, target progress and game objectives',()=>{
  const g={state:'playing',ball:{mode:'live'},ballNumber:2,score:16720,
   time:10,frenzyUntil:0,multiplierUntil:0,
   targets:new Set([0,2]),lanes:new Set([1]),spinnerTurns:5,scoopHits:1};
  assert.deepEqual(getDmdStatus(g,0),['SCORE 16,720','BALL 2 / 3']);
- assert.deepEqual(getDmdStatus(g,4500),['TARGET BANK 2/4','NEON LANES 1/3']);
- assert.deepEqual(getDmdStatus(g,9000),['POWER GRID 0/3','FOUR ROUTES LIVE']);
- assert.deepEqual(getDmdStatus(g,13500),['SPINS 5','SCOOPS 1']);
+ assert.deepEqual(getDmdStatus(g,4000),['POWER GRID 0/3','HIT RAMP OR ORBIT']);
+ assert.deepEqual(getDmdStatus(g,8000),['TARGET BANK 2/4','NEON LANES 1/3']);
+ assert.deepEqual(getDmdStatus(g,12000),['SPINNER 0/5','BUILD OVERDRIVE']);
 });
 test('shot and scoop point announcements respect the live multiplier',()=>{
  const g={time:6,multiplierUntil:10};
@@ -153,11 +152,11 @@ test('random scoring award events do not displace key DMD callouts',()=>{
 });
 test('the DMD shows context-sensitive ball and game-over status',()=>{
  assert.deepEqual(getDmdStatus({state:'playing',ball:{mode:'shooter'},ballNumber:3},9000),
-  ['BALL 3 READY','CHARGE PLUNGER']);
+  ['BALL 3 READY','HOLD TO LAUNCH']);
  assert.deepEqual(getDmdStatus({state:'gameover',score:42180},9500),
-  ['GAME OVER','FINAL 42,180']);
+  ['GAME OVER','FINAL SCORE 42,180']);
  assert.deepEqual(getDmdStatus({state:'between'},9500),
-  ['BALL DRAINED','NEXT BALL READY']);
+  ['BALL 1 OVER','SCORE 0']);
 });
 
 test('Phase 3M DMD announces real bonuses and special modes',()=>{
@@ -174,9 +173,9 @@ test('Phase 3M DMD announces real bonuses and special modes',()=>{
 test('DMD displays timer-driven jackpot and Overdrive objectives',()=>{
  const base={state:'playing',ball:{mode:'live'},ballNumber:2,score:17000,time:12,
   frenzyUntil:0,multiplierUntil:0,powerCharges:3,overdriveUntil:0,hurryUpUntil:26};
- assert.deepEqual(getDmdStatus(base,7000),['NEON RUSH JACKPOT','SCOOP · 14 SECONDS']);
+ assert.deepEqual(getDmdStatus(base,7000),['JACKPOT LIT','SCOOP · 14 SEC']);
  assert.deepEqual(getDmdStatus({...base,hurryUpUntil:0,overdriveUntil:22},7000),
-  ['SPINNER OVERDRIVE','SPIN FOR BONUS']);
+  ['OVERDRIVE · 10S','HIT THE SPINNER']);
 });
 
 
@@ -187,11 +186,11 @@ test('long display messages fit with readable minimum type sizes',()=>{
   const game={state:'playing',ball:{mode:'live'},score:350000,ballNumber:2,time:10,
    hurryUpUntil:25,frenzyUntil:0,multiplierUntil:0};
   display.update(game,5000);
-  assert.equal(m.calls.text.at(-2),'NEON RUSH JACKPOT');
-  assert.equal(m.calls.text.at(-1),'SCOOP · 15 SECONDS');
+  assert.equal(m.calls.text.at(-2),'JACKPOT LIT');
+  assert.equal(m.calls.text.at(-1),'SCOOP · 15 SEC');
   const sizes=m.calls.fonts.slice(-2).map(f=>parseInt(f.match(/(\d+)px/)[1]));
   assert.ok(sizes[0]>=34&&sizes[1]>=26);
-  assert.equal(m.calls.strokes.at(-2),'NEON RUSH JACKPOT');
+  assert.equal(m.calls.strokes.at(-2),'JACKPOT LIT');
   display.dispose();
  }finally{m.restore()}
 });
@@ -206,4 +205,47 @@ test('sharp DMD uses no sampled low-res bitmap or blurred lettering',()=>{
   assert.equal(m.calls.dots,DMD_COLS*DMD_ROWS);
   display.dispose();
  }finally{m.restore()}
+});
+
+test('important events interrupt weaker callouts and queued shots play afterwards',()=>{
+ const timeline=createDmdTimeline(),g={state:'playing',ball:{mode:'live'},score:15000};
+ timeline.notify({type:'shot',kind:'ramp',points:7500},1000,g);
+ assert.equal(timeline.current(1010).headline,'RAMP SHOT');
+ timeline.notify({type:'hurryup'},1300,g);
+ assert.equal(timeline.current(1310).headline,'JACKPOT LIT!');
+ timeline.notify({type:'combo',count:2,points:10000},1400,g);
+ assert.equal(timeline.current(1600).headline,'JACKPOT LIT!');
+ assert.equal(timeline.current(3600).headline,'RAMP SHOT');
+ assert.equal(timeline.current(5200).headline,'COMBO X2');
+});
+test('queued repetitive progress replaces stale updates and expires',()=>{
+ const timeline=createDmdTimeline(),g={state:'playing',ball:{mode:'live'}};
+ timeline.notify({type:'extra'},1000,g);
+ for(let i=0;i<20;i++)timeline.notify({type:'power',charges:i%3,needed:3},1010+i*40,g);
+ assert.equal(timeline.current(1500).headline,'EXTRA BALL');
+ assert.equal(timeline.current(4300).headline,'POWER GRID 1/3');
+ assert.equal(timeline.current(6000),null,'old queued info does not stay forever');
+});
+test('new ball and new game discard old achievements, game-over record is genuine',()=>{
+ const timeline=createDmdTimeline(),g={state:'playing',ball:{mode:'shooter'}};
+ timeline.notify({type:'jackpot',points:50000},1000,g);
+ timeline.notify({type:'combo',count:3,points:5000},1100,g);
+ timeline.notify({type:'ball',ball:2},1200,g);
+ assert.equal(timeline.current(1210).headline,'BALL 2 READY');
+ assert.equal(timeline.current(3300),null,'previous-ball combo discarded');
+ assert.equal(describeDmdEvent({type:'gameover',score:125000,record:true}).headline,'NEW HIGH SCORE!');
+ assert.equal(describeDmdEvent({type:'gameover',score:125000,record:false}).headline,'GAME OVER');
+ timeline.notify({type:'gameover',score:125000,record:true},3500,g);
+ assert.equal(timeline.current(3510).headline,'NEW HIGH SCORE!');
+ timeline.notify({type:'start'},3600,g);
+ assert.equal(timeline.current(3610).headline,'PLAYER ONE READY');
+});
+test('live timers only show real active mode and ball-save windows',()=>{
+ const g={state:'playing',ball:{mode:'live'},ballNumber:1,score:700,
+  time:2,ballSaveUntil:11,ballSaveUsed:false,frenzyUntil:0,multiplierUntil:0};
+ assert.deepEqual(getDmdStatus(g,4000),['BALL SAVE','9 SECONDS LEFT']);
+ assert.deepEqual(getDmdStatus({...g,time:12},4000),['POWER GRID 0/3','HIT RAMP OR ORBIT']);
+ assert.deepEqual(getDmdStatus({...g,hurryUpUntil:14,time:12},4000),['JACKPOT LIT','SCOOP · 2 SEC']);
+ assert.equal(describeDmdEvent({type:'launch'},{skillShotPending:true}).headline,'SKILL SHOT LIT');
+ assert.equal(describeDmdEvent({type:'launch'},{skillShotPending:false}).headline,'BALL IN PLAY');
 });

@@ -1,6 +1,6 @@
 import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=8';
 import {renderTable} from './visuals.mjs?v=14';
-import {createDotMatrix} from './dmd.mjs?v=7';
+import {createDotMatrix} from './dmd.mjs?v=8';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -197,7 +197,10 @@ function sound(freq=500,duration=.07,kind='triangle'){
 }
 function processEvents(){
  for(const e of engine.consumeEvents()){
-  dmd.notify(e,performance.now(),engine);
+  // The records are calculated from the pre-award best, not from a
+  // stale UI state after the end-of-game persistence update.
+  const dmdEvent=e.type==='gameover'?{...e,record:e.score>best}:e;
+  dmd.notify(dmdEvent,performance.now(),engine);
   if(['shot','mission','extra','scoop','spinner','frenzy','multiplier',
       'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave'].includes(e.type)){
    const duration=e.type==='jackpot'||e.type==='extra'?1250:

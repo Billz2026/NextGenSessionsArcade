@@ -5,46 +5,55 @@ export const DMD_COLS=80,DMD_ROWS=22;
 const FMT=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString('en-GB');
 export const ATTRACT_MESSAGES=Object.freeze([
  Object.freeze(['PRESS START','PLAYER ONE READY']),
- Object.freeze(['3 BALL ARCADE','CHASE JACKPOTS']),
- Object.freeze(['FOUR BALL ROUTES','CHASE THE JACKPOT']),
- Object.freeze(['HIGH SCORE RUN','OWN THE NIGHT'])
+ Object.freeze(['NEON TILT','SET A NEW RECORD']),
+ Object.freeze(['FLIPPERS READY','A / D OR ARROWS'])
 ]);
-const ATTRACT_MS=3800,STATUS_MS=4500;
+const ATTRACT_MS=3800,STATUS_MS=4000;
 function bonus(value,game){
  const multiplier=game?.time<game?.multiplierUntil?2:1;
  return '+'+FMT((Number(value)||0)*multiplier);
 }
+// Live machine status derives only from the real game simulation.
+// The screen never claims a bonus, lock, multiball or danger sensor that
+// the physics engine has not produced.
 export function getDmdStatus(game,now=0){
  const state=game?.state||'ready';
  if(state==='ready')return ATTRACT_MESSAGES[Math.floor(Math.max(0,now)/ATTRACT_MS)%ATTRACT_MESSAGES.length];
- if(state==='gameover')return ['GAME OVER','FINAL '+FMT(game.score)];
- if(state==='between')return ['BALL DRAINED','NEXT BALL READY'];
+ if(state==='gameover')return ['GAME OVER','FINAL SCORE '+FMT(game.score)];
+ if(state==='between')return ['BALL '+(game.ballNumber||1)+' OVER','SCORE '+FMT(game.score)];
  const ball=game.ballNumber||1;
- if(game.ball?.mode==='shooter')return ['BALL '+ball+' READY','CHARGE PLUNGER'];
+ if(game.ball?.mode==='shooter')return ['BALL '+ball+' READY','HOLD TO LAUNCH'];
  if(game.ball?.mode==='scoop')return ['SCOOP CAPTURED','WAIT FOR EJECT'];
  if(game.hurryUpUntil>game.time)
-  return ['NEON RUSH JACKPOT','SCOOP · '+Math.ceil(game.hurryUpUntil-game.time)+' SECONDS'];
+  return ['JACKPOT LIT','SCOOP · '+Math.ceil(game.hurryUpUntil-game.time)+' SEC'];
  if(game.overdriveUntil>game.time)
-  return ['SPINNER OVERDRIVE','SPIN FOR BONUS'];
- if(game.time<game.frenzyUntil)return ['BUMPER FRENZY','2X BUMPER POINTS'];
- if(game.time<game.multiplierUntil)return ['2X SCORING','CHASE JACKPOTS'];
+  return ['OVERDRIVE · '+Math.ceil(game.overdriveUntil-game.time)+'S','HIT THE SPINNER'];
+ if(game.time<game.frenzyUntil)
+  return ['BUMPER FRENZY','2X BUMPERS · '+Math.ceil(game.frenzyUntil-game.time)+'S'];
+ if(game.time<game.multiplierUntil)
+  return ['2X SCORING',Math.ceil(game.multiplierUntil-game.time)+' SECONDS LEFT'];
  const targets=game.targets?.size||0,lanes=game.lanes?.size||0;
+ const grid=game.powerCharges||0,spins=game.spinnerTurns||0;
  const frame=Math.floor(Math.max(0,now)/STATUS_MS)%4;
- return [
+ const save=game.state==='playing'&&game.ball?.mode==='live'&&!game.ballSaveUsed&&
+  Number.isFinite(game.ballSaveUntil)&&game.ballSaveUntil>game.time;
+ const status=[
   ['SCORE '+FMT(game.score),'BALL '+ball+' / 3'],
+  save?['BALL SAVE',Math.ceil(game.ballSaveUntil-game.time)+' SECONDS LEFT']:
+   ['POWER GRID '+grid+'/3',grid===2?'ONE MORE SHOT':'HIT RAMP OR ORBIT'],
   ['TARGET BANK '+targets+'/4','NEON LANES '+lanes+'/3'],
-  ['POWER GRID '+(game.powerCharges||0)+'/3','FOUR ROUTES LIVE'],
-  ['SPINS '+(game.spinnerTurns||0),'SCOOPS '+(game.scoopHits||0)]
- ][frame];
+  ['SPINNER '+(spins%5)+'/5',spins>0?'BUILD OVERDRIVE':'HIT THE SPINNER']
+ ];
+ return status[frame];
 }
-// Priority 5: final/extra-ball moments, 4: modes and missions,
-// 3: ball/shot/scoop, 2: spinner, 1: lane/target, 0: occasional bumper.
+// Priority 5: terminal and major awards; 4: modes and missions;
+// 3: skillful shots/combos; 2: progress; 1: minor targets; 0: bumpers.
 export function describeDmdEvent(event,game=null){
  if(!event)return null;
  switch(event.type){
-  case 'start':return {headline:'PLAYER ONE',sub:'THREE BALLS',priority:3,duration:1200};
-  case 'ball':return {headline:'BALL '+(event.ball||1)+' READY',sub:'CHARGE PLUNGER',priority:3,duration:1500};
-  case 'launch':return {headline:'BALL IN PLAY',sub:'CHASE JACKPOTS',priority:2,duration:1100};
+  case 'start':return {headline:'PLAYER ONE READY',sub:'BALL 1 OF 3',priority:3,duration:1100};
+  case 'ball':return {headline:'BALL '+(event.ball||1)+' READY',sub:'HOLD TO LAUNCH',priority:3,duration:1700};
+  case 'launch':return game?.skillShotPending?{headline:'SKILL SHOT LIT',sub:'HIT UPPER LANE',priority:3,duration:1500}:{headline:'BALL IN PLAY',sub:'USE THE FLIPPERS',priority:2,duration:1100};
   case 'shot':return {
    headline:({
     ramp:'RAMP SHOT',orbit:'ORBIT SHOT',
@@ -55,17 +64,17 @@ export function describeDmdEvent(event,game=null){
   };
   case 'skillshot':return {headline:'SKILL SHOT!',sub:'+'+FMT(event.points),priority:4,duration:2300};
   case 'combo':return {headline:'COMBO X'+(event.count||2),sub:'+'+FMT(event.points),priority:3,duration:1550};
-  case 'power':return {headline:'POWER GRID',sub:(event.charges||0)+' / '+(event.needed||3)+' CHARGED',priority:1,duration:900};
-  case 'hurryup':return {headline:'JACKPOT LIT!',sub:'HIT THE SCOOP',priority:4,duration:2650};
-  case 'jackpot':return {headline:'NEON RUSH!',sub:'+'+FMT(event.points),priority:5,duration:3350};
+  case 'power':return {headline:'POWER GRID '+(event.charges||0)+'/'+(event.needed||3),sub:event.charges===event.needed-1?'ONE MORE SHOT':'ROUTE CHARGED',priority:2,duration:1250};
+  case 'hurryup':return {headline:'JACKPOT LIT!',sub:'SHOOT THE SCOOP',priority:4,duration:2250};
+  case 'jackpot':return {headline:'NEON RUSH JACKPOT',sub:'+'+FMT(event.points),priority:5,duration:3200};
   case 'hurryMiss':return {headline:'JACKPOT EXPIRED',sub:'RECHARGE GRID',priority:2,duration:1350};
-  case 'overdrive':return {headline:'OVERDRIVE!',sub:'SUPER SPINNER',priority:4,duration:2750};
+  case 'overdrive':return {headline:'OVERDRIVE!',sub:'HIT THE SPINNER',priority:4,duration:2400};
   case 'superSpinner':return {headline:'SUPER SPINNER',sub:'+'+FMT(event.points),priority:3,duration:1200};
   case 'modeend':return event.mode==='overdrive'?
    {headline:'OVERDRIVE ENDED',sub:'SPIN TO RECHARGE',priority:1,duration:1200}:null;
   case 'spinner':return {
    headline:'SPINNER · '+(event.turns||1),
-   sub:bonus(1250,game),priority:2,duration:1050
+   sub:bonus(event.points||1250,game),priority:2,duration:1050
   };
   case 'scoop':return {headline:'NEON SCOOP',sub:bonus(8000,game),priority:3,duration:2200};
   case 'scoopRelease':return {headline:'SCOOP EJECT',sub:'KEEP IT ALIVE',priority:2,duration:1050};
@@ -81,10 +90,10 @@ export function describeDmdEvent(event,game=null){
   }
   case 'frenzy':return {headline:'BUMPER FRENZY',sub:'2X BUMPER POINTS',priority:4,duration:2400};
   case 'multiplier':return {headline:'2X SCORING',sub:'20 SECONDS',priority:4,duration:2400};
-  case 'ballsave':return {headline:'BALL SAVED!',sub:'SHOOT AGAIN',priority:4,duration:2400};
+  case 'ballsave':return {headline:'BALL SAVED!',sub:'RELAUNCH NOW',priority:4,duration:2200};
   case 'extra':return {headline:'EXTRA BALL',sub:'AWARDED!',priority:5,duration:3250};
-  case 'drain':return {headline:'BALL '+(event.ball||1)+' LOST',sub:'GET READY',priority:3,duration:1500};
-  case 'gameover':return {headline:'GAME OVER',sub:'SCORE '+FMT(event.score),priority:5,duration:3300};
+  case 'drain':return {headline:'BALL '+(event.ball||1)+' OVER',sub:'SCORE '+FMT(game?.score||0),priority:3,duration:1800};
+  case 'gameover':return event.record?{headline:'NEW HIGH SCORE!',sub:'SCORE '+FMT(event.score),priority:5,duration:3700}:{headline:'GAME OVER',sub:'FINAL '+FMT(event.score),priority:5,duration:3200};
   case 'award':
    return event.label==='END-OF-BALL BONUS'?
     {headline:'END BALL BONUS',sub:'+'+FMT(event.score),priority:2,duration:1100}:null;
@@ -93,6 +102,67 @@ export function describeDmdEvent(event,game=null){
     {headline:'BUMPER HIT',sub:'+'+FMT(event.score),priority:0,duration:650}:null;
   default:return null;
  }
+}
+// Bounded event scheduler: important moments pre-empt routine scoring,
+// while other worthwhile events are shown afterwards (never dumped in a burst).
+// All times use the same requestAnimationFrame clock as game.mjs.
+export function createDmdTimeline(){
+ const MAX_QUEUE=5,MAX_AGE=5600;
+ let active=null,queue=[],lastBumperAt=-Infinity;
+ const start=(item,now)=>{active={...item,started:now,until:now+item.duration};};
+ function enqueue(info,now){
+  if(info.priority<2)return;
+  const key=info.eventKey;
+  // Collapse repeated sensor reports; retain only the freshest progress.
+  const duplicate=queue.findIndex(x=>x.eventKey===key);
+  if(duplicate>=0)queue.splice(duplicate,1);
+  queue.push({...info,queuedAt:now});
+  if(queue.length>MAX_QUEUE){
+   let worst=0;
+   for(let i=1;i<queue.length;i++){
+    if(queue[i].priority<queue[worst].priority)worst=i;
+   }
+   queue.splice(worst,1);
+  }
+ }
+ function current(now){
+  if(active&&active.until>now)return active;
+  active=null;
+  queue=queue.filter(x=>now-x.queuedAt<MAX_AGE);
+  if(queue.length){
+   // Higher priority first, then older events at the same priority.
+   let next=0;
+   for(let i=1;i<queue.length;i++){
+    if(queue[i].priority>queue[next].priority)next=i;
+   }
+   const item=queue.splice(next,1)[0];
+   start(item,now);
+  }
+  return active;
+ }
+ function notify(event,now,game=null){
+  if(!event)return;
+  if(['start','ball','gameover'].includes(event.type)){active=null;queue=[];}
+  const info=describeDmdEvent(event,game);
+  if(!info)return;
+  if(info.priority===0){
+   if(now-lastBumperAt<1000)return;
+   lastBumperAt=now;
+  }
+  const item={...info,eventKey:event.type+':'+(event.kind||event.name||'')};
+  if(active?.until<=now)active=null;
+  if(!active){start(item,now);return;}
+  // Mission and jackpot callouts must appear immediately; recent meaningful
+  // messages can resume later, but never after an entire ball has changed.
+  if(info.priority>active.priority && info.priority>=3){
+   if(active.priority>=3 && active.until-now>650 &&
+      !['drain','gameover','start','ball'].includes(active.eventKey))
+    enqueue({...active,duration:Math.min(1700,active.until-now)},now);
+   start(item,now);
+  }else if(info.priority>=2)enqueue(item,now);
+  // Bumper impacts never hide real achievements or build an enormous queue.
+ }
+ return {notify,current,clear(){active=null;queue=[];lastBumperAt=-Infinity}};
 }
 export const DMD_WIDTH=1120,DMD_HEIGHT=324;
 // Native-resolution lettering instead of the old 80x22 rasterised words:
@@ -105,22 +175,12 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
  const width=560,height=162;
  canvas.width=DMD_WIDTH;canvas.height=DMD_HEIGHT;
  ctx.setTransform?.(2,0,0,2,0,0);
- const fontFace='"Arial Black","Barlow Condensed",Impact,Arial,sans-serif';
- let active=null,lastFrame=-Infinity,disposed=false,lastBumperAt=-Infinity;
+ const fontFace='"Oxanium","Arial Black",Impact,Arial,sans-serif';
+ let lastFrame=-Infinity,disposed=false;
+ const timeline=createDmdTimeline();
  function notify(event,now=performance.now(),game=null){
-  if(disposed||!event)return;
-  const info=describeDmdEvent(event,game);
-  if(!info)return;
-  if(event.type==='start')active=null;
-  if(info.priority===0){
-   if(now-lastBumperAt<850)return;
-   lastBumperAt=now;
-  }
-  if(active?.until>now){
-   if(active.priority>info.priority)return;
-   if(active.priority===info.priority&&active.priority<3&&now-active.started<420)return;
-  }
-  active={...info,started:now,until:now+info.duration};
+  if(disposed)return;
+  timeline.notify(event,now,game);
   lastFrame=-Infinity;
  }
  function fitFont(value,preferred,minimum,maxWidth){
@@ -151,7 +211,7 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
  function update(game,now=performance.now()){
   if(disposed||!game||now-lastFrame<65)return;
   lastFrame=now;
-  const showing=active?.until>now?active:null;
+  const showing=timeline.current(now);
   const lines=showing?[showing.headline,showing.sub]:getDmdStatus(game,now);
   const elapsed=showing?Math.max(0,now-showing.started):Infinity;
   const celebration=Boolean(showing&&showing.priority>=4);
@@ -187,5 +247,5 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
   ctx.lineWidth=celebration?3:2;
   ctx.strokeRect(2,2,width-4,height-4);
  }
- return {notify,update,dispose(){disposed=true}};
+ return {notify,update,dispose(){disposed=true;timeline.clear()}};
 }
