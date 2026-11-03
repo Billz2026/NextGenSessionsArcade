@@ -420,3 +420,27 @@ html .hud.hud-v2 .action-panel>button[hidden]{display:none!important}
  .hud-v2 .action-panel{min-height:49px;flex:0 0 auto}
  .hud-v2 .action-panel>.launch-button{height:49px;min-height:49px;max-height:49px}
 }
+
+/* Phase 4I — proportional desktop console.
+   Distribute available height among existing hardware components rather than
+   leaving a large dead area below Table Intel. No new controls or widgets. */
+@media(min-width:1121px) and (min-height:721px){
+ html .hud.hud-v2{justify-content:space-between;gap:9px}
+ .hud-v2 .score-panel{flex:0 0 118px}
+ .hud-v2 .dmd-display{min-height:142px;max-height:210px}
+ .hud-v2 .game-banner{flex:0 0 84px;gap:4px;padding:9px 12px 9px 14px}
+ .hud-v2 .game-banner strong{font-size:clamp(19px,1.8vw,24px);line-height:1.08}
+ .hud-v2 .game-banner>small{font-size:9px;white-space:normal}
+ .hud-v2 .hud-stats{flex:0 0 62px}
+ .hud-v2 .hud-stat strong{font-size:clamp(16px,1.4vw,20px)}
+ .hud-v2 .action-panel{flex:0 0 51px}
+ .hud-v2 .action-panel>button,.hud-v2 .action-panel>.launch-button{
+  height:51px;min-height:51px;max-height:51px
+ }
+ .hud-v2 .console-more{flex:0 0 47px;min-height:47px;max-height:47px}
+ .hud-v2 .console-more summary{min-height:47px}
+}
+/* Preserve compact desktop height and keep all controls in view. */
+@media(min-width:1121px) and (max-height:720px){
+ .hud-v2 .game-banner>small{white-space:normal}
+}

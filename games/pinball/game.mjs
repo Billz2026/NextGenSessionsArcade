@@ -1,6 +1,6 @@
 import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=8';
 import {renderTable} from './visuals.mjs?v=14';
-import {createDotMatrix} from './dmd.mjs?v=10';
+import {createDotMatrix} from './dmd.mjs?v=11';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -140,7 +140,7 @@ function syncHUD(){
  const remaining=rushActive?engine.hurryUpUntil-engine.time:
   overdriveActive?engine.overdriveUntil-engine.time:
   Math.max(engine.multiplierUntil,engine.frenzyUntil)-engine.time;
- ui.gridStatus.textContent=isReady?'3-BALL CLASSIC':isOver?'FINAL SCORE':
+ ui.gridStatus.textContent=isReady?'3 SHOTS TO JACKPOT':isOver?'FINAL SCORE':
   state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'UPPER LANES · SKILL SHOT':
   rushActive?'JACKPOT · '+Math.ceil(engine.hurryUpUntil-engine.time)+'s':
   overdriveActive?'OVERDRIVE · '+Math.ceil(engine.overdriveUntil-engine.time)+'s':
@@ -148,16 +148,16 @@ function syncHUD(){
  ui.shots.textContent=engine.shots+' SHOTS';
  if(spinnerCount)spinnerCount.textContent=engine.spinnerTurns+' SPINS';
  if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
- ui.modeName.textContent=isReady?'TABLE STATUS':isOver?'RUN COMPLETE':
+ ui.modeName.textContent=isReady?'TABLE OBJECTIVE':isOver?'RUN COMPLETE':
   state==='between'?'BETWEEN BALLS':shooterReady?'SKILL SHOT':
   rushActive?'NEON RUSH · JACKPOT LIT':overdriveActive?'SPINNER OVERDRIVE':
   engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
   engine.comboCount>=2?'COMBO X'+engine.comboCount:'CURRENT OBJECTIVE';
- ui.modeTimer.textContent=isReady?'FOUR ROUTES · ONE HIGH SCORE':isOver?'YOUR BEST '+fmt(best):
+ ui.modeTimer.textContent=isReady?'HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP':isOver?'YOUR BEST '+fmt(best):
   state==='between'?'NEXT BALL PREPARING':shooterReady?'HIT AN UPPER N-G-S LANE':
   remaining>0?Math.ceil(remaining)+' SECONDS · '+(rushActive?'HIT SCOOP':overdriveActive?'SPIN FOR BONUS':'MODE LIVE'):
   'RAMP · ORBIT · CROSSOVER · SKYLINE';
- ui.missionMessage.textContent=isReady?'TABLE ONLINE':isOver?'FINAL SCORE '+fmt(score):
+ ui.missionMessage.textContent=isReady?'CHARGE THE POWER GRID':isOver?'FINAL SCORE '+fmt(score):
   state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'SKILL SHOT AVAILABLE':
   rushActive?'SHOOT THE SCOOP':overdriveActive?'HIT THE SPINNER':
   engine.powerCharges===2?'ONE MORE ROUTE FOR JACKPOT':

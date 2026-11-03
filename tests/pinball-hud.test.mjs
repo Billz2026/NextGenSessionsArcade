@@ -29,7 +29,10 @@ function makeHarness(){
 test('ready shows Start only and hides plunger',()=>{
  const {ui,sync}=makeHarness();sync();
  assert.equal(ui.scoreState.textContent,'READY');
- assert.equal(ui.missionMessage.textContent,'TABLE ONLINE');
+ assert.equal(ui.missionMessage.textContent,'CHARGE THE POWER GRID');
+ assert.equal(ui.modeName.textContent,'TABLE OBJECTIVE');
+ assert.equal(ui.gridStatus.textContent,'3 SHOTS TO JACKPOT');
+ assert.equal(ui.modeTimer.textContent,'HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP');
  assert.equal(ui.actionPanel.hidden,false);
  assert.equal(ui.start.hidden,false);
  assert.equal(ui.start.textContent,'START GAME');

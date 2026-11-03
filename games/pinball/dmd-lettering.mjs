@@ -7,7 +7,7 @@ export function measureLedLine(value,{headline=true,maxWidth=518}={}){
  const text=String(value??'').toUpperCase().replaceAll('×','X').replaceAll('·',':');
  const letters=[...text];
  const xPitch=Math.min(headline?7.6:6.4,maxWidth/Math.max(1,letters.length*6-1));
- const yPitch=headline?6.15:4.4;
+ const yPitch=headline?6.15:5.05;
  const width=Math.max(0,(letters.length*6-1)*xPitch);
  return {text,letters,xPitch,yPitch,width,rows:7,litPoints:letters.reduce((n,c)=>n+(P[c]||FALLBACK).join('').split('1').length-1,0)};
 }
@@ -35,11 +35,11 @@ export function renderLedLine(ctx,value,{y,headline=true,celebration=false,flash
   ctx.fill();
  };
  ctx.save?.();
- ctx.globalAlpha=celebration?.38:.23;
- ctx.fillStyle=halo;ctx.shadowColor=halo;ctx.shadowBlur=celebration?8:5;
+ ctx.globalAlpha=celebration?.30:.15;
+ ctx.fillStyle=halo;ctx.shadowColor=halo;ctx.shadowBlur=celebration?6:3;
  drawDots(Math.min(r*1.55,3.8));
  ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.fillStyle=core;drawDots(r);
- ctx.globalAlpha=celebration?.64:.43;ctx.fillStyle=bright;drawDots(r*.46);
+ ctx.globalAlpha=celebration?.58:.37;ctx.fillStyle=bright;drawDots(r*.46);
  ctx.restore?.();
  return metrics;
 }

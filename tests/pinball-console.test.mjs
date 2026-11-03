@@ -27,7 +27,7 @@ test('missions, personal records and instructions remain accessible',()=>{
  assert.equal(new Set(ids).size,ids.length,'IDs stay unique');
 });
 test('isolated stylesheet is linked, with desktop drawer and mobile flow',()=>{
- assert.ok(html.includes('console.css?v=4'));
+ assert.ok(html.includes('console.css?v=5'));
  assert.ok(css.includes('.hud.hud-v2'));
  assert.ok(css.includes('max-height:min(62dvh,470px)'));
  assert.ok(css.includes('@media(max-width:1120px)'));
@@ -67,4 +67,14 @@ test('exactly one contextual primary action and no repeated idle start copy',()=
  assert.ok(!sidebar.includes('PRESS START TO PLAY'));
  assert.ok(!sidebar.includes('START GAME TO LAUNCH'));
  assert.ok(css.includes('.action-panel>button[hidden]{display:none!important}'));
+});
+
+test('desktop console uses available vertical space without adding unnecessary cards',()=>{
+ assert.ok(css.includes('@media(min-width:1121px) and (min-height:721px)'));
+ assert.ok(css.includes('justify-content:space-between'));
+ assert.ok(css.includes('.hud-v2 .console-more{flex:0 0 47px'));
+ assert.ok(css.includes('.hud-v2 .dmd-display{min-height:142px;max-height:210px}'));
+ assert.ok(html.includes('CHARGE THE POWER GRID'));
+ assert.ok(html.includes('HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP'));
+ assert.ok(!html.includes('TABLE ONLINE'));
 });

@@ -1,4 +1,4 @@
-import {renderLedLine} from './dmd-lettering.mjs?v=1';
+import {renderLedLine} from './dmd-lettering.mjs?v=2';
 // NEON TILT — readable high-resolution DMD with a subdued 80 × 22 LED backing grid.
 // No external sprites or timers: transitions depend on the frame clock and
 // deterministic engine events. Reduced motion uses static, legible messages.
@@ -166,8 +166,9 @@ export function createDmdTimeline(){
  return {notify,current,clear(){active=null;queue=[];lastBumperAt=-Infinity}};
 }
 export const DMD_WIDTH=1120,DMD_HEIGHT=324;
-// Original 5x7 red LED cells sit over a faint solid-letter contrast underlay.
-// Event queue and timing remain unchanged.
+// Original 5x7 red and amber LED cells are now the *only* visible lettering.
+// Removing the overlapping solid text layer fixes shadowed/illegible words.
+// The queue, timers, scoring and 3D table remain unchanged.
 export function createDotMatrix(canvas,{reducedMotion=false}={}){
  const noop={notify(){},update(){},dispose(){}};
  if(!canvas?.getContext)return noop;
@@ -176,41 +177,12 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
  const width=560,height=162;
  canvas.width=DMD_WIDTH;canvas.height=DMD_HEIGHT;
  ctx.setTransform?.(2,0,0,2,0,0);
- const fontFace='"Oxanium","Arial Black",Impact,Arial,sans-serif';
  let lastFrame=-Infinity,disposed=false;
  const timeline=createDmdTimeline();
  function notify(event,now=performance.now(),game=null){
   if(disposed)return;
   timeline.notify(event,now,game);
   lastFrame=-Infinity;
- }
- function fitFont(value,preferred,minimum,maxWidth){
-  let size=preferred;
-  for(;size>minimum;size-=1){
-   ctx.font='900 '+size+'px '+fontFace;
-   const measured=ctx.measureText?ctx.measureText(value).width:value.length*size*.68;
-   if(measured<=maxWidth)break;
-  }
-  ctx.font='900 '+size+'px '+fontFace;
-  return size;
- }
- function printLine(value,y,preferred,min,color){
-  const str=String(value??'').toUpperCase();
-  fitFont(str,preferred,min,512);
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-  ctx.lineJoin='round';
-  // Raised, solid LED-style amber typography with a hard edge—not a
-  // low-resolution sampled bitmap or a blurry glow filter.
-  ctx.save?.();
-  ctx.globalAlpha=.065;
-  ctx.shadowBlur=0;
-  ctx.lineWidth=2.3;
-  ctx.strokeStyle='#261208';
-  ctx.strokeText(str,width/2,y,515);
-  ctx.fillStyle=color;
-  ctx.fillText(str,width/2,y,515);
-  ctx.restore?.();
  }
  function update(game,now=performance.now()){
   if(disposed||!game||now-lastFrame<65)return;
@@ -244,14 +216,13 @@ export function createDotMatrix(canvas,{reducedMotion=false}={}){
   ctx.beginPath?.();
   ctx.rect?.(10,11,540*reveal,141);
   ctx.clip?.();
-  printLine(lines[0],46,51,34,'#ff546e');
-  printLine(lines[1],116,35,26,'#ffb775');
   renderLedLine(ctx,lines[0],{y:46,headline:true,celebration,flash});
   renderLedLine(ctx,lines[1],{y:116,headline:false,celebration,flash});
   ctx.restore?.();
   ctx.strokeStyle=celebration?(flash?'#ffb39c':'#e45160'):'#b84959';
   ctx.lineWidth=celebration?3:2;
   ctx.strokeRect(2,2,width-4,height-4);
+  return lines; // Observable in tests; no effect on the frame loop.
  }
  return {notify,update,dispose(){disposed=true;timeline.clear()}};
 }

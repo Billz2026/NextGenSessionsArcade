@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {createDotMatrix,DMD_COLS,DMD_ROWS,getDmdStatus,describeDmdEvent,ATTRACT_MESSAGES,createDmdTimeline} from '../games/pinball/dmd.mjs';
 import {measureLedLine,LED_GLYPHS} from '../games/pinball/dmd-lettering.mjs';
 function mockScreen(){
- const calls={dots:0,frames:0,labels:0,text:[],fonts:[],strokes:[],size:null};
+ const calls={dots:0,frames:0,labels:0,text:[],fonts:[],strokes:[],size:null,litCells:0};
  const screen={
   setTransform(...a){calls.size=a},save(){},restore(){},
   beginPath(){},rect(){},clip(){},
   fillRect(x,y,w,h){
    if(x===0&&y===0&&w===560&&h===162)calls.frames++;
    if(w===1.8&&h===1.8)calls.dots++;
+   else if(w>0&&h>0&&w<8&&h<8)calls.litCells++;
   },
   fillText(txt){calls.labels++;calls.text.push(txt);calls.fonts.push(this.font)},
   strokeText(txt){calls.strokes.push(txt)},
@@ -19,7 +20,7 @@ function mockScreen(){
  return {calls,canvas:{getContext(){return screen}},restore(){}};
 }
 
-test('high-resolution dot-matrix lettering overlays all 80 × 22 physical LED accents',()=>{
+test('only physical LED glyphs render over the 80 × 22 arcade backdrop',()=>{
  const m=mockScreen();
  try{
   const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
@@ -28,7 +29,8 @@ test('high-resolution dot-matrix lettering overlays all 80 × 22 physical LED ac
   assert.equal(m.canvas.width,1120);assert.equal(m.canvas.height,324);
   assert.deepEqual(m.calls.size,[2,0,0,2,0,0]);
   assert.equal(m.calls.dots,DMD_COLS*DMD_ROWS);
-  assert.equal(m.calls.labels,2);
+  assert.equal(m.calls.labels,0,'old solid underlay must not render');
+  assert.ok(m.calls.litCells>200,'letter glyphs use LED dots');
   dmd.dispose();
  }finally{m.restore()}
 });
@@ -52,29 +54,24 @@ test('high priority celebration cannot be displaced by low priority spinner',()=
   const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
   const g={state:'playing',ball:{mode:'live'},ballNumber:1,score:100,time:3,frenzyUntil:0,multiplierUntil:0};
   dmd.notify({type:'extra'},1000);
-  dmd.update(g,1001);
-  const firstHeadline=m.calls.text.at(-2);
+  const firstHeadline=dmd.update(g,1001)[0];
   dmd.notify({type:'spinner',turns:4},1020);
-  dmd.update(g,1100);
-  assert.equal(m.calls.text.at(-2),firstHeadline,'lower priority event replaced EXTRA BALL');
+  assert.equal(dmd.update(g,1100)[0],firstHeadline,'lower priority spinner displaced extra ball');
   assert.equal(firstHeadline,'EXTRA BALL');
   dmd.dispose();
  }finally{m.restore()}
 });
 
-test('mission announcements use large sharp 51px/35px text rather than 11px bitmap glyphs',()=>{
+test('mission announcements are rendered only as readable 5x7 LED cells',()=>{
  const m=mockScreen();
  try{
   const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
   const game={state:'playing',ball:{mode:'live'},ballNumber:1,score:0,time:2,frenzyUntil:0,multiplierUntil:0};
   dmd.notify({type:'mission',headline:'TARGET BANK COMPLETE'},1000);
-  dmd.update(game,1010);
-  assert.equal(m.calls.text.at(-2),'TARGET BANK');
-  assert.equal(m.calls.text.at(-1),'COMPLETE!');
-  assert.ok(parseInt(m.calls.fonts.at(-2).match(/(\d+)px/)[1])>=34);
-  assert.ok(parseInt(m.calls.fonts.at(-1).match(/(\d+)px/)[1])>=26);
-  assert.deepEqual(m.calls.strokes.at(-2),'TARGET BANK');
-  assert.deepEqual(m.calls.strokes.at(-1),'COMPLETE!');
+  assert.deepEqual(dmd.update(game,1010),['TARGET BANK','COMPLETE!']);
+  assert.equal(m.calls.labels,0);
+  assert.equal(m.calls.strokes.length,0);
+  assert.ok(m.calls.litCells>250);
   dmd.dispose();
  }finally{m.restore()}
 });
@@ -107,40 +104,33 @@ test('shot and scoop point announcements respect the live multiplier',()=>{
  assert.equal(describeDmdEvent({type:'shot',kind:'orbit',points:5000},
   {time:11,multiplierUntil:10}).sub,'+5,000');
 });
-test('major events override minor hit messages, but never the other way around',()=>{
+test('major events override minor hits but never vice versa',()=>{
  const m=mockScreen();
  try{
   const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
   const g={state:'playing',ball:{mode:'live'},score:0,ballNumber:1,time:2,frenzyUntil:0,multiplierUntil:0};
   dmd.notify({type:'hit',target:'bumper0',score:150},1000,g);
-  dmd.update(g,1010);
-  assert.equal(m.calls.text.at(-2),'BUMPER HIT');
+  assert.equal(dmd.update(g,1010)[0],'BUMPER HIT');
   dmd.notify({type:'shot',kind:'ramp',points:7500},1200,g);
-  dmd.update(g,1210);
-  assert.equal(m.calls.text.at(-2),'RAMP SHOT');
+  assert.equal(dmd.update(g,1210)[0],'RAMP SHOT');
   dmd.notify({type:'hit',target:'bumper1',score:150},1300,g);
-  dmd.update(g,1400);
-  assert.equal(m.calls.text.at(-2),'RAMP SHOT');
+  assert.equal(dmd.update(g,1400)[0],'RAMP SHOT');
   dmd.notify({type:'extra'},1450,g);
-  dmd.update(g,1500);
-  assert.equal(m.calls.text.at(-2),'EXTRA BALL');
+  assert.equal(dmd.update(g,1500)[0],'EXTRA BALL');
   dmd.notify({type:'shot',kind:'orbit',points:5000},1600,g);
-  dmd.update(g,1700);
-  assert.equal(m.calls.text.at(-2),'EXTRA BALL');
+  assert.equal(dmd.update(g,1700)[0],'EXTRA BALL');
   dmd.dispose();
  }finally{m.restore()}
 });
-test('start event clears prior gameover celebration without waiting for timeout',()=>{
+test('starting a new game clears previous game-over announcement immediately',()=>{
  const m=mockScreen();
  try{
   const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
   const g={state:'ready',score:0};
   dmd.notify({type:'gameover',score:65000},1000,g);
-  dmd.update(g,1010);
-  assert.equal(m.calls.text.at(-2),'GAME OVER');
+  assert.equal(dmd.update(g,1010)[0],'GAME OVER');
   dmd.notify({type:'start'},1020,g);
-  dmd.update(g,1100);
-  assert.equal(m.calls.text.at(-2),'PLAYER ONE READY');
+  assert.equal(dmd.update(g,1100)[0],'PLAYER ONE READY');
   dmd.dispose();
  }finally{m.restore()}
 });
@@ -180,34 +170,36 @@ test('DMD displays timer-driven jackpot and Overdrive objectives',()=>{
 });
 
 
-test('long display messages fit with readable minimum type sizes',()=>{
+test('long LED messages fit the DMD without a conflicting solid-font layer',()=>{
  const m=mockScreen();
  try{
   const display=createDotMatrix(m.canvas,{reducedMotion:true});
   const game={state:'playing',ball:{mode:'live'},score:350000,ballNumber:2,time:10,
    hurryUpUntil:25,frenzyUntil:0,multiplierUntil:0};
-  display.update(game,5000);
-  assert.equal(m.calls.text.at(-2),'JACKPOT LIT');
-  assert.equal(m.calls.text.at(-1),'SCOOP · 15 SEC');
-  const sizes=m.calls.fonts.slice(-2).map(f=>parseInt(f.match(/(\d+)px/)[1]));
-  assert.ok(sizes[0]>=34&&sizes[1]>=26);
-  assert.equal(m.calls.strokes.at(-2),'JACKPOT LIT');
+  assert.deepEqual(display.update(game,5000),['JACKPOT LIT','SCOOP · 15 SEC']);
+  for(const message of ['HIGH SCORE RUN','PLAYER ONE READY','NEON RUSH JACKPOT','FINAL SCORE 12,000,000']){
+   const led=measureLedLine(message,{headline:message!=='HIGH SCORE RUN'});
+   assert.ok(led.width<=518,message+' fits in hardware viewport');
+   assert.ok(led.xPitch>3,message+' retains visible pixel separation');
+   assert.ok(led.litPoints>50,message+' produces actual glyphs');
+  }
+  assert.equal(m.calls.labels,0);
   display.dispose();
  }finally{m.restore()}
 });
-test('sharp DMD uses no sampled low-res bitmap or blurred lettering',()=>{
+test('red/amber LED lettering contains no ghosted text strokes or sampled bitmap',()=>{
  const m=mockScreen();
  try{
   const display=createDotMatrix(m.canvas,{reducedMotion:true});
-  display.update({state:'ready'},1000);
-  assert.equal(m.calls.labels,2);
-  assert.equal(m.calls.strokes.length,2);
+  assert.deepEqual(display.update({state:'ready'},1000),['PLAYER ONE READY','THREE BALL CHALLENGE']);
+  assert.equal(m.calls.labels,0);
+  assert.equal(m.calls.strokes.length,0);
   assert.equal(m.calls.frames,1);
   assert.equal(m.calls.dots,DMD_COLS*DMD_ROWS);
+  assert.ok(m.calls.litCells>200);
   display.dispose();
  }finally{m.restore()}
 });
-
 test('important events interrupt weaker callouts and queued shots play afterwards',()=>{
  const timeline=createDmdTimeline(),g={state:'playing',ball:{mode:'live'},score:15000};
  timeline.notify({type:'shot',kind:'ramp',points:7500},1000,g);
@@ -270,11 +262,12 @@ test('original seven-row LED glyphs fit the display and support scoring punctuat
   assert.ok(layout.litPoints>50);
  }
 });
-test('red and amber LED cells are drawn over the native readable text',()=>{
+test('red and amber LED cells render without overlapping solid typography',()=>{
  const m=mockScreen();
  const dmd=createDotMatrix(m.canvas,{reducedMotion:true});
  dmd.update({state:'playing',ball:{mode:'shooter'},ballNumber:2},1000);
- assert.equal(m.calls.labels,2,'faint contrast underlay retained');
+ assert.equal(m.calls.labels,0,'no faint solid font remains');
+ assert.ok(m.calls.litCells>200,'real illuminated glyph cells are visible');
  assert.ok(m.calls.dots>=DMD_COLS*DMD_ROWS);
  dmd.dispose();
 });
@@ -282,4 +275,10 @@ test('red and amber LED cells are drawn over the native readable text',()=>{
 test('attract messages never duplicate the main Start button',()=>{
  assert.equal(ATTRACT_MESSAGES.some(lines=>lines.join(' ').includes('PRESS START')),false);
  assert.deepEqual(getDmdStatus({state:'ready'},0),['PLAYER ONE READY','THREE BALL CHALLENGE']);
+});
+
+test('subheadline pixel spacing is sufficient to avoid fuzzy overlapped letters',()=>{
+ const m=measureLedLine('HIGH SCORE RUN',{headline:false});
+ assert.ok(m.yPitch>=5,'LED rows should have enough separation');
+ assert.ok(m.xPitch>=5,'LED columns should remain separated');
 });
