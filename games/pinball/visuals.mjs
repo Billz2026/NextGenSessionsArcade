@@ -2,6 +2,7 @@
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
+import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS} from './lower-hardware.mjs?v=1';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -238,17 +239,25 @@ function drawBumpers(c,engine,anim,reducedMotion,bumperFlash=null){
  }
 }
 function drawSlings(c){
- for(let i=0;i<SLINGS.length;i++){
-  const s=SLINGS[i],pivot=i===0?[130,547]:[290,547];
+ for(let i=0;i<LOWER_SLINGS.length;i++){
+  const s=LOWER_SLINGS[i],pivot=i===0?[130,547]:[290,547];
   plastic(c,a=>{a.moveTo(s.x1,s.y1);a.lineTo(s.x2,s.y2);a.lineTo(...pivot);a.closePath()},
    G(c,s.x1,s.y1,s.x2,s.y2,[[0,'#b0595b'],[.42,'#692c3f'],[1,'#331f2d']]),'#dcb19c');
-  line(c,[[s.x1+3,s.y1+4],[s.x2-4,s.y2+2]],'#ffe3bb',3.7);
+  line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#1a1925',10);
+  line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#5d3648',7);
+  line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#f0bf9c',2.2);
+  bolt(c,s.x1,s.y1,3);bolt(c,s.x2,s.y2,3);
   bolt(c,...pivot,4);
  }
  for(const p of POSTS){
   c.save();c.shadowBlur=6;c.shadowOffsetY=3;c.shadowColor='#000';
   disk(c,p.x,p.y,p.r+3,R(c,p.x,p.y,p.r+3,[[0,'#f9e7bf'],[.4,'#b1a5a1'],[.7,'#5b5961'],[1,'#d2c2af']]),'#372f36',1.7);
-  c.restore();disk(c,p.x-1,p.y-1,p.r*.43,'rgba(255,255,255,.5)');
+  c.restore();
+  if(LOWER_POSTS.some(q=>q.x===p.x&&q.y===p.y)){
+   disk(c,p.x,p.y,p.r+1.5,null,'#48313f',3.2);
+   disk(c,p.x,p.y,p.r*.57,'#b4aca7','#f2d6b6',1);
+   line(c,[[p.x-3,p.y+2],[p.x+3,p.y-2]],'#453038',1.4);
+  }else disk(c,p.x-1,p.y-1,p.r*.43,'rgba(255,255,255,.5)');
  }
 }
 function drawWalls(c){
@@ -263,14 +272,24 @@ function drawWalls(c){
   line(c,[[x,510],[left?122:298,545]],'#794f8c',8);
   line(c,[[x,510],[left?122:298,545]],'#d893ae',3);
  }
+ // Exact lower wall channels get stainless cladding, not extra colliders.
+ for(const guide of LOWER_GUIDES){
+  const points=[[guide.x1,guide.y1],[guide.x2,guide.y2]];
+  line(c,points,'#1b2330',11);
+  line(c,points,'#959fa9',6);
+  line(c,points,'#f2d9ba',1.8);
+  bolt(c,guide.x1,guide.y1,3);
+  bolt(c,guide.x2,guide.y2,3);
+ }
 }
 function drawFlippers(c,engine){
  for(const f of engine.flippers){
   const end=engine.flipperTip(f);
   c.save();c.shadowColor='#000';c.shadowBlur=11;c.shadowOffsetY=9;
   line(c,[[f.x,f.y],[end.x,end.y]],'#17121b',25);c.restore();
-  line(c,[[f.x,f.y],[end.x,end.y]],'#594a54',24);
-  line(c,[[f.x,f.y],[end.x,end.y]],G(c,f.x,f.y-11,end.x,end.y+11,[[0,'#fff0d2'],[.2,'#eee1cd'],[.48,'#ac999b'],[.77,'#bd8b8e'],[1,'#624958']]),19);
+  line(c,[[f.x,f.y],[end.x,end.y]],'#503441',24);
+  line(c,[[f.x,f.y],[end.x,end.y]],'#e6af8e',20);
+  line(c,[[f.x,f.y],[end.x,end.y]],G(c,f.x,f.y-11,end.x,end.y+11,[[0,'#fff1db'],[.24,'#f0dfca'],[.57,'#c9a9a1'],[.8,'#b08a8c'],[1,'#724d56']]),16);
   line(c,[[f.x+1,f.y-4],[end.x,end.y-4]],'rgba(255,255,255,.83)',3);
   disk(c,f.x,f.y,13,R(c,f.x,f.y,13,[[0,'#fff1ce'],[.32,'#cfb5ae'],[.7,'#7b5861'],[1,'#e3cbad']]),'#2f2830',2);
   bolt(c,f.x,f.y,4);
@@ -386,7 +405,11 @@ function drawLower(c,engine){
  text(c,'BALL SAVE',206,582,8,ballSave?'#dcf5cc':'#aa7d79');
  c.save();c.shadowColor='#000';c.shadowBlur=8;c.shadowOffsetY=4;
  c.beginPath();c.ellipse(208,692,93,19,0,0,TAU);c.fillStyle='#05060e';c.fill();c.restore();
- text(c,'DRAIN',210,683,9,'#ad8582');
+ // Recessed drain apron below the active flippers, not a fake collision.
+ rect(c,154,670,112,26,5,G(c,154,670,266,696,[[0,'#29313e'],[.27,'#59626a'],[.6,'#1b202b'],[1,'#0c101a']]),'#a6a9aa',2);
+ line(c,[[160,672],[260,672]],'#e5cbac',2);
+ for(const x of [167,253])bolt(c,x,682,3);
+ text(c,'DRAIN',210,686,9,'#dec7b3');
  // Mechanical plunger channel, spring, and knurled handle.
  rect(c,368,474,30,200,8,G(c,367,480,397,674,[[0,'#393442'],[.38,'#10111a'],[.7,'#292431'],[1,'#8e655f']]),'#baa18e',2);
  line(c,[[379,487],[379,661]],'#d2bab0',2);

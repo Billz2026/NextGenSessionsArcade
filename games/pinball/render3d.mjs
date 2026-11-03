@@ -2,6 +2,7 @@
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
+import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES} from './lower-hardware.mjs?v=1';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -315,22 +316,72 @@ export async function create3DTable(host){
   cover.position.z=.27;cover.castShadow=true;group.add(cover);
   // Slingshot contact rubber follows existing collision segments.
  }
- // Inlane/outlane returns are painted on the enamel rather than tubes.
- // Physical lower slings and pivot posts remain present.
+ // Phase 4K.1: hardware around the real lower collision segments.
+ // Each guide/elastic is generated from engine.mjs and is visual-only.
+ const lowerSteel=metal('#bcc4ca',.22,.91);
+ const lowerShade=metal('#36404c',.40,.7);
+ const lowerElastomer=new T.MeshPhysicalMaterial({
+  color:'#4b303f',roughness:.74,metalness:0
+ });
+ const batEnamel=new T.MeshPhysicalMaterial({
+  color:'#f1d8c0',roughness:.25,metalness:.19,clearcoat:.95
+ });
+ const batHighlight=metal('#fae9d2',.24,.54);
+ function mountedRod(segment,z,r,material){
+  const ax=X(segment.x1),ay=Y(segment.y1),bx=X(segment.x2),by=Y(segment.y2);
+  const dx=bx-ax,dy=by-ay;
+  const mesh=add(new T.CylinderGeometry(r,r,Math.hypot(dx,dy),12),
+   material,(ax+bx)/2,(ay+by)/2,z);
+  mesh.rotation.z=Math.atan2(dy,dx)-PI/2;
+  return mesh;
+ }
+ for(const guide of LOWER_GUIDES){
+  mountedRod(guide,.31,.088,lowerShade);
+  mountedRod(guide,.40,.052,lowerSteel);
+  for(const [px,py] of [[guide.x1,guide.y1],[guide.x2,guide.y2]]){
+   cyl(X(px),Y(py),.43,.115,.072,gold,14);
+   cyl(X(px),Y(py),.49,.065,.028,chrome,12);
+  }
+ }
+ for(const sling of LOWER_SLINGS){
+  mountedRod(sling,.43,.102,lowerShade);
+  mountedRod(sling,.51,.073,lowerElastomer);
+  for(const [px,py] of [[sling.x1,sling.y1],[sling.x2,sling.y2]]){
+   cyl(X(px),Y(py),.47,.133,.115,gold,16);
+   cyl(X(px),Y(py),.54,.069,.035,chrome,12);
+  }
+ }
+ for(const post of LOWER_POSTS){
+  const x=X(post.x),y=Y(post.y),r=post.r*SCALE;
+  cyl(x,y,.35,r+.064,.07,lowerShade,20);
+  ring(x,y,.57,r+.014,.047,lowerElastomer);
+  const head=box(x,y,.82,.11,.024,.018,black);
+  head.rotation.z=PI/4;
+ }
+ // Low, recessed drain apron. No fabricated barrier over the live ball.
+ box(X(210),Y(685),.204,2.52,.35,.06,lowerShade);
+ box(X(210),Y(681),.247,2.25,.045,.025,lowerSteel);
+ for(const x of [166,254])cyl(X(x),Y(686),.27,.088,.045,gold,14);
  // Shooter lane geometry and plunger hardware.
  box(X(382),Y(575),.2,.53,4.0,.18,black);
  for(let y=540;y<660;y+=13)box(X(382),Y(y),.35,.32,.05,.02,gold);
  const plungerHandle=box(X(382),Y(660),.46,.44,.3,.56,nickel);
- // Flippers: full 3D paddle capsule (as opposed to flat rendered strokes).
- const flipperMeshes=[],flipperHeads=[];
- for(const f of [{side:'left',x:144,y:613,length:71},{side:'right',x:276,y:613,length:71}]){
-  const paddle=add(new T.CapsuleGeometry(.18,1.06,5,12),new T.MeshPhysicalMaterial({
-   color:'#e4c3af',metalness:.64,roughness:.26,clearcoat:.7,clearcoatRoughness:.12
-  }),X(f.x),Y(f.y),.57);
-  // Capsule's long axis is +Y; rotate around screen-normal Z to match the bat.
-  flipperMeshes.push(paddle);
-  cyl(X(f.x),Y(f.y),.45,.26,.26,darkChrome,32);
-  const pivot=cyl(X(f.x),Y(f.y),.73,.18,.14,chrome,32);flipperHeads.push(pivot);
+ // Layered flippers: grippy rubber sleeve, solid enamel body and
+ // narrow reflective inlay. Their shared rotation follows the real engine.
+ const flipperMeshes=[],flipperRubberMeshes=[],flipperInlays=[];
+ for(const f of LOWER_FLIPPER_BASES){
+  const x=X(f.x),y=Y(f.y);
+  flipperRubberMeshes.push(add(
+   new T.CapsuleGeometry(.225,.97,5,14),lowerElastomer,x,y,.515));
+  flipperMeshes.push(add(
+   new T.CapsuleGeometry(.171,1.04,5,14),batEnamel,x,y,.586));
+  flipperInlays.push(add(
+   new T.CapsuleGeometry(.053,1.09,4,10),batHighlight,x,y,.684));
+  cyl(x,y,.42,.31,.17,lowerShade,32);
+  cyl(x,y,.62,.242,.095,rose,32);
+  cyl(x,y,.75,.175,.09,chrome,32);
+  ring(x,y,.80,.122,.026,gold);
+  box(x,y,.852,.115,.019,.016,darkChrome).rotation.z=.4;
  }
  const ball=add(new T.SphereGeometry(BOARD.radius*SCALE,28,20),chrome,0,0,.56);
  ball.castShadow=true;
@@ -619,10 +670,14 @@ export async function create3DTable(host){
   for(let i=0;i<engine.flippers.length;i++){
    const f=engine.flippers[i],sgn=f.side==='left'?1:-1;
    const dx=sgn*Math.cos(f.a)*f.length*SCALE,dy=-Math.sin(f.a)*f.length*SCALE;
-   flipperMeshes[i].position.set(X(f.x)+dx/2,Y(f.y)+dy/2,.59);
-   // Capsule is modelled on the Y axis, rotated into XY; model orientation is
-   // rotated only around screen-normal Z for correct left/right bat movement.
-   flipperMeshes[i].rotation.set(0,0,Math.atan2(dy,dx)-PI/2);
+   const cx=X(f.x)+dx/2,cy=Y(f.y)+dy/2;
+   const angle=Math.atan2(dy,dx)-PI/2;
+   for(const [mesh,z] of [
+    [flipperRubberMeshes[i],.515],[flipperMeshes[i],.586],[flipperInlays[i],.684]
+   ]){
+    mesh.position.set(cx,cy,z);
+    mesh.rotation.set(0,0,angle);
+   }
   }
   for(let i=0;i<laneLamps.length;i++){
    laneLamps[i].material=engine.lanes.has(i)||engine.missions.lanes?amber:rubber;
