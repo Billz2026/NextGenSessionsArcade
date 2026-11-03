@@ -5,6 +5,7 @@ on:
       - 'games/pinball/**'
       - 'tests/pinball-engine.test.mjs'
       - 'tests/pinball-dmd.test.mjs'
+      - 'tests/pinball-console.test.mjs'
       - 'games/roulette/engine.mjs'
       - 'tests/roulette-engine.test.mjs'
       - '.github/workflows/arcade-tests.yml'
@@ -13,6 +14,7 @@ on:
       - 'games/pinball/**'
       - 'tests/pinball-engine.test.mjs'
       - 'tests/pinball-dmd.test.mjs'
+      - 'tests/pinball-console.test.mjs'
       - 'games/roulette/engine.mjs'
       - 'tests/roulette-engine.test.mjs'
       - '.github/workflows/arcade-tests.yml'
@@ -25,4 +27,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run arcade gameplay and display regression tests
-        run: node --test tests/roulette-engine.test.mjs tests/pinball-engine.test.mjs tests/pinball-dmd.test.mjs
+        run: node --test tests/roulette-engine.test.mjs tests/pinball-engine.test.mjs tests/pinball-dmd.test.mjs tests/pinball-console.test.mjs tests/pinball-hud.test.mjs tests/pinball-render.test.mjs

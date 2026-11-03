@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./game.css?v=15">
+<link rel="stylesheet" href="./console.css?v=1">
 </head>
 <body>
 <a href="#game" class="skip">Skip to pinball game</a>
@@ -56,32 +57,39 @@
       </div>
       <p class="machine-note"><span class="live-led" aria-hidden="true"></span> ARCADE MACHINE 002 <span>·</span> FULL TABLE IN VIEW</p>
     </section>
-    <aside class="hud" aria-label="Pinball score and controls">
-      <div class="hud-header"><span>PLAYER ONE</span><strong>NEON TILT</strong><span id="status-indicator">STANDBY</span></div>
-      <div class="score-panel">
+    <aside class="hud hud-v2" aria-label="Pinball score and controls">
+<div class="hud-header"><span>PLAYER ONE</span><strong>NEON TILT</strong><span id="status-indicator">STANDBY</span></div>
+<div class="score-panel">
         <div class="panel-label"><span>YOUR SCORE</span><span>HIGH SCORE RUN</span></div>
         <strong class="score-number" id="score" aria-live="off">000,000</strong>
         <div class="score-bottom"><span><i class="score-led"></i><span id="score-state">PRESS START</span></span><span id="score-flash" role="status" aria-live="polite">READY</span></div>
       </div>
-      <div class="game-banner" aria-live="polite"><span id="mode-name">ATTRACT MODE</span><strong id="mission-message">PRESS START TO PLAY</strong><small id="mode-timer">NEON TILT / GAME 002</small></div>
-      <div class="hud-stats">
+<div class="dmd-display" aria-label="Animated pinball dot-matrix score display">
+          <div class="dmd-header"><span>NEON TILT · DOT MATRIX</span><span>HIGH VOLTAGE DISPLAY</span></div>
+          <canvas id="dmd-screen" width="560" height="162" aria-hidden="true"></canvas>
+        </div>
+<div class="game-banner" aria-live="polite"><div class="mode-topline"><span id="mode-name">ATTRACT MODE</span><small id="grid-status">POWER GRID 0/3 · CHAIN SHOTS</small></div><strong id="mission-message">PRESS START TO PLAY</strong><small id="mode-timer">NEON TILT / GAME 002</small></div>
+<div class="hud-stats">
         <div class="hud-stat"><span>BALL</span><strong id="ball-number">— / 3</strong></div>
         <div class="hud-stat"><span>PERSONAL BEST</span><strong id="best-score">0</strong></div>
         <div class="hud-stat"><span>MULTIPLIER</span><strong id="multiplier">1×</strong></div>
         <div class="hud-stat"><span>BALL SAVE</span><strong id="ball-save">OFF</strong></div>
       </div>
-      <div class="launcher-section" id="launcher-section">
+<div class="launcher-section" id="launcher-section">
         <div class="section-title"><span id="launch-title">01 / LAUNCH</span><small id="launch-hint">HOLD TO CHARGE · RELEASE TO FIRE</small></div>
         <div class="power-row"><span id="power-title">PLUNGER POWER</span><span id="power-label">26%</span></div>
         <div class="power-track" aria-hidden="true"><div id="power-fill"></div></div>
         <button type="button" id="launch" class="launch-button" disabled>HOLD &amp; RELEASE TO LAUNCH <span aria-hidden="true">⇧</span></button>
       </div>
-      <div class="action-panel">
+<div class="action-panel">
         <button id="start" class="start-button" type="button">START GAME <span aria-hidden="true">↻</span></button>
         <button id="reset" class="reset-button" type="button" disabled>RESTART</button>
       </div>
-      <div class="mission-card">
-        <div class="section-title"><span>02 / MISSIONS</span><small id="grid-status">POWER GRID 0/3 · FOUR ROUTES</small></div>
+<details class="console-more" id="console-more">
+<summary><span class="console-more-title">TABLE INTEL</span><span class="console-more-hint">MISSIONS · SCORES · HELP</span><span class="console-chevron" aria-hidden="true">⌄</span></summary>
+<div class="console-more-content">
+<div class="mission-card">
+        <div class="section-title"><span>02 / MISSIONS</span><small>FOUR ROUTES · CHASE JACKPOTS</small></div>
         <div class="mission-grid">
           <div id="mission-lanes"><span class="mission-icon">N·G·S</span><span>NEON LANES</span><b id="progress-lanes">0 / 3</b></div>
           <div id="mission-frenzy"><span class="mission-icon">✦</span><span>BUMPER FRENZY</span><b id="progress-frenzy">0 / 10</b></div>
@@ -91,22 +99,21 @@
         <div class="mission-footer"><span id="extra-status">EXTRA BALL: COMPLETE ALL FOUR MISSIONS</span>
           <span class="hardware-counts"><strong id="spinner-count">0 SPINS</strong><strong id="scoop-count">0 SCOOPS</strong></span>
           <strong id="shots-counter">0 SHOTS</strong></div>
-        <div class="dmd-display" aria-label="Animated pinball dot-matrix score display">
-          <div class="dmd-header"><span>NEON TILT · DOT MATRIX</span><span>HIGH VOLTAGE DISPLAY</span></div>
-          <canvas id="dmd-screen" width="560" height="162" aria-hidden="true"></canvas>
-        </div>
+        
       </div>
-      <div class="leaderboard-card">
+<div class="leaderboard-card">
         <div class="section-title"><span>03 / ARCADE TOP 5</span><small>ON THIS DEVICE</small></div>
         <ol id="leaderboard" class="highscore-list"><li>NO RECORDS YET — SET THE FIRST SCORE</li></ol>
       </div>
-      <div class="help-card">
+<div class="help-card">
         <strong>HOW TO PLAY</strong>
         <p>Launch and hit an upper N-G-S lane within six seconds for a SKILL SHOT. Use the ORBIT, RAMP, CENTER CROSSOVER and SKYLINE LOOP for COMBO bonuses. Any three route shots charge POWER GRID; hit the SCOOP within 18 seconds for NEON RUSH JACKPOT. Five spinner crossings start OVERDRIVE for 14 seconds. Complete four missions for an extra ball. Each ball has one 11-second early-drain save.</p>
         <div><span>DESKTOP</span><strong>← / A &nbsp; · &nbsp; → / D &nbsp; · &nbsp; SPACE</strong></div>
         <div><span>PHONE / FOLD</span><strong>ON-SCREEN BUTTONS</strong></div>
       </div>
-    </aside>
+</div>
+</details>
+</aside>
   </div>
   <div class="development-note"><strong>REAL-TIME 3D PREVIEW:</strong> Original 3D geometry, metallic materials and dynamic lighting. The physics still runs in 2D and guided ramp/orbit paths remain simplified. A 2D fallback is available. No prizes, purchases or real-money play.</div>
 </main>

@@ -1,0 +1,134 @@
+/* Phase 4D — focused hardware score console, scoped separately from the playfield. */
+html .hud.hud-v2{display:flex;flex-direction:column;align-items:stretch;gap:7px;min-width:0;min-height:0;height:100%;max-height:100%;overflow:hidden;padding:9px;color:#f5ddba;background:linear-gradient(145deg,#282129,#11121a 38%,#0d0f16 79%,#231c27);border:1px solid #7a625d;border-radius:10px;box-shadow:inset 0 1px #ffe2ad26,0 12px 30px #0006}
+.hud-v2 .hud-header{flex:0 0 27px;min-height:27px;height:27px;align-items:center;padding:0 8px;border:0;border-bottom:1px solid #d6a57742;border-radius:0;background:transparent}
+.hud-v2 .hud-header strong{font:900 22px/1 var(--heading);letter-spacing:.09em;color:#ffdcad}
+.hud-v2 .hud-header span{font:800 9px var(--display);color:#cdb4a2}
+.hud-v2 #status-indicator{color:#eaa37c;white-space:nowrap}
+.hud-v2 .score-panel{flex:0 0 104px;min-height:0;padding:10px 13px 7px;border:1px solid #a38c79;border-radius:8px;background:linear-gradient(180deg,#120c0f,#07090e 54%,#0e0c12);box-shadow:inset 0 0 0 2px #241a1c,inset 0 0 20px #000b}
+.hud-v2 .panel-label{color:#d9bd9f;font:800 9px var(--display);letter-spacing:.08em}
+.hud-v2 .score-number{display:block;margin:5px 0 6px;font:900 clamp(38px,3vw,50px)/1 var(--display);letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:#ffe0ae;text-shadow:0 0 15px #ef9b6244;white-space:nowrap;overflow:hidden}
+.hud-v2 .score-bottom{padding-top:5px;border-top:1px solid #e4b07a2a;color:#ccb19d;font:800 9px var(--display)}
+.hud-v2 .score-led{width:6px;height:6px;background:#f9b67b;box-shadow:0 0 7px #f49b69}
+.hud-v2 #score-flash{max-width:55%;color:#edc5a4}
+.hud-v2 .dmd-display{display:flex;flex:1 1 auto;flex-direction:column;min-height:116px;max-height:190px;margin:0;padding:8px;border:1px solid #8b6c5c;border-radius:8px;background:linear-gradient(145deg,#211419,#09090d 30%,#08090c 75%,#24171d);box-shadow:inset 0 0 0 2px #2d201f,inset 0 0 19px #000,0 0 8px #e59c5733}
+.hud-v2 .dmd-header{flex:0 0 auto;font:800 9px var(--display);color:#efbd86;letter-spacing:.06em}
+.hud-v2 .dmd-header span:last-child{color:#987663}
+.hud-v2 #dmd-screen{display:block;flex:1 1 auto;min-height:0;max-height:100%;max-width:100%;width:100%;height:auto;object-fit:contain;aspect-ratio:560/162;filter:none}
+.hud-v2 .game-banner{display:flex;flex:0 0 61px;flex-direction:column;justify-content:center;gap:3px;min-height:0;padding:7px 10px;border:1px solid #d9a6794b;border-left:3px solid #e6a174;border-radius:6px;background:linear-gradient(95deg,#63333f44,#1e1924 75%)}
+.hud-v2 .mode-topline{display:flex;align-items:center;justify-content:space-between;gap:8px;font:800 9px var(--display);letter-spacing:.05em;color:#eeb08b}
+.hud-v2 .mode-topline small{display:block;max-width:57%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font:800 8px var(--display);color:#caaa94}
+.hud-v2 .game-banner strong{font:900 clamp(19px,2vw,26px)/1 var(--heading);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ffe0ae;letter-spacing:.02em}
+.hud-v2 .game-banner>small{font:800 8px var(--display);color:#c7a99b}
+.hud-v2 .hud-stats{display:grid;flex:0 0 50px;min-height:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;overflow:hidden;border:1px solid #d9b18c35;border-radius:6px;background:#0c0e16cc}
+.hud-v2 .hud-stat{display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:0;min-width:0;padding:5px 7px;border:0;border-left:1px solid #ddb59126;border-radius:0;background:transparent}
+.hud-v2 .hud-stat:first-child{border-left:0}
+.hud-v2 .hud-stat span{font:800 9px var(--display);color:#ae9f99}
+.hud-v2 .hud-stat strong{font:900 clamp(14px,1.35vw,19px)/1 var(--display);font-variant-numeric:tabular-nums;color:#ffe0ae;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-v2 .launcher-section{display:flex;flex:0 0 78px;flex-direction:column;gap:0;min-height:0;padding:7px 9px;overflow:hidden;border:1px solid #dfb3913b;border-radius:6px;background:#15151f}
+.hud-v2 .section-title{margin-bottom:4px}
+.hud-v2 .launcher-section .section-title{margin-bottom:3px}
+.hud-v2 .section-title span{font:800 10px var(--display);color:#ebbc86}
+.hud-v2 .section-title small{font:800 8px var(--display);color:#b5a194}
+.hud-v2 .power-row{font:800 9px var(--display);color:#cfb6a5}
+.hud-v2 .power-track{height:5px;min-height:5px;flex:0 0 5px;margin:4px 0 6px;background:#0b0c11}
+.hud-v2 .launch-button{display:block;flex:1 1 auto;width:100%;min-height:29px;max-height:34px;margin:0;padding:3px 7px;border:1px solid #9e7870;border-radius:5px;background:linear-gradient(180deg,#60434c,#392934);font:900 14px/1 var(--heading);letter-spacing:.03em}
+.hud-v2 .launch-button:disabled{opacity:.68}
+.hud-v2 .launcher-section.is-ball-live .launch-button:disabled{opacity:1;background:#1d2b38;color:#a6cbd1;border-color:#50707c}
+.hud-v2 .action-panel{display:grid;flex:0 0 46px;grid-template-columns:1.5fr .82fr;gap:6px;min-height:0}
+.hud-v2 .action-panel>button{height:46px;min-height:46px;max-height:46px;width:100%;padding:4px 8px;border-radius:6px;font:900 17px var(--heading);letter-spacing:.025em}
+.hud-v2 .start-button{color:#271820;background:linear-gradient(180deg,#ffe4b5,#e9b786 64%,#a66f57);border-color:#ffdeaa;box-shadow:inset 0 1px #fff9e7,0 2px 0 #654b44}
+.hud-v2 .reset-button{background:linear-gradient(180deg,#382b35,#231e2a);border-color:#65535b;color:#e2c5ae}
+.hud-v2 .console-more{position:relative;flex:0 0 42px;min-height:42px;max-height:42px;min-width:0;margin:0}
+.hud-v2 .console-more summary{display:flex;align-items:center;gap:9px;width:100%;min-height:42px;padding:0 12px;list-style:none;cursor:pointer;border:1px solid #e0ae814b;border-radius:6px;background:linear-gradient(135deg,#29222b,#151721);user-select:none}
+.hud-v2 .console-more summary::-webkit-details-marker{display:none}
+.hud-v2 .console-more summary:hover{background:#312731;border-color:#d5a47e}
+.hud-v2 .console-more summary:focus-visible{outline:3px solid #ffe4ac;outline-offset:2px}
+.hud-v2 .console-more-title{font:900 13px var(--heading);letter-spacing:.075em;color:#f5d3a4;white-space:nowrap}
+.hud-v2 .console-more-hint{margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 9px var(--display);color:#bbaaa0}
+.hud-v2 .console-chevron{font-size:21px;line-height:1;color:#ebbb8e;transition:transform .2s}
+.hud-v2 .console-more[open] .console-chevron{transform:rotate(180deg)}
+.hud-v2 .console-more-content{position:absolute;left:0;right:0;bottom:calc(100% + 7px);z-index:20;display:grid;gap:8px;max-height:min(62dvh,470px);padding:9px;overflow-y:auto;overscroll-behavior:contain;background:#13141c;border:1px solid #aa8771;border-radius:9px;box-shadow:0 -8px 32px #000d,inset 0 1px #ffdfa528}
+.hud-v2 .console-more:not([open]) .console-more-content{display:none}
+.hud-v2 .console-more .mission-card,.hud-v2 .console-more .leaderboard-card,.hud-v2 .console-more .help-card{display:block;min-height:0;height:auto;padding:11px;overflow:visible;border:1px solid #deae8540;border-radius:7px;background:linear-gradient(135deg,#241e29,#16171e)}
+.hud-v2 .console-more .mission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.hud-v2 .console-more .mission-grid>div{min-height:37px;padding:7px;font-size:10px}
+.hud-v2 .console-more .mission-grid>div b{font-size:9px}
+.hud-v2 .console-more .mission-footer{margin-top:9px;padding-top:9px;gap:8px}
+.hud-v2 .console-more .highscore-list li{display:flex;min-height:27px;padding:5px 8px}
+.hud-v2 .console-more .help-card p{font-size:11px;line-height:1.5;color:#d3c1b6}
+@media(min-width:1121px){html:fullscreen .hud.hud-v2{display:flex;gap:8px;padding:10px}}
+@media(min-width:1121px) and (max-height:720px){
+ html .hud.hud-v2{gap:5px;padding:6px}
+ .hud-v2 .hud-header{flex-basis:23px;height:23px;min-height:23px}
+ .hud-v2 .hud-header strong{font-size:19px}
+ .hud-v2 .score-panel{flex-basis:85px;padding:6px 10px}
+ .hud-v2 .score-number{font-size:37px;margin:3px 0}
+ .hud-v2 .score-bottom{padding-top:3px}
+ .hud-v2 .dmd-display{min-height:90px;max-height:150px;padding:6px}
+ .hud-v2 .dmd-header{font-size:8px}
+ .hud-v2 .game-banner{flex-basis:52px;padding:5px 9px}
+ .hud-v2 .game-banner strong{font-size:21px}
+ .hud-v2 .hud-stats{flex-basis:44px}
+ .hud-v2 .hud-stat{padding:4px 6px;gap:3px}
+ .hud-v2 .hud-stat strong{font-size:17px}
+ .hud-v2 .launcher-section{flex-basis:70px;padding:5px 9px}
+ .hud-v2 .launcher-section .section-title{margin-bottom:2px}
+ .hud-v2 .power-track{margin:3px 0 4px}
+ .hud-v2 .action-panel{flex-basis:42px}
+ .hud-v2 .action-panel>button{height:42px;min-height:42px;max-height:42px;font-size:15px}
+ .hud-v2 .console-more{flex-basis:39px;min-height:39px;max-height:39px}
+ .hud-v2 .console-more summary{min-height:39px}
+}
+@media(min-width:1121px) and (max-height:590px){
+ html .hud.hud-v2{gap:4px;padding:5px}
+ .hud-v2 .score-panel{flex-basis:68px;padding:4px 8px}
+ .hud-v2 .panel-label{font-size:8px}
+ .hud-v2 .score-number{font-size:28px;margin:1px 0}
+ .hud-v2 .score-bottom{font-size:8px;padding-top:1px}
+ .hud-v2 .dmd-display{display:flex;min-height:60px;max-height:104px;padding:4px}
+ .hud-v2 .dmd-header span:last-child{display:none}
+ .hud-v2 .game-banner{flex-basis:41px;padding:3px 8px;gap:1px}
+ .hud-v2 .game-banner strong{font-size:18px}
+ .hud-v2 .game-banner>small{display:none}
+ .hud-v2 .hud-stats{flex-basis:39px}
+ .hud-v2 .hud-stat span{font-size:7px}
+ .hud-v2 .hud-stat strong{font-size:14px}
+ .hud-v2 .launcher-section{flex-basis:64px;padding:4px 7px}
+ .hud-v2 .launch-button{min-height:23px;font-size:12px}
+ .hud-v2 .action-panel{flex-basis:35px}
+ .hud-v2 .action-panel>button{height:35px;min-height:35px;max-height:35px;font-size:13px}
+ .hud-v2 .console-more{flex-basis:33px;min-height:33px;max-height:33px}
+ .hud-v2 .console-more summary{min-height:33px;padding-inline:8px}
+ .hud-v2 .console-more-hint{font-size:8px}
+}
+@media(max-width:1120px){
+ html .hud.hud-v2{display:flex;width:100%;height:auto;min-height:0;max-height:none;overflow:visible;padding:12px;gap:9px}
+ .hud-v2 .hud-header{flex-basis:31px;height:31px;min-height:31px}
+ .hud-v2 .score-panel{flex-basis:auto;min-height:108px}
+ .hud-v2 .score-number{font-size:clamp(37px,7vw,53px)}
+ .hud-v2 .dmd-display{flex:0 0 auto;height:145px;min-height:145px;max-height:none}
+ .hud-v2 .game-banner{flex-basis:auto;min-height:65px}
+ .hud-v2 .hud-stats{flex-basis:auto;min-height:61px}
+ .hud-v2 .hud-stat strong{font-size:clamp(15px,2.5vw,21px)}
+ .hud-v2 .launcher-section{flex-basis:auto;min-height:83px}
+ .hud-v2 .launch-button{height:36px;min-height:36px;max-height:none;flex:none}
+ .hud-v2 .action-panel{flex-basis:auto;min-height:48px}
+ .hud-v2 .action-panel>button{height:48px;min-height:48px;max-height:none}
+ .hud-v2 .console-more{flex:0 0 auto;min-height:44px;max-height:none}
+ .hud-v2 .console-more summary{min-height:44px}
+ .hud-v2 .console-more-content{position:static;max-height:none;margin-top:8px;overflow:visible}
+ .hud-v2 .console-more .help-card{display:block}
+}
+@media(max-width:440px){
+ html .hud.hud-v2{padding:9px;gap:7px}
+ .hud-v2 .hud-header span{font-size:8px}
+ .hud-v2 .hud-header strong{font-size:18px}
+ .hud-v2 .hud-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .hud-v2 .hud-stat{min-height:45px}
+ .hud-v2 .hud-stat:nth-child(odd){border-left:0}
+ .hud-v2 .hud-stat:nth-child(n+3){border-top:1px solid #ddb59126}
+ .hud-v2 .console-more-hint{font-size:8px}
+ .hud-v2 .dmd-display{height:132px;min-height:132px}
+ .hud-v2 .console-more .mission-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){.hud-v2 .console-chevron{transition:none}}

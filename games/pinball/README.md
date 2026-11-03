@@ -1,10 +1,19 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 3K — fair-play physics and sharp cabinet lettering (playable 3D prototype)
+**Current stage:** Phase 4D — premium compact score console (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4D — premium compact arcade score console
+
+- Rebuilt the crowded right-hand HUD using classic Windows pinball information hierarchy: score, ball, DMD, live objective and controls always visible.
+- Kept all original game state and HUD element IDs intact. Missions, top-five personal records and detailed instructions now sit in a native keyboard-accessible Table Intel disclosure.
+- Power Grid countdown moves into the visible mode banner, while the live DMD has a dedicated prominent housing.
+- Added isolated `console.css` instead of more conflicting overrides within the table stylesheet. No physics, scoring, rendering or input-handling behaviour was changed.
+- Preserved the no-scroll desktop game layout, with an accessible expanded panel; on phones and Fold devices the detail section expands naturally in page flow.
+- Automated source regressions cover visible controls, retained mission fields and responsive presentation. Browser and Fold 7 screenshot testing remain necessary.
 
 ## Phase 4B / pass 1 — coordinated lighting and live-ball clarity
 
