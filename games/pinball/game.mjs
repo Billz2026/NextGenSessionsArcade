@@ -87,6 +87,35 @@ if(immersiveButton){
   view3d?.resize();
  });
 }
+// Phase 4L.1 — optional table-first desktop presentation.
+ // The header disappears only while focused; an in-stage exit control
+ // restores every original header action without restarting the run.
+const focusButton=document.getElementById('table-focus');
+const focusExit=document.getElementById('focus-exit');
+const desktopFocusMedia=window.matchMedia?.('(min-width:1121px)');
+let tableFocusEnabled=false;
+function setTableFocus(enabled){
+ const next=Boolean(enabled&&desktopFocusMedia?.matches&&!document.fullscreenElement);
+ tableFocusEnabled=next;
+ document.documentElement.classList.toggle('pinball-focus',next);
+ focusButton?.setAttribute('aria-pressed',String(next));
+ if(focusExit)focusExit.hidden=!next;
+ // Resize after the layout reflows; 2D playfield coordinates stay unchanged.
+ requestAnimationFrame(()=>view3d?.resize());
+}
+focusButton?.addEventListener('click',()=>setTableFocus(!tableFocusEnabled));
+focusExit?.addEventListener('click',()=>setTableFocus(false));
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&tableFocusEnabled&&!document.fullscreenElement){
+  setTableFocus(false);
+ }
+});
+desktopFocusMedia?.addEventListener?.('change',event=>{
+ if(!event.matches&&tableFocusEnabled)setTableFocus(false);
+});
+document.addEventListener('fullscreenchange',()=>{
+ if(document.fullscreenElement&&tableFocusEnabled)setTableFocus(false);
+});
 const spinnerCount=document.getElementById('spinner-count');
 const scoopCount=document.getElementById('scoop-count');
 const fmt=n=>Math.max(0,Math.floor(n)).toLocaleString('en-GB');

@@ -1,10 +1,18 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4K.5 — wireform cleanup, hardware depth and lower inserts (playable 3D beta)
+**Current stage:** Phase 4L.1 — optional table-first desktop presentation (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4L.1 — optional immersive table-first viewing mode
+
+- Added a **TABLE FOCUS** desktop header action: it hides the website header, devotes the recovered vertical height to the authentic 3:5 pinball table and gives the cabinet a cleaner illuminated stage. The game score/DMD, ball state, start/launch actions and physical flipper controls stay present.
+- Normal view is available at any time via the prominent **EXIT TABLE FOCUS** button or Escape. Fullscreen remains a separate browser-supported action; focus mode does not unexpectedly force fullscreen or change system zoom.
+- Focus is available only on desktop widths (at least 1121 CSS pixels); Fold/mobile retain their original responsive touch layout. Resizing to mobile or entering native fullscreen automatically restores the normal focus state.
+- Table-focus CSS is isolated in `focus.css` and loads after the standard console stylesheet. No physics, 3D camera, score tracking, sound, missions or storage changes.
+- Approximate gain on desktop is up to ~48px of table height, depending on viewport constraints. The physical table stays portrait rather than stretched; real browser inspection at 100% zoom and Fold is still necessary.
 
 ## Phase 4K.5 — final classic arcade playfield refinement
 

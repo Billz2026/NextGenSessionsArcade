@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./game.css?v=16">
 <link rel="stylesheet" href="./console.css?v=5">
+<link rel="stylesheet" href="./focus.css?v=1">
 </head>
 <body>
 <a href="#game" class="skip">Skip to pinball game</a>
@@ -24,6 +25,7 @@
   </a>
   <div class="header-label"><span>GAME 002 <b> / </b> CLASSIC ARCADE</span><strong>NEON TILT</strong></div>
   <div class="header-actions">
+    <button type="button" id="table-focus" class="chrome-button focus-toggle" aria-pressed="false" aria-controls="game" title="Give the pinball table more space in your browser">TABLE FOCUS <span aria-hidden="true">⛶</span></button>
     <button type="button" id="render-mode" class="chrome-button view-switch" aria-pressed="true" title="Switch between live 3D table and classic 2D fallback">3D VIEW <span aria-hidden="true">◈</span></button>
     <button type="button" id="immersive" class="chrome-button fullscreen-button" aria-pressed="false" title="Enter browser fullscreen arcade mode">FULLSCREEN <span aria-hidden="true">⛶</span></button>
     <button type="button" id="sound" class="chrome-button" aria-pressed="false">SOUND OFF <span aria-hidden="true">♪</span></button>
@@ -39,6 +41,7 @@
   </div>
   <div class="game-layout">
     <section class="machine" aria-label="Playable pinball table">
+      <button id="focus-exit" type="button" class="focus-exit" aria-label="Exit table focus mode" aria-keyshortcuts="Escape" hidden>EXIT TABLE FOCUS <span aria-hidden="true">↗</span></button>
       <div class="machine-top"><span>✦ NEXTGEN ARCADE MACHINE</span><span id="render-status">LOADING 3D TABLE</span></div>
       <div class="cabinet">
         <div class="cabinet-lights" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
@@ -119,6 +122,6 @@
   <div class="development-note"><strong>REAL-TIME 3D PREVIEW:</strong> Original 3D geometry, metallic materials and dynamic lighting. The physics still runs in 2D and guided ramp/orbit paths remain simplified. A 2D fallback is available. No prizes, purchases or real-money play.</div>
 </main>
 <footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · 3D TABLE PREVIEW</span><a href="../../">BACK TO ARCADE ↗</a></footer>
-<script type="module" src="./game.mjs?v=35"></script>
+<script type="module" src="./game.mjs?v=36"></script>
 </body>
 </html>
