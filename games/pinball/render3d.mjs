@@ -4,7 +4,8 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=2';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=1';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=1';
+import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=2';
+import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=1';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -24,7 +25,7 @@ export async function create3DTable(host){
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;
- renderer.toneMappingExposure=1.35;
+ renderer.toneMappingExposure=1.43;
  renderer.shadowMap.enabled=true;
  renderer.shadowMap.type=T.PCFSoftShadowMap;
  renderer.domElement.className='webgl-table';
@@ -41,7 +42,7 @@ export async function create3DTable(host){
  const metal=(color,roughness=.28,metalness=.9)=>new T.MeshPhysicalMaterial({
   color,roughness,metalness,clearcoat:.18,clearcoatRoughness:.12,envMapIntensity:1.1
  });
- const enamel=new T.MeshPhysicalMaterial({color:'#1d263f',roughness:.29,metalness:.12,clearcoat:.95,clearcoatRoughness:.12,envMapIntensity:.8});
+ const enamel=new T.MeshPhysicalMaterial({color:'#273758',roughness:.23,metalness:.10,clearcoat:.98,clearcoatRoughness:.16,envMapIntensity:.87});
  const black=metal('#15131c',.47,.28),nickel=metal('#b4b7bd',.25,.85),chrome=metal('#c9d0d8',.18,.94);
  const darkChrome=metal('#606373',.34,.8),gold=metal('#c79b76',.24,.75);
  const rubber=new T.MeshStandardMaterial({color:'#bd6773',roughness:.55,metalness:.02});
@@ -132,11 +133,20 @@ export async function create3DTable(host){
  paint.width=840;paint.height=1400;
  const p=paint.getContext('2d');
  const bg=p.createLinearGradient(0,0,0,1400);
- bg.addColorStop(0,'#152238');
- bg.addColorStop(.37,'#161d34');
- bg.addColorStop(.70,'#191a32');
- bg.addColorStop(1,'#171626');
+ bg.addColorStop(0,NEON_FINISH.upper);
+ bg.addColorStop(.38,NEON_FINISH.mid);
+ bg.addColorStop(.76,NEON_FINISH.lower);
+ bg.addColorStop(1,'#22263e');
  p.fillStyle=bg;p.fillRect(0,0,840,1400);
+ // Original cool-blue and coral sheen printed into the lacquer.
+ const cyanSweep=p.createRadialGradient(260,520,35,260,520,460);
+ cyanSweep.addColorStop(0,'rgba(59,156,230,.20)');
+ cyanSweep.addColorStop(1,'rgba(59,156,230,0)');
+ p.fillStyle=cyanSweep;p.fillRect(0,0,840,1400);
+ const coralSweep=p.createRadialGradient(610,820,20,610,820,400);
+ coralSweep.addColorStop(0,'rgba(248,106,163,.14)');
+ coralSweep.addColorStop(1,'rgba(248,106,163,0)');
+ p.fillStyle=coralSweep;p.fillRect(0,0,840,1400);
 
  // Original Space Cadet-influenced visual hierarchy: distinct upper devices,
  // asymmetric side plastics, a central light-core and clear lower flipper play.
@@ -148,7 +158,7 @@ export async function create3DTable(host){
   if(stroke!=='#0000'){p.strokeStyle=stroke;p.lineWidth=lw;p.stroke();}
  }
  // Upper star-map: clean original light paths with muted mid-blue graphic ink.
- p.strokeStyle='rgba(105,158,216,.23)';p.lineWidth=3;
+ p.strokeStyle='rgba(139,209,251,.34)';p.lineWidth=3;
  for(let i=0;i<5;i++){
   p.beginPath();p.moveTo(170,300+i*55);
   p.bezierCurveTo(340,282+i*55,525,304+i*52,660,310+i*48);
@@ -156,7 +166,7 @@ export async function create3DTable(host){
  }
  // Right bank: warm coral segmented moulded plastic, never chrome rails.
  shape([[690,215],[746,202],[762,254],[755,874],[705,884],[711,475]],
-   '#612e3f','#d16c61',9);
+   '#813f68','#fa8390',9);
  p.fillStyle='#ac4853';p.fillRect(716,270,26,530);
  for(let i=0;i<9;i++){
   const y=273+i*63;
@@ -167,9 +177,9 @@ export async function create3DTable(host){
  // Left feature: flowing acrylic shield, target cluster and broad original
  // purple panels, inspired by the reference's use of visual mass.
  shape([[93,382],[124,328],[181,312],[232,332],[212,412],[180,456],
-  [164,569],[143,611],[100,611],[112,488]],'#683c82','#ad78cb',8);
+  [164,569],[143,611],[100,611],[112,488]],'#684cb1','#bea0fc',8);
  shape([[116,390],[150,354],[198,361],[184,422],[157,478],[142,565],
-  [119,558]],'#9863a3','#e1b8ef',4);
+  [119,558]],'#9673d0','#e8d0ff',4);
  for(let i=0;i<4;i++){
   p.fillStyle=i%2?'#ffa66a':'#ffe48f';
   p.fillRect(112+i*12,410+i*40,14,24);
@@ -224,6 +234,20 @@ export async function create3DTable(host){
   shape([[-24,32],[0,-37],[24,32],[8,17],[-8,17]],col,'#1f2342',5);
   p.restore();
  }
+ // Small stamped sci-fi grooves beneath the real mechanical devices.
+ p.save();p.globalAlpha=.37;
+ for(const [side,col] of [[-1,'#73d0fa'],[1,'#fc9dc3']]){
+  p.save();p.translate(420,785);p.scale(side,1);
+  p.lineWidth=4;p.strokeStyle=col;p.beginPath();
+  p.moveTo(108,-48);p.lineTo(165,-24);
+  p.lineTo(180,54);p.lineTo(131,96);p.stroke();
+  p.lineWidth=2;
+  for(let i=0;i<3;i++){
+   p.beginPath();p.moveTo(112+i*11,22);p.lineTo(128+i*11,12);p.stroke();
+  }
+  p.restore();
+ }
+ p.restore();
  // A restrained cyan constellation guides the eye towards the Power Core.
  p.fillStyle='rgba(108,171,225,.72)';
  for(const [x,y] of [[320,740],[360,720],[480,720],[520,740],[345,1010],[495,1010]]){
@@ -253,7 +277,10 @@ export async function create3DTable(host){
  inkLabel('RAMP',656,738,105);
  inkLabel('BALL SAVE',420,1184,166);
  const floorTexture=new T.CanvasTexture(paint);floorTexture.colorSpace=T.SRGBColorSpace;floorTexture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);floorTexture.minFilter=T.LinearMipmapLinearFilter;
- plane(0,0,.166,boardW,boardH,new T.MeshStandardMaterial({map:floorTexture,roughness:.3,metalness:.18}));
+ plane(0,0,.166,boardW,boardH,new T.MeshPhysicalMaterial({
+  map:floorTexture,roughness:.27,metalness:.12,clearcoat:.83,
+  clearcoatRoughness:.19,envMapIntensity:.8
+ }));
  // Brushed steel side rails and body sidewalls.
  for(const px of [-4.34,4.34]){
   box(px,0,.34,.18,boardH,.64,gold);
@@ -385,8 +412,8 @@ export async function create3DTable(host){
  // Each scoring route has two stainless runners below the ball and two
  // safety rails above it, leaving the playfield artwork visible underneath.
  const routeHardware=[];
- const wireSteel=metal('#dce6ee',.15,.94);
- const wireHighlight=metal('#fff1dd',.20,.79);
+ const wireSteel=metal('#e4edf9',.14,.94);
+ const wireHighlight=metal('#fff5e6',.18,.84);
  const wireBracket=metal('#938e99',.31,.70);
  function routeRod(a,b,r,material){
   const from=new T.Vector3(X(a.x),Y(a.y),a.z);
@@ -403,10 +430,17 @@ export async function create3DTable(host){
   // ball visually at the same Z as the engine travel path; elevated sides
   // suggest retention without a full dark channel covering the bumpers.
   for(const side of ['left','right']){
-   for(let i=1;i<edges.length;i++){
-    const a=edges[i-1][side],b=edges[i][side];
-    routeRod({...a,z:a.z-.034},{...b,z:b.z-.034},.024,wireSteel);
-    routeRod({...a,z:a.z+.208},{...b,z:b.z+.208},.022,wireHighlight);
+   // Continuous curved tubes replace disjointed chrome cylinders.
+   const points=roundedWirePoints(edges.map(e=>e[side]),3);
+   for(const [lift,radius,mat] of [
+    [-.034,.024,wireSteel],[.208,.022,wireHighlight]
+   ]){
+    const curve=new T.CatmullRomCurve3(
+     points.map(p=>new T.Vector3(X(p.x),Y(p.y),p.z+lift)),
+     false,'centripetal'
+    );
+    add(new T.TubeGeometry(curve,Math.min(compact?80:112,points.length*3),
+     radius,8,false),mat,0,0,0,false);
    }
   }
   // Three restrained, real-looking bridge ties and mounted support uprights.
@@ -792,6 +826,18 @@ export async function create3DTable(host){
    emissive:'#ff943f',emissiveIntensity:.12,roughness:.27});
   cyl(X(xx),Y(yy),.413,.111,.04,mat,18);powerLampMat.push(mat);
  }
+ // Three flush jewels show the real Power Grid charge stages.
+ const gridLampMaterials=[];
+ for(const g of GRID_LIGHTS){
+  const x=X(g.x),y=Y(g.y);
+  cyl(x,y,.211,.135,.024,chrome,20);
+  const mat=new T.MeshStandardMaterial({
+   color:'#86caed',emissive:'#48b9ee',emissiveIntensity:.14,
+   metalness:.11,roughness:.25
+  });
+  cyl(x,y,.23,.098,.022,mat,20);
+  gridLampMaterials.push(mat);
+ }
  // Phase 4B: a real top rollover lamp bank and two restrained
  // bumper-side light runs. The upper bumper faces remain unobstructed.
  const upperBankLights=[];
@@ -868,11 +914,11 @@ export async function create3DTable(host){
  }
 
  // Warm overhead LED bank, white soft fill and red cabinet-edge glow.
- scene.add(new T.AmbientLight('#a4b4de',.85));
+ scene.add(new T.AmbientLight('#c1d1ff',1.00));
  const key=new T.DirectionalLight('#ffdcbd',2.7);key.position.set(-5,4,13);
  key.castShadow=true;key.shadow.mapSize.set(compact?512:1024,compact?512:1024);key.shadow.camera.left=-9;key.shadow.camera.right=9;
  key.shadow.camera.top=11;key.shadow.camera.bottom=-11;key.shadow.bias=-.0008;scene.add(key);
- const fill=new T.DirectionalLight('#b5c6ff',1.15);fill.position.set(5,-6,11);scene.add(fill);
+ const fill=new T.DirectionalLight('#b4d6ff',1.30);fill.position.set(5,-6,11);scene.add(fill);
  const rim=new T.PointLight('#ff4e64',8,14);rim.position.set(3,3,5);scene.add(rim);
  const sparkle=new T.PointLight('#ffbb6b',6,10);sparkle.position.set(-4,-2,4);scene.add(sparkle);
  // The rendered canvas inherits the parent aspect ratio, not the browser width.
@@ -916,6 +962,9 @@ export async function create3DTable(host){
    laneGateMaterials[i].emissiveIntensity=active?1.9:.16;
   }
   const mid=midTableState(engine);
+  const gridLit=gridIllumination(engine);
+  for(let i=0;i<gridLampMaterials.length;i++)
+   gridLampMaterials[i].emissiveIntensity=gridLit[i]?2.35:.16;
   for(let i=0;i<targetLamps.length;i++){
    const lit=mid.targets[i];
    targetLamps[i].emissiveIntensity=lit?2.05:.17;
@@ -1078,7 +1127,7 @@ export async function create3DTable(host){
   const idle=engine.state==='ready'||engine.state==='gameover';
   sparkle.intensity=(idle&&!reducedMotion?6+Math.sin(now*.002)*1.3:6)+eventFlash*8;
   rim.intensity=8+eventFlash*8;
-  fill.intensity=1.15+eventFlash*.7;
+  fill.intensity=1.30+eventFlash*.7;
   renderer.render(scene,camera);
  }
  // Don't present a blank WebGL canvas as a successfully loaded pinball table.

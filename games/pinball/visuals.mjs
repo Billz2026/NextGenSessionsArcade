@@ -4,7 +4,8 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=2';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=1';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges} from './upper-hardware.mjs?v=1';
+import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges} from './upper-hardware.mjs?v=2';
+import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=1';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -40,8 +41,19 @@ function plastic(c,path,color,glow){
  c.beginPath();path(c);c.fillStyle=color;c.fill();c.lineWidth=2;c.strokeStyle=glow;c.stroke();
 }
 function drawBase(c,anim){
- const bg=G(c,0,0,420,700,[[0,'#172238'],[.28,'#151d33'],[.64,'#17192e'],[1,'#1c1829']]);
+ const bg=G(c,0,0,420,700,[
+  [0,NEON_FINISH.upper],[.35,NEON_FINISH.mid],
+  [.70,NEON_FINISH.lower],[1,'#22263e']
+ ]);
  c.fillStyle=bg;c.fillRect(0,0,BOARD.width,BOARD.height);
+ const blueSheen=c.createRadialGradient(138,268,15,138,268,235);
+ blueSheen.addColorStop(0,'rgba(59,156,230,.24)');
+ blueSheen.addColorStop(1,'rgba(59,156,230,0)');
+ c.fillStyle=blueSheen;c.fillRect(0,0,420,700);
+ const pinkSheen=c.createRadialGradient(305,398,15,305,398,220);
+ pinkSheen.addColorStop(0,'rgba(248,106,163,.16)');
+ pinkSheen.addColorStop(1,'rgba(248,106,163,0)');
+ c.fillStyle=pinkSheen;c.fillRect(0,0,420,700);
  // Worn enamel / star-fleck artwork with stable deterministic placements.
  const rand=seed=>{const n=Math.sin(seed*127.1+67.45)*43758.5453;return n-Math.floor(n)};
  c.fillStyle='rgba(246,226,204,.17)';
@@ -98,7 +110,8 @@ function drawOrbits(c){
   line(c,pts,'rgba(30,32,65,.58)',7);
   line(c,pts,accent,2.5);
   for(const side of ['left','right']){
-   const track=edges.map(e=>[e[side].x,e[side].y]);
+   const track=roundedWirePoints(edges.map(e=>e[side]),3)
+    .map(p=>[p.x,p.y]);
    line(c,track,'#344151',3.3);
    line(c,track,'#e1e8ed',1.7);
   }
@@ -134,7 +147,7 @@ function drawOrbits(c){
 function drawEnamelDetails(c){
  c.save();
  // Printed under-glass lightning arcs & retro arcade scoring ladder.
- c.strokeStyle='rgba(140,156,227,.2)';c.lineWidth=1.15;
+ c.strokeStyle='rgba(145,209,247,.34)';c.lineWidth=1.15;
  for(let i=0;i<5;i++){
   c.beginPath();c.moveTo(116+i*3,355-i*6);
   c.bezierCurveTo(153,382+i*7,253,372-i*7,297-i*3,355-i*6);c.stroke();
@@ -213,6 +226,18 @@ function drawWorkingInserts(c,engine,anim,reducedMotion){
   rect(c,ins.x-19,ins.y-8,38,18,5,ins.on?ins.color:'#2b2532',ins.on?'#fff8d6':'#605361',1.2);
   c.restore();
   text(c,ins.label,ins.x,ins.y+1,8,ins.on?'#2b1826':'#ab90a0','Oxanium',900);
+ }
+ // Three physical-looking Power Grid lights track real charge progression.
+ const gridLit=gridIllumination(engine);
+ for(const g of GRID_LIGHTS){
+  const on=gridLit[g.index];
+  c.save();c.shadowBlur=on?12:0;c.shadowColor=NEON_FINISH.cyan;
+  disk(c,g.x,g.y,8,'#192336','#a6c0d4',1.5);
+  disk(c,g.x,g.y,5.5,on?'#b3eeff':'#43708c',
+   on?'#fff9dc':'#6c97af',1.1);
+  c.restore();
+  text(c,String(g.index+1),g.x,g.y+.25,6.5,
+   on?'#173854':'#d7e9f4','Oxanium',900);
  }
  // Target-bank illumination is driven only by targets that have registered.
  for(const [i,target] of TARGETS.entries()){

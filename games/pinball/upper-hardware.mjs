@@ -18,6 +18,7 @@ export const UPPER_ROUTES=Object.freeze([
 export const UPPER_ROLLOVERS=Object.freeze(LANES.map((l,index)=>
  Object.freeze({index,x:l.x,y:l.y,label:l.label})));
 export const UPPER_BALL_RADIUS=BOARD.radius*.020;
+// Rounded visual wireforms retain all of these authoritative path samples.
 export function guideEdges(route){
  return route.points.map((p,i)=>{
   const a=route.points[Math.max(0,i-1)];

@@ -44,8 +44,9 @@ test('raised visual ball uses real travelHeight from unchanged physics engine',(
  assert.ok(!three.includes('geom.setIndex(indices)'),
   'open wireforms must not have a solid indexed ramp bed');
  assert.ok(three.includes('const wireSteel=metal('));
- assert.ok(three.includes('routeRod({...a,z:a.z-.034}'));
- assert.ok(three.includes('routeRod({...a,z:a.z+.208}'));
+ assert.ok(three.includes('roundedWirePoints(edges.map(e=>e[side]),3)'));
+ assert.ok(three.includes('new T.TubeGeometry(curve,'));
+ assert.ok(three.includes('[-.034,.024,wireSteel],[.208,.022,wireHighlight]'));
  assert.ok(three.includes('for(const route of UPPER_ROUTES)'));
 });
 test('three supported rollover bridges and canvas fallback use matching sensors',()=>{
@@ -69,8 +70,9 @@ test('open wireform channels preserve enough clearance for the ball',()=>{
  assert.ok(!three.includes("geom.setIndex(indices)"),
   'the 3D path must remain open below the wireforms');
  assert.ok(three.includes("for(const side of ['left','right'])"));
- assert.ok(three.includes("routeRod({...a,z:a.z-.034}"));
- assert.ok(three.includes("routeRod({...a,z:a.z+.208}"));
+ assert.ok(three.includes("roundedWirePoints(edges.map(e=>e[side]),3)"));
+ assert.ok(three.includes("new T.TubeGeometry(curve,"));
+ assert.ok(three.includes("[-.034,.024,wireSteel],[.208,.022,wireHighlight]"));
 });
 test('classic shot graphics stay visible and 2D renderer removes black channel bands',()=>{
  assert.ok(three.includes("route(ORBIT_PATH,'#ffc77f','#3c3451')"));

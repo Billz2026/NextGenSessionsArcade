@@ -1,10 +1,18 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4K.3B — classic open chrome wireforms and brighter playfield arrows (playable 3D beta)
+**Current stage:** Phase 4K.4 — bright classic arcade enamel, illuminated grid and polished chrome (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4K.4 — classic-inspired lacquer and sci-fi inserts
+
+- Brightened the original Neon Tilt table's blue-violet enamel, added restrained cool blue and coral lacquer sweeps and stamped original sci-fi groove details; retained all brand artwork and avoided copying Space Cadet assets.
+- Added three real Power Grid progress jewels that illuminate only on the game's existing charges (or jackpot-ready state), in both WebGL and Canvas fallbacks.
+- Rounded the chrome wireform joins over a tiny three-pixel distance and built continuous polished tubes instead of disconnected straight segments, without touching the physics travel path or the 16px-ball clearance.
+- Improved floor clearcoat, reflected highlights, exposure and fill lighting without changing DMD, side console, physics, input handling or scoring.
+- Added automatic regressions verifying shared colours, authentic score-driven insert states and original ramp/ball positions; physical browser and Fold 7 visual validation is still necessary.
 
 ## Phase 4K.3B — classic open chrome upper wireforms
 
