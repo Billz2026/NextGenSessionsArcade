@@ -38,7 +38,8 @@ test('raised visual ball uses real travelHeight from unchanged physics engine',(
  g.advance(1/30);
  assert.ok(g.ball.travelHeight>0);
  assert.ok(three.includes("if(b.mode==='travel')"));
- assert.ok(three.includes("b.travelHeight||.39")+""===undefined?false:true);
+ assert.ok(three.includes('(b.travelHeight||.39)+UPPER_BALL_RADIUS'),
+  'the displayed ball must follow authoritative route height');
  assert.ok(three.includes('UPPER_BALL_RADIUS'));
  assert.ok(three.includes('geom.setIndex(indices)'));
  assert.ok(three.includes('for(const route of UPPER_ROUTES)'));
