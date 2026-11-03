@@ -30,5 +30,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validate WebGL and Canvas renderer syntax
+        run: |
+          node --check games/pinball/render3d.mjs
+          node --check games/pinball/visuals.mjs
+          node --check games/pinball/mid-hardware.mjs
       - name: Run arcade gameplay and display regression tests
         run: node --test tests/roulette-engine.test.mjs tests/pinball-engine.test.mjs tests/pinball-dmd.test.mjs tests/pinball-console.test.mjs tests/pinball-hud.test.mjs tests/pinball-render.test.mjs tests/pinball-lower-hardware.test.mjs tests/pinball-mid-hardware.test.mjs
