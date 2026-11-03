@@ -36,8 +36,8 @@ test('Canvas fallback mirrors hardware and the game loads the new renderers',()=
  assert.ok(fallback.includes('for(let i=0;i<LOWER_SLINGS.length;i++)'));
  assert.ok(fallback.includes('LOWER_POSTS.some('));
  assert.ok(fallback.includes("rect(c,157,680,106,15,3,'#060912'"));
- assert.ok(controller.includes("visuals.mjs?v=16"));
- assert.ok(controller.includes("render3d.mjs?v=18"));
+ assert.ok(controller.includes("visuals.mjs?v=17"));
+ assert.ok(controller.includes("render3d.mjs?v=19"));
 });
 
 test('two connected lower cabinet channels inherit all four real collision guides',()=>{
