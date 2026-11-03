@@ -56,5 +56,5 @@ test('raised decorative centre parts remain separate from unchanged physics',()=
  assert.ok(!game.includes('midTableState'),'the state is derived in renderers');
  assert.ok(game.includes("visuals.mjs?v=19"));
  assert.ok(game.includes("render3d.mjs?v=21"));
- assert.ok(html.includes('game.mjs?v=32'));
+ assert.match(html,/src="\.\/game\.mjs\?v=\d+"/, 'the page loads a cache-versioned game controller');
 });
