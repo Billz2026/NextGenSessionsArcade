@@ -96,10 +96,15 @@ const desktopFocusMedia=window.matchMedia?.('(min-width:1121px)');
 let tableFocusEnabled=false;
 function setTableFocus(enabled){
  const next=Boolean(enabled&&desktopFocusMedia?.matches&&!document.fullscreenElement);
+ const previous=tableFocusEnabled;
  tableFocusEnabled=next;
  document.documentElement.classList.toggle('pinball-focus',next);
  focusButton?.setAttribute('aria-pressed',String(next));
  if(focusExit)focusExit.hidden=!next;
+ // Keep keyboard focus on a visible control when hiding/showing the header.
+ if(next&&!previous)focusExit?.focus({preventScroll:true});
+ else if(previous&&!next&&desktopFocusMedia?.matches&&!document.fullscreenElement)
+  focusButton?.focus({preventScroll:true});
  // Resize after the layout reflows; 2D playfield coordinates stay unchanged.
  requestAnimationFrame(()=>view3d?.resize());
 }

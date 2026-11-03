@@ -14,6 +14,8 @@ test('table focus is a visible desktop option with a clear exit, not a dead butt
  assert.ok(game.includes("focusExit?.addEventListener('click'"));
  assert.ok(game.includes("document.documentElement.classList.toggle('pinball-focus',next)"));
  assert.ok(game.includes("requestAnimationFrame(()=>view3d?.resize())"));
+ assert.ok(game.includes("if(next&&!previous)focusExit?.focus({preventScroll:true})"));
+ assert.ok(game.includes("focusButton?.focus({preventScroll:true})"));
 });
 test('immersive layout retains physical portrait ratio, flipper controls and scoreboard',()=>{
  assert.ok(css.includes('html.pinball-focus:not(:fullscreen) .game-layout'));
