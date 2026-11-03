@@ -3,6 +3,7 @@
 // come from the actual physics engine; moving a collider must move its art.
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=2';
+import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=1';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -205,37 +206,62 @@ function drawTargets(c,engine){
   neonInsert(c,l.x,l.y-5,l.label,on,on?'#ffe5ac':'#eb826d');
   line(c,[[l.x,l.y+22],[l.x,l.y+35]],'rgba(246,174,112,.6)',2);
  }
- for(let i=0;i<TARGETS.length;i++){
-  const t=TARGETS[i],on=engine.targets.has(i)||engine.missions.targets;
-  c.save();c.shadowColor='#000';c.shadowBlur=7;c.shadowOffsetY=7;
-  rect(c,t.x-11,t.y-15,22,32,4,G(c,t.x-11,t.y-15,t.x+11,t.y+17,[[0,'#fff2c2'],[.18,'#c7aca5'],[.48,'#41404b'],[1,'#867376']]),'#1b161f',1);
+ // Mounted target bank: shared pressed-steel backplate and four illuminated
+ // standing switch faces aligned with the game's actual target sensors.
+ c.save();c.shadowColor='#000';c.shadowBlur=9;c.shadowOffsetY=6;
+ rect(c,146,387,123,43,5,
+  G(c,146,387,269,430,[[0,'#bdabb3'],[.26,'#50505e'],[.77,'#292d3a'],[1,'#b1a3a4']]),
+  '#ddc7b1',2.1);
+ c.restore();
+ for(let i=0;i<MID_TARGETS.length;i++){
+  const t=MID_TARGETS[i],on=engine.targets.has(i)||engine.missions.targets;
+  rect(c,t.x-13,t.y-18,26,38,3,'#202532','#93949e',2);
+  rect(c,t.x-10,t.y-15,20,32,2,
+   G(c,t.x-10,t.y-15,t.x+10,t.y+17,[
+    [0,'#cfc5b9'],[.25,'#9e939b'],[.8,'#3b3443'],[1,'#171d2a']
+   ]),'#e4cbb8',1.1);
+  c.save();c.shadowBlur=on?11:0;c.shadowColor='#ffd4a0';
+  rect(c,t.x-7,t.y-11,14,22,2,on?'#ffe2a5':'#a23c57',
+   on?'#fffae6':'#d3928c',1.2);
   c.restore();
-  rect(c,t.x-7,t.y-11,14,20,3,on?'#ffe8a2':'#9c424e',on?'#fff5cf':'#df917e',1.2);
-  text(c,String(i+1),t.x,t.y+1,10,on?'#33201f':'#f4b3a3','Oxanium',900);
-  bolt(c,t.x,t.y+17,2.4);
+  text(c,String(i+1),t.x,t.y+1,10,on?'#392636':'#ffe0c7','Oxanium',900);
+  bolt(c,t.x-9,t.y+15,1.8);bolt(c,t.x+9,t.y+15,1.8);
+  disk(c,t.x,t.y-25,4,on?'#ffe0a5':'#593642',
+   on?'#fff0c5':'#8f7d89',1);
  }
+
 }
 function drawBumpers(c,engine,anim,reducedMotion,bumperFlash=null){
- for(let i=0;i<BUMPERS.length;i++){
-  const b=BUMPERS[i],active=engine.time<engine.frenzyUntil;
-  c.save();c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=16;c.shadowOffsetY=11;
-  disk(c,b.x,b.y+1,b.r+11,'#161923','#14121a',2);c.restore();
-  disk(c,b.x,b.y,b.r+10,R(c,b.x,b.y,b.r+10,[[0,'#ffe7bb'],[.3,'#f5d1a3'],[.61,'#6d5559'],[1,'#d2b39e']]),'#5b4a4b',2);
-  disk(c,b.x,b.y-2,b.r+4,R(c,b.x,b.y-2,b.r+4,[[0,'#fcf3cb'],[.26,'#ee9988'],[.65,'#ac384c'],[1,'#431e38']]),'#f1d0a8',2.6);
-  disk(c,b.x,b.y-2,b.r-6,R(c,b.x,b.y-2,b.r-6,[[0,'#ffefb0'],[.25,'#ff9778'],[.6,'#922b43'],[1,'#641d32']]),'rgba(255,232,174,.8)',1);
-  const flash=active&&!reducedMotion?(Math.sin(anim*16+i*1.8)+1)/2:active?1:.16;
-  c.save();c.globalAlpha=.32+flash*.65;c.shadowColor='#ffb66a';c.shadowBlur=active?17:6;
-  disk(c,b.x,b.y-5,b.r*.49,'#f9c377','#fff5d3',2);c.restore();
-  disk(c,b.x-6,b.y-11,4,'rgba(255,255,255,.72)');
+ const mid=midTableState(engine);
+ for(let i=0;i<MID_BUMPERS.length;i++){
+  const b=MID_BUMPERS[i];
   const hit=!reducedMotion&&bumperFlash?.index===i&&bumperFlash.until>performance.now();
-  if(hit){
-   const intensity=Math.max(0,Math.min(1,(bumperFlash.until-performance.now())/210));
-   c.save();c.globalAlpha=intensity;c.shadowBlur=28;c.shadowColor='#fff0b2';
-   disk(c,b.x,b.y,b.r+12,null,'#ffeab3',3);
-   disk(c,b.x,b.y-4,b.r*.45,'#fff2bc');
-   c.restore();
+  const pulse=reducedMotion?1:.75+.25*Math.sin(anim*7+i*1.2);
+  c.save();c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=17;c.shadowOffsetY=9;
+  disk(c,b.x,b.y+4,b.r+12,'#12151f');c.restore();
+  // Physical mounting washer, plated skirt and visible rubber contact ring.
+  disk(c,b.x,b.y,b.r+10,
+   R(c,b.x,b.y,b.r+12,[[0,'#e6d5c8'],[.38,'#a9a2aa'],[.7,'#545360'],[1,'#1d2534']]),
+   '#c1aaa0',2);
+  disk(c,b.x,b.y-1,b.r+6,'#4a4651','#e9c7b1',3);
+  disk(c,b.x,b.y-2,b.r+1,'#292432','#9a6371',4);
+  disk(c,b.x,b.y-4,b.r-4,
+   R(c,b.x,b.y-5,b.r-3,[
+    [0,hit?'#fff5d5':'#ffdaac'],
+    [.38,'#f69b91'],[.79,'#a84162'],[1,'#532339']
+   ]),'#edc4ae',2.2);
+  c.save();
+  c.globalAlpha=hit?1:mid.frenzy?.72*pulse:.36;
+  c.shadowColor='#ff9a81';c.shadowBlur=hit?16:mid.frenzy?11:4;
+  disk(c,b.x,b.y-6,b.r*.44,'#ffd5ac','#fff2d3',1.4);
+  c.restore();
+  // Three captive screws make the assembly read as mounted machinery.
+  for(let j=0;j<3;j++){
+   const a=j*TAU/3-Math.PI/2;
+   bolt(c,b.x+Math.cos(a)*(b.r+8),b.y+Math.sin(a)*(b.r+8),2.1);
   }
-  text(c,'0'+(i+1),b.x,b.y+47,9,'#ceb9ac');
+  disk(c,b.x-6,b.y-12,3,'rgba(255,255,255,.72)');
+  text(c,'0'+(i+1),b.x,b.y+46,9,'#d3bca8');
  }
 }
 function drawSlings(c){
@@ -356,34 +382,44 @@ function drawNewFeatures(c,engine,reducedMotion=false){
  disk(c,sc.x,sc.y,14,on?'#f48770':'#3a152a','#edbc85',2);
  disk(c,sc.x,sc.y,8,on?'#fff0c0':'#120c17');
  text(c,'SCOOP',sc.x,sc.y+28,9,'#ffdfb2');
- // Signature circular Power Core: concentric illuminated plastic layers.
- const coreX=210,coreY=460,litGrid=engine.powerCharges||0;
- const rushActive=engine.hurryUpUntil>engine.time;
- const pulse=reducedMotion?1:.65+.35*Math.sin(performance.now()*.013);
- disk(c,coreX,coreY,49,'#121629','#a66a83',5);
- disk(c,coreX,coreY,43,R(c,coreX,coreY,45,[
-  [0,rushActive?'#c67176':'#3d79b2'],
-  [.56,'#274a79'],[1,'#121f3c']]),rushActive?'#ffb085':'#75b2df',4);
- disk(c,coreX,coreY,25,'#192947',rushActive?'#ffc3a0':'#447eaf',3);
- disk(c,coreX,coreY,17,'#316499','#95cdee',2);
- if(rushActive)disk(c,coreX,coreY,10,'#ffbb73','#ffe8b0',2);
- for(let i=0;i<16;i++){
-  const a=(i/16)*TAU-Math.PI/2;
-  const x=coreX+Math.cos(a)*44,y=coreY+Math.sin(a)*44;
-  const chase=engine.state==='ready'&&i===Math.floor(performance.now()/170)%16;
-  const on=rushActive||i<litGrid*5||chase;
-  disk(c,x,y,on?4.9:3.8,on?'#ffe0a1':'#497cac',
-   on?'#fff5dc':'#28476f',1.3);
+ // Phase 4K.2 — recessed machine housing and real Power Grid inserts.
+ const coreX=POWER_CORE.x,coreY=POWER_CORE.y;
+ const mid=midTableState(engine),litGrid=mid.charges,rushActive=mid.rush;
+ const pulse=reducedMotion?1:.7+.3*Math.sin(performance.now()*.008);
+ c.save();c.shadowColor='#040710';c.shadowBlur=14;c.shadowOffsetY=7;
+ disk(c,coreX,coreY,50,'#0e1522','#6f6a80',3);c.restore();
+ disk(c,coreX,coreY,47,
+  R(c,coreX,coreY,50,[[0,'#8399aa'],[.36,'#4d6680'],[.68,'#253549'],[1,'#b1a7a9']]),
+  '#d3c3b3',2);
+ disk(c,coreX,coreY,40,'#122033','#b2bbc2',2.2);
+ disk(c,coreX,coreY,33,
+  R(c,coreX,coreY,34,[
+   [0,rushActive?'#ffe1b0':'#72b5dc'],[.40,'#3977ab'],[1,'#17324c']
+  ]),'#a3c7df',2);
+ disk(c,coreX,coreY,19,'#1d405f','#b0d9ed',2.3);
+ c.save();c.globalAlpha=.28+(rushActive?.5:litGrid*.08)*pulse;
+ disk(c,coreX-6,coreY-9,8,'#d7efff');c.restore();
+ for(let i=0;i<POWER_CORE.charges;i++){
+  const a=-Math.PI/2+i*TAU/POWER_CORE.charges+.08;
+  const on=rushActive||i<litGrid;
+  c.beginPath();c.arc(coreX,coreY,35,a,a+TAU/POWER_CORE.charges-.18);
+  c.strokeStyle=on?'#ffe5af':'#4b7796';
+  c.lineWidth=4.4;c.stroke();
  }
- // The subtle inner progression gives the Core identity even when no
- // mission is running; during a rush the centre pulses instead of strobing.
- if(litGrid||rushActive){
-  c.beginPath();c.arc(coreX,coreY,31,-Math.PI/2,
-    -Math.PI/2+TAU*(rushActive?1:litGrid/3));
-  c.lineWidth=4;c.strokeStyle=rushActive?'#ffba7d':'#8bcdf6';c.stroke();
+ for(let i=0;i<16;i++){
+  const a=i*TAU/16-Math.PI/2;
+  const x=coreX+Math.cos(a)*44,y=coreY+Math.sin(a)*44;
+  const lit=rushActive||i<litGrid*5 ||
+   (engine.state==='ready'&&!reducedMotion&&i===Math.floor(performance.now()/180)%16);
+  disk(c,x,y,lit?3.8:3.2,lit?'#ffe0ae':'#6584a5',
+   lit?'#fff4cd':'#344b66',1);
+ }
+ for(let i=0;i<4;i++){
+  const a=i*TAU/4+Math.PI/4;
+  bolt(c,coreX+Math.cos(a)*49,coreY+Math.sin(a)*49,2.2);
  }
  for(const [i,pos] of [[190,462],[210,445],[230,462]].entries()){
-  disk(c,pos[0],pos[1],5,litGrid>i?'#ffc36d':'#443649','#f0be99',1.2);
+  disk(c,pos[0],pos[1],4.8,litGrid>i?'#ffd49d':'#4e4d65','#a9a5b4',1.2);
  }
  const rush=engine.hurryUpUntil>engine.time,overdrive=engine.overdriveUntil>engine.time;
  // Live light cues in the same zones as the 3D display.

@@ -1,10 +1,19 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4K.1B — mechanically integrated lower playfield (playable 3D beta)
+**Current stage:** Phase 4K.2 — mechanical bumpers, Power Core and target bank (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4K.2 — mechanical mid-table rebuild
+
+- Built three multi-layer pop bumpers from exact engine collision coordinates: plated mounting skirts, dark rubber bands, retaining rings, translucent domed caps and captive fasteners. Bumper hits and Frenzy control the lamps, cap brightness and physical insert glow.
+- Rebuilt the four-target bank on a shared steel mount with individual inset contact faces, restrained fasteners and genuine hit-status lamps. The targets don't visually disappear when the unchanged engine still senses their positions.
+- Replaced the flat blue Power Core with a low-profile machined bezel, blue glass lens, captured perimeter fasteners, 16 flush lamps and three illuminated charge arcs driven by actual Power Grid state. All visible parts remain below the ball path to avoid a false collider.
+- Matched bumpers, targets, Power Core and their state-driven lights in the 2D fallback. Central visual coordinates are centralised in mid-hardware.mjs using BUMPERS, TARGETS and ARCADE_MODES from the physics engine.
+- Added static source and game-state checks. No physics, scoring, route definitions, input controls, DMD or console layout changed.
+- Automated tests do not substitute for checking Chrome at 100% and the Samsung Fold 7. Those remain visual/performance QA gates.
 
 ## Phase 4K.1B — mounted guides, tapered bats and open drain
 

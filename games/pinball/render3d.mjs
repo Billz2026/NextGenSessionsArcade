@@ -3,6 +3,7 @@
    Coordinates and moving physical pieces are mapped from engine.mjs. */
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=2';
+import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=1';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -280,26 +281,80 @@ export async function create3DTable(host){
   plane(px,py,.56,.52,.31,label(l.label,'#2b1920',95,180,110));
   for(const d of [-.48,.48])box(px+d,py-.27,.45,.075,.78,.36,nickel);
  }
- // Pop bumpers: 3D stacked metal bases, concentric lenses and lit hemispheres.
+ // Phase 4K.2 — physically constructed bumpers and target-bank hardware.
+ // Every centre is sourced from the unchanged physics sensors.
+ const bumperSkirt=new T.MeshPhysicalMaterial({
+  color:'#b7aab1',roughness:.27,metalness:.72,clearcoat:.48
+ });
+ const bumperRubber=new T.MeshStandardMaterial({color:'#352637',roughness:.88});
+ const bumperCollar=metal('#c7bbc0',.21,.78);
+ const bumperCapMaterials=[],bumperRingMaterials=[];
  const bumperLights=[],bumperTops=[];
- for(const b of BUMPERS){
+ for(const b of MID_BUMPERS){
   const x=X(b.x),y=Y(b.y),r=b.r*SCALE;
-  cyl(x,y,.3,r+.18,.27,darkChrome,48);
-  cyl(x,y,.51,r+.11,.25,gold,48);
-  cyl(x,y,.7,r-.02,.26,rose,48);
-  ring(x,y,.84,r-.07,.042,chrome);
-  const cap=add(new T.SphereGeometry(r*.54,28,18),amber,x,y,.85);
-  cap.scale.z=.34;bumperTops.push(cap);
-  const light=new T.PointLight('#ff9176',2.3,3.2);
-  light.position.set(x,y,1.38);scene.add(light);bumperLights.push(light);
+  // Stacked mounting washer, pressed metal skirt, dark rubber impact band.
+  cyl(x,y,.275,r+.18,.105,black,40);
+  cyl(x,y,.34,r+.145,.11,bumperSkirt,48);
+  ring(x,y,.415,r+.103,.052,chrome);
+  cyl(x,y,.45,r+.04,.115,bumperCollar,48);
+  ring(x,y,.53,r+.015,.062,bumperRubber);
+  cyl(x,y,.59,r-.075,.11,gold,48);
+  // Separate luminescent halo insert and a domed translucent plastic cap.
+  const edge=new T.MeshStandardMaterial({
+   color:'#ffb689',emissive:'#ef5f64',emissiveIntensity:.22,
+   metalness:.18,roughness:.35
+  });
+  ring(x,y,.675,r-.115,.036,edge);bumperRingMaterials.push(edge);
+  const capMat=new T.MeshPhysicalMaterial({
+   color:'#ffccaa',transparent:true,opacity:.87,metalness:.05,
+   roughness:.15,clearcoat:1,clearcoatRoughness:.08,
+   emissive:'#b84857',emissiveIntensity:.18,depthWrite:true
+  });
+  const cap=add(new T.SphereGeometry(r*.65,28,18),capMat,x,y,.69);
+  cap.scale.z=.36;bumperTops.push(cap);bumperCapMaterials.push(capMat);
+  // A short metal cap finial is a clear indication of depth.
+  cyl(x,y,.805,r*.22,.035,chrome,20);
+  for(let i=0;i<3;i++){
+   const a=i*TAU/3-PI/2;
+   const sx=x+Math.cos(a)*(r+.17),sy=y+Math.sin(a)*(r+.17);
+   cyl(sx,sy,.422,.055,.028,gold,12);
+  }
+  const light=new T.PointLight('#ff866a',.75,2.3);
+  light.position.set(x,y,1.1);scene.add(light);bumperLights.push(light);
  }
- // Working targets: raised steel blocks, lamp inset. Dynamic lights follow scoring.
- const targetLamps=[];
- for(const t of TARGETS){
+ // Four standing drop-target facades on a shared mechanical bank plate.
+ // Their hit sensors remain unchanged: only lamps respond to real hits.
+ const left=Math.min(...MID_TARGETS.map(t=>t.x));
+ const right=Math.max(...MID_TARGETS.map(t=>t.x));
+ const targetMid=X((left+right)/2),targetY=Y(407);
+ const bankWidth=(right-left+34)*SCALE;
+ const bankMetal=metal('#929ca8',.29,.77);
+ const targetBacking=new T.MeshPhysicalMaterial({
+  color:'#302b3c',roughness:.37,metalness:.32,clearcoat:.65
+ });
+ box(targetMid,targetY,.26,bankWidth,.72,.115,black);
+ box(targetMid,targetY,.335,bankWidth-.13,.60,.095,bankMetal);
+ box(targetMid,targetY,.40,bankWidth-.25,.47,.08,targetBacking);
+ const targetLamps=[],targetStatusMaterials=[];
+ for(const t of MID_TARGETS){
   const x=X(t.x),y=Y(t.y);
-  box(x,y,.32,.35,.48,.30,darkChrome);
-  const face=box(x,y,.53,.24,.34,.12,cherry);targetLamps.push(face);
-  box(x,y-.39,.24,.31,.12,.16,nickel);
+  box(x,y,.46,.47,.56,.16,darkChrome);
+  box(x,y,.55,.365,.46,.075,rose);
+  const lamp=new T.MeshStandardMaterial({
+   color:'#d56f70',emissive:'#a73250',emissiveIntensity:.20,
+   roughness:.29,metalness:.12
+  });
+  box(x,y,.603,.273,.367,.040,lamp);targetLamps.push(lamp);
+  // Separate shield and status lens so the target body stays legible.
+  box(x,y-.275,.49,.39,.055,.09,nickel);
+  for(const dx of [-.16,.16]){
+   cyl(x+dx,y+.245,.575,.039,.027,chrome,10);
+  }
+  const status=new T.MeshStandardMaterial({
+   color:'#b57677',emissive:'#d75367',emissiveIntensity:.1,roughness:.38
+  });
+  cyl(x,Y(t.y-24),.29,.094,.048,status,16);
+  targetStatusMaterials.push(status);
  }
  // No raised rails or wireforms. Four engine routes are illustrated by
  // flat, illuminated lane markings on the playfield artwork below.
@@ -605,33 +660,62 @@ export async function create3DTable(host){
   [87,258],[76,304],[48,304],[57,244]],leftAcrylic);
  molded([[348,109],[369,100],[378,128],[374,377],
   [356,397],[350,304]],rightAcrylic,.26);
- // A luminous 16-lamp circular Power Core, in the same structural position
- // as the centre feature in a classic arcade pinball table.
- const powerX=X(210),powerY=Y(460);
- cyl(powerX,powerY,.205,.96,.10,metal('#192644',.46,.08),56);
- cyl(powerX,powerY,.31,.77,.08,metal('#285a86',.3,.12),56);
- ring(powerX,powerY,.37,.89,.078,metal('#be7696',.37,.23));
- const coreHaloMaterial=new T.MeshStandardMaterial({
-   color:'#72c7f2',emissive:'#389ce5',emissiveIntensity:.40,
-   roughness:.3,metalness:.1
+ // Phase 4K.2 — the signature Power Core is a recessed machine insert,
+ // not a tall physical obstacle that would contradict the ball simulation.
+ const powerX=X(POWER_CORE.x),powerY=Y(POWER_CORE.y);
+ const coreHousing=metal('#505e72',.29,.75);
+ const coreDark=metal('#182539',.5,.23);
+ const coreGlass=new T.MeshPhysicalMaterial({
+  color:'#3b88c2',metalness:.12,roughness:.11,clearcoat:1,
+  clearcoatRoughness:.06,transparent:true,opacity:.91,
+  emissive:'#2365a2',emissiveIntensity:.15
  });
- ring(powerX,powerY,.43,.68,.038,coreHaloMaterial);
- // Core rings are raised, but sit below the moving ball so no shot is hidden.
+ cyl(powerX,powerY,.20,1.02,.078,black,56);
+ cyl(powerX,powerY,.264,.96,.075,coreHousing,56);
+ ring(powerX,powerY,.316,.915,.045,chrome);
+ cyl(powerX,powerY,.308,.81,.047,coreDark,56);
+ cyl(powerX,powerY,.34,.68,.045,coreGlass,56);
+ ring(powerX,powerY,.393,.62,.035,chrome);
+ const coreHaloMaterial=new T.MeshStandardMaterial({
+  color:'#73c3ea',emissive:'#319be5',emissiveIntensity:.4,
+  roughness:.28,metalness:.08
+ });
+ ring(powerX,powerY,.401,.53,.028,coreHaloMaterial);
+ // Three independent, recessed arc inserts show actual Power Grid charges.
+ const coreArcMaterials=[];
+ for(let i=0;i<POWER_CORE.charges;i++){
+  const mat=new T.MeshStandardMaterial({
+   color:'#376b91',emissive:'#45aae6',emissiveIntensity:.14,
+   roughness:.31,metalness:.07
+  });
+  const arc=add(new T.TorusGeometry(.72,.034,8,30,TAU/POWER_CORE.charges-.17),
+   mat,powerX,powerY,.397,false);
+  arc.rotation.z=-PI/2+i*TAU/POWER_CORE.charges+.09;
+  coreArcMaterials.push(mat);
+ }
+ // Flush-mounted perimeter lamps and four captive bezel screws.
  const coreLightMaterials=[];
  for(let i=0;i<16;i++){
-  const angle=i*TAU/16-PI/2;
-  const xx=powerX+Math.cos(angle)*.88,yy=powerY+Math.sin(angle)*.88;
-  const mat=new T.MeshStandardMaterial({color:i%4?'#83b8ef':'#ffd89a',
-   emissive:i%4?'#397dd0':'#ffb25b',emissiveIntensity:.2,
-   roughness:.38});
-  const cell=add(new T.SphereGeometry(.085,12,10),mat,xx,yy,.42,false);
-  cell.scale.z=.4;coreLightMaterials.push(mat);
+  const a=i*TAU/16-PI/2;
+  const x=powerX+Math.cos(a)*.865,y=powerY+Math.sin(a)*.865;
+  const mat=new T.MeshStandardMaterial({
+   color:i%4?'#94bce5':'#ffd6a1',
+   emissive:i%4?'#377fc7':'#ef9c63',emissiveIntensity:.20,
+   roughness:.28
+  });
+  const lamp=add(new T.SphereGeometry(.072,10,8),mat,x,y,.36,false);
+  lamp.scale.z=.32;coreLightMaterials.push(mat);
+ }
+ for(let i=0;i<4;i++){
+  const a=i*TAU/4+PI/4;
+  const x=powerX+Math.cos(a)*.985,y=powerY+Math.sin(a)*.985;
+  cyl(x,y,.33,.058,.025,gold,12);
  }
  const powerLampMat=[];
  for(const [xx,yy] of [[190,462],[210,445],[230,462]]){
-  const mat=new T.MeshStandardMaterial({color:'#f0c697',
-   emissive:'#ff743e',emissiveIntensity:.15,roughness:.3});
-  cyl(X(xx),Y(yy),.43,.13,.06,mat,18);powerLampMat.push(mat);
+  const mat=new T.MeshStandardMaterial({color:'#e7b47f',
+   emissive:'#ff943f',emissiveIntensity:.12,roughness:.27});
+  cyl(X(xx),Y(yy),.413,.111,.04,mat,18);powerLampMat.push(mat);
  }
  // Phase 4B: a real top rollover lamp bank and two restrained
  // bumper-side light runs. The upper bumper faces remain unobstructed.
@@ -751,18 +835,23 @@ export async function create3DTable(host){
   for(let i=0;i<laneLamps.length;i++){
    laneLamps[i].material=engine.lanes.has(i)||engine.missions.lanes?amber:rubber;
   }
+  const mid=midTableState(engine);
   for(let i=0;i<targetLamps.length;i++){
-   targetLamps[i].material=engine.targets.has(i)||engine.missions.targets?amber:cherry;
+   const lit=mid.targets[i];
+   targetLamps[i].emissiveIntensity=lit?2.05:.17;
+   targetStatusMaterials[i].emissiveIntensity=lit?2.7:.12;
+   targetLamps[i].color.set(lit?'#ffe5b3':'#d56f70');
   }
   const now=performance.now();
   const eventFlash=tableFlash?.until>now&&!reducedMotion
     ?Math.max(0,(tableFlash.until-now)/(tableFlash.duration||600))
     :0;
   for(let i=0;i<bumperLights.length;i++){
-   const hit=bumperFlash?.index===i && bumperFlash.until>now;
-   const frenzy=engine.time<engine.frenzyUntil;
-   bumperLights[i].intensity=hit?6:frenzy?3.1:.65;
-   bumperTops[i].material=hit?chrome:amber;
+   const hit=bumperFlash?.index===i&&bumperFlash.until>now;
+   bumperLights[i].intensity=hit?4.2:mid.frenzy?1.75:.45;
+   bumperCapMaterials[i].emissiveIntensity=hit?2.4:mid.frenzy?1.05:.16;
+   bumperRingMaterials[i].emissiveIntensity=hit?3.1:mid.frenzy?1.55:.22;
+   bumperTops[i].scale.z=hit&&!reducedMotion?.32:.36;
   }
 
   const idleMode=engine.state==='ready'||engine.state==='gameover';
@@ -840,9 +929,14 @@ export async function create3DTable(host){
       idleMode?.45:(side===0?.30:.22);
   }
   coreHaloMaterial.emissiveIntensity=eventFlash?3:
-    rush?2.4*(reducedMotion?1:beat):
-    engine.powerCharges>0?1+engine.powerCharges*.3:
+    mid.rush?2.4*(reducedMotion?1:beat):
+    mid.charges>0?1+mid.charges*.3:
     idleMode?(reducedMotion?.7:.65+.25*Math.sin(now*.002)):.65;
+  coreGlass.emissiveIntensity=mid.rush?1.75*(reducedMotion?1:beat):
+    mid.charges>0?.25+.16*mid.charges:.13;
+  for(let i=0;i<coreArcMaterials.length;i++)
+   coreArcMaterials[i].emissiveIntensity=mid.rush?2.8*(reducedMotion?1:beat):
+    i<mid.charges?2.2:.13;
   for(let i=0;i<coreLightMaterials.length;i++){
    const current=engine.powerCharges>0&&i<engine.powerCharges*5;
    const travel=i===chase%16||i===(chase+1)%16;
