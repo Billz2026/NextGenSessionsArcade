@@ -174,16 +174,28 @@ export async function create3DTable(host){
   p.fillStyle=i%2?'#ffa66a':'#ffe48f';
   p.fillRect(112+i*12,410+i*40,14,24);
  }
- // Visible left loop and right ramp are flat playfield ink with clear arrows.
+ // Bright, original Windows-era arcade lane ink remains visible below the
+ // open wireforms. These graphics do not add sensors or physical rails.
  function route(coords,color,dark){
   p.beginPath();p.moveTo(coords[0][0]*2,coords[0][1]*2);
   for(let i=1;i<coords.length;i++)p.lineTo(coords[i][0]*2,coords[i][1]*2);
-  p.lineWidth=22;p.strokeStyle=dark;p.lineCap='round';p.lineJoin='round';p.stroke();
-  p.lineWidth=10;p.strokeStyle=color;p.stroke();
-  p.lineWidth=3;p.strokeStyle='rgba(255,243,211,.62)';p.stroke();
+  p.lineWidth=12;p.strokeStyle=dark;p.lineCap='round';p.lineJoin='round';p.stroke();
+  p.lineWidth=5;p.strokeStyle=color;p.stroke();
+  p.lineWidth=1.6;p.strokeStyle='rgba(255,246,214,.85)';p.stroke();
+  // Three short, embossed arrow inserts indicate shot direction without
+  // taking up the upper-half playfield like opaque ramp walls.
+  for(const i of [1,3,Math.min(5,coords.length-2)]){
+   const a=coords[i-1],b=coords[i],dx=b[0]-a[0],dy=b[1]-a[1];
+   const ang=Math.atan2(dy,dx)+Math.PI/2;
+   p.save();p.translate(b[0]*2,b[1]*2);p.rotate(ang);
+   p.beginPath();p.moveTo(0,-11);p.lineTo(8,7);p.lineTo(0,2);
+   p.lineTo(-8,7);p.closePath();
+   p.fillStyle=color;p.strokeStyle='#172034';p.lineWidth=2;
+   p.fill();p.stroke();p.restore();
+  }
  }
- route(ORBIT_PATH,'#f9b875','#563949');
- route(RAMP_PATH,'#ff8d98','#572943');
+ route(ORBIT_PATH,'#ffc77f','#3c3451');
+ route(RAMP_PATH,'#ff8fb7','#433251');
  // Centre and Skyline are *thin dashed markings*, not additional overhead
  // pipes. They don't conceal bumpers or compete with the Power Core.
  for(const [path,color] of [[CENTER_PATH,'#8dd8f6'],[SKYLINE_PATH,'#e3a1fa']]){
@@ -369,71 +381,58 @@ export async function create3DTable(host){
   cyl(x,Y(t.y-24),.29,.094,.048,status,16);
   targetStatusMaterials.push(status);
  }
- // Phase 4K.3 — raised ball runways follow the exact segmented engine
- // transport positions, including their changing Z heights.
+ // Phase 4K.3B: classic open wireforms. No dark opaque ramp bed.
+ // Each scoring route has two stainless runners below the ball and two
+ // safety rails above it, leaving the playfield artwork visible underneath.
  const routeHardware=[];
- const routeBed=new T.MeshPhysicalMaterial({
-  color:'#283344',roughness:.34,metalness:.67,clearcoat:.48,
-  side:T.DoubleSide
- });
- const routeChrome=metal('#a8b9c7',.24,.88);
- const routeFastener=metal('#cb9b7b',.3,.68);
- const routeGuard=metal('#34313e',.67,.28);
+ const wireSteel=metal('#dce6ee',.15,.94);
+ const wireHighlight=metal('#fff1dd',.20,.79);
+ const wireBracket=metal('#938e99',.31,.70);
  function routeRod(a,b,r,material){
   const from=new T.Vector3(X(a.x),Y(a.y),a.z);
   const to=new T.Vector3(X(b.x),Y(b.y),b.z);
   const delta=to.clone().sub(from);
-  const rod=add(new T.CylinderGeometry(r,r,delta.length(),9),
-   material,(from.x+to.x)/2,(from.y+to.y)/2,(from.z+to.z)/2);
+  const rod=add(new T.CylinderGeometry(r,r,delta.length(),10),material,
+   (from.x+to.x)/2,(from.y+to.y)/2,(from.z+to.z)/2);
   rod.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());
   return rod;
  }
  for(const route of UPPER_ROUTES){
-  const edges=guideEdges(route),vertices=[],indices=[];
-  for(let i=0;i<edges.length;i++){
-   for(const side of ['left','right']){
-    const p=edges[i][side];
-    vertices.push(X(p.x),Y(p.y),p.z);
-   }
-   if(i){
-    const n=i*2;indices.push(n-2,n-1,n,n-1,n+1,n);
-   }
-  }
-  const geom=new T.BufferGeometry();
-  geom.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
-  geom.setIndex(indices);geom.computeVertexNormals();
-  add(geom,routeBed,0,0,0,false);
-  // Twin slender stainless guards sit to either side of the real ball path.
+  const edges=guideEdges(route);
+  // Four fine wires with an unobstructed open centre. Lower wires carry the
+  // ball visually at the same Z as the engine travel path; elevated sides
+  // suggest retention without a full dark channel covering the bumpers.
   for(const side of ['left','right']){
    for(let i=1;i<edges.length;i++){
     const a=edges[i-1][side],b=edges[i][side];
-    routeRod({...a,z:a.z+.065},{...b,z:b.z+.065},.062,routeGuard);
-    routeRod({...a,z:a.z+.133},{...b,z:b.z+.133},.030,routeChrome);
+    routeRod({...a,z:a.z-.034},{...b,z:b.z-.034},.024,wireSteel);
+    routeRod({...a,z:a.z+.208},{...b,z:b.z+.208},.022,wireHighlight);
    }
-   for(const e of edges){
-    const p=e[side];
-    cyl(X(p.x),Y(p.y),p.z+.125,.035,.045,routeChrome,10);
+  }
+  // Three restrained, real-looking bridge ties and mounted support uprights.
+  // No additional solid pieces are placed across the visible ball path.
+  for(const i of route.supportIndices){
+   const left=edges[i].left,right=edges[i].right;
+   routeRod({...left,z:left.z-.078},{...right,z:right.z-.078},
+    .018,wireBracket);
+   // A single outer-side post at each support creates actual machine depth.
+   const stemHeight=Math.max(0,left.z-.13);
+   if(stemHeight>.08){
+    cyl(X(left.x),Y(left.y),.20+stemHeight/2,.033,stemHeight,wireSteel,10);
+    cyl(X(left.x),Y(left.y),.25,.072,.045,gold,12);
    }
   }
   const mouth=route.entrance;
-  box(X(mouth.x),Y(mouth.y),.253,.60,.35,.075,darkChrome);
+  // Lightweight entrance hardware and a real-event indicator lamp, not a
+  // wide opaque ramp mouth that competes with the playfield artwork.
+  box(X(mouth.x),Y(mouth.y),.255,.40,.24,.050,wireBracket);
   const entryMat=new T.MeshStandardMaterial({
-   color:route.accent==='coral'?'#e99b9b':'#f6cca1',
-   emissive:route.accent==='coral'?'#f06077':'#f7a95b',
-   emissiveIntensity:.32,metalness:.09,roughness:.28
+   color:route.accent==='coral'?'#ffd1c4':'#ffe5ac',
+   emissive:route.accent==='coral'?'#fa6f80':'#f5b963',
+   emissiveIntensity:.33,roughness:.29,metalness:.12
   });
-  ring(X(mouth.x),Y(mouth.y),.314,.245,.025,entryMat);
+  ring(X(mouth.x),Y(mouth.y),.306,.182,.021,entryMat);
   routeHardware.push({kind:route.kind,material:entryMat});
-  // Small braced mounts hold the runway above the playfield.
-  for(const i of route.supportIndices){
-   const p=edges[i].left,targetZ=Math.max(.30,p.z-.075);
-   const stemHeight=targetZ-.23;
-   if(stemHeight<=0)continue;
-   cyl(X(p.x),Y(p.y),.23+stemHeight/2,.043,stemHeight,routeChrome,12);
-   cyl(X(p.x),Y(p.y),.25,.105,.055,routeFastener,16);
-   const opposite=edges[i].right;
-   routeRod({...p,z:p.z-.065},{...opposite,z:opposite.z-.065},.036,routeChrome);
-  }
  }
  // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){

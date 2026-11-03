@@ -13,7 +13,7 @@ function makeRoute(kind,width,accent){
  });
 }
 export const UPPER_ROUTES=Object.freeze([
- makeRoute('orbit',25,'amber'),makeRoute('ramp',24,'coral')
+ makeRoute('orbit',22,'amber'),makeRoute('ramp',22,'coral')
 ]);
 export const UPPER_ROLLOVERS=Object.freeze(LANES.map((l,index)=>
  Object.freeze({index,x:l.x,y:l.y,label:l.label})));

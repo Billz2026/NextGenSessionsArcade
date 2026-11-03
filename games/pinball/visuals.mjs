@@ -90,34 +90,36 @@ function drawBackglass(c,anim){
  }
 }
 function drawOrbits(c){
- // The two guided scoring routes are plated channels, not coloured ink lines.
+ // Classic wireform look: open playfield artwork, coloured shot markers
+ // and delicate steel rails. Avoid heavy dark bands across the bumpers.
  for(const route of UPPER_ROUTES){
-  const pts=route.points.map(p=>[p.x,p.y]),edge=guideEdges(route);
-  const shadow=pts.map(([x,y])=>[x+1.8,y+3.2]);
-  line(c,shadow,'rgba(0,0,0,.65)',route.width+8);
-  line(c,pts,'#151b2b',route.width+3);
-  line(c,pts,route.accent==='coral'?'#6d455d':'#4a586a',route.width-3);
-  line(c,pts,'#303745',route.width-10);
+  const pts=route.points.map(p=>[p.x,p.y]),edges=guideEdges(route);
+  const accent=route.accent==='coral'?'#ff92ba':'#ffd08c';
+  line(c,pts,'rgba(30,32,65,.58)',7);
+  line(c,pts,accent,2.5);
   for(const side of ['left','right']){
-   const track=edge.map(e=>[e[side].x,e[side].y]);
-   line(c,track,'#141d2b',5.2);
-   line(c,track,'#aab7bf',2.7);
-   line(c,track,'#f6ddc2',.9);
+   const track=edges.map(e=>[e[side].x,e[side].y]);
+   line(c,track,'#344151',3.3);
+   line(c,track,'#e1e8ed',1.7);
   }
   for(const i of route.supportIndices){
-   const a=edge[i].left,b=edge[i].right;
-   line(c,[[a.x,a.y],[b.x,b.y]],'#8c91a0',2);
-   disk(c,a.x,a.y,3,'#c6a78b','#313347',1);
+   const a=edges[i].left,b=edges[i].right,p=route.points[i];
+   line(c,[[a.x,a.y],[b.x,b.y]],'#9998a7',1.6);
+   disk(c,a.x,a.y,2.4,'#d4b5a1','#37465c',.8);
+   const q=route.points[i-1],ang=Math.atan2(p.y-q.y,p.x-q.x)+Math.PI/2;
+   c.save();c.translate(p.x,p.y);c.rotate(ang);
+   c.beginPath();c.moveTo(0,-6);c.lineTo(4,4);
+   c.lineTo(0,1);c.lineTo(-4,4);c.closePath();
+   c.fillStyle=accent;c.strokeStyle='#1b2440';c.lineWidth=.8;
+   c.fill();c.stroke();c.restore();
   }
-  disk(c,route.entrance.x,route.entrance.y,7,'#1a1a2b','#ccad96',2);
-  disk(c,route.entrance.x,route.entrance.y,3,
-   route.accent==='coral'?'#fa8586':'#ffd09a');
+  disk(c,route.entrance.x,route.entrance.y,5,'#222339','#e8ccaf',1.6);
+  disk(c,route.entrance.x,route.entrance.y,2.4,accent);
  }
- // Center and Skyline still use clear, modest printed direction markings.
  for(const [path,col] of [[CENTER_PATH,'#89d8f7'],[SKYLINE_PATH,'#dfa6eb']]){
   c.save();c.setLineDash([4,9]);
-  line(c,path.map(([x,y])=>[x,y]),'#292236',7);
-  line(c,path.map(([x,y])=>[x,y]),col,3);c.restore();
+  line(c,path.map(([x,y])=>[x,y]),'#292236',6);
+  line(c,path.map(([x,y])=>[x,y]),col,2.8);c.restore();
  }
  for(const [label,x,y,color] of [
   ['ORBIT',78,372,'#ffdfb4'],['RAMP',315,372,'#ffd4bb'],
