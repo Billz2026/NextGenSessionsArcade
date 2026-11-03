@@ -98,14 +98,18 @@ test('all generated controls are bound and Classic legacy best is preserved',()=
  assert.equal(ui.el['best-score'].textContent,'315');
 });
 
-test('full spin is 3.9 seconds even with an Android reduced-motion preference',()=>{
- const ui=boot(createStore(),{reduced:true});
+test('Android reduced-motion defaults to Short Spin but permits explicit full-spin opt-in',()=>{
+ const store=createStore();
+ const ui=boot(store,{reduced:true});
+ assert.match(ui.el['motion-toggle'].textContent,/SHORT SPIN/);
+ // Explicitly opting into cinematic wheel animation remains possible on a Fold.
+ ui.el['motion-toggle'].click();
  assert.match(ui.el['motion-toggle'].textContent,/FULL SPIN/);
  ui.startSpin(1);
  assert.equal(ui.el['spin-button'].disabled,true);
  ui.flush(300);
  assert.equal(ui.el['spins-count'].textContent,'0');
- // Simulate the remaining animation frames on the same UI instance.
+ // Full spin still lasts 3.9 seconds after the player's choice.
  ui.flush(4200,400);
  assert.equal(ui.el['spins-count'].textContent,'1');
  assert.equal(ui.el['balance'].textContent,'105');
