@@ -29,13 +29,13 @@ test('3D static hardware and moving flipper layers use the collision descriptors
  assert.ok(three.includes('flipperRubberMeshes.push('));
  assert.ok(three.includes('flipperInlays.push('));
  assert.ok(three.includes('mesh.rotation.set(0,0,angle)'));
- assert.ok(three.includes('recessed drain apron') || three.includes('recessed drain'));
+ assert.ok(three.includes('const drainWell=new T.MeshPhysicalMaterial'));
 });
 test('Canvas fallback mirrors hardware and the game loads the new renderers',()=>{
  assert.ok(fallback.includes('for(const channel of LOWER_CHANNELS)'));
  assert.ok(fallback.includes('for(let i=0;i<LOWER_SLINGS.length;i++)'));
  assert.ok(fallback.includes('LOWER_POSTS.some('));
- assert.ok(fallback.includes('Recessed drain apron'));
+ assert.ok(fallback.includes("rect(c,157,680,106,15,3,'#060912'"));
  assert.ok(controller.includes("visuals.mjs?v=16"));
  assert.ok(controller.includes("render3d.mjs?v=18"));
 });
@@ -73,4 +73,12 @@ test('both renderers use tapered flippers and leave an open drain',()=>{
  assert.ok(fallback.includes('batContour(c,f.x,f.y,end.x,end.y,11.4,7.5'));
  assert.ok(three.includes('const drainWell=new T.MeshPhysicalMaterial'));
  assert.ok(fallback.includes('A recessed drain mouth'));
+});
+
+test('recessed drain remains visually open instead of a raised solid crossbar',()=>{
+ assert.ok(three.includes("plane(X(210),Y(685),.274,2.35,.28,drainWell)"));
+ assert.ok(three.includes("box(X(210),Y(672),.298,2.55,.036,.025,lowerSteel)"));
+ assert.ok(!three.includes("box(X(210),Y(685),.204,2.52,.35,.06,lowerShade)"));
+ assert.ok(fallback.includes("rect(c,157,680,106,15,3,'#060912'"));
+ assert.ok(!fallback.includes("rect(c,154,670,112,26,5"));
 });
