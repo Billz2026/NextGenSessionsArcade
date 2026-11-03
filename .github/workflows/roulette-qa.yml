@@ -5,11 +5,17 @@ on:
     branches: [main]
     paths:
       - 'games/roulette/**'
+      - 'index.html'
+      - 'styles.css'
+      - 'assets/neon-tilt-card.svg'
       - 'tests/**'
       - '.github/workflows/roulette-qa.yml'
   pull_request:
     paths:
       - 'games/roulette/**'
+      - 'index.html'
+      - 'styles.css'
+      - 'assets/neon-tilt-card.svg'
       - 'tests/**'
       - '.github/workflows/roulette-qa.yml'
 

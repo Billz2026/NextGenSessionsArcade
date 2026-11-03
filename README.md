@@ -7,9 +7,9 @@ The gold NextGen Sessions wordmark at `assets/nextgen-header-wordmark-2026.webp`
 
 ## Homepage
 - Single-screen **desktop dashboard** targeted at standard desktop viewports, with a compact header, one welcome heading, an instantly visible six-tile library and slim footer.
-- Playable Roulette beta (Game 001) and five category previews (Arcade, Reflex, Puzzle, Strategy, Sports).
-- Browser-credit games remain in planning only, without purchases, real-money stakes or prizes.
-- Cards are not interactive until a game exists.
+- Two playable betas: High Roll Run roulette (Game 001) and Neon Tilt pinball (Game 002), plus four future-category previews (Reflex, Puzzle, Strategy, Sports).
+- Roulette uses fictional credits only; Pinball uses points. No purchases, real-money stakes or prizes.
+- Both playable game cards have direct launch links; future-category cards are non-interactive.
 - On mobile and small screens, the layout reflows into a scrollable grid for legibility. It is not possible to fit all tiles onto every device size without sacrificing usability.
 
 ## Technical
@@ -27,3 +27,11 @@ The former Football Lab Manager is archived on the `archive/football-lab-manager
 - Wheel animation, recent outcomes, local run recovery and personal best scores.
 - No accounts, prizes, purchased credits, real-money stakes, or public leaderboards.
 - Run math tests using `node --test tests/roulette-engine.test.mjs`.
+
+## Game 002: Neon Tilt Pinball
+- Playable visual beta at [games/pinball/](./games/pinball/), linked from the homepage.
+- Original cabinet, 3D table and Canvas fallback with flippers, shots, missions, jackpots and on-device scores.
+- The 3D table uses a 2D physics simulation and guided routes; real multiball has not yet been built.
+- Phase 4C homepage integration retains six tiles on desktop: two playable games and four future categories.
+- Real Chrome desktop and Samsung Fold 7 visual/performance review remains outstanding.
+- Homepage regression: `node --test tests/arcade-home.test.mjs`.

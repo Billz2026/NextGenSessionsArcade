@@ -71,9 +71,24 @@ a{color:inherit;text-decoration:none}img{max-width:100%;display:block}h1,h2,h3,p
 .wheel-art img{width:200px;height:auto;max-width:90%;object-fit:contain;position:relative;z-index:1;transform:rotate(-12deg);filter:drop-shadow(0 12px 15px rgba(0,0,0,.75)) drop-shadow(0 0 24px rgba(240,99,62,.3))}
 .wheel-glow{position:absolute;width:92%;max-width:310px;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(226,83,53,.25),rgba(226,83,53,.05) 52%,transparent 72%);box-shadow:0 0 0 18px rgba(220,64,52,.025),0 0 0 48px rgba(225,65,52,.018)}
 .feature-bottomline{display:flex;justify-content:space-between;gap:15px;padding:7px 17px;border-top:1px solid rgba(255,255,255,.11);font:750 9px var(--tech);letter-spacing:.045em;color:#c6aaa3}
+/* Game 002 joins Roulette in the featured row, with four upcoming categories below. */
+.pinball-card{--accent:#f6b16d;grid-column:span 6;display:flex;flex-direction:column;border-color:rgba(242,172,114,.54);background:radial-gradient(ellipse at 81% 46%,rgba(193,75,62,.28),transparent 54%),linear-gradient(125deg,#2a1a21,#17121b 58%,#0e1018)}
+.pinball-card::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(125deg,transparent 25%,rgba(247,197,137,.055) 49%,transparent 68%);pointer-events:none}
+.pinball-topline{color:#f4d2b0}
+.pinball-content{position:relative;display:flex;align-items:center;flex:1;min-height:0;padding:4px 0}
+.pinball-copy{position:relative;z-index:2;width:60%;min-width:0;padding:8px 0 7px 24px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.pinball-copy h3{font:900 clamp(40px,3.2vw,57px)/.91 var(--display);letter-spacing:.01em;white-space:nowrap;margin:6px 0}
+.pinball-copy h3 em{font-style:normal;color:#ff866a}
+.pinball-copy>p{font-size:12px;line-height:1.34;color:#e0cbca;max-width:270px}
+.pinball-card .feature-chips{margin-top:9px}
+.pinball-play-button{margin-top:9px;background:linear-gradient(100deg,#ffd08b,#e79068);color:#25131a;box-shadow:0 8px 22px rgba(230,102,66,.19)}
+.pinball-play-button:hover{box-shadow:0 12px 26px rgba(238,130,74,.34)}
+.pinball-play-button .play-arrow{border-left-color:rgba(43,25,30,.24)}
+.pinball-art{position:absolute;inset:5px 1% 5px 51%;display:flex;justify-content:center;align-items:center;pointer-events:none;opacity:.98}
+.pinball-art img{display:block;height:100%;width:auto;max-width:84%;object-fit:contain;transform:rotate(10deg);filter:drop-shadow(0 14px 16px rgba(0,0,0,.78)) drop-shadow(0 0 18px rgba(232,118,77,.24))}
 .upcoming-anchor{position:absolute;width:0;height:0;overflow:hidden;scroll-margin-top:85px}
 .category-card{grid-column:span 3;display:flex;flex-direction:column;justify-content:space-between;padding:14px 16px;background:radial-gradient(ellipse at 78% 28%,color-mix(in srgb,var(--accent) 28%,transparent),transparent 57%),linear-gradient(135deg,#211a20,#111318 75%);border-color:color-mix(in srgb,var(--accent) 35%,#29232d)}
-.arcade-card{--accent:#ff715b}.reflex-card{--accent:#f4bf58}.puzzle-card{--accent:#70cfce}.strategy-card{--accent:#bd94ec}.sports-card{--accent:#a8d46c}
+.reflex-card{--accent:#f4bf58}.puzzle-card{--accent:#70cfce}.strategy-card{--accent:#bd94ec}.sports-card{--accent:#a8d46c}
 .category-card::before{content:'';position:absolute;inset:0;z-index:-2;background:linear-gradient(138deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 60%)}
 .category-card::after{content:'';position:absolute;right:-45px;bottom:-68px;width:165px;height:165px;z-index:-1;border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);border-radius:50%;box-shadow:0 0 0 27px color-mix(in srgb,var(--accent) 3%,transparent),0 0 0 54px color-mix(in srgb,var(--accent) 2%,transparent)}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;position:relative;z-index:1;font:800 9px var(--tech);letter-spacing:.04em;color:#bab3bc;white-space:nowrap}
@@ -83,7 +98,7 @@ a{color:inherit;text-decoration:none}img{max-width:100%;display:block}h1,h2,h3,p
 .category-copy p{color:var(--accent);font:800 9px var(--tech);letter-spacing:.045em;margin-bottom:4px}
 .category-copy h3{font:900 clamp(35px,3.2vw,49px)/.9 var(--display);letter-spacing:.018em;margin-bottom:6px}.category-copy h3 span{color:var(--accent)}
 .category-copy>span{color:#cbc2c9;font-size:12px;line-height:1.28}
-.puzzle-card,.strategy-card,.sports-card{grid-column:span 4}
+.puzzle-card,.strategy-card,.sports-card{grid-column:span 3}
 .puzzle-card .category-art,.strategy-card .category-art,.sports-card .category-art{top:7%;right:11%;width:min(33%,125px);opacity:.32}
 .library-note{flex:none;margin:9px 0 0;color:#8c8790;font-size:11px}.library-note span{color:var(--gold);margin-right:5px}
 .footer{flex:none;border-top:1px solid var(--line);background:#07080b}.footer-inner{min-height:46px;display:flex;align-items:center;justify-content:space-between;gap:20px}
@@ -98,6 +113,7 @@ a{color:inherit;text-decoration:none}img{max-width:100%;display:block}h1,h2,h3,p
  .feature-copy h3{font-size:42px}.wheel-art img{width:170px}.feature-copy>p{font-size:11px}.feature-chips{margin-top:8px}.play-button{margin-top:9px;min-height:37px}
  .feature-topline{padding:8px 15px 7px}.feature-bottomline{padding:5px 15px}
  .category-card{padding:11px 13px}.category-copy h3{font-size:39px}
+ .pinball-copy h3{font-size:43px}.pinball-copy>p{font-size:11px}.pinball-card .feature-chips{margin-top:5px}.pinball-play-button{margin-top:6px;min-height:36px}
  .footer-inner{min-height:37px}
 }
 @media(min-width:1500px){.wheel-art img{width:240px}}
@@ -106,10 +122,9 @@ a{color:inherit;text-decoration:none}img{max-width:100%;display:block}h1,h2,h3,p
  .dashboard-head{margin-bottom:20px}
  .dashboard-copy h1{font-size:clamp(43px,5.8vw,62px)}
  .game-grid{height:auto;flex:initial;max-height:none;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:none;gap:12px}
- .feature-card{grid-column:1/-1;min-height:320px}
+ .feature-card,.pinball-card{grid-column:1/-1;min-height:320px}
  .feature-copy{width:50%;padding-left:32px}.feature-copy h3{font-size:clamp(48px,6vw,66px)}.wheel-art img{width:240px;height:auto;max-width:88%}
  .category-card,.puzzle-card,.strategy-card,.sports-card{grid-column:span 3;min-height:218px}
- .sports-card{grid-column:1/-1;min-height:175px}
  .footer-inner{min-height:53px;flex-wrap:wrap;padding-block:12px}
 }
 @media(max-width:700px){
@@ -124,13 +139,13 @@ a{color:inherit;text-decoration:none}img{max-width:100%;display:block}h1,h2,h3,p
  .dashboard-numbers{margin-top:13px;justify-content:flex-start;gap:16px;padding:0}.dashboard-numbers strong{font-size:28px}.dashboard-numbers span{font-size:8px}.dashboard-numbers i{height:25px}
  .library-heading{align-items:flex-start;flex-direction:column;gap:7px;margin-bottom:11px}.library-heading h2{font-size:31px}.library-heading>p{font-size:9px}
  .game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
- .feature-card{grid-column:1/-1;min-height:337px}.feature-topline{padding:11px 12px 9px;font-size:9px}.feature-copy{padding:10px 0 12px 15px;width:56%}.feature-copy h3{font-size:clamp(32px,8.5vw,43px);margin:7px 0}.feature-copy>p{font-size:10.5px;line-height:1.35;max-width:170px}
+ .feature-card{grid-column:1/-1;min-height:337px}
+ .pinball-card{grid-column:1/-1;min-height:305px}.pinball-copy{width:60%;padding-left:16px}.pinball-copy h3{font-size:clamp(36px,8.5vw,48px)}.pinball-copy>p{font-size:10.5px;max-width:195px}.pinball-art{left:49%;right:0}.pinball-art img{max-width:90%}.pinball-play-button{font-size:10px;padding:0 9px;gap:8px}.feature-topline{padding:11px 12px 9px;font-size:9px}.feature-copy{padding:10px 0 12px 15px;width:56%}.feature-copy h3{font-size:clamp(32px,8.5vw,43px);margin:7px 0}.feature-copy>p{font-size:10.5px;line-height:1.35;max-width:170px}
  .feature-chips{margin-top:9px;gap:4px}.feature-chips span{font-size:8px;padding:3px 5px}
  .play-button{min-height:39px;margin-top:12px;font-size:10px;gap:8px;padding:0 9px}.play-arrow{padding-left:6px;font-size:16px}
  .wheel-art{left:53%;}.wheel-art img{width:min(100%,178px);height:auto;max-height:85%}
  .feature-bottomline{font-size:8px;padding:8px 12px;gap:8px}
  .category-card,.puzzle-card,.strategy-card,.sports-card{grid-column:span 1;min-height:190px;padding:11px}
- .sports-card{grid-column:1/-1;min-height:156px}
  .card-head{font-size:8px;flex-wrap:wrap;gap:5px}.coming-label{font-size:7px;padding:4px 5px}
  .category-art,.puzzle-card .category-art,.strategy-card .category-art,.sports-card .category-art{width:60%;right:5%;top:16%;opacity:.31}
  .category-copy p{font-size:8px}.category-copy h3{font-size:clamp(31px,7vw,44px)}.category-copy>span{font-size:10px}
@@ -143,5 +158,6 @@ a{color:inherit;text-decoration:none}img{max-width:100%;display:block}h1,h2,h3,p
  .wheel-art{left:53%}.wheel-art img{width:min(112%,160px)}
  .category-copy h3{font-size:30px}.category-card{padding:9px}
  .feature-bottomline{font-size:7px}
+ .pinball-copy h3{font-size:33px}.pinball-copy>p{font-size:10px;max-width:150px}.pinball-art{left:52%}.pinball-art img{max-width:96%}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
