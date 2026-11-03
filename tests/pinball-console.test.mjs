@@ -27,10 +27,10 @@ test('missions, personal records and instructions remain accessible',()=>{
  assert.equal(new Set(ids).size,ids.length,'IDs stay unique');
 });
 test('isolated stylesheet is linked, with desktop drawer and mobile flow',()=>{
- assert.match(html,/console\\.css\\?v=1/);
- assert.match(css,/\\.hud\\.hud-v2/);
- assert.match(css,/max-height:min\\(62dvh,470px\\)/);
- assert.match(css,/@media\\(max-width:1120px\\)/);
- assert.match(css,/position:static/);
- assert.match(css,/prefers-reduced-motion/);
+ assert.ok(html.includes('console.css?v=1'));
+ assert.ok(css.includes('.hud.hud-v2'));
+ assert.ok(css.includes('max-height:min(62dvh,470px)'));
+ assert.ok(css.includes('@media(max-width:1120px)'));
+ assert.ok(css.includes('position:static'));
+ assert.ok(css.includes('prefers-reduced-motion'));
 });
