@@ -1,10 +1,19 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4I — focused objectives, sharp LED text and balanced desktop console (playable 3D beta)
+**Current stage:** Phase 4J — widescreen arcade cabinet bay (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4J — fill widescreen margins without distorting the playfield
+
+- Replaced the desktop height-derived narrow shell with a stage using up to 1640px of screen width.
+- Expanded the existing score console and added a restrained, full-width metallic cabinet bay with two ambient side rails; no additional controls or text panels.
+- Kept the portrait playfield at its original 3:5 aspect ratio, its flippers visible, and the one-page desktop vertical fit.
+- Desktop laptop widths use a simpler cabinet bay; phone, Fold and native fullscreen layouts are unchanged.
+- The table itself is already height limited at normal desktop zoom. Stretching it horizontally would distort ball and flipper positions. The improvement uses surrounding space instead.
+- Visual desktop and Fold browser QA remains necessary; physics and 3D camera are unchanged.
 
 ## Phase 4I — hardware display clarity and console balance
 

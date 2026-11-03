@@ -1034,3 +1034,39 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
 .launcher-section.is-ball-live #power-fill{background:linear-gradient(90deg,#5aabc6,#9bdcd0);box-shadow:0 0 8px #5aabc64d}
 .launcher-section.is-ball-live .power-row{color:#c7f0e8}
 .launcher-section.is-ball-live .launch-button:disabled{opacity:1;background:#1e303f;color:#9fc6c9;border-color:#45677a;cursor:default}
+
+/* Phase 4J: use widescreen real estate without stretching the 3:5 playfield. */
+@media(min-width:1121px){
+ html:not(:fullscreen) .shell{width:min(calc(100% - 28px),1640px);max-width:1640px}
+ html:not(:fullscreen) .game-layout{
+  grid-template-columns:minmax(0,1fr) clamp(390px,32vw,530px);
+  gap:clamp(10px,1.1vw,20px);align-items:stretch
+ }
+ html:not(:fullscreen) .machine{
+  position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;
+  min-width:0;overflow:hidden;padding:4px clamp(15px,2vw,32px) 5px;
+  border:1px solid #a981804e;border-radius:17px;
+  background:radial-gradient(ellipse 30% 70% at 50% 52%,#ff89612c,transparent 92%),
+   radial-gradient(ellipse 22% 50% at 19% 47%,#b35b8020,transparent 90%),
+   radial-gradient(ellipse 22% 50% at 81% 47%,#488dcc1b,transparent 90%),
+   linear-gradient(90deg,#1a121d,#0a0c15 29%,#18111e 50%,#0a0d17 72%,#17101b);
+  box-shadow:inset 0 1px #ffdab51f,inset 0 0 0 4px #0a0819b3,0 16px 38px #0007
+ }
+ html:not(:fullscreen) .machine::before,html:not(:fullscreen) .machine::after{
+  display:block!important;content:"";position:absolute;z-index:0;top:5%;bottom:5%;
+  width:clamp(9px,1.3vw,17px);opacity:.64;border:1px solid #e0ab9d45;
+  border-radius:8px;pointer-events:none;animation:none!important;
+  background:repeating-linear-gradient(180deg,transparent 0 25px,#ffa96f73 26px 30px,transparent 31px 48px),
+   linear-gradient(90deg,#1c1220,#684352 43%,#221b2c);
+  box-shadow:inset 0 0 6px #000a,0 0 17px #ef686c26
+ }
+ html:not(:fullscreen) .machine::before{left:clamp(10px,2.1vw,30px)}
+ html:not(:fullscreen) .machine::after{right:clamp(10px,2.1vw,30px);transform:scaleX(-1)}
+ html:not(:fullscreen) .cabinet{position:relative;z-index:1}
+ html:not(:fullscreen) .hud.hud-v2{width:100%;min-width:0}
+}
+@media(min-width:1121px) and (max-width:1280px){
+ html:not(:fullscreen) .game-layout{grid-template-columns:minmax(0,1fr) minmax(355px,36%);gap:10px}
+ html:not(:fullscreen) .machine{padding-inline:8px;border-radius:12px}
+ html:not(:fullscreen) .machine::before,html:not(:fullscreen) .machine::after{display:none!important}
+}

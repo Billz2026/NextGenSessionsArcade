@@ -78,3 +78,15 @@ test('desktop console uses available vertical space without adding unnecessary c
  assert.ok(html.includes('HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP'));
  assert.ok(!html.includes('TABLE ONLINE'));
 });
+
+test('widescreen desktop stage fills the viewport without stretching table geometry',()=>{
+ const tableCss=readFileSync(new URL('../games/pinball/game.css',import.meta.url),'utf8');
+ const wide=tableCss.slice(tableCss.lastIndexOf('/* Phase 4J:'));
+ assert.ok(html.includes('game.css?v=16'));
+ assert.ok(wide.includes('1640px'));
+ assert.ok(wide.includes('grid-template-columns:minmax(0,1fr) clamp(390px,32vw,530px)'));
+ assert.ok(wide.includes('html:not(:fullscreen) .machine'));
+ assert.ok(wide.includes('max-width:1280px'));
+ assert.ok(tableCss.includes('aspect-ratio:3/5'));
+ assert.ok(!wide.includes('.playfield-wrap{'));
+});
