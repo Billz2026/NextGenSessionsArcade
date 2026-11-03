@@ -45,8 +45,8 @@ test('wireform rounding preserves all engine path geometry and route endpoints',
  assert.ok(!three.includes('const routeBed=new T.MeshPhysicalMaterial'));
 });
 test('the phase changes no scoring or physics engine',()=>{
- assert.ok(game.includes("render3d.mjs?v=22"));
- assert.ok(game.includes("visuals.mjs?v=20"));
+ assert.ok(game.includes("render3d.mjs?v=23"));
+ assert.ok(game.includes("visuals.mjs?v=21"));
  assert.ok(!three.includes('new T.RigidBody'));
  assert.ok(!canvas.includes('engine.score+='));
 });

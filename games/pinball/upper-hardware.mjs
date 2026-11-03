@@ -9,7 +9,7 @@ function makeRoute(kind,width,accent){
   kind,width,accent,
   points:Object.freeze(path.map(([x,y,z])=>Object.freeze({x,y,z}))),
   entrance:Object.freeze({x:shot.x,y:shot.y,r:shot.r}),
-  supportIndices:Object.freeze([1,3,Math.min(5,path.length-2)])
+  supportIndices:Object.freeze([1,Math.min(4,path.length-2)])
  });
 }
 export const UPPER_ROUTES=Object.freeze([

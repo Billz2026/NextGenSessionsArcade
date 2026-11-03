@@ -1,10 +1,18 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4K.4 — bright classic arcade enamel, illuminated grid and polished chrome (playable 3D beta)
+**Current stage:** Phase 4K.5 — wireform cleanup, hardware depth and lower inserts (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4K.5 — final classic arcade playfield refinement
+
+- Reduced the upper wireform clutter from four to three metal runs per route: two full-length lower runners plus one outer upper guard. The physics-defined ball trajectory and elevated ball height remain unchanged. Reduced support braces from three to two per route.
+- Added a shared softly feathered contact-shadow texture beneath three pop bumpers, four-target assembly, Power Core and both slingshot housings. This separates hardware visually from enamel without new opaque playfield parts or heavy shadow-casting lights.
+- Added two flush directional chevron inserts above the flippers, tied only to real ramp/orbit shots (or completion of the existing ride mission). The left/right inserts are not new scoring targets.
+- Matched the lower chevrons and extra hardware shadows in the Canvas fallback. Existing controls, side console, score logic, DMD and responsive layouts are unchanged.
+- Added new regressions for three-rail upper hardware, actual-shot indicators and non-blocking contact shadows. WebGL/phone/Fold live appearance and performance still need to be checked.
 
 ## Phase 4K.4 — classic-inspired lacquer and sci-fi inserts
 

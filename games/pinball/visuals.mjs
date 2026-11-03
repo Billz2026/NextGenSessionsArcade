@@ -6,6 +6,7 @@ import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hard
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=1';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges} from './upper-hardware.mjs?v=2';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=1';
+import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide} from './finishing-detail.mjs?v=1';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -114,6 +115,9 @@ function drawOrbits(c){
     .map(p=>[p.x,p.y]);
    line(c,track,'#344151',3.3);
    line(c,track,'#e1e8ed',1.7);
+   // Only the outer high safety rail gets an additional polished highlight.
+   if(side===elevatedGuardSide(route.kind))
+    line(c,track,'rgba(255,247,226,.58)',.7);
   }
   for(const i of route.supportIndices){
    const a=edges[i].left,b=edges[i].right,p=route.points[i];
@@ -265,7 +269,8 @@ function drawTargets(c,engine){
  c.restore();
  for(let i=0;i<MID_TARGETS.length;i++){
   const t=MID_TARGETS[i],on=engine.targets.has(i)||engine.missions.targets;
-  rect(c,t.x-13,t.y-18,26,38,3,'#202532','#93949e',2);
+  c.save();c.shadowColor='rgba(2,5,14,.72)';c.shadowBlur=8;c.shadowOffsetY=5;
+  rect(c,t.x-13,t.y-18,26,38,3,'#202532','#93949e',2);c.restore();
   rect(c,t.x-10,t.y-15,20,32,2,
    G(c,t.x-10,t.y-15,t.x+10,t.y+17,[
     [0,'#cfc5b9'],[.25,'#9e939b'],[.8,'#3b3443'],[1,'#171d2a']
@@ -287,7 +292,7 @@ function drawBumpers(c,engine,anim,reducedMotion,bumperFlash=null){
   const b=MID_BUMPERS[i];
   const hit=!reducedMotion&&bumperFlash?.index===i&&bumperFlash.until>performance.now();
   const pulse=reducedMotion?1:.75+.25*Math.sin(anim*7+i*1.2);
-  c.save();c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=17;c.shadowOffsetY=9;
+  c.save();c.shadowColor='rgba(0,0,0,.82)';c.shadowBlur=19;c.shadowOffsetY=10;
   disk(c,b.x,b.y+4,b.r+12,'#12151f');c.restore();
   // Physical mounting washer, plated skirt and visible rubber contact ring.
   disk(c,b.x,b.y,b.r+10,
@@ -317,8 +322,10 @@ function drawBumpers(c,engine,anim,reducedMotion,bumperFlash=null){
 function drawSlings(c){
  for(let i=0;i<LOWER_SLINGS.length;i++){
   const s=LOWER_SLINGS[i],pivot=i===0?[130,547]:[290,547];
+  c.save();c.shadowColor='rgba(3,4,13,.75)';c.shadowBlur=11;c.shadowOffsetY=6;
   plastic(c,a=>{a.moveTo(s.x1,s.y1);a.lineTo(s.x2,s.y2);a.lineTo(...pivot);a.closePath()},
    G(c,s.x1,s.y1,s.x2,s.y2,[[0,'#b0595b'],[.42,'#692c3f'],[1,'#331f2d']]),'#dcb19c');
+  c.restore();
   line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#1a1925',10);
   line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#5d3648',7);
   line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#f0bf9c',2.2);
@@ -538,6 +545,27 @@ function drawLower(c,engine){
  rect(c,370,656,25,27,7,G(c,371,658,390,681,[[0,'#fff4d6'],[.35,'#b7a7a4'],[1,'#72545b']]),'#322a33',2);
  if(engine.ball?.mode==='shooter')text(c,Math.round(engine.charge*100)+'%',380,458,11,'#ffe8c0');
 }
+// Flush, original sci-fi lane inserts near the real flippers. The lights
+// are recoloured only by the already-existing Ramp and Orbit shot events.
+function drawLowerDirectionInserts(c,engine,reducedMotion){
+ for(const item of LOWER_DIRECTION_INSERTS){
+  const on=directionInsertActive(engine,item.kind);
+  const {x,y}=item;
+  c.save();
+  c.shadowColor=item.colour;c.shadowBlur=on&&!reducedMotion?11:0;
+  disk(c,x,y,11,'#1b2337','#a7b9c8',2);
+  disk(c,x,y,8,on?item.colour:'#41526b','#c2cbd9',1);
+  c.beginPath();
+  c.moveTo(x,y-6);c.lineTo(x+6,y+3);
+  c.lineTo(x+2,y+2);c.lineTo(x+2,y+5);
+  c.lineTo(x-2,y+5);c.lineTo(x-2,y+2);
+  c.lineTo(x-6,y+3);c.closePath();
+  c.fillStyle=on?'#17334a':'#b4cedf';c.fill();
+  c.restore();
+  text(c,item.label,x,y-17,8,on?'#fff2cd':'#aabbd3',
+   'Barlow Condensed',900);
+ }
+}
 function drawUpperRouteFeedback(c,engine,reducedMotion){
  const last=engine.lastShot;
  if(!last||engine.time-last.at>2)return;
@@ -573,6 +601,7 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  drawWorkingInserts(ctx,engine,anim,reducedMotion);
  drawNewFeatures(ctx,engine,reducedMotion);
  drawLower(ctx,engine);
+ drawLowerDirectionInserts(ctx,engine,reducedMotion);
  drawFlippers(ctx,engine);
  drawBall(ctx,engine);
  // Two restrained angled light reflections, as if viewed through tempered glass.

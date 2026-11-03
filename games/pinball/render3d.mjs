@@ -6,6 +6,7 @@ import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=1';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=2';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=1';
+import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide} from './finishing-detail.mjs?v=1';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -281,6 +282,26 @@ export async function create3DTable(host){
   map:floorTexture,roughness:.27,metalness:.12,clearcoat:.83,
   clearcoatRoughness:.19,envMapIntensity:.8
  }));
+ // Soft baked contact shadows give hardware physical separation without
+ // additional real-time lights or opaque surfaces over the playfield.
+ const shadowCanvas=document.createElement('canvas');
+ shadowCanvas.width=64;shadowCanvas.height=64;
+ const shadowCtx=shadowCanvas.getContext('2d');
+ const shadowFalloff=shadowCtx.createRadialGradient(32,32,2,32,32,31);
+ shadowFalloff.addColorStop(0,'rgba(3,6,16,.70)');
+ shadowFalloff.addColorStop(.48,'rgba(3,6,16,.35)');
+ shadowFalloff.addColorStop(1,'rgba(3,6,16,0)');
+ shadowCtx.fillStyle=shadowFalloff;shadowCtx.fillRect(0,0,64,64);
+ const shadowTexture=new T.CanvasTexture(shadowCanvas);
+ const contactMaterial=new T.MeshBasicMaterial({
+  map:shadowTexture,transparent:true,opacity:.72,
+  depthWrite:false,side:T.DoubleSide,toneMapped:false
+ });
+ function contactShadow(x,y,w,h){
+  const mesh=add(new T.PlaneGeometry(w,h),contactMaterial,x,y-.065,.182,false);
+  mesh.receiveShadow=false;mesh.castShadow=false;
+  return mesh;
+ }
  // Brushed steel side rails and body sidewalls.
  for(const px of [-4.34,4.34]){
   box(px,0,.34,.18,boardH,.64,gold);
@@ -344,6 +365,7 @@ export async function create3DTable(host){
  const bumperLights=[],bumperTops=[];
  for(const b of MID_BUMPERS){
   const x=X(b.x),y=Y(b.y),r=b.r*SCALE;
+  contactShadow(x,y,r*2.8,r*2.8);
   // Stacked mounting washer, pressed metal skirt, dark rubber impact band.
   cyl(x,y,.275,r+.18,.105,black,40);
   cyl(x,y,.34,r+.145,.11,bumperSkirt,48);
@@ -380,6 +402,7 @@ export async function create3DTable(host){
  const right=Math.max(...MID_TARGETS.map(t=>t.x));
  const targetMid=X((left+right)/2),targetY=Y(407);
  const bankWidth=(right-left+34)*SCALE;
+ contactShadow(targetMid,targetY,bankWidth+.30,1.13);
  const bankMetal=metal('#929ca8',.29,.77);
  const targetBacking=new T.MeshPhysicalMaterial({
   color:'#302b3c',roughness:.37,metalness:.32,clearcoat:.65
@@ -426,15 +449,19 @@ export async function create3DTable(host){
  }
  for(const route of UPPER_ROUTES){
   const edges=guideEdges(route);
-  // Four fine wires with an unobstructed open centre. Lower wires carry the
-  // ball visually at the same Z as the engine travel path; elevated sides
-  // suggest retention without a full dark channel covering the bumpers.
+  const outerGuard=elevatedGuardSide(route.kind);
+  // Three wires rather than four: two bottom runners and a high outer guard.
+  // This reduces visual tangles above the bumpers without changing the path.
+  // Two lower runners carry the ball visually at the same engine height.
+  // One outside upper guard suggests retention without overlapping the
+  // inner bumper hardware or hiding the playfield underneath.
   for(const side of ['left','right']){
    // Continuous curved tubes replace disjointed chrome cylinders.
    const points=roundedWirePoints(edges.map(e=>e[side]),3);
    for(const [lift,radius,mat] of [
     [-.034,.024,wireSteel],[.208,.022,wireHighlight]
    ]){
+    if(lift>0 && side!==outerGuard)continue;
     const curve=new T.CatmullRomCurve3(
      points.map(p=>new T.Vector3(X(p.x),Y(p.y),p.z+lift)),
      false,'centripetal'
@@ -443,7 +470,7 @@ export async function create3DTable(host){
      radius,8,false),mat,0,0,0,false);
    }
   }
-  // Three restrained, real-looking bridge ties and mounted support uprights.
+  // Two restrained, real-looking bridge ties and mounted support uprights.
   // No additional solid pieces are placed across the visible ball path.
   for(const i of route.supportIndices){
    const left=edges[i].left,right=edges[i].right;
@@ -471,6 +498,7 @@ export async function create3DTable(host){
  // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
   const x=i===0?136:284,y=520;
+  contactShadow(X(x),Y(y),1.65,1.04);
   const group=new T.Group();scene.add(group);
   const shape=new T.Shape();
   if(i===0){shape.moveTo(X(117),Y(500));shape.lineTo(X(164),Y(536));shape.lineTo(X(131),Y(547));}
@@ -580,6 +608,26 @@ export async function create3DTable(host){
   cyl(X(x),Y(681),.338,.08,.041,gold,14);
  }
  // The return/apron is completely downstream of the active lower guides.
+ // Flush original sci-fi chevrons make the lower playfield less empty.
+ // They illuminate only after the corresponding actual shot was scored.
+ const lowerDirectionMaterials=[];
+ const arrowProfile=new T.Shape();
+ arrowProfile.moveTo(0,.17);arrowProfile.lineTo(.17,-.08);
+ arrowProfile.lineTo(.060,-.08);arrowProfile.lineTo(.060,-.18);
+ arrowProfile.lineTo(-.060,-.18);arrowProfile.lineTo(-.060,-.08);
+ arrowProfile.lineTo(-.17,-.08);arrowProfile.closePath();
+ const arrowGeometry=new T.ShapeGeometry(arrowProfile);
+ for(const item of LOWER_DIRECTION_INSERTS){
+  const x=X(item.x),y=Y(item.y);
+  cyl(x,y,.203,.246,.028,darkChrome,24);
+  ring(x,y,.235,.218,.025,chrome);
+  const material=new T.MeshStandardMaterial({
+   color:item.colour,emissive:item.colour,emissiveIntensity:.14,
+   roughness:.35,metalness:.12,side:T.DoubleSide
+  });
+  add(arrowGeometry,material,x,y,.247,false);
+  lowerDirectionMaterials.push({kind:item.kind,material});
+ }
  // Shooter lane geometry and plunger hardware.
  box(X(382),Y(575),.2,.53,4.0,.18,black);
  for(let y=540;y<660;y+=13)box(X(382),Y(y),.35,.32,.05,.02,gold);
@@ -772,6 +820,7 @@ export async function create3DTable(host){
  // Phase 4K.2 — the signature Power Core is a recessed machine insert,
  // not a tall physical obstacle that would contradict the ball simulation.
  const powerX=X(POWER_CORE.x),powerY=Y(POWER_CORE.y);
+ contactShadow(powerX,powerY,2.52,2.52);
  const coreHousing=metal('#505e72',.29,.75);
  const coreDark=metal('#182539',.5,.23);
  const coreGlass=new T.MeshPhysicalMaterial({
@@ -965,6 +1014,8 @@ export async function create3DTable(host){
   const gridLit=gridIllumination(engine);
   for(let i=0;i<gridLampMaterials.length;i++)
    gridLampMaterials[i].emissiveIntensity=gridLit[i]?2.35:.16;
+  for(const {kind,material} of lowerDirectionMaterials)
+   material.emissiveIntensity=directionInsertActive(engine,kind)?2.1:.20;
   for(let i=0;i<targetLamps.length;i++){
    const lit=mid.targets[i];
    targetLamps[i].emissiveIntensity=lit?2.05:.17;
