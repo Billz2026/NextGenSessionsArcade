@@ -4,6 +4,7 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=2';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=1';
+import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges} from './upper-hardware.mjs?v=1';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -89,17 +90,34 @@ function drawBackglass(c,anim){
  }
 }
 function drawOrbits(c){
- // Four playable routes, printed onto the playfield. No metal wireforms.
- for(const [path,col] of [
-  [ORBIT_PATH,'#ffbc83'],[RAMP_PATH,'#ff8796'],
-  [CENTER_PATH,'#89d8f7'],[SKYLINE_PATH,'#dfa6eb']
- ]){
-  const pts=path.map(([x,y])=>[x,y]);
-  const dashed=path===CENTER_PATH||path===SKYLINE_PATH;
-  c.save();c.setLineDash(dashed?[4,9]:[]);
-  line(c,pts,'#2b2035',dashed?7:13);
-  line(c,pts,col,dashed?3:6);
-  c.restore();
+ // The two guided scoring routes are plated channels, not coloured ink lines.
+ for(const route of UPPER_ROUTES){
+  const pts=route.points.map(p=>[p.x,p.y]),edge=guideEdges(route);
+  const shadow=pts.map(([x,y])=>[x+1.8,y+3.2]);
+  line(c,shadow,'rgba(0,0,0,.65)',route.width+8);
+  line(c,pts,'#151b2b',route.width+3);
+  line(c,pts,route.accent==='coral'?'#6d455d':'#4a586a',route.width-3);
+  line(c,pts,'#303745',route.width-10);
+  for(const side of ['left','right']){
+   const track=edge.map(e=>[e[side].x,e[side].y]);
+   line(c,track,'#141d2b',5.2);
+   line(c,track,'#aab7bf',2.7);
+   line(c,track,'#f6ddc2',.9);
+  }
+  for(const i of route.supportIndices){
+   const a=edge[i].left,b=edge[i].right;
+   line(c,[[a.x,a.y],[b.x,b.y]],'#8c91a0',2);
+   disk(c,a.x,a.y,3,'#c6a78b','#313347',1);
+  }
+  disk(c,route.entrance.x,route.entrance.y,7,'#1a1a2b','#ccad96',2);
+  disk(c,route.entrance.x,route.entrance.y,3,
+   route.accent==='coral'?'#fa8586':'#ffd09a');
+ }
+ // Center and Skyline still use clear, modest printed direction markings.
+ for(const [path,col] of [[CENTER_PATH,'#89d8f7'],[SKYLINE_PATH,'#dfa6eb']]){
+  c.save();c.setLineDash([4,9]);
+  line(c,path.map(([x,y])=>[x,y]),'#292236',7);
+  line(c,path.map(([x,y])=>[x,y]),col,3);c.restore();
  }
  for(const [label,x,y,color] of [
   ['ORBIT',78,372,'#ffdfb4'],['RAMP',315,372,'#ffd4bb'],
@@ -145,9 +163,14 @@ function drawEnamelDetails(c){
   const x=72+i*34,y=131;
   disk(c,x,y,4,'#21253c','#756680',1);
  }
- for(const lane of LANES){
+ for(const lane of UPPER_ROLLOVERS){
   rect(c,lane.x-24,183,48,23,5,'#2c254b','#bf89c4',2);
   text(c,lane.label,lane.x,193,12,'#ffe5ba','Barlow Condensed',900);
+  line(c,[[lane.x-18,lane.y-16],[lane.x-18,lane.y-22],
+   [lane.x+18,lane.y-22],[lane.x+18,lane.y-16]],'#3c4656',6);
+  line(c,[[lane.x-18,lane.y-22],[lane.x+18,lane.y-22]],'#c8c8cc',2.4);
+  disk(c,lane.x-18,lane.y-16,3,'#d5b89f');
+  disk(c,lane.x+18,lane.y-16,3,'#d5b89f');
  }
  // Dense recessed incandescent insert clusters, like a physical playfield.
  const inserts=[
@@ -488,6 +511,17 @@ function drawLower(c,engine){
  rect(c,370,656,25,27,7,G(c,371,658,390,681,[[0,'#fff4d6'],[.35,'#b7a7a4'],[1,'#72545b']]),'#322a33',2);
  if(engine.ball?.mode==='shooter')text(c,Math.round(engine.charge*100)+'%',380,458,11,'#ffe8c0');
 }
+function drawUpperRouteFeedback(c,engine,reducedMotion){
+ const last=engine.lastShot;
+ if(!last||engine.time-last.at>2)return;
+ const route=UPPER_ROUTES.find(r=>r.kind===last.kind);
+ if(!route)return;
+ c.save();c.shadowBlur=reducedMotion?0:9;
+ c.shadowColor=route.accent==='coral'?'#ff8298':'#ffc589';
+ disk(c,route.entrance.x,route.entrance.y,5.5,
+  route.accent==='coral'?'#ffe0d3':'#fff0bd');
+ c.restore();
+}
 let cachedStatic=null;
 function baseArtwork(){
  if(cachedStatic)return cachedStatic;
@@ -506,6 +540,7 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  const anim=reducedMotion?0:performance.now()/1000;
  ctx.save();ctx.clearRect(0,0,BOARD.width,BOARD.height);
  ctx.drawImage(baseArtwork(),0,0,BOARD.width,BOARD.height);
+ drawUpperRouteFeedback(ctx,engine,reducedMotion);
  drawTargets(ctx,engine);
  drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
  drawWorkingInserts(ctx,engine,anim,reducedMotion);

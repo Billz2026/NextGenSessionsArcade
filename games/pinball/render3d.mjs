@@ -4,6 +4,7 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=2';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=1';
+import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=1';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -271,15 +272,27 @@ export async function create3DTable(host){
   cyl(X(point.x),Y(point.y),.45,.14,.54,chrome);
   cyl(X(point.x),Y(point.y),.74,.17,.09,darkChrome);
  }
- // Upper lane rollover pockets with genuine recess/rubber rings and animated inserts.
- const laneLamps=[];
- for(const l of LANES){
+ // Real upper rollover centres with an elevated cross-bridge above each
+ // lane sensor. These high mounts never create invisible ball collisions.
+ const laneLamps=[],laneGateMaterials=[];
+ for(const l of UPPER_ROLLOVERS){
   const px=X(l.x),py=Y(l.y);
   box(px,py,.22,.83,.63,.18,black);
   box(px,py,.35,.63,.45,.16,darkChrome);
-  const lamp=box(px,py,.48,.42,.27,.11,amber);laneLamps.push(lamp);
+  laneLamps.push(box(px,py,.48,.42,.27,.11,amber));
   plane(px,py,.56,.52,.31,label(l.label,'#2b1920',95,180,110));
   for(const d of [-.48,.48])box(px+d,py-.27,.45,.075,.78,.36,nickel);
+  for(const dx of [-.35,.35]){
+   box(px+dx,py+.32,.68,.065,.13,.62,darkChrome);
+   cyl(px+dx,py+.32,.93,.07,.035,gold,12);
+  }
+  box(px,py+.32,.99,.78,.065,.055,chrome);
+  const mat=new T.MeshStandardMaterial({
+   color:'#e9b780',emissive:'#ee9d5c',emissiveIntensity:.16,
+   roughness:.27,metalness:.08
+  });
+  box(px,py+.32,1.032,.27,.035,.02,mat);
+  laneGateMaterials.push(mat);
  }
  // Phase 4K.2 — physically constructed bumpers and target-bank hardware.
  // Every centre is sourced from the unchanged physics sensors.
@@ -356,9 +369,72 @@ export async function create3DTable(host){
   cyl(x,Y(t.y-24),.29,.094,.048,status,16);
   targetStatusMaterials.push(status);
  }
- // No raised rails or wireforms. Four engine routes are illustrated by
- // flat, illuminated lane markings on the playfield artwork below.
- // The ball follows their existing authoritative engine trajectories.
+ // Phase 4K.3 — raised ball runways follow the exact segmented engine
+ // transport positions, including their changing Z heights.
+ const routeHardware=[];
+ const routeBed=new T.MeshPhysicalMaterial({
+  color:'#283344',roughness:.34,metalness:.67,clearcoat:.48,
+  side:T.DoubleSide
+ });
+ const routeChrome=metal('#a8b9c7',.24,.88);
+ const routeFastener=metal('#cb9b7b',.3,.68);
+ const routeGuard=metal('#34313e',.67,.28);
+ function routeRod(a,b,r,material){
+  const from=new T.Vector3(X(a.x),Y(a.y),a.z);
+  const to=new T.Vector3(X(b.x),Y(b.y),b.z);
+  const delta=to.clone().sub(from);
+  const rod=add(new T.CylinderGeometry(r,r,delta.length(),9),
+   material,(from.x+to.x)/2,(from.y+to.y)/2,(from.z+to.z)/2);
+  rod.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());
+  return rod;
+ }
+ for(const route of UPPER_ROUTES){
+  const edges=guideEdges(route),vertices=[],indices=[];
+  for(let i=0;i<edges.length;i++){
+   for(const side of ['left','right']){
+    const p=edges[i][side];
+    vertices.push(X(p.x),Y(p.y),p.z);
+   }
+   if(i){
+    const n=i*2;indices.push(n-2,n-1,n,n-1,n+1,n);
+   }
+  }
+  const geom=new T.BufferGeometry();
+  geom.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+  geom.setIndex(indices);geom.computeVertexNormals();
+  add(geom,routeBed,0,0,0,false);
+  // Twin slender stainless guards sit to either side of the real ball path.
+  for(const side of ['left','right']){
+   for(let i=1;i<edges.length;i++){
+    const a=edges[i-1][side],b=edges[i][side];
+    routeRod({...a,z:a.z+.065},{...b,z:b.z+.065},.062,routeGuard);
+    routeRod({...a,z:a.z+.133},{...b,z:b.z+.133},.030,routeChrome);
+   }
+   for(const e of edges){
+    const p=e[side];
+    cyl(X(p.x),Y(p.y),p.z+.125,.035,.045,routeChrome,10);
+   }
+  }
+  const mouth=route.entrance;
+  box(X(mouth.x),Y(mouth.y),.253,.60,.35,.075,darkChrome);
+  const entryMat=new T.MeshStandardMaterial({
+   color:route.accent==='coral'?'#e99b9b':'#f6cca1',
+   emissive:route.accent==='coral'?'#f06077':'#f7a95b',
+   emissiveIntensity:.32,metalness:.09,roughness:.28
+  });
+  ring(X(mouth.x),Y(mouth.y),.314,.245,.025,entryMat);
+  routeHardware.push({kind:route.kind,material:entryMat});
+  // Small braced mounts hold the runway above the playfield.
+  for(const i of route.supportIndices){
+   const p=edges[i].left,targetZ=Math.max(.30,p.z-.075);
+   const stemHeight=targetZ-.23;
+   if(stemHeight<=0)continue;
+   cyl(X(p.x),Y(p.y),.23+stemHeight/2,.043,stemHeight,routeChrome,12);
+   cyl(X(p.x),Y(p.y),.25,.105,.055,routeFastener,16);
+   const opposite=edges[i].right;
+   routeRod({...p,z:p.z-.065},{...opposite,z:opposite.z-.065},.036,routeChrome);
+  }
+ }
  // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
   const x=i===0?136:284,y=520;
@@ -819,6 +895,9 @@ export async function create3DTable(host){
    ball.position.set(X(b.x),Y(b.y),b.mode==='scoop'?.31:.62);
    if(b.mode==='shooter')ball.position.z=.55;
    if(b.mode==='scoop')ball.position.z=.31;
+   // Use the simulation's already existing raised-shot height.
+   if(b.mode==='travel')
+    ball.position.z=Math.max(.55,(b.travelHeight||.39)+UPPER_BALL_RADIUS);
   }
   for(let i=0;i<engine.flippers.length;i++){
    const f=engine.flippers[i],sgn=f.side==='left'?1:-1;
@@ -833,7 +912,9 @@ export async function create3DTable(host){
    }
   }
   for(let i=0;i<laneLamps.length;i++){
-   laneLamps[i].material=engine.lanes.has(i)||engine.missions.lanes?amber:rubber;
+   const active=engine.lanes.has(i)||engine.missions.lanes;
+   laneLamps[i].material=active?amber:rubber;
+   laneGateMaterials[i].emissiveIntensity=active?1.9:.16;
   }
   const mid=midTableState(engine);
   for(let i=0;i<targetLamps.length;i++){
@@ -857,6 +938,10 @@ export async function create3DTable(host){
   const idleMode=engine.state==='ready'||engine.state==='gameover';
   const rampActive=engine.lastShot?.kind==='ramp'&&engine.time-engine.lastShot.at<2;
   const orbitActive=engine.lastShot?.kind==='orbit'&&engine.time-engine.lastShot.at<2;
+  for(const route of routeHardware){
+   const active=route.kind==='ramp'?rampActive:orbitActive;
+   route.material.emissiveIntensity=active?2.25:.32;
+  }
   const frenzyActive=engine.time<engine.frenzyUntil;
   const multiplierActive=engine.time<engine.multiplierUntil;
   const ballSaveActive=engine.state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil;

@@ -1,10 +1,19 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4K.2 — mechanical bumpers, Power Core and target bank (playable 3D beta)
+**Current stage:** Phase 4K.3 — raised ramps, orbit rails and rollover bridges (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4K.3 — physical upper shot transport
+
+- Added raised, contoured ramp and orbit channel beds, slender twin metal guide rails, spot fasteners, support brackets, and working entry lamps, all following the exact existing RAMP_PATH and ORBIT_PATH trajectory and vertical-height samples.
+- Fixed visual ball position while travelling: the 3D ball now uses the engine's genuine `travelHeight` plus its radius, instead of clipping through raised visual surfaces at a fixed height.
+- Added bolted rollover-lane cross-bridges over the three actual lane sensors; their lights reflect lane-completion state.
+- Reworked the Canvas fallback with matching two-sided guide channels, support brackets and reactive shot entrances.
+- Kept Center and Skyline as restrained printed pathways so the new upper hardware doesn't obstruct the three bumpers or central Power Core.
+- Physics, scoring, collision data, touch controls and console remain unchanged. Automated tests and desktop/Fold screenshot inspection are required before considering this a finished visual release.
 
 ## Phase 4K.2 — mechanical mid-table rebuild
 
