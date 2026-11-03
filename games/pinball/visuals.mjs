@@ -2,7 +2,7 @@
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
-import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS} from './lower-hardware.mjs?v=1';
+import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=2';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -272,25 +272,55 @@ function drawWalls(c){
   line(c,[[x,510],[left?122:298,545]],'#794f8c',8);
   line(c,[[x,510],[left?122:298,545]],'#d893ae',3);
  }
- // Exact lower wall channels get stainless cladding, not extra colliders.
- for(const guide of LOWER_GUIDES){
-  const points=[[guide.x1,guide.y1],[guide.x2,guide.y2]];
-  line(c,points,'#1b2330',11);
-  line(c,points,'#959fa9',6);
-  line(c,points,'#f2d9ba',1.8);
-  bolt(c,guide.x1,guide.y1,3);
-  bolt(c,guide.x2,guide.y2,3);
+ // Two solid cabinet-mounted channels visually join the four physical
+ // wall segments. The coloured body lies outside the collision line.
+ for(const channel of LOWER_CHANNELS){
+  const pts=channel.points,outline=pts.map(p=>[p.x,p.y]);
+  const back=pts.slice().reverse().map(p=>[p.x+channel.outerOffset,p.y]);
+  c.beginPath();c.moveTo(...outline[0]);
+  for(const p of outline.slice(1))c.lineTo(...p);
+  for(const p of back)c.lineTo(...p);
+  c.closePath();
+  c.fillStyle=G(c,outline[0][0],outline[0][1],
+   back[1][0],back[1][1],[
+    [0,'#7b6673'],[.27,'#352c3c'],[.71,'#1c2333'],[1,'#685362']
+   ]);
+  c.fill();c.lineWidth=1;c.strokeStyle='#b9a49e';c.stroke();
+  line(c,outline,'#222a35',7);
+  line(c,outline,'#7a8b97',3.2);
+  line(c,outline,'#e4cbb6',1);
+  for(const p of pts){
+   const bx=p.x+channel.outerOffset*.56,by=p.y;
+   line(c,[[p.x,p.y],[bx,by]],'#a99792',2.1);
+   bolt(c,bx,by,2.7);
+  }
  }
 }
+// A tapered, rounded flipper outline is easier to read than thick,
+ // perfectly uniform paint strokes. Ends follow the actual engine bat tip.
+ function batContour(c,fx,fy,tx,ty,baseWidth,tipWidth,fill,stroke=null){
+  const d=Math.hypot(tx-fx,ty-fy)||1;
+  const ux=(tx-fx)/d,uy=(ty-fy)/d,nx=-uy,ny=ux;
+  c.beginPath();
+  c.moveTo(fx+nx*baseWidth,fy+ny*baseWidth);
+  c.lineTo(tx+nx*tipWidth,ty+ny*tipWidth);
+  c.quadraticCurveTo(tx+ux*6,ty+uy*6,tx-nx*tipWidth,ty-ny*tipWidth);
+  c.lineTo(fx-nx*baseWidth,fy-ny*baseWidth);
+  c.quadraticCurveTo(fx-ux*8,fy-uy*8,fx+nx*baseWidth,fy+ny*baseWidth);
+  c.closePath();c.fillStyle=fill;c.fill();
+  if(stroke){c.strokeStyle=stroke;c.lineWidth=1.4;c.stroke();}
+ }
 function drawFlippers(c,engine){
  for(const f of engine.flippers){
   const end=engine.flipperTip(f);
-  c.save();c.shadowColor='#000';c.shadowBlur=11;c.shadowOffsetY=9;
-  line(c,[[f.x,f.y],[end.x,end.y]],'#17121b',25);c.restore();
-  line(c,[[f.x,f.y],[end.x,end.y]],'#503441',24);
-  line(c,[[f.x,f.y],[end.x,end.y]],'#e6af8e',20);
-  line(c,[[f.x,f.y],[end.x,end.y]],G(c,f.x,f.y-11,end.x,end.y+11,[[0,'#fff1db'],[.24,'#f0dfca'],[.57,'#c9a9a1'],[.8,'#b08a8c'],[1,'#724d56']]),16);
-  line(c,[[f.x+1,f.y-4],[end.x,end.y-4]],'rgba(255,255,255,.83)',3);
+  c.save();c.shadowColor='#000';c.shadowBlur=10;c.shadowOffsetY=5;
+  batContour(c,f.x,f.y,end.x,end.y,12.4,8.4,'#17121c');c.restore();
+  batContour(c,f.x,f.y,end.x,end.y,11.4,7.5,'#553844','#dba88e');
+  batContour(c,f.x,f.y,end.x,end.y,8.8,5.5,
+   G(c,f.x,f.y-10,end.x,end.y+8,[
+    [0,'#fff0d5'],[.22,'#f0dfcd'],[.60,'#d4b7a9'],[1,'#996d74']
+   ]),'#f7dab9');
+  line(c,[[f.x+4,f.y-3],[end.x-3,end.y-2]],'rgba(255,245,218,.68)',1.8);
   disk(c,f.x,f.y,13,R(c,f.x,f.y,13,[[0,'#fff1ce'],[.32,'#cfb5ae'],[.7,'#7b5861'],[1,'#e3cbad']]),'#2f2830',2);
   bolt(c,f.x,f.y,4);
  }
@@ -405,11 +435,16 @@ function drawLower(c,engine){
  text(c,'BALL SAVE',206,582,8,ballSave?'#dcf5cc':'#aa7d79');
  c.save();c.shadowColor='#000';c.shadowBlur=8;c.shadowOffsetY=4;
  c.beginPath();c.ellipse(208,692,93,19,0,0,TAU);c.fillStyle='#05060e';c.fill();c.restore();
- // Recessed drain apron below the active flippers, not a fake collision.
- rect(c,154,670,112,26,5,G(c,154,670,266,696,[[0,'#29313e'],[.27,'#59626a'],[.6,'#1b202b'],[1,'#0c101a']]),'#a6a9aa',2);
- line(c,[[160,672],[260,672]],'#e5cbac',2);
- for(const x of [167,253])bolt(c,x,682,3);
- text(c,'DRAIN',210,686,9,'#dec7b3');
+ // A recessed drain mouth below the flipper return plane, with a dark
+ // open centre rather than a misleading solid bar across the trough.
+ rect(c,148,676,124,21,5,'#29303d','#9e9ba0',1.3);
+ rect(c,157,680,106,15,3,'#060912','#6f7780',1);
+ line(c,[[151,676],[269,676]],'#ded0c1',2);
+ for(const x of [155,265]){
+  rect(c,x-4,679,8,17,2,'#414452','#ad9290',1);
+  bolt(c,x,682,2.7);
+ }
+ text(c,'DRAIN',210,691,8,'#b7a7a1');
  // Mechanical plunger channel, spring, and knurled handle.
  rect(c,368,474,30,200,8,G(c,367,480,397,674,[[0,'#393442'],[.38,'#10111a'],[.7,'#292431'],[1,'#8e655f']]),'#baa18e',2);
  line(c,[[379,487],[379,661]],'#d2bab0',2);

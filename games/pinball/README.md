@@ -1,10 +1,19 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4K.1 — realistic lower playfield hardware (playable 3D beta)
+**Current stage:** Phase 4K.1B — mechanically integrated lower playfield (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4K.1B — mounted guides, tapered bats and open drain
+
+- Replaced four visually disconnected diagonal steel rods with two low-profile, continuously mounted guide assemblies, derived from the same four collision-wall segments. Moulded panels extend outside the collision line, with thin integrated metal lips and joint fasteners.
+- Added two-layer supported slingshot housings, rubber contact strips and anchored mounts; they remain strictly decorative and retain the engine's contact physics.
+- Upgraded both flippers from uniform-width capsules to tapered 3D bodies with rubber sidewalls, ivory enamel caps and a separate reflective inlay. Their pivots and animated positions still follow the authoritative engine state.
+- Refined the drain into a dark recessed mouth, not a crossbar that appears to block a draining ball.
+- Matched the core changes in the Canvas 2D fallback and added regression coverage for connected guide paths, tapered flippers and drain presentation.
+- Physics, scoring, input controls, DMD and the premium console remain untouched. Browser/GPU testing on desktop and Fold 7 is still required.
 
 ## Phase 4K.1 — lower playfield mechanical detail
 

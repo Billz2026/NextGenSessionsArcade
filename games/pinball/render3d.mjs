@@ -2,7 +2,7 @@
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=8';
-import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES} from './lower-hardware.mjs?v=1';
+import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=2';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -312,9 +312,20 @@ export async function create3DTable(host){
   if(i===0){shape.moveTo(X(117),Y(500));shape.lineTo(X(164),Y(536));shape.lineTo(X(131),Y(547));}
   else{shape.moveTo(X(303),Y(500));shape.lineTo(X(256),Y(536));shape.lineTo(X(289),Y(547));}
   shape.closePath();
-  const cover=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:.18,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.025,bevelThickness:.035}),plastic);
-  cover.position.z=.27;cover.castShadow=true;group.add(cover);
-  // Slingshot contact rubber follows existing collision segments.
+  const backing=new T.Mesh(new T.ExtrudeGeometry(shape,{
+   depth:.09,bevelEnabled:true,bevelSegments:1,steps:1,
+   bevelSize:.02,bevelThickness:.02
+  }),darkChrome);
+  backing.position.z=.235;backing.castShadow=true;group.add(backing);
+  const cover=new T.Mesh(new T.ExtrudeGeometry(shape,{
+   depth:.10,bevelEnabled:true,bevelSegments:2,steps:1,
+   bevelSize:.026,bevelThickness:.027
+  }),plastic);
+  cover.position.z=.345;cover.castShadow=true;group.add(cover);
+  // A braced metal undertray, coloured moulding and contact rubber are
+  // visually layered; actual sling collisions stay on SLINGS.
+  cyl(X(i===0?131:289),Y(547),.48,.17,.10,gold,16);
+  cyl(X(i===0?131:289),Y(547),.56,.095,.035,chrome,14);
  }
  // Phase 4K.1: hardware around the real lower collision segments.
  // Each guide/elastic is generated from engine.mjs and is visual-only.
@@ -335,20 +346,54 @@ export async function create3DTable(host){
   mesh.rotation.z=Math.atan2(dy,dx)-PI/2;
   return mesh;
  }
- for(const guide of LOWER_GUIDES){
-  mountedRod(guide,.31,.088,lowerShade);
-  mountedRod(guide,.40,.052,lowerSteel);
-  for(const [px,py] of [[guide.x1,guide.y1],[guide.x2,guide.y2]]){
-   cyl(X(px),Y(py),.43,.115,.072,gold,14);
-   cyl(X(px),Y(py),.49,.065,.028,chrome,12);
+ // The guides now appear as continuous channel guards mounted to the
+ // cabinet side, instead of four unsupported, floating silver rods.
+ // The panels extend OUTSIDE their exact collision edges.
+ const channelBody=new T.MeshPhysicalMaterial({
+  color:'#37313b',roughness:.34,metalness:.38,clearcoat:.72,
+  clearcoatRoughness:.22,side:T.DoubleSide
+ });
+ const channelRecess=new T.MeshPhysicalMaterial({
+  color:'#111a27',roughness:.72,metalness:.08,clearcoat:.12
+ });
+ for(const channel of LOWER_CHANNELS){
+  const pts=channel.points;
+  const shape=new T.Shape();
+  shape.moveTo(X(pts[0].x),Y(pts[0].y));
+  for(let i=1;i<pts.length;i++)shape.lineTo(X(pts[i].x),Y(pts[i].y));
+  for(let i=pts.length-1;i>=0;i--)
+   shape.lineTo(X(pts[i].x+channel.outerOffset),Y(pts[i].y));
+  shape.closePath();
+  const panel=add(new T.ExtrudeGeometry(shape,{
+   depth:.072,steps:1,bevelEnabled:true,bevelSegments:2,
+   bevelSize:.017,bevelThickness:.017
+  }),channelBody,0,0,.276);
+  panel.receiveShadow=true;
+  // Very thin continuous contact lip; dark inset visually joins the metal
+  // to the side channel. Every lip segment remains on the true WALLS path.
+  for(let i=1;i<pts.length;i++){
+   const edge={x1:pts[i-1].x,y1:pts[i-1].y,x2:pts[i].x,y2:pts[i].y};
+   mountedRod(edge,.39,.067,channelRecess);
+   mountedRod(edge,.445,.028,lowerSteel);
+  }
+  // Two short transverse brackets and a joint washer connect the rail to
+  // the moulded housing; no prominent long diagonal rods remain.
+  for(const p of [pts[0],pts[1],pts[2]]){
+   const anchor={x1:p.x,y1:p.y,x2:p.x+channel.outerOffset*.65,y2:p.y};
+   mountedRod(anchor,.385,.034,lowerShade);
+   const sx=X(p.x+channel.outerOffset*.56),sy=Y(p.y);
+   cyl(sx,sy,.424,.094,.051,gold,16);
+   cyl(sx,sy,.466,.047,.02,lowerSteel,12);
   }
  }
  for(const sling of LOWER_SLINGS){
-  mountedRod(sling,.43,.102,lowerShade);
-  mountedRod(sling,.51,.073,lowerElastomer);
+  // The contact rubber is darker and wider than the narrow metal retaining
+  // strip, making the impact surface readable without overpowering the table.
+  mountedRod(sling,.425,.092,lowerShade);
+  mountedRod(sling,.505,.079,lowerElastomer);
   for(const [px,py] of [[sling.x1,sling.y1],[sling.x2,sling.y2]]){
-   cyl(X(px),Y(py),.47,.133,.115,gold,16);
-   cyl(X(px),Y(py),.54,.069,.035,chrome,12);
+   cyl(X(px),Y(py),.45,.117,.089,gold,16);
+   cyl(X(px),Y(py),.515,.062,.028,chrome,12);
   }
  }
  for(const post of LOWER_POSTS){
@@ -358,25 +403,49 @@ export async function create3DTable(host){
   const head=box(x,y,.82,.11,.024,.018,black);
   head.rotation.z=PI/4;
  }
- // Low, recessed drain apron. No fabricated barrier over the live ball.
- box(X(210),Y(685),.204,2.52,.35,.06,lowerShade);
- box(X(210),Y(681),.247,2.25,.045,.025,lowerSteel);
- for(const x of [166,254])cyl(X(x),Y(686),.27,.088,.045,gold,14);
+ // Recessed drain mouth below the true ball drain, not a crossbar that
+ // appears capable of saving the ball. Its dark opening is deliberately clear.
+ const drainWell=new T.MeshPhysicalMaterial({
+  color:'#070a12',roughness:.92,metalness:.05
+ });
+ plane(X(210),Y(686),.258,2.68,.43,lowerShade);
+ plane(X(210),Y(685),.274,2.35,.28,drainWell);
+ box(X(210),Y(672),.298,2.55,.036,.025,lowerSteel);
+ for(const x of [155,265]){
+  box(X(x),Y(684),.299,.085,.35,.045,lowerShade);
+  cyl(X(x),Y(681),.338,.08,.041,gold,14);
+ }
+ // The return/apron is completely downstream of the active lower guides.
  // Shooter lane geometry and plunger hardware.
  box(X(382),Y(575),.2,.53,4.0,.18,black);
  for(let y=540;y<660;y+=13)box(X(382),Y(y),.35,.32,.05,.02,gold);
  const plungerHandle=box(X(382),Y(660),.46,.44,.3,.56,nickel);
- // Layered flippers: grippy rubber sleeve, solid enamel body and
- // narrow reflective inlay. Their shared rotation follows the real engine.
+ // Physical bats taper towards the tip. The broad pivot end and
+ // narrower contact tip replace the uniform cylinders of the first pass.
  const flipperMeshes=[],flipperRubberMeshes=[],flipperInlays=[];
+ function taperedBat(baseWidth,tipWidth,depth){
+  const outline=new T.Shape();
+  outline.moveTo(-baseWidth,-.49);
+  outline.bezierCurveTo(-baseWidth*1.19,-.67,-baseWidth*.59,-.72,0,-.72);
+  outline.bezierCurveTo(baseWidth*.59,-.72,baseWidth*1.19,-.67,baseWidth,-.49);
+  outline.lineTo(tipWidth,.55);
+  outline.quadraticCurveTo(tipWidth*.76,.72,0,.72);
+  outline.quadraticCurveTo(-tipWidth*.76,.72,-tipWidth,.55);
+  outline.closePath();
+  return new T.ExtrudeGeometry(outline,{
+   depth,steps:1,bevelEnabled:true,bevelSegments:2,
+   bevelSize:.01,bevelThickness:.014
+  });
+ }
+ const rubberBat=taperedBat(.235,.150,.095);
+ const enamelBat=taperedBat(.186,.116,.105);
+ const enamelStripe=taperedBat(.040,.025,.018);
  for(const f of LOWER_FLIPPER_BASES){
   const x=X(f.x),y=Y(f.y);
-  flipperRubberMeshes.push(add(
-   new T.CapsuleGeometry(.225,.97,5,14),lowerElastomer,x,y,.515));
-  flipperMeshes.push(add(
-   new T.CapsuleGeometry(.171,1.04,5,14),batEnamel,x,y,.586));
-  flipperInlays.push(add(
-   new T.CapsuleGeometry(.053,1.09,4,10),batHighlight,x,y,.684));
+  flipperRubberMeshes.push(add(rubberBat,lowerElastomer,x,y,.495));
+  flipperMeshes.push(add(enamelBat,batEnamel,x,y,.578));
+  flipperInlays.push(add(enamelStripe,batHighlight,x,y,.694));
+  // Stationary plated pivot housing with a visible fixed fastener.
   cyl(x,y,.42,.31,.17,lowerShade,32);
   cyl(x,y,.62,.242,.095,rose,32);
   cyl(x,y,.75,.175,.09,chrome,32);
@@ -673,7 +742,7 @@ export async function create3DTable(host){
    const cx=X(f.x)+dx/2,cy=Y(f.y)+dy/2;
    const angle=Math.atan2(dy,dx)-PI/2;
    for(const [mesh,z] of [
-    [flipperRubberMeshes[i],.515],[flipperMeshes[i],.586],[flipperInlays[i],.684]
+    [flipperRubberMeshes[i],.495],[flipperMeshes[i],.578],[flipperInlays[i],.694]
    ]){
     mesh.position.set(cx,cy,z);
     mesh.rotation.set(0,0,angle);
