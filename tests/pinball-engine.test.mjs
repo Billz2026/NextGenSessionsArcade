@@ -297,7 +297,7 @@ test('guided ramp and orbit shots remain aligned with the physical raised paths'
 
 test('separated flipper tips leave an actual drain gap while preserving outlane posts',()=>{
  const g=new PinballEngine();g.start();
- assert.equal(GRAVITY,735);
+ assert.equal(GRAVITY,780);
  assert.ok(g.flippers.every(f=>f.length>=55&&f.length<=60));
  const gap=g.flippers[1].x-g.flippers[0].x-2*g.flippers[0].length*Math.cos(.40);
  assert.ok(gap>BOARD.radius*2,'ball needs a gap between the resting bat tips');
@@ -783,7 +783,7 @@ test('kickback never saves a central drain, never overrides tilt and cannot endl
 
 test('fairer flippers still leave the central gap and return feeds are passive',()=>{
  const g=new PinballEngine();
- assert.equal(g.flippers[0].length,60);
+ assert.equal(g.flippers[0].length,58);
  const gap=g.flippers[1].x-g.flippers[0].x-
   2*g.flippers[0].length*Math.cos(.40);
  assert.ok(gap>BOARD.radius*2,'centre drain must remain genuinely open');
