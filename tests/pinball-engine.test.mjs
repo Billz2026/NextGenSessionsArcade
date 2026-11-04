@@ -4,6 +4,36 @@ import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CEN
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
+test('classic table nudges move the ball and rapid abuse tilts the machine',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';g.ball.x=210;g.ball.y=555;g.ball.vx=0;
+ assert.equal(g.nudge('left'),true);assert.ok(g.ball.vx<0);
+ for(let i=0;i<4;i++)g.advance(.05);
+ assert.equal(g.nudge('right'),true);
+ for(let i=0;i<4;i++)g.advance(.05);
+ assert.equal(g.nudge('up'),true);assert.equal(g.tilted,true);
+ g.setFlipper('left',true);assert.equal(g.leftHeld,false);
+ assert.ok(g.consumeEvents().some(e=>e.type==='tilt'));
+});
+test('tilt cancels scoring and ball bonus, then resets after drain',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';g.ball.x=210;g.ball.y=555;
+ g.scoreHit(500,'test');assert.equal(g.score,500);g.bonus=800;
+ for(let i=0;i<3;i++){if(i>0)for(let s=0;s<4;s++)g.advance(.05);g.nudge('up');}
+ assert.equal(g.tilted,true);
+ g.scoreHit(500,'test');assert.equal(g.score,500);
+ assert.equal(g.addPoints(500,'TEST'),0);
+ g.ball.x=210;g.ball.y=697;g.ball.vx=0;g.ball.vy=160;
+ g.advance(BOARD.step);
+ assert.equal(g.state,'between');assert.equal(g.score,500);
+ for(let i=0;i<28;i++)g.advance(.05);
+ assert.equal(g.state,'playing');assert.equal(g.ball.mode,'shooter');
+ assert.equal(g.tilted,false);
+});
+test('nudge cools down and cannot be spammed in the same physics tick',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';g.ball.x=210;g.ball.y=555;
+ assert.equal(g.nudge('up'),true);assert.equal(g.nudge('up'),false);
+ for(let i=0;i<40;i++)g.advance(.05);
+ assert.equal(g.tilted,false);assert.ok(g.tiltMeter<.1);
+});
 test('game starts with a stationary shooter-lane ball and three-ball session',()=>{
  const g=new PinballEngine();assert.equal(g.state,'ready');g.start();
  assert.equal(g.state,'playing');assert.equal(g.ballNumber,1);assert.equal(g.ball.mode,'shooter');
