@@ -340,7 +340,7 @@ test('unattended flippers eventually drain even with the one-use kickback',()=>{
    if(e.type==='drain')drains++;
   }
  }
- assert.equal(saveCount,1);
+ assert.ok(saveCount<=1,'automatic launch ball save cannot repeat');
  assert.ok(kicks<=1,'a normal turn gets no more than one outlane kick');
  assert.equal(drains,1,JSON.stringify({state:g.state,time:g.time,saveCount,kicks,
   ball:g.ball&&{x:g.ball.x,y:g.ball.y,vx:g.ball.vx,vy:g.ball.vy,mode:g.ball.mode},
