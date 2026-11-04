@@ -1216,8 +1216,12 @@ export async function create3DTable(host){
   const rampActive=engine.lastShot?.kind==='ramp'&&engine.time-engine.lastShot.at<2;
   const orbitActive=engine.lastShot?.kind==='orbit'&&engine.time-engine.lastShot.at<2;
   for(const route of routeHardware){
-   const active=route.kind==='ramp'?rampActive:orbitActive;
-   route.material.emissiveIntensity=active?2.25:.32;
+   const state=shotIndicatorState(engine,route.kind);
+   const active=state==='mission'||state==='jackpot';
+   const recent=state==='confirmed';
+   const strength=shotIndicatorBrightness(state,now/1000,reducedMotion);
+   route.material.emissive.set(active?'#ec3635':recent?'#ffdf92':'#a17b41');
+   route.material.emissiveIntensity=active?1.8+1.4*strength:recent?2.1:.24;
   }
   const frenzyActive=engine.time<engine.frenzyUntil;
   const multiplierActive=engine.time<engine.multiplierUntil;
