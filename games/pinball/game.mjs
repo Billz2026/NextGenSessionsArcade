@@ -1,12 +1,12 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=10';
-import {renderTable} from './visuals.mjs?v=25';
-import {createDotMatrix} from './dmd.mjs?v=12';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=11';
+import {renderTable} from './visuals.mjs?v=26';
+import {createDotMatrix} from './dmd.mjs?v=13';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
  overlayTitle:$('overlay-title'),overlaySub:$('overlay-sub'),score:$('score'),
  scoreFlash:$('score-flash'),scoreState:$('score-state'),ball:$('ball-number'),
- best:$('best-score'),status:$('status-indicator'),power:$('power-fill'),
+ best:$('best-score'),rank:$('rank-name'),status:$('status-indicator'),power:$('power-fill'),
  powerLabel:$('power-label'),powerTitle:$('power-title'),launchTitle:$('launch-title'),launchHint:$('launch-hint'),launcherPanel:$('launcher-section'),actionPanel:$('primary-action'),start:$('start'),reset:$('reset'),
  launch:$('launch'),left:$('flipper-left'),right:$('flipper-right'),sound:$('sound'),
  multi:$('multiplier'),ballSave:$('ball-save'),modeName:$('mode-name'),
@@ -50,7 +50,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=28');
+  const {create3DTable}=await import('./render3d.mjs?v=29');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -157,6 +157,7 @@ function syncHUD(){
  const progress=shooterReady?power:saveRemaining>0?Math.round(Math.min(1,saveRemaining/11)*100):0;
  if(lastPower!==progress){ui.power.style.width=progress+'%';lastPower=progress;}
  if(lastBest!==best){ui.best.textContent=fmt(best);lastBest=best;}
+ ui.rank.textContent=engine.rankName;
  ui.scoreState.textContent=isReady?'READY':shooterReady?'BALL READY':
   ballLive?'IN PLAY':state==='between'?'BALL COMPLETE':'RUN COMPLETE';
  if(lastStatusText!==state){ui.start.textContent=isOver?'PLAY AGAIN':'START GAME';lastStatusText=state;}
@@ -169,7 +170,8 @@ function syncHUD(){
  ui.progress.frenzy.textContent=engine.missions.frenzy?'DONE':Math.min(10,engine.bumperHits)+' / 10';
  ui.progress.targets.textContent=engine.missions.targets?'DONE':engine.targets.size+' / 4';
  ui.progress.ride.textContent=engine.missions.ride?'DONE':'RAMP + ORBIT';
- ui.extraStatus.textContent=engine.extraAwarded?'EXTRA BALL EARNED ✓':'EXTRA BALL: COMPLETE ALL FOUR MISSIONS';
+ ui.extraStatus.textContent=engine.extraAwarded?'COMMANDER RANK · EXTRA BALL EARNED ✓':
+  'FLIGHT RANK: '+engine.rankName+' · '+engine.commandFlags+'/4 MISSION FLAGS';
  const rushActive=engine.hurryUpUntil>engine.time,overdriveActive=engine.overdriveUntil>engine.time;
  const remaining=rushActive?engine.hurryUpUntil-engine.time:
   overdriveActive?engine.overdriveUntil-engine.time:
@@ -224,7 +226,7 @@ function processEvents(){
   // stale UI state after the end-of-game persistence update.
   const dmdEvent=e.type==='gameover'?{...e,record:e.score>best}:e;
   dmd.notify(dmdEvent,performance.now(),engine);
-  if(['shot','mission','extra','scoop','spinner','frenzy','multiplier',
+  if(['shot','mission','promotion','extra','scoop','spinner','frenzy','multiplier',
       'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave'].includes(e.type)){
    const duration=e.type==='jackpot'||e.type==='extra'?1250:
     e.type==='hurryup'||e.type==='overdrive'||e.type==='skillshot'?950:
@@ -292,6 +294,11 @@ function processEvents(){
    sound(1080,.12,'triangle');
   }
   if(e.type==='mission'){arcadeMessage(e.headline);ui.scoreFlash.textContent='MISSION COMPLETE';sound(980,.22);}
+  if(e.type==='promotion'){
+   arcadeMessage('RANK PROMOTION · '+e.rank);
+   ui.scoreFlash.textContent=e.rank+' +'+fmt(e.points);
+   sound(1260,.34,'square');
+  }
   if(e.type==='award'&&!['SKILL SHOT','NEON COMBO','NEON RUSH JACKPOT','OVERDRIVE SPINNER'].includes(e.label)){
    ui.scoreFlash.textContent=e.label+' · +'+fmt(e.score);
   }
