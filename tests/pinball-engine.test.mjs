@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -550,4 +550,30 @@ test('faster shots cross a guided rail in less time',()=>{
   g.activateShot('ramp');return g.ball.travel.duration;
  };
  assert.ok(duration(-1100)<duration(-450));
+});
+test('physical contacts emit material, position and proportional impact feedback',()=>{
+ const g=new PinballEngine();g.start();g.consumeEvents();
+ const bumper=BUMPERS[0];
+ g.ball.mode='live';g.ball.x=bumper.x;g.ball.y=bumper.y-bumper.r-BOARD.radius+.2;
+ g.ball.vx=0;g.ball.vy=420;g.singleStep(BOARD.step);
+ const impact=g.consumeEvents().find(e=>e.type==='impact'&&e.kind==='bumper');
+ assert.ok(impact);assert.equal(impact.x,bumper.x);assert.equal(impact.y,bumper.y);
+ assert.ok(impact.speed>=400);assert.ok(impact.strength>0&&impact.strength<=1);
+});
+test('shot-mouth guidance assists committed ramp and orbit approaches without magnetic cross-table aim',()=>{
+ for(const guide of Object.values(SHOT_GUIDES)){
+  const g=new PinballEngine();g.start();g.ball.mode='live';
+  g.ball.x=guide.x+30;g.ball.y=guide.y+42;g.ball.vx=-180;g.ball.vy=-700;
+  g.guideShotMouths(.08);assert.ok(g.ball.vx<-180,'committed approach was not guided');
+  g.ball.vx=180;g.guideShotMouths(.08);assert.equal(g.ball.vx,180,'away-moving miss was magnetised');
+  g.ball.x=guide.x+guide.capture+8;g.ball.vx=-180;
+  g.guideShotMouths(.08);assert.equal(g.ball.vx,-180,'outside ball was pulled into the shot');
+ }
+});
+test('guided hardware emits one route-exit event when the ball returns to the playfield',()=>{
+ const g=new PinballEngine();g.start();g.consumeEvents();g.ball.mode='live';
+ g.ball.x=SHOTS.ramp.x;g.ball.y=SHOTS.ramp.y;g.ball.vy=-800;g.activateShot('ramp');
+ g.consumeEvents();while(g.ball.mode==='travel')g.singleStep(BOARD.step);
+ const exits=g.consumeEvents().filter(e=>e.type==='routeexit');
+ assert.equal(exits.length,1);assert.equal(exits[0].kind,'ramp');assert.ok(exits[0].speed>0);
 });
