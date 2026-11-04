@@ -237,34 +237,32 @@ export async function create3DTable(host){
   p.fillStyle=i%2?'#ffa66a':'#ffe48f';
   p.fillRect(112+i*12,410+i*40,14,24);
  }
- // Bright, original Windows-era arcade lane ink remains visible below the
- // open wireforms. These graphics do not add sensors or physical rails.
- function route(coords,color,dark){
-  p.beginPath();p.moveTo(coords[0][0]*2,coords[0][1]*2);
-  for(let i=1;i<coords.length;i++)p.lineTo(coords[i][0]*2,coords[i][1]*2);
-  p.lineWidth=7;p.strokeStyle=dark;p.lineCap='round';p.lineJoin='round';p.stroke();
-   p.lineWidth=2.1;p.strokeStyle=color;p.globalAlpha=.48;p.stroke();p.globalAlpha=1;
-  // Three short, embossed arrow inserts indicate shot direction without
-  // taking up the upper-half playfield like opaque ramp walls.
-  for(const i of [1,Math.min(5,coords.length-2)]){
-   const a=coords[i-1],b=coords[i],dx=b[0]-a[0],dy=b[1]-a[1];
-   const ang=Math.atan2(dy,dx)+Math.PI/2;
-   p.save();p.translate(b[0]*2,b[1]*2);p.rotate(ang);
-   p.beginPath();p.moveTo(0,-11);p.lineTo(8,7);p.lineTo(0,2);
-   p.lineTo(-8,7);p.closePath();
-   p.fillStyle=color;p.strokeStyle='#172034';p.lineWidth=2;
-   p.fill();p.stroke();p.restore();
+ // Moulded, inlaid routes replace old thin painted transport lines.
+ // This is the lacquer BELOW the raised plastic channels; the coloured
+ // bands mirror exactly the same four authoritative guided-ball paths.
+ for(const route of UPPER_ROUTES){
+  const edges=guideEdges(route);
+  const primary=route.kind==='orbit'||route.kind==='ramp';
+  const colour=route.kind==='ramp'?'#d7a05f':
+   route.kind==='orbit'?'#d6bb7c':'#b09262';
+  p.beginPath();
+  p.moveTo(edges[0].left.x*2,edges[0].left.y*2);
+  for(let i=1;i<edges.length;i++)
+   p.lineTo(edges[i].left.x*2,edges[i].left.y*2);
+  for(let i=edges.length-1;i>=0;i--)
+   p.lineTo(edges[i].right.x*2,edges[i].right.y*2);
+  p.closePath();p.globalAlpha=primary?.72:.44;
+  p.fillStyle='#0d0c0a';p.fill();p.globalAlpha=1;
+  for(const side of ['left','right']){
+   p.beginPath();
+   p.moveTo(edges[0][side].x*2,edges[0][side].y*2);
+   for(let i=1;i<edges.length;i++)
+    p.lineTo(edges[i][side].x*2,edges[i][side].y*2);
+   p.globalAlpha=primary?.52:.34;
+   p.lineWidth=3.0;p.lineJoin='round';p.lineCap='round';
+   p.strokeStyle=colour;p.stroke();p.globalAlpha=1;
   }
  }
- route(ORBIT_PATH,'#f3c74f','#302517');
- route(RAMP_PATH,'#ff786f','#332018');
- // Centre and Skyline are *thin dashed markings*, not additional overhead
- // pipes. They don't conceal bumpers or compete with the Power Core.
- for(const [path,color] of [[CENTER_PATH,'#e2bf75'],[SKYLINE_PATH,'#d6a95c']]){
-  p.save();p.globalAlpha=.35;p.setLineDash([5,20]);p.lineWidth=3;p.strokeStyle=color;p.beginPath();
-  path.forEach(([x,y],i)=>i?p.lineTo(x*2,y*2):p.moveTo(x*2,y*2));
-  p.stroke();p.setLineDash([]);p.restore();
-  }
   // Bumper field: a recessed six-sided mounting deck groups the three genuine
   // bumper collision zones. This is underlay only, never a new obstacle.
   shape([[221,398],[606,398],[652,550],[535,688],[305,688],[185,550]],
