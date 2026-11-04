@@ -632,8 +632,8 @@ function drawLower(c,engine){
    text(c,side,x,582,8,'#fff0d1','Oxanium',900);
   }
  const ballSave=engine.state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil;
- neonInsert(c,206,558,'S',ballSave,ballSave?'#bce9b9':'#bf675c');
- text(c,'BALL SAVE',206,582,8,ballSave?'#dcf5cc':'#aa7d79');
+ neonInsert(c,206,558,'S',ballSave||engine.streakShieldReady,engine.streakShieldReady?'#f3c74f':ballSave?'#bce9b9':'#bf675c');
+ text(c,engine.streakShieldReady?'SHIELD READY':'BALL SAVE',206,582,8,ballSave||engine.streakShieldReady?'#dcf5cc':'#aa7d79');
  // One-use kickback housings occupy the real side outlanes. Lit = available.
  const kickerLit=engine.kickbackReady&&!engine.tilted;
  for(const coil of Object.values(KICKBACK)){
