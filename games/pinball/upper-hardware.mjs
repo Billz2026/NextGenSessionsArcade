@@ -15,6 +15,21 @@ export const UPPER_ROUTES=Object.freeze([
  makeRoute('orbit',22,'amber'),makeRoute('ramp',22,'coral'),
  makeRoute('center',18,'ivory'),makeRoute('skyline',18,'gold')
 ]);
+// Display only the clearly readable OUTER entry portions. The complete
+// guided-ball transport remains in UPPER_ROUTES / TRAVEL_PATHS for gameplay.
+// V2.7's mistake was tracing all four complete return/crossover paths across
+// the bumper island. A real pinball table does not outline every hidden
+// transport section on top of the playfield.
+export const VISIBLE_CHANNELS=Object.freeze([
+ Object.freeze({
+  kind:'orbit',width:22,trimSide:'right',
+  points:Object.freeze(UPPER_ROUTES[0].points.slice(0,5))
+ }),
+ Object.freeze({
+  kind:'ramp',width:22,trimSide:'left',
+  points:Object.freeze(UPPER_ROUTES[1].points.slice(0,3))
+ })
+]);
 export const UPPER_ROLLOVERS=Object.freeze(LANES.map((l,index)=>
  Object.freeze({index,x:l.x,y:l.y,label:l.label})));
 export const UPPER_BALL_RADIUS=BOARD.radius*.020;
