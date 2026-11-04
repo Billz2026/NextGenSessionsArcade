@@ -356,9 +356,25 @@ export async function create3DTable(host){
  // Real upper rollover centres with an elevated cross-bridge above each
  // lane sensor. These high mounts never create invisible ball collisions.
  const laneLamps=[],laneGateMaterials=[];
+  // Three separate recessed upper bays make every real rollover readable.
+  // Flat decorative plates sit below the active ball and add no colliders.
+  const bayEnamel=new T.MeshPhysicalMaterial({
+   color:'#101c30',roughness:.35,metalness:.26,clearcoat:.82,
+   clearcoatRoughness:.17,side:T.DoubleSide
+  });
+  const bayTrim=metal('#637387',.37,.62);
+  const bayFastener=metal('#d6bc9c',.28,.73);
  for(const l of UPPER_ROLLOVERS){
   const px=X(l.x),py=Y(l.y);
-  box(px,py,.22,.83,.63,.18,black);
+   plane(px,py,.191,1.10,1.38,bayEnamel);
+   for(const by of [py-.69,py+.69])
+    box(px,by,.24,1.10,.047,.055,bayTrim);
+   for(const bx of [px-.55,px+.55]){
+    box(bx,py,.237,.049,1.40,.05,bayTrim);
+    for(const by of [py-.63,py+.63])
+     cyl(bx,by,.276,.049,.035,bayFastener,10);
+   }
+   box(px,py,.22,.83,.63,.18,black);
   box(px,py,.35,.63,.45,.16,darkChrome);
   laneLamps.push(box(px,py,.48,.42,.27,.11,amber));
   plane(px,py,.56,.52,.31,label(l.label,'#2b1920',95,180,110));
@@ -375,10 +391,25 @@ export async function create3DTable(host){
   box(px,py+.32,1.032,.27,.035,.02,mat);
   laneGateMaterials.push(mat);
  }
- // Phase 4K.2 — physically constructed bumpers and target-bank hardware.
+ // Flush cast-metal bumper island, shaped around existing sensor positions.
+  // It is a visual deck; ball collisions remain exclusively in engine.mjs.
+  const deckOutline=[[111,201],[305,201],[330,271],[268,347],[141,347],[87,271]];
+  const deckShape=new T.Shape();
+  deckOutline.forEach(([x,y],i)=>i?deckShape.lineTo(X(x),Y(y)):
+   deckShape.moveTo(X(x),Y(y)));
+  deckShape.closePath();
+  const deckMaterial=new T.MeshPhysicalMaterial({
+   color:'#19293e',metalness:.18,roughness:.43,clearcoat:.64,
+   side:T.DoubleSide
+  });
+  add(new T.ShapeGeometry(deckShape),deckMaterial,0,0,.187,false);
+  const rimPoints=deckOutline.map(([x,y])=>new T.Vector3(X(x),Y(y),.198));
+  scene.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(rimPoints),
+   new T.LineBasicMaterial({color:'#718296'})));
+  // Phase 4K.2 — physically constructed bumpers and target-bank hardware.
  // Every centre is sourced from the unchanged physics sensors.
  const bumperSkirt=new T.MeshPhysicalMaterial({
-  color:'#b7aab1',roughness:.27,metalness:.72,clearcoat:.48
+  color:'#bfc5cb',roughness:.22,metalness:.78,clearcoat:.52
  });
  const bumperRubber=new T.MeshStandardMaterial({color:'#352637',roughness:.88});
  const bumperCollar=metal('#c7bbc0',.21,.78);
@@ -387,7 +418,8 @@ export async function create3DTable(host){
  for(const b of MID_BUMPERS){
   const x=X(b.x),y=Y(b.y),r=b.r*SCALE;
   contactShadow(x,y,r*2.8,r*2.8);
-  // Stacked mounting washer, pressed metal skirt, dark rubber impact band.
+   ring(x,y,.226,r+.28,.019,bayTrim);
+   // Stacked mounting washer, pressed metal skirt, dark rubber impact band.
   cyl(x,y,.275,r+.18,.105,black,40);
   cyl(x,y,.34,r+.145,.11,bumperSkirt,48);
   ring(x,y,.415,r+.103,.052,chrome);
@@ -401,9 +433,9 @@ export async function create3DTable(host){
   });
   ring(x,y,.675,r-.115,.036,edge);bumperRingMaterials.push(edge);
   const capMat=new T.MeshPhysicalMaterial({
-   color:'#ffccaa',transparent:true,opacity:.87,metalness:.05,
-   roughness:.15,clearcoat:1,clearcoatRoughness:.08,
-   emissive:'#b84857',emissiveIntensity:.18,depthWrite:true
+   color:'#fff0d8',transparent:true,opacity:.89,metalness:.05,
+   roughness:.12,clearcoat:1,clearcoatRoughness:.06,
+    emissive:'#b84857',emissiveIntensity:.18,depthWrite:true
   });
   const cap=add(new T.SphereGeometry(r*.65,28,18),capMat,x,y,.69);
   cap.scale.z=.36;bumperTops.push(cap);bumperCapMaterials.push(capMat);
@@ -428,7 +460,11 @@ export async function create3DTable(host){
  const targetBacking=new T.MeshPhysicalMaterial({
   color:'#302b3c',roughness:.37,metalness:.32,clearcoat:.65
  });
- box(targetMid,targetY,.26,bankWidth,.72,.115,black);
+ // The target bank receives its own low-profile engraved hardware nameplate.
+  box(targetMid,Y(387),.249,bankWidth+.20,.14,.058,bankMetal);
+  plane(targetMid,Y(383),.295,bankWidth*.84,.145,
+   label('TARGET BANK','#e8d4bd',70,560,72,true));
+  box(targetMid,targetY,.26,bankWidth,.72,.115,black);
  box(targetMid,targetY,.335,bankWidth-.13,.60,.095,bankMetal);
  box(targetMid,targetY,.40,bankWidth-.25,.47,.08,targetBacking);
  const targetLamps=[],targetStatusMaterials=[];
@@ -532,11 +568,19 @@ export async function create3DTable(host){
    bevelSize:.02,bevelThickness:.02
   }),darkChrome);
   backing.position.z=.235;backing.castShadow=true;group.add(backing);
-  const cover=new T.Mesh(new T.ExtrudeGeometry(shape,{
+  const coverMaterial=new T.MeshPhysicalMaterial({
+    color:i===0?'#644362':'#73404f',
+    metalness:.12,roughness:.29,clearcoat:1,clearcoatRoughness:.13,
+    side:T.DoubleSide
+   });
+   const cover=new T.Mesh(new T.ExtrudeGeometry(shape,{
    depth:.10,bevelEnabled:true,bevelSegments:2,steps:1,
    bevelSize:.026,bevelThickness:.027
-  }),plastic);
-  cover.position.z=.345;cover.castShadow=true;group.add(cover);
+  }),coverMaterial);
+   cover.position.z=.345;cover.castShadow=true;group.add(cover);
+   // A small enameled identity inset sits on each spring-mounted sling.
+   const tagX=X(i===0?137:283),tagY=Y(523);
+   plane(tagX,tagY,.485,.44,.24,label(i===0?'L':'R','#ffe6c7',84,180,90,true));
   // A braced metal undertray, coloured moulding and contact rubber are
   // visually layered; actual sling collisions stay on SLINGS.
   cyl(X(i===0?131:289),Y(547),.48,.17,.10,gold,16);
@@ -544,8 +588,8 @@ export async function create3DTable(host){
  }
  // Phase 4K.1: hardware around the real lower collision segments.
  // Each guide/elastic is generated from engine.mjs and is visual-only.
- const lowerSteel=metal('#bcc4ca',.22,.91);
- const lowerShade=metal('#36404c',.40,.7);
+ const lowerSteel=metal('#c1c9ca',.23,.90);
+  const lowerShade=metal('#333a49',.43,.72);
  const lowerElastomer=new T.MeshPhysicalMaterial({
   color:'#4b303f',roughness:.74,metalness:0
  });
@@ -783,7 +827,8 @@ export async function create3DTable(host){
  }
  // Stacked translucent guide plastics and metal hardware strengthen the
  // impression of a physically assembled cabinet.
- const shroudMat=new T.MeshPhysicalMaterial({color:'#583f70',metalness:.2,roughness:.24,clearcoat:.9,transparent:true,opacity:.82,side:T.DoubleSide,depthWrite:false});
+ const shroudMat=new T.MeshPhysicalMaterial({color:'#483b5a',metalness:.18,roughness:.32,
+   clearcoat:.88,transparent:true,opacity:.83,side:T.DoubleSide,depthWrite:false});
  for(const side of [-1,1]){
   const x=side===-1?104:315;
   box(X(x),Y(509),.38,.95,.40,.14,shroudMat);
