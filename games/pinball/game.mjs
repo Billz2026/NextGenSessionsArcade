@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=16';
-import {renderTable} from './visuals.mjs?v=33';
-import {createDotMatrix} from './dmd.mjs?v=16';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=17';
+import {renderTable} from './visuals.mjs?v=34';
+import {createDotMatrix} from './dmd.mjs?v=17';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -132,7 +132,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=36');
+  const {create3DTable}=await import('./render3d.mjs?v=37');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -252,7 +252,7 @@ function syncHUD(){
   engine.balls.length+' BALLS ACTIVE · RAMP + ORBIT JACKPOTS';
  ui.ballSave.textContent=engine.tilted?'TILT':engine.multiballActive&&engine.time<engine.multiballSaveUntil?
   Math.ceil(engine.multiballSaveUntil-engine.time)+'s':state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
-   ?Math.ceil(engine.ballSaveUntil-engine.time)+'s':'OFF';
+   ?Math.ceil(engine.ballSaveUntil-engine.time)+'s':engine.streakShieldReady?'SHIELD':'OFF';
  for(const name of Object.keys(engine.missions)){ui.mission[name].classList.toggle('completed',engine.missions[name]);}
  ui.progress.lanes.textContent=engine.missions.lanes?'DONE':engine.lanes.size+' / 3';
  ui.progress.frenzy.textContent=engine.missions.frenzy?'DONE':Math.min(10,engine.bumperHits)+' / 10';
@@ -399,11 +399,20 @@ function processEvents(){
   dmd.notify(dmdEvent,performance.now(),engine);
   if(['shot','mission','missionarmed','missionstart','missionprogress','missionfailed','commandcomplete','promotion','extra','scoop','spinner','frenzy','multiplier',
       'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave','kickback','tiltwarning',
-      'balllock','multiballstart','multiballjackpot','superlit','superjackpot','multiballadd','wizardstart','wizardcomplete'].includes(e.type)){
+      'balllock','multiballstart','multiballjackpot','superlit','superjackpot','multiballadd','wizardstart','wizardcomplete','streakshield','streaksave'].includes(e.type)){
    const duration=e.type==='jackpot'||e.type==='extra'?1250:
     e.type==='hurryup'||e.type==='overdrive'||e.type==='skillshot'?950:
     e.type==='mission'?900:550;
    tableFlash={kind:e.type,until:performance.now()+duration,duration};
+  }
+  if(e.type==='streakshield'){
+   ui.scoreFlash.textContent='NEON SHIELD EARNED';
+   sound(1210,.24,'triangle',.045);
+  }
+  if(e.type==='streaksave'){
+   arcadeMessage('STREAK SAVED · RELAUNCH');
+   ui.scoreFlash.textContent='STREAK SAVED!';
+   sound(1100,.34,'sawtooth',.05);
   }
   if(e.type==='kickback'){
    arcadeMessage('NEON KICKBACK · BALL RECOVERED');

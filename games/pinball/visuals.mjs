@@ -1,8 +1,8 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=16';
-import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=4';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
+import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections} from './upper-hardware.mjs?v=4';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
@@ -632,8 +632,8 @@ function drawLower(c,engine){
    text(c,side,x,582,8,'#fff0d1','Oxanium',900);
   }
  const ballSave=engine.state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil;
- neonInsert(c,206,558,'S',ballSave,ballSave?'#bce9b9':'#bf675c');
- text(c,'BALL SAVE',206,582,8,ballSave?'#dcf5cc':'#aa7d79');
+ neonInsert(c,206,558,'S',ballSave||engine.streakShieldReady,engine.streakShieldReady?'#f3c74f':ballSave?'#bce9b9':'#bf675c');
+ text(c,engine.streakShieldReady?'SHIELD READY':'BALL SAVE',206,582,8,ballSave||engine.streakShieldReady?'#dcf5cc':'#aa7d79');
  // One-use kickback housings occupy the real side outlanes. Lit = available.
  const kickerLit=engine.kickbackReady&&!engine.tilted;
  for(const coil of Object.values(KICKBACK)){

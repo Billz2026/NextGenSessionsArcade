@@ -129,6 +129,8 @@ export function describeDmdEvent(event,game=null){
   case 'frenzy':return {headline:'BUMPER FRENZY',sub:'2X BUMPER POINTS',priority:4,duration:2400};
   case 'multiplier':return {headline:'2X SCORING',sub:'20 SECONDS',priority:4,duration:2400};
   case 'ballsave':return {headline:'BALL SAVED!',sub:'RELAUNCH NOW',priority:4,duration:2200};
+  case 'streakshield':return {headline:'NEON SHIELD ARMED',sub:'TWO SHOTS · ONE REPLAY',priority:4,duration:2500};
+  case 'streaksave':return {headline:'STREAK SAVED!',sub:'RELAUNCH · KEEP BUILDING',priority:5,duration:2900};
   case 'extra':return {headline:'EXTRA BALL',sub:'AWARDED!',priority:5,duration:3250};
   case 'drain':return {headline:'BALL '+(event.ball||1)+' OVER',sub:'SCORE '+FMT(game?.score||0),priority:3,duration:1800};
   case 'gameover':return event.record?{headline:'NEW HIGH SCORE!',sub:'SCORE '+FMT(event.score),priority:5,duration:3700}:{headline:'GAME OVER',sub:'FINAL '+FMT(event.score),priority:5,duration:3200};
