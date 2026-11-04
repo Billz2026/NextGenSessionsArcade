@@ -4,9 +4,9 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=4';
+import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=5';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
-import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide} from './finishing-detail.mjs?v=1';
+import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
@@ -401,17 +401,17 @@ export async function create3DTable(host){
  }
  // A low cast-metal crown traces the upper edge below the moving ball.
   // Visual-only trim never obstructs a path or introduces a phantom collider.
-  const crownSteel=metal('#acb7c0',.22,.84);
-  const crownShadow=metal('#253246',.38,.66);
+  const crownSteel=metal('#9b7b45',.46,.35);
+  const crownShadow=metal('#19140f',.58,.15);
   const crownPath=new T.CatmullRomCurve3(
    UPPER_ARCH.map(p=>new T.Vector3(X(p.x),Y(p.y),.204)),false,'centripetal'
   );
-  add(new T.TubeGeometry(crownPath,72,.055,10,false),
+  add(new T.TubeGeometry(crownPath,72,.045,10,false),
    crownShadow,0,0,0,false);
   const crownGlint=new T.CatmullRomCurve3(
    UPPER_ARCH.map(p=>new T.Vector3(X(p.x),Y(p.y),.228)),false,'centripetal'
   );
-  add(new T.TubeGeometry(crownGlint,72,.018,8,false),
+  add(new T.TubeGeometry(crownGlint,72,.009,8,false),
    crownSteel,0,0,0,false);
   for(const i of [2,4,6]){
    const p=UPPER_ARCH[i],xx=X(p.x),yy=Y(p.y);
@@ -558,75 +558,73 @@ export async function create3DTable(host){
   cyl(x,Y(t.y-24),.29,.094,.048,status,16);
   targetStatusMaterials.push(status);
  }
- // Phase 4K.3B: classic open wireforms. No dark opaque ramp bed.
- // Each scoring route has two stainless runners below the ball and two
- // safety rails above it, leaving the playfield artwork visible underneath.
+ // V2.7: Real raised ball paths are represented by continuous moulded
+ // channel floors and flush gold inlays, never floating metallic wire rails.
+ // All lane samples derive from the physics engine's transport curves.
  const routeHardware=[];
-  const wireSteel=metal('#d0aa60',.20,.90);
-  const wireHighlight=metal('#f3c74f',.24,.82);
-  const wireBracket=metal('#947341',.31,.78);
-  // Gunmetal fittings separate the functional tracks from their gold rails.
-  const entrySteel=metal('#393636',.30,.63),entryGold=metal('#bb944b',.24,.83);
-  function routeRod(a,b,r,material){
-   const from=new T.Vector3(X(a.x),Y(a.y),a.z);
-   const to=new T.Vector3(X(b.x),Y(b.y),b.z);
-   const delta=to.clone().sub(from);
-   const rod=add(new T.CylinderGeometry(r,r,delta.length(),10),material,
-    (from.x+to.x)/2,(from.y+to.y)/2,(from.z+to.z)/2);
-   rod.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());
-   return rod;
+ const laneTrim=new T.MeshPhysicalMaterial({
+  color:'#d1a65b',metalness:.32,roughness:.38,side:T.DoubleSide,
+  polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
+ });
+ const laneBaseMaterials={
+  orbit:new T.MeshPhysicalMaterial({color:'#17130d',roughness:.43,metalness:.10,
+   clearcoat:.52,transparent:true,opacity:.88,side:T.DoubleSide,depthWrite:false}),
+  ramp:new T.MeshPhysicalMaterial({color:'#201312',roughness:.4,metalness:.10,
+   clearcoat:.58,transparent:true,opacity:.88,side:T.DoubleSide,depthWrite:false}),
+  center:new T.MeshPhysicalMaterial({color:'#17140e',roughness:.5,metalness:.08,
+   transparent:true,opacity:.72,side:T.DoubleSide,depthWrite:false}),
+  skyline:new T.MeshPhysicalMaterial({color:'#1b170f',roughness:.5,metalness:.08,
+   transparent:true,opacity:.72,side:T.DoubleSide,depthWrite:false})
+ };
+ function channelStrip(route,from,to,lift,mat){
+  // A flat ribbon along the actual elevated ball path. Side-band geometry
+  // is painted trim at the same height, not a physics wall or wireform.
+  const smooth=roundedWirePoints(route.points,3);
+  const edges=guideEdges({points:smooth,width:route.width});
+  const vertices=[],indices=[];
+  for(let i=0;i<edges.length;i++){
+   const edge=edges[i],z=smooth[i].z+lift;
+   for(const t of [from,to]){
+    vertices.push(
+     X(edge.left.x+(edge.right.x-edge.left.x)*t),
+     Y(edge.left.y+(edge.right.y-edge.left.y)*t),
+     z
+    );
+   }
+   if(i){
+    const n=i*2;
+    indices.push(n-2,n-1,n,n-1,n+1,n);
+   }
   }
-  // Lower rails follow the full authoritative path. The tall guard follows
-  // only the outside portions, removing the tangle above the top lanes.
-  function railTube(points,lift,radius,material){
-   const curve=new T.CatmullRomCurve3(
-    roundedWirePoints(points,3).map(p=>new T.Vector3(X(p.x),Y(p.y),p.z+lift)),
-    false,'centripetal'
-   );
-   add(new T.TubeGeometry(curve,Math.min(compact?80:112,points.length*6),
-    radius,8,false),material,0,0,0,false);
-  }
-  for(const route of UPPER_ROUTES){
-   const edges=guideEdges(route);
-   const outerGuard=elevatedGuardSide(route.kind);
-   for(const side of ['left','right']){
-    railTube(edges.map(e=>e[side]),-.034,.024,wireSteel);
-   }
-   for(const [from,to] of upperGuardSections(route)){
-    railTube(edges.slice(from,to+1).map(e=>e[outerGuard]),
-     .17,.016,wireHighlight);
-   }
-   // Braced supports and small plated bases follow existing route samples.
-   for(const index of route.supportIndices){
-    const left=edges[index].left,right=edges[index].right;
-    const anchor=edges[index][outerGuard];
-    routeRod({...left,z:left.z-.081},{...right,z:right.z-.081},
-     .016,wireBracket);
-    const height=Math.max(0,anchor.z-.20);
-    if(height>.07){
-     cyl(X(anchor.x),Y(anchor.y),.20+height/2,.039,height,wireBracket,12);
-     cyl(X(anchor.x),Y(anchor.y),.222,.112,.042,crownSteel,14);
-     cyl(X(anchor.x),Y(anchor.y),.25,.044,.030,wireSteel,12);
-    }
-   }
-   const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
-   // Tapered entry cheeks show exactly where the real shot registers.
-   box(mx,my,.255,.42,.21,.048,entrySteel);
-   box(mx,my-.28,.226,.72,.13,.036,entryGold);
-   for(const dx of [-.40,.40]){
-    box(mx+dx,my-.11,.27,.085,.30,.065,entrySteel);
-    cyl(mx+dx,my-.24,.32,.045,.027,crownSteel,12);
-   }
-   const entryMat=new T.MeshStandardMaterial({
-    color:route.accent==='coral'?'#ffd1c4':'#ffe5ac',
-    emissive:route.accent==='coral'?'#fa6f80':'#f5b963',
-    emissiveIntensity:.33,roughness:.29,metalness:.12
-   });
-   ring(mx,my,.306,.182,.021,entryMat);
-   plane(mx,my-.38,.247,.70,.18,label(route.kind==='orbit'?'ORBIT':'RAMP',
-    '#e8d6c2',55,280,70,true));
-   routeHardware.push({kind:route.kind,material:entryMat});
-  }
+  const geometry=new T.BufferGeometry();
+  geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+  geometry.setIndex(indices);geometry.computeVertexNormals();
+  return add(geometry,mat,0,0,0,false);
+ }
+ for(const route of UPPER_ROUTES){
+  // The steel ball centre is path.z + UPPER_BALL_RADIUS. The floor stays
+  // slightly below the sphere, with no roof obscuring it at crossings.
+  channelStrip(route,0,1,-.025,laneBaseMaterials[route.kind]);
+  channelStrip(route,.006,.075,-.015,laneTrim);
+  channelStrip(route,.925,.994,-.015,laneTrim);
+  if(route.kind!=='orbit'&&route.kind!=='ramp')continue;
+  const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
+  const cheek=metal('#33291c',.4,.25),lip=metal('#b89555',.3,.50);
+  // A wide, flat entry mouth makes the required shot obvious without
+  // introducing new posts or changing the sensor capture area.
+  box(mx,my,.255,.55,.19,.035,cheek);
+  box(mx,my-.26,.241,.66,.08,.025,lip);
+  for(const dx of [-.34,.34])box(mx+dx,my-.08,.263,.045,.26,.040,cheek);
+  const entryMat=new T.MeshStandardMaterial({
+   color:route.kind==='ramp'?'#ffd1c4':'#ffe5ac',
+   emissive:route.kind==='ramp'?'#fa6f80':'#f5b963',
+   emissiveIntensity:.33,roughness:.29,metalness:.12
+  });
+  ring(mx,my,.306,.182,.021,entryMat);
+  plane(mx,my-.37,.247,.66,.17,label(route.kind.toUpperCase(),
+   '#f3debd',55,280,70,true));
+  routeHardware.push({kind:route.kind,material:entryMat});
+ }
   // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
   const x=i===0?136:284,y=520;
