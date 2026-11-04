@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=16';
-import {renderTable} from './visuals.mjs?v=33';
-import {createDotMatrix} from './dmd.mjs?v=16';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=17';
+import {renderTable} from './visuals.mjs?v=34';
+import {createDotMatrix} from './dmd.mjs?v=17';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -93,7 +93,9 @@ function syncArena(){
  arenaText(arena.balls,liveBalls);
  arenaText(arena.state,multi?'✦ NEON OVERLOAD · LIVE':
   lockLit?'● SCOOP LOCK ILLUMINATED':locked?'● '+locked+' BALL'+(locked===1?'':'S')+' HELD':
-  rush?'✦ POWER GRID JACKPOT':'● REACTOR STANDBY');
+  rush?'✦ POWER GRID JACKPOT':
+  engine.streakSaveRemaining>0?'✦ STREAK SAVE · '+Math.ceil(engine.streakSaveRemaining)+'S':
+  '● REACTOR STANDBY');
  arena.state.classList.toggle('is-active',multi);
  arena.state.classList.toggle('is-ready',lockLit||rush);
 }
@@ -132,7 +134,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=36');
+  const {create3DTable}=await import('./render3d.mjs?v=37');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -218,6 +220,9 @@ function syncHUD(){
  const ballLive=state==='playing'&&!shooterReady;
  const saveRemaining=ballLive&&!engine.tilted&&!engine.ballSaveUsed&&engine.ballLaunchedAt!==null?
   Math.max(0,engine.ballSaveUntil-engine.time):0;
+ const streakRemaining=ballLive&&!engine.tilted?engine.streakSaveRemaining:0;
+ const displayedSave=Math.max(saveRemaining,streakRemaining);
+ const isStreakSave=streakRemaining>saveRemaining;
  if(lastBall!==ball||lastStatus!==state||lastTilt!==engine.tilted||lastActiveBalls!==engine.balls.length){
   ui.ball.textContent=engine.multiballActive?engine.balls.length+' LIVE':ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
   ui.status.textContent=engine.tilted?'TILT':isReady?'STANDBY':shooterReady?'BALL READY':
@@ -230,13 +235,14 @@ function syncHUD(){
  ui.launch.hidden=!shooterReady;
  ui.launch.disabled=!shooterReady;
  ui.reset.disabled=isReady;
- ui.launcherPanel.hidden=!(shooterReady||saveRemaining>0);
- ui.launcherPanel.classList.toggle('is-ball-live',saveRemaining>0);
- ui.launchTitle.textContent=shooterReady?'PLUNGER POWER':'BALL SAVE';
- ui.launchHint.textContent=shooterReady?'SHOOTER LANE':'EARLY DRAIN PROTECTION';
+ ui.launcherPanel.hidden=!(shooterReady||displayedSave>0);
+ ui.launcherPanel.classList.toggle('is-ball-live',displayedSave>0);
+ ui.launchTitle.textContent=shooterReady?'PLUNGER POWER':isStreakSave?'NEON STREAK SAVE':'BALL SAVE';
+ ui.launchHint.textContent=shooterReady?'SHOOTER LANE':isStreakSave?'EARNED SHOT PROTECTION':'EARLY DRAIN PROTECTION';
  ui.powerTitle.textContent=shooterReady?'CHARGE':'TIME REMAINING';
- ui.powerLabel.textContent=shooterReady?power+'%':Math.ceil(saveRemaining)+'s';
- const progress=shooterReady?power:saveRemaining>0?Math.round(Math.min(1,saveRemaining/11)*100):0;
+ ui.powerLabel.textContent=shooterReady?power+'%':Math.ceil(displayedSave)+'s';
+ const progress=shooterReady?power:displayedSave>0?
+  Math.round(Math.min(1,displayedSave/(isStreakSave?24:16))*100):0;
  if(lastPower!==progress){ui.power.style.width=progress+'%';lastPower=progress;}
  if(lastBest!==best){ui.best.textContent=fmt(best);lastBest=best;}
  ui.rank.textContent=engine.rankName;
@@ -251,8 +257,8 @@ function syncHUD(){
   engine.time<engine.multiballSaveUntil?'3-BALL SAVE · '+Math.ceil(engine.multiballSaveUntil-engine.time)+'s':
   engine.balls.length+' BALLS ACTIVE · RAMP + ORBIT JACKPOTS';
  ui.ballSave.textContent=engine.tilted?'TILT':engine.multiballActive&&engine.time<engine.multiballSaveUntil?
-  Math.ceil(engine.multiballSaveUntil-engine.time)+'s':state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
-   ?Math.ceil(engine.ballSaveUntil-engine.time)+'s':'OFF';
+  Math.ceil(engine.multiballSaveUntil-engine.time)+'s':
+  displayedSave>0?(isStreakSave?'STREAK ':'')+Math.ceil(displayedSave)+'s':'OFF';
  for(const name of Object.keys(engine.missions)){ui.mission[name].classList.toggle('completed',engine.missions[name]);}
  ui.progress.lanes.textContent=engine.missions.lanes?'DONE':engine.lanes.size+' / 3';
  ui.progress.frenzy.textContent=engine.missions.frenzy?'DONE':Math.min(10,engine.bumperHits)+' / 10';
@@ -399,6 +405,7 @@ function processEvents(){
   dmd.notify(dmdEvent,performance.now(),engine);
   if(['shot','mission','missionarmed','missionstart','missionprogress','missionfailed','commandcomplete','promotion','extra','scoop','spinner','frenzy','multiplier',
       'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave','kickback','tiltwarning',
+      'streakarmed','streaksaved',
       'balllock','multiballstart','multiballjackpot','superlit','superjackpot','multiballadd','wizardstart','wizardcomplete'].includes(e.type)){
    const duration=e.type==='jackpot'||e.type==='extra'?1250:
     e.type==='hurryup'||e.type==='overdrive'||e.type==='skillshot'?950:
@@ -414,6 +421,16 @@ function processEvents(){
   if(e.type==='tiltwarning'){
    ui.scoreFlash.textContent='TILT WARNING';
    sound(440,.15,'triangle',.027);
+  }
+  if(e.type==='streakarmed'){
+   arcadeMessage('NEON STREAK SAVE · 24s PROTECTION');
+   ui.scoreFlash.textContent='STREAK SAVE LIT';
+   sound(1030,.21,'triangle',.038);
+  }
+  if(e.type==='streaksaved'){
+   arcadeMessage('STREAK SAVE · KEEP YOUR PROGRESS');
+   ui.scoreFlash.textContent='BALL SAVED · STREAK';
+   sound(1170,.35,'sawtooth',.055);
   }
   if(e.type==='start'){ui.overlay.hidden=true;ui.scoreFlash.textContent='BALL 1 READY';sound(490,.10);}
   if(e.type==='ball'){
