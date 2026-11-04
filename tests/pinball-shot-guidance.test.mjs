@@ -92,8 +92,8 @@ test('visual pulse is continuous, bounded and steady with reduced motion',()=>{
 });
 
 test('both renderers use one shared guidance module and avoid new collision or scores',()=>{
- assert.match(three,/import \{shotIndicatorState,shotIndicatorBrightness\} from '\.\/shot-guidance\.mjs/);
- assert.match(canvas,/import \{SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness\} from '\.\/shot-guidance\.mjs/);
+ assert.match(three,/import \{shotIndicatorState,shotIndicatorBrightness,approachLampState\} from '\.\/shot-guidance\.mjs/);
+ assert.match(canvas,/import \{SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness,approachLampState\} from '\.\/shot-guidance\.mjs/);
  assert.match(three,/for\(const a of arrowMesh\)/);
  assert.match(three,/shotIndicatorState\(engine,a\.group\)/);
  assert.match(three,/shotIndicatorState\(engine,route\.kind\)/);
