@@ -85,14 +85,26 @@ function drawBackglass(c,anim){
  rect(c,83,35,261,103,10,G(c,90,35,320,139,[[0,'#b6a18b'],[.07,'#4c4447'],[.37,'#161622'],[.82,'#2d2939'],[1,'#ae7e69']]),'#ddc09e',2.5);
  rect(c,91,43,244,86,7,G(c,94,44,331,126,[[0,'#181b2f'],[.55,'#070e22'],[1,'#29172c']]),'rgba(243,201,134,.46)',1.2);
  c.save();
- c.shadowBlur=0;
  c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
- c.font='900 14px "Barlow Condensed",Impact,sans-serif';
- c.fillStyle='#fff0d7';c.fillText('NEXTGEN SESSIONS',213,66,220);
- c.font='900 34px "Arial Black",Impact,Arial,sans-serif';
- c.lineWidth=4.5;c.strokeStyle='#130d18';c.strokeText('NEON TILT',213,101,226);
- c.fillStyle='#ffe6cc';c.fillText('NEON TILT',213,99,226);
- c.fillStyle='#ff835e';c.fillText('NEON TILT',213,97,226);
+ // Compact Canvas version of the 3D cabinet's illuminated arcade marquee.
+ c.translate(213,86);c.globalAlpha=.24;
+ for(let i=0;i<18;i++){
+  const a=i*Math.PI/9;c.beginPath();c.moveTo(Math.cos(a)*38,Math.sin(a)*18);
+  c.lineTo(Math.cos(a)*116,Math.sin(a)*48);
+  c.strokeStyle=i%2?'#2ae7ff':'#ff4ca3';c.lineWidth=i%3===0?2:1;c.stroke();
+ }
+ c.globalAlpha=1;c.translate(-213,-86);
+ c.font='italic 900 39px "Arial Black",Impact,Arial,sans-serif';
+ c.shadowColor='#ff3aa4';c.shadowBlur=13;c.shadowOffsetY=4;
+ c.lineWidth=8;c.strokeStyle='#090712';c.strokeText('NEON TILT',213,86,230);
+ c.shadowColor='#1ce9ff';c.shadowBlur=10;c.shadowOffsetY=0;
+ c.lineWidth=4;c.strokeStyle='#20ddf4';c.strokeText('NEON TILT',213,84,230);
+ c.shadowBlur=0;c.lineWidth=1.5;c.strokeStyle='#fff4dc';c.strokeText('NEON TILT',213,84,230);
+ const logo=G(c,97,64,327,104,[[0,'#5af2ff'],[.42,'#f7fbff'],[.62,'#ff68c4'],[1,'#ff7650']]);
+ c.fillStyle=logo;c.fillText('NEON TILT',213,84,230);
+ c.globalAlpha=.72;c.fillStyle='#fff';c.fillText('NEON TILT',213,81,230);c.globalAlpha=1;
+ c.fillStyle='#23e4ff';c.fillRect(133,116,160,2);
+ c.fillStyle='#ff4ca3';c.fillRect(158,121,110,1.5);
  c.restore();
  for(const x of [101,324])bolt(c,x,52,3);
  // Top crown lamps run automatically in attract mode.
