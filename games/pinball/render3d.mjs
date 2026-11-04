@@ -136,6 +136,33 @@ export async function create3DTable(host){
    side:T.DoubleSide,opacity:1
   });
  }
+ // Independent transparent red glow for a visible, continuous neon pulse.
+ // Kept separate from gold side bars so only the NEON TILT wording breathes.
+ function marqueeGlow(){
+  const canvas=document.createElement('canvas');
+  canvas.width=2048;canvas.height=560;
+  const c=canvas.getContext('2d');
+  c.clearRect(0,0,2048,560);
+  c.textAlign='center';c.textBaseline='middle';c.lineCap='round';c.lineJoin='round';
+  c.font='italic 500 318px "Oxanium","Trebuchet MS",Arial,sans-serif';
+  c.shadowColor='#f01b36';c.shadowBlur=98;
+  c.lineWidth=42;c.strokeStyle='#c51027';
+  c.strokeText('NEON TILT',1024,277,1550);
+  c.shadowColor='#ff3649';c.shadowBlur=64;
+  c.lineWidth=23;c.strokeStyle='#f32b3e';
+  c.strokeText('NEON TILT',1024,277,1550);
+  c.shadowBlur=21;c.lineWidth=8;c.strokeStyle='#ff7882';
+  c.strokeText('NEON TILT',1024,277,1550);
+  const texture=new T.CanvasTexture(canvas);
+  texture.colorSpace=T.SRGBColorSpace;
+  texture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);
+  texture.minFilter=T.LinearMipmapLinearFilter;
+  texture.magFilter=T.LinearFilter;
+  return new T.MeshBasicMaterial({
+   map:texture,transparent:true,depthWrite:false,toneMapped:false,
+   side:T.DoubleSide,blending:T.AdditiveBlending,opacity:.5
+  });
+ }
  // Backbox and lacquered hardwood body, with truly modelled thickness.
  const boardW=BOARD.width*SCALE,boardH=BOARD.height*SCALE;
  box(0,0,-.38,boardW+.72,boardH+.72,.88,metal('#352633',.35,.55));
@@ -361,7 +388,10 @@ export async function create3DTable(host){
  for(const py of [-7.12,7.12])box(0,py,.46,8.6,.16,.61,gold);
  // A floating neon wordmark, mounted over the black enamel without a framed plaque.
  const neonMarqueeMaterial=cabinetMarquee();
+ const neonGlowMaterial=marqueeGlow();
  plane(0,5.48,.535,5.90,1.58,neonMarqueeMaterial);
+ // Slight positive offset prevents z-fighting with the permanent, sharp tube core.
+ plane(0,5.48,.548,5.90,1.58,neonGlowMaterial);
  // Collision walls stay in engine.mjs. The Space Cadet-inspired visual
  // treatment replaces metal wall wires with painted enamel / plastic edges.
  for(const point of POSTS){
@@ -1303,9 +1333,12 @@ export async function create3DTable(host){
      engine.missions.ride?2.5:.5+1.1*(.5+.5*Math.sin(now*.006-i*.85)))+eventFlash*4;
   }
 
-  // Slow breathing illumination; never strobe, and honour reduced motion.
-  const marqueePulse=reducedMotion?1:.90+.10*Math.sin(now*.0033);
-  neonMarqueeMaterial.opacity=marqueePulse;
+  // The sharp neon tubes stay fully readable while their red light breathes.
+  // A 2.1s smooth cycle continues during standby, live play, multiball and gameover.
+  // Reduced-motion mode keeps a bright, fixed glow without flashing.
+  const marqueePulse=reducedMotion?.75:.5+.5*Math.sin(now*.0030);
+  neonMarqueeMaterial.opacity=1;
+  neonGlowMaterial.opacity=.28+.70*marqueePulse;
   const idle=engine.state==='ready'||engine.state==='gameover';
   sparkle.intensity=(idle&&!reducedMotion?6+Math.sin(now*.002)*1.3:6)+eventFlash*8;
   rim.intensity=8+eventFlash*8;
