@@ -36,7 +36,7 @@ export function getDmdStatus(game,now=0){
   return ['2X SCORING',Math.ceil(game.multiplierUntil-game.time)+' SECONDS LEFT'];
  const targets=game.targets?.size||0,lanes=game.lanes?.size||0;
  const grid=game.powerCharges||0,spins=game.spinnerTurns||0;
- const frame=Math.floor(Math.max(0,now)/STATUS_MS)%4;
+ const frame=Math.floor(Math.max(0,now)/STATUS_MS)%5;
  const save=game.state==='playing'&&game.ball?.mode==='live'&&!game.ballSaveUsed&&
   Number.isFinite(game.ballSaveUntil)&&game.ballSaveUntil>game.time;
  const status=[
@@ -44,7 +44,8 @@ export function getDmdStatus(game,now=0){
   save?['BALL SAVE',Math.ceil(game.ballSaveUntil-game.time)+' SECONDS LEFT']:
    ['POWER GRID '+grid+'/3',grid===2?'ONE MORE SHOT':'HIT RAMP OR ORBIT'],
   ['TARGET BANK '+targets+'/4','NEON LANES '+lanes+'/3'],
-  ['SPINNER '+(spins%5)+'/5',spins>0?'BUILD OVERDRIVE':'HIT THE SPINNER']
+  ['SPINNER '+(spins%5)+'/5',spins>0?'BUILD OVERDRIVE':'HIT THE SPINNER'],
+  ['FLIGHT RANK',''+(game.rankName||'CADET')+' · '+(game.commandFlags||0)+'/4 FLAGS']
  ];
  return status[frame];
 }
@@ -92,6 +93,7 @@ export function describeDmdEvent(event,game=null){
    if(name==='lanes'||full.includes('LANES'))return {headline:'NEON LANES',sub:'2X SCORING',priority:4,duration:2350};
    return {headline:'MISSION',sub:'COMPLETE!',priority:4,duration:2300};
   }
+  case 'promotion':return {headline:'RANK PROMOTION!',sub:String(event.rank||'ENSIGN')+' · +'+FMT(event.points),priority:5,duration:3200};
   case 'frenzy':return {headline:'BUMPER FRENZY',sub:'2X BUMPER POINTS',priority:4,duration:2400};
   case 'multiplier':return {headline:'2X SCORING',sub:'20 SECONDS',priority:4,duration:2400};
   case 'ballsave':return {headline:'BALL SAVED!',sub:'RELAUNCH NOW',priority:4,duration:2200};
