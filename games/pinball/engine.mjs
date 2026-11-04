@@ -83,6 +83,7 @@ export class PinballEngine{
                  {side:'right',x:276,y:613,a:.40,omega:0,length:71}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
+  this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
   this.lanes=new Set();this.targets=new Set();this.bumperHits=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
@@ -100,6 +101,7 @@ export class PinballEngine{
   this.state='playing';this.score=0;this.ballNumber=1;
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.accumulator=0;this.cooldowns.clear();
+  this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
   this.lanes.clear();this.targets.clear();this.bumperHits=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
@@ -117,6 +119,7 @@ export class PinballEngine{
   this.ball={x:382,y:582,vx:0,vy:0,r:BOARD.radius,mode:'shooter',trail:[]};
   this.charging=false;this.charge=.26;
   this.ballSaveUntil=0;this.ballLaunchedAt=null;this.ballSaveUsed=false;
+  this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
   this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;this.overdriveUntil=0;
   this.emit('ball',{ball:this.ballNumber});
@@ -136,11 +139,34 @@ export class PinballEngine{
   this.skillShotUntil=this.time+ARCADE_MODES.skillWindow;
   this.emit('launch',{power:p});return true;
  }
- setFlipper(side,held){if(side==='left')this.leftHeld=Boolean(held);if(side==='right')this.rightHeld=Boolean(held);}
+ setFlipper(side,held){
+  if(this.tilted&&held)return;
+  if(side==='left')this.leftHeld=Boolean(held);
+  if(side==='right')this.rightHeld=Boolean(held);
+ }
+ // Table bumps are physical impulses, not automatic ball saves.
+ // Excessive nudging TILTs the machine until the next ball.
+ nudge(direction){
+  const b=this.ball;
+  if(this.state!=='playing'||!b||b.mode!=='live'||this.tilted||
+     !['left','right','up'].includes(direction)||this.time-this.lastNudgeAt<.085)return false;
+  this.lastNudgeAt=this.time;
+  if(direction==='left')b.vx-=135;
+  else if(direction==='right')b.vx+=135;
+  else b.vy-=165;
+  this.tiltMeter+=.38;
+  this.emit('nudge',{direction});
+  if(this.tiltMeter>=1){
+   this.tilted=true;
+   this.leftHeld=false;this.rightHeld=false;
+   this.emit('tilt');
+  }
+  return true;
+ }
  releaseControls(){this.leftHeld=false;this.rightHeld=false;this.cancelLaunchCharge();}
  cancelLaunchCharge(){this.charging=false;if(this.ball?.mode==='shooter')this.charge=.26;}
  scoreHit(score,type){
-  if(this.state!=='playing')return;
+  if(this.state!=='playing'||this.tilted)return;
   const active=this.time<this.multiplierUntil?2:1;
   const frenzy=type.startsWith('bumper')&&this.time<this.frenzyUntil?2:1;
   const awarded=score*active*frenzy;
@@ -148,6 +174,7 @@ export class PinballEngine{
   this.emit('hit',{score:awarded,target:type,total:this.score});
  }
  cooldownHit(key,delay,score,type){
+  if(this.tilted)return false;
   const last=this.cooldowns.get(key)??-100;
   if(this.time-last<delay)return false;
   this.cooldowns.set(key,this.time);this.scoreHit(score,type);
@@ -188,7 +215,7 @@ export class PinballEngine{
  }
  updateFlippers(dt){
   for(const f of this.flippers){
-   const held=f.side==='left'?this.leftHeld:this.rightHeld;
+   const held=!this.tilted&&(f.side==='left'?this.leftHeld:this.rightHeld);
    const goal=held?-.57:.40;
    const old=f.a;
    f.a=clip(goal,old-14*dt,old+14*dt);
@@ -208,7 +235,7 @@ export class PinballEngine{
   };
   const contacted=this.collideSegment(f.x,f.y,tip.x,tip.y,11,.65,'flipper',0,bodyVelocity);
   if(contacted){
-   const held=f.side==='left'?this.leftHeld:this.rightHeld;
+   const held=!this.tilted&&(f.side==='left'?this.leftHeld:this.rightHeld);
    const last=this.cooldowns.get('bat-'+f.side)??-100;
    if(held && this.ball.y<f.y+14 && this.time-last>.085){
     // A stationary held bat still needs an upward collision response.
@@ -222,6 +249,7 @@ export class PinballEngine{
  }
  // All sensors and scoring run in fixed simulation time, not per render frame.
  addPoints(points,label){
+  if(this.tilted)return 0;
   const multiplier=this.time<this.multiplierUntil?2:1;
   const value=points*multiplier;
   this.score+=value;this.bonus+=Math.floor(value/10);
@@ -319,7 +347,7 @@ export class PinballEngine{
   b.mode='travel';b.travel={kind,t:0,duration:durations[kind],from:{x:b.x,y:b.y}};
  }
  checkSensors(previous){
-  const b=this.ball;if(!b||b.mode!=='live')return;
+  const b=this.ball;if(!b||b.mode!=='live'||this.tilted)return;
   // Crossing guards prevent repeated scoring when balls rest against a target.
   for(let i=0;i<LANES.length;i++){
    const lane=LANES[i];
@@ -426,6 +454,7 @@ export class PinballEngine{
    b.x=382;b.y=582;b.vx=0;b.vy=0;return;
   }
   this.time+=dt;
+  this.tiltMeter=Math.max(0,this.tiltMeter-dt*.27);
   this.expireArcadeModes();
   if(b.mode==='travel'){this.updateTravel(dt);return;}
   if(b.mode==='scoop'){
@@ -464,14 +493,14 @@ export class PinballEngine{
    for(const f of this.flippers)this.collideFlipper(f);
   }
   if(b.y>695||b.x< -35||b.x>455){
-   if(!this.ballSaveUsed && this.ballLaunchedAt!==null && this.time<this.ballSaveUntil){
+   if(!this.tilted && !this.ballSaveUsed && this.ballLaunchedAt!==null && this.time<this.ballSaveUntil){
     this.ballSaveUsed=true;this.ball=null;this.spawnBall();
     this.ballSaveUsed=true; // preserve single-use guard after spawnBall
     this.emit('ballsave');return;
    }
    this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
    this.hurryUpUntil=0;this.powerCharges=0;this.overdriveUntil=0;
-   const endBonus=this.bonus;
+   const endBonus=this.tilted?0:this.bonus;
    if(endBonus>0){
     this.score+=endBonus;this.emit('award',{score:endBonus,label:'END-OF-BALL BONUS',total:this.score});
    }
