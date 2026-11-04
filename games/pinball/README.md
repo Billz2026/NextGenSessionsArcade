@@ -1,10 +1,21 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase V2.6 — premium black-and-gold playfield and shot guidance (playable 3D beta)
+**Current stage:** Phase V2.7 — integrated route channels replacing exposed rails (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase V2.7 — Space-Cadet-style lane clarity, original NextGen design
+
+- **Removed the floating upper wireform runners and tall guard rails** (including their supporting rods and mounts) rather than simply recolouring them. This directly addresses the upper-board rail clutter.
+- Replaced the exposed rails with **four readable, continuous integrated lanes** drawn from the exact physics engine paths: **Left Orbit, Right Ramp, Centre Crossover and Skyline**. The left/right routes use 22px corridors and the secondary crossover/skyline paths use 18px corridors, all wider than the 14px ball diameter.
+- **3D:** created elevated, moulded smoked-black and deep-burgundy channel floors with flush gold edge inlays. The floor sits just below the animated ball centre along its actual `TRAVEL_PATHS` coordinates, including elevations and return bends. There are no new blockers, rails, or colliders.
+- **2D:** replaced the wire drawings with matching filled channel silhouettes, inlaid gold edging and sparse direction chevrons. Raised and printed routes share a consistent visual hierarchy.
+- Simplified the original bright top crown to restrained black/gold trim; kept genuine N/G/S upper gates, pop bumpers, Scoop, Power Core and target banks intact.
+- Original mission shot arrows still show the next required objective; the two main route mouths remain clearly engraved as ORBIT and RAMP, with compact CROSS and SKY labels at their actual scoring entrances.
+- Preserved gameplay exactly: no changes to `engine.mjs`, simulated transport, route speed, collisions, flippers, ball saves, missions, jackpots, multiball or scoring. This phase changes presentation, not physics.
+- Updated tests to verify all four 3D/Canvas corridors follow the authoritative ball path, maintain clearance, and contain no leftover upper wireform renderer.
 
 ## Phase V2.6 — premium playfield and live shot guidance
 
