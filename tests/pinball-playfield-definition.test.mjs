@@ -35,7 +35,7 @@ test('bumper cluster underlays are decorative and aligned to all three existing 
  assert.deepEqual(MID_BUMPERS.map(({x,y,r})=>[x,y,r]),BUMPERS.map(({x,y,r})=>[x,y,r]));
  assert.match(three,/const deckOutline=\[\[111,201\]/);
  assert.match(three,/new T\.ShapeGeometry\(deckShape\)/);
- assert.match(canvas,/for\(const b of MID_BUMPERS\)/);
+ assert.match(canvas,/for\(let i=0;i<MID_BUMPERS\.length;i\+\+\)/);
  assert.match(three,/for\(const b of MID_BUMPERS\)/);
  assert.equal(MID_TARGETS.length,4);
  assert.match(three,/label\('TARGET BANK'/);
