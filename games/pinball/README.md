@@ -1,10 +1,18 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4L.1 — optional table-first desktop presentation (playable 3D beta)
+**Current stage:** Phase 4L.2 — flight-rank campaign progression (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4L.2 — classic flight-rank campaign
+
+- Added a genuine five-rank in-run career from **Cadet** to **Commander**. Each of the four existing physical missions awards one command flag and one promotion; the same completed mission cannot manufacture duplicate flags.
+- Promotion bonuses increase with rank and are emitted by the deterministic engine, so the HUD, dot-matrix display, score and sound all react to one authoritative result rather than decorative fake events.
+- Added five state-driven rank lamps to both the live Three.js table and Canvas fallback, plus an always-visible HUD rank readout while retaining the personal best and four-mission extra-ball objective.
+- The DMD now cycles a live flight-rank/flag page and gives promotions a top-priority machine callout. New engine and DMD regressions cover promotion scoring, duplicate prevention, reset behaviour and display output.
+- This phase borrows the campaign feel that made classic Windows pinball memorable while keeping Neon Tilt's original names, artwork, geometry and mission rules.
 
 ## Phase 4L.1 — optional immersive table-first viewing mode
 
