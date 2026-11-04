@@ -1,6 +1,6 @@
 /* Upper machine geometry uses the existing engine transport paths.
    Decorative guide rails never alter physics or create extra scoring zones. */
-import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=8';
+import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=10';
 function makeRoute(kind,width,accent){
  const path=TRAVEL_PATHS[kind],shot=SHOTS[kind];
  if(!path||!shot||path[0][0]!==shot.x||path[0][1]!==shot.y)
