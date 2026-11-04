@@ -1,4 +1,4 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=12';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=13';
 import {renderTable} from './visuals.mjs?v=28';
 import {createDotMatrix} from './dmd.mjs?v=14';
 const $=id=>document.getElementById(id);
@@ -20,7 +20,7 @@ const engine=new PinballEngine();
 const STORAGE_KEY='ngs_pinball_proto_best_v1', TOP_KEY='ngs_pinball_top5_v2';
 const safeRead=()=>{try{return Number(localStorage.getItem(STORAGE_KEY))||0}catch{return 0}};
 const safeWrite=n=>{try{localStorage.setItem(STORAGE_KEY,String(n))}catch{}};
-let best=safeRead(),soundOn=false,audio=null,lastTime=0,particles=[],touchPointers=new Map();
+let best=safeRead(),soundOn=false,audio=null,audioMaster=null,audioNoise=null,lastTime=0,particles=[],touchPointers=new Map();
 let bumperFlash=null,tableFlash=null;
 let topScores=[];try{const v=JSON.parse(localStorage.getItem(TOP_KEY)||'[]');if(Array.isArray(v))topScores=v.filter(n=>Number.isSafeInteger(n)&&n>=0).slice(0,5)}catch{}
 best=Math.max(best,...topScores,0);
@@ -215,16 +215,86 @@ function renderLeaderboard(){
  if(!topScores.length){const li=document.createElement('li');li.textContent='NO RECORDS YET — SET THE FIRST SCORE';ui.leaderboard.append(li);return;}
  topScores.forEach((s,i)=>{const li=document.createElement('li');const rank=document.createElement('span');rank.textContent='#'+String(i+1).padStart(2,'0');const score=document.createElement('strong');score.textContent=fmt(s);li.append(rank,score);ui.leaderboard.append(li);});
 }
-function sound(freq=500,duration=.07,kind='triangle'){
- if(!soundOn)return;
+function ensureAudio(){
  try{
   audio??=new (window.AudioContext||window.webkitAudioContext)();
+  if(!audioMaster){
+   const compressor=audio.createDynamicsCompressor();
+   compressor.threshold.value=-18;compressor.knee.value=14;
+   compressor.ratio.value=5;compressor.attack.value=.004;compressor.release.value=.16;
+   audioMaster=audio.createGain();audioMaster.gain.value=.72;
+   audioMaster.connect(compressor).connect(audio.destination);
+  }
   if(audio.state==='suspended')audio.resume();
+  return audio;
+ }catch{return null}
+}
+function audioBus(pan=0){
+ if(!audioMaster)return null;
+ if(!audio.createStereoPanner)return audioMaster;
+ const panner=audio.createStereoPanner();panner.pan.value=clamp(pan,-.85,.85);panner.connect(audioMaster);return panner;
+}
+function sound(freq=500,duration=.07,kind='triangle',volume=.035,pan=0){
+ if(!soundOn)return;
+ try{
+  if(!ensureAudio())return;
   const t=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();
   osc.type=kind;osc.frequency.setValueAtTime(freq,t);osc.frequency.exponentialRampToValueAtTime(Math.max(100,freq*.75),t+duration);
-  gain.gain.setValueAtTime(.035,t);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
-  osc.connect(gain).connect(audio.destination);osc.start(t);osc.stop(t+duration+.01);
+  gain.gain.setValueAtTime(volume,t);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+  osc.connect(gain).connect(audioBus(pan));osc.start(t);osc.stop(t+duration+.01);
  }catch{}
+}
+function noiseBurst(duration=.045,volume=.035,filterFrequency=1500,pan=0){
+ if(!soundOn||!ensureAudio())return;
+ try{
+  if(!audioNoise){
+   audioNoise=audio.createBuffer(1,Math.ceil(audio.sampleRate*.25),audio.sampleRate);
+   const channel=audioNoise.getChannelData(0);
+   for(let i=0;i<channel.length;i++)channel[i]=(Math.random()*2-1)*(1-i/channel.length*.45);
+  }
+  const t=audio.currentTime,source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();
+  source.buffer=audioNoise;filter.type='bandpass';filter.frequency.value=filterFrequency;filter.Q.value=.7;
+  gain.gain.setValueAtTime(volume,t);gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+  source.connect(filter).connect(gain).connect(audioBus(pan));source.start(t);source.stop(t+duration+.01);
+ }catch{}
+}
+function impactPan(x){return Number.isFinite(x)?(x/BOARD.width)*1.6-.8:0}
+function mechanicalImpact(event){
+ const strength=clamp(event.strength||.08,.06,1),pan=impactPan(event.x);
+ if(event.kind==='bumper'){
+  noiseBurst(.038,.025+strength*.04,2300,pan);
+  sound(165+strength*75,.095,'sine',.045+strength*.055,pan);
+  sound(720+strength*260,.042,'square',.012+strength*.018,pan);return;
+ }
+ if(event.kind==='sling'){
+  noiseBurst(.052,.028+strength*.045,1700,pan);
+  sound(235+strength*90,.07,'triangle',.04+strength*.045,pan);return;
+ }
+ if(event.kind==='flipper'){
+  noiseBurst(.028,.018+strength*.025,1150,pan);
+  sound(105+strength*55,.055,'sine',.035+strength*.04,pan);return;
+ }
+ if(event.kind==='target'){
+  noiseBurst(.032,.02+strength*.025,2850,pan);
+  sound(510+strength*180,.045,'square',.018+strength*.02,pan);return;
+ }
+ const post=event.kind==='post';
+ noiseBurst(post ? .034 : .026,.014+strength*.026,post?3200:2450,pan);
+ sound(post?430+strength*190:260+strength*120,post ? .05 : .038,'triangle',.012+strength*.024,pan);
+}
+function mechanicalCoil(active,side){
+ const pan=side==='left'?-.55:.55;
+ noiseBurst(active ? .036 : .024,active ? .033 : .018,active?850:1250,pan);
+ sound(active?92:128,active ? .06 : .035,'square',active ? .045 : .022,pan);
+}
+function routeHardware(kind,exit=false){
+ const pan=kind==='orbit'?-.52:kind==='ramp' ? .52 : 0;
+ noiseBurst(exit ? .05 : .075,exit ? .025 : .035,exit?1850:1250,pan);
+ sound(exit?390:285,exit ? .06 : .11,'triangle',exit ? .022 : .035,pan);
+}
+function plungerHardware(power=.5){
+ noiseBurst(.065,.035+.025*power,720,.68);
+ sound(105+power*55,.12,'sine',.055+.03*power,.68);
 }
 function processEvents(){
  for(const e of engine.consumeEvents()){
@@ -244,15 +314,16 @@ function processEvents(){
    ui.overlay.hidden=true;ui.scoreFlash.textContent='BALL '+e.ball+' READY';
    if(e.ball>1)sound(480,.12);
   }
-  if(e.type==='launch'){ui.scoreFlash.textContent='BALL LAUNCHED';arcadeMessage('SKILL SHOTS LIVE');sound(360,.15,'sawtooth');}
+  if(e.type==='launch'){ui.scoreFlash.textContent='BALL LAUNCHED';arcadeMessage('SKILL SHOTS LIVE');plungerHardware(e.power);sound(360,.15,'sawtooth',.03,.55);}
   if(e.type==='shot'){
    const names={ramp:'RAMP SHOT',orbit:'LEFT ORBIT',
      center:'CENTER CROSSOVER',skyline:'SKYLINE LOOP'};
    const label=names[e.kind]||'SHOT';
    arcadeMessage(label+'! +'+fmt(e.points));
    ui.scoreFlash.textContent=label;
-   sound(e.kind==='center'?900:e.kind==='skyline'?1020:760,.16);
+   routeHardware(e.kind);sound(e.kind==='center'?900:e.kind==='skyline'?1020:760,.16,'triangle',.032,e.kind==='orbit'?-.45:e.kind==='ramp'?.45:0);
   }
+  if(e.type==='routeexit')routeHardware(e.kind,true);
   if(e.type==='spinner'){
    arcadeMessage('SPINNER! · '+e.turns+' TURNS');
    ui.scoreFlash.textContent='SPINNER +1,250';
@@ -323,7 +394,8 @@ function processEvents(){
   if(e.type==='award'&&!['SKILL SHOT','NEON COMBO','NEON RUSH JACKPOT','OVERDRIVE SPINNER'].includes(e.label)){
    ui.scoreFlash.textContent=e.label+' · +'+fmt(e.score);
   }
-  if(e.type==='nudge')sound(190,.045,'sawtooth');
+  if(e.type==='impact')mechanicalImpact(e);
+  if(e.type==='nudge'){noiseBurst(.055,.035,480,0);sound(115,.07,'sine',.05);}
    if(e.type==='tilt'){
     ui.scoreFlash.textContent='TILT · BONUS LOST';
     ui.left.classList.remove('active');ui.right.classList.remove('active');
@@ -339,7 +411,7 @@ function processEvents(){
    if(e.target.startsWith('bumper')){
     bumperFlash={index:Number(e.target.slice(-1)),until:performance.now()+210};
    }
-   sound(e.target.startsWith('bumper')?650:560,.055);
+   if(e.target.startsWith('lane'))sound(560,.045,'triangle',.022,0);
    if(!reducedMotion){
     const p=e.target.startsWith('bumper')?BUMPERS[Number(e.target.slice(-1))]:
       e.target.startsWith('target')?TARGETS[Number(e.target.slice(-1))]:
@@ -373,8 +445,13 @@ ui.sound.addEventListener('click',()=>{
  ui.sound.innerHTML=soundOn?'SOUND ON <span aria-hidden="true">♪</span>':'SOUND OFF <span aria-hidden="true">♪</span>';
  if(soundOn)sound(780,.08);
 });
+const flipperAudioState={left:false,right:false};
 function setHold(side,held){
   const active=Boolean(held)&&!engine.tilted;
+  if(flipperAudioState[side]!==active){
+   flipperAudioState[side]=active;
+   if(engine.state==='playing')mechanicalCoil(active,side);
+  }
   engine.setFlipper(side,active);
   (side==='left'?ui.left:ui.right).classList.toggle('active',active);
  }
@@ -442,6 +519,7 @@ ui.canvas.addEventListener('lostpointercapture',e=>releaseTouch(e.pointerId));
 function loseFocus(){
  touchPointers.clear();pressedKeys.clear();ui.left.classList.remove('active');ui.right.classList.remove('active');
  ui.launch.classList.remove('pressed');
+ flipperAudioState.left=false;flipperAudioState.right=false;
  engine.setFlipper('left',false);engine.setFlipper('right',false);
  engine.cancelLaunchCharge();
 }
