@@ -1,5 +1,5 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=13';
-import {renderTable} from './visuals.mjs?v=28';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=14';
+import {renderTable} from './visuals.mjs?v=29';
 import {createDotMatrix} from './dmd.mjs?v=14';
 const $=id=>document.getElementById(id);
 const ui={
@@ -50,7 +50,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=31');
+  const {create3DTable}=await import('./render3d.mjs?v=32');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -272,7 +272,9 @@ function mechanicalImpact(event){
  }
  if(event.kind==='flipper'){
   noiseBurst(.028,.018+strength*.025,1150,pan);
-  sound(105+strength*55,.055,'sine',.035+strength*.04,pan);return;
+  sound(105+strength*55,.055,'sine',.035+strength*.04,pan);
+  if(event.grip>.55)sound(610+event.grip*170,.038,'triangle',.018+event.grip*.014,pan);
+  return;
  }
  if(event.kind==='target'){
   noiseBurst(.032,.02+strength*.025,2850,pan);
