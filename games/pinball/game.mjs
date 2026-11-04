@@ -1,5 +1,5 @@
 import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=17';
-import {renderTable} from './visuals.mjs?v=35';
+import {renderTable} from './visuals.mjs?v=36';
 import {createDotMatrix} from './dmd.mjs?v=17';
 const $=id=>document.getElementById(id);
 const ui={
@@ -132,7 +132,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=38');
+  const {create3DTable}=await import('./render3d.mjs?v=39');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -668,16 +668,6 @@ function glowLamp(x,y,r,col,active,label=''){
  circle(x,y,r,active?col:'#27242b',active?'#ffe8b7':'#7a5b43',1.5);
  ctx.shadowBlur=0;circle(x-2,y-2,r*.25,active?'#fff5dc':'#725a4b');
  if(label)centerText(label,x,y+r+12,8,active?'#fae0a3':'#847a72');
- ctx.restore();
-}
-function rail(points,thickness=9,color='#dfac6a'){
- ctx.save();
- ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
- for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
- ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#150e14';ctx.lineWidth=thickness+8;ctx.stroke();
- ctx.strokeStyle='#49312f';ctx.lineWidth=thickness+3;ctx.stroke();
- ctx.strokeStyle=color;ctx.lineWidth=thickness;ctx.stroke();
- ctx.strokeStyle='rgba(255,251,211,.65)';ctx.lineWidth=1.5;ctx.stroke();
  ctx.restore();
 }
 function drawBoard(){renderTable(ctx,engine,{reducedMotion,bumperFlash});}
