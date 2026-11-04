@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const html=readFileSync(new URL('../games/pinball/index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../games/pinball/console.css',import.meta.url),'utf8');
+const towerCss=readFileSync(new URL('../games/pinball/side-towers.css',import.meta.url),'utf8');
+const gameSource=readFileSync(new URL('../games/pinball/game.mjs',import.meta.url),'utf8');
 const sidebarStart=html.indexOf('<aside class="hud hud-v2"');
 const sidebar=html.slice(sidebarStart,html.indexOf('</aside>',sidebarStart)+8);
 test('critical game HUD stays available with Table Intel collapsed',()=>{
@@ -90,4 +92,84 @@ test('widescreen desktop stage fills the viewport without stretching table geome
  assert.ok(wide.includes('max-width:1280px'));
  assert.ok(tableCss.includes('aspect-ratio:3/5'));
  assert.ok(!wide.includes('.playfield-wrap{'));
+});
+
+test('two full-height instrument towers flank but never replace the functional playfield',()=>{
+ const arenaStart=html.indexOf('class="machine-arena"'),table=html.indexOf('<div class="cabinet">',arenaStart);
+ const left=html.indexOf('class="arena-wing arena-wing--missions"',arenaStart);
+ const right=html.indexOf('class="arena-wing arena-wing--overload"',arenaStart);
+ assert.ok(arenaStart>0&&left>arenaStart&&left<table&&table<right);
+ assert.ok(right<html.indexOf('<aside class="hud hud-v2"'),'instrument towers remain inside the machine');
+ for(const id of ['wing-flight-title','wing-mission-count','wing-fuel-fill','wing-wizard','wing-overload-title',
+  'wing-lock-1','wing-lock-2','wing-lock-3','wing-jackpot-ramp','wing-jackpot-orbit','wing-jackpot-super',
+  'wing-power-cells','wing-live-balls','wing-overload-state']){
+  assert.match(html,new RegExp('id="'+id+'"'));
+ }
+ for(const id of ['launch','orbit','core','night','signal','redline'])
+  assert.ok(html.includes('data-flight-id="'+id+'"'),id+' mission present');
+ assert.ok(html.includes('side-towers.css?v=1'));
+ assert.match(towerCss,/grid-template-columns:minmax\(0,1fr\) max-content minmax\(0,1fr\)/);
+ assert.match(towerCss,/@container \(max-width: 800px\)/);
+ assert.match(towerCss,/@media\(max-width:900px\)/);
+ assert.match(towerCss,/prefers-reduced-motion:reduce/);
+ assert.match(gameSource,/syncHUD\(\);syncArena\(\);dmd\.update/);
+});
+
+test('side tower lights mirror actual mission, lock, charge and jackpot state',async()=>{
+ const {PinballEngine}=await import('../games/pinball/engine.mjs');
+ const start=gameSource.indexOf('// Cabinet-side instrument towers mirror existing engine state.');
+ const end=gameSource.indexOf('const ctx=ui.canvas.getContext',start);
+ assert.ok(start>=0&&end>start,'locate the actual live tower sync implementation');
+ const section=gameSource.slice(start,end);
+ const element=id=>{
+  const active=new Set();
+  return{
+   id,textContent:'',style:{width:''},dataset:{flightId:id},
+   classList:{
+    toggle(name,on){if(on)active.add(name);else active.delete(name)},
+    contains(name){return active.has(name)}
+   }
+  };
+ };
+ const ids=[...html.matchAll(/id="([^"]+)"/g)].map(x=>x[1]);
+ const elements=new Map(ids.map(id=>[id,element(id)]));
+ const missionRows=[...html.matchAll(/data-flight-id="([^"]+)"/g)].map(x=>element(x[1]));
+ const powerCells=[element('cell0'),element('cell1'),element('cell2')];
+ const document={
+  getElementById(id){return elements.get(id)||null},
+  querySelectorAll(query){
+   if(query==='[data-flight-id]')return missionRows;
+   if(query==='#wing-power-cells i')return powerCells;
+   return [];
+  }
+ };
+ const g=new PinballEngine();
+ const build=Function('engine','document',
+  "const $=id=>document.getElementById(id);"+section+";return syncArena;");
+ const sync=build(g,document);
+ sync();
+ assert.equal(elements.get('wing-flight-title').textContent,'SYSTEM STANDBY');
+ assert.equal(elements.get('wing-mission-count').textContent,'0 / 6');
+ g.start();g.armCommandMission();sync();
+ assert.equal(elements.get('wing-fuel-fill').style.width,'100%');
+ assert.equal(missionRows[0].classList.contains('is-current'),true);
+ g.startCommandMission();
+ for(const action of g.commandMission.sequence)g.progressCommand(action);
+ sync();
+ assert.equal(missionRows[0].classList.contains('is-complete'),true);
+ assert.equal(elements.get('wing-mission-count').textContent,'1 / 6');
+ g.ballLocks=1;g.lockLit=true;g.powerCharges=2;sync();
+ assert.equal(elements.get('wing-lock-count').textContent,'1/2');
+ assert.equal(elements.get('wing-lock-1').classList.contains('is-locked'),true);
+ assert.equal(elements.get('wing-lock-2').classList.contains('is-ready'),true);
+ assert.equal(powerCells.filter(c=>c.classList.contains('is-charged')).length,2);
+ g.startMultiball();sync();
+ assert.equal(elements.get('wing-overload-title').textContent,'NEON OVERLOAD');
+ assert.ok(elements.get('wing-reactor').classList.contains('is-active'));
+ assert.equal(elements.get('wing-live-balls').textContent,'3');
+ assert.ok(elements.get('wing-lock-3').classList.contains('is-live'));
+ g.awardMultiballJackpot('ramp');g.awardMultiballJackpot('orbit');sync();
+ assert.ok(elements.get('wing-jackpot-ramp').classList.contains('is-claimed'));
+ assert.ok(elements.get('wing-jackpot-super').classList.contains('is-live'));
+ assert.doesNotMatch(section,/engine\.score\s*=/,'decorative instruments may not mutate scoring');
 });
