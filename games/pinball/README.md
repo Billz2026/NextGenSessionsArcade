@@ -1,10 +1,18 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4N — mechanical response and shot control (playable 3D beta)
+**Current stage:** Phase 4O — lower-table control and accurate feeds (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4O — lower-table control and accurate feeds
+
+- Added a genuine flipper contact model around a visible gold **sweet-spot band**. A powered hit near the band receives a restrained directional-grip blend toward the natural cross-table route: left flipper to ramp, right flipper to orbit.
+- The adjustment preserves the collision's real speed and depends on contact position and stroke timing. Heel hits, weak contacts, held/dead flips and late misses receive no artificial launch.
+- Added matching illuminated sweet-spot hardware to the Three.js flippers and the Canvas fallback so the accuracy mechanic is learnable rather than an invisible auto-aim system.
+- Refined the existing ramp and orbit wireform exits into predictable right- and left-flipper feed windows. The visible route geometry and endpoints remain unchanged; only the release vector receives a small blend toward the intended return lane.
+- Stress tests retain the open centre drain, unattended-ball drain behaviour, normal crossover reachability and tip-versus-heel power difference. New deterministic checks cover shot alignment, dead-flip safety, return-feed projection and renderer parity.
 
 ## Phase 4N — mechanical response and shot control
 
@@ -345,8 +353,9 @@ An original red, amber and gold browser arcade pinball table inspired by the *fe
 1. Start Game.
 2. Hold and release Space or the onscreen Launch button to fire the plunger.
 3. Left Arrow / A = left flipper. Right Arrow / D = right flipper.
-4. Hit the ramp and orbit to chase the Night Ride combo. Complete all four missions for the extra ball.
-5. Scores are stored in this browser only. No purchases, cash stakes or prizes.
+4. Time the ball near the gold flipper band for the cleanest cross-table ramp/orbit shot.
+5. Hit the ramp and orbit to chase the Night Ride combo. Complete all four missions for the extra ball.
+6. Scores are stored in this browser only. No purchases, cash stakes or prizes.
 
 ## Technical details and limitations
 
