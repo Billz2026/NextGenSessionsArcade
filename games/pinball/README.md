@@ -1,10 +1,19 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4L.3 — illuminated arcade marquee (playable 3D beta)
+**Current stage:** Phase 4M — mission control and fuel system (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4M — mission control and fuel system
+
+- Completing the four physical stand-up targets now selects one of four original multi-stage flight missions. The right ramp becomes the genuine mission launch shot rather than missions appearing automatically from unrelated scoring.
+- Added **Launch Window**, **Orbital Sweep**, **Core Recovery** and **Night Flight**, each with an ordered sequence of real ramp, orbit, crossover, Skyline, scoop or bumper shots.
+- Every launched mission receives 26 seconds of fuel. Correct objective shots extend the timer; running out of fuel or draining the ball produces a genuine mission failure with no reward.
+- Promotions now come only from completing flight missions. Four command flags move the player from Cadet through Ensign, Lieutenant and Captain to Commander.
+- Added five working fuel lamps beside the shooter lane in both Three.js and Canvas renderers. The HUD and dot-matrix display show selected mission, next required shot, remaining fuel, progress, completion and failure.
+- Added deterministic regressions for mission selection, ramp launch, ordered objectives, fuel expiry, promotion and DMD callouts while retaining the existing Power Grid, jackpots, four table objectives and extra-ball rules.
 
 ## Phase 4L.3 — illuminated arcade marquee
 
