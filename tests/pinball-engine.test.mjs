@@ -608,3 +608,95 @@ test('wireform returns project into their named flipper feed windows',()=>{
   assert.ok(Math.abs(projectedX-feed.x)<22,kind+' return missed the '+feed.side+' feed');
  }
 });
+
+test('Neon Tilt V2 selects six distinct flight missions and unlocks command mode after four',()=>{
+ const g=new PinballEngine();g.start();
+ assert.equal(FLIGHT_MISSIONS.length,6);
+ for(let i=0;i<4;i++){
+  assert.equal(g.armCommandMission(),true);
+  assert.equal(g.commandMission.id,FLIGHT_MISSIONS[i].id);
+  assert.equal(g.startCommandMission(),true);
+  for(const action of FLIGHT_MISSIONS[i].sequence)assert.ok(g.progressCommand(action));
+ }
+ assert.equal(g.rankName,'COMMANDER');
+ assert.equal(g.neonCommandReady,true);
+ assert.equal(g.startNeonCommand(),true);
+ for(const action of ['ramp','orbit','center','skyline','scoop'])assert.ok(g.progressNeonCommand(action));
+ assert.equal(g.neonCommandDone,true);
+ assert.equal(g.neonCommandActive,false);
+ assert.ok(g.consumeEvents().some(e=>e.type==='wizardcomplete'));
+ g.start();assert.equal(g.completedCommands.size,0);assert.equal(g.neonCommandDone,false);
+});
+
+test('Ball locks require actual scoop capture and serve replacements without spending regular balls',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ for(let locked=1;locked<=2;locked++){
+  g.lockLit=true;g.commandMissionReady=false;g.activeCommand=null;
+  g.lastScoopTime=-100;
+  g.ball.mode='live';g.ball.x=SCOOP.x;g.ball.y=SCOOP.y;g.ball.vy=-480;
+  g.checkSensors({x:SCOOP.x,y:SCOOP.y+16});
+  assert.equal(g.ballLocks,locked);
+  assert.equal(g.balls.length,1);
+  assert.equal(g.ball.mode,'shooter');
+  assert.equal(g.ballNumber,1);
+ }
+ g.lockLit=true;g.lastScoopTime=-100;
+ g.ball.mode='live';g.ball.x=SCOOP.x;g.ball.y=SCOOP.y;g.ball.vy=-500;
+ g.checkSensors({x:SCOOP.x,y:SCOOP.y+16});
+ assert.equal(g.multiballActive,true);
+ assert.equal(g.balls.length,3);
+ assert.equal(new Set(g.balls.map(b=>b.id)).size,3);
+ assert.ok(g.balls.every(b=>b.mode==='live'));
+ assert.ok(g.consumeEvents().some(e=>e.type==='multiballstart'));
+});
+
+test('Multiball jackpots require two different shots and a scoop for super jackpot',()=>{
+ const g=new PinballEngine();g.start();g.startMultiball();
+ assert.equal(g.awardMultiballJackpot('ramp'),true);
+ assert.equal(g.awardMultiballJackpot('ramp'),false);
+ assert.equal(g.multiballSuperLit,false);
+ assert.equal(g.awardMultiballJackpot('orbit'),true);
+ assert.equal(g.multiballSuperLit,true);
+ assert.equal(g.awardSuperJackpot(),true);
+ assert.equal(g.multiballSuperLit,false);
+ assert.equal(g.awardSuperJackpot(),false);
+ assert.equal(g.score,160000);
+});
+
+test('Simulated multiball drains, saves and completion never consume extra regular turns',()=>{
+ const g=new PinballEngine();g.start();g.startMultiball();
+ const ids=g.balls.map(b=>b.id);
+ const early=g.balls[2];
+ early.x=210;early.y=698;early.vy=290;
+ g.singleStep(BOARD.step);
+ assert.equal(g.balls.length,3);
+ assert.equal(g.multiballActive,true);
+ assert.equal(g.ballNumber,1);
+ assert.ok(!g.balls.some(b=>b.id===ids[2]));
+ g.time=g.multiballSaveUntil+1;
+ for(let n=2;n>=1;n--){
+  const b=g.balls[g.balls.length-1];
+  b.mode='live';b.x=210;b.y=698;b.vy=300;
+  g.singleStep(BOARD.step);
+  assert.equal(g.balls.length,n);
+ }
+ assert.equal(g.multiballActive,false);
+ assert.equal(g.state,'playing');
+ assert.equal(g.ballNumber,1);
+ g.ball.mode='live';g.ball.x=210;g.ball.y=698;g.ball.vy=300;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'between');
+ assert.equal(g.balls.length,0);
+});
+
+test('Active multiball can add only one replacement ball from a completed lane bank',()=>{
+ const g=new PinballEngine();g.start();g.startMultiball();
+ g.time=g.multiballSaveUntil+1;
+ const b=g.balls.at(-1);b.x=210;b.y=698;b.vy=250;g.singleStep(BOARD.step);
+ assert.equal(g.balls.length,2);
+ g.activateLane(0);g.activateLane(1);g.activateLane(2);
+ assert.equal(g.balls.length,3);
+ assert.equal(g.multiballAddUsed,true);
+ g.lanes.clear();g.activateLane(0);g.activateLane(1);g.activateLane(2);
+ assert.equal(g.balls.length,3);
+});
