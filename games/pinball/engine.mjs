@@ -455,7 +455,7 @@ export class PinballEngine{
   captured.vx=-440;captured.vy=-640;captured.trail=[];
   this.balls=[captured,this.makeMultiballBall(294,414,-310,-780),this.makeMultiballBall(263,434,-560,-460)];
   this.ball=captured;this.multiballActive=true;this.ballLocks=0;this.lockLit=false;
-  this.multiballSaveUntil=this.time+10;this.multiballJackpots.clear();
+  this.multiballSaveUntil=this.time+10;this.ballSaveUsed=true;this.multiballJackpots.clear();
   this.multiballSuperLit=false;this.multiballAddUsed=false;
   this.emit('multiballstart',{count:3,save:10});return true;
  }
@@ -526,6 +526,11 @@ export class PinballEngine{
   this.progressCommand('lane');
   if(this.lanes.size===3){
    this.lanes.clear();this.multiplierUntil=this.time+20;
+   if(this.multiballActive&&!this.multiballAddUsed&&this.balls.length<3){
+    this.multiballAddUsed=true;
+    this.balls.push(this.makeMultiballBall(322,195,-265,-260));
+    this.emit('multiballadd',{count:this.balls.length});
+   }
    this.mission('lanes','NEON LANES · 2× SCORING',10000);
    this.emit('multiplier',{until:this.multiplierUntil});
   }
@@ -625,11 +630,25 @@ export class PinballEngine{
   if(sd<SCOOP.r-2 && b.vy< -180 && this.time-this.lastScoopTime>2){
    this.lastScoopTime=this.time;this.scoopHits++;
    this.addPoints(SCOOP.points,'NEON SCOOP');
-   this.progressCommand('scoop');
+   const wizardWasReady=this.neonCommandReady;
+   this.progressCommand('scoop');this.progressNeonCommand('scoop');
+   if(this.multiballActive)this.awardSuperJackpot();
    if(this.hurryUpUntil>this.time){
     const points=this.addPoints(50000,'NEON RUSH JACKPOT');
     this.emit('jackpot',{points});
     this.powerCharges=0;this.hurryUpUntil=0;
+   }
+   // A flight mission owns its scoop shot. Lock only when mission control is idle.
+   if(!this.multiballActive&&wizardWasReady&&!this.activeCommand&&!this.commandMissionReady)
+    this.startNeonCommand();
+   if(!this.multiballActive&&this.lockLit&&!this.neonCommandActive&&!this.neonCommandReady&&
+      !this.activeCommand&&!this.commandMissionReady){
+    this.lockLit=false;
+    if(this.ballLocks<2){
+     this.ballLocks++;this.emit('balllock',{locked:this.ballLocks,needed:2});
+     this.spawnBall();return;
+    }
+    this.startMultiball(b);return;
    }
    b.mode='scoop';b.scoopTimer=SCOOP.hold;
    b.x=SCOOP.x;b.y=SCOOP.y;b.vx=0;b.vy=0;
@@ -694,14 +713,24 @@ export class PinballEngine{
   if(this.state!=='playing')return;
   this.updateFlippers(dt);
   if(this.charging)this.charge=clip(this.charge+dt*.82,.12,1);
+  const current=this.ball;
+  if(!current)return;
+  if(current.mode==='shooter'){
+   current.x=382;current.y=582;current.vx=0;current.vy=0;return;
+  }
+  this.time+=dt;this.tiltMeter=Math.max(0,this.tiltMeter-dt*.27);
+  this.expireArcadeModes();
+  // Flippers and the timer advance once; each physical ball has its own simulation.
+  for(const item of [...this.balls]){
+   if(!this.balls.includes(item))continue;
+   this.ball=item;this.stepActiveBall(dt);
+  }
+  if(this.multiballActive)this.collideMultiball();
+  this.ball=this.balls[0]||null;
+ }
+ stepActiveBall(dt){
   const b=this.ball;
   if(!b)return;
-  if(b.mode==='shooter'){
-   b.x=382;b.y=582;b.vx=0;b.vy=0;return;
-  }
-  this.time+=dt;
-  this.tiltMeter=Math.max(0,this.tiltMeter-dt*.27);
-  this.expireArcadeModes();
   if(b.mode==='travel'){this.updateTravel(dt);return;}
   if(b.mode==='scoop'){
    b.scoopTimer-=dt;
@@ -723,7 +752,7 @@ export class PinballEngine{
   if(speed>max){b.vx*=max/speed;b.vy*=max/speed;}
   b.x+=b.vx*dt;b.y+=b.vy*dt;
   this.checkSensors(previous);
-  if(b.mode!=='live')return;
+  if(!this.balls.includes(b)||b.mode!=='live')return;
   // The shooter lane starts below the open top: once the ball crosses over the divider
   // on the way down it enters the main table.
   for(let pass=0;pass<2;pass++){
@@ -740,6 +769,19 @@ export class PinballEngine{
    for(const f of this.flippers)this.collideFlipper(f);
   }
   if(b.y>695||b.x< -35||b.x>455){
+   if(this.multiballActive){
+    this.balls=this.balls.filter(other=>other!==b);
+    if(!this.tilted&&this.time<this.multiballSaveUntil){
+     this.balls.push(this.makeMultiballBall(330,215,-265,-260));
+     this.emit('multiballsave',{count:this.balls.length});return;
+    }
+    this.emit('multiballdrain',{remaining:this.balls.length});
+    if(this.balls.length<=1){
+     this.multiballActive=false;this.multiballSuperLit=false;this.multiballJackpots.clear();
+     this.emit('multiballend',{remaining:this.balls.length});
+    }
+    if(this.balls.length>0)return;
+   }
    if(!this.tilted && !this.ballSaveUsed && this.ballLaunchedAt!==null && this.time<this.ballSaveUntil){
     this.ballSaveUsed=true;this.ball=null;this.spawnBall();
     this.ballSaveUsed=true; // preserve single-use guard after spawnBall
@@ -747,13 +789,14 @@ export class PinballEngine{
    }
    this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
    if(this.activeCommand)this.failCommand('BALL DRAINED');
+   if(this.neonCommandActive)this.failNeonCommand('BALL DRAINED');
    this.hurryUpUntil=0;this.powerCharges=0;this.overdriveUntil=0;
    const endBonus=this.tilted?0:this.bonus;
    if(endBonus>0){
     this.score+=endBonus;this.emit('award',{score:endBonus,label:'END-OF-BALL BONUS',total:this.score});
    }
    this.bonus=0;
-   this.ball=null;this.state='between';this.between=1.1;
+   this.ball=null;this.balls=[];this.state='between';this.between=1.1;
    this.emit('drain',{ball:this.ballNumber,bonus:endBonus});
   }
  }
