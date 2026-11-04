@@ -81,6 +81,14 @@ export const SHOT_GUIDES=Object.freeze({
  orbit:Object.freeze({x:77,y:373,capture:45,depth:78,pull:31,damping:2.4}),
  ramp:Object.freeze({x:311,y:372,capture:46,depth:78,pull:31,damping:2.4})
 });
+// A powered strike near the marked rubber band has slightly more directional
+// grip. It preserves the collision's real speed and only blends the outgoing
+// angle; heel hits, dead flips and weak contacts receive no hidden launch.
+export const FLIPPER_SWEET_SPOT=.68;
+export const RETURN_FEEDS=Object.freeze({
+ orbit:Object.freeze({side:'left',x:145,y:577,blend:.24}),
+ ramp:Object.freeze({side:'right',x:275,y:577,blend:.24})
+});
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
 export const SLINGS=Object.freeze([
@@ -221,14 +229,14 @@ export class PinballEngine{
   if(type.startsWith('bumper'))this.bumper();
   return true;
  }
- impactFeedback(kind,key,speed,x,y){
+ impactFeedback(kind,key,speed,x,y,detail={}){
   if(speed<55)return false;
   const id='impact:'+key,last=this.cooldowns.get(id)??-100;
   if(this.time-last<.045)return false;
   this.cooldowns.set(id,this.time);
   this.emit('impact',{
    kind,key,speed:Math.round(speed),
-   strength:clip((speed-55)/850,.06,1),x,y
+   strength:clip((speed-55)/850,.06,1),x,y,...detail
   });
   return true;
  }
@@ -304,7 +312,18 @@ export class PinballEngine{
   const tangent=(b.vx-surfaceX)*tx+(b.vy-surfaceY)*ty;
   const friction=clip(-tangent*.22,-impulse*.25,impulse*.25);
   b.vx+=tx*friction;b.vy+=ty*friction;
-  this.impactFeedback('flipper','flipper-'+f.side,impact,p.px,p.py);
+  const powered=f.omega<-2.5,grip=powered&&impact>80?
+   clip(1-Math.abs(p.t-FLIPPER_SWEET_SPOT)/.36,0,1):0;
+  if(grip>0&&b.vy<-50){
+   const target=f.side==='left'?SHOTS.ramp:SHOTS.orbit;
+   const aimX=target.x-b.x,aimY=target.y-b.y,aimLength=Math.hypot(aimX,aimY)||1;
+   const speed=Math.hypot(b.vx,b.vy),blend=.025+.095*grip;
+   const vx=b.vx*(1-blend)+speed*aimX/aimLength*blend;
+   const vy=b.vy*(1-blend)+speed*aimY/aimLength*blend;
+   const adjusted=Math.hypot(vx,vy)||1;
+   b.vx=vx*speed/adjusted;b.vy=vy*speed/adjusted;
+  }
+  this.impactFeedback('flipper','flipper-'+f.side,impact,p.px,p.py,{contact:p.t,grip});
   return true;
  }
  guideShotMouths(dt){
@@ -559,10 +578,17 @@ export class PinballEngine{
   if(progress>=1){
    const a=path.at(-2),z=path.at(-1),dx=z[0]-a[0],dy=z[1]-a[1];
    const length=Math.hypot(dx,dy)||1;
-   const speed=clip(geo.total/tr.duration*.50,260,475);
-   b.vx=speed*dx/length;b.vy=speed*dy/length;
+   const speed=clip(geo.total/tr.duration*.50,260,475),feed=RETURN_FEEDS[tr.kind];
+   let vx=dx/length,vy=dy/length;
+   if(feed){
+    const fx=feed.x-z[0],fy=feed.y-z[1],fl=Math.hypot(fx,fy)||1;
+    vx=vx*(1-feed.blend)+fx/fl*feed.blend;
+    vy=vy*(1-feed.blend)+fy/fl*feed.blend;
+    const vl=Math.hypot(vx,vy)||1;vx/=vl;vy/=vl;
+   }
+   b.vx=speed*vx;b.vy=speed*vy;
    b.mode='live';b.travel=null;b.travelHeight=0;b.trail=[];
-   this.emit('routeexit',{kind:tr.kind,speed,x:b.x,y:b.y});
+   this.emit('routeexit',{kind:tr.kind,speed,x:b.x,y:b.y,feed:feed?.side||null});
   }
  }
 
