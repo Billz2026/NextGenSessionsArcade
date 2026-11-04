@@ -30,11 +30,15 @@ export const TARGETS=Object.freeze([{x:165,y:410,r:12},{x:194,y:405,r:12},{x:223
 // [x, y, 3D height] coordinates; collision physics elsewhere stays 2D.
 export const RAMP_PATH=Object.freeze([
  [311,372,.40],[327,333,.65],[320,290,.94],[286,244,1.23],
- [285,203,1.45],[311,170,1.28],[291,150,.95]
+ [285,203,1.45],[311,170,1.28],[291,150,.95],
+ [321,167,.95],[341,222,.85],[339,298,.68],[332,387,.53],
+ [316,469,.43],[287,518,.46]
 ].map(p=>Object.freeze(p)));
 export const ORBIT_PATH=Object.freeze([
  [77,373,.39],[59,321,.52],[56,250,.67],[71,204,.78],
- [94,176,.86],[136,152,.9],[214,150,.82],[300,150,.69]
+ [94,176,.86],[136,152,.9],[214,150,.82],[300,150,.69],
+ [273,121,.77],[180,113,.80],[91,129,.71],[50,173,.65],
+ [45,268,.55],[48,352,.46],[66,425,.39],[120,519,.46]
 ].map(p=>Object.freeze(p)));
 // Phase 3N routes are shared by physics, the 3D hardware and 2D fallback.
 export const CENTER_PATH=Object.freeze([
@@ -42,17 +46,28 @@ export const CENTER_PATH=Object.freeze([
  [208,289,1.50],[208,266,1.58],
  [204,220,1.48],[226,183,1.43],[259,165,1.41],
  [272,205,1.24],[270,273,1.12],[251,349,.84],
- [241,415,.58],[260,505,.34]
+ [275,416,.58],[253,505,.46]
 ].map(p=>Object.freeze(p)));
 export const SKYLINE_PATH=Object.freeze([
  [124,380,.38],[102,341,.63],[94,304,.92],[94,254,1.23],
  [119,207,1.43],[158,173,1.53],[196,152,1.60],
  [178,219,1.38],[156,283,1.05],[141,360,.76],
- [134,428,.52],[159,508,.33]
+ [134,428,.52],[159,508,.46]
 ].map(p=>Object.freeze(p)));
 export const TRAVEL_PATHS=Object.freeze({
  ramp:RAMP_PATH,orbit:ORBIT_PATH,center:CENTER_PATH,skyline:SKYLINE_PATH
 });
+// Three-dimensional arc length is shared by all guided rail segments.
+const TRAVEL_GEOMETRY=Object.freeze(Object.fromEntries(
+ Object.entries(TRAVEL_PATHS).map(([kind,path])=>{
+  const lengths=[0];
+  for(let i=1;i<path.length;i++){
+   const a=path[i-1],b=path[i];
+   lengths.push(lengths[i-1]+Math.hypot(b[0]-a[0],b[1]-a[1],45*(b[2]-a[2])));
+  }
+  return [kind,Object.freeze({lengths:Object.freeze(lengths),total:lengths.at(-1)})];
+ })
+));
 export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
  ramp:{x:311,y:372,r:27,points:7500},
@@ -218,7 +233,8 @@ export class PinballEngine{
    const held=!this.tilted&&(f.side==='left'?this.leftHeld:this.rightHeld);
    const goal=held?-.57:.40;
    const old=f.a;
-   f.a=clip(goal,old-14*dt,old+14*dt);
+   const angularSpeed=held?17:12; // powered stroke / slower return
+   f.a=clip(goal,old-angularSpeed*dt,old+angularSpeed*dt);
    f.omega=(f.a-old)/dt;
   }
  }
@@ -226,26 +242,27 @@ export class PinballEngine{
   return {x:f.x+(f.side==='left'?1:-1)*Math.cos(f.a)*f.length,y:f.y+Math.sin(f.a)*f.length};
  }
  collideFlipper(f){
-  const tip=this.flipperTip(f),sx=f.side==='left'?1:-1;
-  const bodyVelocity=p=>{
-   const rx=p.px-f.x,ry=p.py-f.y;
-   // Flip angle is mirrored horizontally for the right bat.
-   const w=f.omega*sx;
-   return {x:-w*ry,y:w*rx};
-  };
-  const contacted=this.collideSegment(f.x,f.y,tip.x,tip.y,11,.65,'flipper',0,bodyVelocity);
-  if(contacted){
-   const held=!this.tilted&&(f.side==='left'?this.leftHeld:this.rightHeld);
-   const last=this.cooldowns.get('bat-'+f.side)??-100;
-   if(held && this.ball.y<f.y+14 && this.time-last>.085){
-    // A stationary held bat still needs an upward collision response.
-    // The kick is stronger while its motor is actively rotating into the ball.
-    const lift=470+Math.min(320,Math.abs(f.omega)*24);
-    this.ball.vy=Math.min(this.ball.vy,-lift);
-    this.ball.vx+=(f.side==='left'?1:-1)*(90+Math.min(90,Math.abs(f.omega)*7));
-    this.cooldowns.set('bat-'+f.side,this.time);
-   }
-  }
+  const b=this.ball,tip=this.flipperTip(f);
+  const p=pointToSegment(b.x,b.y,f.x,f.y,tip.x,tip.y);
+  const overlap=b.r+11-p.dist;
+  if(overlap<=0)return false;
+  // Contact depends on the ball's velocity relative to the rotating bat.
+  // A tip strike is stronger than a strike near the pivot.
+  const w=f.omega*(f.side==='left'?1:-1);
+  const rx=p.px-f.x,ry=p.py-f.y;
+  const surfaceX=-w*ry,surfaceY=w*rx;
+  const vn=(b.vx-surfaceX)*p.nx+(b.vy-surfaceY)*p.ny;
+  b.x+=p.nx*(overlap+.06);b.y+=p.ny*(overlap+.06);
+  if(vn>=-.1)return true;
+  const impact=-vn;
+  const restitution=impact<95?.12:impact<260?.50:.80;
+  const impulse=Math.min((1+restitution)*impact,1900);
+  b.vx+=p.nx*impulse;b.vy+=p.ny*impulse;
+  const tx=-p.ny,ty=p.nx;
+  const tangent=(b.vx-surfaceX)*tx+(b.vy-surfaceY)*ty;
+  const friction=clip(-tangent*.22,-impulse*.25,impulse*.25);
+  b.vx+=tx*friction;b.vy+=ty*friction;
+  return true;
  }
  // All sensors and scoring run in fixed simulation time, not per render frame.
  addPoints(points,label){
@@ -344,7 +361,9 @@ export class PinballEngine{
   }
   const b=this.ball;
   const durations={ramp:.95,orbit:.8,center:1.24,skyline:1.18};
-  b.mode='travel';b.travel={kind,t:0,duration:durations[kind],from:{x:b.x,y:b.y}};
+  const approach=Math.hypot(b.vx,b.vy),base=durations[kind];
+  const duration=clip(base*650/clip(approach,500,900),base*.84,base*1.12);
+  b.mode='travel';b.travel={kind,t:0,duration,from:{x:b.x,y:b.y}};
  }
  checkSensors(previous){
   const b=this.ball;if(!b||b.mode!=='live'||this.tilted)return;
@@ -409,24 +428,25 @@ export class PinballEngine{
  updateTravel(dt){
   const b=this.ball,tr=b.travel;if(!tr){b.mode='live';return;}
   tr.t+=dt;
-  const path=TRAVEL_PATHS[tr.kind];
-  const progress=Math.min(1,tr.t/tr.duration);
-  const pos=progress*(path.length-1);
-  const i=Math.min(path.length-2,Math.floor(pos));
-  const f=Math.max(0,Math.min(1,pos-i));
-  const entryBlend=Math.max(0,1-progress*8);
-  b.x=path[i][0]+(path[i+1][0]-path[i][0])*f+
-    (tr.from.x-path[0][0])*entryBlend;
-  b.y=path[i][1]+(path[i+1][1]-path[i][1])*f+
-    (tr.from.y-path[0][1])*entryBlend;
+  const path=TRAVEL_PATHS[tr.kind],geo=TRAVEL_GEOMETRY[tr.kind];
+  const progress=clip(tr.t/tr.duration,0,1);
+  // Unevenly spaced rail supports do not cause uneven ball movement.
+  // Slight acceleration on descent keeps shots lively.
+  const distance=geo.total*(progress-.055*Math.sin(Math.PI*progress));
+  const lengths=geo.lengths;
+  let i=0;while(i<path.length-2&&lengths[i+1]<distance)i++;
+  const segment=lengths[i+1]-lengths[i];
+  const f=segment>0?clip((distance-lengths[i])/segment,0,1):0;
+  const entryBlend=Math.max(0,1-progress*9);
+  b.x=path[i][0]+(path[i+1][0]-path[i][0])*f+(tr.from.x-path[0][0])*entryBlend;
+  b.y=path[i][1]+(path[i+1][1]-path[i][1])*f+(tr.from.y-path[0][1])*entryBlend;
   b.travelHeight=path[i][2]+(path[i+1][2]-path[i][2])*f;
   if(progress>=1){
-   b.mode='live';b.travel=null;
-   // Each elevated return feeds a different flipper approach.
-   const exits={ramp:[-170,230],orbit:[-260,230],
-    center:[-140,260],skyline:[175,250]};
-   [b.vx,b.vy]=exits[tr.kind];
-   b.travelHeight=0;b.trail=[];
+   const a=path.at(-2),z=path.at(-1),dx=z[0]-a[0],dy=z[1]-a[1];
+   const length=Math.hypot(dx,dy)||1;
+   const speed=clip(geo.total/tr.duration*.50,260,475);
+   b.vx=speed*dx/length;b.vy=speed*dy/length;
+   b.mode='live';b.travel=null;b.travelHeight=0;b.trail=[];
   }
  }
 
