@@ -790,3 +790,10 @@ test('fairer flippers still leave the central gap and return feeds are passive',
  assert.ok(RETURN_FEEDS.ramp.blend>=.3&&RETURN_FEEDS.ramp.blend<.5);
  assert.ok(RETURN_FEEDS.orbit.blend>=.3&&RETURN_FEEDS.orbit.blend<.5);
 });
+
+test('shooter lane is not mistaken for a right-side outlane recovery',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';
+ g.ball.x=382;g.ball.y=649;g.ball.vx=0;g.ball.vy=300;
+ assert.equal(g.tryOutlaneKickback(),false,'plunger channel cannot consume KICKBACK');
+ assert.equal(g.kickbackReady,true);
+});
