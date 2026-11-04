@@ -502,7 +502,7 @@ function drawFlippers(c,engine){
  }
 }
 function drawBall(c,engine){
- const b=engine.ball;if(!b)return;
+ for(const b of (engine.balls?.length?engine.balls:(engine.ball?[engine.ball]:[]))){
  if(b.mode!=='shooter'){
   b.trail.push({x:b.x,y:b.y});if(b.trail.length>7)b.trail.shift();
   for(let i=0;i<b.trail.length;i++){
@@ -514,6 +514,7 @@ function drawBall(c,engine){
  c.save();c.shadowColor='rgba(248,239,220,.54)';c.shadowBlur=4;
  disk(c,b.x,b.y,b.r,R(c,b.x,b.y,b.r,[[0,'#fff'],[.2,'#f4f5f5'],[.49,'#dad9d5'],[.74,'#898994'],[1,'#464651']]),'#e5e0d8',.8);
  c.restore();disk(c,b.x-3,b.y-3,2,'#fff');
+ }
 }
 
 function drawNewFeatures(c,engine,reducedMotion=false){
@@ -527,11 +528,15 @@ function drawNewFeatures(c,engine,reducedMotion=false){
  c.restore();
  text(c,'SPIN',sx,sy+26,9,'#ffd5a4');
  // Recessed scoop, chrome lip and bright catch light, same coordinates as 3D.
- const sc=SCOOP,on=engine.ball?.mode==='scoop';
+ const sc=SCOOP,on=engine.balls?.some(b=>b.mode==='scoop')||engine.ball?.mode==='scoop';
  disk(c,sc.x,sc.y,20,'#211823','#d7b9ae',3);
  disk(c,sc.x,sc.y,14,on?'#f48770':'#3a152a','#edbc85',2);
  disk(c,sc.x,sc.y,8,on?'#fff0c0':'#120c17');
  text(c,'SCOOP',sc.x,sc.y+28,9,'#ffdfb2');
+ if(engine.multiballActive){
+  text(c,'MULTIBALL',sc.x,sc.y+43,10,'#ff6d5b');
+  if(engine.multiballSuperLit)text(c,'SUPER LIT',sc.x,sc.y+54,9,'#fff2d6');
+ }else if(engine.lockLit){text(c,'LOCK LIT',sc.x,sc.y+43,9,'#ff6d5b');}
  // Phase 4K.2 — recessed machine housing and real Power Grid inserts.
  const coreX=POWER_CORE.x,coreY=POWER_CORE.y;
  const mid=midTableState(engine),litGrid=mid.charges,rushActive=mid.rush;
