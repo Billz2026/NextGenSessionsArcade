@@ -27,7 +27,7 @@ test('missions, personal records and instructions remain accessible',()=>{
  assert.equal(new Set(ids).size,ids.length,'IDs stay unique');
 });
 test('isolated stylesheet is linked, with desktop drawer and mobile flow',()=>{
- assert.ok(html.includes('console.css?v=6'));
+ assert.ok(html.includes('console.css?v=7'));
  assert.ok(css.includes('.hud.hud-v2'));
  assert.ok(css.includes('max-height:min(62dvh,470px)'));
  assert.ok(css.includes('@media(max-width:1120px)'));
