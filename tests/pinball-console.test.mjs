@@ -26,7 +26,7 @@ test('missions, personal records and instructions remain accessible',()=>{
   assert.ok(details.includes('id="'+id+'"'),id+' preserved');
  }
  assert.match(details,/HOW TO PLAY/);
- const ids=[...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]);
+ const ids=[...html.matchAll(/\sid="([^"]+)"/g)].map(m=>m[1]);
  assert.equal(new Set(ids).size,ids.length,'IDs stay unique');
 });
 test('isolated stylesheet is linked, with desktop drawer and mobile flow',()=>{
@@ -131,7 +131,7 @@ test('side tower lights mirror actual mission, lock, charge and jackpot state',a
    }
   };
  };
- const ids=[...html.matchAll(/id="([^"]+)"/g)].map(x=>x[1]);
+ const ids=[...html.matchAll(/\sid="([^"]+)"/g)].map(x=>x[1]);
  const elements=new Map(ids.map(id=>[id,element(id)]));
  const missionRows=[...html.matchAll(/data-flight-id="([^"]+)"/g)].map(x=>element(x[1]));
  const powerCells=[element('cell0'),element('cell1'),element('cell2')];
