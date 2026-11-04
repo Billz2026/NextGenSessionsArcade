@@ -50,6 +50,8 @@ export async function create3DTable(host){
  const enamel=new T.MeshPhysicalMaterial({color:'#273758',roughness:.23,metalness:.10,clearcoat:.98,clearcoatRoughness:.16,envMapIntensity:.87});
  const black=metal('#15131c',.47,.28),nickel=metal('#b4b7bd',.25,.85),chrome=metal('#c9d0d8',.18,.94);
  const darkChrome=metal('#606373',.34,.8),gold=metal('#c79b76',.24,.75);
+  // Arcade-red lacquer is shared with the NextGen Sessions ARCADE wordmark.
+  const cabinetRed=new T.MeshPhysicalMaterial({color:'#921721',roughness:.23,metalness:.30,clearcoat:1,clearcoatRoughness:.12});
  const rubber=new T.MeshStandardMaterial({color:'#8b515f',roughness:.65,metalness:.02});
  const rose=metal('#bc596d',.29,.48),plastic=new T.MeshPhysicalMaterial({
   color:'#9b7184',metalness:.06,roughness:.22,clearcoat:1,clearcoatRoughness:.12,
@@ -103,8 +105,8 @@ export async function create3DTable(host){
   face.addColorStop(0,'#080d20');face.addColorStop(.5,'#171038');face.addColorStop(1,'#090e24');
   c.fillStyle=face;c.fillRect(0,0,2048,560);
   c.fillStyle='#11152b';c.fillRect(34,30,1980,500);
-  c.strokeStyle='#f2bd73';c.lineWidth=12;c.strokeRect(29,26,1990,508);
-  c.strokeStyle='#ff4ca3';c.lineWidth=5;c.strokeRect(51,49,1945,462);
+  c.strokeStyle='#ff6d5b';c.lineWidth=12;c.strokeRect(29,26,1990,508);
+  c.strokeStyle='#ec3635';c.lineWidth=5;c.strokeRect(51,49,1945,462);
   // Printed starburst and electric corner bolts make this a real arcade
   // marquee while keeping the centre clean enough for one dominant title.
   c.save();c.translate(1024,280);c.globalAlpha=.24;
@@ -112,32 +114,32 @@ export async function create3DTable(host){
    const a=i*Math.PI/14,len=i%2?730:930;
    c.beginPath();c.moveTo(Math.cos(a)*250,Math.sin(a)*90);
    c.lineTo(Math.cos(a)*len,Math.sin(a)*260);
-   c.strokeStyle=i%2?'#27e8ff':'#ff4ca3';c.lineWidth=i%3===0?7:3;c.stroke();
+   c.strokeStyle=i%2?'#ffab8a':'#ec3635';c.lineWidth=i%3===0?7:3;c.stroke();
   }
   c.restore();
   for(const side of [-1,1]){
    c.save();c.translate(side<0?190:1858,280);c.scale(side,1);
    c.beginPath();c.moveTo(-42,-128);c.lineTo(58,-22);c.lineTo(4,-22);
    c.lineTo(52,128);c.lineTo(-67,4);c.lineTo(-8,4);c.closePath();
-   c.fillStyle='#ffd166';c.shadowColor='#ff4ca3';c.shadowBlur=28;c.fill();c.restore();
+   c.fillStyle='#ffab8a';c.shadowColor='#ec3635';c.shadowBlur=28;c.fill();c.restore();
   }
   c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
   c.font='italic 900 322px "Arial Black",Impact,Arial,sans-serif';
-  // Deep shadow, cyan tube edge, white keyline and a cyan-to-pink fill create
-  // the loud illuminated arcade logo the original flat red wordmark lacked.
-  c.shadowColor='#ff2f9d';c.shadowBlur=46;c.shadowOffsetY=18;
-  c.lineWidth=50;c.strokeStyle='#070713';c.strokeText('NEON TILT',1024,290,1710);
-  c.shadowColor='#1de8ff';c.shadowBlur=35;c.shadowOffsetY=0;
-  c.lineWidth=25;c.strokeStyle='#16dff5';c.strokeText('NEON TILT',1024,276,1710);
-  c.shadowBlur=0;c.lineWidth=8;c.strokeStyle='#fff4dc';c.strokeText('NEON TILT',1024,276,1710);
-  const logo=c.createLinearGradient(340,100,1710,440);
-  logo.addColorStop(0,'#61f4ff');logo.addColorStop(.38,'#f9fbff');
-  logo.addColorStop(.56,'#ff66c4');logo.addColorStop(1,'#ff744d');
-  c.fillStyle=logo;c.fillText('NEON TILT',1024,276,1710);
-  c.globalAlpha=.78;c.fillStyle='#ffffff';
-  c.fillText('NEON TILT',1024,258,1710);c.globalAlpha=1;
-  c.fillStyle='#20e7ff';c.fillRect(390,478,1268,7);
-  c.fillStyle='#ff4ca3';c.fillRect(530,496,988,5);
+  // Clear white-hot centre with a deep NextGen red neon bloom.
+  c.shadowColor='#ec3635';c.shadowBlur=78;c.shadowOffsetY=8;
+  c.lineWidth=54;c.strokeStyle='#27090d';c.strokeText('NEON TILT',1024,285,1710);
+  c.shadowColor='#ec3635';c.shadowBlur=62;c.shadowOffsetY=0;
+  c.lineWidth=27;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',1024,276,1710);
+  c.shadowBlur=13;c.lineWidth=7;c.strokeStyle='#fff2d6';c.strokeText('NEON TILT',1024,276,1710);
+  const logo=c.createLinearGradient(0,104,0,438);
+  logo.addColorStop(0,'#fff2d6');logo.addColorStop(.22,'#ffab8a');
+  logo.addColorStop(.56,'#ff6d5b');logo.addColorStop(1,'#cf272c');
+  c.shadowColor='#ec3635';c.shadowBlur=38;c.fillStyle=logo;
+  c.fillText('NEON TILT',1024,276,1710);
+  c.shadowBlur=0;c.globalAlpha=.67;c.fillStyle='#fff3e8';
+  c.fillText('NEON TILT',1024,261,1710);c.globalAlpha=1;
+  c.fillStyle='#ff6d5b';c.fillRect(390,478,1268,7);
+  c.fillStyle='#b3232e';c.fillRect(530,496,988,5);
   const texture=new T.CanvasTexture(canvas);
   texture.colorSpace=T.SRGBColorSpace;
   texture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);
@@ -148,7 +150,7 @@ export async function create3DTable(host){
  // Backbox and lacquered hardwood body, with truly modelled thickness.
  const boardW=BOARD.width*SCALE,boardH=BOARD.height*SCALE;
  box(0,0,-.38,boardW+.72,boardH+.72,.88,metal('#352633',.35,.55));
- box(0,0,-.12,boardW+.16,boardH+.16,.34,gold);
+ box(0,0,-.12,boardW+.16,boardH+.16,.34,cabinetRed);
  box(0,0,.05,boardW,boardH,.20,enamel);
  // Phase 4: clear classic arcade zones with original Neon Tilt artwork. The important
  // scoring zones are distinct; no more ghost NEON lettering or purple haze.
@@ -351,7 +353,7 @@ export async function create3DTable(host){
  }
  // Brushed steel side rails and body sidewalls.
  for(const px of [-4.34,4.34]){
-  box(px,0,.34,.18,boardH,.64,gold);
+  box(px,0,.34,.18,boardH,.64,cabinetRed);
   box(px,0,.67,.06,boardH,.09,chrome);
   for(const y of [6,3,0,-3,-6]){
    const screw=add(new T.SphereGeometry(.071,12,8),chrome,px,y,.78);
@@ -365,8 +367,8 @@ export async function create3DTable(host){
  plane(0,5.48,.535,5.79,1.58,cabinetMarquee());
  // A physically raised cast-metal marquee frame reads as a real backlit
  // cabinet assembly even without the expensive glyph-extrusion font loader.
- for(const y of [4.63,6.33])box(0,y,.62,6.14,.13,.15,gold);
- for(const x of [-3.02,3.02])box(x,5.48,.62,.13,1.75,.15,gold);
+ for(const y of [4.63,6.33])box(0,y,.62,6.14,.13,.15,cabinetRed);
+ for(const x of [-3.02,3.02])box(x,5.48,.62,.13,1.75,.15,cabinetRed);
  for(const x of [-2.99,2.99])for(const y of [4.64,6.31]){
   const screw=add(new T.SphereGeometry(.085,14,10),chrome,x,y,.74);
   screw.scale.z=.55;
