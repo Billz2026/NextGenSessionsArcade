@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=12';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT} from './engine.mjs?v=14';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=3';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections} from './upper-hardware.mjs?v=4';
@@ -493,6 +493,10 @@ function drawFlippers(c,engine){
     [0,'#fff0d5'],[.22,'#f0dfcd'],[.60,'#d4b7a9'],[1,'#996d74']
    ]),'#f7dab9');
   line(c,[[f.x+4,f.y-3],[end.x-3,end.y-2]],'rgba(255,245,218,.68)',1.8);
+  const mx=f.x+(end.x-f.x)*FLIPPER_SWEET_SPOT,my=f.y+(end.y-f.y)*FLIPPER_SWEET_SPOT;
+  const length=Math.hypot(end.x-f.x,end.y-f.y)||1,nx=-(end.y-f.y)/length,ny=(end.x-f.x)/length;
+  line(c,[[mx-nx*6.2,my-ny*6.2],[mx+nx*6.2,my+ny*6.2]],'#ffca7a',2.5);
+  disk(c,mx,my,2.6,(f.side==='left'?engine.leftHeld:engine.rightHeld)?'#fff0b0':'#c98368','#ffe1a0',1);
   disk(c,f.x,f.y,13,R(c,f.x,f.y,13,[[0,'#fff1ce'],[.32,'#cfb5ae'],[.7,'#7b5861'],[1,'#e3cbad']]),'#2f2830',2);
   bolt(c,f.x,f.y,4);
  }
