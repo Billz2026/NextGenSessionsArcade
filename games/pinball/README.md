@@ -1,10 +1,18 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4M — mission control and fuel system (playable 3D beta)
+**Current stage:** Phase 4N — mechanical response and shot control (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4N — mechanical response and shot control
+
+- Replaced the single thin table beep with layered procedural cabinet audio. Bumpers, slingshots, steel posts, rails, stand-up targets and ball-to-flipper contacts now produce distinct noise-and-body transients with impact strength and table-position stereo placement.
+- Added separate physical feedback for flipper coil engagement/release, plunger launch, guided-route entry and wireform return. A compressor/master bus prevents stacked bumper hits and mission tones from clipping.
+- Collision feedback now comes from the authoritative physics contact itself, including material, speed and playfield position. Quiet grazing contacts are suppressed and rapid repeated contacts are throttled.
+- Added restrained ramp/orbit mouth guidance for fast balls already moving toward the visible entrance. It does not pull cross-table misses or balls moving away from the shot, retaining player control while making properly aimed outside-lane shots more dependable.
+- Preserved the proven collision restitution and drain balance after stress testing. New regressions cover impact telemetry, non-magnetic shot guidance, single route-exit events and the complete mechanical audio signal chain.
 
 ## Phase 4M — mission control and fuel system
 
@@ -321,7 +329,7 @@ An original red, amber and gold browser arcade pinball table inspired by the *fe
 
 - A rebuilt, hand-rendered 420 × 700 playfield with a cached 2× mechanical background, enamel cabinet edges, detailed metal rails, glass reflections, dimensional-looking ramps, recessed lamps, layered bumpers, chrome flippers and ball trails.
 - 240 Hz fixed-step ball physics: manual motor-driven flippers, hold-and-release plunger, wall/post collisions, bumpers and slingshots.
-- Three standard balls, four-second single-use ball-save window per ball, and one earnable extra ball.
+- Three standard balls, 11-second single-use ball-save window per ball, and one earnable extra ball.
 - N-G-S upper lanes: complete all three for a 20-second 2× multiplier.
 - Bumper Frenzy: ten bumper hits activate a 15-second 2× bumper mode.
 - Target Bank: activate all four stand-up targets for 25,000 bonus points.
@@ -330,7 +338,7 @@ An original red, amber and gold browser arcade pinball table inspired by the *fe
 - End-of-ball bonus, local personal best and Top 5 records.
 - Visible mission progress and timed scoring mode on the arcade HUD.
 - Desktop keyboard controls and simultaneous mobile/Fold touch controls.
-- Synthesized sound effects are muted by default; reduced-motion preference suppresses decorative flashes.
+- Layered procedural mechanical sound effects are muted by default; reduced-motion preference suppresses decorative flashes.
 
 ## How to play
 
