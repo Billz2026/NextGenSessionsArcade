@@ -41,7 +41,7 @@ test('lane rounding preserves all engine path geometry and route endpoints',()=>
   assert.deepEqual(route.points.map(p=>[p.x,p.y,p.z]),TRAVEL_PATHS[route.kind]);
  }
  assert.ok(three.includes('roundedWirePoints(route.points,3)'));
- assert.ok(canvas.includes('roundedWirePoints(route.points,3)'));
+ assert.ok(canvas.includes('roundedWirePoints(channel.points,3)'));
  assert.ok(three.includes('function channelStrip(route,from,to,lift,mat)'));
  assert.ok(!three.includes('function railTube('));
 });
