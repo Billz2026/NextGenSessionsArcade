@@ -7,6 +7,7 @@ import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.m
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=4';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide} from './finishing-detail.mjs?v=1';
+import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -48,13 +49,13 @@ export async function create3DTable(host){
   color,roughness,metalness,clearcoat:.18,clearcoatRoughness:.12,envMapIntensity:1.1
  });
  const enamel=new T.MeshPhysicalMaterial({color:'#15110d',roughness:.23,metalness:.10,clearcoat:.98,clearcoatRoughness:.16,envMapIntensity:.87});
- const black=metal('#15131c',.47,.28),nickel=metal('#b4b7bd',.25,.85),chrome=metal('#c9d0d8',.18,.94);
+ const black=metal('#100e0b',.47,.28),nickel=metal('#8f9294',.25,.85),chrome=metal('#b9b3a6',.18,.94);
  const darkChrome=metal('#606373',.34,.8),gold=metal('#d6ac56',.21,.83);
   // Arcade-red lacquer is shared with the NextGen Sessions ARCADE wordmark.
   const cabinetRed=new T.MeshPhysicalMaterial({color:'#921721',roughness:.23,metalness:.30,clearcoat:1,clearcoatRoughness:.12});
- const rubber=new T.MeshStandardMaterial({color:'#8b515f',roughness:.65,metalness:.02});
- const rose=metal('#bc596d',.29,.48),plastic=new T.MeshPhysicalMaterial({
-  color:'#9b7184',metalness:.06,roughness:.22,clearcoat:1,clearcoatRoughness:.12,
+ const rubber=new T.MeshStandardMaterial({color:'#392a26',roughness:.65,metalness:.02});
+ const rose=metal('#9c413f',.29,.48),plastic=new T.MeshPhysicalMaterial({
+  color:'#312923',metalness:.06,roughness:.22,clearcoat:1,clearcoatRoughness:.12,
   transparent:true,opacity:.8,side:T.DoubleSide,depthWrite:false,envMapIntensity:1
  });
  const lampMaterial=(hex)=>new T.MeshStandardMaterial({color:hex,emissive:hex,emissiveIntensity:.35,roughness:.3,metalness:.15});
@@ -255,11 +256,11 @@ export async function create3DTable(host){
    p.fill();p.stroke();p.restore();
   }
  }
- route(ORBIT_PATH,'#ffc77f','#3c3451');
- route(RAMP_PATH,'#ff8fb7','#433251');
+ route(ORBIT_PATH,'#f3c74f','#302517');
+ route(RAMP_PATH,'#ff786f','#332018');
  // Centre and Skyline are *thin dashed markings*, not additional overhead
  // pipes. They don't conceal bumpers or compete with the Power Core.
- for(const [path,color] of [[CENTER_PATH,'#8dd8f6'],[SKYLINE_PATH,'#e3a1fa']]){
+ for(const [path,color] of [[CENTER_PATH,'#e2bf75'],[SKYLINE_PATH,'#d6a95c']]){
   p.save();p.globalAlpha=.35;p.setLineDash([5,20]);p.lineWidth=3;p.strokeStyle=color;p.beginPath();
   path.forEach(([x,y],i)=>i?p.lineTo(x*2,y*2):p.moveTo(x*2,y*2));
   p.stroke();p.setLineDash([]);p.restore();
@@ -564,6 +565,8 @@ export async function create3DTable(host){
   const wireSteel=metal('#d0aa60',.20,.90);
   const wireHighlight=metal('#f3c74f',.24,.82);
   const wireBracket=metal('#947341',.31,.78);
+  // Gunmetal fittings separate the functional tracks from their gold rails.
+  const entrySteel=metal('#393636',.30,.63),entryGold=metal('#bb944b',.24,.83);
   function routeRod(a,b,r,material){
    const from=new T.Vector3(X(a.x),Y(a.y),a.z);
    const to=new T.Vector3(X(b.x),Y(b.y),b.z);
@@ -608,10 +611,10 @@ export async function create3DTable(host){
    }
    const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
    // Tapered entry cheeks show exactly where the real shot registers.
-   box(mx,my,.255,.42,.21,.048,wireBracket);
-   box(mx,my-.28,.226,.72,.13,.036,crownSteel);
+   box(mx,my,.255,.42,.21,.048,entrySteel);
+   box(mx,my-.28,.226,.72,.13,.036,entryGold);
    for(const dx of [-.40,.40]){
-    box(mx+dx,my-.11,.27,.085,.30,.065,wireBracket);
+    box(mx+dx,my-.11,.27,.085,.30,.065,entrySteel);
     cyl(mx+dx,my-.24,.32,.045,.027,crownSteel,12);
    }
    const entryMat=new T.MeshStandardMaterial({
@@ -901,8 +904,9 @@ export async function create3DTable(host){
  const arrowMesh=[];
  const arrowPositions=[
   [93,346,'orbit',-.18],[321,350,'ramp',.22],
-  [204,386,'spinner',0],[208,416,'center',0],
-  [125,360,'skyline',-.14],
+  [204,347,'spinner',0],[208,416,'center',0],
+  [125,360,'skyline',-.14],[312,433,'scoop',.25],
+  [212,386,'target',0],
   [136,568,'lower',0],[282,568,'lower',0]
  ];
  for(let i=0;i<arrowPositions.length;i++){
@@ -912,16 +916,18 @@ export async function create3DTable(host){
   shape.lineTo(.09,-.24);shape.lineTo(-.09,-.24);
   shape.lineTo(-.09,-.07);shape.lineTo(-.20,-.07);shape.closePath();
   const material=new T.MeshStandardMaterial({
-   color:i%2?'#c97b81':'#a99fcc',
-   emissive:i%2?'#ff887a':'#a6c2ee',emissiveIntensity:.22,
+   color:'#8d7247',
+   emissive:'#f3c74f',emissiveIntensity:.22,
    metalness:.18,roughness:.24,side:T.DoubleSide
   });
   const arrow=add(new T.ShapeGeometry(shape),material,X(x),Y(y),.235,false);
-  arrow.rotation.z=rot;arrowMesh.push({arrow,material,group,i});
+  arrow.rotation.z=rot;
+  const glowMat=group==='lower'?null:halo(X(x),Y(y),.292,.75,'#ec3635',.06);
+  arrowMesh.push({arrow,material,glowMat,group,i});
  }
  // Stacked translucent guide plastics and metal hardware strengthen the
  // impression of a physically assembled cabinet.
- const shroudMat=new T.MeshPhysicalMaterial({color:'#483b5a',metalness:.18,roughness:.32,
+ const shroudMat=new T.MeshPhysicalMaterial({color:'#25201d',metalness:.18,roughness:.32,
    clearcoat:.88,transparent:true,opacity:.83,side:T.DoubleSide,depthWrite:false});
  for(const side of [-1,1]){
   const x=side===-1?104:315;
@@ -960,10 +966,10 @@ export async function create3DTable(host){
   box(scx+dx,scy,.45,.08,.75,.39,darkChrome);
  }
  // Moulded original left and right acrylic panels, not metal tube rails.
- const leftAcrylic=new T.MeshPhysicalMaterial({color:'#614a82',metalness:0,
+ const leftAcrylic=new T.MeshPhysicalMaterial({color:'#24201c',metalness:0,
    roughness:.25,clearcoat:.95,transparent:true,opacity:.72,
   side:T.DoubleSide,depthWrite:false});
- const rightAcrylic=new T.MeshPhysicalMaterial({color:'#843f54',metalness:.08,
+ const rightAcrylic=new T.MeshPhysicalMaterial({color:'#432323',metalness:.08,
    roughness:.3,clearcoat:.93,side:T.DoubleSide});
  function molded(points,material,z=.34){
   const shape=new T.Shape();
@@ -1210,8 +1216,12 @@ export async function create3DTable(host){
   const rampActive=engine.lastShot?.kind==='ramp'&&engine.time-engine.lastShot.at<2;
   const orbitActive=engine.lastShot?.kind==='orbit'&&engine.time-engine.lastShot.at<2;
   for(const route of routeHardware){
-   const active=route.kind==='ramp'?rampActive:orbitActive;
-   route.material.emissiveIntensity=active?2.25:.32;
+   const state=shotIndicatorState(engine,route.kind);
+   const active=state==='mission'||state==='jackpot';
+   const recent=state==='confirmed';
+   const strength=shotIndicatorBrightness(state,now/1000,reducedMotion);
+   route.material.emissive.set(active?'#ec3635':recent?'#ffdf92':'#a17b41');
+   route.material.emissiveIntensity=active?1.8+1.4*strength:recent?2.1:.24;
   }
   const frenzyActive=engine.time<engine.frenzyUntil;
   const multiplierActive=engine.time<engine.multiplierUntil;
@@ -1314,15 +1324,20 @@ export async function create3DTable(host){
    powerLampMat[i].emissiveIntensity=lit?(rush?3.7*beat:2.35):.11;
   }
   rushRing.opacity=rush?.89*beat:engine.state==='ready'?.18:.12;
+  // Forward-looking shot guide. Next mission shot and available jackpots
+  // pulse red; completed jackpots dim. No new sensors, scoring or collisions.
   for(const a of arrowMesh){
-   const on=a.group==='ramp'?rampActive:a.group==='orbit'?orbitActive:
-    a.group==='center'?engine.lastShot?.kind==='center':
-    a.group==='skyline'?engine.lastShot?.kind==='skyline':
-    a.group==='spinner'?(overdrive||engine.spinnerTurns>0):
-    a.group==='mission'?engine.missions.ride:
-    engine.state==='playing';
-   const pulse=reducedMotion?1:(.6+.4*Math.sin(now*.009-a.i*.5));
-   a.material.emissiveIntensity=on?2.2*pulse:(idleMode?.6+.5*pulse:.22);
+   if(a.group==='lower')continue;
+   const state=shotIndicatorState(engine,a.group);
+   const strength=shotIndicatorBrightness(state,now/1000,reducedMotion);
+   const urgent=state==='mission'||state==='jackpot';
+   a.material.color.set(urgent?'#fff2c7':state==='confirmed'?'#ffe0a0':'#8d7247');
+   a.material.emissive.set(urgent?'#ec3635':state==='confirmed'?'#f3c74f':'#bb8c4b');
+   a.material.emissiveIntensity=.13+3.1*strength;
+   if(a.glowMat){
+    a.glowMat.color.set(urgent?'#ec3635':'#d6ad63');
+    a.glowMat.opacity=urgent?.20+.58*strength:state==='confirmed'?.4:.06;
+   }
   }
   // Animate the mechanical spinner through each full rotation, rather than
   // jumping directly to its event-driven final angle.

@@ -7,6 +7,7 @@ import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.m
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections} from './upper-hardware.mjs?v=4';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide} from './finishing-detail.mjs?v=1';
+import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -136,7 +137,7 @@ function drawOrbits(c){
  // and delicate steel rails. Avoid heavy dark bands across the bumpers.
  for(const route of UPPER_ROUTES){
   const pts=route.points.map(p=>[p.x,p.y]),edges=guideEdges(route);
-   const accent=route.accent==='coral'?'#ff92ba':'#ffd08c';
+   const accent=route.accent==='coral'?'#ee776b':'#e5bc6c';
    // Colour only the entrance and return, not the entire overlapping
    // transport route: the physical wireform does the visual navigation.
    for(const section of [pts.slice(0,4),pts.slice(-4)]){
@@ -158,38 +159,38 @@ function drawOrbits(c){
   }
   for(const i of route.supportIndices){
     const a=edges[i].left,b=edges[i].right,p=route.points[i];
-    line(c,[[a.x,a.y],[b.x,b.y]],'#889cac',2.1);
+    line(c,[[a.x,a.y],[b.x,b.y]],'#776b56',2.1);
     const outer=edges[i][elevatedGuardSide(route.kind)];
-    disk(c,outer.x,outer.y,4.3,'#202a3a','#c2cbd0',1.4);
+    disk(c,outer.x,outer.y,4.3,'#191714','#c9ad76',1.4);
     bolt(c,outer.x,outer.y,1.5);
    const q=route.points[i-1],ang=Math.atan2(p.y-q.y,p.x-q.x)+Math.PI/2;
    c.save();c.translate(p.x,p.y);c.rotate(ang);
    c.beginPath();c.moveTo(0,-6);c.lineTo(4,4);
    c.lineTo(0,1);c.lineTo(-4,4);c.closePath();
-   c.fillStyle=accent;c.strokeStyle='#1b2440';c.lineWidth=.8;
+   c.fillStyle=accent;c.strokeStyle='#292117';c.lineWidth=.8;
    c.fill();c.stroke();c.restore();
   }
   const ex=route.entrance.x,ey=route.entrance.y;
    // Steel entry cheeks and low-profile authentic launch plate.
-   rect(c,ex-19,ey-11,38,18,4,'#202d3d','#a3b1c0',1.4);
+   rect(c,ex-19,ey-11,38,18,4,'#25201c','#bb9552',1.4);
    for(const dx of [-20,20]){
-    rect(c,ex+dx-3,ey-16,6,15,2,'#4c6072','#abbcc5',1.1);
+    rect(c,ex+dx-3,ey-16,6,15,2,'#34312b','#ad965f',1.1);
     bolt(c,ex+dx,ey-15,1.5);
    }
-   disk(c,ex,ey,5,'#222339','#e8ccaf',1.6);
+   disk(c,ex,ey,5,'#28221b','#e8ccaf',1.6);
    disk(c,ex,ey,2.4,accent);
    text(c,route.kind.toUpperCase(),ex,ey+19,9,'#e7d5c7','Barlow Condensed',900);
  }
- for(const [path,col] of [[CENTER_PATH,'#89d8f7'],[SKYLINE_PATH,'#dfa6eb']]){
+ for(const [path,col] of [[CENTER_PATH,'#efc77a'],[SKYLINE_PATH,'#d8b778']]){
   c.save();c.setLineDash([4,9]);
-  line(c,path.map(([x,y])=>[x,y]),'#292236',6);
+  line(c,path.map(([x,y])=>[x,y]),'#2c241c',6);
   line(c,path.map(([x,y])=>[x,y]),col,2.8);c.restore();
  }
  for(const [label,x,y,color] of [
   ['ORBIT',78,372,'#ffdfb4'],['RAMP',315,372,'#ffd4bb'],
-  ['CROSS',208,438,'#bcecff'],['SKY',122,404,'#e5c8ff']
+  ['CROSS',208,438,'#f0d4a1'],['SKY',122,404,'#eacb8f']
  ]){
-  rect(c,x-26,y-11,52,22,4,'#151b30','#bd8b87',1.4);
+  rect(c,x-26,y-11,52,22,4,'#151210','#c7a15f',1.4);
   text(c,label,x,y,11,color,'Barlow Condensed',900);
  }
 }
@@ -202,11 +203,11 @@ function drawEnamelDetails(c){
   c.beginPath();
   for(const [i,pt] of [[110,200],[304,200],[330,272],[269,347],[141,347],[87,272]].entries())
    i?c.lineTo(...pt):c.moveTo(...pt);
-  c.closePath();c.fillStyle='#18283e';c.fill();
-  c.lineWidth=2.2;c.strokeStyle='#687c91';c.stroke();
+  c.closePath();c.fillStyle='#16130e';c.fill();
+  c.lineWidth=2.2;c.strokeStyle='#9c7845';c.stroke();
   for(const b of MID_BUMPERS){
-   disk(c,b.x,b.y,b.r+14,'#111d2f','#334a60',2);
-   disk(c,b.x,b.y,b.r+11,null,'#6f8193',1.3);
+   disk(c,b.x,b.y,b.r+14,'#15120e','#5a4832',2);
+   disk(c,b.x,b.y,b.r+11,null,'#af956c',1.3);
   }
   // Printed under-glass lightning arcs & retro arcade scoring ladder.
  c.strokeStyle='rgba(145,209,247,.19)';c.lineWidth=1.0;
@@ -229,23 +230,23 @@ function drawEnamelDetails(c){
  plastic(c,p=>{
   p.moveTo(42,429);p.bezierCurveTo(54,423,63,410,71,396);
   p.lineTo(91,426);p.lineTo(75,457);p.lineTo(42,453);p.closePath();
- },G(c,40,420,91,460,[[0,'#7b6f95'],[.45,'#39374e'],[1,'#171728']]),'#bda5bb');
+ },G(c,40,420,91,460,[[0,'#5b4e3a'],[.45,'#24211e'],[1,'#10100e']]),'#b19359');
  plastic(c,p=>{
   p.moveTo(338,423);p.bezierCurveTo(350,409,357,406,362,395);
   p.lineTo(374,445);p.lineTo(346,457);p.lineTo(326,431);p.closePath();
- },G(c,326,406,369,462,[[0,'#9b7b89'],[.46,'#403746'],[1,'#1c1a2a']]),'#e3bca1');
+ },G(c,326,406,369,462,[[0,'#673432'],[.46,'#30201e'],[1,'#121110']]),'#b78b57');
  // Three recessed upper-lane bays visually contain the real N/G/S sensors.
   // The faceplates are static; only real lane switches illuminate dynamically.
   for(const lane of UPPER_ROLLOVERS){
    c.save();c.shadowColor='#060a17';c.shadowBlur=8;c.shadowOffsetY=4;
    rect(c,lane.x-28,lane.y-35,56,70,7,
     G(c,lane.x-29,lane.y-35,lane.x+28,lane.y+37,[
-     [0,'#65758b'],[.11,'#26364e'],[.55,'#101c2e'],[1,'#263045']
-    ]),'#8996a2',2);
+     [0,'#817156'],[.11,'#32281e'],[.55,'#16130f'],[1,'#33281d']
+     ]),'#a88c5d',2);
    c.restore();
-   rect(c,lane.x-24,lane.y-29,48,58,4,'#111b2f','#536982',1.2);
+   rect(c,lane.x-24,lane.y-29,48,58,4,'#14110d','#625237',1.2);
    // The top shoulder aligns with the real upper rollover bay.
-   rect(c,lane.x-24,lane.y-35,48,5,1,'#a5b4bf','#29384c',1);
+   rect(c,lane.x-24,lane.y-35,48,5,1,'#bda16c','#2a2217',1);
    for(const dx of [-19,19])bolt(c,lane.x+dx,lane.y-33,1.7);
    for(const dx of [-24,24])for(const dy of [-27,27])
     bolt(c,lane.x+dx,lane.y+dy,1.8);
@@ -255,7 +256,7 @@ function drawEnamelDetails(c){
  text(c,'FLIGHT RANK',210,116,8,'rgba(222,226,238,.72)','Oxanium',900);
  for(let i=0;i<5;i++)disk(c,142+i*34,131,5,'#172236','#71889c',1.2);
  for(const lane of UPPER_ROLLOVERS){
-  rect(c,lane.x-22,183,44,21,4,'#1c2740','#8697a9',1.5);
+  rect(c,lane.x-22,183,44,21,4,'#211913','#a18a60',1.5);
   text(c,lane.label,lane.x,193,12,'#ffe5ba','Barlow Condensed',900);
   line(c,[[lane.x-18,lane.y-16],[lane.x-18,lane.y-22],
     [lane.x+18,lane.y-22],[lane.x+18,lane.y-16]],'#334458',6);
@@ -343,6 +344,31 @@ function drawWorkingInserts(c,engine,anim,reducedMotion){
  }
 }
 
+// Physically grounded, render-only shot arrows: the same shared mode
+// decisions drive WebGL and Canvas. Draw underneath moving hardware and ball.
+function drawShotGuidance(c,engine,anim,reducedMotion){
+ for(const spec of SHOT_INDICATORS){
+  const state=shotIndicatorState(engine,spec.kind);
+  const strength=shotIndicatorBrightness(state,anim,reducedMotion);
+  const urgent=state==='mission'||state==='jackpot';
+  const lit=state==='confirmed'||urgent;
+  const x=spec.x,y=spec.y;
+  c.save();
+  c.globalAlpha=state==='claimed'?.38:1;
+  c.shadowColor=urgent?'#f0434c':'#f3c74f';
+  c.shadowBlur=lit?9+13*strength:0;
+  disk(c,x,y,9.4,'#15110d',urgent?'#ff6b67':'#86663b',1.7);
+  disk(c,x,y,6.4,urgent?'#84232a':lit?'#725125':'#2f2519',
+   lit?'#fff0c7':'#806541',1);
+  // Short directional chevron shows the physical mouth, not a second sensor.
+  c.beginPath();
+  c.moveTo(x,y-5.2);c.lineTo(x+4.9,y+2.8);c.lineTo(x+1.5,y+1);
+  c.lineTo(x+1.5,y+5);c.lineTo(x-1.5,y+5);c.lineTo(x-1.5,y+1);
+  c.lineTo(x-4.9,y+2.8);c.closePath();
+  c.fillStyle=urgent?'#fff1da':lit?'#f3c74f':'#967a4e';c.fill();
+  c.shadowBlur=0;c.restore();
+ }
+}
 function drawTargets(c,engine){
  for(let i=0;i<LANES.length;i++){
   const l=LANES[i],on=engine.lanes.has(i)||engine.missions.lanes;
@@ -714,6 +740,7 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  // Animated marquee is drawn each frame; base texture stays cached and inexpensive.
  drawNeonMarquee(ctx,anim);
  drawUpperRouteFeedback(ctx,engine,reducedMotion);
+ drawShotGuidance(ctx,engine,anim,reducedMotion);
  drawTargets(ctx,engine);
  drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
  drawWorkingInserts(ctx,engine,anim,reducedMotion);
