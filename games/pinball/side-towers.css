@@ -203,7 +203,17 @@
  .machine-arena{display:block;width:100%;height:auto}
  .machine-arena>.arena-wing{display:none}
 }
+@keyframes wing-indicator-breathe{
+ 0%,100%{filter:brightness(.84);box-shadow:0 0 7px #ec36354d}
+ 50%{filter:brightness(1.35);box-shadow:0 0 19px #ff5f66c2}
+}
+@media(prefers-reduced-motion:no-preference){
+ .wing-mission.is-current>i,.wing-lock.is-ready,.wing-jackpot--super.is-live>i{
+  animation:wing-indicator-breathe 1.7s ease-in-out infinite
+ }
+}
 @media(prefers-reduced-motion:reduce){
+ .wing-mission.is-current>i,.wing-lock.is-ready,.wing-jackpot--super.is-live>i{animation:none}
  .reactor-ring.is-active{animation:none}
  .wing-meter>span{transition:none}
 }
