@@ -78,7 +78,7 @@ test('classic shot graphics stay visible and 2D renderer removes black channel b
  assert.ok(three.includes("route(ORBIT_PATH,'#f3c74f','#302517')"));
  assert.ok(three.includes("route(RAMP_PATH,'#ff786f','#332018')"));
  assert.ok(three.includes("p.lineWidth=7;p.strokeStyle=dark"));
- assert.ok(canvas.includes("const accent=route.accent==='coral'?'#ff92ba':'#ffd08c'"));
+ assert.ok(canvas.includes("const accent=route.accent==='coral'?'#ee776b':'#e5bc6c'"));
  assert.ok(!canvas.includes("route.width+8"));
  assert.ok(!canvas.includes("route.width-10"));
  assert.ok(canvas.includes("line(c,track,'#d3ad61',1.3)"));
