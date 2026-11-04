@@ -63,9 +63,9 @@ test('visible approach edges straddle their exact path centreline',()=>{
 });
 test('WebGL only paints two moulded outside-lane approaches and no full four-route ribbons',()=>{
  assert.match(three,/for\(const channel of VISIBLE_CHANNELS\)/);
- assert.match(three,/channelStrip\(channel,0,1,-\.058,laneBaseMaterials\[channel\.kind\]\)/);
- assert.match(three,/channelStrip\(channel,\.929,\.985,-\.051,laneTrim\)/);
- assert.match(three,/channelStrip\(channel,\.015,\.071,-\.051,laneTrim\)/);
+ assert.match(three,/channelStrip\(channel,0,1,-\.025,laneBaseMaterials\[channel\.kind\]\)/);
+ assert.match(three,/channelStrip\(channel,\.929,\.985,-\.015,laneTrim\)/);
+ assert.match(three,/channelStrip\(channel,\.015,\.071,-\.015,laneTrim\)/);
  assert.match(three,/const route=UPPER_ROUTES\.find\(r=>r\.kind===channel\.kind\)/);
  assert.doesNotMatch(three,/channelStrip\(route,0,1/);
  assert.doesNotMatch(three,/for\(const route of UPPER_ROUTES\)\{\s*const edges=guideEdges\(route\)/);
