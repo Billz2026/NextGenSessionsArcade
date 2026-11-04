@@ -17,12 +17,16 @@ export async function create3DTable(host){
  if(!host || !T.WebGLRenderer)throw Error('3D canvas unavailable');
  const scene=new T.Scene();
  scene.background=new T.Color('#080a11');
- const camera=new T.PerspectiveCamera(33,0.6,.1,120);
- // Frame almost the entire physical playfield while keeping the outer rails visible.
+ // Reframe the real playable area, not the wooden margins. A tighter desktop
+ // camera makes the ball, flippers, ramps and targets roughly 14% larger without
+ // scaling/distorting the 420 × 700 physics canvas or cutting off live walls.
+ // Keep the original framing on phones/Fold where tap accuracy matters most.
+ const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
+ const camera=new T.PerspectiveCamera(compact?33:29.2,0.6,.1,120);
+ // Frame the active playfield (all live wall ends fit inside the camera).
  camera.position.set(1.05,-2.0,26.25);
  camera.lookAt(0,0,.22);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
- const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
  renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.toneMapping=T.ACESFilmicToneMapping;

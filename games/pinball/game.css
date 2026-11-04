@@ -1070,3 +1070,22 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
  html:not(:fullscreen) .machine{padding-inline:8px;border-radius:12px}
  html:not(:fullscreen) .machine::before,html:not(:fullscreen) .machine::after{display:none!important}
 }
+
+
+/* Phase 4M — larger playable table on ordinary desktop (step 1 only).
+   The stage is height constrained: reclaim seven pixels from outer clearance
+   and three from desktop flipper chrome, but never stretch the 3:5 playfield.
+   Real visual enlargement comes from the tighter 3D camera, not cropping
+   interactive controls. Small desktop heights, Fold and mobile retain the
+   existing one-screen layout. */
+@media (min-width:1121px) and (min-height:721px){
+ html:not(:fullscreen):not(.pinball-focus) .cabinet{
+  --table-height:clamp(220px,calc(100dvh - 101px),1000px);
+ }
+ html:not(:fullscreen):not(.pinball-focus) .flipper-controls{
+  height:33px;min-height:33px;flex-basis:33px
+ }
+ html:not(:fullscreen):not(.pinball-focus) .flipper-control{
+  height:33px;min-height:33px
+ }
+}

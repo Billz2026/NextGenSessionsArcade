@@ -82,7 +82,7 @@ test('desktop console uses available vertical space without adding unnecessary c
 test('widescreen desktop stage fills the viewport without stretching table geometry',()=>{
  const tableCss=readFileSync(new URL('../games/pinball/game.css',import.meta.url),'utf8');
  const wide=tableCss.slice(tableCss.lastIndexOf('/* Phase 4J:'));
- assert.ok(html.includes('game.css?v=16'));
+ assert.match(html,/game\.css\?v=\d+/);
  assert.ok(wide.includes('1640px'));
  assert.ok(wide.includes('grid-template-columns:minmax(0,1fr) clamp(390px,32vw,530px)'));
  assert.ok(wide.includes('html:not(:fullscreen) .machine'));
