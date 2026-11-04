@@ -170,6 +170,18 @@ test('classic campaign progression is visible in status and promotion callouts',
  assert.deepEqual(describeDmdEvent({type:'promotion',rank:'CAPTAIN',points:30000},game),
   {headline:'RANK PROMOTION!',sub:'CAPTAIN · +30,000',priority:5,duration:3200});
 });
+test('DMD runs mission select, fuel objective, progress and failure states',()=>{
+ const ready={state:'playing',ballNumber:1,ball:{mode:'live'},commandMissionReady:true};
+ assert.deepEqual(getDmdStatus(ready,2000),['MISSION READY','SHOOT RAMP TO LAUNCH']);
+ const active={...ready,commandMissionReady:false,activeCommand:{step:0},
+  commandMission:{name:'LAUNCH WINDOW'},commandInstruction:'HIT RAMP',commandFuelRemaining:19.2};
+ assert.deepEqual(getDmdStatus(active,2000),['LAUNCH WINDOW','HIT RAMP · 20S']);
+ assert.equal(describeDmdEvent({type:'missionarmed',name:'ORBITAL SWEEP'}).headline,'MISSION SELECTED');
+ assert.equal(describeDmdEvent({type:'missionstart',name:'ORBITAL SWEEP',instruction:'HIT ORBIT',fuel:26}).priority,5);
+ assert.equal(describeDmdEvent({type:'missionprogress',step:1,total:2,instruction:'HIT CROSSOVER'}).sub,'HIT CROSSOVER');
+ assert.equal(describeDmdEvent({type:'missionfailed',reason:'BALL DRAINED'}).sub,'BALL DRAINED');
+ assert.equal(describeDmdEvent({type:'commandcomplete',points:35000}).sub,'+35,000');
+});
 test('DMD displays timer-driven jackpot and Overdrive objectives',()=>{
  const base={state:'playing',ball:{mode:'live'},ballNumber:2,score:17000,time:12,
   frenzyUntil:0,multiplierUntil:0,powerCharges:3,overdriveUntil:0,hurryUpUntil:26};
