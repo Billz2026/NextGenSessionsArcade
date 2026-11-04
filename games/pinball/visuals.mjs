@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=11';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=12';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=3';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections} from './upper-hardware.mjs?v=4';
@@ -288,6 +288,17 @@ function drawWorkingInserts(c,engine,anim,reducedMotion){
   const on=i<=engine.rankIndex;
   c.save();c.shadowBlur=on?12:0;c.shadowColor=i<3?'#ffd28a':'#89dcff';
   disk(c,142+i*34,131,4.1,on?(i<3?'#ffd28a':'#89dcff'):'#273145',on?'#fff3cf':'#66798b',1);
+  c.restore();
+ }
+ // Space-flight fuel is physical table information, not a HUD-only timer.
+ // Five lamps sit beside the shooter/fuel lane and extinguish from top down.
+ text(c,'FUEL',349,230,8,'#bdeeff','Oxanium',900);
+ const fuelLit=Math.ceil(engine.commandFuelRatio*5);
+ for(let i=0;i<5;i++){
+  const on=engine.commandMissionReady||i>=5-fuelLit,y=252+i*20;
+  c.save();c.shadowBlur=on?11:0;c.shadowColor=i<2?'#ff806f':'#72e7ff';
+  disk(c,349,y,5.2,'#15243a','#8ea6b5',1.2);
+  disk(c,349,y,3.5,on?(i<2?'#ff806f':'#72e7ff'):'#355064',on?'#fff3d1':'#56768b',.9);
   c.restore();
  }
  const active=[
