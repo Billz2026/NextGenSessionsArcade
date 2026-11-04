@@ -99,27 +99,45 @@ export async function create3DTable(host){
  function cabinetMarquee(){
   const canvas=document.createElement('canvas');canvas.width=2048;canvas.height=560;
   const c=canvas.getContext('2d');
-  c.fillStyle='#0b101e';c.fillRect(0,0,2048,560);
-  c.fillStyle='#12182a';c.fillRect(34,30,1980,500);
-  c.strokeStyle='#e3af79';c.lineWidth=12;c.strokeRect(29,26,1990,508);
-  c.strokeStyle='#5d3a40';c.lineWidth=4;c.strokeRect(51,49,1945,462);
-  // Slim horizontal rules keep the real-world sign feel without a halo.
-  c.fillStyle='#d7a16c';
-  c.fillRect(285,158,320,5);c.fillRect(1443,158,320,5);
+  const face=c.createLinearGradient(0,0,2048,560);
+  face.addColorStop(0,'#080d20');face.addColorStop(.5,'#171038');face.addColorStop(1,'#090e24');
+  c.fillStyle=face;c.fillRect(0,0,2048,560);
+  c.fillStyle='#11152b';c.fillRect(34,30,1980,500);
+  c.strokeStyle='#f2bd73';c.lineWidth=12;c.strokeRect(29,26,1990,508);
+  c.strokeStyle='#ff4ca3';c.lineWidth=5;c.strokeRect(51,49,1945,462);
+  // Printed starburst and electric corner bolts make this a real arcade
+  // marquee while keeping the centre clean enough for one dominant title.
+  c.save();c.translate(1024,280);c.globalAlpha=.24;
+  for(let i=0;i<28;i++){
+   const a=i*Math.PI/14,len=i%2?730:930;
+   c.beginPath();c.moveTo(Math.cos(a)*250,Math.sin(a)*90);
+   c.lineTo(Math.cos(a)*len,Math.sin(a)*260);
+   c.strokeStyle=i%2?'#27e8ff':'#ff4ca3';c.lineWidth=i%3===0?7:3;c.stroke();
+  }
+  c.restore();
+  for(const side of [-1,1]){
+   c.save();c.translate(side<0?190:1858,280);c.scale(side,1);
+   c.beginPath();c.moveTo(-42,-128);c.lineTo(58,-22);c.lineTo(4,-22);
+   c.lineTo(52,128);c.lineTo(-67,4);c.lineTo(-8,4);c.closePath();
+   c.fillStyle='#ffd166';c.shadowColor='#ff4ca3';c.shadowBlur=28;c.fill();c.restore();
+  }
   c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
-  c.shadowBlur=0;c.shadowOffsetX=0;c.shadowOffsetY=0;
-  c.font='900 90px "Barlow Condensed",Impact,"Arial Narrow",sans-serif';
-  c.lineWidth=5;c.strokeStyle='#11141d';
-  c.strokeText('NEXTGEN SESSIONS',1024,157,790);
-  c.fillStyle='#fff0d7';c.fillText('NEXTGEN SESSIONS',1024,157,790);
-  c.font='900 292px "Arial Black",Impact,Arial,sans-serif';
-  c.lineWidth=25;c.strokeStyle='#140a13';
-  c.strokeText('NEON TILT',1024,346,1880);
-  // Offset underprint and bright cream cap make a chunky embossed, backlit sign.
-  c.fillStyle='#85384b';c.fillText('NEON TILT',1024,365,1880);
-  c.fillStyle='#ffe0bf';c.fillText('NEON TILT',1024,341,1880);
-  c.fillStyle='#ff825f';c.fillText('NEON TILT',1024,335,1880);
-  c.fillStyle='#e9b27d';c.fillRect(360,495,1328,9);
+  c.font='italic 900 322px "Arial Black",Impact,Arial,sans-serif';
+  // Deep shadow, cyan tube edge, white keyline and a cyan-to-pink fill create
+  // the loud illuminated arcade logo the original flat red wordmark lacked.
+  c.shadowColor='#ff2f9d';c.shadowBlur=46;c.shadowOffsetY=18;
+  c.lineWidth=50;c.strokeStyle='#070713';c.strokeText('NEON TILT',1024,290,1710);
+  c.shadowColor='#1de8ff';c.shadowBlur=35;c.shadowOffsetY=0;
+  c.lineWidth=25;c.strokeStyle='#16dff5';c.strokeText('NEON TILT',1024,276,1710);
+  c.shadowBlur=0;c.lineWidth=8;c.strokeStyle='#fff4dc';c.strokeText('NEON TILT',1024,276,1710);
+  const logo=c.createLinearGradient(340,100,1710,440);
+  logo.addColorStop(0,'#61f4ff');logo.addColorStop(.38,'#f9fbff');
+  logo.addColorStop(.56,'#ff66c4');logo.addColorStop(1,'#ff744d');
+  c.fillStyle=logo;c.fillText('NEON TILT',1024,276,1710);
+  c.globalAlpha=.78;c.fillStyle='#ffffff';
+  c.fillText('NEON TILT',1024,258,1710);c.globalAlpha=1;
+  c.fillStyle='#20e7ff';c.fillRect(390,478,1268,7);
+  c.fillStyle='#ff4ca3';c.fillRect(530,496,988,5);
   const texture=new T.CanvasTexture(canvas);
   texture.colorSpace=T.SRGBColorSpace;
   texture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);
@@ -339,7 +357,7 @@ export async function create3DTable(host){
   }
  }
  for(const py of [-7.12,7.12])box(0,py,.46,8.6,.16,.61,darkChrome);
- // Billboard sign: original logo displayed on textured top panel, not lifted website heading.
+ // Billboard sign: a self-contained arcade marquee, not a website brand lock-up.
  box(0,5.48,.3,6.25,1.95,.22,metal('#161322',.18,.62));
  box(0,5.48,.46,5.93,1.70,.03,metal('#070d20',.17,.23));
  plane(0,5.48,.535,5.79,1.58,cabinetMarquee());
