@@ -30,21 +30,6 @@ export const VISIBLE_CHANNELS=Object.freeze([
   points:Object.freeze(UPPER_ROUTES[1].points.slice(0,3))
  })
 ]);
-// Flush direction inserts sit INSIDE the two visible lane approaches,
-// never across the bumper field or at invented gameplay sensors.
-// Each one is interpolated from neighbouring authoritative transport samples.
-export const APPROACH_LIGHTS=Object.freeze(VISIBLE_CHANNELS.flatMap(channel=>
- [0.65,1.48].map((location,index)=>{
-  const segment=Math.floor(location),t=location-segment;
-  const a=channel.points[segment],b=channel.points[segment+1];
-  return Object.freeze({
-   kind:channel.kind,index,
-   x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,
-   z:a.z+(b.z-a.z)*t,
-   dx:b.x-a.x,dy:b.y-a.y
-  });
- })
-));
 export const UPPER_ROLLOVERS=Object.freeze(LANES.map((l,index)=>
  Object.freeze({index,x:l.x,y:l.y,label:l.label})));
 export const UPPER_BALL_RADIUS=BOARD.radius*.020;

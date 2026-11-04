@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {TRAVEL_PATHS,SHOTS,LANES,BOARD,BUMPERS,PinballEngine}
  from '../games/pinball/engine.mjs';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,APPROACH_LIGHTS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS}
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS}
  from '../games/pinball/upper-hardware.mjs';
 
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
@@ -112,33 +112,4 @@ test('three N/G/S rollover bridges remain attached to the actual sensors',()=>{
   assert.deepEqual({x:lane.x,y:lane.y,label:lane.label},
    {x:LANES[lane.index].x,y:LANES[lane.index].y,label:LANES[lane.index].label});
  assert.match(three,/laneGateMaterials\[i\]\.emissiveIntensity=active\?/);
-});
-
-test('four inset lenses stay inside actual visible approaches and outside bumper island',()=>{
- assert.deepEqual(APPROACH_LIGHTS.map(l=>l.kind),['orbit','orbit','ramp','ramp']);
- for(const lens of APPROACH_LIGHTS){
-  const channel=VISIBLE_CHANNELS.find(c=>c.kind===lens.kind);
-  assert.ok(channel,'unknown visible approach');
-  assert.ok(lens.index===0||lens.index===1);
-  const a=channel.points[lens.index],b=channel.points[lens.index+1];
-  assert.ok(distanceToSegment(lens,a,b)<1e-6);
-  assert.ok(lens.y>275&&lens.y<360,'lamp overlaps upper N/G/S gates');
-  assert.ok(lens.kind==='orbit'?lens.x<85:lens.x>300,'lamp blocks centre bumpers');
-  for(const bumper of BUMPERS)
-   assert.ok(Math.hypot(lens.x-bumper.x,lens.y-bumper.y)>bumper.r+17);
- }
-});
-
-test('both playfield renderers recess the lane floor and illuminate only the four true lane lenses',()=>{
- assert.match(three,/channelStrip\(channel,\.28,\.72,-\.018,laneGroove\)/);
- assert.match(three,/for\(const lamp of APPROACH_LIGHTS\)/);
- assert.match(three,/approachLampState\(engine,indicator\.kind\)/);
- assert.match(three,/arrow\.rotation\.z=Math\.atan2\(-lamp\.dy,lamp\.dx\)-PI\/2/);
- assert.match(canvas,/drawApproachLamps\(ctx,engine,anim,reducedMotion\)/);
- assert.match(canvas,/const state=approachLampState\(engine,lamp\.kind\)/);
- assert.match(canvas,/for\(const lamp of APPROACH_LIGHTS\)/);
- assert.doesNotMatch(canvas,/One subtle directional insert per open approach/);
- // The old V2.7 full-path 'spaghetti' should never return.
- assert.doesNotMatch(three,/channelStrip\(route,0,1/);
- assert.doesNotMatch(canvas,/for\(const route of ordered\)/);
 });

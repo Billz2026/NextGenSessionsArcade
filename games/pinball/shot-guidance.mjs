@@ -39,18 +39,8 @@ export function shotIndicatorState(engine,kind){
   return 'confirmed';
  return 'idle';
 }
-// A glowing arrow inside a lane only gets fully illuminated when that shot
-// is requested or a real ball has actually entered that route.
-export function approachLampState(engine,kind){
- if(engine.state!=='playing'||engine.tilted)return 'idle';
- const balls=engine.balls?.length?engine.balls:engine.ball?[engine.ball]:[];
- if(balls.some(ball=>ball.mode==='travel'&&ball.travel?.kind===kind))
-  return 'travel';
- return shotIndicatorState(engine,kind);
-}
 export function shotIndicatorBrightness(state,phase,reducedMotion=false){
  if(state==='idle'||state==='claimed')return state==='claimed'?.13:.24;
- if(state==='travel')return reducedMotion?1:.78+.22*(.5+.5*Math.sin(phase*7));
  if(state==='confirmed')return .84;
  if(reducedMotion)return state==='mission'||state==='jackpot'?1:.7;
  const beat=(Math.sin(phase*6.3)+1)/2;

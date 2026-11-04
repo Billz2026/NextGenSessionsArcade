@@ -4,10 +4,10 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,APPROACH_LIGHTS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=6';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
-import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness,approachLampState} from './shot-guidance.mjs?v=3';
+import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -139,24 +139,30 @@ function drawOrbits(c){
  for(const channel of VISIBLE_CHANNELS){
   const smooth=roundedWirePoints(channel.points,3);
   const edges=guideEdges({points:smooth,width:channel.width});
-  const fill=channel.kind==='orbit'?'#302a21':'#35231f';
+  const fill=channel.kind==='orbit'?'#15120f':'#1d1411';
   const accent=channel.kind==='orbit'?'#9c7b47':'#a8624d';
   c.save();
   c.beginPath();c.moveTo(edges[0].left.x,edges[0].left.y);
   for(let i=1;i<edges.length;i++)c.lineTo(edges[i].left.x,edges[i].left.y);
   for(let i=edges.length-1;i>=0;i--)
    c.lineTo(edges[i].right.x,edges[i].right.y);
-  c.closePath();c.globalAlpha=.72;c.fillStyle=fill;c.fill();c.globalAlpha=1;
-  // A charcoal recess makes the open approach readable as a shallow lane.
-  c.globalAlpha=.45;
-  line(c,smooth.map(p=>[p.x,p.y]),'#11100e',9);
-  c.globalAlpha=1;
+  c.closePath();c.fillStyle=fill;c.fill();
   // Only the OUTER edge is accented. No double gold rail outline.
   const side=channel.trimSide;
   const points=edges.map(e=>[e[side].x,e[side].y]);
   c.globalAlpha=.78;
   line(c,points,accent,1.8);
   c.globalAlpha=1;
+  // One subtle directional insert per open approach.
+  const n=Math.floor(smooth.length*.40),p=smooth[n],q=smooth[n+2];
+  if(p&&q){
+   const angle=Math.atan2(q.y-p.y,q.x-p.x)+Math.PI/2;
+   c.translate(p.x,p.y);c.rotate(angle);
+   c.beginPath();c.moveTo(0,-6);c.lineTo(4.3,3);
+   c.lineTo(0,1);c.lineTo(-4.3,3);c.closePath();
+   c.fillStyle=channel.kind==='ramp'?'#e9a085':'#e8c88a';
+   c.fill();
+  }
   c.restore();
  }
  // Two clearly marked physical mouths. Centre/Skyline retain the small
@@ -344,31 +350,6 @@ function drawShotGuidance(c,engine,anim,reducedMotion){
   c.lineTo(x-4.9,y+2.8);c.closePath();
   c.fillStyle=urgent?'#fff1da':lit?'#f3c74f':'#967a4e';c.fill();
   c.shadowBlur=0;c.restore();
- }
-}
-// Inset direction glasses illuminate for the upcoming mission shot or
-// genuine travelling ball. Coordinates are interpolated from actual routes.
-function drawApproachLamps(c,engine,anim,reducedMotion){
- for(const lamp of APPROACH_LIGHTS){
-  const state=approachLampState(engine,lamp.kind);
-  const level=shotIndicatorBrightness(state,anim,reducedMotion);
-  const active=state==='mission'||state==='jackpot',travel=state==='travel';
-  const colour=active?'#ff6a66':travel?'#ffe6a8':'#9e7d50';
-  c.save();c.translate(lamp.x,lamp.y);
-  c.rotate(Math.atan2(lamp.dy,lamp.dx)+Math.PI/2);
-  c.shadowColor=colour;c.shadowBlur=active?8+12*level:travel?16:0;
-  c.globalAlpha=active?.66+.34*level:travel?1:.66;
-  c.fillStyle='#11100e';c.strokeStyle='#74593a';c.lineWidth=.85;
-  c.beginPath();c.moveTo(0,-8);c.lineTo(5.5,-.6);
-  c.lineTo(2.4,-.6);c.lineTo(2.4,6.5);
-  c.lineTo(-2.4,6.5);c.lineTo(-2.4,-.6);
-  c.lineTo(-5.5,-.6);c.closePath();c.fill();c.stroke();
-  c.fillStyle=active?'#ffddd2':travel?'#fff0be':'#bd9458';
-  c.beginPath();c.moveTo(0,-6);c.lineTo(3.4,-.3);
-  c.lineTo(1.3,-.3);c.lineTo(1.3,4.4);
-  c.lineTo(-1.3,4.4);c.lineTo(-1.3,-.3);
-  c.lineTo(-3.4,-.3);c.closePath();c.fill();
-  c.restore();
  }
 }
 function drawTargets(c,engine){
@@ -743,7 +724,6 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  drawNeonMarquee(ctx,anim);
  drawUpperRouteFeedback(ctx,engine,reducedMotion);
  drawShotGuidance(ctx,engine,anim,reducedMotion);
- drawApproachLamps(ctx,engine,anim,reducedMotion);
  drawTargets(ctx,engine);
  drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
  drawWorkingInserts(ctx,engine,anim,reducedMotion);

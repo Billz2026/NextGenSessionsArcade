@@ -1,18 +1,10 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase V2.8 — recessed, illuminated side-lane approaches with live shot guidance (playable 3D beta)
+**Current stage:** Phase V2.7.1 — simplified side approaches and unobstructed bumper island (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
-
-## Phase V2.8 — readable recessed route entrances
-
-- Refined the two short side approach surfaces into shallow smoked-black **open troughs** rather than opaque-looking dark side panels. Each lane has one subdued outer edge seam and a recessed centre, without any additional overhead wire rails.
-- Four flush **directional lamp inserts**, two within the physical left Orbit approach and two within the right Ramp approach, interpolate directly from real engine path samples. They never cross the three bumpers or upper rollover switches.
-- The lamps respond to actual state: amber when idle, bright pulsing red when the next flight mission/jackpot requires that route, and warm white-gold while a real ball is travelling through it. Reduced-motion preference produces steady lights.
-- WebGL renders these as flat inset arrow lenses above the lane floor; Canvas renders the same four inserts live, without redundant static arrows. No changes to any collision geometry, engine motion, drains, scoring, mission progression or multiball.
-- New deterministic checks verify physical position interpolation, bumper clearance, 2D/3D implementation and real route activity. This improves lane-entry readability; it is **not** a claim to reproduce Space Cadet's entire physical routing or concealed return-path mechanics.
 
 ## Phase V2.7.1 — corrective visual cleanup
 
