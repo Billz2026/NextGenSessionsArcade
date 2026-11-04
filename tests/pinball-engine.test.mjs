@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -167,6 +167,20 @@ test('all four missions award one extra ball only once',()=>{
  g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=150;
  g.advance(BOARD.step);steps(g,1.25);
  assert.equal(g.state,'gameover');
+});
+test('each unique mission raises flight rank and emits a genuine promotion',()=>{
+ const g=new PinballEngine();g.start();g.consumeEvents();
+ g.mission('lanes','NEON LANES',1000);
+ assert.equal(g.rankName,'ENSIGN');assert.equal(g.commandFlags,1);
+ let promotion=g.consumeEvents().find(e=>e.type==='promotion');
+ assert.equal(promotion.rank,'ENSIGN');assert.equal(promotion.points,10000);
+ g.mission('lanes','NEON LANES',1000);
+ assert.equal(g.commandFlags,1,'same mission cannot manufacture another flag');
+ g.mission('frenzy','BUMPER FRENZY',1000);
+ g.mission('targets','TARGET BANK',1000);
+ g.mission('ride','NIGHT RIDE',1000);
+ assert.equal(g.rankName,RANKS.at(-1));assert.equal(g.commandFlags,4);
+ g.start();assert.equal(g.rankName,'CADET');assert.equal(g.commandFlags,0);
 });
 test('ball save works once and requires a real launch',()=>{
  const g=new PinballEngine();g.start();g.launch();
