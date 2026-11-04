@@ -67,14 +67,14 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
 .machine-top span:last-child{color:#bf9091}
 .cabinet{
  position:relative;width:min(100%,615px);margin:0 auto;
- padding:12px 13px 12px;border:7px solid #751c24;border-radius:20px;
- background:linear-gradient(110deg,#ffab8a,#921721 6%,#2d111c 17%,#140c14 82%,#921721 94%,#ff6d5b);
- box-shadow:0 0 0 2px #ec3635,0 0 0 6px rgba(11,8,14,.9),0 15px 31px #05050a,
- inset 0 1px rgba(255,171,138,.55),inset 0 0 19px rgba(0,0,0,.77)
+ padding:12px 13px 12px;border:7px solid #916826;border-radius:20px;
+ background:linear-gradient(110deg,#f3c74f,#6f4c20 5%,#18130b 18%,#090909 82%,#34240f 94%,#e6ba62);
+ box-shadow:0 0 0 2px #dfb657,0 0 0 6px rgba(11,8,14,.9),0 0 17px rgba(243,199,79,.24),0 15px 31px #05050a,
+ inset 0 1px rgba(255,237,169,.55),inset 0 0 19px rgba(0,0,0,.77)
 }
 .cabinet:before{
  content:"";position:absolute;inset:4px;pointer-events:none;border-radius:10px;
- box-shadow:inset 0 0 0 1px rgba(255,109,91,.28),inset 0 0 22px #000;z-index:1
+ box-shadow:inset 0 0 0 1px rgba(243,199,79,.32),inset 0 0 22px #000;z-index:1
 }
 .cabinet-lights{display:flex;justify-content:space-evenly;gap:10px;margin:1px 0 10px}
 .cabinet-lights span{
@@ -85,8 +85,8 @@ a:focus-visible,button:focus-visible{outline:3px solid #ffe1a4;outline-offset:3p
 .cabinet-lights span:nth-child(3n){background:radial-gradient(circle at 30% 25%,#ffe9dc,#ec806d 54%,#713f54);box-shadow:0 0 9px rgba(235,107,97,.63)}
 .playfield-wrap{
  position:relative;width:min(100%,570px);margin:0 auto;aspect-ratio:3/5;
- border:4px solid #9f897d;border-radius:10px;overflow:hidden;background:#10121d;
- box-shadow:0 0 0 2px #1a131c,0 0 0 4px rgba(230,182,134,.25),0 15px 32px rgba(0,0,0,.66),
+ border:4px solid #bb9148;border-radius:10px;overflow:hidden;background:#090909;
+ box-shadow:0 0 0 2px #1b140b,0 0 0 4px rgba(243,199,79,.30),0 15px 32px rgba(0,0,0,.66),
  inset 0 0 20px #000
 }
 .playfield-wrap:after{
