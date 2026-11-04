@@ -89,7 +89,7 @@ test('black lacquer and deterministic gold dust are shared by both renderers',()
  assert.match(canvasSource,/for\(let i=0;i<290;i\+\+\)/);
  assert.match(threeSource,/rgba\(243,199,79,\.22\)/);
  assert.match(threeSource,/for\(let i=0;i<450;i\+\+\)/);
- assert.match(threeSource,/const wireSteel=metal\('#d0aa60'/);
+ assert.match(threeSource,/const laneTrim=new T.MeshPhysicalMaterial/);
  assert.doesNotMatch(canvasSource,/Math\.random\(/);
  assert.doesNotMatch(threeSource,/Math\.random\(/);
 });
