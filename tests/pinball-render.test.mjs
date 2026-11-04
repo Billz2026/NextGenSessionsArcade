@@ -64,7 +64,7 @@ test('table marquee is a clean flashy arcade logo without the website brand line
  assert.doesNotMatch(threeSource,/fillText\('NEXTGEN SESSIONS'/);
  for(const source of [canvasSource,threeSource]){
   assert.match(source,/italic 900/);
-  assert.match(source,/#ff4ca3/i);
-  assert.match(source,/#(?:1de8ff|1ce9ff|20ddf4)/i);
+  assert.match(source,/#ec3635/i);
+  assert.match(source,/#ff6d5b/i);
  }
 });
