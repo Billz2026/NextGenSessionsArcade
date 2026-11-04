@@ -791,6 +791,8 @@ export async function create3DTable(host){
  }
  const ball=add(new T.SphereGeometry(BOARD.radius*SCALE,28,20),chrome,0,0,.56);
  ball.castShadow=true;
+ const extraBallMeshes=[ball.clone(),ball.clone()];
+ for(const extra of extraBallMeshes){extra.castShadow=true;extra.visible=false;scene.add(extra);}
  const goldLamps=[];
  for(const [i,pos] of [[104,458],[306,458],[112,560],[310,560],[196,554]].entries()){
   const g=add(new T.SphereGeometry(.075,12,10),i%2?cyan:amber,X(pos[0]),Y(pos[1]),.34);
@@ -1111,15 +1113,16 @@ export async function create3DTable(host){
  function update(engine,{bumperFlash=null,tableFlash=null,reducedMotion=false}={}){
   if(disposed)return;
   resize();
-  const b=engine.ball;
-  ball.visible=Boolean(b);
-  if(b){
-   ball.position.set(X(b.x),Y(b.y),b.mode==='scoop'?.31:.62);
-   if(b.mode==='shooter')ball.position.z=.55;
-   if(b.mode==='scoop')ball.position.z=.31;
-   // Use the simulation's already existing raised-shot height.
+  const activeBalls=engine.balls?.length?engine.balls:(engine.ball?[engine.ball]:[]);
+  for(const [i,mesh] of [ball,...extraBallMeshes].entries()){
+   const b=activeBalls[i];
+   mesh.visible=Boolean(b);
+   if(!b)continue;
+   mesh.position.set(X(b.x),Y(b.y),b.mode==='scoop'?.31:.62);
+   if(b.mode==='shooter')mesh.position.z=.55;
+   if(b.mode==='scoop')mesh.position.z=.31;
    if(b.mode==='travel')
-    ball.position.z=Math.max(.55,(b.travelHeight||.39)+UPPER_BALL_RADIUS);
+    mesh.position.z=Math.max(.55,(b.travelHeight||.39)+UPPER_BALL_RADIUS);
   }
   for(let i=0;i<engine.flippers.length;i++){
    const f=engine.flippers[i],sgn=f.side==='left'?1:-1;
@@ -1293,7 +1296,7 @@ export async function create3DTable(host){
   if(engine.spinnerAngle<renderedSpin)renderedSpin=engine.spinnerAngle;
   spinnerPivot.rotation.x=renderedSpin;
   plungerHandle.position.y=Y(660)-(engine.charging?Math.max(0,engine.charge-.26)*.27:0);
-  const scoopActive=engine.ball?.mode==='scoop';
+  const scoopActive=engine.balls?.some(b=>b.mode==='scoop')||engine.ball?.mode==='scoop';
   scoopLens.material.emissiveIntensity=rush?3.9*beat:
    scoopActive?3.5:idleMode?1+.65*Math.sin(now*.004):.55;
   for(let i=0;i<cabinetLEDs.length;i++){
