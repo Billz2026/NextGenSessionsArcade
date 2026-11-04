@@ -161,6 +161,15 @@ test('Phase 3M DMD announces real bonuses and special modes',()=>{
  assert.equal(describeDmdEvent({type:'superSpinner',points:3000}).sub,'+3,000');
  assert.equal(describeDmdEvent({type:'hurryMiss'}).sub,'RECHARGE GRID');
 });
+test('classic campaign progression is visible in status and promotion callouts',()=>{
+ const game={state:'playing',ballNumber:1,ball:{mode:'live'},score:12000,time:20,
+  multiplierUntil:0,frenzyUntil:0,hurryUpUntil:0,overdriveUntil:0,
+  targets:new Set(),lanes:new Set(),powerCharges:0,spinnerTurns:0,
+  ballSaveUsed:true,ballSaveUntil:0,rankName:'CAPTAIN',commandFlags:3};
+ assert.deepEqual(getDmdStatus(game,16000),['FLIGHT RANK','CAPTAIN · 3/4 FLAGS']);
+ assert.deepEqual(describeDmdEvent({type:'promotion',rank:'CAPTAIN',points:30000},game),
+  {headline:'RANK PROMOTION!',sub:'CAPTAIN · +30,000',priority:5,duration:3200});
+});
 test('DMD displays timer-driven jackpot and Overdrive objectives',()=>{
  const base={state:'playing',ball:{mode:'live'},ballNumber:2,score:17000,time:12,
   frenzyUntil:0,multiplierUntil:0,powerCharges:3,overdriveUntil:0,hurryUpUntil:26};
