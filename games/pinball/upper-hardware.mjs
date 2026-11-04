@@ -23,7 +23,7 @@ export const UPPER_ROUTES=Object.freeze([
 export const VISIBLE_CHANNELS=Object.freeze([
  Object.freeze({
   kind:'orbit',width:22,trimSide:'right',
-  points:Object.freeze(UPPER_ROUTES[0].points.slice(0,5))
+  points:Object.freeze(UPPER_ROUTES[0].points.slice(0,4))
  }),
  Object.freeze({
   kind:'ramp',width:22,trimSide:'left',
