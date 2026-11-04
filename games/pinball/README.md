@@ -1,10 +1,20 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase V2.7 — integrated route channels replacing exposed rails (playable 3D beta)
+**Current stage:** Phase V2.7.1 — simplified side approaches and unobstructed bumper island (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase V2.7.1 — corrective visual cleanup
+
+- The initial V2.7 implementation was not acceptable: tracing all four complete travel trajectories created overlapping gold paths across the bumpers and central playfield, making the machine look worse.
+- Removed those full-length channel surfaces from the 3D model **and** the 3D printed artwork and Canvas fallback. Now only the beginning of the **left orbit** (4 true engine samples) and **right ramp** (3 true engine samples) appear as dark moulded approach lanes.
+- Each approach has just **one** restrained outer gold/burgundy edge seam. No second outlining rail, upper transport loops, central elevated crossing channels or visual return-path spaghetti. Both approaches end outside the pop-bumper area and above the shot sensor area.
+- Centre Crossover and Skyline are physical shots, but now use only existing forward-looking mission LEDs rather than elevated lines through the bumper cluster. Full physical travel and release points still operate as originally tested.
+- Replaced the shiny raised top arch with a flat enamel header strip, keeping the three actual N/G/S rollover devices intact.
+- Added regressions specifically ensuring the two presented approaches never overlap any bumper, never cross the top N/G/S gates, keep their original engine coordinates and do not introduce physics changes.
+- This is a **visual correction**, not a claim that the whole game already recreates Space Cadet's table layout. Desktop/mobile gameplay and WebGL/Canvas still require actual visual inspection.
 
 ## Phase V2.7 — Space-Cadet-style lane clarity, original NextGen design
 
