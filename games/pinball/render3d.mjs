@@ -47,9 +47,9 @@ export async function create3DTable(host){
  const metal=(color,roughness=.28,metalness=.9)=>new T.MeshPhysicalMaterial({
   color,roughness,metalness,clearcoat:.18,clearcoatRoughness:.12,envMapIntensity:1.1
  });
- const enamel=new T.MeshPhysicalMaterial({color:'#273758',roughness:.23,metalness:.10,clearcoat:.98,clearcoatRoughness:.16,envMapIntensity:.87});
+ const enamel=new T.MeshPhysicalMaterial({color:'#15110d',roughness:.23,metalness:.10,clearcoat:.98,clearcoatRoughness:.16,envMapIntensity:.87});
  const black=metal('#15131c',.47,.28),nickel=metal('#b4b7bd',.25,.85),chrome=metal('#c9d0d8',.18,.94);
- const darkChrome=metal('#606373',.34,.8),gold=metal('#c79b76',.24,.75);
+ const darkChrome=metal('#606373',.34,.8),gold=metal('#d6ac56',.21,.83);
   // Arcade-red lacquer is shared with the NextGen Sessions ARCADE wordmark.
   const cabinetRed=new T.MeshPhysicalMaterial({color:'#921721',roughness:.23,metalness:.30,clearcoat:1,clearcoatRoughness:.12});
  const rubber=new T.MeshStandardMaterial({color:'#8b515f',roughness:.65,metalness:.02});
@@ -99,53 +99,42 @@ export async function create3DTable(host){
  // independently stretched low-resolution glow labels. Native text strokes
  // remain readable at small desktop table sizes.
  function cabinetMarquee(){
+  // Transparent artwork: only neon tubing and small gold wings. No sign rectangle.
   const canvas=document.createElement('canvas');canvas.width=2048;canvas.height=560;
-  const c=canvas.getContext('2d');
-  const face=c.createLinearGradient(0,0,2048,560);
-  face.addColorStop(0,'#080d20');face.addColorStop(.5,'#171038');face.addColorStop(1,'#090e24');
-  c.fillStyle=face;c.fillRect(0,0,2048,560);
-  c.fillStyle='#11152b';c.fillRect(34,30,1980,500);
-  c.strokeStyle='#ff6d5b';c.lineWidth=12;c.strokeRect(29,26,1990,508);
-  c.strokeStyle='#ec3635';c.lineWidth=5;c.strokeRect(51,49,1945,462);
-  // Printed starburst and electric corner bolts make this a real arcade
-  // marquee while keeping the centre clean enough for one dominant title.
-  c.save();c.translate(1024,280);c.globalAlpha=.24;
-  for(let i=0;i<28;i++){
-   const a=i*Math.PI/14,len=i%2?730:930;
-   c.beginPath();c.moveTo(Math.cos(a)*250,Math.sin(a)*90);
-   c.lineTo(Math.cos(a)*len,Math.sin(a)*260);
-   c.strokeStyle=i%2?'#ffab8a':'#ec3635';c.lineWidth=i%3===0?7:3;c.stroke();
-  }
-  c.restore();
+  const c=canvas.getContext('2d');c.clearRect(0,0,2048,560);
+  c.lineCap='round';c.lineJoin='round';
   for(const side of [-1,1]){
-   c.save();c.translate(side<0?190:1858,280);c.scale(side,1);
-   c.beginPath();c.moveTo(-42,-128);c.lineTo(58,-22);c.lineTo(4,-22);
-   c.lineTo(52,128);c.lineTo(-67,4);c.lineTo(-8,4);c.closePath();
-   c.fillStyle='#ffab8a';c.shadowColor='#ec3635';c.shadowBlur=28;c.fill();c.restore();
+   for(let i=0;i<3;i++){
+    const y=216+i*49;
+    const x1=side<0?77:1805,x2=side<0?237:1971;
+    c.shadowColor='#f3c74f';c.shadowBlur=29;
+    c.strokeStyle='#b78024';c.lineWidth=19;
+    c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.stroke();
+    c.shadowBlur=13;c.strokeStyle='#ffe3a0';c.lineWidth=7;
+    c.beginPath();c.moveTo(x1+8,y-2);c.lineTo(x2-8,y-2);c.stroke();
+   }
   }
-  c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
-  c.font='italic 900 322px "Arial Black",Impact,Arial,sans-serif';
-  // Clear white-hot centre with a deep NextGen red neon bloom.
-  c.shadowColor='#ec3635';c.shadowBlur=78;c.shadowOffsetY=8;
-  c.lineWidth=54;c.strokeStyle='#27090d';c.strokeText('NEON TILT',1024,285,1710);
-  c.shadowColor='#ec3635';c.shadowBlur=62;c.shadowOffsetY=0;
-  c.lineWidth=27;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',1024,276,1710);
-  c.shadowBlur=13;c.lineWidth=7;c.strokeStyle='#fff2d6';c.strokeText('NEON TILT',1024,276,1710);
-  const logo=c.createLinearGradient(0,104,0,438);
-  logo.addColorStop(0,'#fff2d6');logo.addColorStop(.22,'#ffab8a');
-  logo.addColorStop(.56,'#ff6d5b');logo.addColorStop(1,'#cf272c');
-  c.shadowColor='#ec3635';c.shadowBlur=38;c.fillStyle=logo;
-  c.fillText('NEON TILT',1024,276,1710);
-  c.shadowBlur=0;c.globalAlpha=.67;c.fillStyle='#fff3e8';
-  c.fillText('NEON TILT',1024,261,1710);c.globalAlpha=1;
-  c.fillStyle='#ff6d5b';c.fillRect(390,478,1268,7);
-  c.fillStyle='#b3232e';c.fillRect(530,496,988,5);
+  c.textAlign='center';c.textBaseline='middle';
+  // Thin italic Oxanium neon outline, not the previous heavy block-face text.
+  c.font='italic 500 318px "Oxanium","Trebuchet MS",Arial,sans-serif';
+  c.shadowColor='#ee1732';c.shadowBlur=84;
+  c.lineWidth=31;c.strokeStyle='#760711';
+  c.strokeText('NEON TILT',1024,277,1550);
+  c.shadowBlur=58;c.lineWidth=20;c.strokeStyle='#ec3635';
+  c.strokeText('NEON TILT',1024,277,1550);
+  c.shadowBlur=26;c.lineWidth=10;c.strokeStyle='#ff4652';
+  c.strokeText('NEON TILT',1024,277,1550);
+  c.shadowBlur=9;c.lineWidth=4;c.strokeStyle='#fff0e6';
+  c.strokeText('NEON TILT',1024,277,1550);
   const texture=new T.CanvasTexture(canvas);
   texture.colorSpace=T.SRGBColorSpace;
   texture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);
   texture.minFilter=T.LinearMipmapLinearFilter;
   texture.magFilter=T.LinearFilter;
-  return new T.MeshBasicMaterial({map:texture,toneMapped:false,side:T.DoubleSide});
+  return new T.MeshBasicMaterial({
+   map:texture,transparent:true,depthWrite:false,toneMapped:false,
+   side:T.DoubleSide,opacity:1
+  });
  }
  // Backbox and lacquered hardwood body, with truly modelled thickness.
  const boardW=BOARD.width*SCALE,boardH=BOARD.height*SCALE;
@@ -161,17 +150,26 @@ export async function create3DTable(host){
  bg.addColorStop(0,NEON_FINISH.upper);
  bg.addColorStop(.38,NEON_FINISH.mid);
  bg.addColorStop(.76,NEON_FINISH.lower);
- bg.addColorStop(1,'#22263e');
+ bg.addColorStop(1,'#070707');
  p.fillStyle=bg;p.fillRect(0,0,840,1400);
- // Original cool-blue and coral sheen printed into the lacquer.
- const cyanSweep=p.createRadialGradient(260,520,35,260,520,460);
- cyanSweep.addColorStop(0,'rgba(59,156,230,.20)');
- cyanSweep.addColorStop(1,'rgba(59,156,230,0)');
- p.fillStyle=cyanSweep;p.fillRect(0,0,840,1400);
- const coralSweep=p.createRadialGradient(610,820,20,610,820,400);
- coralSweep.addColorStop(0,'rgba(248,106,163,.14)');
- coralSweep.addColorStop(1,'rgba(248,106,163,0)');
- p.fillStyle=coralSweep;p.fillRect(0,0,840,1400);
+ // Deep piano-black enamel with restrained amber reflections and fine gold dust.
+ const goldSheen=p.createRadialGradient(245,435,20,245,435,620);
+ goldSheen.addColorStop(0,'rgba(193,136,45,.09)');
+ goldSheen.addColorStop(1,'rgba(193,136,45,0)');
+ p.fillStyle=goldSheen;p.fillRect(0,0,840,1400);
+ const emberSheen=p.createRadialGradient(650,920,15,650,920,440);
+ emberSheen.addColorStop(0,'rgba(236,54,53,.045)');
+ emberSheen.addColorStop(1,'rgba(236,54,53,0)');
+ p.fillStyle=emberSheen;p.fillRect(0,0,840,1400);
+ // Seeded positions: texture never crawls/flickers and costs no work per frame.
+ const goldDust=seed=>{const v=Math.sin(seed*127.1+67.45)*43758.5453;return v-Math.floor(v)};
+ for(let i=0;i<450;i++){
+  const x=25+goldDust(i+9)*790,y=30+goldDust(i+577)*1330;
+  const radius=i%23===0?1.35:i%7===0?.8:.42;
+  p.beginPath();p.arc(x,y,radius,0,Math.PI*2);
+  p.fillStyle=i%11===0?'rgba(255,228,150,.40)':'rgba(243,199,79,.22)';
+  p.fill();
+ }
 
  // Original Space Cadet-influenced visual hierarchy: distinct upper devices,
  // asymmetric side plastics, a central light-core and clear lower flipper play.
@@ -183,7 +181,7 @@ export async function create3DTable(host){
   if(stroke!=='#0000'){p.strokeStyle=stroke;p.lineWidth=lw;p.stroke();}
  }
  // Upper star-map: clean original light paths with muted mid-blue graphic ink.
- p.strokeStyle='rgba(139,209,251,.15)';p.lineWidth=2;
+ p.strokeStyle='rgba(232,184,84,.16)';p.lineWidth=2;
   for(let i=0;i<3;i++){
   p.beginPath();p.moveTo(170,300+i*55);
   p.bezierCurveTo(340,282+i*55,525,304+i*52,660,310+i*48);
@@ -191,8 +189,8 @@ export async function create3DTable(host){
  }
  // Right bank: warm coral segmented moulded plastic, never chrome rails.
  shape([[707,234],[747,224],[752,264],[750,720],[717,729],[715,449]],
-    '#34344a','#8f7885',4);
-  p.fillStyle='#202c42';p.fillRect(718,272,19,395);
+    '#241c12','#a27c39',4);
+  p.fillStyle='#17110b';p.fillRect(718,272,19,395);
   p.strokeStyle='#a5a6b3';p.lineWidth=2;p.strokeRect(718,272,19,395);
   for(let i=0;i<7;i++){
    const y=290+i*52;
@@ -204,9 +202,9 @@ export async function create3DTable(host){
  // Left feature: flowing acrylic shield, target cluster and broad original
  // purple panels, inspired by the reference's use of visual mass.
  shape([[83,384],[102,338],[128,320],[151,337],[139,405],[118,477],
-   [90,524],[73,522]],'#29364e','#8596ad',4);
+   [90,524],[73,522]],'#1b1713','#a78750',4);
   shape([[89,380],[110,346],[136,338],[124,401],[107,477],
-   [82,510]],'#41485f','#a9a4b9',2);
+   [82,510]],'#272017','#d2ac63',2);
  for(let i=0;i<4;i++){
   p.fillStyle=i%2?'#ffa66a':'#ffe48f';
   p.fillRect(112+i*12,410+i*40,14,24);
@@ -242,9 +240,9 @@ export async function create3DTable(host){
   // Bumper field: a recessed six-sided mounting deck groups the three genuine
   // bumper collision zones. This is underlay only, never a new obstacle.
   shape([[221,398],[606,398],[652,550],[535,688],[305,688],[185,550]],
-    '#101e33','#677d96',5);
+    '#16130e','#af8948',5);
   shape([[237,412],[589,412],[631,551],[522,671],[317,671],[207,551]],
-    '#1a304a','#334d6b',3);
+    '#221c14','#725b34',3);
   for(const [cx,cy] of [[300,480],[518,480],[410,620]]){
    p.beginPath();p.arc(cx,cy,68,0,Math.PI*2);
    p.strokeStyle='rgba(192,209,219,.24)';p.lineWidth=6;p.stroke();
@@ -294,24 +292,24 @@ export async function create3DTable(host){
   for(const side of [-1,1]){
    p.save();p.translate(420,1190);p.scale(side,1);
    shape([[123,-133],[221,-37],[217,37],[181,32],[111,-106]],
-     '#16253c','#61778d',4);
+     '#1c1813','#97743c',4);
    shape([[135,-113],[208,-33],[205,10],[180,8]],
-     '#26354d','#a6b8bd',2);
+     '#2b2217','#cba45a',2);
    p.restore();
   }
   // Symmetric lower flipper zones: strongly graphic like a classic arcade game.
  for(const side of [-1,1]){
   p.save();p.translate(420,1200);p.scale(side,1);
-  shape([[74,-170],[222,-90],[235,18],[180,20]],'#492f5b','#d07894',5);
-  shape([[92,-139],[177,-104],[205,-18],[179,-7]],'#292f57','#95bdd8',4);
+  shape([[74,-170],[222,-90],[235,18],[180,20]],'#251912','#c18b45',5);
+  shape([[92,-139],[177,-104],[205,-18],[179,-7]],'#161410','#d4af64',4);
   p.strokeStyle='#ffbc8d';p.lineWidth=7;p.beginPath();
   p.moveTo(83,-160);p.lineTo(197,-8);p.stroke();
   p.restore();
  }
  // Device labels occupy dark areas, without blocking shots or covering rings.
  function inkLabel(text,x,y,width,color='#ffe0ad'){
-  p.fillStyle='#121625';p.fillRect(x-width/2,y-19,width,38);
-  p.strokeStyle='#ae777c';p.lineWidth=2;p.strokeRect(x-width/2,y-19,width,38);
+  p.fillStyle='#110e0a';p.fillRect(x-width/2,y-19,width,38);
+  p.strokeStyle='#af863b';p.lineWidth=2;p.strokeRect(x-width/2,y-19,width,38);
   p.font='900 26px Impact,"Arial Black",sans-serif';
   p.fillStyle=color;p.textAlign='center';p.textBaseline='middle';
   p.fillText(text,x,y,width-10);
@@ -322,7 +320,7 @@ export async function create3DTable(host){
  p.font='900 18px Oxanium,Arial,sans-serif';p.fillStyle='#bdeeff';
  p.fillText('FUEL',698,460);
  inkLabel('TARGET BANK',417,827,190);
- inkLabel('POWER CORE',420,1098,210,'#a9d9ff');
+ inkLabel('POWER CORE',420,1098,210,'#f3c74f');
  inkLabel('ORBIT',120,738,105);
  inkLabel('RAMP',656,738,105);
  inkLabel('BALL SAVE',420,1184,166);
@@ -353,28 +351,17 @@ export async function create3DTable(host){
  }
  // Brushed steel side rails and body sidewalls.
  for(const px of [-4.34,4.34]){
-  box(px,0,.34,.18,boardH,.64,cabinetRed);
-  box(px,0,.67,.06,boardH,.09,chrome);
+  box(px,0,.34,.18,boardH,.64,gold);
+  box(px,0,.67,.06,boardH,.09,gold);
   for(const y of [6,3,0,-3,-6]){
    const screw=add(new T.SphereGeometry(.071,12,8),chrome,px,y,.78);
    screw.scale.z=.45;
   }
  }
- for(const py of [-7.12,7.12])box(0,py,.46,8.6,.16,.61,darkChrome);
- // Billboard sign: a self-contained arcade marquee, not a website brand lock-up.
- box(0,5.48,.3,6.25,1.95,.22,metal('#161322',.18,.62));
- box(0,5.48,.46,5.93,1.70,.03,metal('#070d20',.17,.23));
- plane(0,5.48,.535,5.79,1.58,cabinetMarquee());
- // A physically raised cast-metal marquee frame reads as a real backlit
- // cabinet assembly even without the expensive glyph-extrusion font loader.
- for(const y of [4.63,6.33])box(0,y,.62,6.14,.13,.15,cabinetRed);
- for(const x of [-3.02,3.02])box(x,5.48,.62,.13,1.75,.15,cabinetRed);
- for(const x of [-2.99,2.99])for(const y of [4.64,6.31]){
-  const screw=add(new T.SphereGeometry(.085,14,10),chrome,x,y,.74);
-  screw.scale.z=.55;
- }
- // Side-depth panels frame, rather than cover, the printed title.
- for(const x of [-3.18,3.18])box(x,5.48,.26,.14,2.05,.52,darkChrome);
+ for(const py of [-7.12,7.12])box(0,py,.46,8.6,.16,.61,gold);
+ // A floating neon wordmark, mounted over the black enamel without a framed plaque.
+ const neonMarqueeMaterial=cabinetMarquee();
+ plane(0,5.48,.535,5.90,1.58,neonMarqueeMaterial);
  // Collision walls stay in engine.mjs. The Space Cadet-inspired visual
  // treatment replaces metal wall wires with painted enamel / plastic edges.
  for(const point of POSTS){
@@ -544,9 +531,9 @@ export async function create3DTable(host){
  // Each scoring route has two stainless runners below the ball and two
  // safety rails above it, leaving the playfield artwork visible underneath.
  const routeHardware=[];
-  const wireSteel=metal('#b5c3ce',.20,.90);
-  const wireHighlight=metal('#8292a4',.29,.82);
-  const wireBracket=metal('#6e8092',.33,.76);
+  const wireSteel=metal('#d0aa60',.20,.90);
+  const wireHighlight=metal('#f3c74f',.24,.82);
+  const wireBracket=metal('#947341',.31,.78);
   function routeRod(a,b,r,material){
    const from=new T.Vector3(X(a.x),Y(a.y),a.z);
    const to=new T.Vector3(X(b.x),Y(b.y),b.z);
@@ -1316,6 +1303,9 @@ export async function create3DTable(host){
      engine.missions.ride?2.5:.5+1.1*(.5+.5*Math.sin(now*.006-i*.85)))+eventFlash*4;
   }
 
+  // Slow breathing illumination; never strobe, and honour reduced motion.
+  const marqueePulse=reducedMotion?1:.90+.10*Math.sin(now*.0033);
+  neonMarqueeMaterial.opacity=marqueePulse;
   const idle=engine.state==='ready'||engine.state==='gameover';
   sparkle.intensity=(idle&&!reducedMotion?6+Math.sin(now*.002)*1.3:6)+eventFlash*8;
   rim.intensity=8+eventFlash*8;
