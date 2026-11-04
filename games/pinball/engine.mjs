@@ -2,7 +2,7 @@
 // Coordinates are pixels in a 420 × 700 playfield, +Y points down.
 export const BOARD = Object.freeze({width:420,height:700,radius:8,step:1/240});
 export const GRAVITY=780;
-export const PLAY_BALANCE=Object.freeze({launchSave:15,flipperLength:60,returnBlend:.40,streakShots:2});
+export const PLAY_BALANCE=Object.freeze({launchSave:15,flipperLength:58,returnBlend:.36,streakShots:2});
 // One illuminated, physical outlane kickback per served ball. The central drain
 // stays open, and the solenoid never fires after TILT.
 export const KICKBACK=Object.freeze({
