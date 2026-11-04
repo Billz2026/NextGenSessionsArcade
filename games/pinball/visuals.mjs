@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=10';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=11';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=3';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections} from './upper-hardware.mjs?v=4';
@@ -235,10 +235,8 @@ function drawEnamelDetails(c){
   }
   // Retro upper-playfield inserts and sculpted rollover plastics.
   // Devices remain visible; no rail or elevated structure is painted over them.
- for(let i=0;i<9;i++){
-  const x=72+i*34,y=131;
-  disk(c,x,y,4,'#21253c','#756680',1);
- }
+ text(c,'FLIGHT RANK',210,116,8,'rgba(222,226,238,.72)','Oxanium',900);
+ for(let i=0;i<5;i++)disk(c,142+i*34,131,5,'#172236','#71889c',1.2);
  for(const lane of UPPER_ROLLOVERS){
   rect(c,lane.x-22,183,44,21,4,'#1c2740','#8697a9',1.5);
   text(c,lane.label,lane.x,193,12,'#ffe5ba','Barlow Condensed',900);
@@ -273,6 +271,13 @@ function drawWorkingInserts(c,engine,anim,reducedMotion){
  const pulse=reducedMotion?1:.76+.24*Math.sin(anim*5.2);
  const multi=engine.time<engine.multiplierUntil;
  const frenzy=engine.time<engine.frenzyUntil;
+ // Five real rank lamps make the in-run career visible on the playfield.
+ for(let i=0;i<5;i++){
+  const on=i<=engine.rankIndex;
+  c.save();c.shadowBlur=on?12:0;c.shadowColor=i<3?'#ffd28a':'#89dcff';
+  disk(c,142+i*34,131,4.1,on?(i<3?'#ffd28a':'#89dcff'):'#273145',on?'#fff3cf':'#66798b',1);
+  c.restore();
+ }
  const active=[
   {x:142,y:369,label:'2×',on:multi,color:'#ffe29a'},
   {x:275,y:369,label:'2×',on:multi,color:'#ffe29a'},
