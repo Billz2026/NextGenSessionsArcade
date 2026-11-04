@@ -81,6 +81,10 @@ export const SLINGS=Object.freeze([
  {x1:301,y1:502,x2:257,y2:535,score:100}
 ]);
 export const ARCADE_MODES=Object.freeze({skillWindow:6,comboWindow:7,hurryWindow:18,overdriveWindow:14,powerShots:3,spinThreshold:5});
+// Classic Windows-era pinball was memorable because a run felt like a career,
+// not just a score chase. Neon Tilt keeps its own missions and identity, while
+// exposing the same kind of persistent in-run rank progression.
+export const RANKS=Object.freeze(['CADET','ENSIGN','LIEUTENANT','CAPTAIN','COMMANDER']);
 const MIN_LAUNCH=1050, MAX_LAUNCH=1450;
 const clip=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const len=(x,y)=>Math.hypot(x,y);
@@ -101,6 +105,7 @@ export class PinballEngine{
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
   this.lanes=new Set();this.targets=new Set();this.bumperHits=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
+  this.rankIndex=0;this.rankName=RANKS[0];this.commandFlags=0;
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
@@ -119,6 +124,7 @@ export class PinballEngine{
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
   this.lanes.clear();this.targets.clear();this.bumperHits=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
+  this.rankIndex=0;this.rankName=RANKS[0];this.commandFlags=0;
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
@@ -278,6 +284,14 @@ export class PinballEngine{
   this.missions[name]=true;
   if(points)this.addPoints(points,headline);
   this.emit('mission',{name,headline});
+  this.commandFlags++;
+  const nextRank=Math.min(RANKS.length-1,this.commandFlags);
+  if(nextRank>this.rankIndex){
+   this.rankIndex=nextRank;this.rankName=RANKS[nextRank];
+   const promotionBonus=10000*nextRank;
+   this.addPoints(promotionBonus,'RANK PROMOTION');
+   this.emit('promotion',{rank:this.rankName,index:nextRank,flags:this.commandFlags,points:promotionBonus});
+  }
   this.checkExtraBall();
  }
  checkExtraBall(){
