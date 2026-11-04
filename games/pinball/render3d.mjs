@@ -4,10 +4,10 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=6';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,APPROACH_LIGHTS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=6';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
-import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
+import {shotIndicatorState,shotIndicatorBrightness,approachLampState} from './shot-guidance.mjs?v=3';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -557,11 +557,15 @@ export async function create3DTable(host){
   polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
  });
  const laneBaseMaterials={
-  orbit:new T.MeshPhysicalMaterial({color:'#17130d',roughness:.62,metalness:.02,
-   transparent:true,opacity:.94,side:T.DoubleSide,depthWrite:false}),
-  ramp:new T.MeshPhysicalMaterial({color:'#221612',roughness:.60,metalness:.02,
-   transparent:true,opacity:.94,side:T.DoubleSide,depthWrite:false})
+  orbit:new T.MeshPhysicalMaterial({color:'#2b251c',roughness:.72,metalness:.02,
+   transparent:true,opacity:.72,side:T.DoubleSide,depthWrite:false}),
+  ramp:new T.MeshPhysicalMaterial({color:'#33231d',roughness:.70,metalness:.02,
+   transparent:true,opacity:.72,side:T.DoubleSide,depthWrite:false})
  };
+ const laneGroove=new T.MeshPhysicalMaterial({
+  color:'#12110f',roughness:.86,metalness:.0,transparent:true,opacity:.78,
+  side:T.DoubleSide,depthWrite:false
+ });
  function channelStrip(route,from,to,lift,mat){
   // A flat ribbon along the actual elevated ball path. Side-band geometry
   // is painted trim at the same height, not a physics wall or wireform.
@@ -591,6 +595,8 @@ export async function create3DTable(host){
   // These physical approaches intentionally stop before the bumper field.
   // Secondary shots use flush lit markers, not overlapping elevated channels.
   channelStrip(channel,0,1,-.025,laneBaseMaterials[channel.kind]);
+  // A recessed dark trough makes this a lane instead of a solid side panel.
+  channelStrip(channel,.28,.72,-.018,laneGroove);
   if(channel.trimSide==='right')
    channelStrip(channel,.929,.985,-.015,laneTrim);
   else
@@ -612,6 +618,25 @@ export async function create3DTable(host){
   plane(mx,my-.37,.247,.66,.17,label(route.kind.toUpperCase(),
    '#f3debd',55,280,70,true));
   routeHardware.push({kind:route.kind,material:entryMat});
+ }
+ // Four flush directional lenses are embedded inside the two real
+ // approaches. They show travel/mission state, not fake ramps or collisions.
+ const approachLamps=[];
+ for(const lamp of APPROACH_LIGHTS){
+  const arrowShape=new T.Shape();
+  arrowShape.moveTo(0,.18);arrowShape.lineTo(.108,-.035);
+  arrowShape.lineTo(.044,-.035);arrowShape.lineTo(.044,-.14);
+  arrowShape.lineTo(-.044,-.14);arrowShape.lineTo(-.044,-.035);
+  arrowShape.lineTo(-.108,-.035);arrowShape.closePath();
+  const material=new T.MeshStandardMaterial({
+   color:'#d8ac60',emissive:'#b88d48',emissiveIntensity:.25,
+   roughness:.38,metalness:.1,side:T.DoubleSide
+  });
+  const arrow=add(new T.ShapeGeometry(arrowShape),material,
+   X(lamp.x),Y(lamp.y),lamp.z+.012,false);
+  arrow.rotation.z=Math.atan2(-lamp.dy,lamp.dx)-PI/2;
+  const glow=halo(X(lamp.x),Y(lamp.y),lamp.z+.021,.43,'#f3c74f',.07);
+  approachLamps.push({kind:lamp.kind,material,glow});
  }
   // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
@@ -1208,6 +1233,19 @@ export async function create3DTable(host){
    const strength=shotIndicatorBrightness(state,now/1000,reducedMotion);
    route.material.emissive.set(active?'#ec3635':recent?'#ffdf92':'#a17b41');
    route.material.emissiveIntensity=active?1.8+1.4*strength:recent?2.1:.24;
+  }
+  for(const indicator of approachLamps){
+   const state=approachLampState(engine,indicator.kind);
+   const level=shotIndicatorBrightness(state,now/1000,reducedMotion);
+   const target=state==='mission'||state==='jackpot';
+   const travelling=state==='travel';
+   const colour=target?'#ec3635':travelling?'#ffe6a8':'#bd9251';
+   indicator.material.color.set(target?'#fff0db':'#d8b575');
+   indicator.material.emissive.set(colour);
+   indicator.material.emissiveIntensity=target?1.6+2*level:
+    travelling?3.6:state==='confirmed'?1.55:.18;
+   indicator.glow.color.set(colour);
+   indicator.glow.opacity=target?.21+.37*level:travelling?.65:.05;
   }
   const frenzyActive=engine.time<engine.frenzyUntil;
   const multiplierActive=engine.time<engine.multiplierUntil;
