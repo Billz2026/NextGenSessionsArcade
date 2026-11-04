@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const html=readFileSync(new URL('../games/pinball/index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../games/pinball/console.css',import.meta.url),'utf8');
-const sidebar=html.slice(html.indexOf('<aside class="hud hud-v2"'),html.indexOf('</aside>')+8);
+const sidebarStart=html.indexOf('<aside class="hud hud-v2"');
+const sidebar=html.slice(sidebarStart,html.indexOf('</aside>',sidebarStart)+8);
 test('critical game HUD stays available with Table Intel collapsed',()=>{
  const cutoff=sidebar.indexOf('<details class="console-more"');
  assert.ok(cutoff>0);
