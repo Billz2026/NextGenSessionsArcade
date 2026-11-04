@@ -1,8 +1,8 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT} from './engine.mjs?v=14';
-import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=3';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=16';
+import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=4';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=4';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
@@ -732,6 +732,21 @@ export async function create3DTable(host){
   const head=box(x,y,.82,.11,.024,.018,black);
   head.rotation.z=PI/4;
  }
+ // Arcade pinball outlane kickback solenoids: gold coil housings beside
+ // the actual recovery zones. The physical trigger lives only in engine.mjs.
+ const kickbackLenses=[];
+ for(const [side,coil] of Object.entries(KICKBACK)){
+  const x=X(coil.x),y=Y(coil.y);
+  cyl(x,y,.30,.234,.056,lowerShade,18);
+  ring(x,y,.36,.176,.030,gold);
+  const lens=new T.MeshStandardMaterial({
+   color:'#806022',emissive:'#f3c74f',emissiveIntensity:1.4,
+   metalness:.28,roughness:.22
+  });
+  cyl(x,y,.388,.119,.040,lens,20);
+  plane(x,y+.32,.292,.65,.17,label('KICK', '#f3c74f',62,280,85,true));
+  kickbackLenses.push({side,material:lens});
+ }
  // Recessed drain mouth below the true ball drain, not a crossbar that
  // appears capable of saving the ball. Its dark opening is deliberately clear.
  const drainWell=new T.MeshPhysicalMaterial({
@@ -1140,6 +1155,11 @@ export async function create3DTable(host){
    if(b.mode==='scoop')mesh.position.z=.31;
    if(b.mode==='travel')
     mesh.position.z=Math.max(.55,(b.travelHeight||.39)+UPPER_BALL_RADIUS);
+  }
+  // LEDs expose the one-use outlane recovery charge in actual gameplay.
+  for(const {material} of kickbackLenses){
+   const ready=engine.kickbackReady&&!engine.tilted;
+   material.emissiveIntensity=ready?(reducedMotion?1.8:1.35+.45*Math.sin(performance.now()*.004)):.07;
   }
   for(let i=0;i<engine.flippers.length;i++){
    const f=engine.flippers[i],sgn=f.side==='left'?1:-1;

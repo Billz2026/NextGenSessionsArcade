@@ -1,10 +1,20 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase V2.3 — live mission and multiball side towers, premium black-and-gold finish (playable 3D beta)
+**Current stage:** Phase V2.4 — fairer ball recovery and nudge balancing, with mission and multiball side towers (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase V2.4 — fairer playable ball control, without impossible saves
+
+- Reviewed the 72-second November 4 gameplay recording. In the first ball, rapid nudges produced TILT around the 12-second mark. TILT disables flippers/scoring, so the following loss was unavoidable.
+- Nudge sensitivity is less abrupt: four rapid nudges can still tilt, but three no longer do. The engine emits a visible **TILT WARNING** before a genuine penalty. Tilt energy cools gradually; cooldown and input anti-spam remain.
+- Slightly lengthened both physical flipper bats from 56 to 58 units while preserving the genuine, open central drain. Updated the source-of-truth `LOWER_FLIPPER_BASES` geometry so the 3D and 2D hardware still matches the actual collision reach.
+- Increased ramp/orbit return feed blending from .24 to .32 to make successfully executed shots land more consistently in a controllable lower-flipper area, without changing ball speed or teleporting its position.
+- Introduced a **NEON KICKBACK** solenoid with one charge per served ball. When an actual ball falls through either low side outlane, the coil gives a visible physical upward/inward impulse, then disarms until the next served ball. A live gold LED is shown in both 3D and 2D. It adds no points, cannot save a centre drain, cannot operate during TILT, never activates in the plunger chute and has no auto-aim.
+- The DMD and audio now announce a real kickback, not a fake save. Normal short ball-save logic, genuine drains, three-ball game length and multiball scoring remain unchanged.
+- Deterministic tests cover both outlanes, charge depletion, tilt exclusion, warning timing, central drains, shooter lane exclusion, real fixed-step firing and eventual unattended draining.
 
 ## Phase V2.3 — dual integrated cabinet instrument towers
 

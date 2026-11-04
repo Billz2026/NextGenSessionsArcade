@@ -2,6 +2,12 @@
 // Coordinates are pixels in a 420 × 700 playfield, +Y points down.
 export const BOARD = Object.freeze({width:420,height:700,radius:8,step:1/240});
 export const GRAVITY=780;
+// One illuminated, physical outlane kickback per served ball. The central drain
+// stays open, and the solenoid never fires after TILT.
+export const KICKBACK=Object.freeze({
+ left:Object.freeze({x:105,y:640,edge:126,vx:335,vy:-685}),
+ right:Object.freeze({x:315,y:640,edge:294,vx:-335,vy:-685})
+});
 export const BUMPERS=Object.freeze([
  {x:150,y:240,r:24,score:250},
  {x:259,y:240,r:24,score:250},
@@ -86,8 +92,8 @@ export const SHOT_GUIDES=Object.freeze({
 // angle; heel hits, dead flips and weak contacts receive no hidden launch.
 export const FLIPPER_SWEET_SPOT=.68;
 export const RETURN_FEEDS=Object.freeze({
- orbit:Object.freeze({side:'left',x:145,y:577,blend:.24}),
- ramp:Object.freeze({side:'right',x:275,y:577,blend:.24})
+ orbit:Object.freeze({side:'left',x:145,y:577,blend:.32}),
+ ramp:Object.freeze({side:'right',x:275,y:577,blend:.32})
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
@@ -123,11 +129,12 @@ export class PinballEngine{
  constructor(){
   this.state='ready';this.score=0;this.best=0;this.ballNumber=0;
   this.ball=null;this.balls=[];this.nextBallId=1;this.leftHeld=false;this.rightHeld=false;
-  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:56},
-                 {side:'right',x:276,y:613,a:.40,omega:0,length:56}];
+  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:58},
+                 {side:'right',x:276,y:613,a:.40,omega:0,length:58}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
+  this.kickbackReady=true;
   this.lanes=new Set();this.targets=new Set();this.bumperHits=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.rankIndex=0;this.rankName=RANKS[0];this.commandFlags=0;
@@ -152,6 +159,7 @@ export class PinballEngine{
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.accumulator=0;this.cooldowns.clear();
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
+  this.kickbackReady=true;
   this.lanes.clear();this.targets.clear();this.bumperHits=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.rankIndex=0;this.rankName=RANKS[0];this.commandFlags=0;
@@ -177,6 +185,7 @@ export class PinballEngine{
   this.charging=false;this.charge=.26;
   this.ballSaveUntil=0;this.ballLaunchedAt=null;this.ballSaveUsed=false;
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
+  this.kickbackReady=true;
   this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;this.overdriveUntil=0;
   this.emit('ball',{ball:this.ballNumber});
@@ -206,18 +215,36 @@ export class PinballEngine{
  nudge(direction){
   const b=this.ball;
   if(this.state!=='playing'||!b||b.mode!=='live'||this.tilted||
-     !['left','right','up'].includes(direction)||this.time-this.lastNudgeAt<.085)return false;
+     !['left','right','up'].includes(direction)||this.time-this.lastNudgeAt<.12)return false;
   this.lastNudgeAt=this.time;
   if(direction==='left')b.vx-=135;
   else if(direction==='right')b.vx+=135;
   else b.vy-=165;
-  this.tiltMeter+=.38;
+  const before=this.tiltMeter;
+  this.tiltMeter+=.32;
   this.emit('nudge',{direction});
   if(this.tiltMeter>=1){
    this.tilted=true;
    this.leftHeld=false;this.rightHeld=false;
    this.emit('tilt');
+  }else if(before<.72&&this.tiltMeter>=.72){
+   this.emit('tiltwarning',{level:Math.round(this.tiltMeter*100)});
   }
+  return true;
+ }
+ // This is a visible solenoid kick at the physical outlane, NOT a magnetic
+ // ball catch or a free relaunch. One charge can be spent per served ball.
+ tryOutlaneKickback(){
+  const b=this.ball;
+  if(!this.kickbackReady||this.tilted||this.state!=='playing'||!b||
+     b.mode!=='live'||b.y<635||b.y>694||b.vy<=100)return false;
+  const side=b.x>35&&b.x<KICKBACK.left.edge&&b.vx<140?'left':
+   b.x<365&&b.x>KICKBACK.right.edge&&b.vx>-140?'right':null;
+  if(!side)return false;
+  const coil=KICKBACK[side];
+  this.kickbackReady=false;
+  b.vx=coil.vx;b.vy=coil.vy;
+  this.emit('kickback',{side,x:b.x,y:b.y});
   return true;
  }
  releaseControls(){this.leftHeld=false;this.rightHeld=false;this.cancelLaunchCharge();}
@@ -718,7 +745,7 @@ export class PinballEngine{
   if(current.mode==='shooter'){
    current.x=382;current.y=582;current.vx=0;current.vy=0;return;
   }
-  this.time+=dt;this.tiltMeter=Math.max(0,this.tiltMeter-dt*.27);
+  this.time+=dt;this.tiltMeter=Math.max(0,this.tiltMeter-dt*.36);
   this.expireArcadeModes();
   // Flippers and the timer advance once; each physical ball has its own simulation.
   for(const item of [...this.balls]){
@@ -753,6 +780,9 @@ export class PinballEngine{
   b.x+=b.vx*dt;b.y+=b.vy*dt;
   this.checkSensors(previous);
   if(!this.balls.includes(b)||b.mode!=='live')return;
+  // Kickback fires at the physical side-lane threshold BEFORE rail/post
+  // collisions push a genuine outlane ball out of its recovery zone.
+  this.tryOutlaneKickback();
   // The shooter lane starts below the open top: once the ball crosses over the divider
   // on the way down it enters the main table.
   for(let pass=0;pass<2;pass++){

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -10,6 +10,8 @@ test('classic table nudges move the ball and rapid abuse tilts the machine',()=>
  for(let i=0;i<4;i++)g.advance(.05);
  assert.equal(g.nudge('right'),true);
  for(let i=0;i<4;i++)g.advance(.05);
+ assert.equal(g.nudge('up'),true);assert.equal(g.tilted,false);
+ for(let i=0;i<4;i++)g.advance(.05);
  assert.equal(g.nudge('up'),true);assert.equal(g.tilted,true);
  g.setFlipper('left',true);assert.equal(g.leftHeld,false);
  assert.ok(g.consumeEvents().some(e=>e.type==='tilt'));
@@ -17,7 +19,7 @@ test('classic table nudges move the ball and rapid abuse tilts the machine',()=>
 test('tilt cancels scoring and ball bonus, then resets after drain',()=>{
  const g=new PinballEngine();g.start();g.ball.mode='live';g.ball.x=210;g.ball.y=555;
  g.scoreHit(500,'test');assert.equal(g.score,500);g.bonus=800;
- for(let i=0;i<3;i++){if(i>0)for(let s=0;s<4;s++)g.advance(.05);g.nudge('up');}
+ for(let i=0;i<4;i++){if(i>0)for(let s=0;s<4;s++)g.advance(.05);g.nudge('up');}
  assert.equal(g.tilted,true);
  g.scoreHit(500,'test');assert.equal(g.score,500);
  assert.equal(g.addPoints(500,'TEST'),0);
@@ -324,19 +326,25 @@ test('an expired ball-save window does not prevent a genuine drain',()=>{
  g.singleStep(BOARD.step);
  assert.equal(g.state,'between');
 });
-test('unattended flippers eventually drain instead of permanently trapping the ball',()=>{
+test('unattended flippers eventually drain even with the one-use kickback',()=>{
  const g=new PinballEngine();g.start();g.launch();
- let saveCount=0,drains=0;
- for(let i=0;i<32/BOARD.step&&!drains;i++){
+ let saveCount=0,drains=0,kicks=0;
+ // Once-only outlane recovery extends the run; it must never create an
+ // infinite unattended ball or a second free recovery charge.
+ for(let i=0;i<90/BOARD.step&&!drains;i++){
   if(g.ball?.mode==='shooter')g.launch();
   g.singleStep(BOARD.step);
   for(const e of g.consumeEvents()){
    if(e.type==='ballsave')saveCount++;
+   if(e.type==='kickback')kicks++;
    if(e.type==='drain')drains++;
   }
  }
- assert.equal(saveCount,1);
- assert.equal(drains,1);
+ assert.ok(saveCount<=1,'automatic launch ball save cannot repeat');
+ assert.ok(kicks<=1,'a normal turn gets no more than one outlane kick');
+ assert.equal(drains,1,JSON.stringify({state:g.state,time:g.time,saveCount,kicks,
+  ball:g.ball&&{x:g.ball.x,y:g.ball.y,vx:g.ball.vx,vy:g.ball.vy,mode:g.ball.mode},
+  shots:g.shots,score:g.score,ballSaveUsed:g.ballSaveUsed,kickbackReady:g.kickbackReady}));
 });
 test('responsive flipper play keeps the first ball active beyond initial short-drain window',()=>{
  const g=new PinballEngine();g.start();g.launch();
@@ -699,4 +707,93 @@ test('Active multiball can add only one replacement ball from a completed lane b
  assert.equal(g.multiballAddUsed,true);
  g.lanes.clear();g.activateLane(0);g.activateLane(1);g.activateLane(2);
  assert.equal(g.balls.length,3);
+});
+
+test('nudge gives a genuine TILT WARNING after three closely spaced bumps before fourth causes TILT',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';g.ball.x=210;g.ball.y=505;
+ for(let i=0;i<3;i++){
+  if(i>0)g.time+=.14;
+  assert.equal(g.nudge('up'),true);
+ }
+ assert.equal(g.tilted,false,'three nudges are recoverable, as in the uploaded video');
+ const events=g.consumeEvents();
+ assert.equal(events.filter(e=>e.type==='tiltwarning').length,1);
+ assert.equal(events.filter(e=>e.type==='tilt').length,0);
+ g.time+=.14;assert.equal(g.nudge('up'),true);
+ assert.equal(g.tilted,true);
+ assert.equal(g.consumeEvents().filter(e=>e.type==='tilt').length,1);
+});
+
+test('outlane kickback is a single genuine physical impulse, not scoring or a teleport',()=>{
+ for(const [side,x,vx] of [['left',105,-100],['right',315,100]]){
+  const g=new PinballEngine();g.start();
+  const b=g.ball;
+  b.mode='live';b.x=x;b.y=644;b.vx=vx;b.vy=440;
+  const score=g.score;
+  assert.equal(g.kickbackReady,true);
+  assert.equal(g.tryOutlaneKickback(),true,side+' was not recovered');
+  assert.equal(b.x,x,'ball position must not be teleported');
+  assert.equal(b.y,644,'ball position must not be teleported');
+  assert.equal(b.vx,KICKBACK[side].vx);
+  assert.equal(b.vy,KICKBACK[side].vy);
+  assert.equal(g.kickbackReady,false);
+  assert.equal(g.score,score,'coil is recovery not a score bonus');
+  assert.equal(g.ballNumber,1);
+  assert.equal(g.tryOutlaneKickback(),false,'charge cannot be used twice');
+  const ev=g.consumeEvents().filter(e=>e.type==='kickback');
+  assert.equal(ev.length,1);
+  assert.equal(ev[0].side,side);
+ }
+});
+
+test('outlane coil triggers during real fixed-step physics after entering the danger zone',()=>{
+ for(const side of ['left','right']){
+  const g=new PinballEngine();g.start();const b=g.ball;
+  b.mode='live';b.x=side==='left'?105:315;b.y=639;
+  b.vx=side==='left'?-80:80;b.vy=300;
+  g.singleStep(BOARD.step);
+  assert.equal(g.kickbackReady,false);
+  assert.equal(g.ballNumber,1);
+  assert.equal(g.state,'playing');
+  assert.ok(b.vy<0);
+  assert.equal(g.consumeEvents().filter(e=>e.type==='kickback').length,1);
+ }
+});
+
+test('kickback never saves a central drain, never overrides tilt and cannot endlessly save a ball',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';
+ g.ball.x=210;g.ball.y=697;g.ball.vx=0;g.ball.vy=200;
+ assert.equal(g.tryOutlaneKickback(),false);
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'between','centre drain is always physically open');
+ assert.equal(g.kickbackReady,true,'unused side coil stays charged for that ball');
+ steps(g,1.25);
+ g.ball.mode='live';g.ball.x=105;g.ball.y=644;g.ball.vx=-70;g.ball.vy=400;
+ assert.equal(g.tryOutlaneKickback(),true);
+ assert.equal(g.kickbackReady,false);
+ g.ball.x=105;g.ball.y=644;g.ball.vx=-70;g.ball.vy=400;
+ assert.equal(g.tryOutlaneKickback(),false);
+ g.tilted=true;g.kickbackReady=true;
+ assert.equal(g.tryOutlaneKickback(),false);
+ g.ball.x=210;g.ball.y=697;g.ball.vx=0;g.ball.vy=200;
+ g.singleStep(BOARD.step);
+ steps(g,1.25);
+ assert.equal(g.kickbackReady,true,'new served ball gets a fresh charge');
+});
+
+test('fairer flippers still leave the central gap and return feeds are passive',()=>{
+ const g=new PinballEngine();
+ assert.equal(g.flippers[0].length,58);
+ const gap=g.flippers[1].x-g.flippers[0].x-
+  2*g.flippers[0].length*Math.cos(.40);
+ assert.ok(gap>BOARD.radius*2,'centre drain must remain genuinely open');
+ assert.ok(RETURN_FEEDS.ramp.blend>=.3&&RETURN_FEEDS.ramp.blend<.5);
+ assert.ok(RETURN_FEEDS.orbit.blend>=.3&&RETURN_FEEDS.orbit.blend<.5);
+});
+
+test('shooter lane is not mistaken for a right-side outlane recovery',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';
+ g.ball.x=382;g.ball.y=649;g.ball.vx=0;g.ball.vy=300;
+ assert.equal(g.tryOutlaneKickback(),false,'plunger channel cannot consume KICKBACK');
+ assert.equal(g.kickbackReady,true);
 });

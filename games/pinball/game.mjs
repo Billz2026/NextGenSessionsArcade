@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=15';
-import {renderTable} from './visuals.mjs?v=32';
-import {createDotMatrix} from './dmd.mjs?v=15';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=16';
+import {renderTable} from './visuals.mjs?v=33';
+import {createDotMatrix} from './dmd.mjs?v=16';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -132,7 +132,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=35');
+  const {create3DTable}=await import('./render3d.mjs?v=36');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -398,12 +398,22 @@ function processEvents(){
   const dmdEvent=e.type==='gameover'?{...e,record:e.score>best}:e;
   dmd.notify(dmdEvent,performance.now(),engine);
   if(['shot','mission','missionarmed','missionstart','missionprogress','missionfailed','commandcomplete','promotion','extra','scoop','spinner','frenzy','multiplier',
-      'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave',
+      'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave','kickback','tiltwarning',
       'balllock','multiballstart','multiballjackpot','superlit','superjackpot','multiballadd','wizardstart','wizardcomplete'].includes(e.type)){
    const duration=e.type==='jackpot'||e.type==='extra'?1250:
     e.type==='hurryup'||e.type==='overdrive'||e.type==='skillshot'?950:
     e.type==='mission'?900:550;
    tableFlash={kind:e.type,until:performance.now()+duration,duration};
+  }
+  if(e.type==='kickback'){
+   arcadeMessage('NEON KICKBACK · BALL RECOVERED');
+   ui.scoreFlash.textContent='KICKBACK!';
+   noiseBurst(.085,.055,1150,e.side==='left'?-.75:.75);
+   sound(770,.24,'sawtooth',.065,e.side==='left'?-.7:.7);
+  }
+  if(e.type==='tiltwarning'){
+   ui.scoreFlash.textContent='TILT WARNING';
+   sound(440,.15,'triangle',.027);
   }
   if(e.type==='start'){ui.overlay.hidden=true;ui.scoreFlash.textContent='BALL 1 READY';sound(490,.10);}
   if(e.type==='ball'){

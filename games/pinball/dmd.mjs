@@ -66,6 +66,8 @@ export function describeDmdEvent(event,game=null){
  switch(event.type){
   case 'start':return {headline:'PLAYER ONE READY',sub:'BALL 1 OF 3',priority:3,duration:1100};
   case 'nudge':return {headline:'TABLE NUDGE',sub:'WATCH THE TILT!',priority:1,duration:700};
+  case 'tiltwarning':return {headline:'TILT WARNING!',sub:'EASE OFF THE NUDGE',priority:4,duration:1700};
+  case 'kickback':return {headline:'NEON KICKBACK!',sub:String(event.side||'SIDE').toUpperCase()+' OUTLANE SAVE',priority:5,duration:2300};
   case 'tilt':return {headline:'TILT!',sub:'BONUS FORFEITED',priority:5,duration:3200};
   case 'ball':return {headline:'BALL '+(event.ball||1)+' READY',sub:'HOLD TO LAUNCH',priority:3,duration:1700};
   case 'launch':return game?.skillShotPending?{headline:'SKILL SHOT LIT',sub:'HIT UPPER LANE',priority:3,duration:1500}:{headline:'BALL IN PLAY',sub:'USE THE FLIPPERS',priority:2,duration:1100};
