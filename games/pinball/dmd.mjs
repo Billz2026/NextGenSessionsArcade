@@ -55,7 +55,6 @@ export function getDmdStatus(game,now=0){
    ['POWER GRID '+grid+'/3',grid===2?'ONE MORE SHOT':'HIT RAMP OR ORBIT'],
   ['TARGET BANK '+targets+'/4','NEON LANES '+lanes+'/3'],
   ['SPINNER '+(spins%5)+'/5',spins>0?'BUILD OVERDRIVE':'HIT THE SPINNER'],
-  game.streakShieldReady?['NEON SHIELD READY','ONE EARNED BALL RESCUE']:['STREAK SHIELD '+Math.min(2,game.streakShots||0)+'/2','HIT RAMP · ORBIT · SCOOP'],
   ['FLIGHT RANK',''+(game.rankName||'CADET')+' · '+Math.min(4,game.commandFlags||0)+'/4 FLAGS']
  ];
  return status[frame];
