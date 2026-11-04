@@ -173,6 +173,8 @@ html .hud.hud-v2{
 .hud-v2 .hud-stat span{
  font:850 9px var(--display);letter-spacing:.01em;color:#cabec8
 }
+.hud-v2 .hud-stat span small{display:block;margin-top:2px;font:700 7px/1 var(--display);color:#9c8d8f;letter-spacing:.04em}
+.hud-v2 .hud-stat span small b{color:var(--nt-gold);font-weight:900}
 .hud-v2 .hud-stat strong{
  font:900 clamp(14px,1.36vw,19px)/1 var(--display);
  font-variant-numeric:tabular-nums;white-space:nowrap;
