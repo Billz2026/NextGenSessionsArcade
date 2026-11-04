@@ -1,8 +1,8 @@
 // Neon Tilt prototype physics: deterministic fixed-step ball and flipper simulation.
 // Coordinates are pixels in a 420 × 700 playfield, +Y points down.
 export const BOARD = Object.freeze({width:420,height:700,radius:8,step:1/240});
-// Slightly reduced vertical acceleration increases reaction time without removing gravity.
-export const GRAVITY=735;
+// Retain the proven physical gravity: fairness comes from earned ball saves and return control.
+export const GRAVITY=780;
 export const LAUNCH_SAVE_SECONDS=16;
 export const STREAK_SAVE_SECONDS=24;
 // One illuminated, physical outlane kickback per served ball. The central drain
@@ -132,8 +132,8 @@ export class PinballEngine{
  constructor(){
   this.state='ready';this.score=0;this.best=0;this.ballNumber=0;
   this.ball=null;this.balls=[];this.nextBallId=1;this.leftHeld=false;this.rightHeld=false;
-  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:60},
-                 {side:'right',x:276,y:613,a:.40,omega:0,length:60}];
+  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:58},
+                 {side:'right',x:276,y:613,a:.40,omega:0,length:58}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
