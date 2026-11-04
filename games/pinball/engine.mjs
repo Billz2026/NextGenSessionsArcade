@@ -780,6 +780,9 @@ export class PinballEngine{
   b.x+=b.vx*dt;b.y+=b.vy*dt;
   this.checkSensors(previous);
   if(!this.balls.includes(b)||b.mode!=='live')return;
+  // Kickback fires at the physical side-lane threshold BEFORE rail/post
+  // collisions push a genuine outlane ball out of its recovery zone.
+  this.tryOutlaneKickback();
   // The shooter lane starts below the open top: once the ball crosses over the divider
   // on the way down it enters the main table.
   for(let pass=0;pass<2;pass++){
@@ -795,9 +798,6 @@ export class PinballEngine{
    }
    for(const f of this.flippers)this.collideFlipper(f);
   }
-  // Rescue only a genuine low outlane ball, after physical wall/post impacts;
-  // centre shots still drain and TILT disables the kicker entirely.
-  this.tryOutlaneKickback();
   if(b.y>695||b.x< -35||b.x>455){
    if(this.multiballActive){
     this.balls=this.balls.filter(other=>other!==b);
