@@ -94,8 +94,8 @@ export class PinballEngine{
  constructor(){
   this.state='ready';this.score=0;this.best=0;this.ballNumber=0;
   this.ball=null;this.leftHeld=false;this.rightHeld=false;
-  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:71},
-                 {side:'right',x:276,y:613,a:.40,omega:0,length:71}];
+  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:56},
+                 {side:'right',x:276,y:613,a:.40,omega:0,length:56}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
@@ -231,7 +231,7 @@ export class PinballEngine{
  updateFlippers(dt){
   for(const f of this.flippers){
    const held=!this.tilted&&(f.side==='left'?this.leftHeld:this.rightHeld);
-   const goal=held?-.57:.40;
+   const goal=held?-.30:.40;
    const old=f.a;
    const angularSpeed=held?17:12; // powered stroke / slower return
    f.a=clip(goal,old-angularSpeed*dt,old+angularSpeed*dt);
@@ -255,7 +255,7 @@ export class PinballEngine{
   b.x+=p.nx*(overlap+.06);b.y+=p.ny*(overlap+.06);
   if(vn>=-.1)return true;
   const impact=-vn;
-  const restitution=impact<95?.12:impact<260?.50:.80;
+  const restitution=impact<95?.12:impact<260?.50:.88;
   const impulse=Math.min((1+restitution)*impact,1900);
   b.vx+=p.nx*impulse;b.vy+=p.ny*impulse;
   const tx=-p.ny,ty=p.nx;
@@ -490,7 +490,7 @@ export class PinballEngine{
   }
   const previous={x:b.x,y:b.y};
   b.vy+=GRAVITY*dt;
-  // Gentle air drag and speed cap. Four sub-pixel slices near top speed prevent tunnelling.
+  // Gentle air drag and speed cap. Fixed 240 Hz collision steps limit tunnelling.
   b.vx*=1-.09*dt;b.vy*=1-.04*dt;
   const speed=len(b.vx,b.vy),max=1670;
   if(speed>max){b.vx*=max/speed;b.vy*=max/speed;}
