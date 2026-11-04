@@ -13,8 +13,8 @@ export const LOWER_POSTS=Object.freeze(
   .map(({x,y,r})=>Object.freeze({x,y,r}))
 );
 export const LOWER_FLIPPER_BASES=Object.freeze([
- Object.freeze({side:'left',x:144,y:613,length:60}),
- Object.freeze({side:'right',x:276,y:613,length:60})
+ Object.freeze({side:'left',x:144,y:613,length:58}),
+ Object.freeze({side:'right',x:276,y:613,length:58})
 ]);
 
 // Join the four original lower guide segments into two continuously mounted
