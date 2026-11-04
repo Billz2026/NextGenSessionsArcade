@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -168,19 +168,34 @@ test('all four missions award one extra ball only once',()=>{
  g.advance(BOARD.step);steps(g,1.25);
  assert.equal(g.state,'gameover');
 });
-test('each unique mission raises flight rank and emits a genuine promotion',()=>{
+test('target bank arms a flight mission and the ramp launches it with full fuel',()=>{
  const g=new PinballEngine();g.start();g.consumeEvents();
- g.mission('lanes','NEON LANES',1000);
- assert.equal(g.rankName,'ENSIGN');assert.equal(g.commandFlags,1);
- let promotion=g.consumeEvents().find(e=>e.type==='promotion');
- assert.equal(promotion.rank,'ENSIGN');assert.equal(promotion.points,10000);
- g.mission('lanes','NEON LANES',1000);
- assert.equal(g.commandFlags,1,'same mission cannot manufacture another flag');
- g.mission('frenzy','BUMPER FRENZY',1000);
- g.mission('targets','TARGET BANK',1000);
- g.mission('ride','NIGHT RIDE',1000);
+ for(let i=0;i<4;i++)g.activateTarget(i);
+ assert.equal(g.commandMissionReady,true);assert.equal(g.commandMission.name,FLIGHT_MISSIONS[0].name);
+ g.activateShot('ramp');
+ assert.equal(g.commandMissionReady,false);assert.ok(g.activeCommand);
+ assert.equal(g.commandFuelRemaining,MISSION_FUEL);
+ const types=g.consumeEvents().map(e=>e.type);
+ assert.ok(types.includes('missionarmed'));assert.ok(types.includes('missionstart'));
+});
+test('multi-stage flight missions award command flags and rank promotions',()=>{
+ const g=new PinballEngine();g.start();g.consumeEvents();
+ for(const mission of FLIGHT_MISSIONS){
+  assert.equal(g.armCommandMission(),true);assert.equal(g.startCommandMission(),true);
+  for(const action of mission.sequence)assert.equal(g.progressCommand(action),true);
+ }
  assert.equal(g.rankName,RANKS.at(-1));assert.equal(g.commandFlags,4);
+ const events=g.consumeEvents();
+ assert.equal(events.filter(e=>e.type==='commandcomplete').length,4);
+ assert.equal(events.filter(e=>e.type==='promotion').length,4);
  g.start();assert.equal(g.rankName,'CADET');assert.equal(g.commandFlags,0);
+});
+test('mission fuel expires honestly and requires the target bank to re-arm',()=>{
+ const g=new PinballEngine();g.start();g.armCommandMission();g.startCommandMission();g.consumeEvents();
+ g.time=MISSION_FUEL;g.expireArcadeModes();
+ assert.equal(g.activeCommand,null);assert.equal(g.commandMissionReady,false);
+ const failed=g.consumeEvents().find(e=>e.type==='missionfailed');
+ assert.equal(failed.reason,'FUEL DEPLETED');
 });
 test('ball save works once and requires a real launch',()=>{
  const g=new PinballEngine();g.start();g.launch();
