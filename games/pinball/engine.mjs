@@ -1,12 +1,15 @@
 // Neon Tilt prototype physics: deterministic fixed-step ball and flipper simulation.
 // Coordinates are pixels in a 420 × 700 playfield, +Y points down.
 export const BOARD = Object.freeze({width:420,height:700,radius:8,step:1/240});
-export const GRAVITY=780;
+// Slightly reduced vertical acceleration increases reaction time without removing gravity.
+export const GRAVITY=735;
+export const LAUNCH_SAVE_SECONDS=16;
+export const STREAK_SAVE_SECONDS=24;
 // One illuminated, physical outlane kickback per served ball. The central drain
 // stays open, and the solenoid never fires after TILT.
 export const KICKBACK=Object.freeze({
- left:Object.freeze({x:105,y:640,edge:126,vx:335,vy:-685}),
- right:Object.freeze({x:315,y:640,edge:294,vx:-335,vy:-685})
+ left:Object.freeze({x:105,y:640,edge:126,vx:300,vy:-780}),
+ right:Object.freeze({x:315,y:640,edge:294,vx:-300,vy:-780})
 });
 export const BUMPERS=Object.freeze([
  {x:150,y:240,r:24,score:250},
@@ -92,8 +95,8 @@ export const SHOT_GUIDES=Object.freeze({
 // angle; heel hits, dead flips and weak contacts receive no hidden launch.
 export const FLIPPER_SWEET_SPOT=.68;
 export const RETURN_FEEDS=Object.freeze({
- orbit:Object.freeze({side:'left',x:145,y:577,blend:.32}),
- ramp:Object.freeze({side:'right',x:275,y:577,blend:.32})
+ orbit:Object.freeze({side:'left',x:145,y:577,blend:.40}),
+ ramp:Object.freeze({side:'right',x:275,y:577,blend:.40})
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
@@ -129,8 +132,8 @@ export class PinballEngine{
  constructor(){
   this.state='ready';this.score=0;this.best=0;this.ballNumber=0;
   this.ball=null;this.balls=[];this.nextBallId=1;this.leftHeld=false;this.rightHeld=false;
-  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:58},
-                 {side:'right',x:276,y:613,a:.40,omega:0,length:58}];
+  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:60},
+                 {side:'right',x:276,y:613,a:.40,omega:0,length:60}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
@@ -146,6 +149,10 @@ export class PinballEngine{
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
+  // A genuinely earned, single-use ball save protects a shot streak for 24s.
+  // Awarded once per normal turn, even if another ball is served by a save.
+  this.streakSaveAwarded=false;this.streakSaveUsed=false;this.streakSaveUntil=0;
+  this.ballTargetHits=0;this.ballSpinnerTurns=0;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
   this.skillShotPending=false;this.skillShotUntil=0;
   this.comboCount=0;this.comboUntil=0;
@@ -171,6 +178,10 @@ export class PinballEngine{
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
+  // A genuinely earned, single-use ball save protects a shot streak for 24s.
+  // Awarded once per normal turn, even if another ball is served by a save.
+  this.streakSaveAwarded=false;this.streakSaveUsed=false;this.streakSaveUntil=0;
+  this.ballTargetHits=0;this.ballSpinnerTurns=0;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
   this.skillShotPending=false;this.skillShotUntil=0;
   this.comboCount=0;this.comboUntil=0;
@@ -179,16 +190,23 @@ export class PinballEngine{
   for(const f of this.flippers){f.a=.4;f.omega=0;}
   this.spawnBall();this.emit('start');
  }
- spawnBall(){
+ spawnBall({continuation=false}={}){
   this.ball={id:this.nextBallId++,x:382,y:582,vx:0,vy:0,r:BOARD.radius,mode:'shooter',trail:[]};
   this.balls=[this.ball];
   this.charging=false;this.charge=.26;
-  this.ballSaveUntil=0;this.ballLaunchedAt=null;this.ballSaveUsed=false;
+  this.ballSaveUntil=0;this.ballLaunchedAt=null;this.ballSaveUsed=continuation;
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
   this.kickbackReady=true;
-  this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
-  this.powerCharges=0;this.hurryUpUntil=0;this.overdriveUntil=0;
-  this.emit('ball',{ball:this.ballNumber});
+  this.skillShotPending=false;
+  // A protected drain does not silently erase mission/Power Grid progress or
+  // re-award streak protection. An actual next turn starts fresh.
+  if(!continuation){
+   this.comboCount=0;this.comboUntil=0;
+   this.powerCharges=0;this.hurryUpUntil=0;this.overdriveUntil=0;
+   this.streakSaveAwarded=false;this.streakSaveUsed=false;this.streakSaveUntil=0;
+   this.ballTargetHits=0;this.ballSpinnerTurns=0;
+  }
+  this.emit('ball',{ball:this.ballNumber,saved:continuation});
  }
  holdLaunch(held){
   if(this.state!=='playing'||!this.ball||this.ball.mode!=='shooter')return;
@@ -200,7 +218,8 @@ export class PinballEngine{
   const p=clip(this.charge,.12,1);
   this.ball.vy=-(MIN_LAUNCH+(MAX_LAUNCH-MIN_LAUNCH)*p);
   this.ball.vx=-18;this.ball.mode='live';this.charging=false;
-  this.ballLaunchedAt=this.time;this.ballSaveUntil=this.time+11;
+  this.ballLaunchedAt=this.time;
+  this.ballSaveUntil=this.ballSaveUsed?0:this.time+LAUNCH_SAVE_SECONDS;
   this.skillShotPending=!this.ballSaveUsed;
   this.skillShotUntil=this.time+ARCADE_MODES.skillWindow;
   this.emit('launch',{power:p});return true;
@@ -448,6 +467,16 @@ export class PinballEngine{
   return true;
  }
  // Four distinct flight flags unlock a timed final command sequence.
+ get streakSaveRemaining(){return !this.tilted&&this.streakSaveAwarded&&!this.streakSaveUsed?
+  Math.max(0,this.streakSaveUntil-this.time):0;}
+ armStreakSave(source){
+  // Actual sensor-confirmed progress is the only source of a streak save.
+  if(this.state!=='playing'||!this.ball||this.ball.mode!=='live'||
+     this.tilted||this.multiballActive||this.streakSaveAwarded||this.streakSaveUsed)return false;
+  this.streakSaveAwarded=true;this.streakSaveUntil=this.time+STREAK_SAVE_SECONDS;
+  this.emit('streakarmed',{source,seconds:STREAK_SAVE_SECONDS});
+  return true;
+ }
  get neonCommandRemaining(){return this.neonCommandActive?Math.max(0,this.neonCommandUntil-this.time):0;}
  startNeonCommand(){
   if(!this.neonCommandReady||this.neonCommandDone||this.multiballActive)return false;
@@ -538,6 +567,9 @@ export class PinballEngine{
    this.overdriveUntil=0;
    this.emit('modeend',{mode:'overdrive'});
   }
+  if(this.streakSaveAwarded&&!this.streakSaveUsed&&this.streakSaveUntil>0&&this.time>=this.streakSaveUntil){
+   this.streakSaveUntil=0;this.emit('streakexpired');
+  }
   if(this.activeCommand && this.time>=this.commandFuelUntil)this.failCommand();
   if(this.neonCommandActive&&this.time>=this.neonCommandUntil)this.failNeonCommand('FUEL DEPLETED');
  }
@@ -566,6 +598,7 @@ export class PinballEngine{
   if(this.targets.has(i))return;
   this.targets.add(i);this.scoreHit(1500,'target'+i);
   this.emit('target',{index:i,count:this.targets.size});
+  this.ballTargetHits++;if(this.ballTargetHits>=2)this.armStreakSave('targets');
   if(this.targets.size===4){
    this.targets.clear();
    this.mission('targets','TARGET BANK COMPLETE',25000);
@@ -583,6 +616,7 @@ export class PinballEngine{
   }[kind];
   this.addPoints(shot.points,shotName);
   this.emit('shot',{kind,points:shot.points});
+  this.armStreakSave(kind);
   if(this.commandMissionReady&&kind==='ramp')this.startCommandMission();
   else this.progressCommand(kind);
   this.progressNeonCommand(kind);
@@ -639,7 +673,8 @@ export class PinballEngine{
      ((previous.y<SPINNER.y&&b.y>=SPINNER.y) || (previous.y>SPINNER.y&&b.y<=SPINNER.y)) &&
      Math.abs(b.vy)>170 && this.time-(this.cooldowns.get('spinner')??-100)>.19){
    this.cooldowns.set('spinner',this.time);
-   this.spinnerTurns++;
+   this.spinnerTurns++;this.ballSpinnerTurns++;
+   if(this.ballSpinnerTurns>=2)this.armStreakSave('spinner');
    this.spinnerAngle+=Math.PI*1.5;
    this.progressCommand('spinner');
    const points=this.addPoints(SPINNER.points,'SPINNER');
@@ -813,9 +848,17 @@ export class PinballEngine{
     if(this.balls.length>0)return;
    }
    if(!this.tilted && !this.ballSaveUsed && this.ballLaunchedAt!==null && this.time<this.ballSaveUntil){
-    this.ballSaveUsed=true;this.ball=null;this.spawnBall();
-    this.ballSaveUsed=true; // preserve single-use guard after spawnBall
+    this.ball=null;this.spawnBall({continuation:true});
     this.emit('ballsave');return;
+   }
+   // Visible, earned pinball ball-save feature: one additional physical
+   // relaunch for a qualifying route or target/spinner progression. Never
+   // triggers on tilt, during multiball or after the grace window expires.
+   if(!this.tilted&&!this.multiballActive&&this.streakSaveRemaining>0){
+    this.streakSaveUsed=true;this.streakSaveUntil=0;
+    this.ball=null;this.spawnBall({continuation:true});
+    this.streakSaveUsed=true;this.streakSaveUntil=0;
+    this.emit('streaksaved');return;
    }
    this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
    if(this.activeCommand)this.failCommand('BALL DRAINED');
