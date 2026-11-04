@@ -1297,13 +1297,17 @@ export async function create3DTable(host){
   spinnerPivot.rotation.x=renderedSpin;
   plungerHandle.position.y=Y(660)-(engine.charging?Math.max(0,engine.charge-.26)*.27:0);
   const scoopActive=engine.balls?.some(b=>b.mode==='scoop')||engine.ball?.mode==='scoop';
-  scoopLens.material.emissiveIntensity=rush?3.9*beat:
+  // Real lock/super-jackpot state lights the scoop red, in both 3D and 2D.
+  scoopLens.material.emissive.set(engine.lockLit||engine.multiballSuperLit?'#ec3635':'#d53f6a');
+  scoopLens.material.emissiveIntensity=engine.multiballSuperLit?4.5*beat:
+   engine.lockLit?3.5*beat:rush?3.9*beat:
    scoopActive?3.5:idleMode?1+.65*Math.sin(now*.004):.55;
   for(let i=0;i<cabinetLEDs.length;i++){
    const m=cabinetLEDs[i].material;
    const phase=(now*.007-i*.42);
    m.emissiveIntensity=reducedMotion?.9:
      idleMode?.6+2.8*(.5+.5*Math.sin(phase)):
+       engine.multiballActive?3.4+.9*Math.sin(phase):
        frenzyActive?3.8:.9+1.35*(.5+.5*Math.sin(phase));
   }
   for(let i=0;i<backboxBars.length;i++){
