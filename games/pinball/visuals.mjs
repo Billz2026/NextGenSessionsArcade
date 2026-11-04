@@ -157,16 +157,6 @@ function drawOrbits(c){
   c.globalAlpha=.78;
   line(c,points,accent,1.8);
   c.globalAlpha=1;
-  // One subtle directional insert per open approach.
-  const n=Math.floor(smooth.length*.40),p=smooth[n],q=smooth[n+2];
-  if(p&&q){
-   const angle=Math.atan2(q.y-p.y,q.x-p.x)+Math.PI/2;
-   c.translate(p.x,p.y);c.rotate(angle);
-   c.beginPath();c.moveTo(0,-6);c.lineTo(4.3,3);
-   c.lineTo(0,1);c.lineTo(-4.3,3);c.closePath();
-   c.fillStyle=channel.kind==='ramp'?'#e9a085':'#e8c88a';
-   c.fill();
-  }
   c.restore();
  }
  // Two clearly marked physical mouths. Centre/Skyline retain the small
