@@ -16,6 +16,87 @@ const ui={
  mission:{lanes:$('mission-lanes'),frenzy:$('mission-frenzy'),targets:$('mission-targets'),ride:$('mission-ride')},
  progress:{lanes:$('progress-lanes'),frenzy:$('progress-frenzy'),targets:$('progress-targets'),ride:$('progress-ride')}
 };
+// Cabinet-side instrument towers mirror existing engine state. They never
+// control physics or introduce additional timers or duplicate mission rules.
+const arena={
+ missionTitle:$('wing-flight-title'),missionHint:$('wing-flight-hint'),
+ missionCount:$('wing-mission-count'),fuel:$('wing-fuel-value'),
+ fuelFill:$('wing-fuel-fill'),rank:$('wing-rank'),wizard:$('wing-wizard'),
+ missionRows:[...document.querySelectorAll('[data-flight-id]')],
+ reactor:$('wing-reactor'),overloadTitle:$('wing-overload-title'),overloadHint:$('wing-overload-hint'),
+ lockCount:$('wing-lock-count'),locks:[1,2,3].map(n=>$('wing-lock-'+n)),
+ lockHint:$('wing-lock-hint'),
+ ramp:$('wing-jackpot-ramp'),orbit:$('wing-jackpot-orbit'),super:$('wing-jackpot-super'),
+ power:$('wing-power-value'),powerCells:[...document.querySelectorAll('#wing-power-cells i')],
+ powerRow:$('wing-power-cells'),balls:$('wing-live-balls'),state:$('wing-overload-state')
+};
+const arenaText=(element,value)=>{if(element&&element.textContent!==String(value))element.textContent=String(value)};
+function syncArena(){
+ if(!arena.missionTitle)return;
+ const playing=engine.state==='playing',active=Boolean(engine.activeCommand),ready=engine.commandMissionReady;
+ const wizardActive=engine.neonCommandActive,wizardReady=engine.neonCommandReady;
+ const multi=engine.multiballActive,locked=engine.ballLocks||0,lockLit=engine.lockLit;
+ const mission=engine.commandMission;
+ const completed=engine.completedCommands;
+ arenaText(arena.missionCount,completed.size+' / 6');
+ arenaText(arena.missionTitle,wizardActive?'NEON COMMAND':active||ready?mission.name:
+  engine.state==='gameover'?'RUN COMPLETE':engine.state==='ready'?'SYSTEM STANDBY':
+  wizardReady?'COMMAND READY':'FLIGHT CONTROL');
+ arenaText(arena.missionHint,wizardActive?'SHOT '+(engine.neonCommandStep+1)+'/5 · '+Math.ceil(engine.neonCommandRemaining)+'S':
+  active?engine.commandInstruction+' · '+Math.ceil(engine.commandFuelRemaining)+'S':
+  ready?'SHOOT RAMP TO LAUNCH':wizardReady?'HIT SCOOP TO START':playing?'COMPLETE TARGET BANK':'START A THREE-BALL RUN');
+ const fuelRatio=wizardActive?engine.neonCommandRemaining/35:active||ready?engine.commandFuelRatio:0;
+ const fuelPct=Math.max(0,Math.min(100,Math.round(fuelRatio*100)));
+ arena.fuelFill.style.width=fuelPct+'%';
+ arenaText(arena.fuel,wizardActive?Math.ceil(engine.neonCommandRemaining)+'S':
+  active?Math.ceil(engine.commandFuelRemaining)+'S':ready?'ARMED':'—');
+ arenaText(arena.rank,engine.rankName);
+ arenaText(arena.wizard,engine.neonCommandDone?'✦ NEON COMMAND · COMPLETE':
+  wizardActive?'✦ NEON COMMAND · ACTIVE':wizardReady?'✦ NEON COMMAND · READY':'✦ NEON COMMAND · LOCKED');
+ arena.wizard.classList.toggle('is-ready',wizardReady||engine.neonCommandDone);
+ arena.wizard.classList.toggle('is-active',wizardActive);
+ for(const row of arena.missionRows){
+  const id=row.dataset.flightId,done=completed.has(id);
+  row.classList.toggle('is-complete',done);
+  row.classList.toggle('is-current',!done&&(active||ready)&&mission.id===id);
+ }
+ const heldLabel=multi?'LIVE':locked+'/2';
+ arenaText(arena.lockCount,heldLabel);
+ arenaText(arena.overloadTitle,multi?'NEON OVERLOAD':lockLit?'LOCK ILLUMINATED':
+  locked?'LOCK CHAMBER':'REACTOR IDLE');
+ arenaText(arena.overloadHint,multi?(engine.multiballSuperLit?'SUPER JACKPOT AT SCOOP':'RAMP + ORBIT JACKPOTS'):
+  active||ready?'COMPLETE FLIGHT MISSION':lockLit?'SHOOT SCOOP TO LOCK':
+  playing?'COMPLETE TARGET BANK':'AWAITING LAUNCH');
+ arenaText(arena.lockHint,multi?engine.balls.length+' LIVE BALLS · JACKPOTS ARMED':
+  lockLit&&locked>=2?'NEXT SCOOP STARTS MULTIBALL':lockLit?'SCOOP LOCK IS LIT':
+  locked?'COMPLETE TARGET BANK TO LOCK':'COMPLETE BANK · LIGHT LOCK');
+ arena.reactor.classList.toggle('is-charged',multi||lockLit||locked>=2);
+ arena.reactor.classList.toggle('is-active',multi);
+ for(let i=0;i<arena.locks.length;i++){
+  const orb=arena.locks[i];
+  orb.classList.toggle('is-locked',!multi&&i<locked);
+  orb.classList.toggle('is-ready',!multi&&lockLit&&i===Math.min(locked,2));
+  orb.classList.toggle('is-live',multi&&i<engine.balls.length);
+ }
+ for(const [name,el] of [['ramp',arena.ramp],['orbit',arena.orbit]]){
+  el.classList.toggle('is-live',multi&&!engine.multiballJackpots.has(name));
+  el.classList.toggle('is-claimed',multi&&engine.multiballJackpots.has(name));
+ }
+ arena.super.classList.toggle('is-live',multi&&engine.multiballSuperLit);
+ arena.super.classList.toggle('is-claimed',multi&&!engine.multiballSuperLit);
+ const rush=engine.hurryUpUntil>engine.time;
+ const charges=rush?3:Math.min(3,engine.powerCharges);
+ arenaText(arena.power,charges+' / 3');
+ for(let i=0;i<arena.powerCells.length;i++)arena.powerCells[i].classList.toggle('is-charged',i<charges);
+ arena.powerRow.classList.toggle('is-rush',rush);
+ const liveBalls=playing?(engine.ball?.mode==='shooter'?0:engine.balls.length):0;
+ arenaText(arena.balls,liveBalls);
+ arenaText(arena.state,multi?'✦ NEON OVERLOAD · LIVE':
+  lockLit?'● SCOOP LOCK ILLUMINATED':locked?'● '+locked+' BALL'+(locked===1?'':'S')+' HELD':
+  rush?'✦ POWER GRID JACKPOT':'● REACTOR STANDBY');
+ arena.state.classList.toggle('is-active',multi);
+ arena.state.classList.toggle('is-ready',lockLit||rush);
+}
 const ctx=ui.canvas.getContext('2d',{alpha:false});
 const engine=new PinballEngine();
 const STORAGE_KEY='ngs_pinball_proto_best_v1', TOP_KEY='ngs_pinball_top5_v2';
@@ -597,7 +678,7 @@ function resize(){
 function loop(now){
  const dt=lastTime?Math.min(.05,(now-lastTime)/1000):0;lastTime=now;
  if(!document.hidden){
-  engine.advance(dt);processEvents();syncHUD();dmd.update(engine,now);
+  engine.advance(dt);processEvents();syncHUD();syncArena();dmd.update(engine,now);
   if(prefer3d&&view3d){
    try{
     view3d.update(engine,{bumperFlash,tableFlash,reducedMotion});

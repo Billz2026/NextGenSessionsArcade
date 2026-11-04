@@ -1,10 +1,21 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase V2.1 — premium black-and-gold finish, unboxed neon marquee and Neon Overload multiball (playable 3D beta)
+**Current stage:** Phase V2.3 — live mission and multiball side towers, premium black-and-gold finish (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
-An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or## Phase V2.1 — premium unboxed neon and NextGen gold edition
+An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase V2.3 — dual integrated cabinet instrument towers
+
+- Added **Flight Deck** to the left of the physical table: all six mission indicators, live mission selection, ordered objective instructions, fuel meter, Cadet-to-Commander rank and Neon Command wizard-ready light.
+- Added **Neon Overload Core** to the right: charged reactor ring, two real lock chambers and third-ball activation indicator, live ramp/orbit/super jackpot status, three-step power grid, ball population and lock instructions.
+- All instruments read the actual `PinballEngine` state at render time; nothing manufactures fake locks, points, jackpot timers, or ball events. The authoritative HUD and dot-matrix display remain unchanged.
+- Full-height instrument panels use black-and-gold arcade styling and stretch to fill the previously wasted horizontal space around the portrait cabinet. Desktop, wide unfolded views, fullscreen and Table Focus preserve the existing 3:5 playfield, flipper controls and HUD.
+- Narrow layouts hide the side panels instead of compressing the table. The page stays playable without them, including on compact phones and unfolded displays with limited CSS pixel width.
+- Tests exercise mission progression, real ball-lock state, multiball activation, jackpot indicators and responsive layout rules.
+
+## Phase V2.1 — premium unboxed neon and NextGen gold edition
 
 - Removed the heavy filled **NEON TILT** block-letter face and surrounding sign rectangle from the physical 3D marquee and 2D fallback. The title is now standalone thin italic **red neon tube lettering** with three small golden light bars on each side.
 - The marquee slowly breathes in brightness during play and attract mode, with no strobing; the 3D renderer respects the reduced-motion setting and the Canvas fallback shows a static sign when reduced motion is requested.
@@ -13,7 +24,6 @@ An original red, amber and gold browser arcade pinball table inspired by the *fe
 - Kept the existing red arcade identity in the NEON TILT title and reactive game lights. All shots, collider locations, game modes, table scale, keyboard/touch controls and ball motion are unchanged.
 - Updated cache versions and source-level checks for the unboxed sign, 3D/Canvas consistency and stationary gold dust.
 
- geometry.
 
 ## Phase V2 — red arcade cabinet, deeper missions and three-ball pinball
 
