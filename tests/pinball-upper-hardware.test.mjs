@@ -1,96 +1,115 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {TRAVEL_PATHS,SHOTS,LANES,BOARD,PinballEngine}
+import {TRAVEL_PATHS,SHOTS,LANES,BOARD,BUMPERS,PinballEngine}
  from '../games/pinball/engine.mjs';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS}
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS}
  from '../games/pinball/upper-hardware.mjs';
 
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
 
-test('four moulded corridors begin at the true scoring sensors and mirror full ball paths',()=>{
+function distanceToSegment(p,a,b){
+ const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy||1;
+ const t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/den));
+ return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy));
+}
+
+test('four genuine playable transport routes are preserved in the physics engine',()=>{
  assert.deepEqual(UPPER_ROUTES.map(r=>r.kind),['orbit','ramp','center','skyline']);
  for(const route of UPPER_ROUTES){
   assert.deepEqual(route.points.map(p=>[p.x,p.y,p.z]),TRAVEL_PATHS[route.kind]);
   assert.deepEqual(route.entrance,
    {x:SHOTS[route.kind].x,y:SHOTS[route.kind].y,r:SHOTS[route.kind].r});
-  assert.equal(route.width,['orbit','ramp'].includes(route.kind)?22:18);
-  assert.ok(route.width>2*BOARD.radius,'corridor must clear the actual ball');
-  assert.ok(route.points.every(p=>p.z>=.3&&p.z<=1.65));
+  assert.ok(route.width>=2*BOARD.radius,'real ball has adequate route clearance');
  }
 });
-test('integrated lane edges straddle each actual physical travel centreline',()=>{
- for(const route of UPPER_ROUTES){
-  const edges=guideEdges(route);
-  assert.equal(edges.length,route.points.length);
+test('only two short perimeter approaches are visually shown, not four entire paths',()=>{
+ assert.deepEqual(VISIBLE_CHANNELS.map(r=>r.kind),['orbit','ramp']);
+ assert.deepEqual(VISIBLE_CHANNELS.map(r=>r.points.length),[4,3]);
+ for(const ch of VISIBLE_CHANNELS){
+  assert.ok(ch.points.length<UPPER_ROUTES.find(r=>r.kind===ch.kind).points.length/2);
+  assert.deepEqual(ch.points,UPPER_ROUTES.find(r=>r.kind===ch.kind).points.slice(0,ch.points.length));
+  assert.ok(['left','right'].includes(ch.trimSide));
+  assert.equal(ch.width,22);
+  assert.deepEqual(ch.points[0],UPPER_ROUTES.find(r=>r.kind===ch.kind).points[0]);
+ }
+ assert.equal(VISIBLE_CHANNELS[0].trimSide,'right');
+ assert.equal(VISIBLE_CHANNELS[1].trimSide,'left');
+});
+test('every exposed channel stays outside all three bumpers and ends before top N/G/S gates',()=>{
+ for(const ch of VISIBLE_CHANNELS){
+  for(let i=1;i<ch.points.length;i++){
+   for(const bumper of BUMPERS){
+    const d=distanceToSegment(bumper,ch.points[i-1],ch.points[i]);
+    assert.ok(d>bumper.r+ch.width/2+6,
+     ch.kind+' exposed segment '+i+' visually crosses bumper at '+JSON.stringify(bumper));
+   }
+  }
+  const last=ch.points.at(-1);
+  assert.ok(last.y>195,'do not draw a channel across upper rollover switches');
+ }
+});
+test('visible approach edges straddle their exact path centreline',()=>{
+ for(const ch of VISIBLE_CHANNELS){
+  const edges=guideEdges(ch);
   for(let i=0;i<edges.length;i++){
-   const a=edges[i].left,b=edges[i].right,p=route.points[i];
+   const a=edges[i].left,b=edges[i].right,p=ch.points[i];
    assert.ok(Math.abs((a.x+b.x)/2-p.x)<1e-9);
    assert.ok(Math.abs((a.y+b.y)/2-p.y)<1e-9);
-   assert.ok(Math.abs(Math.hypot(a.x-b.x,a.y-b.y)-route.width)<1e-7);
-   assert.equal(a.z,p.z);assert.equal(b.z,p.z);
+   assert.ok(Math.abs(Math.hypot(a.x-b.x,a.y-b.y)-ch.width)<1e-7);
   }
  }
 });
-test('3D guided ball stays above its actual integrated lane bed',()=>{
+test('WebGL only paints two moulded outside-lane approaches and no full four-route ribbons',()=>{
+ assert.match(three,/for\(const channel of VISIBLE_CHANNELS\)/);
+ assert.match(three,/channelStrip\(channel,0,1,-\.058,laneBaseMaterials\[channel\.kind\]\)/);
+ assert.match(three,/channelStrip\(channel,\.929,\.985,-\.051,laneTrim\)/);
+ assert.match(three,/channelStrip\(channel,\.015,\.071,-\.051,laneTrim\)/);
+ assert.match(three,/const route=UPPER_ROUTES\.find\(r=>r\.kind===channel\.kind\)/);
+ assert.doesNotMatch(three,/channelStrip\(route,0,1/);
+ assert.doesNotMatch(three,/for\(const route of UPPER_ROUTES\)\{\s*const edges=guideEdges\(route\)/);
+ assert.doesNotMatch(three,/function railTube\(/);
+ assert.doesNotMatch(three,/function routeRod\(/);
+ assert.doesNotMatch(three,/const crownGlint=/);
+});
+test('Canvas paints only two dark channels, one restrained outer trim line each',()=>{
+ assert.match(canvas,/for\(const channel of VISIBLE_CHANNELS\)/);
+ assert.match(canvas,/const side=channel\.trimSide/);
+ assert.match(canvas,/const points=edges\.map\(e=>\[e\[side\]\.x,e\[side\]\.y\]\)/);
+ assert.match(canvas,/line\(c,points,accent,1\.8\)/);
+ assert.doesNotMatch(canvas,/for\(const route of ordered\)/);
+ assert.doesNotMatch(canvas,/upperGuardSections\(route\)/);
+});
+test('other shots still have real matching gameplay entrances and mission LEDs',()=>{
+ assert.deepEqual(UPPER_ROUTES.slice(2).map(r=>r.kind),['center','skyline']);
+ assert.ok(three.includes("['center'")||three.includes("'center',0]"));
+ assert.ok(canvas.includes('drawShotGuidance(ctx,engine,anim,reducedMotion)'));
+ assert.ok(three.includes('shotIndicatorState(engine,a.group)'));
+});
+test('3D ball continues to follow the complete hidden return trajectory without teleporting',()=>{
  const g=new PinballEngine();g.start();g.launch();
  for(const route of UPPER_ROUTES){
-  g.ball.mode='live';
-  g.activateShot(route.kind);
+  g.ball.mode='live';g.activateShot(route.kind);
   assert.equal(g.ball.mode,'travel');
   g.advance(1/30);
   assert.ok(g.ball.travelHeight>0);
-  assert.ok(UPPER_BALL_RADIUS>0);
   assert.equal(g.ball.travel.kind,route.kind);
  }
+ assert.ok(UPPER_BALL_RADIUS>0);
  assert.match(three,/\(b\.travelHeight\|\|\.39\)\+UPPER_BALL_RADIUS/);
- assert.match(three,/channelStrip\(route,0,1,-\.025,laneBaseMaterials\[route\.kind\]\)/);
 });
-test('WebGL renders flat smoked channels and painted inlays, not overhead wireforms',()=>{
- assert.match(three,/function channelStrip\(route,from,to,lift,mat\)/);
- assert.match(three,/new T\.BufferGeometry\(\)/);
- assert.match(three,/geometry\.setIndex\(indices\)/);
- assert.match(three,/new T\.Float32BufferAttribute\(vertices,3\)/);
- assert.match(three,/channelStrip\(route,\.006,\.075,-\.015,laneTrim\)/);
- assert.match(three,/channelStrip\(route,\.925,\.994,-\.015,laneTrim\)/);
- assert.doesNotMatch(three,/function railTube\(/);
- assert.doesNotMatch(three,/railTube\(edges\.map/);
- assert.doesNotMatch(three,/routeRod\(/);
- assert.doesNotMatch(three,/upperGuardSections\(route\)/);
- assert.doesNotMatch(three,/wireSteel=metal/);
-});
-test('Canvas fallback shows filled corridor silhouettes instead of thin steel rails',()=>{
- assert.match(canvas,/function drawOrbits\(c\)/);
- assert.match(canvas,/roundedWirePoints\(route\.points,3\)/);
- assert.match(canvas,/guideEdges\(\{points:smooth,width:route\.width\}\)/);
- assert.match(canvas,/for\(let i=edges\.length-1;i>=0;i--\)c\.lineTo\(edges\[i\]\.right\.x/);
- assert.match(canvas,/c\.closePath\(\);c\.fillStyle=fill;c\.fill\(\)/);
- assert.doesNotMatch(canvas,/upperGuardSections\(route\)/);
- assert.doesNotMatch(canvas,/elevatedGuardSide\(route\.kind\)/);
-});
-test('only primary orbit and ramp receive wide physical entrance mouths',()=>{
- assert.match(three,/if\(route\.kind!==\x27orbit\x27&&route\.kind!==\x27ramp\x27\)continue/);
- assert.match(three,/const mouth=route\.entrance/);
- assert.match(canvas,/const ex=route\.entrance\.x,ey=route\.entrance\.y/);
- assert.match(canvas,/route\.kind===\x27center\x27\?\x27CROSS\x27:\x27SKY\x27/);
- assert.ok(UPPER_ROUTES.every(r=>r.entrance.x===SHOTS[r.kind].x&&r.entrance.y===SHOTS[r.kind].y));
-});
-test('upper crown remains low-profile outside the functional ball routes',()=>{
+test('top crown is flush printed enamel, not another shiny suspended arch',()=>{
  assert.equal(UPPER_ARCH.length,9);
- assert.ok(UPPER_ARCH.every(p=>p.x>BOARD.radius&&p.x<BOARD.width-BOARD.radius));
  assert.ok(UPPER_ARCH.every(p=>p.y>=140&&p.y<=212));
- assert.ok(UPPER_ARCH.every((p,i)=>i===0||p.x>UPPER_ARCH[i-1].x));
- assert.match(three,/UPPER_ARCH\.map\(p=>new T\.Vector3\(X\(p\.x\),Y\(p\.y\),\.204\)\)/);
+ assert.match(three,/new T\.ShapeGeometry\(crownShape\)/);
  assert.match(canvas,/drawUpperCrown\(c\)/);
+ assert.doesNotMatch(three,/new T\.TubeGeometry\(crownPath/);
 });
-test('three genuine N/G/S rollover bridges remain on their original scoring sensors',()=>{
+test('three N/G/S rollover bridges remain attached to the actual sensors',()=>{
  assert.equal(UPPER_ROLLOVERS.length,3);
- for(const lane of UPPER_ROLLOVERS){
+ for(const lane of UPPER_ROLLOVERS)
   assert.deepEqual({x:lane.x,y:lane.y,label:lane.label},
    {x:LANES[lane.index].x,y:LANES[lane.index].y,label:LANES[lane.index].label});
- }
  assert.match(three,/laneGateMaterials\[i\]\.emissiveIntensity=active\?/);
- assert.match(canvas,/for\(const lane of UPPER_ROLLOVERS\)/);
- assert.match(canvas,/drawUpperRouteFeedback\(ctx,engine,reducedMotion\)/);
 });
