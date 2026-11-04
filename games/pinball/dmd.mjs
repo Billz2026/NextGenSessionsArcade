@@ -26,6 +26,9 @@ export function getDmdStatus(game,now=0){
  if(game.ball?.mode==='shooter')return ['BALL '+ball+' READY','HOLD TO LAUNCH'];
  if(game.ball?.mode==='scoop')return ['SCOOP CAPTURED','WAIT FOR EJECT'];
  if(game.tilted)return ['TILT','FLIPPERS OFF · NO BONUS'];
+ if(game.activeCommand)
+  return [String(game.commandMission?.name||'FLIGHT MISSION'),String(game.commandInstruction||'COMPLETE MISSION')+' · '+Math.ceil(game.commandFuelRemaining||0)+'S'];
+ if(game.commandMissionReady)return ['MISSION READY','SHOOT RAMP TO LAUNCH'];
  if(game.hurryUpUntil>game.time)
   return ['JACKPOT LIT','SCOOP · '+Math.ceil(game.hurryUpUntil-game.time)+' SEC'];
  if(game.overdriveUntil>game.time)
@@ -45,7 +48,7 @@ export function getDmdStatus(game,now=0){
    ['POWER GRID '+grid+'/3',grid===2?'ONE MORE SHOT':'HIT RAMP OR ORBIT'],
   ['TARGET BANK '+targets+'/4','NEON LANES '+lanes+'/3'],
   ['SPINNER '+(spins%5)+'/5',spins>0?'BUILD OVERDRIVE':'HIT THE SPINNER'],
-  ['FLIGHT RANK',''+(game.rankName||'CADET')+' · '+(game.commandFlags||0)+'/4 FLAGS']
+  ['FLIGHT RANK',''+(game.rankName||'CADET')+' · '+Math.min(4,game.commandFlags||0)+'/4 FLAGS']
  ];
  return status[frame];
 }
@@ -93,6 +96,11 @@ export function describeDmdEvent(event,game=null){
    if(name==='lanes'||full.includes('LANES'))return {headline:'NEON LANES',sub:'2X SCORING',priority:4,duration:2350};
    return {headline:'MISSION',sub:'COMPLETE!',priority:4,duration:2300};
   }
+  case 'missionarmed':return {headline:'MISSION SELECTED',sub:String(event.name||'FLIGHT MISSION'),priority:4,duration:2500};
+  case 'missionstart':return {headline:String(event.name||'MISSION START'),sub:String(event.instruction||'GO!')+' · '+(event.fuel||26)+'S',priority:5,duration:2800};
+  case 'missionprogress':return {headline:'MISSION '+(event.step||1)+'/'+(event.total||2),sub:String(event.instruction||'KEEP GOING'),priority:4,duration:1700};
+  case 'missionfailed':return {headline:'MISSION FAILED',sub:String(event.reason||'FUEL DEPLETED'),priority:5,duration:2600};
+  case 'commandcomplete':return {headline:'MISSION COMPLETE!',sub:'+'+FMT(event.points),priority:5,duration:3100};
   case 'promotion':return {headline:'RANK PROMOTION!',sub:String(event.rank||'ENSIGN')+' · +'+FMT(event.points),priority:5,duration:3200};
   case 'frenzy':return {headline:'BUMPER FRENZY',sub:'2X BUMPER POINTS',priority:4,duration:2400};
   case 'multiplier':return {headline:'2X SCORING',sub:'20 SECONDS',priority:4,duration:2400};
