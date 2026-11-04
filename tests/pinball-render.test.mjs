@@ -76,8 +76,12 @@ test('marquee uses standalone red neon tubing without a surrounding plaque',()=>
   assert.match(section,/strokeText\('NEON TILT'/);
  }
  assert.match(canvasSource,/drawNeonMarquee\(ctx,anim\)/,'2D sign must pulse each frame');
- assert.match(threeSource,/neonMarqueeMaterial\.opacity=marqueePulse/,'3D sign must pulse');
- assert.match(threeSource,/reducedMotion\?1:/,'3D sign honours reduced motion');
+ assert.match(canvasSource,/\.5\+\.5\*Math\.sin\(anim\*3\.0\)/,'2D glow must breathe smoothly');
+ assert.match(threeSource,/const neonGlowMaterial=marqueeGlow\(\)/,'3D neon must have a real luminous halo');
+ assert.match(threeSource,/T\.AdditiveBlending/,'3D sign must illuminate rather than disappear');
+ assert.match(threeSource,/neonGlowMaterial\.opacity=\.28\+\.70\*marqueePulse/,'3D red halo must pulse every frame');
+ assert.match(threeSource,/neonMarqueeMaterial\.opacity=1/,'neon glass core must stay visible');
+ assert.match(threeSource,/reducedMotion\?\.75:/,'3D sign honours reduced motion');
 });
 
 test('black lacquer and deterministic gold dust are shared by both renderers',()=>{
@@ -88,4 +92,13 @@ test('black lacquer and deterministic gold dust are shared by both renderers',()
  assert.match(threeSource,/const wireSteel=metal\('#d0aa60'/);
  assert.doesNotMatch(canvasSource,/Math\.random\(/);
  assert.doesNotMatch(threeSource,/Math\.random\(/);
+});
+
+test('marquee pulse keeps a continuous live play-loop update with no scoring dependency',()=>{
+ const render3d=threeSource.split('function update(engine,')[1]?.split('function isFrameVisible()')[0]||'';
+ const canvas2d=canvasSource.split('export function renderTable(')[1]||'';
+ assert.match(render3d,/Math\.sin\(now\*\.0030\)/);
+ assert.match(render3d,/neonGlowMaterial\.opacity=/);
+ assert.match(canvas2d,/drawNeonMarquee\(ctx,anim\)/);
+ assert.ok(!render3d.includes('if(engine.state===\'playing\')neonGlowMaterial'));
 });

@@ -83,7 +83,8 @@ function drawBase(c,anim){
 }
 // Only the freestanding neon words and two small amber wings remain: no sign box.
 function drawNeonMarquee(c,anim){
- const pulse=anim===0?1:.89+.11*Math.sin(anim*3.3);
+ // Animated every rendered frame, not only at game start or on a scoring event.
+ const pulse=anim===0?.75:.5+.5*Math.sin(anim*3.0);
  c.save();c.textAlign='center';c.textBaseline='middle';c.lineCap='round';c.lineJoin='round';
  for(const side of [-1,1]){
   for(let i=0;i<3;i++){
@@ -97,15 +98,17 @@ function drawNeonMarquee(c,anim){
   }
  }
  c.font='italic 500 43px "Oxanium","Trebuchet MS",Arial,sans-serif';
- c.globalAlpha=pulse;
- c.shadowColor='#ee1732';c.shadowBlur=21;
- c.lineWidth=5.5;c.strokeStyle='#860914';c.strokeText('NEON TILT',213,85,245);
- c.shadowBlur=13;c.lineWidth=3.3;c.strokeStyle='#ec3635';
- c.strokeText('NEON TILT',213,85,245);
- c.shadowBlur=6;c.lineWidth=1.9;c.strokeStyle='#ff5160';
- c.strokeText('NEON TILT',213,85,245);
- c.shadowBlur=2;c.lineWidth=.85;c.strokeStyle='#fff0e6';
- c.strokeText('NEON TILT',213,85,245);
+ // Layered red halo breathes while a crisp white-hot glass tube remains visible.
+ c.globalAlpha=.45+.55*pulse;
+ c.shadowColor='#f01b36';c.shadowBlur=26+19*pulse;
+ c.lineWidth=8;c.strokeStyle='#a70d20';c.strokeText('NEON TILT',213,85,245);
+ c.shadowColor='#ff3649';c.shadowBlur=18+12*pulse;
+ c.lineWidth=4.7;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',213,85,245);
+ c.globalAlpha=1;
+ c.shadowColor='#ff5664';c.shadowBlur=7+8*pulse;
+ c.lineWidth=2.5;c.strokeStyle='#ff6670';c.strokeText('NEON TILT',213,85,245);
+ c.shadowColor='#fff0e6';c.shadowBlur=2;
+ c.lineWidth=1.2;c.strokeStyle='#fff0e6';c.strokeText('NEON TILT',213,85,245);
  c.restore();
 }
 function drawBackglass(c,anim){
