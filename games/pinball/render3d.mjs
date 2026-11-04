@@ -590,11 +590,11 @@ export async function create3DTable(host){
  for(const channel of VISIBLE_CHANNELS){
   // These physical approaches intentionally stop before the bumper field.
   // Secondary shots use flush lit markers, not overlapping elevated channels.
-  channelStrip(channel,0,1,-.058,laneBaseMaterials[channel.kind]);
+  channelStrip(channel,0,1,-.025,laneBaseMaterials[channel.kind]);
   if(channel.trimSide==='right')
-   channelStrip(channel,.929,.985,-.051,laneTrim);
+   channelStrip(channel,.929,.985,-.015,laneTrim);
   else
-   channelStrip(channel,.015,.071,-.051,laneTrim);
+   channelStrip(channel,.015,.071,-.015,laneTrim);
   const route=UPPER_ROUTES.find(r=>r.kind===channel.kind);
   const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
   const cheek=metal('#33291c',.4,.25),lip=metal('#b89555',.3,.50);
