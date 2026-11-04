@@ -64,10 +64,10 @@ function drawBase(c,anim){
  for(let i=0;i<12;i++){const y=160+i*37;line(c,[[61,y],[211,y-25],[329,y]],i%2?'#c44d72':'#b9968a',.8);}
  c.restore();
  // Long fluted body side walls in perspective: thick edging, polished rails.
- const left=G(c,12,30,33,600,[[0,'#f6d29a'],[.16,'#765d5b'],[.65,'#4b454f'],[1,'#dfb287']]);
- const right=G(c,387,30,406,650,[[0,'#e8b987'],[.2,'#62505b'],[.75,'#383847'],[1,'#d2a077']]);
- plastic(c,x=>{x.moveTo(1,8);x.lineTo(30,28);x.lineTo(29,622);x.lineTo(12,695);x.lineTo(1,695);x.closePath()},left,'#dbb179');
- plastic(c,x=>{x.moveTo(418,8);x.lineTo(392,26);x.lineTo(391,633);x.lineTo(408,697);x.lineTo(419,697);x.closePath()},right,'#b59479');
+ const left=G(c,12,30,33,600,[[0,'#ffab8a'],[.16,'#ec3635'],[.65,'#921721'],[1,'#ff6d5b']]);
+ const right=G(c,387,30,406,650,[[0,'#ffab8a'],[.2,'#c52731'],[.75,'#5c1320'],[1,'#ec3635']]);
+ plastic(c,x=>{x.moveTo(1,8);x.lineTo(30,28);x.lineTo(29,622);x.lineTo(12,695);x.lineTo(1,695);x.closePath()},left,'#ffab8a');
+ plastic(c,x=>{x.moveTo(418,8);x.lineTo(392,26);x.lineTo(391,633);x.lineTo(408,697);x.lineTo(419,697);x.closePath()},right,'#ff6d5b');
  line(c,[[30,64],[32,622]],'rgba(255,249,206,.54)',2);
  line(c,[[388,56],[387,630]],'rgba(255,245,215,.48)',2);
  // Underlay city / star-map silhouettes preserve original branding identity.
@@ -81,8 +81,8 @@ function drawBase(c,anim){
 function drawBackglass(c,anim){
  // Recessed metal plaque: 3D shadow outside, glass window and spotlight.
  c.save();c.shadowColor='#050407';c.shadowBlur=18;c.shadowOffsetY=12;
- rect(c,79,32,269,108,11,'#17131c','#876d5a',5);c.restore();
- rect(c,83,35,261,103,10,G(c,90,35,320,139,[[0,'#b6a18b'],[.07,'#4c4447'],[.37,'#161622'],[.82,'#2d2939'],[1,'#ae7e69']]),'#ddc09e',2.5);
+ rect(c,79,32,269,108,11,'#17131c','#921721',5);c.restore();
+ rect(c,83,35,261,103,10,G(c,90,35,320,139,[[0,'#ffab8a'],[.07,'#921721'],[.37,'#161622'],[.82,'#2d1824'],[1,'#ec3635']]), '#ff6d5b',2.5);
  rect(c,91,43,244,86,7,G(c,94,44,331,126,[[0,'#181b2f'],[.55,'#070e22'],[1,'#29172c']]),'rgba(243,201,134,.46)',1.2);
  c.save();
  c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
@@ -91,20 +91,20 @@ function drawBackglass(c,anim){
  for(let i=0;i<18;i++){
   const a=i*Math.PI/9;c.beginPath();c.moveTo(Math.cos(a)*38,Math.sin(a)*18);
   c.lineTo(Math.cos(a)*116,Math.sin(a)*48);
-  c.strokeStyle=i%2?'#2ae7ff':'#ff4ca3';c.lineWidth=i%3===0?2:1;c.stroke();
+  c.strokeStyle=i%2?'#ffab8a':'#ec3635';c.lineWidth=i%3===0?2:1;c.stroke();
  }
  c.globalAlpha=1;c.translate(-213,-86);
  c.font='italic 900 39px "Arial Black",Impact,Arial,sans-serif';
- c.shadowColor='#ff3aa4';c.shadowBlur=13;c.shadowOffsetY=4;
- c.lineWidth=8;c.strokeStyle='#090712';c.strokeText('NEON TILT',213,86,230);
- c.shadowColor='#1ce9ff';c.shadowBlur=10;c.shadowOffsetY=0;
- c.lineWidth=4;c.strokeStyle='#20ddf4';c.strokeText('NEON TILT',213,84,230);
- c.shadowBlur=0;c.lineWidth=1.5;c.strokeStyle='#fff4dc';c.strokeText('NEON TILT',213,84,230);
- const logo=G(c,97,64,327,104,[[0,'#5af2ff'],[.42,'#f7fbff'],[.62,'#ff68c4'],[1,'#ff7650']]);
+ c.shadowColor='#ec3635';c.shadowBlur=18;c.shadowOffsetY=4;
+ c.lineWidth=8;c.strokeStyle='#26070e';c.strokeText('NEON TILT',213,86,230);
+ c.shadowColor='#ec3635';c.shadowBlur=14;c.shadowOffsetY=0;
+ c.lineWidth=4;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',213,84,230);
+ c.shadowBlur=2;c.lineWidth=1.4;c.strokeStyle='#fff2d6';c.strokeText('NEON TILT',213,84,230);
+ const logo=G(c,97,64,327,104,[[0,'#fff2d6'],[.3,'#ffab8a'],[.6,'#ff6d5b'],[1,'#cf272c']]);
  c.fillStyle=logo;c.fillText('NEON TILT',213,84,230);
- c.globalAlpha=.72;c.fillStyle='#fff';c.fillText('NEON TILT',213,81,230);c.globalAlpha=1;
- c.fillStyle='#23e4ff';c.fillRect(133,116,160,2);
- c.fillStyle='#ff4ca3';c.fillRect(158,121,110,1.5);
+ c.globalAlpha=.55;c.fillStyle='#fff3e8';c.fillText('NEON TILT',213,81,230);c.globalAlpha=1;
+ c.fillStyle='#ff6d5b';c.fillRect(133,116,160,2);
+ c.fillStyle='#b3232e';c.fillRect(158,121,110,1.5);
  c.restore();
  for(const x of [101,324])bolt(c,x,52,3);
  // Top crown lamps run automatically in attract mode.
