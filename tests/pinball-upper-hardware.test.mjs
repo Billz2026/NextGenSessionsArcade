@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {TRAVEL_PATHS,SHOTS,LANES,BOARD,PinballEngine}
  from '../games/pinball/engine.mjs';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges,UPPER_BALL_RADIUS}
+import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,upperGuardSections,guideEdges,UPPER_BALL_RADIUS}
  from '../games/pinball/upper-hardware.mjs';
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
@@ -44,9 +44,9 @@ test('raised visual ball uses real travelHeight from unchanged physics engine',(
  assert.ok(!three.includes('geom.setIndex(indices)'),
   'open wireforms must not have a solid indexed ramp bed');
  assert.ok(three.includes('const wireSteel=metal('));
- assert.ok(three.includes('roundedWirePoints(edges.map(e=>e[side]),3)'));
+ assert.ok(three.includes('roundedWirePoints(points,3)'));
  assert.ok(three.includes('new T.TubeGeometry(curve,'));
- assert.ok(three.includes('[-.034,.019,wireSteel],[.185,.013,wireHighlight]'));
+ assert.ok(three.includes('railTube(edges.map(e=>e[side]),-.034,.024,wireSteel)'));
  assert.ok(three.includes('for(const route of UPPER_ROUTES)'));
 });
 test('three supported rollover bridges and canvas fallback use matching sensors',()=>{
@@ -70,9 +70,9 @@ test('open wireform channels preserve enough clearance for the ball',()=>{
  assert.ok(!three.includes("geom.setIndex(indices)"),
   'the 3D path must remain open below the wireforms');
  assert.ok(three.includes("for(const side of ['left','right'])"));
- assert.ok(three.includes("roundedWirePoints(edges.map(e=>e[side]),3)"));
+ assert.ok(three.includes("roundedWirePoints(points,3)"));
  assert.ok(three.includes("new T.TubeGeometry(curve,"));
- assert.ok(three.includes("[-.034,.019,wireSteel],[.185,.013,wireHighlight]"));
+ assert.ok(three.includes("railTube(edges.map(e=>e[side]),-.034,.024,wireSteel)"));
 });
 test('classic shot graphics stay visible and 2D renderer removes black channel bands',()=>{
  assert.ok(three.includes("route(ORBIT_PATH,'#ffc77f','#3c3451')"));
@@ -82,4 +82,35 @@ test('classic shot graphics stay visible and 2D renderer removes black channel b
  assert.ok(!canvas.includes("route.width+8"));
  assert.ok(!canvas.includes("route.width-10"));
  assert.ok(canvas.includes("line(c,track,'#a8b6c1',1.3)"));
+});
+
+test('upper crown is a low-profile arch outside active hardware',()=>{
+ assert.equal(UPPER_ARCH.length,9);
+ assert.ok(UPPER_ARCH.every(p=>p.x>BOARD.radius&&p.x<BOARD.width-BOARD.radius));
+ assert.ok(UPPER_ARCH.every(p=>p.y>=140&&p.y<=212));
+ assert.ok(UPPER_ARCH.every((p,i)=>i===0||p.x>UPPER_ARCH[i-1].x));
+ assert.ok(three.includes('UPPER_ARCH.map(p=>new T.Vector3(X(p.x),Y(p.y),.204))'));
+ assert.ok(canvas.includes('drawUpperCrown(c)'));
+ assert.ok(canvas.includes('UPPER_ARCH.map(p=>[p.x,p.y])'));
+});
+test('upper guard sections avoid overhead crossings but lower rails stay continuous',()=>{
+ for(const route of UPPER_ROUTES){
+  const sections=upperGuardSections(route);
+  assert.equal(sections.length,2);
+  assert.equal(sections[0][0],0);
+  assert.equal(sections[1][1],route.points.length-1);
+  assert.ok(sections[0][1]<sections[1][0]-1);
+  for(const [from,to] of sections)assert.ok(from>=0&&from<to&&to<route.points.length);
+  assert.equal(route.supportIndices.length,3);
+ }
+ assert.ok(three.includes('for(const [from,to] of upperGuardSections(route))'));
+ assert.ok(canvas.includes('for(const [from,to] of upperGuardSections(route))'));
+ assert.ok(three.includes('railTube(edges.map(e=>e[side]),-.034,.024,wireSteel)'));
+});
+test('mouths and mounting supports still correspond to real scoring positions',()=>{
+ assert.ok(three.includes('const mouth=route.entrance'));
+ assert.ok(canvas.includes('const ex=route.entrance.x,ey=route.entrance.y'));
+ assert.ok(three.includes('for(const index of route.supportIndices)'));
+ assert.ok(canvas.includes('for(const i of route.supportIndices)'));
+ assert.ok(UPPER_ROUTES.every(r=>r.entrance.x===SHOTS[r.kind].x&&r.entrance.y===SHOTS[r.kind].y));
 });
