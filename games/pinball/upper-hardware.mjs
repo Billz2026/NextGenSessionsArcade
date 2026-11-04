@@ -8,8 +8,8 @@ function makeRoute(kind,width,accent){
  return Object.freeze({
   kind,width,accent,
   points:Object.freeze(path.map(([x,y,z])=>Object.freeze({x,y,z}))),
-  entrance:Object.freeze({x:shot.x,y:shot.y,r:shot.r}),
-  supportIndices:Object.freeze([1,4,path.length-3])
+  entrance:Object.freeze({x:shot.x,y:shot.y,r:shot.r})
+
  });
 }
 export const UPPER_ROUTES=Object.freeze([
@@ -40,14 +40,3 @@ export const UPPER_ARCH=Object.freeze([
  [300,145],[336,154],[357,181],[365,211]
 ].map(([x,y])=>Object.freeze({x,y})));
 
-// Retained for diagnostic compatibility; V2.7 renders moulded channels,
-// not wireform guards or exposed upper rails.
-export function upperGuardSections(route){
- if(route.kind==='orbit')return Object.freeze([
-  Object.freeze([0,5]),Object.freeze([11,route.points.length-1])
- ]);
- if(route.kind==='ramp')return Object.freeze([
-  Object.freeze([0,4]),Object.freeze([7,route.points.length-1])
- ]);
- throw Error('Unknown upper route '+route.kind);
-}
