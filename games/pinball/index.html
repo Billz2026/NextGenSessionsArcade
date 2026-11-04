@@ -46,7 +46,7 @@
       <div class="cabinet">
         <div class="cabinet-lights" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
         <div class="playfield-wrap" id="table-stage">
-          <canvas id="playfield" width="420" height="700" role="img" aria-label="Neon Tilt pinball playfield with flippers, red and gold bumpers, four stand-up targets, a right ramp and left orbit. Use the controls below to play."></canvas>
+          <canvas id="playfield" width="420" height="700" role="img" aria-label="Neon Tilt pinball playfield with flippers, red and gold bumpers, four stand-up targets, a right ramp and left orbit. Use the controls below to play. On touch devices, tap the upper table to nudge."></canvas>
           <div class="screen-overlay" id="screen-overlay" aria-live="polite">
             <span id="overlay-kicker">WELCOME TO NEON TILT</span>
             <strong id="overlay-title">READY TO PLAY?</strong>
@@ -54,8 +54,8 @@
           </div>
         </div>
         <div class="flipper-controls" aria-label="Pinball controls">
-          <button type="button" id="flipper-left" class="flipper-control" aria-label="Hold left flipper"><span class="control-icon">↖</span><strong>LEFT FLIPPER</strong><small>A / ←</small></button>
-          <button type="button" id="flipper-right" class="flipper-control" aria-label="Hold right flipper"><span class="control-icon">↗</span><strong>RIGHT FLIPPER</strong><small>D / →</small></button>
+          <button type="button" id="flipper-left" class="flipper-control" aria-label="Hold left flipper"><span class="control-icon">↖</span><strong>LEFT FLIPPER</strong><small>Z / A / ←</small></button>
+          <button type="button" id="flipper-right" class="flipper-control" aria-label="Hold right flipper"><span class="control-icon">↗</span><strong>RIGHT FLIPPER</strong><small>SLASH / D / →</small></button>
         </div>
       </div>
       <p class="machine-note"><span class="live-led" aria-hidden="true"></span> ARCADE MACHINE 002 <span>·</span> FULL TABLE IN VIEW</p>
@@ -110,8 +110,9 @@
 <div class="help-card">
         <strong>HOW TO PLAY</strong>
         <p>Launch and hit an upper N-G-S lane within six seconds for a SKILL SHOT. Use the ORBIT, RAMP, CENTER CROSSOVER and SKYLINE LOOP for COMBO bonuses. Any three route shots charge POWER GRID; hit the SCOOP within 18 seconds for NEON RUSH JACKPOT. Five spinner crossings start OVERDRIVE for 14 seconds. Complete four missions for an extra ball. Each ball has one 11-second early-drain save.</p>
-        <div><span>DESKTOP</span><strong>← / A &nbsp; · &nbsp; → / D &nbsp; · &nbsp; SPACE</strong></div>
-        <div><span>PHONE / FOLD</span><strong>ON-SCREEN BUTTONS</strong></div>
+        <div><span>DESKTOP</span><strong>Z / ← &nbsp; · &nbsp; SLASH / → &nbsp; · &nbsp; SPACE</strong></div>
+        <div><span>NUDGE / TILT</span><strong>X / . / ↑ &nbsp; · &nbsp; EXCESS = TILT</strong></div>
+        <div><span>PHONE / FOLD</span><strong>FLIP BUTTONS · TAP UPPER TABLE TO NUDGE</strong></div>
       </div>
 <div class="console-utilities"><span>SESSION CONTROL</span>
 <button id="reset" class="reset-button" type="button" title="Abandon current run and begin another three-ball game" disabled>RESTART RUN</button></div>
@@ -122,6 +123,6 @@
   <div class="development-note"><strong>REAL-TIME 3D PREVIEW:</strong> Original 3D geometry, metallic materials and dynamic lighting. The physics still runs in 2D and guided ramp/orbit paths remain simplified. A 2D fallback is available. No prizes, purchases or real-money play.</div>
 </main>
 <footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · 3D TABLE PREVIEW</span><a href="../../">BACK TO ARCADE ↗</a></footer>
-<script type="module" src="./game.mjs?v=36"></script>
+<script type="module" src="./game.mjs?v=39"></script>
 </body>
 </html>

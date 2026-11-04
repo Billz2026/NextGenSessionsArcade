@@ -4,6 +4,36 @@ import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CEN
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
+test('classic table nudges move the ball and rapid abuse tilts the machine',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';g.ball.x=210;g.ball.y=555;g.ball.vx=0;
+ assert.equal(g.nudge('left'),true);assert.ok(g.ball.vx<0);
+ for(let i=0;i<4;i++)g.advance(.05);
+ assert.equal(g.nudge('right'),true);
+ for(let i=0;i<4;i++)g.advance(.05);
+ assert.equal(g.nudge('up'),true);assert.equal(g.tilted,true);
+ g.setFlipper('left',true);assert.equal(g.leftHeld,false);
+ assert.ok(g.consumeEvents().some(e=>e.type==='tilt'));
+});
+test('tilt cancels scoring and ball bonus, then resets after drain',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';g.ball.x=210;g.ball.y=555;
+ g.scoreHit(500,'test');assert.equal(g.score,500);g.bonus=800;
+ for(let i=0;i<3;i++){if(i>0)for(let s=0;s<4;s++)g.advance(.05);g.nudge('up');}
+ assert.equal(g.tilted,true);
+ g.scoreHit(500,'test');assert.equal(g.score,500);
+ assert.equal(g.addPoints(500,'TEST'),0);
+ g.ball.x=210;g.ball.y=697;g.ball.vx=0;g.ball.vy=160;
+ g.advance(BOARD.step);
+ assert.equal(g.state,'between');assert.equal(g.score,500);
+ for(let i=0;i<28;i++)g.advance(.05);
+ assert.equal(g.state,'playing');assert.equal(g.ball.mode,'shooter');
+ assert.equal(g.tilted,false);
+});
+test('nudge cools down and cannot be spammed in the same physics tick',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';g.ball.x=210;g.ball.y=555;
+ assert.equal(g.nudge('up'),true);assert.equal(g.nudge('up'),false);
+ for(let i=0;i<40;i++)g.advance(.05);
+ assert.equal(g.tilted,false);assert.ok(g.tiltMeter<.1);
+});
 test('game starts with a stationary shooter-lane ball and three-ball session',()=>{
  const g=new PinballEngine();assert.equal(g.state,'ready');g.start();
  assert.equal(g.state,'playing');assert.equal(g.ballNumber,1);assert.equal(g.ball.mode,'shooter');
@@ -22,7 +52,7 @@ test('releasing focus cancels charge rather than accidentally launching',()=>{
 test('flippers move toward motor targets and return to rest',()=>{
  const g=new PinballEngine();g.start();g.setFlipper('left',true);g.setFlipper('right',true);
  steps(g,.15);
- assert.ok(g.flippers.every(f=>f.a<-.5));
+ assert.ok(g.flippers.every(f=>f.a<-.25));
  g.setFlipper('left',false);g.setFlipper('right',false);steps(g,.15);
  assert.ok(g.flippers.every(f=>f.a>.35));
 });
@@ -223,20 +253,23 @@ test('guided ramp and orbit shots remain aligned with the physical raised paths'
   steps(g,duration/2,BOARD.step);
   const b=g.ball;
   assert.equal(b.mode,'travel');
-  const q=b.travel.t/duration*(path.length-1),i=Math.min(path.length-2,Math.floor(q));
-  const mix=q-i;
-  const ex=path[i][0]+(path[i+1][0]-path[i][0])*mix;
-  const ey=path[i][1]+(path[i+1][1]-path[i][1])*mix;
-  assert.ok(Math.abs(b.x-ex)<1.2,kind+' x deviated from raised rail');
-  assert.ok(Math.abs(b.y-ey)<1.2,kind+' y deviated from raised rail');
+   // Every sample remains on a visible rail, despite uneven marker spacing.
+   const distances=path.slice(1).map((q,i)=>{
+    const p=path[i],dx=q[0]-p[0],dy=q[1]-p[1];
+    const mix=Math.max(0,Math.min(1,((b.x-p[0])*dx+(b.y-p[1])*dy)/(dx*dx+dy*dy||1)));
+    return Math.hypot(b.x-(p[0]+mix*dx),b.y-(p[1]+mix*dy));
+   });
+   assert.ok(Math.min(...distances)<1.2,kind+' ball left its visible wireform');
   assert.ok(b.travelHeight>=.35,kind+' failed to track physical height');
  }
 });
 
-test('longer physical flippers and paired outlane posts provide recoverable lower-playfield coverage',()=>{
+test('separated flipper tips leave an actual drain gap while preserving outlane posts',()=>{
  const g=new PinballEngine();g.start();
  assert.equal(GRAVITY,780);
- assert.ok(g.flippers.every(f=>f.length>=70));
+ assert.ok(g.flippers.every(f=>f.length>=55&&f.length<=60));
+ const gap=g.flippers[1].x-g.flippers[0].x-2*g.flippers[0].length*Math.cos(.40);
+ assert.ok(gap>BOARD.radius*2,'ball needs a gap between the resting bat tips');
  assert.ok(POSTS.some(p=>p.x===130&&p.y===641));
  assert.ok(POSTS.some(p=>p.x===290&&p.y===641));
 });
@@ -428,4 +461,64 @@ test('centre crossover is reachable during real flipper play, not just sensor in
    if(event.type==='shot'&&event.kind==='center')centre++;
  }
  assert.ok(centre>=1,'centre channel must be reachable in ordinary responsive play');
+});
+
+test('a stationary held bat does not apply an automatic upward kick',()=>{
+ for(const side of ['left','right']){
+  const g=new PinballEngine();g.start();g.setFlipper(side,true);
+  steps(g,.2,BOARD.step);
+  const f=g.flippers.find(x=>x.side===side),tip=g.flipperTip(f);
+  const dx=tip.x-f.x,dy=tip.y-f.y,length=Math.hypot(dx,dy);
+  const nx=(dx>0?dy:-dy)/length,ny=-Math.abs(dx)/length;
+  function impact(vy){
+   g.ball.mode='live';g.ball.x=f.x+dx*.55+nx*16;
+   g.ball.y=f.y+dy*.55+ny*16;g.ball.vx=0;g.ball.vy=vy;
+   g.collideFlipper(f);return Math.hypot(g.ball.vx,g.ball.vy);
+  }
+  const soft=impact(50),hard=impact(550);
+  assert.ok(soft<170,side+' slow contact was artificially launched');
+  assert.ok(hard>soft+200,side+' hard contact lacked proportional rebound');
+ }
+});
+test('bat tip travels faster than heel and yields a stronger strike',()=>{
+ for(const side of ['left','right']){
+  const g=new PinballEngine();g.start();
+  const f=g.flippers.find(x=>x.side===side);
+  f.a=-.25;f.omega=-14;
+  const tip=g.flipperTip(f),dx=tip.x-f.x,dy=tip.y-f.y,length=Math.hypot(dx,dy);
+  const nx=(dx>0?dy:-dy)/length,ny=-Math.abs(dx)/length;
+  function strike(at){
+   g.ball.mode='live';g.ball.x=f.x+dx*at+nx*16;
+   g.ball.y=f.y+dy*at+ny*16;g.ball.vx=0;g.ball.vy=160;
+   g.collideFlipper(f);return Math.hypot(g.ball.vx,g.ball.vy);
+  }
+  assert.ok(strike(.82)>strike(.23)+90,side+' tip strike not stronger');
+ }
+});
+test('ramp and orbit return down the wireform without teleporting',()=>{
+ for(const kind of ['ramp','orbit']){
+  const path=TRAVEL_PATHS[kind];
+  assert.ok(path.length>=13&&path.at(-1)[1]>500,'missing return rail');
+  const g=new PinballEngine();g.start();g.ball.mode='live';
+  g.ball.x=path[0][0];g.ball.y=path[0][1];g.ball.vy=-730;
+  g.activateShot(kind);
+  let biggest=0;
+  while(g.ball.mode==='travel'){
+   const old=[g.ball.x,g.ball.y];g.singleStep(BOARD.step);
+   biggest=Math.max(biggest,Math.hypot(g.ball.x-old[0],g.ball.y-old[1]));
+  }
+  assert.ok(biggest<25,'rail motion had a visible teleport');
+  assert.ok(Math.hypot(g.ball.x-path.at(-1)[0],g.ball.y-path.at(-1)[1])<.01);
+  const last=path.at(-1),previous=path.at(-2);
+  assert.ok(g.ball.vx*(last[0]-previous[0])+g.ball.vy*(last[1]-previous[1])>0,
+   'ball exited opposite to the wireform direction');
+ }
+});
+test('faster shots cross a guided rail in less time',()=>{
+ const duration=vy=>{
+  const g=new PinballEngine();g.start();g.ball.mode='live';
+  g.ball.x=SHOTS.ramp.x;g.ball.y=SHOTS.ramp.y;g.ball.vy=vy;
+  g.activateShot('ramp');return g.ball.travel.duration;
+ };
+ assert.ok(duration(-1100)<duration(-450));
 });

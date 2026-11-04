@@ -9,7 +9,7 @@ test('table focus is a visible desktop option with a clear exit, not a dead butt
  assert.match(html,/id="focus-exit"[^>]*aria-keyshortcuts="Escape"/);
  assert.ok(html.includes('focus.css?v=1'));
  assert.ok(html.indexOf('focus.css?v=1')>html.indexOf('console.css?v=5'));
- assert.ok(html.includes('game.mjs?v=36'));
+ assert.match(html,/game\.mjs\?v=\d+/);
  assert.ok(game.includes("focusButton?.addEventListener('click'"));
  assert.ok(game.includes("focusExit?.addEventListener('click'"));
  assert.ok(game.includes("document.documentElement.classList.toggle('pinball-focus',next)"));

@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=8';
-import {renderTable} from './visuals.mjs?v=21';
-import {createDotMatrix} from './dmd.mjs?v=11';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=10';
+import {renderTable} from './visuals.mjs?v=23';
+import {createDotMatrix} from './dmd.mjs?v=12';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -25,7 +25,7 @@ let bumperFlash=null,tableFlash=null;
 let topScores=[];try{const v=JSON.parse(localStorage.getItem(TOP_KEY)||'[]');if(Array.isArray(v))topScores=v.filter(n=>Number.isSafeInteger(n)&&n>=0).slice(0,5)}catch{}
 best=Math.max(best,...topScores,0);
 let lastModeMessage='',messageUntil=0,announcedGameOver=false;
-let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='';
+let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='',lastTilt=null;
 const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const dmd=createDotMatrix(document.getElementById('dmd-screen'),{reducedMotion});
 // A physically modelled Three.js scene is the preferred renderer. 2D Canvas
@@ -50,7 +50,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=23');
+  const {create3DTable}=await import('./render3d.mjs?v=25');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -134,13 +134,13 @@ function syncHUD(){
  const isReady=state==='ready',isOver=state==='gameover';
  const shooterReady=state==='playing'&&engine.ball?.mode==='shooter';
  const ballLive=state==='playing'&&!shooterReady;
- const saveRemaining=ballLive&&!engine.ballSaveUsed&&engine.ballLaunchedAt!==null?
+ const saveRemaining=ballLive&&!engine.tilted&&!engine.ballSaveUsed&&engine.ballLaunchedAt!==null?
   Math.max(0,engine.ballSaveUntil-engine.time):0;
- if(lastBall!==ball||lastStatus!==state){
+ if(lastBall!==ball||lastStatus!==state||lastTilt!==engine.tilted){
   ui.ball.textContent=ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
-  ui.status.textContent=isReady?'STANDBY':shooterReady?'BALL READY':
+  ui.status.textContent=engine.tilted?'TILT':isReady?'STANDBY':shooterReady?'BALL READY':
    ballLive?'BALL LIVE':state==='between'?'BETWEEN BALLS':'GAME OVER';
-  lastBall=ball;lastStatus=state;
+  lastBall=ball;lastStatus=state;lastTilt=engine.tilted;
  }
  ui.actionPanel.hidden=!(isReady||isOver||shooterReady);
  ui.start.hidden=!(isReady||isOver);
@@ -162,7 +162,7 @@ function syncHUD(){
  if(lastStatusText!==state){ui.start.textContent=isOver?'PLAY AGAIN':'START GAME';lastStatusText=state;}
  const activeMulti=engine.time<engine.multiplierUntil;
  ui.multi.textContent=activeMulti?'2×':'1×';
- ui.ballSave.textContent=state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
+ ui.ballSave.textContent=engine.tilted?'TILT':state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
    ?Math.ceil(engine.ballSaveUntil-engine.time)+'s':'OFF';
  for(const name of Object.keys(engine.missions)){ui.mission[name].classList.toggle('completed',engine.missions[name]);}
  ui.progress.lanes.textContent=engine.missions.lanes?'DONE':engine.lanes.size+' / 3';
@@ -182,16 +182,16 @@ function syncHUD(){
  ui.shots.textContent=engine.shots+' SHOTS';
  if(spinnerCount)spinnerCount.textContent=engine.spinnerTurns+' SPINS';
  if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
- ui.modeName.textContent=isReady?'TABLE OBJECTIVE':isOver?'RUN COMPLETE':
+ ui.modeName.textContent=engine.tilted?'TILT · NO SCORING':isReady?'TABLE OBJECTIVE':isOver?'RUN COMPLETE':
   state==='between'?'BETWEEN BALLS':shooterReady?'SKILL SHOT':
   rushActive?'NEON RUSH · JACKPOT LIT':overdriveActive?'SPINNER OVERDRIVE':
   engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
   engine.comboCount>=2?'COMBO X'+engine.comboCount:'CURRENT OBJECTIVE';
- ui.modeTimer.textContent=isReady?'HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP':isOver?'YOUR BEST '+fmt(best):
+ ui.modeTimer.textContent=engine.tilted?'BONUS FORFEITED · NEXT BALL TO RESET':isReady?'HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP':isOver?'YOUR BEST '+fmt(best):
   state==='between'?'NEXT BALL PREPARING':shooterReady?'HIT AN UPPER N-G-S LANE':
   remaining>0?Math.ceil(remaining)+' SECONDS · '+(rushActive?'HIT SCOOP':overdriveActive?'SPIN FOR BONUS':'MODE LIVE'):
   'RAMP · ORBIT · CROSSOVER · SKYLINE';
- ui.missionMessage.textContent=isReady?'CHARGE THE POWER GRID':isOver?'FINAL SCORE '+fmt(score):
+ ui.missionMessage.textContent=engine.tilted?'WAIT FOR BALL TO DRAIN':isReady?'CHARGE THE POWER GRID':isOver?'FINAL SCORE '+fmt(score):
   state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'SKILL SHOT AVAILABLE':
   rushActive?'SHOOT THE SCOOP':overdriveActive?'HIT THE SPINNER':
   engine.powerCharges===2?'ONE MORE ROUTE FOR JACKPOT':
@@ -295,7 +295,13 @@ function processEvents(){
   if(e.type==='award'&&!['SKILL SHOT','NEON COMBO','NEON RUSH JACKPOT','OVERDRIVE SPINNER'].includes(e.label)){
    ui.scoreFlash.textContent=e.label+' · +'+fmt(e.score);
   }
-  if(e.type==='ballsave'){ui.overlay.hidden=true;arcadeMessage('BALL SAVED! LAUNCH AGAIN');sound(720,.18);}
+  if(e.type==='nudge')sound(190,.045,'sawtooth');
+   if(e.type==='tilt'){
+    ui.scoreFlash.textContent='TILT · BONUS LOST';
+    ui.left.classList.remove('active');ui.right.classList.remove('active');
+    arcadeMessage('TILT · FLIPPERS DISABLED');sound(220,.34,'sawtooth');
+   }
+   if(e.type==='ballsave'){ui.overlay.hidden=true;arcadeMessage('BALL SAVED! LAUNCH AGAIN');sound(720,.18);}
   if(e.type==='extra'){arcadeMessage('EXTRA BALL UNLOCKED!');sound(1060,.22);}
   if(e.type==='multiplier'){arcadeMessage('2× MULTIPLIER · 20 SECONDS');}
   if(e.type==='frenzy'){arcadeMessage('BUMPER FRENZY · 15 SECONDS');}
@@ -340,9 +346,10 @@ ui.sound.addEventListener('click',()=>{
  if(soundOn)sound(780,.08);
 });
 function setHold(side,held){
- engine.setFlipper(side,held);
- (side==='left'?ui.left:ui.right).classList.toggle('active',held);
-}
+  const active=Boolean(held)&&!engine.tilted;
+  engine.setFlipper(side,active);
+  (side==='left'?ui.left:ui.right).classList.toggle('active',active);
+ }
 function bindHold(button,down,up){
  button.addEventListener('pointerdown',e=>{
   if(e.pointerType==='mouse'&&e.button!==0)return;
@@ -358,28 +365,41 @@ bindHold(ui.right,()=>setHold('right',true),()=>setHold('right',false));
 bindHold(ui.launch,()=>{engine.holdLaunch(true);ui.launch.classList.add('pressed');},
  ()=>{engine.holdLaunch(false);ui.launch.classList.remove('pressed');});
 const isInput=t=>t?.matches?.('input,textarea,select,[contenteditable="true"]');
-document.addEventListener('keydown',e=>{
- if(isInput(e.target))return;
- const k=e.code;
- if(['ArrowLeft','ArrowRight','Space','ArrowDown','KeyA','KeyD','Enter','KeyP'].includes(k))e.preventDefault();
- if(k==='ArrowLeft'||k==='KeyA')setHold('left',true);
- if(k==='ArrowRight'||k==='KeyD')setHold('right',true);
- if((k==='Space'||k==='ArrowDown')&&!e.repeat){engine.holdLaunch(true);ui.launch.classList.add('pressed');}
- if(k==='Enter'&&!e.repeat&&(engine.state==='ready'||engine.state==='gameover'))startGame();
-});
-document.addEventListener('keyup',e=>{
- if(e.code==='ArrowLeft'||e.code==='KeyA')setHold('left',false);
- if(e.code==='ArrowRight'||e.code==='KeyD')setHold('right',false);
- if(e.code==='Space'||e.code==='ArrowDown'){
+ const leftFlipperKeys=new Set(['ArrowLeft','KeyA','KeyZ']);
+ const rightFlipperKeys=new Set(['ArrowRight','KeyD','Slash']);
+ const nudgeKeys={KeyX:'left',Period:'right',ArrowUp:'up'};
+ const pressedKeys=new Set();
+ document.addEventListener('keydown',e=>{
+  if(isInput(e.target))return;
+  const k=e.code;
+  if(leftFlipperKeys.has(k)||rightFlipperKeys.has(k)||nudgeKeys[k]||
+     ['Space','ArrowDown','Enter'].includes(k))e.preventDefault();
+  if(leftFlipperKeys.has(k)){pressedKeys.add(k);setHold('left',true);}
+  if(rightFlipperKeys.has(k)){pressedKeys.add(k);setHold('right',true);}
+  if(nudgeKeys[k]&&!e.repeat)engine.nudge(nudgeKeys[k]);
+  if((k==='Space'||k==='ArrowDown')&&!e.repeat){engine.holdLaunch(true);ui.launch.classList.add('pressed');}
+  if(k==='Enter'&&!e.repeat&&(engine.state==='ready'||engine.state==='gameover'))startGame();
+ });
+ document.addEventListener('keyup',e=>{
+  const k=e.code;
+  pressedKeys.delete(k);
+  if(leftFlipperKeys.has(k))setHold('left',[...leftFlipperKeys].some(code=>pressedKeys.has(code)));
+  if(rightFlipperKeys.has(k))setHold('right',[...rightFlipperKeys].some(code=>pressedKeys.has(code)));
+  if(k==='Space'||k==='ArrowDown'){
    engine.holdLaunch(false);ui.launch.classList.remove('pressed');
- }
-});
+  }
+ });
 // Pointer controls work directly on the lower playfield, including two simultaneous touches.
 ui.canvas.addEventListener('pointerdown',e=>{
  if(e.pointerType==='mouse'&&e.button!==0)return;
  const rect=ui.canvas.getBoundingClientRect(),x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;
- if(y<.49||engine.state!=='playing')return;
- e.preventDefault();ui.canvas.setPointerCapture?.(e.pointerId);
+ if(engine.state!=='playing')return;
+  if(y<.49){
+   // Touch nudge without making the Fold/table-focus controls taller.
+   if(e.pointerType!=='mouse'){e.preventDefault();engine.nudge('up');}
+   return;
+  }
+  e.preventDefault();ui.canvas.setPointerCapture?.(e.pointerId);
  const side=x<.5?'left':'right';touchPointers.set(e.pointerId,side);setHold(side,true);
 });
 function releaseTouch(id){
@@ -392,7 +412,7 @@ ui.canvas.addEventListener('pointerup',e=>releaseTouch(e.pointerId));
 ui.canvas.addEventListener('pointercancel',e=>releaseTouch(e.pointerId));
 ui.canvas.addEventListener('lostpointercapture',e=>releaseTouch(e.pointerId));
 function loseFocus(){
- touchPointers.clear();ui.left.classList.remove('active');ui.right.classList.remove('active');
+ touchPointers.clear();pressedKeys.clear();ui.left.classList.remove('active');ui.right.classList.remove('active');
  ui.launch.classList.remove('pressed');
  engine.setFlipper('left',false);engine.setFlipper('right',false);
  engine.cancelLaunchCharge();

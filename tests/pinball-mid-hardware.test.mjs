@@ -49,12 +49,12 @@ test('Power Core arc progression follows the real charge limit and jackpot state
  assert.ok(three.includes('i<mid.charges?2.2:.13'));
  assert.ok(canvas.includes('for(let i=0;i<POWER_CORE.charges;i++)'));
 });
-test('raised decorative centre parts remain separate from unchanged physics',()=>{
+test('raised decorative centre parts stay separate from collision logic',()=>{
  assert.ok(three.includes('const coreGlass=new T.MeshPhysicalMaterial'));
  assert.ok(three.includes('cyl(powerX,powerY,.34,.68,.045,coreGlass'));
  assert.ok(three.includes('const targetBacking=new T.MeshPhysicalMaterial'));
  assert.ok(!game.includes('midTableState'),'the state is derived in renderers');
- assert.ok(game.includes("visuals.mjs?v=21"));
- assert.ok(game.includes("render3d.mjs?v=23"));
+ assert.match(game,/visuals\.mjs\?v=\d+/);
+ assert.match(game,/render3d\.mjs\?v=\d+/);
  assert.match(html,/src="\.\/game\.mjs\?v=\d+"/, 'the page loads a cache-versioned game controller');
 });
