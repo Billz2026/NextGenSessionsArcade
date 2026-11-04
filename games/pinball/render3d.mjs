@@ -4,7 +4,7 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=5';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=6';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
@@ -237,31 +237,26 @@ export async function create3DTable(host){
   p.fillStyle=i%2?'#ffa66a':'#ffe48f';
   p.fillRect(112+i*12,410+i*40,14,24);
  }
- // Moulded, inlaid routes replace old thin painted transport lines.
- // This is the lacquer BELOW the raised plastic channels; the coloured
- // bands mirror exactly the same four authoritative guided-ball paths.
- for(const route of UPPER_ROUTES){
-  const edges=guideEdges(route);
-  const primary=route.kind==='orbit'||route.kind==='ramp';
-  const colour=route.kind==='ramp'?'#d7a05f':
-   route.kind==='orbit'?'#d6bb7c':'#b09262';
-  p.beginPath();
-  p.moveTo(edges[0].left.x*2,edges[0].left.y*2);
+ // Only TWO restrained, outer-edge entry channels are painted.
+ // Previous full-path outlines crisscrossed the bumpers and were removed.
+ // The complete ball travel path remains unchanged in engine.mjs.
+ for(const channel of VISIBLE_CHANNELS){
+  const edges=guideEdges(channel);
+  const trim=channel.kind==='orbit'?'#977741':'#9c5746';
+  p.beginPath();p.moveTo(edges[0].left.x*2,edges[0].left.y*2);
   for(let i=1;i<edges.length;i++)
    p.lineTo(edges[i].left.x*2,edges[i].left.y*2);
   for(let i=edges.length-1;i>=0;i--)
    p.lineTo(edges[i].right.x*2,edges[i].right.y*2);
-  p.closePath();p.globalAlpha=primary?.72:.44;
-  p.fillStyle='#0d0c0a';p.fill();p.globalAlpha=1;
-  for(const side of ['left','right']){
-   p.beginPath();
-   p.moveTo(edges[0][side].x*2,edges[0][side].y*2);
-   for(let i=1;i<edges.length;i++)
-    p.lineTo(edges[i][side].x*2,edges[i][side].y*2);
-   p.globalAlpha=primary?.52:.34;
-   p.lineWidth=3.0;p.lineJoin='round';p.lineCap='round';
-   p.strokeStyle=colour;p.stroke();p.globalAlpha=1;
+  p.closePath();p.fillStyle='#15110d';p.globalAlpha=.72;p.fill();
+  p.globalAlpha=1;
+  p.beginPath();
+  p.moveTo(edges[0][channel.trimSide].x*2,edges[0][channel.trimSide].y*2);
+  for(let i=1;i<edges.length;i++){
+   const pt=edges[i][channel.trimSide];p.lineTo(pt.x*2,pt.y*2);
   }
+  p.lineWidth=2.5;p.lineJoin='round';p.lineCap='round';
+  p.strokeStyle=trim;p.globalAlpha=.56;p.stroke();p.globalAlpha=1;
  }
   // Bumper field: a recessed six-sided mounting deck groups the three genuine
   // bumper collision zones. This is underlay only, never a new obstacle.
@@ -397,25 +392,22 @@ export async function create3DTable(host){
   cyl(X(point.x),Y(point.y),.45,.14,.54,chrome);
   cyl(X(point.x),Y(point.y),.74,.17,.09,darkChrome);
  }
- // A low cast-metal crown traces the upper edge below the moving ball.
-  // Visual-only trim never obstructs a path or introduces a phantom collider.
-  const crownSteel=metal('#9b7b45',.46,.35);
-  const crownShadow=metal('#19140f',.58,.15);
-  const crownPath=new T.CatmullRomCurve3(
-   UPPER_ARCH.map(p=>new T.Vector3(X(p.x),Y(p.y),.204)),false,'centripetal'
-  );
-  add(new T.TubeGeometry(crownPath,72,.045,10,false),
-   crownShadow,0,0,0,false);
-  const crownGlint=new T.CatmullRomCurve3(
-   UPPER_ARCH.map(p=>new T.Vector3(X(p.x),Y(p.y),.228)),false,'centripetal'
-  );
-  add(new T.TubeGeometry(crownGlint,72,.009,8,false),
-   crownSteel,0,0,0,false);
-  for(const i of [2,4,6]){
-   const p=UPPER_ARCH[i],xx=X(p.x),yy=Y(p.y);
-   cyl(xx,yy,.25,.118,.035,crownShadow,16);
-   cyl(xx,yy,.272,.057,.026,crownSteel,12);
-  }
+ // A flat lacquered header strip replaces the old upper chrome arch.
+ // This sits under every active rollover and cannot look like a raised rail.
+ const crownShape=new T.Shape();
+ UPPER_ARCH.forEach((p,i)=>i?
+  crownShape.lineTo(X(p.x),Y(p.y)):
+  crownShape.moveTo(X(p.x),Y(p.y)));
+ for(let i=UPPER_ARCH.length-1;i>=0;i--){
+  const p=UPPER_ARCH[i];
+  crownShape.lineTo(X(p.x),Y(p.y+7));
+ }
+ crownShape.closePath();
+ const crownInk=new T.MeshBasicMaterial({
+  color:'#403320',transparent:true,opacity:.52,side:T.DoubleSide,depthWrite:false
+ });
+ add(new T.ShapeGeometry(crownShape),crownInk,0,0,.198,false);
+ const crownSteel=metal('#8a744c',.5,.25);
   // Real upper rollover centres with an elevated cross-bridge above each
  // lane sensor. These high mounts never create invisible ball collisions.
  const laneLamps=[],laneGateMaterials=[];
@@ -556,23 +548,19 @@ export async function create3DTable(host){
   cyl(x,Y(t.y-24),.29,.094,.048,status,16);
   targetStatusMaterials.push(status);
  }
- // V2.7: Real raised ball paths are represented by continuous moulded
- // channel floors and flush gold inlays, never floating metallic wire rails.
- // All lane samples derive from the physics engine's transport curves.
+ // Outer-edge plastic lane approaches only. Tracing the complete engine
+ // trajectory through the centre caused unreadable overlapping gold lines.
  const routeHardware=[];
  const laneTrim=new T.MeshPhysicalMaterial({
-  color:'#d1a65b',metalness:.32,roughness:.38,side:T.DoubleSide,
+  color:'#8c7042',metalness:.08,roughness:.62,transparent:true,opacity:.76,
+  side:T.DoubleSide,depthWrite:false,
   polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
  });
  const laneBaseMaterials={
-  orbit:new T.MeshPhysicalMaterial({color:'#17130d',roughness:.43,metalness:.10,
-   clearcoat:.52,transparent:true,opacity:.88,side:T.DoubleSide,depthWrite:false}),
-  ramp:new T.MeshPhysicalMaterial({color:'#201312',roughness:.4,metalness:.10,
-   clearcoat:.58,transparent:true,opacity:.88,side:T.DoubleSide,depthWrite:false}),
-  center:new T.MeshPhysicalMaterial({color:'#17140e',roughness:.5,metalness:.08,
-   transparent:true,opacity:.72,side:T.DoubleSide,depthWrite:false}),
-  skyline:new T.MeshPhysicalMaterial({color:'#1b170f',roughness:.5,metalness:.08,
-   transparent:true,opacity:.72,side:T.DoubleSide,depthWrite:false})
+  orbit:new T.MeshPhysicalMaterial({color:'#17130d',roughness:.62,metalness:.02,
+   transparent:true,opacity:.94,side:T.DoubleSide,depthWrite:false}),
+  ramp:new T.MeshPhysicalMaterial({color:'#221612',roughness:.60,metalness:.02,
+   transparent:true,opacity:.94,side:T.DoubleSide,depthWrite:false})
  };
  function channelStrip(route,from,to,lift,mat){
   // A flat ribbon along the actual elevated ball path. Side-band geometry
@@ -599,13 +587,15 @@ export async function create3DTable(host){
   geometry.setIndex(indices);geometry.computeVertexNormals();
   return add(geometry,mat,0,0,0,false);
  }
- for(const route of UPPER_ROUTES){
-  // The steel ball centre is path.z + UPPER_BALL_RADIUS. The floor stays
-  // slightly below the sphere, with no roof obscuring it at crossings.
-  channelStrip(route,0,1,-.025,laneBaseMaterials[route.kind]);
-  channelStrip(route,.006,.075,-.015,laneTrim);
-  channelStrip(route,.925,.994,-.015,laneTrim);
-  if(route.kind!=='orbit'&&route.kind!=='ramp')continue;
+ for(const channel of VISIBLE_CHANNELS){
+  // These physical approaches intentionally stop before the bumper field.
+  // Secondary shots use flush lit markers, not overlapping elevated channels.
+  channelStrip(channel,0,1,-.025,laneBaseMaterials[channel.kind]);
+  if(channel.trimSide==='right')
+   channelStrip(channel,.929,.985,-.015,laneTrim);
+  else
+   channelStrip(channel,.015,.071,-.015,laneTrim);
+  const route=UPPER_ROUTES.find(r=>r.kind===channel.kind);
   const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
   const cheek=metal('#33291c',.4,.25),lip=metal('#b89555',.3,.50);
   // A wide, flat entry mouth makes the required shot obvious without

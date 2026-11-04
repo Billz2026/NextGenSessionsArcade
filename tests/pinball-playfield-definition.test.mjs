@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {BOARD,LANES,BUMPERS,SLINGS,SHOTS,PinballEngine} from '../games/pinball/engine.mjs';
-import {UPPER_ROLLOVERS,UPPER_ROUTES,guideEdges} from '../games/pinball/upper-hardware.mjs';
+import {UPPER_ROLLOVERS,UPPER_ROUTES,VISIBLE_CHANNELS,guideEdges} from '../games/pinball/upper-hardware.mjs';
 import {MID_BUMPERS,MID_TARGETS} from '../games/pinball/mid-hardware.mjs';
 import {LOWER_SLINGS,LOWER_GUIDES} from '../games/pinball/lower-hardware.mjs';
 import {NEON_FINISH} from '../games/pinball/classic-finish.mjs';
@@ -60,7 +60,9 @@ test('all four original shots and fixed-step game physics remain playable',()=>{
  assert.equal(BOARD.width,420);
  assert.equal(BOARD.height,700);
  assert.equal(BOARD.step,1/240);
- assert.match(three,/const edges=guideEdges\(route\)/);
+ assert.match(three,/const edges=guideEdges\(channel\)/);
+ assert.equal(VISIBLE_CHANNELS.length,2);
+ assert.ok(VISIBLE_CHANNELS.every(c=>SHOTS[c.kind]));
  for(const r of UPPER_ROUTES)
   assert.equal(guideEdges(r).length,r.points.length);
  assert.ok(!three.includes('new PinballEngine('));

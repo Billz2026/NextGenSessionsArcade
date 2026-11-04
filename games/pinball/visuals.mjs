@@ -4,7 +4,7 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=5';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=6';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
@@ -123,9 +123,9 @@ function drawBackglass(c,anim){
 function drawUpperCrown(c){
  // Two brushed-metal sweeps under the ball, set back from the N/G/S switches.
  const arch=UPPER_ARCH.map(p=>[p.x,p.y]);
- line(c,arch,'#121b2b',9);
- line(c,arch,'#ba914a',5.2);
- line(c,arch,'#f3c74f',1.25);
+ line(c,arch,'#15110e',12);
+ line(c,arch,'#3f3526',4);
+ line(c,arch,'#7b6439',.8);
  for(const i of [2,4,6]){
   const p=UPPER_ARCH[i];
   disk(c,p.x,p.y,5.8,'#292016','#d1aa59',1.5);
@@ -133,64 +133,47 @@ function drawUpperCrown(c){
  }
 }
 function drawOrbits(c){
- // All four visually raised routes follow the engine's actual transport
- // centres. Solid matte lane beds replace the former dozens of thin wires.
- // Dark lanes are drawn before devices so pop bumpers remain clearly exposed.
- const ordered=[...UPPER_ROUTES].sort((a,b)=>
-  (a.kind==='orbit'||a.kind==='ramp'?1:0)-
-  (b.kind==='orbit'||b.kind==='ramp'?1:0));
- for(const route of ordered){
-  const primary=route.kind==='orbit'||route.kind==='ramp';
-  const smooth=roundedWirePoints(route.points,3);
-  const edges=guideEdges({points:smooth,width:route.width});
-  const gold=route.kind==='ramp'?'#d9aa69':route.kind==='orbit'?'#e1c47e':'#a98b58';
-  const fill=route.kind==='ramp'?'#211513':
-   route.kind==='orbit'?'#17130f':'#181510';
-  c.save();c.globalAlpha=primary?.90:.72;
-  c.beginPath();
-  c.moveTo(edges[0].left.x,edges[0].left.y);
+ // Space-Cadet-like readability: one sculpted left orbit entry and one
+ // sculpted right ramp entry. No complete transport overlays crossing the
+ // bumpers or four nested loops around the playfield.
+ for(const channel of VISIBLE_CHANNELS){
+  const smooth=roundedWirePoints(channel.points,3);
+  const edges=guideEdges({points:smooth,width:channel.width});
+  const fill=channel.kind==='orbit'?'#15120f':'#1d1411';
+  const accent=channel.kind==='orbit'?'#9c7b47':'#a8624d';
+  c.save();
+  c.beginPath();c.moveTo(edges[0].left.x,edges[0].left.y);
   for(let i=1;i<edges.length;i++)c.lineTo(edges[i].left.x,edges[i].left.y);
-  for(let i=edges.length-1;i>=0;i--)c.lineTo(edges[i].right.x,edges[i].right.y);
+  for(let i=edges.length-1;i>=0;i--)
+   c.lineTo(edges[i].right.x,edges[i].right.y);
   c.closePath();c.fillStyle=fill;c.fill();
+  // Only the OUTER edge is accented. No double gold rail outline.
+  const side=channel.trimSide;
+  const points=edges.map(e=>[e[side].x,e[side].y]);
+  c.globalAlpha=.78;
+  line(c,points,accent,1.8);
   c.globalAlpha=1;
-  for(const side of ['left','right']){
-   const points=edges.map(e=>[e[side].x,e[side].y]);
-   line(c,points,'rgba(10,9,8,.88)',primary?3.4:2.5);
-   c.globalAlpha=primary?.86:.53;
-   line(c,points,gold,primary?1.75:1.2);
-   c.globalAlpha=1;
-  }
-  // Sparse inset directional arrows rather than overhead wire crossbars.
-  for(const i of [Math.floor(smooth.length*.16),Math.floor(smooth.length*.72)]){
-   const p=smooth[i],q=smooth[Math.min(smooth.length-1,i+2)];
-   if(!p||!q)continue;
+  // One subtle directional insert per open approach.
+  const n=Math.floor(smooth.length*.40),p=smooth[n],q=smooth[n+2];
+  if(p&&q){
    const angle=Math.atan2(q.y-p.y,q.x-p.x)+Math.PI/2;
-   c.save();c.translate(p.x,p.y);c.rotate(angle);
-   c.beginPath();c.moveTo(0,-5.6);c.lineTo(4.5,4.8);
-   c.lineTo(0,2.2);c.lineTo(-4.5,4.8);c.closePath();
-   c.fillStyle=route.kind==='ramp'?'#f0a08a':'#e8c37b';
-   c.globalAlpha=primary?.8:.55;
-   c.fill();c.restore();
+   c.translate(p.x,p.y);c.rotate(angle);
+   c.beginPath();c.moveTo(0,-6);c.lineTo(4.3,3);
+   c.lineTo(0,1);c.lineTo(-4.3,3);c.closePath();
+   c.fillStyle=channel.kind==='ramp'?'#e9a085':'#e8c88a';
+   c.fill();
   }
   c.restore();
  }
- // The entry mouths are wider than the moving ball and align exactly
- // to the real scoring sensors. Nothing decorative can catch a ball.
+ // Two clearly marked physical mouths. Centre/Skyline retain the small
+ // mission-controlled shot LEDs instead of long interfering channel bands.
  for(const route of UPPER_ROUTES){
   const ex=route.entrance.x,ey=route.entrance.y;
-  const primary=route.kind==='orbit'||route.kind==='ramp';
-  if(primary){
-   rect(c,ex-18,ey-10,36,18,4,'#16120d','#bd985e',1.4);
-   for(const dx of [-18,18]){
-    rect(c,ex+dx-3,ey-15,6,15,2,'#342819','#ab8c54',1);
-    bolt(c,ex+dx,ey-15,1.5);
-   }
-   disk(c,ex,ey,4,'#2b221a','#eed0a4',1);
-   text(c,route.kind.toUpperCase(),ex,ey+19,9,'#f3dcb1','Barlow Condensed',900);
-  }else{
-   rect(c,ex-22,ey+9,44,15,3,'#17130e','#8a7147',1);
-   text(c,route.kind==='center'?'CROSS':'SKY',ex,ey+16.5,9,
-    '#e9c897','Barlow Condensed',900);
+  if(route.kind==='orbit'||route.kind==='ramp'){
+   rect(c,ex-18,ey-10,36,17,4,'#17120e','#927242',1.2);
+   disk(c,ex,ey,4,'#35251a','#ddba85',1);
+   text(c,route.kind.toUpperCase(),ex,ey+17,9,
+    '#f3dcb1','Barlow Condensed',900);
   }
  }
 }

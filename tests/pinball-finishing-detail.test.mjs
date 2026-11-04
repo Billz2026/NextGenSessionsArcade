@@ -14,10 +14,11 @@ test('upper route finishing uses four actual guided paths and no metal runners',
   assert.equal(guideEdges(route).length,route.points.length);
  }
  assert.ok(three.includes('function channelStrip(route,from,to,lift,mat)'));
- assert.ok(three.includes('channelStrip(route,0,1,-.025,laneBaseMaterials[route.kind])'));
+ assert.ok(three.includes('channelStrip(channel,0,1,-.025,laneBaseMaterials[channel.kind])'));
  assert.ok(!three.includes('function railTube('));
  assert.ok(!three.includes('routeRod('));
  assert.ok(!canvas.includes('upperGuardSections(route)'));
+ assert.ok(canvas.includes('for(const channel of VISIBLE_CHANNELS)'));
 });
 test('flipper-area indicator lamps react only to real shot and mission states',()=>{
  const game=new PinballEngine();game.start();
