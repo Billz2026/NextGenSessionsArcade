@@ -326,19 +326,23 @@ test('an expired ball-save window does not prevent a genuine drain',()=>{
  g.singleStep(BOARD.step);
  assert.equal(g.state,'between');
 });
-test('unattended flippers eventually drain instead of permanently trapping the ball',()=>{
+test('unattended flippers eventually drain even with the one-use kickback',()=>{
  const g=new PinballEngine();g.start();g.launch();
- let saveCount=0,drains=0;
- for(let i=0;i<32/BOARD.step&&!drains;i++){
+ let saveCount=0,drains=0,kicks=0;
+ // Once-only outlane recovery extends the run; it must never create an
+ // infinite unattended ball or a second free recovery charge.
+ for(let i=0;i<90/BOARD.step&&!drains;i++){
   if(g.ball?.mode==='shooter')g.launch();
   g.singleStep(BOARD.step);
   for(const e of g.consumeEvents()){
    if(e.type==='ballsave')saveCount++;
+   if(e.type==='kickback')kicks++;
    if(e.type==='drain')drains++;
   }
  }
  assert.equal(saveCount,1);
- assert.equal(drains,1);
+ assert.ok(kicks<=1,'a normal turn gets no more than one outlane kick');
+ assert.equal(drains,1,'even with rescue, unattended play must eventually drain');
 });
 test('responsive flipper play keeps the first ball active beyond initial short-drain window',()=>{
  const g=new PinballEngine();g.start();g.launch();
