@@ -59,12 +59,33 @@ test('classic fallback keeps rendering after starting a ball',()=>{
   assert.ok(calls.texts.includes('BALL SAVE'));
  }finally{globalThis.document=original}
 });
-test('table marquee is a clean flashy arcade logo without the website brand line',()=>{
+test('marquee uses standalone red neon tubing without a surrounding plaque',()=>{
  assert.doesNotMatch(canvasSource,/fillText\('NEXTGEN SESSIONS'/);
  assert.doesNotMatch(threeSource,/fillText\('NEXTGEN SESSIONS'/);
  for(const source of [canvasSource,threeSource]){
-  assert.match(source,/italic 900/);
+  assert.match(source,/italic 500/);
   assert.match(source,/#ec3635/i);
-  assert.match(source,/#ff6d5b/i);
+  assert.match(source,/#f3c74f/i);
  }
+ const draw=canvasSource.split('function drawNeonMarquee(c,anim){')[1]?.split('function drawBackglass')[0];
+ const texture=threeSource.split('function cabinetMarquee(){')[1]?.split('// Backbox and lacquered hardwood body')[0];
+ assert.ok(draw&&texture,'both unboxed sign renderers must exist');
+ for(const section of [draw,texture]){
+  assert.doesNotMatch(section,/(?:strokeRect|fillRect|roundRect)\(/,
+   'the neon lettering must have no rectangle behind or around it');
+  assert.match(section,/strokeText\('NEON TILT'/);
+ }
+ assert.match(canvasSource,/drawNeonMarquee\(ctx,anim\)/,'2D sign must pulse each frame');
+ assert.match(threeSource,/neonMarqueeMaterial\.opacity=marqueePulse/,'3D sign must pulse');
+ assert.match(threeSource,/reducedMotion\?1:/,'3D sign honours reduced motion');
+});
+
+test('black lacquer and deterministic gold dust are shared by both renderers',()=>{
+ assert.match(canvasSource,/rgba\(243,199,79,\.20\)/);
+ assert.match(canvasSource,/for\(let i=0;i<290;i\+\+\)/);
+ assert.match(threeSource,/rgba\(243,199,79,\.22\)/);
+ assert.match(threeSource,/for\(let i=0;i<450;i\+\+\)/);
+ assert.match(threeSource,/const wireSteel=metal\('#d0aa60'/);
+ assert.doesNotMatch(canvasSource,/Math\.random\(/);
+ assert.doesNotMatch(threeSource,/Math\.random\(/);
 });
