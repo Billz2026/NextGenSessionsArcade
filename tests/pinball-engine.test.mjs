@@ -184,9 +184,9 @@ test('multi-stage flight missions award command flags and rank promotions',()=>{
   assert.equal(g.armCommandMission(),true);assert.equal(g.startCommandMission(),true);
   for(const action of mission.sequence)assert.equal(g.progressCommand(action),true);
  }
- assert.equal(g.rankName,RANKS.at(-1));assert.equal(g.commandFlags,4);
+ assert.equal(g.rankName,RANKS.at(-1));assert.equal(g.commandFlags,FLIGHT_MISSIONS.length);
  const events=g.consumeEvents();
- assert.equal(events.filter(e=>e.type==='commandcomplete').length,4);
+ assert.equal(events.filter(e=>e.type==='commandcomplete').length,FLIGHT_MISSIONS.length);
  assert.equal(events.filter(e=>e.type==='promotion').length,4);
  g.start();assert.equal(g.rankName,'CADET');assert.equal(g.commandFlags,0);
 });
