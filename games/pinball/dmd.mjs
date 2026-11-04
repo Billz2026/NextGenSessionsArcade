@@ -25,6 +25,7 @@ export function getDmdStatus(game,now=0){
  const ball=game.ballNumber||1;
  if(game.ball?.mode==='shooter')return ['BALL '+ball+' READY','HOLD TO LAUNCH'];
  if(game.ball?.mode==='scoop')return ['SCOOP CAPTURED','WAIT FOR EJECT'];
+ if(game.tilted)return ['TILT','FLIPPERS OFF · NO BONUS'];
  if(game.hurryUpUntil>game.time)
   return ['JACKPOT LIT','SCOOP · '+Math.ceil(game.hurryUpUntil-game.time)+' SEC'];
  if(game.overdriveUntil>game.time)
@@ -53,6 +54,8 @@ export function describeDmdEvent(event,game=null){
  if(!event)return null;
  switch(event.type){
   case 'start':return {headline:'PLAYER ONE READY',sub:'BALL 1 OF 3',priority:3,duration:1100};
+  case 'nudge':return {headline:'TABLE NUDGE',sub:'WATCH THE TILT!',priority:1,duration:700};
+  case 'tilt':return {headline:'TILT!',sub:'BONUS FORFEITED',priority:5,duration:3200};
   case 'ball':return {headline:'BALL '+(event.ball||1)+' READY',sub:'HOLD TO LAUNCH',priority:3,duration:1700};
   case 'launch':return game?.skillShotPending?{headline:'SKILL SHOT LIT',sub:'HIT UPPER LANE',priority:3,duration:1500}:{headline:'BALL IN PLAY',sub:'USE THE FLIPPERS',priority:2,duration:1100};
   case 'shot':return {
