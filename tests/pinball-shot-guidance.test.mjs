@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PinballEngine,SHOTS,SCOOP,FLIGHT_MISSIONS} from '../games/pinball/engine.mjs';
-import {SHOT_INDICATORS,requiredShot,shotIndicatorState,shotIndicatorBrightness}
+import {SHOT_INDICATORS,requiredShot,shotIndicatorState,shotIndicatorBrightness,approachLampState}
  from '../games/pinball/shot-guidance.mjs';
 
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
@@ -104,4 +104,28 @@ test('both renderers use one shared guidance module and avoid new collision or s
  assert.match(canvas,/G\(c,40,420,91,460,\[\[0,'#5b4e3a'/);
  assert.doesNotMatch(engineSource,/shot-guidance\.mjs/);
  assert.doesNotMatch(three,/new T\.BoxGeometry\(\d+,\d+,\d+\).*SHOT_INDICATORS/);
+});
+
+test('lane lens illuminates on requested shots and the actual ball transport state',()=>{
+ const game=new PinballEngine();
+ assert.equal(approachLampState(game,'orbit'),'idle');
+ game.start();
+ assert.equal(approachLampState(game,'orbit'),'idle');
+ game.armCommandMission();
+ assert.equal(approachLampState(game,'ramp'),'mission');
+ assert.equal(approachLampState(game,'orbit'),'idle');
+ game.ball.mode='live';
+ game.activateShot('orbit');
+ assert.equal(approachLampState(game,'orbit'),'travel');
+ assert.equal(approachLampState(game,'ramp'),'mission');
+ game.tilted=true;
+ assert.equal(approachLampState(game,'orbit'),'idle','TILT must not imply a working lamp');
+});
+
+test('ball-travel lens effect is smooth and respects reduced-motion',()=>{
+ const samples=[0,.2,.4,.6,.8,1].map(t=>shotIndicatorBrightness('travel',t,false));
+ assert.ok(samples.every(n=>n>=.78&&n<=1));
+ assert.ok(Math.max(...samples)-Math.min(...samples)>.04);
+ for(const t of [0,.3,1,50])
+  assert.equal(shotIndicatorBrightness('travel',t,true),1);
 });
