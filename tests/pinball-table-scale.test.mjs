@@ -60,7 +60,7 @@ test('physics, UI controls and cache-versioned 3D entrypoints remain consistent'
  assert.equal(BOARD.width,420);assert.equal(BOARD.height,700);
  assert.equal(BOARD.step,1/240);
  assert.match(game,/render3d\.mjs\?v=\d+/);
- assert.match(html,/game\.css\?v=18/);
+ assert.match(html,/game\.css\?v=19/);
  assert.match(html,/game\.mjs\?v=\d+/);
  assert.match(html,/id="flipper-left"/);assert.match(html,/id="flipper-right"/);
 });
