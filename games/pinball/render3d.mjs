@@ -904,7 +904,7 @@ export async function create3DTable(host){
  const arrowMesh=[];
  const arrowPositions=[
   [93,346,'orbit',-.18],[321,350,'ramp',.22],
-  [204,386,'spinner',0],[208,416,'center',0],
+  [204,347,'spinner',0],[208,416,'center',0],
   [125,360,'skyline',-.14],[312,433,'scoop',.25],
   [212,386,'target',0],
   [136,568,'lower',0],[282,568,'lower',0]
