@@ -1,10 +1,25 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4O — lower-table control and accurate feeds (playable 3D beta)
+**Current stage:** Phase V2 — NextGen red identity, six flight missions and Neon Overload multiball (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase V2 — red arcade cabinet, deeper missions and three-ball pinball
+
+- Recoloured the 3D physical cabinet and Canvas fallback from gold-dominant metal to NextGen Sessions Arcade's official red palette. Narrow gold hardware accents and the original flipper sweet spots remain.
+- Rebuilt both versions of the physical NEON TILT marquee with readable white-hot red lettering, matching red tube outlines and a brighter red bloom. No homepage redesign or physical table geometry changes.
+- Expanded four flight missions to six: **Signal Chase** uses five spinner crossings plus the orbit and crossover; **Redline Run** requires ramp-orbit-ramp within 22 seconds. The original four flight missions, timers, target-bank activation, and Cadet-to-Commander rank progression remain.
+- Distinct mission flags prevent farming promotions by replaying the same mission. Four distinct completions unlock the 35-second five-shot **Neon Command** wizard mission.
+- Implemented **Neon Overload** using a genuine array of independently simulated pinballs, not three graphics following one collider. A full target bank lights a scoop ball lock when flight mission control is idle; two captured balls are held virtually and served replacement balls. A third capture releases three independently moving balls onto the table.
+- During multiball the ramp/orbit award 25,000 and 35,000 jackpots once per cycle; both light the 100,000-point scoop super jackpot. A 10-second multiball ball save and one lane-set add-a-ball provide recoveries. After the multiball population reaches one, the surviving ball continues the original turn.
+- Updated the live dot-matrix display, HUD, machine audio and 2D/3D ball rendering. Machine physics still runs in a deterministic fixed 240 Hz 2D step even in the 3D presentation.
+- Added regression coverage for distinct mission progression, wizard mode, actual scoop capture locks, jackpot sequencing, multiple independent balls, drain safety and add-a-ball limits.
+
+**Gameplay order:** Finish target bank → resolve/complete the armed flight mission → shoot the lit scoop for LOCK. Repeat to lock two balls. A third lit scoop starts Neon Overload multiball. Flight missions take precedence over locks when they require the same scoop.
+
+**Quality gate:** GitHub Actions performs syntax checks and physics/display regression tests. Desktop GPU visuals and Galaxy Z Fold 7 performance require a browser/device inspection prior to calling this a fully validated visual release.
 
 ## Phase 4O — lower-table control and accurate feeds
 
