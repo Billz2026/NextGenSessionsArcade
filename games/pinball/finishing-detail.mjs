@@ -10,10 +10,3 @@ export function directionInsertActive(engine,kind){
   (last?.kind===kind && engine.time>=last.at &&
    engine.time-last.at<5));
 }
-// Only the outside high safety rail stays visible at the upper crossing.
-// Both bottom runners remain continuous and aligned with the engine path.
-export function elevatedGuardSide(kind){
- if(kind==='orbit')return 'right';
- if(kind==='ramp')return 'left';
- throw Error('Unknown wireform route '+kind);
-}
