@@ -44,30 +44,33 @@ function plastic(c,path,color,glow){
 function drawBase(c,anim){
  const bg=G(c,0,0,420,700,[
   [0,NEON_FINISH.upper],[.35,NEON_FINISH.mid],
-  [.70,NEON_FINISH.lower],[1,'#22263e']
+  [.70,NEON_FINISH.lower],[1,'#070707']
  ]);
  c.fillStyle=bg;c.fillRect(0,0,BOARD.width,BOARD.height);
- const blueSheen=c.createRadialGradient(138,268,15,138,268,235);
- blueSheen.addColorStop(0,'rgba(59,156,230,.24)');
- blueSheen.addColorStop(1,'rgba(59,156,230,0)');
- c.fillStyle=blueSheen;c.fillRect(0,0,420,700);
- const pinkSheen=c.createRadialGradient(305,398,15,305,398,220);
- pinkSheen.addColorStop(0,'rgba(248,106,163,.16)');
- pinkSheen.addColorStop(1,'rgba(248,106,163,0)');
- c.fillStyle=pinkSheen;c.fillRect(0,0,420,700);
- // Worn enamel / star-fleck artwork with stable deterministic placements.
+ // Premium black lacquer: warm reflections and fixed, fine flecks of NextGen gold.
+ const goldSheen=c.createRadialGradient(138,255,12,138,255,280);
+ goldSheen.addColorStop(0,'rgba(193,136,45,.10)');
+ goldSheen.addColorStop(1,'rgba(193,136,45,0)');
+ c.fillStyle=goldSheen;c.fillRect(0,0,420,700);
+ const redSheen=c.createRadialGradient(320,430,15,320,430,245);
+ redSheen.addColorStop(0,'rgba(236,54,53,.045)');
+ redSheen.addColorStop(1,'rgba(236,54,53,0)');
+ c.fillStyle=redSheen;c.fillRect(0,0,420,700);
  const rand=seed=>{const n=Math.sin(seed*127.1+67.45)*43758.5453;return n-Math.floor(n)};
- c.fillStyle='rgba(246,226,204,.17)';
- for(let i=0;i<110;i++){const x=18+rand(i+1)*372,y=37+rand(i+419)*590;if(x>362&&y>150)continue;disk(c,x,y,(i%4===0?1.05:.45),i%3===0?'rgba(255,195,118,.28)':'rgba(190,208,255,.23)');}
+ for(let i=0;i<290;i++){
+  const x=19+rand(i+1)*380,y=22+rand(i+419)*650;
+  const radius=i%23===0?1:i%7===0?.65:.3;
+  disk(c,x,y,radius,i%11===0?'rgba(255,228,150,.37)':'rgba(243,199,79,.20)');
+ }
  // Atmospheric sweeps are part of the enamel printing, not arbitrary UI decor.
  c.save();c.globalAlpha=.16;
- for(let i=0;i<12;i++){const y=160+i*37;line(c,[[61,y],[211,y-25],[329,y]],i%2?'#c44d72':'#b9968a',.8);}
+ for(let i=0;i<12;i++){const y=160+i*37;line(c,[[61,y],[211,y-25],[329,y]],i%2?'#aa7b36':'#765a2d',.8);}
  c.restore();
  // Long fluted body side walls in perspective: thick edging, polished rails.
- const left=G(c,12,30,33,600,[[0,'#ffab8a'],[.16,'#ec3635'],[.65,'#921721'],[1,'#ff6d5b']]);
- const right=G(c,387,30,406,650,[[0,'#ffab8a'],[.2,'#c52731'],[.75,'#5c1320'],[1,'#ec3635']]);
- plastic(c,x=>{x.moveTo(1,8);x.lineTo(30,28);x.lineTo(29,622);x.lineTo(12,695);x.lineTo(1,695);x.closePath()},left,'#ffab8a');
- plastic(c,x=>{x.moveTo(418,8);x.lineTo(392,26);x.lineTo(391,633);x.lineTo(408,697);x.lineTo(419,697);x.closePath()},right,'#ff6d5b');
+ const left=G(c,12,30,33,600,[[0,'#fff0bd'],[.16,'#cba052'],[.65,'#493218'],[1,'#dfb862']]);
+ const right=G(c,387,30,406,650,[[0,'#f3c74f'],[.2,'#97712e'],[.75,'#302213'],[1,'#ddb15f']]);
+ plastic(c,x=>{x.moveTo(1,8);x.lineTo(30,28);x.lineTo(29,622);x.lineTo(12,695);x.lineTo(1,695);x.closePath()},left,'#f3c74f');
+ plastic(c,x=>{x.moveTo(418,8);x.lineTo(392,26);x.lineTo(391,633);x.lineTo(408,697);x.lineTo(419,697);x.closePath()},right,'#dfb862');
  line(c,[[30,64],[32,622]],'rgba(255,249,206,.54)',2);
  line(c,[[388,56],[387,630]],'rgba(255,245,215,.48)',2);
  // Underlay city / star-map silhouettes preserve original branding identity.
@@ -78,35 +81,34 @@ function drawBase(c,anim){
  // Brass enamel edge screws.
  for(const [x,y] of [[23,32],[397,32],[19,263],[400,263],[19,524],[402,524],[30,671],[389,671]])bolt(c,x,y,4);
 }
-function drawBackglass(c,anim){
- // Recessed metal plaque: 3D shadow outside, glass window and spotlight.
- c.save();c.shadowColor='#050407';c.shadowBlur=18;c.shadowOffsetY=12;
- rect(c,79,32,269,108,11,'#17131c','#921721',5);c.restore();
- rect(c,83,35,261,103,10,G(c,90,35,320,139,[[0,'#ffab8a'],[.07,'#921721'],[.37,'#161622'],[.82,'#2d1824'],[1,'#ec3635']]), '#ff6d5b',2.5);
- rect(c,91,43,244,86,7,G(c,94,44,331,126,[[0,'#181b2f'],[.55,'#070e22'],[1,'#29172c']]),'rgba(243,201,134,.46)',1.2);
- c.save();
- c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
- // Compact Canvas version of the 3D cabinet's illuminated arcade marquee.
- c.translate(213,86);c.globalAlpha=.24;
- for(let i=0;i<18;i++){
-  const a=i*Math.PI/9;c.beginPath();c.moveTo(Math.cos(a)*38,Math.sin(a)*18);
-  c.lineTo(Math.cos(a)*116,Math.sin(a)*48);
-  c.strokeStyle=i%2?'#ffab8a':'#ec3635';c.lineWidth=i%3===0?2:1;c.stroke();
+// Only the freestanding neon words and two small amber wings remain: no sign box.
+function drawNeonMarquee(c,anim){
+ const pulse=anim===0?1:.89+.11*Math.sin(anim*3.3);
+ c.save();c.textAlign='center';c.textBaseline='middle';c.lineCap='round';c.lineJoin='round';
+ for(const side of [-1,1]){
+  for(let i=0;i<3;i++){
+   const y=73+i*7;
+   const x1=side<0?52:344,x2=side<0?87:375;
+   c.shadowColor='#f3c74f';c.shadowBlur=9*pulse;
+   c.strokeStyle='#b78024';c.lineWidth=3.4;
+   c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.stroke();
+   c.shadowBlur=3;c.strokeStyle='#fff0bc';c.lineWidth=1.2;
+   c.beginPath();c.moveTo(x1+2,y-1);c.lineTo(x2-2,y-1);c.stroke();
+  }
  }
- c.globalAlpha=1;c.translate(-213,-86);
- c.font='italic 900 39px "Arial Black",Impact,Arial,sans-serif';
- c.shadowColor='#ec3635';c.shadowBlur=18;c.shadowOffsetY=4;
- c.lineWidth=8;c.strokeStyle='#26070e';c.strokeText('NEON TILT',213,86,230);
- c.shadowColor='#ec3635';c.shadowBlur=14;c.shadowOffsetY=0;
- c.lineWidth=4;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',213,84,230);
- c.shadowBlur=2;c.lineWidth=1.4;c.strokeStyle='#fff2d6';c.strokeText('NEON TILT',213,84,230);
- const logo=G(c,97,64,327,104,[[0,'#fff2d6'],[.3,'#ffab8a'],[.6,'#ff6d5b'],[1,'#cf272c']]);
- c.fillStyle=logo;c.fillText('NEON TILT',213,84,230);
- c.globalAlpha=.55;c.fillStyle='#fff3e8';c.fillText('NEON TILT',213,81,230);c.globalAlpha=1;
- c.fillStyle='#ff6d5b';c.fillRect(133,116,160,2);
- c.fillStyle='#b3232e';c.fillRect(158,121,110,1.5);
+ c.font='italic 500 43px "Oxanium","Trebuchet MS",Arial,sans-serif';
+ c.globalAlpha=pulse;
+ c.shadowColor='#ee1732';c.shadowBlur=21;
+ c.lineWidth=5.5;c.strokeStyle='#860914';c.strokeText('NEON TILT',213,85,245);
+ c.shadowBlur=13;c.lineWidth=3.3;c.strokeStyle='#ec3635';
+ c.strokeText('NEON TILT',213,85,245);
+ c.shadowBlur=6;c.lineWidth=1.9;c.strokeStyle='#ff5160';
+ c.strokeText('NEON TILT',213,85,245);
+ c.shadowBlur=2;c.lineWidth=.85;c.strokeStyle='#fff0e6';
+ c.strokeText('NEON TILT',213,85,245);
  c.restore();
- for(const x of [101,324])bolt(c,x,52,3);
+}
+function drawBackglass(c,anim){
  // Top crown lamps run automatically in attract mode.
  for(let i=0;i<3;i++){
   const power=anim>0 ? (Math.sin(anim*1.8+i*2.1)+1)/2 : .7;
@@ -118,11 +120,11 @@ function drawUpperCrown(c){
  // Two brushed-metal sweeps under the ball, set back from the N/G/S switches.
  const arch=UPPER_ARCH.map(p=>[p.x,p.y]);
  line(c,arch,'#121b2b',9);
- line(c,arch,'#8395a9',5.2);
- line(c,arch,'#d2d8d6',1.25);
+ line(c,arch,'#ba914a',5.2);
+ line(c,arch,'#f3c74f',1.25);
  for(const i of [2,4,6]){
   const p=UPPER_ARCH[i];
-  disk(c,p.x,p.y,5.8,'#202b3d','#a7b1bd',1.5);
+  disk(c,p.x,p.y,5.8,'#292016','#d1aa59',1.5);
   bolt(c,p.x,p.y,2.1);
  }
 }
@@ -135,14 +137,14 @@ function drawOrbits(c){
    // Colour only the entrance and return, not the entire overlapping
    // transport route: the physical wireform does the visual navigation.
    for(const section of [pts.slice(0,4),pts.slice(-4)]){
-    line(c,section,'rgba(19,27,47,.75)',4);
+    line(c,section,'rgba(24,17,9,.75)',4);
     line(c,section,accent,1.25);
    }
   for(const side of ['left','right']){
    const track=roundedWirePoints(edges.map(e=>e[side]),3)
     .map(p=>[p.x,p.y]);
-   line(c,track,'#242f41',3.1);
-     line(c,track,'#a8b6c1',1.3);
+   line(c,track,'#312416',3.1);
+     line(c,track,'#d3ad61',1.3);
    // Only the outer high safety rail gets an additional polished highlight.
    if(side===elevatedGuardSide(route.kind)){
      for(const [from,to] of upperGuardSections(route)){
@@ -699,6 +701,8 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  const anim=reducedMotion?0:performance.now()/1000;
  ctx.save();ctx.clearRect(0,0,BOARD.width,BOARD.height);
  ctx.drawImage(baseArtwork(),0,0,BOARD.width,BOARD.height);
+ // Animated marquee is drawn each frame; base texture stays cached and inexpensive.
+ drawNeonMarquee(ctx,anim);
  drawUpperRouteFeedback(ctx,engine,reducedMotion);
  drawTargets(ctx,engine);
  drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
