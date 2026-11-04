@@ -1,7 +1,7 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=12';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT} from './engine.mjs?v=14';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=3';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=4';
@@ -752,7 +752,7 @@ export async function create3DTable(host){
  const plungerHandle=box(X(382),Y(660),.46,.44,.3,.56,nickel);
  // Physical bats taper towards the tip. The broad pivot end and
  // narrower contact tip replace the uniform cylinders of the first pass.
- const flipperMeshes=[],flipperRubberMeshes=[],flipperInlays=[];
+ const flipperMeshes=[],flipperRubberMeshes=[],flipperInlays=[],flipperAimMarkers=[];
  function taperedBat(baseWidth,tipWidth,depth){
   const outline=new T.Shape();
   outline.moveTo(-baseWidth,-.49);
@@ -775,6 +775,11 @@ export async function create3DTable(host){
   flipperRubberMeshes.push(add(rubberBat,lowerElastomer,x,y,.495));
   flipperMeshes.push(add(enamelBat,batEnamel,x,y,.578));
   flipperInlays.push(add(enamelStripe,batHighlight,x,y,.694));
+  const aimMaterial=new T.MeshStandardMaterial({
+   color:'#ffd58a',emissive:'#ff9b58',emissiveIntensity:.62,
+   metalness:.28,roughness:.31
+  });
+  flipperAimMarkers.push(ring(x,y,.724,.085,.022,aimMaterial));
   // Stationary plated pivot housing with a visible fixed fastener.
   cyl(x,y,.42,.31,.17,lowerShade,32);
   cyl(x,y,.62,.242,.095,rose,32);
@@ -1126,6 +1131,9 @@ export async function create3DTable(host){
     mesh.rotation.set(0,0,angle);
      mesh.scale.y=f.length/71; // 3D bat geometry matches its 2D collider
    }
+   const marker=flipperAimMarkers[i];
+   marker.position.set(X(f.x)+dx*FLIPPER_SWEET_SPOT,Y(f.y)+dy*FLIPPER_SWEET_SPOT,.724);
+   marker.material.emissiveIntensity=(f.side==='left'?engine.leftHeld:engine.rightHeld) ? .95 : .48;
   }
   for(let i=0;i<laneLamps.length;i++){
    const active=engine.lanes.has(i)||engine.missions.lanes;
