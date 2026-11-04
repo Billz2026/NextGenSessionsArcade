@@ -30,10 +30,10 @@ export function getDmdStatus(game,now=0){
   game.multiballSuperLit?'SUPER JACKPOT · HIT SCOOP':'JACKPOTS · RAMP + ORBIT'];
  if(game.neonCommandActive)return ['NEON COMMAND',
   ['RAMP','ORBIT','CROSSOVER','SKYLINE','SCOOP'][game.neonCommandStep]+' · '+Math.ceil(game.neonCommandRemaining)+'S'];
- if(game.neonCommandReady)return ['NEON COMMAND READY','HIT SCOOP TO BEGIN'];
  if(game.activeCommand)
   return [String(game.commandMission?.name||'FLIGHT MISSION'),String(game.commandInstruction||'COMPLETE MISSION')+' · '+Math.ceil(game.commandFuelRemaining||0)+'S'];
  if(game.commandMissionReady)return ['MISSION READY','SHOOT RAMP TO LAUNCH'];
+ if(game.neonCommandReady)return ['NEON COMMAND READY','HIT SCOOP TO BEGIN'];
  if(game.lockLit)return ['BALL LOCK LIT','SHOOT SCOOP · '+(game.ballLocks||0)+'/2 HELD'];
  if(game.ballLocks>0)return ['BALLS HELD '+game.ballLocks+'/2','COMPLETE TARGET BANK'];
  if(game.hurryUpUntil>game.time)
