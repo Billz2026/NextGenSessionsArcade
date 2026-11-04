@@ -170,23 +170,23 @@ export async function create3DTable(host){
   p.stroke();
  }
  // Right bank: warm coral segmented moulded plastic, never chrome rails.
- shape([[690,215],[746,202],[757,256],[749,778],[711,789],[711,475]],
-    '#452e48','#ab6470',6);
-  p.fillStyle='#282c41';p.fillRect(713,272,25,444);
-  p.strokeStyle='#ad8990';p.lineWidth=3;p.strokeRect(713,272,25,444);
-  for(let i=0;i<8;i++){
-   const y=284+i*54;
-   p.fillStyle='#171c2d';p.fillRect(717,y,17,20);
-   p.fillStyle=i%3===0?'#ffd597':'#ae6971';
-   p.fillRect(719,y+3,13,13);
-   p.fillStyle='#fff0cd';p.fillRect(721,y+4,7,2);
+ shape([[707,234],[747,224],[752,264],[750,720],[717,729],[715,449]],
+    '#34344a','#8f7885',4);
+  p.fillStyle='#202c42';p.fillRect(718,272,19,395);
+  p.strokeStyle='#a5a6b3';p.lineWidth=2;p.strokeRect(718,272,19,395);
+  for(let i=0;i<7;i++){
+   const y=290+i*52;
+   p.fillStyle='#101929';p.fillRect(721,y,13,18);
+   p.fillStyle=i%3===0?'#ffe0a8':'#b78085';
+   p.fillRect(723,y+3,9,10);
+   p.fillStyle='#fff0cd';p.fillRect(724,y+4,5,2);
   }
  // Left feature: flowing acrylic shield, target cluster and broad original
  // purple panels, inspired by the reference's use of visual mass.
- shape([[93,382],[124,328],[181,312],[225,332],[202,412],[175,456],
-   [159,552],[140,584],[103,584],[112,488]],'#42395f','#8d80b2',5);
-  shape([[116,390],[150,354],[193,361],[179,422],[154,477],[143,552],
-   [120,549]],'#615780','#c4accd',3);
+ shape([[83,384],[102,338],[128,320],[151,337],[139,405],[118,477],
+   [90,524],[73,522]],'#29364e','#8596ad',4);
+  shape([[89,380],[110,346],[136,338],[124,401],[107,477],
+   [82,510]],'#41485f','#a9a4b9',2);
  for(let i=0;i<4;i++){
   p.fillStyle=i%2?'#ffa66a':'#ffe48f';
   p.fillRect(112+i*12,410+i*40,14,24);
@@ -543,7 +543,8 @@ export async function create3DTable(host){
     radius,8,false),material,0,0,0,false);
   }
   for(const route of UPPER_ROUTES){
-   const edges=guideEdges(route),outerGuard=elevatedGuardSide(route.kind);
+   const edges=guideEdges(route);
+   const outerGuard=elevatedGuardSide(route.kind);
    for(const side of ['left','right']){
     railTube(edges.map(e=>e[side]),-.034,.024,wireSteel);
    }
@@ -909,10 +910,10 @@ export async function create3DTable(host){
   return add(new T.ExtrudeGeometry(shape,{depth:.1,bevelEnabled:true,
    bevelThickness:.03,bevelSize:.02,bevelSegments:2}),material,0,0,z);
  }
- molded([[47,193],[62,161],[96,156],[120,180],[106,224],
-  [87,258],[76,304],[48,304],[57,244]],leftAcrylic);
- molded([[348,109],[367,102],[375,127],[372,354],
-   [355,379],[350,300]],rightAcrylic,.26);
+ molded([[39,208],[46,169],[61,148],[80,159],[71,203],
+   [62,249],[47,299],[37,299]],leftAcrylic);
+ molded([[354,115],[369,108],[374,135],[371,346],
+   [361,361],[355,292]],rightAcrylic,.26);
  // Phase 4K.2 — the signature Power Core is a recessed machine insert,
  // not a tall physical obstacle that would contradict the ball simulation.
  const powerX=X(POWER_CORE.x),powerY=Y(POWER_CORE.y);
