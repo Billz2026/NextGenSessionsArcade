@@ -183,6 +183,13 @@ export class PinballEngine{
   this.spawnBall();this.emit('start');
  }
  spawnBall({preserveProtection=false}={}){
+  // A protected relaunch is the SAME earned turn: retain active score mode
+  // progress and combo streak. A genuine next ball resets the counters.
+  const liveModes=preserveProtection?{
+   comboCount:this.comboCount,comboUntil:this.comboUntil,
+   powerCharges:this.powerCharges,hurryUpUntil:this.hurryUpUntil,
+   overdriveUntil:this.overdriveUntil
+  }:null;
   this.ball={id:this.nextBallId++,x:382,y:582,vx:0,vy:0,r:BOARD.radius,mode:'shooter',trail:[]};
   this.balls=[this.ball];
   this.charging=false;this.charge=.26;
@@ -192,6 +199,7 @@ export class PinballEngine{
   this.kickbackReady=true;
   this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;this.overdriveUntil=0;
+  if(liveModes)Object.assign(this,liveModes);
   this.emit('ball',{ball:this.ballNumber});
  }
  holdLaunch(held){
