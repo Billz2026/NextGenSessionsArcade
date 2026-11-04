@@ -85,6 +85,14 @@ export const ARCADE_MODES=Object.freeze({skillWindow:6,comboWindow:7,hurryWindow
 // not just a score chase. Neon Tilt keeps its own missions and identity, while
 // exposing the same kind of persistent in-run rank progression.
 export const RANKS=Object.freeze(['CADET','ENSIGN','LIEUTENANT','CAPTAIN','COMMANDER']);
+export const MISSION_FUEL=26;
+export const FLIGHT_MISSIONS=Object.freeze([
+ Object.freeze({id:'launch',name:'LAUNCH WINDOW',sequence:Object.freeze(['ramp','skyline']),bonus:30000}),
+ Object.freeze({id:'orbit',name:'ORBITAL SWEEP',sequence:Object.freeze(['orbit','center']),bonus:35000}),
+ Object.freeze({id:'core',name:'CORE RECOVERY',sequence:Object.freeze(['scoop','bumper','bumper','bumper']),bonus:40000}),
+ Object.freeze({id:'night',name:'NIGHT FLIGHT',sequence:Object.freeze(['ramp','orbit','scoop']),bonus:50000})
+]);
+const COMMAND_LABELS=Object.freeze({ramp:'HIT RAMP',skyline:'HIT SKYLINE',orbit:'HIT ORBIT',center:'HIT CROSSOVER',scoop:'HIT SCOOP',bumper:'HIT BUMPERS'});
 const MIN_LAUNCH=1050, MAX_LAUNCH=1450;
 const clip=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const len=(x,y)=>Math.hypot(x,y);
@@ -106,6 +114,8 @@ export class PinballEngine{
   this.lanes=new Set();this.targets=new Set();this.bumperHits=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.rankIndex=0;this.rankName=RANKS[0];this.commandFlags=0;
+  this.commandMissionReady=false;this.commandMissionIndex=0;
+  this.activeCommand=null;this.commandFuelUntil=0;
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
@@ -125,6 +135,8 @@ export class PinballEngine{
   this.lanes.clear();this.targets.clear();this.bumperHits=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.rankIndex=0;this.rankName=RANKS[0];this.commandFlags=0;
+  this.commandMissionReady=false;this.commandMissionIndex=0;
+  this.activeCommand=null;this.commandFuelUntil=0;
   this.multiplierUntil=0;this.frenzyUntil=0;this.lastShot=null;
   this.extraBalls=0;this.extraAwarded=false;this.ballSaveUntil=0;this.ballSaveUsed=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
@@ -284,15 +296,60 @@ export class PinballEngine{
   this.missions[name]=true;
   if(points)this.addPoints(points,headline);
   this.emit('mission',{name,headline});
-  this.commandFlags++;
+  this.checkExtraBall();
+ }
+ get commandMission(){return FLIGHT_MISSIONS[this.commandMissionIndex%FLIGHT_MISSIONS.length];}
+ get commandFuelRemaining(){return this.activeCommand?Math.max(0,this.commandFuelUntil-this.time):this.commandMissionReady?MISSION_FUEL:0;}
+ get commandFuelRatio(){return clip(this.commandFuelRemaining/MISSION_FUEL,0,1);}
+ get commandInstruction(){
+  if(this.commandMissionReady)return 'SHOOT RAMP TO LAUNCH';
+  if(!this.activeCommand)return 'COMPLETE TARGET BANK';
+  return COMMAND_LABELS[this.commandMission.sequence[this.activeCommand.step]]||'COMPLETE MISSION';
+ }
+ armCommandMission(){
+  if(this.activeCommand||this.commandMissionReady)return false;
+  this.commandMissionIndex=this.commandFlags%FLIGHT_MISSIONS.length;
+  this.commandMissionReady=true;this.commandFuelUntil=0;
+  const mission=this.commandMission;
+  this.emit('missionarmed',{mission:mission.id,name:mission.name,instruction:'SHOOT RAMP TO LAUNCH'});
+  return true;
+ }
+ startCommandMission(){
+  if(!this.commandMissionReady||this.activeCommand||this.state!=='playing')return false;
+  const mission=this.commandMission;
+  this.commandMissionReady=false;this.activeCommand={index:this.commandMissionIndex,step:0};
+  this.commandFuelUntil=this.time+MISSION_FUEL;
+  this.emit('missionstart',{mission:mission.id,name:mission.name,instruction:this.commandInstruction,fuel:MISSION_FUEL});
+  return true;
+ }
+ progressCommand(action){
+  if(!this.activeCommand||this.time>=this.commandFuelUntil)return false;
+  const mission=this.commandMission,expected=mission.sequence[this.activeCommand.step];
+  if(action!==expected)return false;
+  this.activeCommand.step++;
+  this.commandFuelUntil=Math.min(this.time+MISSION_FUEL,this.commandFuelUntil+3);
+  if(this.activeCommand.step<mission.sequence.length){
+   this.emit('missionprogress',{mission:mission.id,name:mission.name,step:this.activeCommand.step,total:mission.sequence.length,instruction:this.commandInstruction});
+   return true;
+  }
+  const points=this.addPoints(mission.bonus,'FLIGHT MISSION');
+  this.activeCommand=null;this.commandFuelUntil=0;this.commandFlags++;
+  this.emit('commandcomplete',{mission:mission.id,name:mission.name,points,flags:this.commandFlags});
   const nextRank=Math.min(RANKS.length-1,this.commandFlags);
   if(nextRank>this.rankIndex){
    this.rankIndex=nextRank;this.rankName=RANKS[nextRank];
    const promotionBonus=10000*nextRank;
-   this.addPoints(promotionBonus,'RANK PROMOTION');
-   this.emit('promotion',{rank:this.rankName,index:nextRank,flags:this.commandFlags,points:promotionBonus});
+   const awarded=this.addPoints(promotionBonus,'RANK PROMOTION');
+   this.emit('promotion',{rank:this.rankName,index:nextRank,flags:this.commandFlags,points:awarded});
   }
-  this.checkExtraBall();
+  return true;
+ }
+ failCommand(reason='FUEL DEPLETED'){
+  if(!this.activeCommand)return false;
+  const mission=this.commandMission;
+  this.activeCommand=null;this.commandFuelUntil=0;
+  this.emit('missionfailed',{mission:mission.id,name:mission.name,reason});
+  return true;
  }
  checkExtraBall(){
   if(this.extraAwarded||!Object.values(this.missions).every(Boolean))return;
@@ -300,6 +357,7 @@ export class PinballEngine{
  }
  bumper(){
   this.bumperHits++;
+  this.progressCommand('bumper');
   if(this.bumperHits===10){
    this.frenzyUntil=this.time+15;
    this.mission('frenzy','BUMPER FRENZY',7500);
@@ -319,6 +377,7 @@ export class PinballEngine{
    this.overdriveUntil=0;
    this.emit('modeend',{mode:'overdrive'});
   }
+  if(this.activeCommand && this.time>=this.commandFuelUntil)this.failCommand();
  }
  activateLane(i){
   if(this.lanes.has(i))return;
@@ -329,6 +388,7 @@ export class PinballEngine{
    this.emit('skillshot',{points,lane:i});
   }
   this.emit('lane',{index:i,count:this.lanes.size});
+  this.progressCommand('lane');
   if(this.lanes.size===3){
    this.lanes.clear();this.multiplierUntil=this.time+20;
    this.mission('lanes','NEON LANES · 2× SCORING',10000);
@@ -342,6 +402,7 @@ export class PinballEngine{
   if(this.targets.size===4){
    this.targets.clear();
    this.mission('targets','TARGET BANK COMPLETE',25000);
+   this.armCommandMission();
   }
  }
  activateShot(kind){
@@ -354,6 +415,8 @@ export class PinballEngine{
   }[kind];
   this.addPoints(shot.points,shotName);
   this.emit('shot',{kind,points:shot.points});
+  if(this.commandMissionReady&&kind==='ramp')this.startCommandMission();
+  else this.progressCommand(kind);
   const chained=this.lastShot && this.time-this.lastShot.at<ARCADE_MODES.comboWindow;
   this.comboCount=chained?Math.min(5,Math.max(1,this.comboCount)+1):1;
   this.comboUntil=this.time+ARCADE_MODES.comboWindow;
@@ -422,6 +485,7 @@ export class PinballEngine{
   if(sd<SCOOP.r-2 && b.vy< -180 && this.time-this.lastScoopTime>2){
    this.lastScoopTime=this.time;this.scoopHits++;
    this.addPoints(SCOOP.points,'NEON SCOOP');
+   this.progressCommand('scoop');
    if(this.hurryUpUntil>this.time){
     const points=this.addPoints(50000,'NEON RUSH JACKPOT');
     this.emit('jackpot',{points});
@@ -533,6 +597,7 @@ export class PinballEngine{
     this.emit('ballsave');return;
    }
    this.skillShotPending=false;this.comboCount=0;this.comboUntil=0;
+   if(this.activeCommand)this.failCommand('BALL DRAINED');
    this.hurryUpUntil=0;this.powerCharges=0;this.overdriveUntil=0;
    const endBonus=this.tilted?0:this.bonus;
    if(endBonus>0){
