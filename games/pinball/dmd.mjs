@@ -52,6 +52,7 @@ export function getDmdStatus(game,now=0){
  const status=[
   ['SCORE '+FMT(game.score),'BALL '+ball+' / 3'],
   save?['BALL SAVE',Math.ceil(game.ballSaveUntil-game.time)+' SECONDS LEFT']:
+   game.streakSaveRemaining>0?['NEON STREAK SAVE',Math.ceil(game.streakSaveRemaining)+' SEC · ONE SAVE']:
    ['POWER GRID '+grid+'/3',grid===2?'ONE MORE SHOT':'HIT RAMP OR ORBIT'],
   ['TARGET BANK '+targets+'/4','NEON LANES '+lanes+'/3'],
   ['SPINNER '+(spins%5)+'/5',spins>0?'BUILD OVERDRIVE':'HIT THE SPINNER'],
@@ -128,6 +129,9 @@ export function describeDmdEvent(event,game=null){
   case 'promotion':return {headline:'RANK PROMOTION!',sub:String(event.rank||'ENSIGN')+' · +'+FMT(event.points),priority:5,duration:3200};
   case 'frenzy':return {headline:'BUMPER FRENZY',sub:'2X BUMPER POINTS',priority:4,duration:2400};
   case 'multiplier':return {headline:'2X SCORING',sub:'20 SECONDS',priority:4,duration:2400};
+  case 'streakarmed':return {headline:'STREAK SAVE LIT!',sub:'PROTECTED FOR '+event.seconds+'S',priority:4,duration:2300};
+  case 'streaksaved':return {headline:'STREAK SAVE!',sub:'RELAUNCH · KEEP YOUR PROGRESS',priority:5,duration:3200};
+  case 'streakexpired':return {headline:'STREAK SAVE EXPIRED',sub:'STAY ON THE FLIPPERS',priority:2,duration:1400};
   case 'ballsave':return {headline:'BALL SAVED!',sub:'RELAUNCH NOW',priority:4,duration:2200};
   case 'extra':return {headline:'EXTRA BALL',sub:'AWARDED!',priority:5,duration:3250};
   case 'drain':return {headline:'BALL '+(event.ball||1)+' OVER',sub:'SCORE '+FMT(game?.score||0),priority:3,duration:1800};
