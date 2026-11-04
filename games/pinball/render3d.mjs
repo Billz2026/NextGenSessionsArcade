@@ -1228,7 +1228,7 @@ export async function create3DTable(host){
    if(ins.group==='orbit')active=orbitActive||engine.comboCount>=2;
    if(ins.group==='target')active=engine.missions.targets;
    if(ins.group==='mission')active=multiplierActive||engine.missions.ride||engine.powerCharges>0;
-   if(ins.group==='save')active=ballSaveActive;
+   if(ins.group==='save')active=ballSaveActive||engine.streakShieldReady;
    if(ins.group==='top')active=engine.missions.lanes||engine.lanes.size>0;
    if(ins.group==='rank')active=ins.phase<=engine.rankIndex;
    if(ins.group==='fuel')active=engine.commandMissionReady||ins.phase<=Math.ceil(engine.commandFuelRatio*5);
