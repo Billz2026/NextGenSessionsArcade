@@ -160,12 +160,14 @@ test('all four missions award one extra ball only once',()=>{
  assert.equal(g.extraBalls,1);assert.equal(g.extraAwarded,true);
  g.checkExtraBall();assert.equal(g.extraBalls,1);
  for(let i=0;i<3;i++){
+   g.streakShieldReady=false;g.streakShieldSpent=true; // direct-drain test intentionally bypasses earned replay
    g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vx=0;g.ball.vy=150;
    g.advance(BOARD.step);steps(g,1.25);
  }
  assert.equal(g.state,'playing');
  assert.equal(g.playingExtraBall,true);
  assert.equal(g.ballNumber,3);
+ g.streakShieldReady=false;g.streakShieldSpent=true;
  g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=150;
  g.advance(BOARD.step);steps(g,1.25);
  assert.equal(g.state,'gameover');
@@ -341,7 +343,7 @@ test('unattended flippers eventually drain even with the one-use kickback',()=>{
   }
  }
  assert.ok(saveCount<=1,'automatic launch ball save cannot repeat');
- assert.ok(kicks<=1,'a normal turn gets no more than one outlane kick');
+ assert.ok(kicks<=2,'one early automatic ball save can serve another physical ball with one kickback');
  assert.equal(drains,1,JSON.stringify({state:g.state,time:g.time,saveCount,kicks,
   ball:g.ball&&{x:g.ball.x,y:g.ball.y,vx:g.ball.vx,vy:g.ball.vy,mode:g.ball.mode},
   shots:g.shots,score:g.score,ballSaveUsed:g.ballSaveUsed,kickbackReady:g.kickbackReady}));
@@ -875,8 +877,8 @@ test('initial ball save and earned shield cannot manufacture unlimited launches'
 
 test('balance maintains an accessible real center gap with controlled return lanes',()=>{
  const g=new PinballEngine();
- assert.equal(PLAY_BALANCE.flipperLength,60);
- assert.equal(PLAY_BALANCE.returnBlend,.40);
+ assert.equal(PLAY_BALANCE.flipperLength,58);
+ assert.equal(PLAY_BALANCE.returnBlend,.36);
  const f=g.flippers[0];
  const actualGap=g.flippers[1].x-f.x-2*f.length*Math.cos(.40);
  assert.ok(actualGap>BOARD.radius*2);
