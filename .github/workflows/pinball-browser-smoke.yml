@@ -1,0 +1,38 @@
+name: Pinball browser rendering smoke
+on:
+  push:
+    paths:
+      - 'games/pinball/**'
+      - 'tests/pinball-browser-smoke.mjs'
+      - '.github/workflows/pinball-browser-smoke.yml'
+  pull_request:
+    paths:
+      - 'games/pinball/**'
+      - 'tests/pinball-browser-smoke.mjs'
+      - '.github/workflows/pinball-browser-smoke.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install lightweight browser test dependencies
+        run: npm install --no-save --no-package-lock playwright@1.56.1 pngjs@7.0.0
+      - name: Install headless Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start local static arcade server
+        run: |
+          python3 -m http.server 8877 --bind 127.0.0.1 >/tmp/neon-tilt-server.log 2>&1 &
+          sleep 2
+      - name: Verify pinball rendering in Chromium
+        run: node tests/pinball-browser-smoke.mjs
+      - name: Preserve visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-tilt-render-proof
+          path: artifacts/
+          if-no-files-found: warn
