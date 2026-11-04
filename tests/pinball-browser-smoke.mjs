@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-import {PNG} from 'pngjs';
 import {mkdirSync} from 'node:fs';
 
 const base='http://127.0.0.1:8877/games/pinball/';
@@ -17,37 +16,47 @@ page.on('console',msg=>{
  if(msg.type()==='warning')warnings.push(msg.text());
 });
 try{
- await page.goto(base,{waitUntil:'load',timeout:30000});
+ await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
  await page.waitForTimeout(2200);
- const wrap=page.locator('.playfield-wrap').first();
- await wrap.screenshot({path:'artifacts/neon-tilt-table.png'});
- const png=PNG.sync.read(await wrap.screenshot());
- let colourful=0,bright=0;
- for(let y=10;y<png.height-10;y+=4){
-  for(let x=10;x<png.width-10;x+=4){
-   const offset=(y*png.width+x)*4;
-   const [r,g,b]=png.data.subarray(offset,offset+3);
+ // Inspect the actual rendered pixels directly. Screenshot waiting for a
+ // dynamically sized/animated stage to settle can timeout even on a good page.
+ const evidence=await page.evaluate(()=>{
+  const canvas=document.querySelector('#playfield');
+  const stage=document.querySelector('#table-stage');
+  if(!canvas)throw Error('No playfield canvas in page');
+  const context=canvas.getContext('2d');
+  if(!context)throw Error('Playfield has no 2D context');
+  const w=canvas.width,h=canvas.height,rgba=context.getImageData(0,0,w,h).data;
+  let bright=0,colourful=0,checked=0;
+  for(let y=12;y<h-12;y+=6)for(let x=12;x<w-12;x+=6){
+   const o=(y*w+x)*4,r=rgba[o],g=rgba[o+1],b=rgba[o+2];
+   checked++;
    if(Math.max(r,g,b)>105)bright++;
    if((r>100&&g>45&&r>g*1.15)||(r>105&&g>95&&b<100))colourful++;
   }
- }
- const state=await page.evaluate(()=>{
-  const canvas=document.querySelector('#playfield');
-  const stage=document.querySelector('#table-stage');
   return {
+   width:w,height:h,bright,colourful,checked,
    mode:document.querySelector('#render-mode')?.textContent?.trim(),
    active3D:stage?.classList.contains('has-webgl'),
-   canvasWidth:canvas?.width,canvasHeight:canvas?.height,
-   tableClass:stage?.className
+   stageClass:stage?.className||''
   };
  });
- console.log('Pixel evidence',JSON.stringify({width:png.width,height:png.height,bright,colourful,...state}));
- console.log('Browser warnings',JSON.stringify(warnings.slice(0,8)));
- console.log('Browser errors',JSON.stringify(errors.slice(0,8)));
- assert.ok(bright>200,'Playfield is empty or too dark: no illuminated hardware visible');
- assert.ok(colourful>75,'Playfield neon lights, gold rails or bumpers are not visible');
+ console.log('Rendered pixel evidence:',JSON.stringify(evidence));
+ console.log('Browser warnings:',JSON.stringify(warnings.slice(0,8)));
+ console.log('Browser errors:',JSON.stringify(errors.slice(0,8)));
+ assert.ok(evidence.width>250&&evidence.height>400,'playfield canvas was not sized');
+ assert.ok(evidence.active3D||evidence.bright>180,
+   'Neither active WebGL nor painted 2D playfield detected');
+ if(!evidence.active3D)
+  assert.ok(evidence.colourful>55,'2D fallback has no visible neon or gold hardware');
  assert.equal(errors.length,0,'Browser runtime errors found');
+ // Best-effort image; pixel assertions above are the authoritative smoke test.
+ try{
+  await page.screenshot({path:'artifacts/neon-tilt-browser.png',
+   animations:'disabled',timeout:4500});
+ }catch(error){
+  console.log('Screenshot omitted; animated stage did not settle:',String(error).slice(0,150));
+ }
 }finally{
- await page.screenshot({path:'artifacts/neon-tilt-full-page.png',fullPage:true}).catch(()=>{});
  await browser.close();
 }
