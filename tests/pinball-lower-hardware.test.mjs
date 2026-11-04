@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {WALLS,POSTS,SLINGS,PinballEngine} from '../games/pinball/engine.mjs';
+import {WALLS,POSTS,SLINGS,FLIPPER_SWEET_SPOT,RETURN_FEEDS,PinballEngine} from '../games/pinball/engine.mjs';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS}
  from '../games/pinball/lower-hardware.mjs';
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
@@ -71,6 +71,11 @@ test('both renderers use tapered flippers and leave an open drain',()=>{
  assert.ok(three.includes('const rubberBat=taperedBat(.235,.150,.095)'));
  assert.ok(fallback.includes('function batContour('));
  assert.ok(fallback.includes('batContour(c,f.x,f.y,end.x,end.y,11.4,7.5'));
+ assert.ok(FLIPPER_SWEET_SPOT>.5&&FLIPPER_SWEET_SPOT<.8);
+ assert.deepEqual(Object.keys(RETURN_FEEDS).sort(),['orbit','ramp']);
+ assert.ok(three.includes('flipperAimMarkers.push('));
+ assert.ok(three.includes('dx*FLIPPER_SWEET_SPOT'));
+ assert.ok(fallback.includes('(end.x-f.x)*FLIPPER_SWEET_SPOT'));
  assert.ok(three.includes('const drainWell=new T.MeshPhysicalMaterial'));
  assert.ok(fallback.includes('A recessed drain mouth'));
 });
