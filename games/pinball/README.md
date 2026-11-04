@@ -1,10 +1,17 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase 4L.2 — flight-rank campaign progression (playable 3D beta)
+**Current stage:** Phase 4L.3 — illuminated arcade marquee (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase 4L.3 — illuminated arcade marquee
+
+- Removed the small **NEXTGEN SESSIONS** line from the physical table backglass so the machine reads as a cleaner standalone arcade cabinet rather than a website header.
+- Rebuilt **NEON TILT** as the only marquee title: substantially larger italic arcade lettering, cyan tube edging, a white keyline, cyan-to-pink/orange face colour, deep magenta illumination and electric starburst details.
+- Matched the marquee in the Three.js cabinet and the Canvas fallback, preserving the physical brass frame, responsive table size and all gameplay geometry.
+- Updated cache versions and added source-level regression coverage preventing the removed brand line from returning to either table renderer.
 
 ## Phase 4L.2 — classic flight-rank campaign
 
