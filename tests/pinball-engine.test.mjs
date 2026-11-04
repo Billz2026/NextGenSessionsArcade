@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -576,4 +576,35 @@ test('guided hardware emits one route-exit event when the ball returns to the pl
  g.consumeEvents();while(g.ball.mode==='travel')g.singleStep(BOARD.step);
  const exits=g.consumeEvents().filter(e=>e.type==='routeexit');
  assert.equal(exits.length,1);assert.equal(exits[0].kind,'ramp');assert.ok(exits[0].speed>0);
+ assert.equal(exits[0].feed,'right');
+});
+test('marked powered-flipper sweet spot improves cross-table shot alignment without energising dead flips',()=>{
+ for(const side of ['left','right']){
+  const strike=(at,omega=-14)=>{
+   const g=new PinballEngine();g.start();g.consumeEvents();
+   const f=g.flippers.find(x=>x.side===side);f.a=.12;f.omega=omega;
+   const tip=g.flipperTip(f),dx=tip.x-f.x,dy=tip.y-f.y,length=Math.hypot(dx,dy);
+   const nx=(dx>0?dy:-dy)/length,ny=-Math.abs(dx)/length;
+   g.ball.mode='live';g.ball.x=f.x+dx*at+nx*16;g.ball.y=f.y+dy*at+ny*16;
+   g.ball.vx=0;g.ball.vy=260;g.collideFlipper(f);
+   const target=side==='left'?SHOTS.ramp:SHOTS.orbit;
+   const ax=target.x-g.ball.x,ay=target.y-g.ball.y,speed=Math.hypot(g.ball.vx,g.ball.vy);
+   const alignment=(ax*g.ball.vx+ay*g.ball.vy)/(Math.hypot(ax,ay)*speed);
+   return {alignment,speed,event:g.consumeEvents().find(e=>e.type==='impact')};
+  };
+  const heel=strike(.20),sweet=strike(FLIPPER_SWEET_SPOT),dead=strike(FLIPPER_SWEET_SPOT,0);
+  assert.equal(heel.event.grip,0);assert.ok(sweet.event.grip>.95);
+  assert.ok(sweet.alignment>heel.alignment+.025,side+' sweet spot did not improve aim');
+  assert.equal(dead.event.grip,0);assert.ok(dead.speed<sweet.speed*.55,side+' dead flip received a hidden kick');
+ }
+});
+test('wireform returns project into their named flipper feed windows',()=>{
+ for(const kind of ['ramp','orbit']){
+  const g=new PinballEngine();g.start();g.ball.mode='live';g.activateShot(kind);
+  while(g.ball.mode==='travel')g.singleStep(BOARD.step);
+  const feed=RETURN_FEEDS[kind],travel=(feed.y-g.ball.y)/g.ball.vy;
+  const projectedX=g.ball.x+g.ball.vx*travel;
+  assert.ok(g.ball.vy>0&&travel>0,kind+' did not descend toward the flippers');
+  assert.ok(Math.abs(projectedX-feed.x)<22,kind+' return missed the '+feed.side+' feed');
+ }
 });
