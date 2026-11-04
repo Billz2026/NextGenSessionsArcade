@@ -4,7 +4,7 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=10';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=3';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges} from './upper-hardware.mjs?v=3';
+import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections} from './upper-hardware.mjs?v=4';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=3';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide} from './finishing-detail.mjs?v=1';
 const TAU=Math.PI*2;
@@ -102,27 +102,49 @@ function drawBackglass(c,anim){
   c.save();c.globalAlpha=power*.45;disk(c,111+i*102,151,15,null,'#ffbb81',2);c.restore();
  }
 }
+function drawUpperCrown(c){
+ // Two brushed-metal sweeps under the ball, set back from the N/G/S switches.
+ const arch=UPPER_ARCH.map(p=>[p.x,p.y]);
+ line(c,arch,'#121b2b',9);
+ line(c,arch,'#8395a9',5.2);
+ line(c,arch,'#d2d8d6',1.25);
+ for(const i of [2,4,6]){
+  const p=UPPER_ARCH[i];
+  disk(c,p.x,p.y,5.8,'#202b3d','#a7b1bd',1.5);
+  bolt(c,p.x,p.y,2.1);
+ }
+}
 function drawOrbits(c){
  // Classic wireform look: open playfield artwork, coloured shot markers
  // and delicate steel rails. Avoid heavy dark bands across the bumpers.
  for(const route of UPPER_ROUTES){
   const pts=route.points.map(p=>[p.x,p.y]),edges=guideEdges(route);
-  const accent=route.accent==='coral'?'#ff92ba':'#ffd08c';
-  line(c,pts,'rgba(19,27,47,.75)',5);
-   line(c,pts,accent,1.7);
+   const accent=route.accent==='coral'?'#ff92ba':'#ffd08c';
+   // Colour only the entrance and return, not the entire overlapping
+   // transport route: the physical wireform does the visual navigation.
+   for(const section of [pts.slice(0,4),pts.slice(-4)]){
+    line(c,section,'rgba(19,27,47,.75)',4);
+    line(c,section,accent,1.25);
+   }
   for(const side of ['left','right']){
    const track=roundedWirePoints(edges.map(e=>e[side]),3)
     .map(p=>[p.x,p.y]);
    line(c,track,'#242f41',3.1);
-    line(c,track,'#a8b6c1',1.3);
+     line(c,track,'#a8b6c1',1.3);
    // Only the outer high safety rail gets an additional polished highlight.
-   if(side===elevatedGuardSide(route.kind))
-    line(c,track,'rgba(255,240,215,.34)',.55);
+   if(side===elevatedGuardSide(route.kind)){
+     for(const [from,to] of upperGuardSections(route)){
+      const segment=track.slice(from,to+1);
+      line(c,segment,'rgba(255,240,215,.52)',1.05);
+     }
+    }
   }
   for(const i of route.supportIndices){
-   const a=edges[i].left,b=edges[i].right,p=route.points[i];
-   line(c,[[a.x,a.y],[b.x,b.y]],'#9998a7',1.6);
-   disk(c,a.x,a.y,2.4,'#d4b5a1','#37465c',.8);
+    const a=edges[i].left,b=edges[i].right,p=route.points[i];
+    line(c,[[a.x,a.y],[b.x,b.y]],'#889cac',2.1);
+    const outer=edges[i][elevatedGuardSide(route.kind)];
+    disk(c,outer.x,outer.y,4.3,'#202a3a','#c2cbd0',1.4);
+    bolt(c,outer.x,outer.y,1.5);
    const q=route.points[i-1],ang=Math.atan2(p.y-q.y,p.x-q.x)+Math.PI/2;
    c.save();c.translate(p.x,p.y);c.rotate(ang);
    c.beginPath();c.moveTo(0,-6);c.lineTo(4,4);
@@ -130,8 +152,16 @@ function drawOrbits(c){
    c.fillStyle=accent;c.strokeStyle='#1b2440';c.lineWidth=.8;
    c.fill();c.stroke();c.restore();
   }
-  disk(c,route.entrance.x,route.entrance.y,5,'#222339','#e8ccaf',1.6);
-  disk(c,route.entrance.x,route.entrance.y,2.4,accent);
+  const ex=route.entrance.x,ey=route.entrance.y;
+   // Steel entry cheeks and low-profile authentic launch plate.
+   rect(c,ex-19,ey-11,38,18,4,'#202d3d','#a3b1c0',1.4);
+   for(const dx of [-20,20]){
+    rect(c,ex+dx-3,ey-16,6,15,2,'#4c6072','#abbcc5',1.1);
+    bolt(c,ex+dx,ey-15,1.5);
+   }
+   disk(c,ex,ey,5,'#222339','#e8ccaf',1.6);
+   disk(c,ex,ey,2.4,accent);
+   text(c,route.kind.toUpperCase(),ex,ey+19,9,'#e7d5c7','Barlow Condensed',900);
  }
  for(const [path,col] of [[CENTER_PATH,'#89d8f7'],[SKYLINE_PATH,'#dfa6eb']]){
   c.save();c.setLineDash([4,9]);
@@ -197,6 +227,9 @@ function drawEnamelDetails(c){
     ]),'#8996a2',2);
    c.restore();
    rect(c,lane.x-24,lane.y-29,48,58,4,'#111b2f','#536982',1.2);
+   // The top shoulder aligns with the real upper rollover bay.
+   rect(c,lane.x-24,lane.y-35,48,5,1,'#a5b4bf','#29384c',1);
+   for(const dx of [-19,19])bolt(c,lane.x+dx,lane.y-33,1.7);
    for(const dx of [-24,24])for(const dy of [-27,27])
     bolt(c,lane.x+dx,lane.y+dy,1.8);
   }
@@ -618,7 +651,8 @@ function baseArtwork(){
  const c=layer.getContext('2d');c.setTransform(detail,0,0,detail,0,0);
  drawBase(c,0);
  drawBackglass(c,0);
- drawOrbits(c);
+  drawUpperCrown(c);
+  drawOrbits(c);
  drawEnamelDetails(c);
  drawSlings(c);
  drawWalls(c);

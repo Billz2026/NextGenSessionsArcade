@@ -11,13 +11,14 @@ test('upper wireform keeps two continuous lower rails and one outside high guard
  assert.equal(elevatedGuardSide('orbit'),'right');
  assert.equal(elevatedGuardSide('ramp'),'left');
  for(const route of UPPER_ROUTES){
-  assert.equal(route.supportIndices.length,2);
+  assert.equal(route.supportIndices.length,3);
   assert.deepEqual(route.points.map(p=>[p.x,p.y,p.z]),TRAVEL_PATHS[route.kind]);
   assert.equal(guideEdges(route).length,route.points.length);
  }
  assert.throws(()=>elevatedGuardSide('center'),/Unknown/);
- assert.ok(three.includes('if(lift>0 && side!==outerGuard)continue;'));
+ assert.ok(three.includes('for(const [from,to] of upperGuardSections(route))'));
  assert.ok(three.includes('const outerGuard=elevatedGuardSide(route.kind)'));
+ assert.ok(three.includes('railTube(edges.map(e=>e[side]),-.034,.024,wireSteel)'));
  assert.ok(three.includes('new T.TubeGeometry(curve,'));
  assert.ok(!three.includes('const routeBed=new T.MeshPhysicalMaterial'));
 });

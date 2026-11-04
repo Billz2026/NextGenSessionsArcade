@@ -9,7 +9,7 @@ function makeRoute(kind,width,accent){
   kind,width,accent,
   points:Object.freeze(path.map(([x,y,z])=>Object.freeze({x,y,z}))),
   entrance:Object.freeze({x:shot.x,y:shot.y,r:shot.r}),
-  supportIndices:Object.freeze([1,Math.min(4,path.length-2)])
+  supportIndices:Object.freeze([1,4,path.length-3])
  });
 }
 export const UPPER_ROUTES=Object.freeze([
@@ -30,4 +30,23 @@ export function guideEdges(route){
    right:Object.freeze({x:p.x-ox,y:p.y-oy,z:p.z})
   });
  });
+}
+
+// The upper crown follows the outer machine silhouette and stays UNDER the ball.
+// Its y-coordinates never intersect the visible title plaque or alter scoring.
+export const UPPER_ARCH=Object.freeze([
+ [48,211],[56,179],[83,153],[120,145],[210,142],
+ [300,145],[336,154],[357,181],[365,211]
+].map(([x,y])=>Object.freeze({x,y})));
+
+// The two tall outer guard sections stop before the overhead crossover.
+// Both real lower rails remain continuous for the full guided-ball path.
+export function upperGuardSections(route){
+ if(route.kind==='orbit')return Object.freeze([
+  Object.freeze([0,5]),Object.freeze([11,route.points.length-1])
+ ]);
+ if(route.kind==='ramp')return Object.freeze([
+  Object.freeze([0,4]),Object.freeze([7,route.points.length-1])
+ ]);
+ throw Error('Unknown upper route '+route.kind);
 }
