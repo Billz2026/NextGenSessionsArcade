@@ -182,22 +182,25 @@
  .machine-arena>.cabinet{grid-column:1;grid-row:1}
  .machine-arena>.arena-wing{display:none}
 }
-@media (max-width:1120px){
+/* When unfolded and sufficiently wide, still use side columns rather than a
+   second row. Shorter/narrower Fold and mobile views keep the full table. */
+@media (min-width:901px) and (max-width:1120px){
  .machine-arena{
-  width:100%;max-width:100%;display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  align-items:stretch;gap:10px
+  width:100%;min-width:0;display:grid;
+  grid-template-columns:minmax(0,1fr) max-content minmax(0,1fr);
+  gap:7px;align-items:stretch
  }
- .machine-arena>.cabinet{grid-column:1/-1;grid-row:1;justify-self:center}
- .machine-arena>.arena-wing{grid-row:2;min-height:240px}
- .arena-wing{padding:10px;gap:7px}
- .wing-hero{min-height:90px;flex:none}
- .wing-mission{min-height:30px}
- .wing-jackpot{min-height:32px}
- .reactor-ring{width:75px;height:75px}
+ .machine-arena>.cabinet{grid-row:1;grid-column:2;justify-self:center;align-self:center;margin:0}
+ .machine-arena>.arena-wing{grid-row:1;padding:6px;gap:5px}
+ .machine-arena>.arena-wing--missions{grid-column:1}
+ .machine-arena>.arena-wing--overload{grid-column:3}
+ .wing-hero{min-height:75px;padding:6px 3px}
+ .wing-mission{min-height:28px;padding:3px}
+ .wing-jackpot{min-height:28px}
+ .reactor-ring{width:68px;height:68px}
 }
-@media(max-width:690px){
- .machine-arena{display:block}
+@media(max-width:900px){
+ .machine-arena{display:block;width:100%;height:auto}
  .machine-arena>.arena-wing{display:none}
 }
 @media(prefers-reduced-motion:reduce){
