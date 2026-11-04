@@ -26,9 +26,16 @@ export function getDmdStatus(game,now=0){
  if(game.ball?.mode==='shooter')return ['BALL '+ball+' READY','HOLD TO LAUNCH'];
  if(game.ball?.mode==='scoop')return ['SCOOP CAPTURED','WAIT FOR EJECT'];
  if(game.tilted)return ['TILT','FLIPPERS OFF · NO BONUS'];
+ if(game.multiballActive)return ['NEON OVERLOAD · '+(game.balls?.length||1)+' BALLS',
+  game.multiballSuperLit?'SUPER JACKPOT · HIT SCOOP':'JACKPOTS · RAMP + ORBIT'];
+ if(game.neonCommandActive)return ['NEON COMMAND',
+  ['RAMP','ORBIT','CROSSOVER','SKYLINE','SCOOP'][game.neonCommandStep]+' · '+Math.ceil(game.neonCommandRemaining)+'S'];
+ if(game.neonCommandReady)return ['NEON COMMAND READY','HIT SCOOP TO BEGIN'];
  if(game.activeCommand)
   return [String(game.commandMission?.name||'FLIGHT MISSION'),String(game.commandInstruction||'COMPLETE MISSION')+' · '+Math.ceil(game.commandFuelRemaining||0)+'S'];
  if(game.commandMissionReady)return ['MISSION READY','SHOOT RAMP TO LAUNCH'];
+ if(game.lockLit)return ['BALL LOCK LIT','SHOOT SCOOP · '+(game.ballLocks||0)+'/2 HELD'];
+ if(game.ballLocks>0)return ['BALLS HELD '+game.ballLocks+'/2','COMPLETE TARGET BANK'];
  if(game.hurryUpUntil>game.time)
   return ['JACKPOT LIT','SCOOP · '+Math.ceil(game.hurryUpUntil-game.time)+' SEC'];
  if(game.overdriveUntil>game.time)
@@ -75,6 +82,21 @@ export function describeDmdEvent(event,game=null){
   case 'power':return {headline:'POWER GRID '+(event.charges||0)+'/'+(event.needed||3),sub:event.charges===event.needed-1?'ONE MORE SHOT':'ROUTE CHARGED',priority:2,duration:1250};
   case 'hurryup':return {headline:'JACKPOT LIT!',sub:'SHOOT THE SCOOP',priority:4,duration:2250};
   case 'jackpot':return {headline:'NEON RUSH JACKPOT',sub:'+'+FMT(event.points),priority:5,duration:3200};
+  case 'locklit':return {headline:'BALL LOCK LIT',sub:'HIT THE SCOOP',priority:4,duration:1900};
+  case 'balllock':return {headline:'BALL '+event.locked+' LOCKED',sub:event.locked+'/2 · SHOOT TO CONTINUE',priority:5,duration:2800};
+  case 'multiballstart':return {headline:'NEON OVERLOAD!',sub:'THREE-BALL MULTIBALL',priority:5,duration:3400};
+  case 'multiballjackpot':return {headline:'MULTIBALL JACKPOT!',sub:'+'+FMT(event.points),priority:5,duration:2700};
+  case 'superlit':return {headline:'SUPER JACKPOT LIT',sub:'SHOOT THE SCOOP',priority:5,duration:2600};
+  case 'superjackpot':return {headline:'SUPER JACKPOT!',sub:'+'+FMT(event.points),priority:5,duration:3600};
+  case 'multiballadd':return {headline:'ADD-A-BALL!',sub:'BALLS IN PLAY '+event.count,priority:5,duration:2600};
+  case 'multiballsave':return {headline:'MULTIBALL SAVE',sub:event.count+' BALLS ACTIVE',priority:3,duration:1300};
+  case 'multiballdrain':return {headline:'MULTIBALL DRAIN',sub:event.remaining+' BALLS LEFT',priority:3,duration:1200};
+  case 'multiballend':return {headline:'MULTIBALL ENDED',sub:'CONTINUE YOUR RUN',priority:4,duration:2200};
+  case 'wizardready':return {headline:'NEON COMMAND LIT',sub:'HIT SCOOP TO BEGIN',priority:5,duration:3000};
+  case 'wizardstart':return {headline:'NEON COMMAND',sub:'HIT RAMP · '+event.fuel+'S',priority:5,duration:2900};
+  case 'wizardprogress':return {headline:'COMMAND '+event.step+'/'+event.total,sub:event.instruction,priority:4,duration:1600};
+  case 'wizardcomplete':return {headline:'NEON COMMAND CLEAR!',sub:'+'+FMT(event.points),priority:5,duration:3500};
+  case 'wizardfailed':return {headline:'COMMAND FAILED',sub:String(event.reason),priority:4,duration:2100};
   case 'hurryMiss':return {headline:'JACKPOT EXPIRED',sub:'RECHARGE GRID',priority:2,duration:1350};
   case 'overdrive':return {headline:'OVERDRIVE!',sub:'HIT THE SPINNER',priority:4,duration:2400};
   case 'superSpinner':return {headline:'SUPER SPINNER',sub:'+'+FMT(event.points),priority:3,duration:1200};
