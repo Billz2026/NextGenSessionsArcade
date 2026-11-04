@@ -887,11 +887,12 @@ test('balance maintains an accessible real center gap with controlled return lan
 
 test('protected replay keeps earned combo and grid progress for a real streak',()=>{
  const g=new PinballEngine();g.start();g.launch();
+ g.time=g.ballSaveUntil+1; // build a fresh streak after normal early ball-save expires
  g.activateShot('ramp');g.ball.mode='live';g.time+=1;g.activateShot('orbit');
  assert.equal(g.streakShieldReady,true);
  const combo=g.comboCount,charges=g.powerCharges,until=g.comboUntil;
  assert.ok(combo>=2&&charges>0);
- g.time=g.ballSaveUntil+1;g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=200;
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=200;
  g.singleStep(BOARD.step);
  assert.equal(g.ball.mode,'shooter');
  assert.equal(g.comboCount,combo);
