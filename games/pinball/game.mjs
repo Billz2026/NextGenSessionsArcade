@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=11';
-import {renderTable} from './visuals.mjs?v=27';
-import {createDotMatrix} from './dmd.mjs?v=13';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=12';
+import {renderTable} from './visuals.mjs?v=28';
+import {createDotMatrix} from './dmd.mjs?v=14';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -50,7 +50,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=30');
+  const {create3DTable}=await import('./render3d.mjs?v=31');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -162,6 +162,7 @@ function syncHUD(){
   ballLive?'IN PLAY':state==='between'?'BALL COMPLETE':'RUN COMPLETE';
  if(lastStatusText!==state){ui.start.textContent=isOver?'PLAY AGAIN':'START GAME';lastStatusText=state;}
  const activeMulti=engine.time<engine.multiplierUntil;
+ const commandActive=Boolean(engine.activeCommand),commandReady=engine.commandMissionReady;
  ui.multi.textContent=activeMulti?'2×':'1×';
  ui.ballSave.textContent=engine.tilted?'TILT':state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
    ?Math.ceil(engine.ballSaveUntil-engine.time)+'s':'OFF';
@@ -171,13 +172,14 @@ function syncHUD(){
  ui.progress.targets.textContent=engine.missions.targets?'DONE':engine.targets.size+' / 4';
  ui.progress.ride.textContent=engine.missions.ride?'DONE':'RAMP + ORBIT';
  ui.extraStatus.textContent=engine.extraAwarded?'COMMANDER RANK · EXTRA BALL EARNED ✓':
-  'FLIGHT RANK: '+engine.rankName+' · '+engine.commandFlags+'/4 MISSION FLAGS';
+  'FLIGHT RANK: '+engine.rankName+' · '+Math.min(4,engine.commandFlags)+'/4 MISSION FLAGS';
  const rushActive=engine.hurryUpUntil>engine.time,overdriveActive=engine.overdriveUntil>engine.time;
  const remaining=rushActive?engine.hurryUpUntil-engine.time:
   overdriveActive?engine.overdriveUntil-engine.time:
   Math.max(engine.multiplierUntil,engine.frenzyUntil)-engine.time;
  ui.gridStatus.textContent=isReady?'3 SHOTS TO JACKPOT':isOver?'FINAL SCORE':
   state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'UPPER LANES · SKILL SHOT':
+  commandActive?'FUEL · '+Math.ceil(engine.commandFuelRemaining)+'s':commandReady?'MISSION READY':
   rushActive?'JACKPOT · '+Math.ceil(engine.hurryUpUntil-engine.time)+'s':
   overdriveActive?'OVERDRIVE · '+Math.ceil(engine.overdriveUntil-engine.time)+'s':
   'POWER GRID '+engine.powerCharges+'/3';
@@ -186,15 +188,19 @@ function syncHUD(){
  if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
  ui.modeName.textContent=engine.tilted?'TILT · NO SCORING':isReady?'TABLE OBJECTIVE':isOver?'RUN COMPLETE':
   state==='between'?'BETWEEN BALLS':shooterReady?'SKILL SHOT':
+  commandActive?'FLIGHT MISSION':commandReady?'MISSION CONTROL':
   rushActive?'NEON RUSH · JACKPOT LIT':overdriveActive?'SPINNER OVERDRIVE':
   engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
   engine.comboCount>=2?'COMBO X'+engine.comboCount:'CURRENT OBJECTIVE';
  ui.modeTimer.textContent=engine.tilted?'BONUS FORFEITED · NEXT BALL TO RESET':isReady?'HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP':isOver?'YOUR BEST '+fmt(best):
   state==='between'?'NEXT BALL PREPARING':shooterReady?'HIT AN UPPER N-G-S LANE':
+  commandActive?engine.commandInstruction+' · '+Math.ceil(engine.commandFuelRemaining)+' SECONDS FUEL':
+  commandReady?'TARGET BANK LOCKED · RAMP STARTS MISSION':
   remaining>0?Math.ceil(remaining)+' SECONDS · '+(rushActive?'HIT SCOOP':overdriveActive?'SPIN FOR BONUS':'MODE LIVE'):
   'RAMP · ORBIT · CROSSOVER · SKYLINE';
  ui.missionMessage.textContent=engine.tilted?'WAIT FOR BALL TO DRAIN':isReady?'CHARGE THE POWER GRID':isOver?'FINAL SCORE '+fmt(score):
   state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'SKILL SHOT AVAILABLE':
+  commandActive?engine.commandMission.name:commandReady?'SHOOT RAMP TO LAUNCH':
   rushActive?'SHOOT THE SCOOP':overdriveActive?'HIT THE SPINNER':
   engine.powerCharges===2?'ONE MORE ROUTE FOR JACKPOT':
   engine.powerCharges>0?'CHARGE THE POWER GRID':'SHOOT RAMP OR ORBIT';
@@ -226,7 +232,7 @@ function processEvents(){
   // stale UI state after the end-of-game persistence update.
   const dmdEvent=e.type==='gameover'?{...e,record:e.score>best}:e;
   dmd.notify(dmdEvent,performance.now(),engine);
-  if(['shot','mission','promotion','extra','scoop','spinner','frenzy','multiplier',
+  if(['shot','mission','missionarmed','missionstart','missionprogress','missionfailed','commandcomplete','promotion','extra','scoop','spinner','frenzy','multiplier',
       'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave'].includes(e.type)){
    const duration=e.type==='jackpot'||e.type==='extra'?1250:
     e.type==='hurryup'||e.type==='overdrive'||e.type==='skillshot'?950:
@@ -294,6 +300,21 @@ function processEvents(){
    sound(1080,.12,'triangle');
   }
   if(e.type==='mission'){arcadeMessage(e.headline);ui.scoreFlash.textContent='MISSION COMPLETE';sound(980,.22);}
+  if(e.type==='missionarmed'){
+   arcadeMessage(e.name+' SELECTED · SHOOT RAMP');ui.scoreFlash.textContent='MISSION READY';sound(840,.2,'square');
+  }
+  if(e.type==='missionstart'){
+   arcadeMessage(e.name+' · '+e.instruction);ui.scoreFlash.textContent='MISSION START · '+e.fuel+'s';sound(1050,.28,'sawtooth');
+  }
+  if(e.type==='missionprogress'){
+   arcadeMessage('MISSION '+e.step+'/'+e.total+' · '+e.instruction);ui.scoreFlash.textContent=e.instruction;sound(940,.16,'square');
+  }
+  if(e.type==='missionfailed'){
+   arcadeMessage('MISSION FAILED · '+e.reason);ui.scoreFlash.textContent='MISSION FAILED';sound(210,.32,'sawtooth');
+  }
+  if(e.type==='commandcomplete'){
+   arcadeMessage(e.name+' COMPLETE · +'+fmt(e.points));ui.scoreFlash.textContent='FLIGHT MISSION COMPLETE';sound(1320,.34,'square');
+  }
   if(e.type==='promotion'){
    arcadeMessage('RANK PROMOTION · '+e.rank);
    ui.scoreFlash.textContent=e.rank+' +'+fmt(e.points);
