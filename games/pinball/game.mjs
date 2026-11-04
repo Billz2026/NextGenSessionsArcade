@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=14';
-import {renderTable} from './visuals.mjs?v=29';
-import {createDotMatrix} from './dmd.mjs?v=14';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=15';
+import {renderTable} from './visuals.mjs?v=30';
+import {createDotMatrix} from './dmd.mjs?v=15';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -10,6 +10,7 @@ const ui={
  powerLabel:$('power-label'),powerTitle:$('power-title'),launchTitle:$('launch-title'),launchHint:$('launch-hint'),launcherPanel:$('launcher-section'),actionPanel:$('primary-action'),start:$('start'),reset:$('reset'),
  launch:$('launch'),left:$('flipper-left'),right:$('flipper-right'),sound:$('sound'),
  multi:$('multiplier'),ballSave:$('ball-save'),modeName:$('mode-name'),
+ multiballStatus:$('multiball-indicator'),multiballText:$('multiball-text'),
  modeTimer:$('mode-timer'),missionMessage:$('mission-message'),
  extraStatus:$('extra-status'),gridStatus:$('grid-status'),shots:$('shots-counter'),leaderboard:$('leaderboard'),
  mission:{lanes:$('mission-lanes'),frenzy:$('mission-frenzy'),targets:$('mission-targets'),ride:$('mission-ride')},
@@ -25,7 +26,7 @@ let bumperFlash=null,tableFlash=null;
 let topScores=[];try{const v=JSON.parse(localStorage.getItem(TOP_KEY)||'[]');if(Array.isArray(v))topScores=v.filter(n=>Number.isSafeInteger(n)&&n>=0).slice(0,5)}catch{}
 best=Math.max(best,...topScores,0);
 let lastModeMessage='',messageUntil=0,announcedGameOver=false;
-let lastScore=-1,lastBall=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='',lastTilt=null;
+let lastScore=-1,lastBall=-1,lastActiveBalls=-1,lastStatus='',lastPower=-1,lastBest=-1,lastStatusText='',lastTilt=null;
 const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
 const dmd=createDotMatrix(document.getElementById('dmd-screen'),{reducedMotion});
 // A physically modelled Three.js scene is the preferred renderer. 2D Canvas
@@ -50,7 +51,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=32');
+  const {create3DTable}=await import('./render3d.mjs?v=33');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -136,11 +137,11 @@ function syncHUD(){
  const ballLive=state==='playing'&&!shooterReady;
  const saveRemaining=ballLive&&!engine.tilted&&!engine.ballSaveUsed&&engine.ballLaunchedAt!==null?
   Math.max(0,engine.ballSaveUntil-engine.time):0;
- if(lastBall!==ball||lastStatus!==state||lastTilt!==engine.tilted){
-  ui.ball.textContent=ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
+ if(lastBall!==ball||lastStatus!==state||lastTilt!==engine.tilted||lastActiveBalls!==engine.balls.length){
+  ui.ball.textContent=engine.multiballActive?engine.balls.length+' LIVE':ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
   ui.status.textContent=engine.tilted?'TILT':isReady?'STANDBY':shooterReady?'BALL READY':
    ballLive?'BALL LIVE':state==='between'?'BETWEEN BALLS':'GAME OVER';
-  lastBall=ball;lastStatus=state;lastTilt=engine.tilted;
+  lastBall=ball;lastStatus=state;lastTilt=engine.tilted;lastActiveBalls=engine.balls.length;
  }
  ui.actionPanel.hidden=!(isReady||isOver||shooterReady);
  ui.start.hidden=!(isReady||isOver);
@@ -164,7 +165,12 @@ function syncHUD(){
  const activeMulti=engine.time<engine.multiplierUntil;
  const commandActive=Boolean(engine.activeCommand),commandReady=engine.commandMissionReady;
  ui.multi.textContent=activeMulti?'2×':'1×';
- ui.ballSave.textContent=engine.tilted?'TILT':state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
+ ui.multiballStatus.hidden=!engine.multiballActive;
+ if(engine.multiballActive)ui.multiballText.textContent=engine.multiballSuperLit?'SUPER JACKPOT LIT · SHOOT SCOOP':
+  engine.time<engine.multiballSaveUntil?'3-BALL SAVE · '+Math.ceil(engine.multiballSaveUntil-engine.time)+'s':
+  engine.balls.length+' BALLS ACTIVE · RAMP + ORBIT JACKPOTS';
+ ui.ballSave.textContent=engine.tilted?'TILT':engine.multiballActive&&engine.time<engine.multiballSaveUntil?
+  Math.ceil(engine.multiballSaveUntil-engine.time)+'s':state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil
    ?Math.ceil(engine.ballSaveUntil-engine.time)+'s':'OFF';
  for(const name of Object.keys(engine.missions)){ui.mission[name].classList.toggle('completed',engine.missions[name]);}
  ui.progress.lanes.textContent=engine.missions.lanes?'DONE':engine.lanes.size+' / 3';
@@ -179,6 +185,8 @@ function syncHUD(){
   Math.max(engine.multiplierUntil,engine.frenzyUntil)-engine.time;
  ui.gridStatus.textContent=isReady?'3 SHOTS TO JACKPOT':isOver?'FINAL SCORE':
   state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'UPPER LANES · SKILL SHOT':
+  engine.multiballActive?'MULTIBALL · '+engine.balls.length+' BALLS':
+  engine.neonCommandActive?'NEON COMMAND · '+Math.ceil(engine.neonCommandRemaining)+'s':
   commandActive?'FUEL · '+Math.ceil(engine.commandFuelRemaining)+'s':commandReady?'MISSION READY':
   rushActive?'JACKPOT · '+Math.ceil(engine.hurryUpUntil-engine.time)+'s':
   overdriveActive?'OVERDRIVE · '+Math.ceil(engine.overdriveUntil-engine.time)+'s':
@@ -188,18 +196,22 @@ function syncHUD(){
  if(scoopCount)scoopCount.textContent=engine.scoopHits+' SCOOPS';
  ui.modeName.textContent=engine.tilted?'TILT · NO SCORING':isReady?'TABLE OBJECTIVE':isOver?'RUN COMPLETE':
   state==='between'?'BETWEEN BALLS':shooterReady?'SKILL SHOT':
+  engine.multiballActive?'NEON OVERLOAD · MULTIBALL':engine.neonCommandActive?'NEON COMMAND':
   commandActive?'FLIGHT MISSION':commandReady?'MISSION CONTROL':
   rushActive?'NEON RUSH · JACKPOT LIT':overdriveActive?'SPINNER OVERDRIVE':
   engine.time<engine.frenzyUntil?'BUMPER FRENZY':activeMulti?'NEON LANES 2×':
   engine.comboCount>=2?'COMBO X'+engine.comboCount:'CURRENT OBJECTIVE';
  ui.modeTimer.textContent=engine.tilted?'BONUS FORFEITED · NEXT BALL TO RESET':isReady?'HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP':isOver?'YOUR BEST '+fmt(best):
   state==='between'?'NEXT BALL PREPARING':shooterReady?'HIT AN UPPER N-G-S LANE':
+  engine.multiballActive?(engine.multiballSuperLit?'SHOOT SCOOP FOR SUPER JACKPOT':'HIT RAMP + ORBIT FOR JACKPOTS'):
+  engine.neonCommandActive?'COMMAND '+engine.neonCommandStep+'/5 · '+Math.ceil(engine.neonCommandRemaining)+'s':
   commandActive?engine.commandInstruction+' · '+Math.ceil(engine.commandFuelRemaining)+' SECONDS FUEL':
   commandReady?'TARGET BANK LOCKED · RAMP STARTS MISSION':
   remaining>0?Math.ceil(remaining)+' SECONDS · '+(rushActive?'HIT SCOOP':overdriveActive?'SPIN FOR BONUS':'MODE LIVE'):
   'RAMP · ORBIT · CROSSOVER · SKYLINE';
  ui.missionMessage.textContent=engine.tilted?'WAIT FOR BALL TO DRAIN':isReady?'CHARGE THE POWER GRID':isOver?'FINAL SCORE '+fmt(score):
   state==='between'?'BALL '+ball+' COMPLETE':shooterReady?'SKILL SHOT AVAILABLE':
+  engine.multiballActive?'THREE-BALL SCORE ATTACK':engine.neonCommandActive?'FINAL COMMAND MISSION':
   commandActive?engine.commandMission.name:commandReady?'SHOOT RAMP TO LAUNCH':
   rushActive?'SHOOT THE SCOOP':overdriveActive?'HIT THE SPINNER':
   engine.powerCharges===2?'ONE MORE ROUTE FOR JACKPOT':
@@ -305,7 +317,8 @@ function processEvents(){
   const dmdEvent=e.type==='gameover'?{...e,record:e.score>best}:e;
   dmd.notify(dmdEvent,performance.now(),engine);
   if(['shot','mission','missionarmed','missionstart','missionprogress','missionfailed','commandcomplete','promotion','extra','scoop','spinner','frenzy','multiplier',
-      'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave'].includes(e.type)){
+      'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave',
+      'balllock','multiballstart','multiballjackpot','superlit','superjackpot','multiballadd','wizardstart','wizardcomplete'].includes(e.type)){
    const duration=e.type==='jackpot'||e.type==='extra'?1250:
     e.type==='hurryup'||e.type==='overdrive'||e.type==='skillshot'?950:
     e.type==='mission'?900:550;
@@ -397,6 +410,12 @@ function processEvents(){
    ui.scoreFlash.textContent=e.label+' · +'+fmt(e.score);
   }
   if(e.type==='impact')mechanicalImpact(e);
+  if(e.type==='balllock'){ui.scoreFlash.textContent='BALL '+e.locked+' LOCKED';sound(930,.25,'square');}
+  if(e.type==='multiballstart'){ui.scoreFlash.textContent='NEON OVERLOAD';sound(1150,.46,'sawtooth');}
+  if(e.type==='multiballjackpot'){ui.scoreFlash.textContent='MULTIBALL JACKPOT +'+fmt(e.points);sound(1320,.29,'square');}
+  if(e.type==='superjackpot'){ui.scoreFlash.textContent='SUPER JACKPOT +'+fmt(e.points);sound(1490,.50,'square');}
+  if(e.type==='multiballadd'){ui.scoreFlash.textContent='ADD-A-BALL';sound(1030,.28,'triangle');}
+  if(e.type==='wizardstart'||e.type==='wizardcomplete'){ui.scoreFlash.textContent=e.type==='wizardstart'?'NEON COMMAND':'COMMAND CLEAR';sound(1180,.39,'square');}
   if(e.type==='nudge'){noiseBurst(.055,.035,480,0);sound(115,.07,'sine',.05);}
    if(e.type==='tilt'){
     ui.scoreFlash.textContent='TILT · BONUS LOST';
