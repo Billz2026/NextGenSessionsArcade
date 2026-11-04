@@ -81,7 +81,7 @@ test('classic shot graphics stay visible and 2D renderer removes black channel b
  assert.ok(canvas.includes("const accent=route.accent==='coral'?'#ff92ba':'#ffd08c'"));
  assert.ok(!canvas.includes("route.width+8"));
  assert.ok(!canvas.includes("route.width-10"));
- assert.ok(canvas.includes("line(c,track,'#a8b6c1',1.3)"));
+ assert.ok(canvas.includes("line(c,track,'#d3ad61',1.3)"));
 });
 
 test('upper crown is a low-profile arch outside active hardware',()=>{
