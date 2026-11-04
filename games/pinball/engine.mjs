@@ -239,7 +239,7 @@ export class PinballEngine{
   if(!this.kickbackReady||this.tilted||this.state!=='playing'||!b||
      b.mode!=='live'||b.y<635||b.y>694||b.vy<=100)return false;
   const side=b.x>35&&b.x<KICKBACK.left.edge&&b.vx<140?'left':
-   b.x<385&&b.x>KICKBACK.right.edge&&b.vx>-140?'right':null;
+   b.x<365&&b.x>KICKBACK.right.edge&&b.vx>-140?'right':null;
   if(!side)return false;
   const coil=KICKBACK[side];
   this.kickbackReady=false;
