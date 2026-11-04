@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,PLAY_BALANCE,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -304,9 +304,9 @@ test('separated flipper tips leave an actual drain gap while preserving outlane 
  assert.ok(POSTS.some(p=>p.x===130&&p.y===641));
  assert.ok(POSTS.some(p=>p.x===290&&p.y===641));
 });
-test('ball save lasts 11 seconds from launch but can be claimed only once per ball',()=>{
+test('ball save lasts 15 seconds from launch but can be claimed only once per ball',()=>{
  const g=new PinballEngine();g.start();g.launch();
- assert.ok(Math.abs(g.ballSaveUntil-g.ballLaunchedAt-11)<1e-8);
+ assert.ok(Math.abs(g.ballSaveUntil-g.ballLaunchedAt-15)<1e-8);
  g.time=g.ballSaveUntil-.1;
  g.ball.x=210;g.ball.y=697;g.ball.vy=180;
  g.singleStep(BOARD.step);
@@ -783,7 +783,7 @@ test('kickback never saves a central drain, never overrides tilt and cannot endl
 
 test('fairer flippers still leave the central gap and return feeds are passive',()=>{
  const g=new PinballEngine();
- assert.equal(g.flippers[0].length,58);
+ assert.equal(g.flippers[0].length,60);
  const gap=g.flippers[1].x-g.flippers[0].x-
   2*g.flippers[0].length*Math.cos(.40);
  assert.ok(gap>BOARD.radius*2,'centre drain must remain genuinely open');
@@ -796,4 +796,89 @@ test('shooter lane is not mistaken for a right-side outlane recovery',()=>{
  g.ball.x=382;g.ball.y=649;g.ball.vx=0;g.ball.vy=300;
  assert.equal(g.tryOutlaneKickback(),false,'plunger channel cannot consume KICKBACK');
  assert.equal(g.kickbackReady,true);
+});
+
+test('streak rescue is earned by two real route scoring events, not by passive bounces',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ for(let i=0;i<12;i++)g.bumper();
+ assert.equal(g.streakShots,0);
+ assert.equal(g.streakShieldReady,false);
+ g.activateShot('ramp');
+ assert.equal(g.streakShots,1);
+ assert.equal(g.streakShieldReady,false);
+ g.ball.mode='live';g.activateShot('orbit');
+ assert.equal(g.streakShots,2);
+ assert.equal(g.streakShieldReady,true);
+ assert.equal(g.consumeEvents().filter(e=>e.type==='streakshield').length,1);
+});
+
+test('earned shield saves one legitimate post-window central drain without adding a turn',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ g.activateShot('ramp');g.ball.mode='live';g.activateShot('orbit');
+ assert.equal(g.streakShieldReady,true);
+ g.time=g.ballSaveUntil+2;
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vx=0;g.ball.vy=260;
+ const before=g.ballNumber;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'playing');assert.equal(g.ball.mode,'shooter');
+ assert.equal(g.ballNumber,before);
+ assert.equal(g.streakShieldSpent,true);
+ assert.equal(g.streakShieldReady,false);
+ assert.equal(g.ballSaveUsed,true);
+ assert.equal(g.consumeEvents().filter(e=>e.type==='streaksave').length,1);
+ g.launch();
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=240;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'between','earned replay must never loop');
+});
+
+test('a fresh normal turn restores one earnable shield after the previous one is spent',()=>{
+ const g=new PinballEngine();g.start();
+ g.streakShots=2;g.streakShieldReady=false;g.streakShieldSpent=true;
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=180;
+ g.singleStep(BOARD.step);
+ for(let i=0;i<320;i++)g.singleStep(BOARD.step);
+ assert.equal(g.state,'playing');assert.equal(g.ball.mode,'shooter');
+ assert.equal(g.streakShieldSpent,false);
+ assert.equal(g.streakShots,0);
+ assert.equal(g.streakShieldReady,false);
+});
+
+test('tilted balls forfeit earned streak protection rather than becoming free replays',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ g.activateShot('ramp');g.ball.mode='live';g.activateShot('orbit');
+ g.tilted=true;g.time=g.ballSaveUntil+1;
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=210;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'between');
+ assert.equal(g.consumeEvents().filter(e=>e.type==='streaksave').length,0);
+});
+
+test('initial ball save and earned shield cannot manufacture unlimited launches',()=>{
+ const g=new PinballEngine();g.start();g.launch();
+ g.activateShot('ramp');g.ball.mode='live';g.activateShot('orbit');
+ g.time=g.ballSaveUntil-.1;
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=190;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'playing');assert.equal(g.ballSaveUsed,true);
+ assert.equal(g.streakShieldReady,true);
+ g.launch();g.time=g.ballSaveUntil+1;
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=190;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'playing');
+ assert.equal(g.streakShieldSpent,true);
+ g.launch();
+ g.ball.mode='live';g.ball.x=210;g.ball.y=697;g.ball.vy=190;
+ g.singleStep(BOARD.step);
+ assert.equal(g.state,'between');
+});
+
+test('balance maintains an accessible real center gap with controlled return lanes',()=>{
+ const g=new PinballEngine();
+ assert.equal(PLAY_BALANCE.flipperLength,60);
+ assert.equal(PLAY_BALANCE.returnBlend,.40);
+ const f=g.flippers[0];
+ const actualGap=g.flippers[1].x-f.x-2*f.length*Math.cos(.40);
+ assert.ok(actualGap>BOARD.radius*2);
+ assert.equal(PLAY_BALANCE.launchSave,15);
 });
