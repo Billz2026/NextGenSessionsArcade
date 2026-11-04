@@ -1,10 +1,20 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase V2.5 — skill-earned streak protection and more forgiving scoring runs (playable 3D beta)
+**Current stage:** Phase V2.6 — premium black-and-gold playfield and shot guidance (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase V2.6 — premium playfield and live shot guidance
+
+- Refinished the original upper route hardware in brushed warm gold, smoked gunmetal and dark enamel, with consistent fastener and entry-cheek materials. Cleaned up leftover purple acrylic return panels, rollover bay faces, bumper-island surrounds and printed path graphics in **both** 3D and 2D.
+- Kept the black enamel, fine gold dust, gold rails and standalone red neon wordmark, with a limited blue accent only around the Power Core. The raised wireforms remain open and follow the exact original physical paths.
+- Added small **flush red/gold shot arrows** at the real Ramp, Orbit, Crossover, Skyline, Scoop, Spinner and Target Bank areas. These are visual-only meshes/Canvas overlays; they do not create new targets, walls, score events or deflect the ball.
+- Introduced `shot-guidance.mjs` as a shared renderer decision layer. The currently required mission/wizard/ball-lock shot pulses **before** the ball reaches it; unrelated shot lamps remain dim. During multiball, available Ramp and Orbit jackpots illuminate while already claimed jackpots dim; after both are collected, the Scoop guides the player to the actual Super Jackpot.
+- Respects reduced-motion preferences: illuminated guidance stays fixed instead of flashing. Existing completed-shot feedback remains, but has lower priority than the next required objective.
+- Camera, scoring, 58-unit flipper collision geometry, 240 Hz ball physics, multiball simulation, tilt, shield, cabinet controls and mobile/desktop layout have not been changed.
+- Added CI-tested shared guidance states, exact physical-shot marker positioning, mission transitions, jackpot cycles, visual-renderer integration, and reduced-motion behaviour.
 
 ## Phase V2.5 — protecting productive pinball streaks
 
