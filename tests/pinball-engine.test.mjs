@@ -342,7 +342,9 @@ test('unattended flippers eventually drain even with the one-use kickback',()=>{
  }
  assert.equal(saveCount,1);
  assert.ok(kicks<=1,'a normal turn gets no more than one outlane kick');
- assert.equal(drains,1,'even with rescue, unattended play must eventually drain');
+ assert.equal(drains,1,JSON.stringify({state:g.state,time:g.time,saveCount,kicks,
+  ball:g.ball&&{x:g.ball.x,y:g.ball.y,vx:g.ball.vx,vy:g.ball.vy,mode:g.ball.mode},
+  shots:g.shots,score:g.score,ballSaveUsed:g.ballSaveUsed,kickbackReady:g.kickbackReady}));
 });
 test('responsive flipper play keeps the first ball active beyond initial short-drain window',()=>{
  const g=new PinballEngine();g.start();g.launch();
