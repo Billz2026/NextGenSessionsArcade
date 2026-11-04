@@ -4,9 +4,9 @@
 import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections} from './upper-hardware.mjs?v=4';
+import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=5';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
-import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide} from './finishing-detail.mjs?v=1';
+import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -133,65 +133,65 @@ function drawUpperCrown(c){
  }
 }
 function drawOrbits(c){
- // Classic wireform look: open playfield artwork, coloured shot markers
- // and delicate steel rails. Avoid heavy dark bands across the bumpers.
- for(const route of UPPER_ROUTES){
-  const pts=route.points.map(p=>[p.x,p.y]),edges=guideEdges(route);
-   const accent=route.accent==='coral'?'#ee776b':'#e5bc6c';
-   // Colour only the entrance and return, not the entire overlapping
-   // transport route: the physical wireform does the visual navigation.
-   for(const section of [pts.slice(0,4),pts.slice(-4)]){
-    line(c,section,'rgba(24,17,9,.75)',4);
-    line(c,section,accent,1.25);
-   }
+ // All four visually raised routes follow the engine's actual transport
+ // centres. Solid matte lane beds replace the former dozens of thin wires.
+ // Dark lanes are drawn before devices so pop bumpers remain clearly exposed.
+ const ordered=[...UPPER_ROUTES].sort((a,b)=>
+  (a.kind==='orbit'||a.kind==='ramp'?1:0)-
+  (b.kind==='orbit'||b.kind==='ramp'?1:0));
+ for(const route of ordered){
+  const primary=route.kind==='orbit'||route.kind==='ramp';
+  const smooth=roundedWirePoints(route.points,3);
+  const edges=guideEdges({points:smooth,width:route.width});
+  const gold=route.kind==='ramp'?'#d9aa69':route.kind==='orbit'?'#e1c47e':'#a98b58';
+  const fill=route.kind==='ramp'?'#211513':
+   route.kind==='orbit'?'#17130f':'#181510';
+  c.save();c.globalAlpha=primary?.90:.72;
+  c.beginPath();
+  c.moveTo(edges[0].left.x,edges[0].left.y);
+  for(let i=1;i<edges.length;i++)c.lineTo(edges[i].left.x,edges[i].left.y);
+  for(let i=edges.length-1;i>=0;i--)c.lineTo(edges[i].right.x,edges[i].right.y);
+  c.closePath();c.fillStyle=fill;c.fill();
+  c.globalAlpha=1;
   for(const side of ['left','right']){
-   const track=roundedWirePoints(edges.map(e=>e[side]),3)
-    .map(p=>[p.x,p.y]);
-   line(c,track,'#312416',3.1);
-     line(c,track,'#d3ad61',1.3);
-   // Only the outer high safety rail gets an additional polished highlight.
-   if(side===elevatedGuardSide(route.kind)){
-     for(const [from,to] of upperGuardSections(route)){
-      const segment=track.slice(from,to+1);
-      line(c,segment,'rgba(255,240,215,.52)',1.05);
-     }
-    }
+   const points=edges.map(e=>[e[side].x,e[side].y]);
+   line(c,points,'rgba(10,9,8,.88)',primary?3.4:2.5);
+   c.globalAlpha=primary?.86:.53;
+   line(c,points,gold,primary?1.75:1.2);
+   c.globalAlpha=1;
   }
-  for(const i of route.supportIndices){
-    const a=edges[i].left,b=edges[i].right,p=route.points[i];
-    line(c,[[a.x,a.y],[b.x,b.y]],'#776b56',2.1);
-    const outer=edges[i][elevatedGuardSide(route.kind)];
-    disk(c,outer.x,outer.y,4.3,'#191714','#c9ad76',1.4);
-    bolt(c,outer.x,outer.y,1.5);
-   const q=route.points[i-1],ang=Math.atan2(p.y-q.y,p.x-q.x)+Math.PI/2;
-   c.save();c.translate(p.x,p.y);c.rotate(ang);
-   c.beginPath();c.moveTo(0,-6);c.lineTo(4,4);
-   c.lineTo(0,1);c.lineTo(-4,4);c.closePath();
-   c.fillStyle=accent;c.strokeStyle='#292117';c.lineWidth=.8;
-   c.fill();c.stroke();c.restore();
+  // Sparse inset directional arrows rather than overhead wire crossbars.
+  for(const i of [Math.floor(smooth.length*.16),Math.floor(smooth.length*.72)]){
+   const p=smooth[i],q=smooth[Math.min(smooth.length-1,i+2)];
+   if(!p||!q)continue;
+   const angle=Math.atan2(q.y-p.y,q.x-p.x)+Math.PI/2;
+   c.save();c.translate(p.x,p.y);c.rotate(angle);
+   c.beginPath();c.moveTo(0,-5.6);c.lineTo(4.5,4.8);
+   c.lineTo(0,2.2);c.lineTo(-4.5,4.8);c.closePath();
+   c.fillStyle=route.kind==='ramp'?'#f0a08a':'#e8c37b';
+   c.globalAlpha=primary?.8:.55;
+   c.fill();c.restore();
   }
+  c.restore();
+ }
+ // The entry mouths are wider than the moving ball and align exactly
+ // to the real scoring sensors. Nothing decorative can catch a ball.
+ for(const route of UPPER_ROUTES){
   const ex=route.entrance.x,ey=route.entrance.y;
-   // Steel entry cheeks and low-profile authentic launch plate.
-   rect(c,ex-19,ey-11,38,18,4,'#25201c','#bb9552',1.4);
-   for(const dx of [-20,20]){
-    rect(c,ex+dx-3,ey-16,6,15,2,'#34312b','#ad965f',1.1);
+  const primary=route.kind==='orbit'||route.kind==='ramp';
+  if(primary){
+   rect(c,ex-18,ey-10,36,18,4,'#16120d','#bd985e',1.4);
+   for(const dx of [-18,18]){
+    rect(c,ex+dx-3,ey-15,6,15,2,'#342819','#ab8c54',1);
     bolt(c,ex+dx,ey-15,1.5);
    }
-   disk(c,ex,ey,5,'#28221b','#e8ccaf',1.6);
-   disk(c,ex,ey,2.4,accent);
-   text(c,route.kind.toUpperCase(),ex,ey+19,9,'#e7d5c7','Barlow Condensed',900);
- }
- for(const [path,col] of [[CENTER_PATH,'#efc77a'],[SKYLINE_PATH,'#d8b778']]){
-  c.save();c.setLineDash([4,9]);
-  line(c,path.map(([x,y])=>[x,y]),'#2c241c',6);
-  line(c,path.map(([x,y])=>[x,y]),col,2.8);c.restore();
- }
- for(const [label,x,y,color] of [
-  ['ORBIT',78,372,'#ffdfb4'],['RAMP',315,372,'#ffd4bb'],
-  ['CROSS',208,438,'#f0d4a1'],['SKY',122,404,'#eacb8f']
- ]){
-  rect(c,x-26,y-11,52,22,4,'#151210','#c7a15f',1.4);
-  text(c,label,x,y,11,color,'Barlow Condensed',900);
+   disk(c,ex,ey,4,'#2b221a','#eed0a4',1);
+   text(c,route.kind.toUpperCase(),ex,ey+19,9,'#f3dcb1','Barlow Condensed',900);
+  }else{
+   rect(c,ex-22,ey+9,44,15,3,'#17130e','#8a7147',1);
+   text(c,route.kind==='center'?'CROSS':'SKY',ex,ey+16.5,9,
+    '#e9c897','Barlow Condensed',900);
+  }
  }
 }
 /* Phase 3C: printed enamel, moulded plastics, ball guides and working inserts.

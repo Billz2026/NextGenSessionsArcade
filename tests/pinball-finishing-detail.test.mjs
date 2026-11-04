@@ -3,24 +3,21 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PinballEngine,TRAVEL_PATHS} from '../games/pinball/engine.mjs';
 import {UPPER_ROUTES,guideEdges} from '../games/pinball/upper-hardware.mjs';
-import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide}
+import {LOWER_DIRECTION_INSERTS,directionInsertActive}
  from '../games/pinball/finishing-detail.mjs';
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
-test('upper wireform keeps two continuous lower rails and one outside high guard',()=>{
- assert.equal(elevatedGuardSide('orbit'),'right');
- assert.equal(elevatedGuardSide('ramp'),'left');
+test('upper route finishing uses four actual guided paths and no metal runners',()=>{
+ assert.deepEqual(UPPER_ROUTES.map(r=>r.kind),['orbit','ramp','center','skyline']);
  for(const route of UPPER_ROUTES){
-  assert.equal(route.supportIndices.length,3);
   assert.deepEqual(route.points.map(p=>[p.x,p.y,p.z]),TRAVEL_PATHS[route.kind]);
   assert.equal(guideEdges(route).length,route.points.length);
  }
- assert.throws(()=>elevatedGuardSide('center'),/Unknown/);
- assert.ok(three.includes('for(const [from,to] of upperGuardSections(route))'));
- assert.ok(three.includes('const outerGuard=elevatedGuardSide(route.kind)'));
- assert.ok(three.includes('railTube(edges.map(e=>e[side]),-.034,.024,wireSteel)'));
- assert.ok(three.includes('new T.TubeGeometry(curve,'));
- assert.ok(!three.includes('const routeBed=new T.MeshPhysicalMaterial'));
+ assert.ok(three.includes('function channelStrip(route,from,to,lift,mat)'));
+ assert.ok(three.includes('channelStrip(route,0,1,-.025,laneBaseMaterials[route.kind])'));
+ assert.ok(!three.includes('function railTube('));
+ assert.ok(!three.includes('routeRod('));
+ assert.ok(!canvas.includes('upperGuardSections(route)'));
 });
 test('flipper-area indicator lamps react only to real shot and mission states',()=>{
  const game=new PinballEngine();game.start();

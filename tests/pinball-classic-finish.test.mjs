@@ -27,7 +27,7 @@ test('three Power Grid jewels show real charge count and jackpot',()=>{
  assert.ok(canvas.includes('const gridLit=gridIllumination(engine)'));
  assert.ok(GRID_LIGHTS.every(g=>g.x>40&&g.x<BOARD.width-40));
 });
-test('wireform rounding preserves all engine path geometry and route endpoints',()=>{
+test('lane rounding preserves all engine path geometry and route endpoints',()=>{
  for(const route of UPPER_ROUTES){
   const edges=guideEdges(route);
   for(const side of ['left','right']){
@@ -40,9 +40,10 @@ test('wireform rounding preserves all engine path geometry and route endpoints',
   }
   assert.deepEqual(route.points.map(p=>[p.x,p.y,p.z]),TRAVEL_PATHS[route.kind]);
  }
- assert.ok(three.includes('new T.TubeGeometry(curve,'));
- assert.ok(canvas.includes('roundedWirePoints(edges.map(e=>e[side]),3)'));
- assert.ok(!three.includes('const routeBed=new T.MeshPhysicalMaterial'));
+ assert.ok(three.includes('roundedWirePoints(route.points,3)'));
+ assert.ok(canvas.includes('roundedWirePoints(route.points,3)'));
+ assert.ok(three.includes('function channelStrip(route,from,to,lift,mat)'));
+ assert.ok(!three.includes('function railTube('));
 });
 test('classic finish does not change collision rules',()=>{
  assert.match(game,/render3d\.mjs\?v=\d+/);

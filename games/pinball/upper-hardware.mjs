@@ -1,24 +1,24 @@
-/* Upper machine geometry uses the existing engine transport paths.
-   Decorative guide rails never alter physics or create extra scoring zones. */
+/* Integrated routed-lane geometry follows the existing authoritative engine
+   transport paths. These visual lane surfaces never alter physics or scoring. */
 import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=10';
 function makeRoute(kind,width,accent){
  const path=TRAVEL_PATHS[kind],shot=SHOTS[kind];
  if(!path||!shot||path[0][0]!==shot.x||path[0][1]!==shot.y)
-  throw Error('Upper rail does not start at '+kind+' scoring sensor');
+  throw Error('Integrated lane does not start at '+kind+' scoring sensor');
  return Object.freeze({
   kind,width,accent,
   points:Object.freeze(path.map(([x,y,z])=>Object.freeze({x,y,z}))),
-  entrance:Object.freeze({x:shot.x,y:shot.y,r:shot.r}),
-  supportIndices:Object.freeze([1,4,path.length-3])
+  entrance:Object.freeze({x:shot.x,y:shot.y,r:shot.r})
  });
 }
 export const UPPER_ROUTES=Object.freeze([
- makeRoute('orbit',22,'amber'),makeRoute('ramp',22,'coral')
+ makeRoute('orbit',22,'amber'),makeRoute('ramp',22,'coral'),
+ makeRoute('center',18,'ivory'),makeRoute('skyline',18,'gold')
 ]);
 export const UPPER_ROLLOVERS=Object.freeze(LANES.map((l,index)=>
  Object.freeze({index,x:l.x,y:l.y,label:l.label})));
 export const UPPER_BALL_RADIUS=BOARD.radius*.020;
-// Rounded visual wireforms retain all of these authoritative path samples.
+// Both edges describe real 22px/18px channels centred on the exact ball path.
 export function guideEdges(route){
  return route.points.map((p,i)=>{
   const a=route.points[Math.max(0,i-1)];
@@ -39,14 +39,3 @@ export const UPPER_ARCH=Object.freeze([
  [300,145],[336,154],[357,181],[365,211]
 ].map(([x,y])=>Object.freeze({x,y})));
 
-// The two tall outer guard sections stop before the overhead crossover.
-// Both real lower rails remain continuous for the full guided-ball path.
-export function upperGuardSections(route){
- if(route.kind==='orbit')return Object.freeze([
-  Object.freeze([0,5]),Object.freeze([11,route.points.length-1])
- ]);
- if(route.kind==='ramp')return Object.freeze([
-  Object.freeze([0,4]),Object.freeze([7,route.points.length-1])
- ]);
- throw Error('Unknown upper route '+route.kind);
-}
