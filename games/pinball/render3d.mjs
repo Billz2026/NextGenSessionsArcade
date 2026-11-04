@@ -1,7 +1,7 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=11';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH} from './engine.mjs?v=12';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=3';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,upperGuardSections,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=4';
@@ -317,6 +317,8 @@ export async function create3DTable(host){
  inkLabel('N · G · S',420,365,176);
  p.font='900 20px Oxanium,Arial,sans-serif';p.fillStyle='#bcd5e8';
  p.textAlign='center';p.fillText('FLIGHT RANK',420,235);
+ p.font='900 18px Oxanium,Arial,sans-serif';p.fillStyle='#bdeeff';
+ p.fillText('FUEL',698,460);
  inkLabel('TARGET BANK',417,827,190);
  inkLabel('POWER CORE',420,1098,210,'#a9d9ff');
  inkLabel('ORBIT',120,738,105);
@@ -828,6 +830,7 @@ export async function create3DTable(host){
  // emissive materials; the moving ball remains in front of the inserts).
  const insertSpecs=[
   [142,131,'rank',0],[176,131,'rank',1],[210,131,'rank',2],[244,131,'rank',3],[278,131,'rank',4],
+  [349,252,'fuel',5],[349,272,'fuel',4],[349,292,'fuel',3],[349,312,'fuel',2],[349,332,'fuel',1],
   [80,209,'top',0],[172,180,'top',1],[246,180,'top',2],[332,213,'top',0],
   [107,268,'bumper',0],[305,268,'bumper',1],
   [87,346,'orbit',0],[96,447,'orbit',1],
@@ -1178,8 +1181,9 @@ export async function create3DTable(host){
    if(ins.group==='save')active=ballSaveActive;
    if(ins.group==='top')active=engine.missions.lanes||engine.lanes.size>0;
    if(ins.group==='rank')active=ins.phase<=engine.rankIndex;
-   ins.material.emissiveIntensity=active?3.4:(idleMode?.9+2.1*chasing:.65+.85*chasing);
-   ins.glowMat.opacity=Math.min(1,(active?.82:(idleMode?.18+.56*chasing:.18+.3*chasing))+eventFlash*.36);
+   if(ins.group==='fuel')active=engine.commandMissionReady||ins.phase<=Math.ceil(engine.commandFuelRatio*5);
+   ins.material.emissiveIntensity=active?3.4:ins.group==='fuel'?.12:(idleMode?.9+2.1*chasing:.65+.85*chasing);
+   ins.glowMat.opacity=Math.min(1,(active?.82:ins.group==='fuel'?.06:(idleMode?.18+.56*chasing:.18+.3*chasing))+eventFlash*.36);
   }
   // Halos over the three pop bumpers, upper rollover lanes, four targets,
   // spinner and scoop reflect player action and attract-mode light sequences.
