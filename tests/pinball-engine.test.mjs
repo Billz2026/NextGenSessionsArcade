@@ -785,7 +785,7 @@ test('kickback never saves a central drain, never overrides tilt and cannot endl
 
 test('fairer flippers still leave the central gap and return feeds are passive',()=>{
  const g=new PinballEngine();
- assert.equal(g.flippers[0].length,60);
+ assert.equal(g.flippers[0].length,58);
  const gap=g.flippers[1].x-g.flippers[0].x-
   2*g.flippers[0].length*Math.cos(.40);
  assert.ok(gap>BOARD.radius*2,'centre drain must remain genuinely open');
