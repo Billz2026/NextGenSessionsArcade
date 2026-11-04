@@ -1,10 +1,19 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase V2 — NextGen red identity, six flight missions and Neon Overload multiball (playable 3D beta)
+**Current stage:** Phase V2.1 — premium black-and-gold finish, unboxed neon marquee and Neon Overload multiball (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
-An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or## Phase V2.1 — premium unboxed neon and NextGen gold edition
+
+- Removed the heavy filled **NEON TILT** block-letter face and surrounding sign rectangle from the physical 3D marquee and 2D fallback. The title is now standalone thin italic **red neon tube lettering** with three small golden light bars on each side.
+- The marquee slowly breathes in brightness during play and attract mode, with no strobing; the 3D renderer respects the reduced-motion setting and the Canvas fallback shows a static sign when reduced motion is requested.
+- Changed both physical playfields to near-black lacquer with subtle warm reflections and a deterministic layer of fine gold dust specks. The flecks are baked into cached textures, not animated over moving balls.
+- Brought back the NextGen Sessions gold identity through the cabinet perimeter, raised edging, upper-crown rails, wireform runners, accent linework, and subtle gold hardware.
+- Kept the existing red arcade identity in the NEON TILT title and reactive game lights. All shots, collider locations, game modes, table scale, keyboard/touch controls and ball motion are unchanged.
+- Updated cache versions and source-level checks for the unboxed sign, 3D/Canvas consistency and stationary gold dust.
+
+ geometry.
 
 ## Phase V2 — red arcade cabinet, deeper missions and three-ball pinball
 
