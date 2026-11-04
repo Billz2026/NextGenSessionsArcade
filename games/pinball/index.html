@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./game.css?v=17">
-<link rel="stylesheet" href="./console.css?v=5">
+<link rel="stylesheet" href="./console.css?v=6">
 <link rel="stylesheet" href="./focus.css?v=1">
 </head>
 <body>
@@ -74,7 +74,7 @@
 <div class="game-banner" aria-live="polite"><div class="mode-topline"><span id="mode-name">TABLE OBJECTIVE</span><small id="grid-status">3 SHOTS TO JACKPOT</small></div><strong id="mission-message">CHARGE THE POWER GRID</strong><small id="mode-timer">HIT THREE ROUTE SHOTS TO LIGHT THE SCOOP</small></div>
 <div class="hud-stats">
         <div class="hud-stat"><span>BALL</span><strong id="ball-number">— / 3</strong></div>
-        <div class="hud-stat"><span>PERSONAL BEST</span><strong id="best-score">0</strong></div>
+        <div class="hud-stat"><span>FLIGHT RANK <small>BEST <b id="best-score">0</b></small></span><strong id="rank-name">CADET</strong></div>
         <div class="hud-stat"><span>MULTIPLIER</span><strong id="multiplier">1×</strong></div>
         <div class="hud-stat"><span>BALL SAVE</span><strong id="ball-save">OFF</strong></div>
       </div>
@@ -109,7 +109,7 @@
       </div>
 <div class="help-card">
         <strong>HOW TO PLAY</strong>
-        <p>Launch and hit an upper N-G-S lane within six seconds for a SKILL SHOT. Use the ORBIT, RAMP, CENTER CROSSOVER and SKYLINE LOOP for COMBO bonuses. Any three route shots charge POWER GRID; hit the SCOOP within 18 seconds for NEON RUSH JACKPOT. Five spinner crossings start OVERDRIVE for 14 seconds. Complete four missions for an extra ball. Each ball has one 11-second early-drain save.</p>
+        <p>Launch and hit an upper N-G-S lane within six seconds for a SKILL SHOT. Use the ORBIT, RAMP, CENTER CROSSOVER and SKYLINE LOOP for COMBO bonuses. Any three route shots charge POWER GRID; hit the SCOOP within 18 seconds for NEON RUSH JACKPOT. Each completed mission earns a command flag and promotes your flight rank from CADET toward COMMANDER. Complete all four missions for an extra ball. Each ball has one 11-second early-drain save.</p>
         <div><span>DESKTOP</span><strong>Z / ← &nbsp; · &nbsp; SLASH / → &nbsp; · &nbsp; SPACE</strong></div>
         <div><span>NUDGE / TILT</span><strong>X / . / ↑ &nbsp; · &nbsp; EXCESS = TILT</strong></div>
         <div><span>PHONE / FOLD</span><strong>FLIP BUTTONS · TAP UPPER TABLE TO NUDGE</strong></div>
@@ -123,6 +123,6 @@
   <div class="development-note"><strong>REAL-TIME 3D PREVIEW:</strong> Original 3D geometry, metallic materials and dynamic lighting. The physics still runs in 2D and guided ramp/orbit paths remain simplified. A 2D fallback is available. No prizes, purchases or real-money play.</div>
 </main>
 <footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · 3D TABLE PREVIEW</span><a href="../../">BACK TO ARCADE ↗</a></footer>
-<script type="module" src="./game.mjs?v=42"></script>
+<script type="module" src="./game.mjs?v=43"></script>
 </body>
 </html>
