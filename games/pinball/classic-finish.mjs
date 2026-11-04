@@ -1,8 +1,9 @@
 /* Original arcade artwork and light states; physics is unchanged. */
 import {ARCADE_MODES} from './engine.mjs?v=10';
 export const NEON_FINISH=Object.freeze({
- upper:'#2c4168',mid:'#283459',lower:'#232a49',
- ivory:'#fff0cf',cyan:'#80d8fb',coral:'#ff88b2',amber:'#ffd38f'
+ upper:'#1b2b49',mid:'#18263e',lower:'#181e33',
+ ivory:'#fff0cf',cyan:'#80d8fb',coral:'#ff88b2',amber:'#ffd38f',
+ rail:'#9faebd',railShadow:'#2b3445',violet:'#684d87',copper:'#a45160'
 });
 export const GRID_LIGHTS=Object.freeze([
  Object.freeze({index:0,x:165,y:351}),

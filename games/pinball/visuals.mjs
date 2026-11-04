@@ -5,7 +5,7 @@ import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=3';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,UPPER_ROLLOVERS,guideEdges} from './upper-hardware.mjs?v=3';
-import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=2';
+import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=3';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive,elevatedGuardSide} from './finishing-detail.mjs?v=1';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -108,16 +108,16 @@ function drawOrbits(c){
  for(const route of UPPER_ROUTES){
   const pts=route.points.map(p=>[p.x,p.y]),edges=guideEdges(route);
   const accent=route.accent==='coral'?'#ff92ba':'#ffd08c';
-  line(c,pts,'rgba(30,32,65,.58)',7);
-  line(c,pts,accent,2.5);
+  line(c,pts,'rgba(19,27,47,.75)',5);
+   line(c,pts,accent,1.7);
   for(const side of ['left','right']){
    const track=roundedWirePoints(edges.map(e=>e[side]),3)
     .map(p=>[p.x,p.y]);
-   line(c,track,'#344151',3.3);
-   line(c,track,'#e1e8ed',1.7);
+   line(c,track,'#242f41',3.1);
+    line(c,track,'#a8b6c1',1.3);
    // Only the outer high safety rail gets an additional polished highlight.
    if(side===elevatedGuardSide(route.kind))
-    line(c,track,'rgba(255,247,226,.58)',.7);
+    line(c,track,'rgba(255,240,215,.34)',.55);
   }
   for(const i of route.supportIndices){
    const a=edges[i].left,b=edges[i].right,p=route.points[i];
@@ -150,13 +150,24 @@ function drawOrbits(c){
    Decorative lamps follow existing mechanic state; they do not create fake targets. */
 function drawEnamelDetails(c){
  c.save();
- // Printed under-glass lightning arcs & retro arcade scoring ladder.
- c.strokeStyle='rgba(145,209,247,.34)';c.lineWidth=1.15;
- for(let i=0;i<5;i++){
-  c.beginPath();c.moveTo(116+i*3,355-i*6);
+ // Under-glass bumper island groups the three impact devices in a clean
+  // hexagonal machined assembly; sensor positions remain in engine.mjs.
+  c.beginPath();
+  for(const [i,pt] of [[110,200],[304,200],[330,272],[269,347],[141,347],[87,272]].entries())
+   i?c.lineTo(...pt):c.moveTo(...pt);
+  c.closePath();c.fillStyle='#18283e';c.fill();
+  c.lineWidth=2.2;c.strokeStyle='#687c91';c.stroke();
+  for(const b of MID_BUMPERS){
+   disk(c,b.x,b.y,b.r+14,'#111d2f','#334a60',2);
+   disk(c,b.x,b.y,b.r+11,null,'#6f8193',1.3);
+  }
+  // Printed under-glass lightning arcs & retro arcade scoring ladder.
+ c.strokeStyle='rgba(145,209,247,.19)';c.lineWidth=1.0;
+ for(let i=0;i<3;i++){
+   c.beginPath();c.moveTo(116+i*3,355-i*6);
   c.bezierCurveTo(153,382+i*7,253,372-i*7,297-i*3,355-i*6);c.stroke();
  }
- text(c,'POWER GRID',210,360,10,'rgba(255,226,173,.57)','Oxanium',900);
+ text(c,'POWER GRID',210,360,10,'rgba(255,226,173,.68)','Oxanium',900);
  // The former ghost lettering is replaced by a clear central power insert.
  // A restrained 3D-effect skyline is printed onto the playfield, not a prop.
  for(let i=0;i<14;i++){
@@ -176,17 +187,30 @@ function drawEnamelDetails(c){
   p.moveTo(338,423);p.bezierCurveTo(350,409,357,406,362,395);
   p.lineTo(374,445);p.lineTo(346,457);p.lineTo(326,431);p.closePath();
  },G(c,326,406,369,462,[[0,'#9b7b89'],[.46,'#403746'],[1,'#1c1a2a']]),'#e3bca1');
- // Retro upper-playfield inserts and sculpted rollover plastics.
- // Devices remain visible; no rail or elevated structure is painted over them.
+ // Three recessed upper-lane bays visually contain the real N/G/S sensors.
+  // The faceplates are static; only real lane switches illuminate dynamically.
+  for(const lane of UPPER_ROLLOVERS){
+   c.save();c.shadowColor='#060a17';c.shadowBlur=8;c.shadowOffsetY=4;
+   rect(c,lane.x-28,lane.y-35,56,70,7,
+    G(c,lane.x-29,lane.y-35,lane.x+28,lane.y+37,[
+     [0,'#65758b'],[.11,'#26364e'],[.55,'#101c2e'],[1,'#263045']
+    ]),'#8996a2',2);
+   c.restore();
+   rect(c,lane.x-24,lane.y-29,48,58,4,'#111b2f','#536982',1.2);
+   for(const dx of [-24,24])for(const dy of [-27,27])
+    bolt(c,lane.x+dx,lane.y+dy,1.8);
+  }
+  // Retro upper-playfield inserts and sculpted rollover plastics.
+  // Devices remain visible; no rail or elevated structure is painted over them.
  for(let i=0;i<9;i++){
   const x=72+i*34,y=131;
   disk(c,x,y,4,'#21253c','#756680',1);
  }
  for(const lane of UPPER_ROLLOVERS){
-  rect(c,lane.x-24,183,48,23,5,'#2c254b','#bf89c4',2);
+  rect(c,lane.x-22,183,44,21,4,'#1c2740','#8697a9',1.5);
   text(c,lane.label,lane.x,193,12,'#ffe5ba','Barlow Condensed',900);
   line(c,[[lane.x-18,lane.y-16],[lane.x-18,lane.y-22],
-   [lane.x+18,lane.y-22],[lane.x+18,lane.y-16]],'#3c4656',6);
+    [lane.x+18,lane.y-22],[lane.x+18,lane.y-16]],'#334458',6);
   line(c,[[lane.x-18,lane.y-22],[lane.x+18,lane.y-22]],'#c8c8cc',2.4);
   disk(c,lane.x-18,lane.y-16,3,'#d5b89f');
   disk(c,lane.x+18,lane.y-16,3,'#d5b89f');
@@ -296,15 +320,15 @@ function drawBumpers(c,engine,anim,reducedMotion,bumperFlash=null){
   disk(c,b.x,b.y+4,b.r+12,'#12151f');c.restore();
   // Physical mounting washer, plated skirt and visible rubber contact ring.
   disk(c,b.x,b.y,b.r+10,
-   R(c,b.x,b.y,b.r+12,[[0,'#e6d5c8'],[.38,'#a9a2aa'],[.7,'#545360'],[1,'#1d2534']]),
+    R(c,b.x,b.y,b.r+12,[[0,'#f0e5d9'],[.38,'#c1bec4'],[.7,'#636876'],[1,'#1d2534']]),
    '#c1aaa0',2);
   disk(c,b.x,b.y-1,b.r+6,'#4a4651','#e9c7b1',3);
   disk(c,b.x,b.y-2,b.r+1,'#292432','#9a6371',4);
   disk(c,b.x,b.y-4,b.r-4,
-   R(c,b.x,b.y-5,b.r-3,[
-    [0,hit?'#fff5d5':'#ffdaac'],
-    [.38,'#f69b91'],[.79,'#a84162'],[1,'#532339']
-   ]),'#edc4ae',2.2);
+    R(c,b.x,b.y-5,b.r-3,[
+     [0,hit?'#fffef4':'#fff0d5'],
+     [.38,'#e8bcab'],[.79,'#a64e63'],[1,'#482b45']
+    ]),'#f3d4bd',2.2);
   c.save();
   c.globalAlpha=hit?1:mid.frenzy?.72*pulse:.36;
   c.shadowColor='#ff9a81';c.shadowBlur=hit?16:mid.frenzy?11:4;
@@ -321,16 +345,20 @@ function drawBumpers(c,engine,anim,reducedMotion,bumperFlash=null){
 }
 function drawSlings(c){
  for(let i=0;i<LOWER_SLINGS.length;i++){
-  const s=LOWER_SLINGS[i],pivot=i===0?[130,547]:[290,547];
+   const s=LOWER_SLINGS[i],pivot=i===0?[130,547]:[290,547];
   c.save();c.shadowColor='rgba(3,4,13,.75)';c.shadowBlur=11;c.shadowOffsetY=6;
   plastic(c,a=>{a.moveTo(s.x1,s.y1);a.lineTo(s.x2,s.y2);a.lineTo(...pivot);a.closePath()},
-   G(c,s.x1,s.y1,s.x2,s.y2,[[0,'#b0595b'],[.42,'#692c3f'],[1,'#331f2d']]),'#dcb19c');
+   G(c,s.x1,s.y1,s.x2,s.y2,[[0,'#9d7483'],[.42,'#674354'],[1,'#342a3c']]),'#d5b49f');
   c.restore();
   line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#1a1925',10);
   line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#5d3648',7);
   line(c,[[s.x1,s.y1],[s.x2,s.y2]],'#f0bf9c',2.2);
   bolt(c,s.x1,s.y1,3);bolt(c,s.x2,s.y2,3);
   bolt(c,...pivot,4);
+   // Small inset is fixed to the sling plastic; the ball never collides
+   // with this decal, while existing lamps still indicate ball save.
+   disk(c,i===0?135:285,523,10,'#1a2538','#b7a6aa',1.4);
+   text(c,i===0?'L':'R',i===0?135:285,524,10,'#ffe3c4','Oxanium',900);
  }
  for(const p of POSTS){
   c.save();c.shadowBlur=6;c.shadowOffsetY=3;c.shadowColor='#000';
@@ -348,8 +376,8 @@ function drawWalls(c){
  // Real collisions remain in engine.mjs, independent from the artwork.
  for(const w of WALLS){
   const pts=[[w[0],w[1]],[w[2],w[3]]];
-  line(c,pts,'#241e37',7);
-  line(c,pts,'rgba(205,122,156,.55)',3);
+  line(c,pts,'#101929',6);
+   line(c,pts,'rgba(151,173,189,.67)',2.4);
  }
  for(const [x,left] of [[91,true],[329,false]]){
   line(c,[[x,510],[left?122:298,545]],'#794f8c',8);
@@ -521,8 +549,13 @@ function drawNewFeatures(c,engine,reducedMotion=false){
 }
 
 function drawLower(c,engine){
- rect(c,75,571,61,20,4,'#302331','#aa8582',1);
- rect(c,286,571,61,20,4,'#302331','#aa8582',1);
+ rect(c,75,571,61,20,4,'#1c283c','#82909b',1.4);
+  rect(c,286,571,61,20,4,'#1c283c','#82909b',1.4);
+  // Paired return-lane engravings guide the eye to the live flipper bays.
+  for(const [x,side] of [[99,'L'],[321,'R']]){
+   rect(c,x-14,576,28,11,3,'#131c2e','#8d9eae',.8);
+   text(c,side,x,582,8,'#fff0d1','Oxanium',900);
+  }
  const ballSave=engine.state==='playing'&&engine.ballLaunchedAt!==null&&!engine.ballSaveUsed&&engine.time<engine.ballSaveUntil;
  neonInsert(c,206,558,'S',ballSave,ballSave?'#bce9b9':'#bf675c');
  text(c,'BALL SAVE',206,582,8,ballSave?'#dcf5cc':'#aa7d79');
