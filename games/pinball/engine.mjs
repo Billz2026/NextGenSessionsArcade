@@ -74,6 +74,13 @@ export const SHOTS=Object.freeze({
  center:{x:207,y:426,r:33,points:4500},
  skyline:{x:124,y:380,r:18,points:6000}
 });
+// Ramp and orbit entries should reward a deliberate outside-lane shot without
+// feeling like a magnetic auto-aim. The spring acts only inside the visible
+// mouth, on a fast upward ball, and never pulls a centre-table miss across.
+export const SHOT_GUIDES=Object.freeze({
+ orbit:Object.freeze({x:77,y:373,capture:45,depth:78,pull:31,damping:2.4}),
+ ramp:Object.freeze({x:311,y:372,capture:46,depth:78,pull:31,damping:2.4})
+});
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
 export const SLINGS=Object.freeze([
@@ -214,6 +221,17 @@ export class PinballEngine{
   if(type.startsWith('bumper'))this.bumper();
   return true;
  }
+ impactFeedback(kind,key,speed,x,y){
+  if(speed<55)return false;
+  const id='impact:'+key,last=this.cooldowns.get(id)??-100;
+  if(this.time-last<.045)return false;
+  this.cooldowns.set(id,this.time);
+  this.emit('impact',{
+   kind,key,speed:Math.round(speed),
+   strength:clip((speed-55)/850,.06,1),x,y
+  });
+  return true;
+ }
  collideCircle(obj,impulse=1.07,key='circle',score=0){
   const b=this.ball,dx=b.x-obj.x,dy=b.y-obj.y;
   const limit=b.r+obj.r,d=len(dx,dy);
@@ -222,10 +240,13 @@ export class PinballEngine{
   b.x+=nx*(limit-d+.12);b.y+=ny*(limit-d+.12);
   const dot=b.vx*nx+b.vy*ny;
   if(dot<0){
+   const impact=-dot;
    b.vx-=(1+impulse)*dot*nx;b.vy-=(1+impulse)*dot*ny;
    if(score && dot<-35 && this.cooldownHit(key,.11,score,key)){
     b.vx+=nx*90;b.vy+=ny*90;
    }
+   const kind=key.startsWith('bumper')?'bumper':key.startsWith('post')?'post':'metal';
+   this.impactFeedback(kind,key,impact,obj.x,obj.y);
   }
   return true;
  }
@@ -237,12 +258,15 @@ export class PinballEngine{
   const vel=velocity?velocity(p):{x:0,y:0};
   const vn=(b.vx-vel.x)*p.nx+(b.vy-vel.y)*p.ny;
   if(vn<-1){
+   const impact=-vn;
    let rebound=-(1+restitution)*vn;
    if(velocity)rebound=Math.min(rebound,1150);
    b.vx+=p.nx*rebound;b.vy+=p.ny*rebound;
    if(score && vn<-35 && this.cooldownHit(key,.13,score,key)){
     b.vx+=p.nx*75;b.vy+=p.ny*75;
    }
+   const kind=key.startsWith('sling')?'sling':key.startsWith('wall')?'rail':'metal';
+   this.impactFeedback(kind,key,impact,p.px,p.py);
   }
   return true;
  }
@@ -280,7 +304,19 @@ export class PinballEngine{
   const tangent=(b.vx-surfaceX)*tx+(b.vy-surfaceY)*ty;
   const friction=clip(-tangent*.22,-impulse*.25,impulse*.25);
   b.vx+=tx*friction;b.vy+=ty*friction;
+  this.impactFeedback('flipper','flipper-'+f.side,impact,p.px,p.py);
   return true;
+ }
+ guideShotMouths(dt){
+  const b=this.ball;
+  if(!b||b.mode!=='live'||b.vy>=-260||Math.abs(b.vx)>650)return;
+  for(const guide of Object.values(SHOT_GUIDES)){
+   const depth=b.y-guide.y,dx=b.x-guide.x;
+   if(depth<=0||depth>=guide.depth||Math.abs(dx)>=guide.capture)continue;
+   if(Math.abs(dx)>13&&dx*b.vx>=0)continue;
+   const envelope=(1-depth/guide.depth)*(1-Math.abs(dx)/guide.capture*.34);
+   b.vx+=(-dx*guide.pull-b.vx*guide.damping)*envelope*dt;
+  }
  }
  // All sensors and scoring run in fixed simulation time, not per render frame.
  addPoints(points,label){
@@ -460,6 +496,7 @@ export class PinballEngine{
      b.x=t.x+nx*(t.r+b.r+.5);b.y=t.y+ny*(t.r+b.r+.5);
      const toward=b.vx*nx+b.vy*ny;
      if(toward<0){b.vx-=(1.6)*toward*nx;b.vy-=(1.6)*toward*ny;}
+     this.impactFeedback('target','target'+i,Math.abs(toward),t.x,t.y);
      this.activateTarget(i);
    }
   }
@@ -525,6 +562,7 @@ export class PinballEngine{
    const speed=clip(geo.total/tr.duration*.50,260,475);
    b.vx=speed*dx/length;b.vy=speed*dy/length;
    b.mode='live';b.travel=null;b.travelHeight=0;b.trail=[];
+   this.emit('routeexit',{kind:tr.kind,speed,x:b.x,y:b.y});
   }
  }
 
@@ -570,6 +608,7 @@ export class PinballEngine{
   b.vy+=GRAVITY*dt;
   // Gentle air drag and speed cap. Fixed 240 Hz collision steps limit tunnelling.
   b.vx*=1-.09*dt;b.vy*=1-.04*dt;
+  this.guideShotMouths(dt);
   const speed=len(b.vx,b.vy),max=1670;
   if(speed>max){b.vx*=max/speed;b.vy*=max/speed;}
   b.x+=b.vx*dt;b.y+=b.vy*dt;
