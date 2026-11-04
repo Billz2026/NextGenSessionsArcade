@@ -1,10 +1,21 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
-**Current stage:** Phase V2.4 — fairer ball recovery and nudge balancing, with mission and multiball side towers (playable 3D beta)
+**Current stage:** Phase V2.5 — skill-earned streak protection and more forgiving scoring runs (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
 
 An original red, amber and gold browser arcade pinball table inspired by the *feeling* of classic Windows-era pinball, not a copy of Space Cadet's assets or geometry.
+
+## Phase V2.5 — protecting productive pinball streaks
+
+- Reviewed the second user-supplied ~84-second gameplay capture. The first ball completes around 44 seconds; subsequent ball losses still interrupt mission/scoring progress too frequently, despite the working outlane kickback.
+- Increased the initial single-use ball-save period from 11 to **15 seconds** per launched ball. Saving a ball once cannot refresh this allowance.
+- Added **NEON SHIELD**, a one-use earned replay that lights after two qualifying physical ramp, orbit, crossover, skyline or scoop shots on one regular turn. It can recover a genuine centre or side drain once after initial protection expires, but cannot trigger during TILT or multiball. Ordinary bumper ricochets and unscored movements do not earn it.
+- Active combo and Power Grid state survive an earned rescue or the initial protected replay, allowing a scored streak to continue instead of resetting. A truly new ball correctly resets progress.
+- Kept the previously proven 58px bat geometry because further lengthening broke ordinary centre-crossover reachability in regression simulation. Preserved the open central gap, honest physics and one per-served-ball outlane kickback.
+- Tuned physical ramp/orbit return-feed blending modestly from .32 to .36 without teleportation, magnetic ball guidance or free points.
+- Added DMD/event audio, ball-save HUD and 2D/3D centre-insert illumination when shield is armed. The underlying three-ball game and multiball structure are unchanged.
+- Tests cover one earned replay only, TILT forfeiture, original ball saves, no unlimited relaunches, retained combo/grid progress, reset on actual new ball and unchanged flipper-crossover geometry.
 
 ## Phase V2.4 — fairer playable ball control, without impossible saves
 
