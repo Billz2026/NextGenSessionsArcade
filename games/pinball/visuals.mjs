@@ -130,6 +130,9 @@ function drawBackglass(c,anim){
  }
 }
 function drawUpperCrown(c){
+ // Stage 1: the older printed crown stays a faint shadow, not a second rail.
+ // The sculpted horseshoe now owns the visible structural detailing.
+ c.save();c.globalAlpha=.13;
  // Two brushed-metal sweeps under the ball, set back from the N/G/S switches.
  const arch=UPPER_ARCH.map(p=>[p.x,p.y]);
  line(c,arch,'#15110e',12);
@@ -140,6 +143,7 @@ function drawUpperCrown(c){
   disk(c,p.x,p.y,5.8,'#292016','#d1aa59',1.5);
   bolt(c,p.x,p.y,2.1);
  }
+ c.restore();
 }
 function drawOrbits(c){
  // Upper horseshoe, left side chute and right return, coloured for Neon Tilt.
