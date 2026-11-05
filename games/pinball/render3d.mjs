@@ -8,6 +8,7 @@ import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPE
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
+import {UPPER_MOULDINGS,SLING_GUIDE_MOULDINGS,LOWER_RAIL_WIDTH} from './rail-mouldings.mjs?v=1';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -559,10 +560,16 @@ export async function create3DTable(host){
  // Outer-edge plastic lane approaches only. Tracing the complete engine
  // trajectory through the centre caused unreadable overlapping gold lines.
  const routeHardware=[];
- const laneTrim=new T.MeshPhysicalMaterial({
-  color:'#b68b52',metalness:0,roughness:.46,transparent:true,opacity:.83,
-  side:T.DoubleSide,depthWrite:false,
-  polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
+ const railBody=new T.MeshPhysicalMaterial({
+  color:'#66212b',metalness:0,roughness:.32,clearcoat:.92,
+  clearcoatRoughness:.20,side:T.DoubleSide
+ });
+ const railGold=new T.MeshPhysicalMaterial({
+  color:'#dbac68',metalness:0,roughness:.38,clearcoat:.76,
+  side:T.DoubleSide
+ });
+ const railContact=new T.MeshStandardMaterial({
+  color:'#271914',metalness:0,roughness:.83,side:T.DoubleSide
  });
  const laneBaseMaterials={
   orbit:new T.MeshPhysicalMaterial({color:'#17130d',roughness:.62,metalness:.02,
@@ -595,20 +602,10 @@ export async function create3DTable(host){
   geometry.setIndex(indices);geometry.computeVertexNormals();
   return add(geometry,mat,0,0,0,false);
  }
- const mouldedEntryGuard=new T.MeshPhysicalMaterial({
-  color:'#bd955d',metalness:0,roughness:.37,clearcoat:.83,
-  side:T.DoubleSide,depthWrite:true
- });
  for(const channel of VISIBLE_CHANNELS){
-  // Polymer lips follow both edges of the engine-centred shot throat.
-  // The 22px channel stays clear for the 16px ball; no phantom collider.
-  channelStrip(channel,0,1,-.025,laneBaseMaterials[channel.kind]);
-  channelStrip(channel,.015,.08,.035,mouldedEntryGuard);
-  channelStrip(channel,.92,.985,.035,mouldedEntryGuard);
-  if(channel.trimSide==='right')
-   channelStrip(channel,.929,.985,-.015,laneTrim);
-  else
-   channelStrip(channel,.015,.071,-.015,laneTrim);
+  // The open, dark 22px ball channel is retained. The attached outer
+  // housing below provides mass, instead of narrow floating wire outlines.
+  channelStrip(channel,0,1,-.055,laneBaseMaterials[channel.kind]);
   const route=UPPER_ROUTES.find(r=>r.kind===channel.kind);
   const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
   const cheek=new T.MeshPhysicalMaterial({
@@ -631,6 +628,42 @@ export async function create3DTable(host){
   plane(mx,my-.37,.247,.66,.17,label(route.kind.toUpperCase(),
    '#f3debd',55,280,70,true));
   routeHardware.push({kind:route.kind,material:entryMat});
+ }
+ // True solid upper shells with top surfaces and hanging side skirts.
+ // The mass sits outside the existing guided-ball channel.
+ function upperShellBand(profile,from,to,zTop,zBottom,material){
+  const curve=new T.CatmullRomCurve3(profile.points.map(p=>
+   new T.Vector3(p.x,p.y,p.z)),false,'centripetal');
+  const steps=Math.max(28,(profile.points.length-1)*15);
+  const points=curve.getPoints(steps),side=profile.side==='left'?1:-1;
+  const vertices=[],indices=[];
+  for(let i=0;i<points.length;i++){
+   const p=points[i],a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)];
+   const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
+   const nx=-dy/len*side,ny=dx/len*side;
+   const inner=profile.width/2+from,outer=profile.width/2+to;
+   for(const [offset,z] of [[inner,zTop],[outer,zTop],[inner,zBottom],[outer,zBottom]])
+    vertices.push(X(p.x+nx*offset),Y(p.y+ny*offset),p.z+z);
+   if(i){
+    const prev=(i-1)*4,next=i*4;
+    indices.push(prev,prev+1,next,prev+1,next+1,next);
+    indices.push(prev,prev+2,next,prev+2,next+2,next);
+    indices.push(prev+1,next+1,prev+3,prev+3,next+1,next+3);
+    indices.push(prev+2,prev+3,next+2,prev+3,next+3,next+2);
+   }
+  }
+  const geom=new T.BufferGeometry();
+  geom.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+  geom.setIndex(indices);geom.computeVertexNormals();
+  return add(geom,material,0,0,0,false);
+ }
+ for(const profile of UPPER_MOULDINGS){
+  // Display the raised right-hand return, not the hidden crossover.
+  if(profile.id==='ramp-return-housing')
+   channelStrip(profile,0,1,-.09,laneBaseMaterials.ramp);
+  upperShellBand(profile,0,profile.bodyWidth,.055,-.135,railBody);
+  upperShellBand(profile,0,2.2,.092,.050,railContact);
+  upperShellBand(profile,1.3,3.25,.111,.091,railGold);
  }
   // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){
@@ -688,45 +721,41 @@ export async function create3DTable(host){
   mesh.rotation.z=Math.atan2(dy,dx)-PI/2;
   return mesh;
  }
- // The guides now appear as continuous channel guards mounted to the
- // cabinet side, instead of four unsupported, floating silver rods.
- // The panels extend OUTSIDE their exact collision edges.
- const channelBody=new T.MeshPhysicalMaterial({
-  color:'#631f2a',roughness:.32,metalness:0,clearcoat:.94,
-  clearcoatRoughness:.20,side:T.DoubleSide
- });
- const channelRecess=new T.MeshPhysicalMaterial({
-  color:'#211a16',roughness:.70,metalness:0,clearcoat:.24
- });
- for(const channel of LOWER_CHANNELS){
-  const pts=channel.points;
+ // Broad solid lower housings follow the collision-facing walls precisely.
+ // Their extra mass is entirely toward the cabinet, not over the ball.
+ const channelBody=railBody;
+ const channelRecess=railContact;
+ function lowerMoulding(points,side,width,small=false){
+  const shaped=roundedWirePoints(points.map(p=>({...p,z:.3})),2);
+  const offset=side==='left'?-width:width;
   const shape=new T.Shape();
-  shape.moveTo(X(pts[0].x),Y(pts[0].y));
-  for(let i=1;i<pts.length;i++)shape.lineTo(X(pts[i].x),Y(pts[i].y));
-  for(let i=pts.length-1;i>=0;i--)
-   shape.lineTo(X(pts[i].x+channel.outerOffset),Y(pts[i].y));
+  shape.moveTo(X(shaped[0].x),Y(shaped[0].y));
+  for(const p of shaped.slice(1))shape.lineTo(X(p.x),Y(p.y));
+  for(let i=shaped.length-1;i>=0;i--)
+   shape.lineTo(X(shaped[i].x+offset),Y(shaped[i].y));
   shape.closePath();
-  const panel=add(new T.ExtrudeGeometry(shape,{
-   depth:.072,steps:1,bevelEnabled:true,bevelSegments:2,
-   bevelSize:.017,bevelThickness:.017
-  }),channelBody,0,0,.276);
-  panel.receiveShadow=true;
-  // Dark rubber and warm-gold polymer lips follow the true WALLS
-  // collider coordinates, with no extra invisible obstruction.
-  for(let i=1;i<pts.length;i++){
-   const edge={x1:pts[i-1].x,y1:pts[i-1].y,x2:pts[i].x,y2:pts[i].y};
-   mountedRod(edge,.39,.067,channelRecess);
-   mountedRod(edge,.445,.028,mouldedIvory);
+  const body=add(new T.ExtrudeGeometry(shape,{
+   depth:small?.075:.12,steps:1,bevelEnabled:true,bevelSegments:2,
+   bevelSize:.018,bevelThickness:.018
+  }),channelBody,0,0,.265);
+  body.receiveShadow=true;
+  for(let i=1;i<points.length;i++){
+   const a=points[i-1],b=points[i];
+   const edge={x1:a.x,y1:a.y,x2:b.x,y2:b.y};
+   mountedRod(edge,small?.36:.39,small?.047:.06,channelRecess);
+   mountedRod(edge,small?.425:.47,.019,mouldedIvory);
   }
-  // Recessed plastic standoffs join each guard to its outside housing.
-  for(const p of [pts[0],pts[1],pts[2]]){
-   const anchor={x1:p.x,y1:p.y,x2:p.x+channel.outerOffset*.65,y2:p.y};
-   mountedRod(anchor,.385,.034,guideRubber);
-   const sx=X(p.x+channel.outerOffset*.56),sy=Y(p.y);
-   cyl(sx,sy,.424,.094,.051,channelBody,16);
-   cyl(sx,sy,.466,.047,.02,mouldedIvory,12);
+  // Two end standoffs, not a visible run of floating metal brackets.
+  if(!small)for(const p of [points[0],points.at(-1)]){
+   const x=X(p.x+offset*.52),y=Y(p.y);
+   cyl(x,y,.38,.07,.035,channelBody,14);
+   cyl(x,y,.42,.03,.014,mouldedIvory,12);
   }
  }
+ for(const channel of LOWER_CHANNELS)
+  lowerMoulding(channel.points,channel.side,LOWER_RAIL_WIDTH[channel.side]);
+ for(const channel of SLING_GUIDE_MOULDINGS)
+  lowerMoulding(channel.points,channel.side,channel.bodyWidth,true);
  for(const sling of LOWER_SLINGS){
   // The contact rubber is darker and wider than the narrow metal retaining
   // strip, making the impact surface readable without overpowering the table.
