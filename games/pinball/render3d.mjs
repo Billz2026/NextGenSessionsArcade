@@ -414,7 +414,7 @@ export async function create3DTable(host){
  }
  crownShape.closePath();
  const crownInk=new T.MeshBasicMaterial({
-  color:'#403320',transparent:true,opacity:.52,side:T.DoubleSide,depthWrite:false
+  color:'#403320',transparent:true,opacity:.11,side:T.DoubleSide,depthWrite:false
  });
  add(new T.ShapeGeometry(crownShape),crownInk,0,0,.198,false);
  const crownSteel=metal('#8a744c',.5,.25);
