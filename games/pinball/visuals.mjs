@@ -332,9 +332,13 @@ function drawShotGuidance(c,engine,anim,reducedMotion){
 function drawTargets(c,engine){
  for(let i=0;i<LANES.length;i++){
   const l=LANES[i],on=engine.lanes.has(i)||engine.missions.lanes;
-  rect(c,l.x-21,l.y-16,42,22,8,G(c,l.x-19,l.y-15,l.x+18,l.y+9,[[0,'#a3887c'],[.2,'#45333b'],[1,'#1b1822']]),'#c7a48c',2);
-  neonInsert(c,l.x,l.y-5,l.label,on,on?'#ffe5ac':'#eb826d');
-  line(c,[[l.x,l.y+22],[l.x,l.y+35]],'rgba(246,174,112,.6)',2);
+  rect(c,l.x-13,l.y-10,26,18,5,
+   G(c,l.x-13,l.y-10,l.x+13,l.y+8,[
+    [0,'#8c745b'],[.25,'#4d3531'],[1,'#1a171b']
+   ]),'#c7a48c',1.2);
+  disk(c,l.x,l.y-1,6,on?'#ffdb9c':'#875340','#e2bf86',1.2);
+  text(c,l.label,l.x,l.y,8,on?'#321a18':'#fff0d1','Oxanium',900);
+  line(c,[[l.x,l.y+12],[l.x,l.y+22]],'rgba(246,174,112,.55)',1.4);
  }
  // Mounted target bank: shared pressed-steel backplate and four illuminated
  // standing switch faces aligned with the game's actual target sensors.
