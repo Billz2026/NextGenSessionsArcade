@@ -12,6 +12,9 @@ const P=Object.freeze({
   [120,333],[105,350],[97,379]],
  fin:[[336,333],[351,339],[361,363],[365,388],[354,416],
   [339,444],[330,428],[337,397],[326,378]],
+ rightDeck:[[321,187],[337,198],[352,227],[355,261],
+  [350,293],[339,324],[324,327],[329,297],[336,258],
+  [333,231],[321,208]],
  lowLeft:[[24,566],[35,590],[56,617],[80,643],[105,666],[116,674]],
  lowRight:[[365,566],[352,590],[340,618],[326,644],[307,668],[305,674]],
  inLeft:[[105,581],[109,590],[118,604],[130,618]],
@@ -64,10 +67,12 @@ export function paintClassicRails(c,{upper=true,lower=true}={}){
  };
  if(upper){
   road(P.outer,30);road(P.inner,17);
+  plate(P.rightDeck);
   plate(P.left);road(P.chute,21);plate(P.fin);
   for(const [x,y] of P.lamps){
-   c.fillStyle='#271c18';c.fillRect(x-7,y-10,14,20);
-   c.fillStyle='#c78e58';c.fillRect(x-5,y-8,10,16);
+   c.fillStyle='#1a1715';c.fillRect(x-9,y-12,18,24);
+   c.strokeStyle='#b88b5c';c.lineWidth=1.4;c.strokeRect(x-9,y-12,18,24);
+   c.fillStyle='#dd9d61';c.fillRect(x-6,y-9,12,18);
   }
   for(const [x,y] of P.sideLamps){
    c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fillStyle='#e7a65e';c.fill();
@@ -78,7 +83,7 @@ export function paintClassicRails(c,{upper=true,lower=true}={}){
    c.fillStyle='#f0b574';c.fill();
   }
  }
- if(lower){road(P.lowLeft,13);road(P.lowRight,13);road(P.inLeft,10);road(P.inRight,10);}
+ if(lower){road(P.lowLeft,19);road(P.lowRight,19);road(P.inLeft,13);road(P.inRight,13);}
  c.restore();
 }
 export function buildClassicRails(T,scene,{X,Y}){
@@ -121,14 +126,20 @@ export function buildClassicRails(T,scene,{X,Y}){
   lens.position.x=X(x);lens.position.y=Y(y);
  };
  road(P.outer,30,.237,.105);road(P.inner,17,.252,.098);
+ plate(P.rightDeck,.245,.105);
  plate(P.left,.247,.108);road(P.chute,21,.364,.046);
  plate(P.fin,.245,.086);
- for(const p of P.lamps)insert(...p,11,17,.38);
- for(const p of P.sideLamps)insert(...p,8,8,.38);
+ for(const p of P.lamps)insert(...p,15,19,.385);
+ for(const [x,y] of P.sideLamps){
+  const rim=add(new T.TorusGeometry(.107,.030,10,24),gold,.41,false);
+  rim.position.x=X(x);rim.position.y=Y(y);
+  const glass=add(new T.CircleGeometry(.076,20),light,.413,false);
+  glass.position.x=X(x);glass.position.y=Y(y);
+ }
  for(const [x,y] of P.chevrons){
   const s=shape([[x-6,y+5],[x,y-6],[x+6,y+5]]);
   add(new T.ShapeGeometry(s),gold,.354,false);
  }
- road(P.lowLeft,13,.262,.085);road(P.lowRight,13,.262,.085);
- road(P.inLeft,10,.266,.072);road(P.inRight,10,.266,.072);
+ road(P.lowLeft,19,.262,.085);road(P.lowRight,19,.262,.085);
+ road(P.inLeft,13,.266,.072);road(P.inRight,13,.266,.072);
 }
