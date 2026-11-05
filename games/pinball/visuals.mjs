@@ -1,10 +1,10 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=19';
-import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS,INLANE_CHANNELS} from './lower-hardware.mjs?v=6';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=18';
+import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,MOLDED_RAILS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=8';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
@@ -136,7 +136,7 @@ function drawOrbits(c){
  // Space-Cadet-like readability: one sculpted left orbit entry and one
  // sculpted right ramp entry. No complete transport overlays crossing the
  // bumpers or four nested loops around the playfield.
- for(const channel of MOLDED_RAILS){
+ for(const channel of VISIBLE_CHANNELS){
   const smooth=roundedWirePoints(channel.points,3);
   const edges=guideEdges({points:smooth,width:channel.width});
   const fill=channel.kind==='orbit'?'#15120f':'#1d1411';
@@ -147,13 +147,12 @@ function drawOrbits(c){
   for(let i=edges.length-1;i>=0;i--)
    c.lineTo(edges[i].right.x,edges[i].right.y);
   c.closePath();c.fillStyle=fill;c.fill();
-  // Twin functional-looking sculpted strips on each routed section.
-  for(const side of ['left','right']){
-   const points=edges.map(e=>[e[side].x,e[side].y]);
-   line(c,points,'#64212b',5);
-   line(c,points,'#c89b60',1.6);
-  }
-  if(!VISIBLE_CHANNELS.includes(channel)){c.restore();continue;}
+  // Only the OUTER edge is accented. No double gold rail outline.
+  const side=channel.trimSide;
+  const points=edges.map(e=>[e[side].x,e[side].y]);
+  c.globalAlpha=.78;
+  line(c,points,accent,1.8);
+  c.globalAlpha=1;
   // One subtle directional insert per open approach.
   const n=Math.floor(smooth.length*.40),p=smooth[n],q=smooth[n+2];
   if(p&&q){
@@ -459,22 +458,27 @@ function drawWalls(c){
   line(c,[[x,510],[left?122:298,545]],'#70252b',8);
   line(c,[[x,510],[left?122:298,545]],'#d18b69',3);
  }
- // Physical outlane walls and inlane dividers: maroon acrylic with slim gold lips.
- for(const [channels,isDivider] of [[LOWER_CHANNELS,false],[INLANE_CHANNELS,true]]){
-  for(const channel of channels){
-   const pts=roundedWirePoints(channel.points.map(p=>({...p,z:.35})),2);
-   const outline=pts.map(p=>[p.x,p.y]);
-   const back=pts.slice().reverse().map(p=>[p.x+channel.outerOffset,p.y]);
-   c.beginPath();c.moveTo(...outline[0]);
-   for(const p of outline.slice(1))c.lineTo(...p);
-   for(const p of back)c.lineTo(...p);
-   c.closePath();
-   c.fillStyle=G(c,outline[0][0],outline[0][1],back[0][0],back[0][1],[
-    [0,'#7b2b31'],[.55,'#401c1c'],[1,'#221714']
+ // Two solid cabinet-mounted channels visually join the four physical
+ // wall segments. The coloured body lies outside the collision line.
+ for(const channel of LOWER_CHANNELS){
+  const pts=channel.points,outline=pts.map(p=>[p.x,p.y]);
+  const back=pts.slice().reverse().map(p=>[p.x+channel.outerOffset,p.y]);
+  c.beginPath();c.moveTo(...outline[0]);
+  for(const p of outline.slice(1))c.lineTo(...p);
+  for(const p of back)c.lineTo(...p);
+  c.closePath();
+  c.fillStyle=G(c,outline[0][0],outline[0][1],
+   back[1][0],back[1][1],[
+    [0,'#9b5143'],[.27,'#59252a'],[.71,'#261d1a'],[1,'#752f32']
    ]);
-   c.fill();c.lineWidth=.7;c.strokeStyle='#862e32';c.stroke();
-   line(c,outline,'#261d19',isDivider?5.5:5.2);
-   line(c,outline,'#c69a5f',isDivider?1.5:1.8);
+  c.fill();c.lineWidth=1;c.strokeStyle='#c99567';c.stroke();
+  line(c,outline,'#291c17',7);
+  line(c,outline,'#9d553c',3.2);
+  line(c,outline,'#e5c18a',1);
+  for(const p of pts){
+   const bx=p.x+channel.outerOffset*.56,by=p.y;
+   line(c,[[p.x,p.y],[bx,by]],'#714134',2.1);
+   bolt(c,bx,by,2.7);
   }
  }
 }

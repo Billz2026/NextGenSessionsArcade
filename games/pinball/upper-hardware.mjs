@@ -1,6 +1,6 @@
 /* Integrated routed-lane geometry follows the existing authoritative engine
    transport paths. These visual lane surfaces never alter physics or scoring. */
-import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=19';
+import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=18';
 function makeRoute(kind,width,accent){
  const path=TRAVEL_PATHS[kind],shot=SHOTS[kind];
  if(!path||!shot||path[0][0]!==shot.x||path[0][1]!==shot.y)
@@ -23,21 +23,13 @@ export const UPPER_ROUTES=Object.freeze([
 export const VISIBLE_CHANNELS=Object.freeze([
  Object.freeze({
   kind:'orbit',width:22,trimSide:'right',
-  points:Object.freeze(UPPER_ROUTES[0].points.slice(0,5))
+  points:Object.freeze(UPPER_ROUTES[0].points.slice(0,4))
  }),
  Object.freeze({
   kind:'ramp',width:22,trimSide:'left',
   points:Object.freeze(UPPER_ROUTES[1].points.slice(0,3))
  })
 ]);
-// Expose only outer guided transport runs; the bumper crossover remains hidden.
-export const RETURN_CHANNELS=Object.freeze([
- Object.freeze({kind:'orbit',width:22,trimSide:'left',
-  points:Object.freeze(UPPER_ROUTES[0].points.slice(11))}),
- Object.freeze({kind:'ramp',width:22,trimSide:'right',
-  points:Object.freeze(UPPER_ROUTES[1].points.slice(7))})
-]);
-export const MOLDED_RAILS=Object.freeze([...VISIBLE_CHANNELS,...RETURN_CHANNELS]);
 export const UPPER_ROLLOVERS=Object.freeze(LANES.map((l,index)=>
  Object.freeze({index,x:l.x,y:l.y,label:l.label})));
 export const UPPER_BALL_RADIUS=BOARD.radius*.020;

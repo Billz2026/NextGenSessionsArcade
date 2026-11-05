@@ -1,10 +1,10 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=19';
-import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS,INLANE_CHANNELS} from './lower-hardware.mjs?v=6';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=18';
+import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,MOLDED_RAILS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=8';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=7';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
@@ -559,13 +559,10 @@ export async function create3DTable(host){
  // Outer-edge plastic lane approaches only. Tracing the complete engine
  // trajectory through the centre caused unreadable overlapping gold lines.
  const routeHardware=[];
- const upperMouldedRed=new T.MeshPhysicalMaterial({
-  color:'#63222c',metalness:0,roughness:.35,clearcoat:.86,
-  clearcoatRoughness:.22,side:T.DoubleSide
- });
- const upperGoldLip=new T.MeshPhysicalMaterial({
-  color:'#c99a5c',metalness:0,roughness:.39,clearcoat:.76,
-  side:T.DoubleSide
+ const laneTrim=new T.MeshPhysicalMaterial({
+  color:'#b68b52',metalness:0,roughness:.46,transparent:true,opacity:.83,
+  side:T.DoubleSide,depthWrite:false,
+  polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
  });
  const laneBaseMaterials={
   orbit:new T.MeshPhysicalMaterial({color:'#17130d',roughness:.62,metalness:.02,
@@ -598,16 +595,20 @@ export async function create3DTable(host){
   geometry.setIndex(indices);geometry.computeVertexNormals();
   return add(geometry,mat,0,0,0,false);
  }
- // True travel path surfaces, not fake obstacles crossing the bumpers.
- function sculptChannel(channel){
-  channelStrip(channel,0,1,-.06,laneBaseMaterials[channel.kind]);
-  channelStrip(channel,.005,.16,.015,upperMouldedRed);
-  channelStrip(channel,.84,.995,.015,upperMouldedRed);
-  channelStrip(channel,.040,.090,.083,upperGoldLip);
-  channelStrip(channel,.910,.960,.083,upperGoldLip);
- }
- for(const channel of MOLDED_RAILS)sculptChannel(channel);
+ const mouldedEntryGuard=new T.MeshPhysicalMaterial({
+  color:'#bd955d',metalness:0,roughness:.37,clearcoat:.83,
+  side:T.DoubleSide,depthWrite:true
+ });
  for(const channel of VISIBLE_CHANNELS){
+  // Polymer lips follow both edges of the engine-centred shot throat.
+  // The 22px channel stays clear for the 16px ball; no phantom collider.
+  channelStrip(channel,0,1,-.025,laneBaseMaterials[channel.kind]);
+  channelStrip(channel,.015,.08,.035,mouldedEntryGuard);
+  channelStrip(channel,.92,.985,.035,mouldedEntryGuard);
+  if(channel.trimSide==='right')
+   channelStrip(channel,.929,.985,-.015,laneTrim);
+  else
+   channelStrip(channel,.015,.071,-.015,laneTrim);
   const route=UPPER_ROUTES.find(r=>r.kind===channel.kind);
   const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
   const cheek=new T.MeshPhysicalMaterial({
@@ -687,8 +688,9 @@ export async function create3DTable(host){
   mesh.rotation.z=Math.atan2(dy,dx)-PI/2;
   return mesh;
  }
- // Low-profile scarlet mouldings with dark contact rubber and narrow gold lip.
- // Original physics posts and collision lines always define their positions.
+ // The guides now appear as continuous channel guards mounted to the
+ // cabinet side, instead of four unsupported, floating silver rods.
+ // The panels extend OUTSIDE their exact collision edges.
  const channelBody=new T.MeshPhysicalMaterial({
   color:'#631f2a',roughness:.32,metalness:0,clearcoat:.94,
   clearcoatRoughness:.20,side:T.DoubleSide
@@ -696,35 +698,35 @@ export async function create3DTable(host){
  const channelRecess=new T.MeshPhysicalMaterial({
   color:'#211a16',roughness:.70,metalness:0,clearcoat:.24
  });
- function curvedLip(pts,z,r,mat){
-  const curve=new T.CatmullRomCurve3(pts.map(p=>
-   new T.Vector3(X(p.x),Y(p.y),z)),false,'centripetal');
-  return add(new T.TubeGeometry(curve,Math.max(24,pts.length*4),r,8,false),mat);
- }
- function moldedGuide(channel,divider=false){
-  // 2px fillet is beneath the 8px ball radius; no apparent fake wall.
-  const pts=roundedWirePoints(channel.points.map(p=>({...p,z:.34})),2);
+ for(const channel of LOWER_CHANNELS){
+  const pts=channel.points;
   const shape=new T.Shape();
   shape.moveTo(X(pts[0].x),Y(pts[0].y));
-  for(const p of pts.slice(1))shape.lineTo(X(p.x),Y(p.y));
+  for(let i=1;i<pts.length;i++)shape.lineTo(X(pts[i].x),Y(pts[i].y));
   for(let i=pts.length-1;i>=0;i--)
    shape.lineTo(X(pts[i].x+channel.outerOffset),Y(pts[i].y));
   shape.closePath();
-  const body=add(new T.ExtrudeGeometry(shape,{
-   depth:.047,steps:1,bevelEnabled:true,bevelSegments:2,
-   bevelSize:.010,bevelThickness:.010
-  }),channelBody,0,0,.282);
-  body.receiveShadow=true;
-  curvedLip(pts,.395,divider?.057:.055,channelRecess);
-  curvedLip(pts,.474,divider?.021:.023,mouldedIvory);
-  if(!divider)for(const p of [channel.points[0],channel.points.at(-1)]){
-   const x=X(p.x+channel.outerOffset*.62),y=Y(p.y);
-   cyl(x,y,.39,.08,.04,channelBody,12);
-   cyl(x,y,.433,.04,.019,mouldedIvory,12);
+  const panel=add(new T.ExtrudeGeometry(shape,{
+   depth:.072,steps:1,bevelEnabled:true,bevelSegments:2,
+   bevelSize:.017,bevelThickness:.017
+  }),channelBody,0,0,.276);
+  panel.receiveShadow=true;
+  // Dark rubber and warm-gold polymer lips follow the true WALLS
+  // collider coordinates, with no extra invisible obstruction.
+  for(let i=1;i<pts.length;i++){
+   const edge={x1:pts[i-1].x,y1:pts[i-1].y,x2:pts[i].x,y2:pts[i].y};
+   mountedRod(edge,.39,.067,channelRecess);
+   mountedRod(edge,.445,.028,mouldedIvory);
+  }
+  // Recessed plastic standoffs join each guard to its outside housing.
+  for(const p of [pts[0],pts[1],pts[2]]){
+   const anchor={x1:p.x,y1:p.y,x2:p.x+channel.outerOffset*.65,y2:p.y};
+   mountedRod(anchor,.385,.034,guideRubber);
+   const sx=X(p.x+channel.outerOffset*.56),sy=Y(p.y);
+   cyl(sx,sy,.424,.094,.051,channelBody,16);
+   cyl(sx,sy,.466,.047,.02,mouldedIvory,12);
   }
  }
- for(const channel of LOWER_CHANNELS)moldedGuide(channel);
- for(const channel of INLANE_CHANNELS)moldedGuide(channel,true);
  for(const sling of LOWER_SLINGS){
   // The contact rubber is darker and wider than the narrow metal retaining
   // strip, making the impact surface readable without overpowering the table.
@@ -764,11 +766,7 @@ export async function create3DTable(host){
  });
  plane(X(210),Y(686),.258,2.68,.43,guideRubber);
  plane(X(210),Y(685),.274,2.35,.28,drainWell);
- // Separate apron cheeks: nothing traverses the active central drain.
- for(const x of [168,252]){
-  const cheek=box(X(x),Y(672),.298,.68,.035,.025,mouldedIvory);
-  cheek.rotation.z=x<210?-.20:.20;
- }
+ box(X(210),Y(672),.298,2.55,.036,.025,mouldedIvory);
  for(const x of [155,265]){
   box(X(x),Y(684),.299,.085,.35,.045,guideRubber);
   cyl(X(x),Y(681),.338,.08,.041,gold,14);
