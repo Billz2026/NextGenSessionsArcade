@@ -343,9 +343,13 @@ function drawTargets(c,engine){
  // Mounted target bank: shared pressed-steel backplate and four illuminated
  // standing switch faces aligned with the game's actual target sensors.
  c.save();c.shadowColor='#000';c.shadowBlur=9;c.shadowOffsetY=6;
- rect(c,146,387,123,43,5,
-  G(c,146,387,269,430,[[0,'#bdabb3'],[.26,'#50505e'],[.77,'#292d3a'],[1,'#b1a3a4']]),
-  '#ddc7b1',2.1);
+ const bankLeft=Math.min(...MID_TARGETS.map(t=>t.x))-16;
+ const bankTop=MID_TARGETS[0].y-22;
+ const bankWidth=Math.max(...MID_TARGETS.map(t=>t.x))-Math.min(...MID_TARGETS.map(t=>t.x))+32;
+ rect(c,bankLeft,bankTop,bankWidth,44,5,
+  G(c,bankLeft,bankTop,bankLeft+bankWidth,bankTop+44,[
+   [0,'#bdabb3'],[.26,'#50505e'],[.77,'#292d3a'],[1,'#b1a3a4']
+  ]),'#ddc7b1',2.1);
  c.restore();
  for(let i=0;i<MID_TARGETS.length;i++){
   const t=MID_TARGETS[i],on=engine.targets.has(i)||engine.missions.targets;
