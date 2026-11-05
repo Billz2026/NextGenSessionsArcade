@@ -40,9 +40,10 @@ test('lane rounding preserves all engine path geometry and route endpoints',()=>
   }
   assert.deepEqual(route.points.map(p=>[p.x,p.y,p.z]),TRAVEL_PATHS[route.kind]);
  }
- assert.ok(three.includes('roundedWirePoints(route.points,3)'));
- assert.ok(canvas.includes('roundedWirePoints(channel.points,3)'));
- assert.ok(three.includes('function channelStrip(route,from,to,lift,mat)'));
+ // Gameplay path interpolation is unchanged; the new visual hardware comes
+ // from a shared architectural profile instead of painting the full routes.
+ assert.ok(three.includes('buildClassicRails(T,scene,{X,Y})'));
+ assert.ok(canvas.includes('paintClassicRails(c,{upper:true,lower:false})'));
  assert.ok(!three.includes('function railTube('));
 });
 test('classic finish does not change collision rules',()=>{
