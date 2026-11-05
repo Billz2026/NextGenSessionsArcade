@@ -451,12 +451,12 @@ function drawWalls(c){
  // Real collisions remain in engine.mjs, independent from the artwork.
  for(const w of WALLS){
   const pts=[[w[0],w[1]],[w[2],w[3]]];
-  line(c,pts,'#25243b',7);
-  line(c,pts,'rgba(216,198,217,.74)',2.4);
+  line(c,pts,'#291c17',7);
+  line(c,pts,'rgba(219,181,124,.74)',2.4);
  }
  for(const [x,left] of [[91,true],[329,false]]){
-  line(c,[[x,510],[left?122:298,545]],'#794f8c',8);
-  line(c,[[x,510],[left?122:298,545]],'#d893ae',3);
+  line(c,[[x,510],[left?122:298,545]],'#70252b',8);
+  line(c,[[x,510],[left?122:298,545]],'#d18b69',3);
  }
  // Two solid cabinet-mounted channels visually join the four physical
  // wall segments. The coloured body lies outside the collision line.
@@ -469,15 +469,15 @@ function drawWalls(c){
   c.closePath();
   c.fillStyle=G(c,outline[0][0],outline[0][1],
    back[1][0],back[1][1],[
-    [0,'#84719b'],[.27,'#453459'],[.71,'#252942'],[1,'#65537e']
+    [0,'#9b5143'],[.27,'#59252a'],[.71,'#261d1a'],[1,'#752f32']
    ]);
-  c.fill();c.lineWidth=1;c.strokeStyle='#c4acca';c.stroke();
-  line(c,outline,'#25243b',7);
-  line(c,outline,'#7c637f',3.2);
-  line(c,outline,'#e9d6e3',1);
+  c.fill();c.lineWidth=1;c.strokeStyle='#c99567';c.stroke();
+  line(c,outline,'#291c17',7);
+  line(c,outline,'#9d553c',3.2);
+  line(c,outline,'#e5c18a',1);
   for(const p of pts){
    const bx=p.x+channel.outerOffset*.56,by=p.y;
-   line(c,[[p.x,p.y],[bx,by]],'#66536e',2.1);
+   line(c,[[p.x,p.y],[bx,by]],'#714134',2.1);
    bolt(c,bx,by,2.7);
   }
  }

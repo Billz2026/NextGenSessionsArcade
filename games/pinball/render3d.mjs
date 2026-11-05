@@ -370,14 +370,14 @@ export async function create3DTable(host){
   mesh.receiveShadow=false;mesh.castShadow=false;
   return mesh;
  }
- // Moulded navy perimeter and ivory polymer edging. The ball itself
- // remains metal, but the sidewalls are satin plastic like classic tables.
+ // NextGen arcade-red perimeter with warm gold-coloured moulded edging.
+ // Geometry follows classic pinball construction, not Space Cadet's palette.
  const perimeterPlastic=new T.MeshPhysicalMaterial({
-  color:'#24233f',metalness:0,roughness:.38,
+  color:'#551a22',metalness:0,roughness:.38,
   clearcoat:.88,clearcoatRoughness:.23
  });
  const perimeterLip=new T.MeshPhysicalMaterial({
-  color:'#b6a7c6',metalness:0,roughness:.42,clearcoat:.76
+  color:'#b58e57',metalness:0,roughness:.42,clearcoat:.76
  });
  for(const px of [-4.34,4.34]){
   box(px,0,.34,.18,boardH,.64,perimeterPlastic);
@@ -560,7 +560,7 @@ export async function create3DTable(host){
  // trajectory through the centre caused unreadable overlapping gold lines.
  const routeHardware=[];
  const laneTrim=new T.MeshPhysicalMaterial({
-  color:'#d4b7a7',metalness:0,roughness:.46,transparent:true,opacity:.83,
+  color:'#b68b52',metalness:0,roughness:.46,transparent:true,opacity:.83,
   side:T.DoubleSide,depthWrite:false,
   polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
  });
@@ -596,7 +596,7 @@ export async function create3DTable(host){
   return add(geometry,mat,0,0,0,false);
  }
  const mouldedEntryGuard=new T.MeshPhysicalMaterial({
-  color:'#b7a8cf',metalness:0,roughness:.37,clearcoat:.83,
+  color:'#bd955d',metalness:0,roughness:.37,clearcoat:.83,
   side:T.DoubleSide,depthWrite:true
  });
  for(const channel of VISIBLE_CHANNELS){
@@ -612,10 +612,10 @@ export async function create3DTable(host){
   const route=UPPER_ROUTES.find(r=>r.kind===channel.kind);
   const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
   const cheek=new T.MeshPhysicalMaterial({
-   color:'#46334c',metalness:0,roughness:.40,clearcoat:.82
+   color:'#45201d',metalness:0,roughness:.40,clearcoat:.82
   });
   const lip=new T.MeshPhysicalMaterial({
-   color:'#d9b6aa',metalness:0,roughness:.42,clearcoat:.79
+   color:'#d7b57b',metalness:0,roughness:.42,clearcoat:.79
   });
   // A wide, flat entry mouth makes the required shot obvious without
   // introducing new posts or changing the sensor capture area.
@@ -667,14 +667,14 @@ export async function create3DTable(host){
  // Phase 4K.1: hardware around the real lower collision segments.
  // Each guide/elastic is generated from engine.mjs and is visual-only.
  const mouldedIvory=new T.MeshPhysicalMaterial({
-  color:'#d8c6d9',metalness:0,roughness:.38,clearcoat:.80,
+  color:'#e2c495',metalness:0,roughness:.38,clearcoat:.80,
   clearcoatRoughness:.20
  });
  const guideRubber=new T.MeshPhysicalMaterial({
-  color:'#27243a',metalness:0,roughness:.82
+  color:'#2b211d',metalness:0,roughness:.82
  });
  const lowerElastomer=new T.MeshPhysicalMaterial({
-  color:'#622e54',roughness:.84,metalness:0
+  color:'#64262a',roughness:.84,metalness:0
  });
  const batEnamel=new T.MeshPhysicalMaterial({
   color:'#f1d8c0',roughness:.25,metalness:.19,clearcoat:.95
@@ -692,11 +692,11 @@ export async function create3DTable(host){
  // cabinet side, instead of four unsupported, floating silver rods.
  // The panels extend OUTSIDE their exact collision edges.
  const channelBody=new T.MeshPhysicalMaterial({
-  color:'#3b2d57',roughness:.32,metalness:0,clearcoat:.94,
+  color:'#631f2a',roughness:.32,metalness:0,clearcoat:.94,
   clearcoatRoughness:.20,side:T.DoubleSide
  });
  const channelRecess=new T.MeshPhysicalMaterial({
-  color:'#1a1c32',roughness:.70,metalness:0,clearcoat:.24
+  color:'#211a16',roughness:.70,metalness:0,clearcoat:.24
  });
  for(const channel of LOWER_CHANNELS){
   const pts=channel.points;
@@ -711,8 +711,8 @@ export async function create3DTable(host){
    bevelSize:.017,bevelThickness:.017
   }),channelBody,0,0,.276);
   panel.receiveShadow=true;
-  // Rubber and ivory polymer lips sit directly on the true WALLS
-  // collider coordinates: no purely visual obstruction to ball flow.
+  // Dark rubber and warm-gold polymer lips follow the true WALLS
+  // collider coordinates, with no extra invisible obstruction.
   for(let i=1;i<pts.length;i++){
    const edge={x1:pts[i-1].x,y1:pts[i-1].y,x2:pts[i].x,y2:pts[i].y};
    mountedRod(edge,.39,.067,channelRecess);
