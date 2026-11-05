@@ -71,7 +71,7 @@ export const CLASSIC_RAIL_PROFILES=P;
 // recessed bed clears a 16px pinball, while the moulding reaches 27px.
 // Other table sections and all physics remain unchanged.
 export const TOP_HORSESHOE_SPEC=Object.freeze({
- bodyWidth:27,clearChannelWidth:19,couplerWidth:31,couplerDepth:8,
+ bodyWidth:24,clearChannelWidth:19,couplerWidth:26,couplerDepth:6,
  profileNames:Object.freeze(['topLeft','topHorseshoe'])
 });
 
@@ -151,13 +151,13 @@ export function paintClassicRails(c,{upper=true,lower=true}={}){
  const topHorseshoeSection=(pts)=>{
   const {bodyWidth,clearChannelWidth}=TOP_HORSESHOE_SPEC;
   const p=ribbon(pts,bodyWidth),bed=ribbon(pts,clearChannelWidth);
-  c.save();c.shadowColor='rgba(0,0,0,.52)';c.shadowBlur=7;c.shadowOffsetY=2;
-  pathCanvas(c,p.polygon,true);c.fillStyle='#56202a';c.fill();
+  c.save();c.shadowColor='rgba(0,0,0,.38)';c.shadowBlur=3;c.shadowOffsetY=1;
+  pathCanvas(c,p.polygon,true);c.fillStyle='#3e1b24';c.fill();
   c.shadowBlur=0;c.shadowOffsetY=0;
-  c.strokeStyle='#d3a36e';c.lineWidth=1.25;c.stroke();
+  c.strokeStyle='#96683f';c.lineWidth=.8;c.stroke();
   pathCanvas(c,bed.polygon,true);c.fillStyle='#201b1c';c.fill();
-  pathCanvas(c,p.left);c.strokeStyle='#e2ba86';c.lineWidth=2.2;c.stroke();
-  pathCanvas(c,p.right);c.strokeStyle='#b98758';c.lineWidth=2.2;c.stroke();
+  pathCanvas(c,p.left);c.strokeStyle='#c7a577';c.lineWidth=1.05;c.stroke();
+  pathCanvas(c,p.right);c.strokeStyle='#94734e';c.lineWidth=1.05;c.stroke();
   // Fine rubber shadows inside both moulded retaining lips.
   pathCanvas(c,bed.left);c.strokeStyle='#74313c';c.lineWidth=1.2;c.stroke();
   pathCanvas(c,bed.right);c.strokeStyle='#74313c';c.lineWidth=1.2;c.stroke();
@@ -166,14 +166,14 @@ export function paintClassicRails(c,{upper=true,lower=true}={}){
  const upperCoupler=(x,y,angle)=>{
   const {couplerWidth,couplerDepth}=TOP_HORSESHOE_SPEC;
   c.save();c.translate(x,y);c.rotate(angle);
-  c.shadowColor='rgba(0,0,0,.55)';c.shadowBlur=3;c.shadowOffsetY=2;
-  c.fillStyle='#c6a77d';c.strokeStyle='#f1d5a5';c.lineWidth=1;
+  c.shadowColor='rgba(0,0,0,.30)';c.shadowBlur=2;c.shadowOffsetY=1;
+  c.fillStyle='#a88b6b';c.strokeStyle='#d9b988';c.lineWidth=.65;
   c.beginPath();c.roundRect(-couplerWidth/2,-couplerDepth/2,
    couplerWidth,couplerDepth,2);c.fill();c.stroke();
   c.shadowBlur=0;c.shadowOffsetY=0;
   c.fillStyle='#3a2426';
   for(const dx of [-couplerWidth*.38,couplerWidth*.38]){
-   c.beginPath();c.arc(dx,0,1.7,0,Math.PI*2);c.fill();
+   c.beginPath();c.arc(dx,0,1.2,0,Math.PI*2);c.fill();
   }
   c.restore();
  };
@@ -299,31 +299,38 @@ export function buildClassicRails(T,scene,{X,Y}){
  const upperHorseshoeSection=(pts,z=.253)=>{
   const {bodyWidth,clearChannelWidth}=TOP_HORSESHOE_SPEC;
   const outer=ribbon(pts,bodyWidth),inset=ribbon(pts,clearChannelWidth);
+  const upperShell=new T.MeshPhysicalMaterial({
+   color:'#401c27',metalness:0,roughness:.59,
+   clearcoat:.20,clearcoatRoughness:.65,side:T.DoubleSide
+  });
+  const mutedLip=new T.MeshStandardMaterial({
+   color:'#b4996f',metalness:.12,roughness:.62,side:T.DoubleSide
+  });
   add(new T.ExtrudeGeometry(geomShape(outer.polygon),{
-   depth:.105,steps:1,bevelEnabled:true,bevelSegments:3,
-   bevelSize:.016,bevelThickness:.013
-  }),red,z);
+   depth:.073,steps:1,bevelEnabled:true,bevelSegments:2,
+   bevelSize:.009,bevelThickness:.009
+  }),upperShell,z);
   // Non-metal black recess and two retaining lips give the same depth
   // hierarchy as the reference's original steel/plastic track.
-  add(new T.ShapeGeometry(geomShape(inset.polygon)),dark,z+.121,false);
-  tube(outer.left,z+.159,.028,gold);
-  tube(outer.right,z+.159,.028,gold);
-  tube(inset.left,z+.146,.011,raised);
-  tube(inset.right,z+.146,.011,raised);
+  add(new T.ShapeGeometry(geomShape(inset.polygon)),dark,z+.084,false);
+  tube(outer.left,z+.105,.014,mutedLip);
+  tube(outer.right,z+.105,.014,mutedLip);
+  tube(inset.left,z+.094,.008,raised);
+  tube(inset.right,z+.094,.008,raised);
  };
  const topHorseshoeCoupler=(x,y,angle)=>{
   const {couplerWidth,couplerDepth}=TOP_HORSESHOE_SPEC;
   const group=new T.Group();group.position.set(X(x),Y(y),0);
   group.rotation.z=angle;scene.add(group);
   const clamp=new T.Mesh(new T.BoxGeometry(couplerWidth*.020,
-   couplerDepth*.020,.056),steel);
-  clamp.position.z=.442;group.add(clamp);
+   couplerDepth*.020,.043),steel);
+  clamp.position.z=.372;group.add(clamp);
   const veneer=new T.Mesh(new T.BoxGeometry(couplerWidth*.020*.94,
-   couplerDepth*.020*.70,.012),gold);
-  veneer.position.z=.479;group.add(veneer);
+   couplerDepth*.020*.74,.010),gold);
+  veneer.position.z=.399;group.add(veneer);
   for(const dx of [-couplerWidth*.38,couplerWidth*.38]){
-   const bolt=new T.Mesh(new T.CylinderGeometry(.028,.028,.014,12),dark);
-   bolt.rotation.x=Math.PI/2;bolt.position.set(dx*.020,0,.491);
+   const bolt=new T.Mesh(new T.CylinderGeometry(.020,.020,.010,12),dark);
+   bolt.rotation.x=Math.PI/2;bolt.position.set(dx*.020,0,.407);
    group.add(bolt);
   }
  };
