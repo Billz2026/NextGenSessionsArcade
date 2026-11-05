@@ -5,7 +5,7 @@ import {TRAVEL_PATHS,SHOTS,LANES,BOARD,BUMPERS,PinballEngine}
  from '../games/pinball/engine.mjs';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS}
  from '../games/pinball/upper-hardware.mjs';
-import {CLASSIC_RAIL_PROFILES} from '../games/pinball/space-cadet-architecture.mjs';
+import {CLASSIC_RAIL_PROFILES,REFERENCE_FRAME,referenceToTable} from '../games/pinball/space-cadet-architecture.mjs';
 
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
@@ -62,21 +62,36 @@ test('visible approach edges straddle their exact path centreline',()=>{
   }
  }
 });
-test('3D moulding profile is substantial, asymmetric and outside the bumper field',()=>{
+test('reference-traced upper mechanical assemblies have correct proportions and clear bounds',()=>{
  assert.ok(three.includes('buildClassicRails(T,scene,{X,Y})'));
- assert.ok(CLASSIC_RAIL_PROFILES.outer.length>=10);
- assert.ok(CLASSIC_RAIL_PROFILES.left.length>=15);
- assert.ok(CLASSIC_RAIL_PROFILES.rightDeck.length>=9);
- assert.ok(Math.min(...CLASSIC_RAIL_PROFILES.outer.map(p=>p[1]))<=140);
+ assert.deepEqual(REFERENCE_FRAME,{width:915,height:983});
+ const P=CLASSIC_RAIL_PROFILES;
+ const traced=[P.topLeft,P.topHorseshoe,P.leftDeck,P.leftSpiral,
+  P.rightDeck,P.rightInner,P.rightCrescent,P.rightOuter];
+ assert.ok(P.topHorseshoe.length>=8,'top arch must have segmented spans');
+ assert.ok(P.leftDeck.length>=15,'left ramp must not be a simple spoon shape');
+ assert.ok(P.rightDeck.length>=15,'right return should be a broad stepped deck');
+ assert.ok(P.rightWindows.length>=5,'right return requires repeated mechanical windows');
+ assert.ok(P.leftGears.length>=3,'left ramp needs multiple real-looking mechanisms');
+ for(const path of traced){
+  assert.ok(path.length>=5);
+  assert.ok(path.every(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)
+   &&x>=0&&x<=BOARD.width&&y>=0&&y<=BOARD.height),
+   'traced assembly must remain within the actual playfield');
+ }
+ assert.ok(Math.min(...P.topHorseshoe.map(p=>p[1]))<150);
+ assert.ok(Math.max(...P.leftDeck.map(p=>p[1]))>480);
  assert.ok(!three.includes('function railTube('));
 });
-test('Canvas uses the exact same structural profiles and preserves shot markers',()=>{
+test('Canvas shares the 3D traced architecture, preserving independent shot sensors',()=>{
  assert.ok(canvas.includes('paintClassicRails(c,{upper:true,lower:false})'));
  assert.ok(three.includes('UPPER_ROUTES.filter(r=>r.kind==='));
- for(const path of [CLASSIC_RAIL_PROFILES.outer,CLASSIC_RAIL_PROFILES.inner,
-  CLASSIC_RAIL_PROFILES.left,CLASSIC_RAIL_PROFILES.rightDeck]){
-  assert.ok(path.every(([x,y])=>x>=0&&x<=BOARD.width&&y>=0&&y<=BOARD.height));
- }
+ const centre=referenceToTable(500,500);
+ assert.ok(centre[0]>0&&centre[0]<BOARD.width);
+ assert.ok(centre[1]>0&&centre[1]<BOARD.height);
+ for(const route of UPPER_ROUTES)
+  assert.deepEqual(route.entrance,
+   {x:SHOTS[route.kind].x,y:SHOTS[route.kind].y,r:SHOTS[route.kind].r});
  assert.ok(!canvas.includes('upperGuardSections(route)'));
 });
 test('other shots still have real matching gameplay entrances and mission LEDs',()=>{
