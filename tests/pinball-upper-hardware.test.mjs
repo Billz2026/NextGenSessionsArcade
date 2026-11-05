@@ -5,9 +5,11 @@ import {TRAVEL_PATHS,SHOTS,LANES,BOARD,BUMPERS,PinballEngine}
  from '../games/pinball/engine.mjs';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS}
  from '../games/pinball/upper-hardware.mjs';
+import {CLASSIC_RAIL_PROFILES,REFERENCE_FRAME,referenceToTable,TOP_HORSESHOE_SPEC,topRailCouplers} from '../games/pinball/space-cadet-architecture.mjs';
 
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
+const architecture=readFileSync(new URL('../games/pinball/space-cadet-architecture.mjs',import.meta.url),'utf8');
 
 function distanceToSegment(p,a,b){
  const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy||1;
@@ -61,25 +63,55 @@ test('visible approach edges straddle their exact path centreline',()=>{
   }
  }
 });
-test('WebGL only paints two moulded outside-lane approaches and no full four-route ribbons',()=>{
- assert.match(three,/for\(const channel of VISIBLE_CHANNELS\)/);
- assert.match(three,/channelStrip\(channel,0,1,-\.025,laneBaseMaterials\[channel\.kind\]\)/);
- assert.match(three,/channelStrip\(channel,\.929,\.985,-\.015,laneTrim\)/);
- assert.match(three,/channelStrip\(channel,\.015,\.071,-\.015,laneTrim\)/);
- assert.match(three,/const route=UPPER_ROUTES\.find\(r=>r\.kind===channel\.kind\)/);
- assert.doesNotMatch(three,/channelStrip\(route,0,1/);
- assert.doesNotMatch(three,/for\(const route of UPPER_ROUTES\)\{\s*const edges=guideEdges\(route\)/);
- assert.doesNotMatch(three,/function railTube\(/);
- assert.doesNotMatch(three,/function routeRod\(/);
- assert.doesNotMatch(three,/const crownGlint=/);
+test('Section 1 upper horseshoe uses a real ball-width recess and attached couplers',()=>{
+ assert.equal(TOP_HORSESHOE_SPEC.bodyWidth,24);
+ assert.equal(TOP_HORSESHOE_SPEC.couplerWidth,26);
+ assert.equal(TOP_HORSESHOE_SPEC.couplerDepth,6);
+ assert.ok(TOP_HORSESHOE_SPEC.clearChannelWidth>=BOARD.radius*2+3,
+  'visible recessed ball bed must be wider than the 16px ball');
+ assert.ok(TOP_HORSESHOE_SPEC.bodyWidth>TOP_HORSESHOE_SPEC.clearChannelWidth+4);
+ const brackets=topRailCouplers();
+ assert.equal(brackets.length,5);
+ assert.ok(brackets.every(c=>Number.isFinite(c.x)&&Number.isFinite(c.y)
+  &&Number.isFinite(c.angle)&&c.gap<=20),'couplers must sit on moulding');
+ assert.ok(architecture.includes('upperHorseshoeSection(P.topLeft)'));
+ assert.ok(architecture.includes('upperHorseshoeSection(P.topHorseshoe)'));
+ assert.ok(architecture.includes('topHorseshoeSection(P.topLeft)'));
+ assert.ok(architecture.includes('topHorseshoeSection(P.topHorseshoe)'));
+ assert.ok(architecture.includes('topRailCouplers()'));
+ assert.ok(architecture.includes('topRailCouplers()'));
 });
-test('Canvas paints only two dark channels, one restrained outer trim line each',()=>{
- assert.match(canvas,/for\(const channel of VISIBLE_CHANNELS\)/);
- assert.match(canvas,/const side=channel\.trimSide/);
- assert.match(canvas,/const points=edges\.map\(e=>\[e\[side\]\.x,e\[side\]\.y\]\)/);
- assert.match(canvas,/line\(c,points,accent,1\.8\)/);
- assert.doesNotMatch(canvas,/for\(const route of ordered\)/);
- assert.doesNotMatch(canvas,/upperGuardSections\(route\)/);
+test('reference-traced upper mechanical assemblies have correct proportions and clear bounds',()=>{
+ assert.ok(three.includes('buildClassicRails(T,scene,{X,Y})'));
+ assert.deepEqual(REFERENCE_FRAME,{width:915,height:983});
+ const P=CLASSIC_RAIL_PROFILES;
+ const traced=[P.topLeft,P.topHorseshoe,P.leftDeck,P.leftSpiral,
+  P.rightDeck,P.rightInner,P.rightCrescent,P.rightOuter];
+ assert.ok(P.topHorseshoe.length>=8,'top arch must have segmented spans');
+ assert.ok(P.leftDeck.length>=15,'left ramp must not be a simple spoon shape');
+ assert.ok(P.rightDeck.length>=15,'right return should be a broad stepped deck');
+ assert.ok(P.rightWindows.length>=5,'right return requires repeated mechanical windows');
+ assert.ok(P.leftGears.length>=3,'left ramp needs multiple real-looking mechanisms');
+ for(const path of traced){
+  assert.ok(path.length>=5);
+  assert.ok(path.every(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)
+   &&x>=0&&x<=BOARD.width&&y>=0&&y<=BOARD.height),
+   'traced assembly must remain within the actual playfield');
+ }
+ assert.ok(Math.min(...P.topHorseshoe.map(p=>p[1]))<150);
+ assert.ok(Math.max(...P.leftDeck.map(p=>p[1]))>480);
+ assert.ok(!three.includes('function railTube('));
+});
+test('Canvas shares the 3D traced architecture, preserving independent shot sensors',()=>{
+ assert.ok(canvas.includes('paintClassicRails(c,{upper:true,lower:false})'));
+ assert.ok(three.includes('UPPER_ROUTES.filter(r=>r.kind==='));
+ const centre=referenceToTable(500,500);
+ assert.ok(centre[0]>0&&centre[0]<BOARD.width);
+ assert.ok(centre[1]>0&&centre[1]<BOARD.height);
+ for(const route of UPPER_ROUTES)
+  assert.deepEqual(route.entrance,
+   {x:SHOTS[route.kind].x,y:SHOTS[route.kind].y,r:SHOTS[route.kind].r});
+ assert.ok(!canvas.includes('upperGuardSections(route)'));
 });
 test('other shots still have real matching gameplay entrances and mission LEDs',()=>{
  assert.deepEqual(UPPER_ROUTES.slice(2).map(r=>r.kind),['center','skyline']);

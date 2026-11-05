@@ -1,6 +1,6 @@
 /* Integrated routed-lane geometry follows the existing authoritative engine
    transport paths. These visual lane surfaces never alter physics or scoring. */
-import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=18';
+import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=19';
 function makeRoute(kind,width,accent){
  const path=TRAVEL_PATHS[kind],shot=SHOTS[kind];
  if(!path||!shot||path[0][0]!==shot.x||path[0][1]!==shot.y)

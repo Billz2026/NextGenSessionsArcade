@@ -904,3 +904,25 @@ test('protected replay keeps earned combo and grid progress for a real streak',(
  for(let i=0;i<340;i++)g.singleStep(BOARD.step);
  assert.equal(g.comboCount,0,'a genuinely new ball resets combo progress');
 });
+
+test('reference-traced inlanes and outlanes do not wedge unattended balls',()=>{
+ const scenarios=[
+  ['left outlane',45,552,0,240],
+  ['right outlane',354,552,0,240],
+  ['left inlane',112,575,10,240],
+  ['right inlane',302,575,-10,240]
+ ];
+ for(const [name,x,y,vx,vy] of scenarios){
+  const g=new PinballEngine();g.start();
+  g.ball.mode='live';Object.assign(g.ball,{x,y,vx,vy});
+  g.ballSaveUntil=-1;g.kickbackReady=false;g.ballSaveUsed=true;
+  let drained=false;
+  for(let i=0;i<2000;i++){
+   g.singleStep(BOARD.step);
+   if(!g.ball){drained=true;break;}
+   assert.ok([g.ball.x,g.ball.y,g.ball.vx,g.ball.vy].every(Number.isFinite),
+    name+' generated invalid physics');
+  }
+  assert.ok(drained,name+' trapped a stationary ball instead of draining');
+ }
+});

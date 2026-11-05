@@ -1,3 +1,4 @@
+import {MOULDED_COLLISION_RAILS,CLASSIC_RAIL_PROFILES} from './space-cadet-architecture.mjs?v=2';
 // Neon Tilt prototype physics: deterministic fixed-step ball and flipper simulation.
 // Coordinates are pixels in a 420 × 700 playfield, +Y points down.
 export const BOARD = Object.freeze({width:420,height:700,radius:8,step:1/240});
@@ -10,9 +11,9 @@ export const KICKBACK=Object.freeze({
  right:Object.freeze({x:315,y:640,edge:294,vx:-335,vy:-685})
 });
 export const BUMPERS=Object.freeze([
- {x:150,y:240,r:24,score:250},
- {x:259,y:240,r:24,score:250},
- {x:205,y:310,r:24,score:250}
+ {x:185,y:230,r:24,score:250},
+ {x:239,y:219,r:24,score:250},
+ {x:213,y:270,r:24,score:250}
 ]);
 export const POSTS=Object.freeze([
  {x:112,y:585,r:9},{x:308,y:585,r:9},
@@ -25,14 +26,21 @@ export const WALLS=Object.freeze([
  [61,41,104,25],[104,25,310,25],[310,25,351,37],
  [351,37,385,74],[385,74,400,118],[400,118,400,659],
  [365,156,365,590], // launch lane divider; upper opening lets ball enter playfield
- [24,566,95,644],[95,644,116,674],
- [365,566,325,639],[325,639,305,674],
- [91,496,120,526],[120,526,142,542],
- [329,496,300,526],[300,526,278,542],
+ ...MOULDED_COLLISION_RAILS.leftOut,
+ ...MOULDED_COLLISION_RAILS.rightOut,
+ ...MOULDED_COLLISION_RAILS.leftIn,
+ ...MOULDED_COLLISION_RAILS.rightIn,
+ [93,489,113,497],[113,497,122,530],
+ [327,489,307,497],[307,497,298,530],
  [53,366,83,419],[336,420,357,365]
 ]);
-export const LANES=Object.freeze([{x:101,y:173,label:'N'},{x:210,y:169,label:'G'},{x:314,y:174,label:'S'}]);
-export const TARGETS=Object.freeze([{x:165,y:410,r:12},{x:194,y:405,r:12},{x:223,y:405,r:12},{x:252,y:410,r:12}]);
+export const LANES=Object.freeze([
+  {x:164,y:174,label:'N'},{x:211,y:170,label:'G'},{x:258,y:174,label:'S'}
+ ]);
+export const TARGETS=Object.freeze([
+  {x:181,y:316,r:10},{x:205,y:316,r:10},
+  {x:229,y:316,r:10},{x:253,y:316,r:10}
+ ]);
 // Single source of truth for guided-ball motion and the raised 3D rail paths.
 // [x, y, 3D height] coordinates; collision physics elsewhere stays 2D.
 export const RAMP_PATH=Object.freeze([
@@ -102,9 +110,16 @@ export const RETURN_FEEDS=Object.freeze({
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
+// Active rubber is mounted on the diagonals of the tall traced sling covers.
 export const SLINGS=Object.freeze([
- {x1:119,y1:502,x2:163,y2:535,score:100},
- {x1:301,y1:502,x2:257,y2:535,score:100}
+ {x1:CLASSIC_RAIL_PROFILES.leftSling[0][0],
+  y1:CLASSIC_RAIL_PROFILES.leftSling[0][1],
+  x2:CLASSIC_RAIL_PROFILES.leftSling[2][0],
+  y2:CLASSIC_RAIL_PROFILES.leftSling[2][1],score:100},
+ {x1:CLASSIC_RAIL_PROFILES.rightSling[1][0],
+  y1:CLASSIC_RAIL_PROFILES.rightSling[1][1],
+  x2:CLASSIC_RAIL_PROFILES.rightSling[3][0],
+  y2:CLASSIC_RAIL_PROFILES.rightSling[3][1],score:100}
 ]);
 export const ARCADE_MODES=Object.freeze({skillWindow:6,comboWindow:7,hurryWindow:18,overdriveWindow:14,powerShots:3,spinThreshold:5});
 // Classic Windows-era pinball was memorable because a run felt like a career,
@@ -134,8 +149,8 @@ export class PinballEngine{
  constructor(){
   this.state='ready';this.score=0;this.best=0;this.ballNumber=0;
   this.ball=null;this.balls=[];this.nextBallId=1;this.leftHeld=false;this.rightHeld=false;
-  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:PLAY_BALANCE.flipperLength},
-                 {side:'right',x:276,y:613,a:.40,omega:0,length:PLAY_BALANCE.flipperLength}];
+  this.flippers=[{side:'left',x:136,y:613,a:.40,omega:0,length:PLAY_BALANCE.flipperLength},
+                 {side:'right',x:284,y:613,a:.40,omega:0,length:PLAY_BALANCE.flipperLength}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
@@ -712,7 +727,10 @@ export class PinballEngine{
   }
   for(const kind of ['orbit','ramp','center','skyline']){
    const s=SHOTS[kind];
-   if(b.vy<-300&&previous.y>=s.y&&b.y<s.y&&Math.abs(b.x-s.x)<s.r){
+   // The centre opening accepts a slightly slower genuine flipper return,
+   // without weakening the faster perimeter ramp/orbit entrances.
+   const minimumSpeed=kind==='center'?260:300;
+   if(b.vy<-minimumSpeed&&previous.y>=s.y&&b.y<s.y&&Math.abs(b.x-s.x)<s.r){
     this.activateShot(kind);return;
    }
   }

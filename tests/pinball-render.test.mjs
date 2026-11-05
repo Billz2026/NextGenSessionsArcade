@@ -89,7 +89,8 @@ test('black lacquer and deterministic gold dust are shared by both renderers',()
  assert.match(canvasSource,/for\(let i=0;i<290;i\+\+\)/);
  assert.match(threeSource,/rgba\(243,199,79,\.22\)/);
  assert.match(threeSource,/for\(let i=0;i<450;i\+\+\)/);
- assert.match(threeSource,/const laneTrim=new T.MeshPhysicalMaterial/);
+ assert.match(threeSource,/buildClassicRails\(T,scene,\{X,Y\}\)/);
+ assert.match(canvasSource,/paintClassicRails\(c,\{upper:true,lower:false\}\)/);
  assert.doesNotMatch(canvasSource,/Math\.random\(/);
  assert.doesNotMatch(threeSource,/Math\.random\(/);
 });

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-import {mkdirSync} from 'node:fs';
+import {mkdirSync,writeFileSync} from 'node:fs';
 
 const base='http://127.0.0.1:8877/games/pinball/';
 mkdirSync('artifacts',{recursive:true});
@@ -50,12 +50,27 @@ try{
  if(!evidence.active3D)
   assert.ok(evidence.colourful>55,'2D fallback has no visible neon or gold hardware');
  assert.equal(errors.length,0,'Browser runtime errors found');
- // Best-effort image; pixel assertions above are the authoritative smoke test.
+ // Always save the stable 2D playfield, even when Chromium's dynamic WebGL
+ // compositor refuses to settle for a whole-page screenshot.
+ const playfieldData=await page.evaluate(()=>{
+  const c=document.querySelector('#playfield');
+  return c.toDataURL('image/png');
+ });
+ writeFileSync('artifacts/neon-tilt-2d-reference.png',
+  Buffer.from(playfieldData.split(',')[1],'base64'));
+ // Capture the compositor frame through CDP, bypassing Playwright's
+ // waiting for animations/stability (the WebGL canvas never stops drawing).
  try{
-  await page.screenshot({path:'artifacts/neon-tilt-browser.png',
-   animations:'disabled',timeout:4500});
+  const cdp=await page.context().newCDPSession(page);
+  const frame=await cdp.send('Page.captureScreenshot',{
+   format:'png',captureBeyondViewport:false,fromSurface:true
+  });
+  writeFileSync('artifacts/neon-tilt-browser.png',
+   Buffer.from(frame.data,'base64'));
+  await cdp.detach();
+  console.log('Direct compositor screenshot captured');
  }catch(error){
-  console.log('Screenshot omitted; animated stage did not settle:',String(error).slice(0,150));
+  console.log('CDP frame unavailable:',String(error).slice(0,240));
  }
 }finally{
  await browser.close();

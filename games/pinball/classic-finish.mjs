@@ -1,5 +1,5 @@
 /* Original arcade artwork and light states; physics is unchanged. */
-import {ARCADE_MODES} from './engine.mjs?v=10';
+import {ARCADE_MODES} from './engine.mjs?v=19';
 export const NEON_FINISH=Object.freeze({
  upper:'#0b0a09',mid:'#100e0b',lower:'#090909',
  ivory:'#fff0cf',cyan:'#80d8fb',coral:'#ff88b2',amber:'#ffd38f',
