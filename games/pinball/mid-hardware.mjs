@@ -1,6 +1,6 @@
 /* Phase 4K.2: shared mid-table visual positions grounded in game sensors.
    This file does not define collisions or create new game objectives. */
-import {BUMPERS,TARGETS,ARCADE_MODES} from './engine.mjs?v=10';
+import {BUMPERS,TARGETS,ARCADE_MODES} from './engine.mjs?v=19';
 export const MID_BUMPERS=Object.freeze(BUMPERS.map((b,i)=>Object.freeze({
  index:i,x:b.x,y:b.y,r:b.r
 })));
