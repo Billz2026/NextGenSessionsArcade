@@ -5,7 +5,7 @@ import {TRAVEL_PATHS,SHOTS,LANES,BOARD,BUMPERS,PinballEngine}
  from '../games/pinball/engine.mjs';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS}
  from '../games/pinball/upper-hardware.mjs';
-import {CLASSIC_RAIL_PROFILES,REFERENCE_FRAME,referenceToTable} from '../games/pinball/space-cadet-architecture.mjs';
+import {CLASSIC_RAIL_PROFILES,REFERENCE_FRAME,referenceToTable,TOP_HORSESHOE_SPEC,topRailCouplers} from '../games/pinball/space-cadet-architecture.mjs';
 
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
@@ -61,6 +61,22 @@ test('visible approach edges straddle their exact path centreline',()=>{
    assert.ok(Math.abs(Math.hypot(a.x-b.x,a.y-b.y)-ch.width)<1e-7);
   }
  }
+});
+test('Section 1 upper horseshoe uses a real ball-width recess and attached couplers',()=>{
+ assert.equal(TOP_HORSESHOE_SPEC.bodyWidth,27);
+ assert.ok(TOP_HORSESHOE_SPEC.clearChannelWidth>=BOARD.radius*2+3,
+  'visible recessed ball bed must be wider than the 16px ball');
+ assert.ok(TOP_HORSESHOE_SPEC.bodyWidth>TOP_HORSESHOE_SPEC.clearChannelWidth+4);
+ const brackets=topRailCouplers();
+ assert.equal(brackets.length,5);
+ assert.ok(brackets.every(c=>Number.isFinite(c.x)&&Number.isFinite(c.y)
+  &&Number.isFinite(c.angle)&&c.gap<=20),'couplers must sit on moulding');
+ assert.ok(three.includes('upperHorseshoeSection(P.topLeft)'));
+ assert.ok(three.includes('upperHorseshoeSection(P.topHorseshoe)'));
+ assert.ok(canvas.includes('topHorseshoeSection(P.topLeft)'));
+ assert.ok(canvas.includes('topHorseshoeSection(P.topHorseshoe)'));
+ assert.ok(three.includes('topRailCouplers()'));
+ assert.ok(canvas.includes('topRailCouplers()'));
 });
 test('reference-traced upper mechanical assemblies have correct proportions and clear bounds',()=>{
  assert.ok(three.includes('buildClassicRails(T,scene,{X,Y})'));
