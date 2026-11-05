@@ -328,6 +328,13 @@ export async function create3DTable(host){
   p.moveTo(83,-160);p.lineTo(197,-8);p.stroke();
   p.restore();
  }
+ // Three-prong ruby jet-tail art, printed beneath the live flipper hardware.
+ p.save();p.globalAlpha=.38;
+ shape([[344,1095],[390,1186],[420,1282],[450,1186],[496,1095],
+  [471,1270],[420,1365],[369,1270]],'#632031','#995044',4);
+ shape([[389,1180],[420,1058],[451,1180],[436,1212],[420,1177],
+  [404,1212]],'#7e2a37','#c28b58',3);
+ p.restore();
  // Device labels occupy dark areas, without blocking shots or covering rings.
  function inkLabel(text,x,y,width,color='#ffe0ad'){
   p.fillStyle='#110e0a';p.fillRect(x-width/2,y-19,width,38);
@@ -462,21 +469,8 @@ export async function create3DTable(host){
   box(px,py+.32,1.032,.27,.035,.02,mat);
   laneGateMaterials.push(mat);
  }
- // Flush cast-metal bumper island, shaped around existing sensor positions.
-  // It is a visual deck; ball collisions remain exclusively in engine.mjs.
-  const deckOutline=[[111,201],[305,201],[330,271],[268,347],[141,347],[87,271]];
-  const deckShape=new T.Shape();
-  deckOutline.forEach(([x,y],i)=>i?deckShape.lineTo(X(x),Y(y)):
-   deckShape.moveTo(X(x),Y(y)));
-  deckShape.closePath();
-  const deckMaterial=new T.MeshPhysicalMaterial({
-   color:'#19293e',metalness:.18,roughness:.43,clearcoat:.64,
-   side:T.DoubleSide
-  });
-  add(new T.ShapeGeometry(deckShape),deckMaterial,0,0,.187,false);
-  const rimPoints=deckOutline.map(([x,y])=>new T.Vector3(X(x),Y(y),.198));
-  scene.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(rimPoints),
-   new T.LineBasicMaterial({color:'#718296'})));
+ // Freestanding bumpers sit directly over original lacquer.
+ // The grey hexagon was a graphic, not a collision object.
   // Phase 4K.2 — physically constructed bumpers and target-bank hardware.
  // Every centre is sourced from the unchanged physics sensors.
  const bumperSkirt=new T.MeshPhysicalMaterial({
