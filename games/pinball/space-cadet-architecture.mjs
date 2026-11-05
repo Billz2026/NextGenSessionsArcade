@@ -52,9 +52,13 @@ const P=Object.freeze({
  leftOut:trace([[181,745],[163,783],[146,835],[136,900],[148,920]])
   .map(([x,y])=>Object.freeze([x+10,y])),
  rightOut:trace([[764,745],[785,782],[808,836],[820,900],[810,920]])
-  .map(([x,y])=>Object.freeze([x-15,y])),
- leftIn:trace([[197,824],[239,846],[280,872],[328,916]]),
- rightIn:trace([[745,823],[706,847],[669,872],[613,915]]),
+  .map(([x,y])=>Object.freeze([x-30,y])),
+ // Shift the inlane entrances toward the centre so the 16px ball plus
+ // rubber clearance can actually pass between the two moulded walls.
+ leftIn:trace([[197,824],[239,846],[280,872],[328,916]])
+  .map(([x,y],i)=>Object.freeze([x+[28,18,9,0][i],y])),
+ rightIn:trace([[745,823],[706,847],[669,872],[613,915]])
+  .map(([x,y],i)=>Object.freeze([x-[28,18,9,0][i],y])),
  topBrackets:trace([[285,88],[406,73],[533,61],[640,75],[727,159]]),
  leftGears:trace([[184,505],[258,524],[204,568]]),
  leftSwitches:trace([[192,443],[223,458],[243,475]]),
