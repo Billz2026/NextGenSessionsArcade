@@ -348,8 +348,10 @@ export async function create3DTable(host){
  inkLabel('BALL SAVE',420,1184,166);
  const floorTexture=new T.CanvasTexture(paint);floorTexture.colorSpace=T.SRGBColorSpace;floorTexture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);floorTexture.minFilter=T.LinearMipmapLinearFilter;
  plane(0,0,.166,boardW,boardH,new T.MeshPhysicalMaterial({
-  map:floorTexture,roughness:.27,metalness:.12,clearcoat:.83,
-  clearcoatRoughness:.19,envMapIntensity:.8
+  // Matte black lacquer keeps the table's own palette, while preventing
+  // studio reflections from washing the upper playfield into beige.
+  map:floorTexture,roughness:.78,metalness:0,clearcoat:.10,
+  clearcoatRoughness:.75,envMapIntensity:.08
  }));
  // Soft baked contact shadows give hardware physical separation without
  // additional real-time lights or opaque surfaces over the playfield.
