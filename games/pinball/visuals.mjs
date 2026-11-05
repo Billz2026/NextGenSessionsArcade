@@ -405,7 +405,7 @@ function drawBumpers(c,engine,anim,reducedMotion,bumperFlash=null){
 }
 function drawSlings(c){
  for(let i=0;i<LOWER_SLINGS.length;i++){
-   const s=LOWER_SLINGS[i],pivot=i===0?[130,547]:[290,547];
+   const s=LOWER_SLINGS[i],pivot=i===0?[126,590]:[294,590];
   c.save();c.shadowColor='rgba(3,4,13,.75)';c.shadowBlur=11;c.shadowOffsetY=6;
   plastic(c,a=>{a.moveTo(s.x1,s.y1);a.lineTo(s.x2,s.y2);a.lineTo(...pivot);a.closePath()},
    G(c,s.x1,s.y1,s.x2,s.y2,[[0,'#9d7483'],[.42,'#674354'],[1,'#342a3c']]),'#d5b49f');
