@@ -112,6 +112,24 @@ function ribbon(pts,width){
  }
  return {center:p,left,right,polygon:[...left,...right.slice().reverse()]};
 }
+// Clamp centres and orientations are projected onto the actual smooth
+// rail centreline. A clamp must never float at a traced but misaligned dot.
+export function topRailCouplers(){
+ const rail=[...smooth(P.topLeft,8),...smooth(P.topHorseshoe,8)];
+ return Object.freeze(P.topBrackets.map(([x,y])=>{
+  let best=null;
+  for(let i=1;i<rail.length;i++){
+   const a=rail[i-1],b=rail[i],dx=b[0]-a[0],dy=b[1]-a[1];
+   const len=dx*dx+dy*dy||1;
+   const t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/len));
+   const px=a[0]+dx*t,py=a[1]+dy*t;
+   const gap=Math.hypot(x-px,y-py);
+   if(!best||gap<best.gap)best={x:px,y:py,
+    angle:Math.atan2(dy,dx)+Math.PI/2,gap};
+  }
+  return Object.freeze(best);
+ }));
+}
 function pathCanvas(c,p,close=false){
  c.beginPath();p.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));if(close)c.closePath();
 }
@@ -175,10 +193,8 @@ export function paintClassicRails(c,{upper=true,lower=true}={}){
   topHorseshoeSection(P.topHorseshoe);
   road(P.leftOrbit,10);
   // Five ivory couplers follow the original Space Cadet rail rhythm.
-  for(let i=0;i<P.topBrackets.length;i++){
-   const [x,y]=P.topBrackets[i];
-   upperCoupler(x,y,[.42,.14,.06,.20,.78][i]);
-  }
+  for(const {x,y,angle} of topRailCouplers())
+   upperCoupler(x,y,angle);
   // True broad asymmetric deck with multi-level curled launch shell.
   plate(P.leftDeck,'#63242d');plate(P.leftUpper,'#953b45');
   road(P.leftSpiral,18);
@@ -316,8 +332,8 @@ export function buildClassicRails(T,scene,{X,Y}){
  upperHorseshoeSection(P.topLeft);
  upperHorseshoeSection(P.topHorseshoe);
  road(P.leftOrbit,10,.244,.085);
- P.topBrackets.forEach(([x,y],i)=>
-  topHorseshoeCoupler(x,y,[.42,.14,.06,.20,.78][i]));
+ for(const {x,y,angle} of topRailCouplers())
+  topHorseshoeCoupler(x,y,angle);
  // Broad left Space Cadet-inspired mechanical deck and raised spiral.
  plate(P.leftDeck,.257,.118,red);
  plate(P.leftUpper,.380,.074,raised);
