@@ -8,6 +8,7 @@ import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPE
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
+import {buildClassicRails} from './space-cadet-architecture.mjs?v=1';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -559,69 +560,11 @@ export async function create3DTable(host){
  // Outer-edge plastic lane approaches only. Tracing the complete engine
  // trajectory through the centre caused unreadable overlapping gold lines.
  const routeHardware=[];
- const laneTrim=new T.MeshPhysicalMaterial({
-  color:'#b68b52',metalness:0,roughness:.46,transparent:true,opacity:.83,
-  side:T.DoubleSide,depthWrite:false,
-  polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
- });
- const laneBaseMaterials={
-  orbit:new T.MeshPhysicalMaterial({color:'#17130d',roughness:.62,metalness:.02,
-   transparent:true,opacity:.94,side:T.DoubleSide,depthWrite:false}),
-  ramp:new T.MeshPhysicalMaterial({color:'#221612',roughness:.60,metalness:.02,
-   transparent:true,opacity:.94,side:T.DoubleSide,depthWrite:false})
- };
- function channelStrip(route,from,to,lift,mat){
-  // A flat ribbon along the actual elevated ball path. Side-band geometry
-  // is painted trim at the same height, not a physics wall or wireform.
-  const smooth=roundedWirePoints(route.points,3);
-  const edges=guideEdges({points:smooth,width:route.width});
-  const vertices=[],indices=[];
-  for(let i=0;i<edges.length;i++){
-   const edge=edges[i],z=smooth[i].z+lift;
-   for(const t of [from,to]){
-    vertices.push(
-     X(edge.left.x+(edge.right.x-edge.left.x)*t),
-     Y(edge.left.y+(edge.right.y-edge.left.y)*t),
-     z
-    );
-   }
-   if(i){
-    const n=i*2;
-    indices.push(n-2,n-1,n,n-1,n+1,n);
-   }
-  }
-  const geometry=new T.BufferGeometry();
-  geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
-  geometry.setIndex(indices);geometry.computeVertexNormals();
-  return add(geometry,mat,0,0,0,false);
- }
- const mouldedEntryGuard=new T.MeshPhysicalMaterial({
-  color:'#bd955d',metalness:0,roughness:.37,clearcoat:.83,
-  side:T.DoubleSide,depthWrite:true
- });
- for(const channel of VISIBLE_CHANNELS){
-  // Polymer lips follow both edges of the engine-centred shot throat.
-  // The 22px channel stays clear for the 16px ball; no phantom collider.
-  channelStrip(channel,0,1,-.025,laneBaseMaterials[channel.kind]);
-  channelStrip(channel,.015,.08,.035,mouldedEntryGuard);
-  channelStrip(channel,.92,.985,.035,mouldedEntryGuard);
-  if(channel.trimSide==='right')
-   channelStrip(channel,.929,.985,-.015,laneTrim);
-  else
-   channelStrip(channel,.015,.071,-.015,laneTrim);
-  const route=UPPER_ROUTES.find(r=>r.kind===channel.kind);
+ // Hand-modelled upper horseshoe, left chute, red return fin and lower
+ // inlanes: visible structure rather than elongated wire outlines.
+ buildClassicRails(T,scene,{X,Y});
+ for(const route of UPPER_ROUTES.filter(r=>r.kind==='orbit'||r.kind==='ramp')){
   const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
-  const cheek=new T.MeshPhysicalMaterial({
-   color:'#45201d',metalness:0,roughness:.40,clearcoat:.82
-  });
-  const lip=new T.MeshPhysicalMaterial({
-   color:'#d7b57b',metalness:0,roughness:.42,clearcoat:.79
-  });
-  // A wide, flat entry mouth makes the required shot obvious without
-  // introducing new posts or changing the sensor capture area.
-  box(mx,my,.255,.55,.19,.035,cheek);
-  box(mx,my-.26,.241,.66,.08,.025,lip);
-  for(const dx of [-.34,.34])box(mx+dx,my-.08,.263,.045,.26,.040,cheek);
   const entryMat=new T.MeshStandardMaterial({
    color:route.kind==='ramp'?'#ffd1c4':'#ffe5ac',
    emissive:route.kind==='ramp'?'#fa6f80':'#f5b963',
@@ -688,45 +631,8 @@ export async function create3DTable(host){
   mesh.rotation.z=Math.atan2(dy,dx)-PI/2;
   return mesh;
  }
- // The guides now appear as continuous channel guards mounted to the
- // cabinet side, instead of four unsupported, floating silver rods.
- // The panels extend OUTSIDE their exact collision edges.
- const channelBody=new T.MeshPhysicalMaterial({
-  color:'#631f2a',roughness:.32,metalness:0,clearcoat:.94,
-  clearcoatRoughness:.20,side:T.DoubleSide
- });
- const channelRecess=new T.MeshPhysicalMaterial({
-  color:'#211a16',roughness:.70,metalness:0,clearcoat:.24
- });
- for(const channel of LOWER_CHANNELS){
-  const pts=channel.points;
-  const shape=new T.Shape();
-  shape.moveTo(X(pts[0].x),Y(pts[0].y));
-  for(let i=1;i<pts.length;i++)shape.lineTo(X(pts[i].x),Y(pts[i].y));
-  for(let i=pts.length-1;i>=0;i--)
-   shape.lineTo(X(pts[i].x+channel.outerOffset),Y(pts[i].y));
-  shape.closePath();
-  const panel=add(new T.ExtrudeGeometry(shape,{
-   depth:.072,steps:1,bevelEnabled:true,bevelSegments:2,
-   bevelSize:.017,bevelThickness:.017
-  }),channelBody,0,0,.276);
-  panel.receiveShadow=true;
-  // Dark rubber and warm-gold polymer lips follow the true WALLS
-  // collider coordinates, with no extra invisible obstruction.
-  for(let i=1;i<pts.length;i++){
-   const edge={x1:pts[i-1].x,y1:pts[i-1].y,x2:pts[i].x,y2:pts[i].y};
-   mountedRod(edge,.39,.067,channelRecess);
-   mountedRod(edge,.445,.028,mouldedIvory);
-  }
-  // Recessed plastic standoffs join each guard to its outside housing.
-  for(const p of [pts[0],pts[1],pts[2]]){
-   const anchor={x1:p.x,y1:p.y,x2:p.x+channel.outerOffset*.65,y2:p.y};
-   mountedRod(anchor,.385,.034,guideRubber);
-   const sx=X(p.x+channel.outerOffset*.56),sy=Y(p.y);
-   cyl(sx,sy,.424,.094,.051,channelBody,16);
-   cyl(sx,sy,.466,.047,.02,mouldedIvory,12);
-  }
- }
+ // The solid lower mouldings are part of the shared architecture.
+ // Existing real sling/post/ball collisions and their hardware are unchanged.
  for(const sling of LOWER_SLINGS){
   // The contact rubber is darker and wider than the narrow metal retaining
   // strip, making the impact surface readable without overpowering the table.
