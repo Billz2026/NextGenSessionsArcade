@@ -9,6 +9,7 @@ import {CLASSIC_RAIL_PROFILES,REFERENCE_FRAME,referenceToTable,TOP_HORSESHOE_SPE
 
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
+const architecture=readFileSync(new URL('../games/pinball/space-cadet-architecture.mjs',import.meta.url),'utf8');
 
 function distanceToSegment(p,a,b){
  const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy||1;
@@ -71,12 +72,12 @@ test('Section 1 upper horseshoe uses a real ball-width recess and attached coupl
  assert.equal(brackets.length,5);
  assert.ok(brackets.every(c=>Number.isFinite(c.x)&&Number.isFinite(c.y)
   &&Number.isFinite(c.angle)&&c.gap<=20),'couplers must sit on moulding');
- assert.ok(three.includes('upperHorseshoeSection(P.topLeft)'));
- assert.ok(three.includes('upperHorseshoeSection(P.topHorseshoe)'));
- assert.ok(canvas.includes('topHorseshoeSection(P.topLeft)'));
- assert.ok(canvas.includes('topHorseshoeSection(P.topHorseshoe)'));
- assert.ok(three.includes('topRailCouplers()'));
- assert.ok(canvas.includes('topRailCouplers()'));
+ assert.ok(architecture.includes('upperHorseshoeSection(P.topLeft)'));
+ assert.ok(architecture.includes('upperHorseshoeSection(P.topHorseshoe)'));
+ assert.ok(architecture.includes('topHorseshoeSection(P.topLeft)'));
+ assert.ok(architecture.includes('topHorseshoeSection(P.topHorseshoe)'));
+ assert.ok(architecture.includes('topRailCouplers()'));
+ assert.ok(architecture.includes('topRailCouplers()'));
 });
 test('reference-traced upper mechanical assemblies have correct proportions and clear bounds',()=>{
  assert.ok(three.includes('buildClassicRails(T,scene,{X,Y})'));
