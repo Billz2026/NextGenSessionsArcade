@@ -8,12 +8,13 @@ import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints}
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
 const game=readFileSync(new URL('../games/pinball/game.mjs',import.meta.url),'utf8');
-test('brighter original finish is shared across 3D and fallback',()=>{
+test('NextGen dark lacquer finish is shared across 3D and fallback',()=>{
  for(const c of Object.values(NEON_FINISH))assert.match(c,/^#[0-9a-f]{6}$/i);
  assert.notEqual(NEON_FINISH.upper,NEON_FINISH.lower);
  assert.ok(three.includes('bg.addColorStop(0,NEON_FINISH.upper)'));
  assert.ok(canvas.includes('[0,NEON_FINISH.upper]'));
- assert.ok(three.includes('clearcoat:.83'));
+ assert.ok(three.includes('roughness:.78,metalness:0,clearcoat:.10'),
+  '3D floor must remain matte black rather than beige from reflections');
 });
 test('three Power Grid jewels show real charge count and jackpot',()=>{
  const e=new PinballEngine();e.start();
