@@ -58,12 +58,19 @@ try{
  });
  writeFileSync('artifacts/neon-tilt-2d-reference.png',
   Buffer.from(playfieldData.split(',')[1],'base64'));
- // Best-effort full browser image for visual design sign-off.
+ // Capture the compositor frame through CDP, bypassing Playwright's
+ // waiting for animations/stability (the WebGL canvas never stops drawing).
  try{
-  await page.screenshot({path:'artifacts/neon-tilt-browser.png',
-   animations:'disabled',timeout:16000});
+  const cdp=await page.context().newCDPSession(page);
+  const frame=await cdp.send('Page.captureScreenshot',{
+   format:'png',captureBeyondViewport:false,fromSurface:true
+  });
+  writeFileSync('artifacts/neon-tilt-browser.png',
+   Buffer.from(frame.data,'base64'));
+  await cdp.detach();
+  console.log('Direct compositor screenshot captured');
  }catch(error){
-  console.log('Screenshot omitted; animated stage did not settle:',String(error).slice(0,150));
+  console.log('CDP frame unavailable:',String(error).slice(0,240));
  }
 }finally{
  await browser.close();
