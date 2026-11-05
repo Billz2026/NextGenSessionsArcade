@@ -167,7 +167,22 @@ export function paintClassicRails(c,{upper=true,lower=true}={}){
   for(const poly of [P.leftSling,P.rightSling]){
    plate(poly,'#7e2732');
    const center=poly.reduce((p,[x,y])=>[p[0]+x/4,p[1]+y/4],[0,0]);
+   const recess=poly.map(([x,y])=>[
+    center[0]+(x-center[0])*.64,center[1]+(y-center[1])*.64
+   ]);
+   pathCanvas(c,recess,true);c.fillStyle='#241c24';c.fill();
+   c.strokeStyle='#d5a16f';c.lineWidth=1.8;c.stroke();
+   const [tipx,tipy]=poly[2];
+   pathCanvas(c,[[center[0],center[1]-12],[tipx*.52+center[0]*.48,
+    tipy*.52+center[1]*.48]]);
+   c.strokeStyle='#b9424f';c.lineWidth=2.4;c.stroke();
    disk(center[0],center[1],6,'#e6a76c');
+  }
+  // Recessed mechanical inserts circle the Power Core without changing it.
+  for(let i=0;i<20;i++){
+   const a=i*Math.PI/10-Math.PI/2,x=210+63*Math.cos(a),y=460+63*Math.sin(a);
+   disk(x,y,4.6,'#22202c','#8f643f',1);
+   disk(x,y,2.5,'#445e78','#111a20',.8);
   }
  }
  c.restore();
@@ -179,7 +194,8 @@ export function buildClassicRails(T,scene,{X,Y}){
  });
  const red=mat('#62232c'),raised=mat('#87323e'),
   gold=mat('#cda064',.41),dark=mat('#211b1b',.77);
- const steel=mat('#9d8271',.43),blue=mat('#2b4358',.31);
+ const steel=mat('#9d8271',.43),blue=mat('#2b4358',.31),
+  smoked=mat('#24232a',.54),slingInset=mat('#211d24',.68);
  const amber=new T.MeshStandardMaterial({color:'#efb784',emissive:'#b76c3c',emissiveIntensity:.24});
  const add=(geometry,material,z=0,shadow=true)=>{
   const mesh=new T.Mesh(geometry,material);mesh.position.z=z;
@@ -213,13 +229,13 @@ export function buildClassicRails(T,scene,{X,Y}){
   const m=add(new T.CylinderGeometry(r,r,.045,24),material,z);
   m.rotation.x=Math.PI/2;m.position.x=X(x);m.position.y=Y(y);return m;
  };
- const window=(x,y,w,h,angle=0,z=.405)=>{
+ const window=(x,y,w,h,angle=0,z=.405,lensMaterial=amber)=>{
   const group=new T.Group();group.position.set(X(x),Y(y),0);group.rotation.z=angle;scene.add(group);
   const bezel=new T.Mesh(new T.BoxGeometry(w*.020,h*.020,.05),dark);
   bezel.position.z=z;group.add(bezel);
   const frame=new T.Mesh(new T.BoxGeometry(w*.021,h*.022,.014),steel);
   frame.position.z=z-.034;group.add(frame);
-  const lens=new T.Mesh(new T.BoxGeometry(w*.014,h*.014,.057),amber);
+  const lens=new T.Mesh(new T.BoxGeometry(w*.014,h*.014,.057),lensMaterial);
   lens.position.z=z+.033;group.add(lens);
  };
  // Two-level upper orbit horseshoe with actual breaks/metal couplings.
@@ -243,7 +259,7 @@ export function buildClassicRails(T,scene,{X,Y}){
  plate(P.rightDeck,.255,.110,red);
  road(P.rightCrescent,17,.375,.080);
  road(P.rightInner,14,.388,.064);
- P.rightWindows.forEach(([x,y],i)=>window(x,y,20,14,.20+i*.19,.477));
+ P.rightWindows.forEach(([x,y],i)=>window(x,y,22,16,.20+i*.19,.477,smoked));
  P.rightBrackets.forEach(([x,y])=>window(x,y,14,6,.30,.400));
  road(P.rightOuter,11,.265,.115);
  plate(P.rightFlame,.270,.083,raised);
@@ -255,6 +271,18 @@ export function buildClassicRails(T,scene,{X,Y}){
  for(const p of [P.leftSling,P.rightSling]){
   plate(p,.288,.110,raised);
   const [x,y]=p.reduce((a,[xx,yy])=>[a[0]+xx/4,a[1]+yy/4],[0,0]);
-  disk(x,y,.10,.427,amber);
+  const inset=p.map(([px,py])=>[x+(px-x)*.64,y+(py-y)*.64]);
+  add(new T.ShapeGeometry(geomShape(inset)),slingInset,.410,false);
+  tube([...inset,inset[0]],.431,.021,gold,true);
+  disk(x,y,.10,.435,amber);
+ }
+ // The blue-black insert ring resembles a machined gear around the
+ // existing Power Core. It is purely visual and sits below active hardware.
+ for(let i=0;i<20;i++){
+  const a=i*Math.PI/10-Math.PI/2,x=210+63*Math.cos(a),y=460+63*Math.sin(a);
+  const bezel=add(new T.RingGeometry(.034,.081,18),smoked,.222,false);
+  bezel.position.x=X(x);bezel.position.y=Y(y);
+  const insert=add(new T.CircleGeometry(.036,18),blue,.225,false);
+  insert.position.x=X(x);insert.position.y=Y(y);
  }
 }
