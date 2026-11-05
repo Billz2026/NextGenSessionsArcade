@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {WALLS,POSTS,SLINGS,FLIPPER_SWEET_SPOT,RETURN_FEEDS,PinballEngine} from '../games/pinball/engine.mjs';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS}
  from '../games/pinball/lower-hardware.mjs';
+import {CLASSIC_RAIL_PROFILES} from '../games/pinball/space-cadet-architecture.mjs';
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const fallback=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
 const controller=readFileSync(new URL('../games/pinball/game.mjs',import.meta.url),'utf8');
@@ -24,15 +25,16 @@ test('lower slings, six posts and flipper pivots remain grounded in the engine',
   f=>({side:f.side,x:f.x,y:f.y,length:f.length})));
 });
 test('3D static hardware and moving flipper layers use the collision descriptors',()=>{
- for(const name of ['LOWER_CHANNELS','LOWER_SLINGS','LOWER_POSTS','LOWER_FLIPPER_BASES'])
-  assert.ok(three.includes('for(const '+(name==='LOWER_POSTS'?'post':name==='LOWER_CHANNELS'?'channel':name==='LOWER_SLINGS'?'sling':'f')+' of '+name+')'));
+ for(const name of ['LOWER_SLINGS','LOWER_POSTS','LOWER_FLIPPER_BASES'])
+  assert.ok(three.includes('for(const '+(name==='LOWER_POSTS'?'post':name==='LOWER_SLINGS'?'sling':'f')+' of '+name+')'));
+ assert.ok(three.includes('buildClassicRails(T,scene,{X,Y})'));
  assert.ok(three.includes('flipperRubberMeshes.push('));
  assert.ok(three.includes('flipperInlays.push('));
  assert.ok(three.includes('mesh.rotation.set(0,0,angle)'));
  assert.ok(three.includes('const drainWell=new T.MeshPhysicalMaterial'));
 });
 test('Canvas fallback mirrors hardware and the game loads the new renderers',()=>{
- assert.ok(fallback.includes('for(const channel of LOWER_CHANNELS)'));
+ assert.ok(fallback.includes('paintClassicRails(c,{upper:false,lower:true})'));
  assert.ok(fallback.includes('for(let i=0;i<LOWER_SLINGS.length;i++)'));
  assert.ok(fallback.includes('LOWER_POSTS.some('));
  assert.ok(fallback.includes("rect(c,157,680,106,15,3,'#060912'"));
@@ -57,13 +59,17 @@ test('two connected lower cabinet channels inherit all four real collision guide
  }
  assert.equal(new Set(touched).size,4,'all four guide segments used once');
 });
-test('channel panels are recessed outside physics walls and mounted at joints',()=>{
- assert.ok(three.includes('shape.lineTo(X(pts[i].x+channel.outerOffset)'));
- assert.ok(three.includes('mountedRod(edge,.445,.028,lowerSteel)'));
- assert.ok(three.includes('for(const p of [pts[0],pts[1],pts[2]])'));
- assert.ok(!three.includes('mountedRod(guide,.40,.052,lowerSteel)'));
- assert.ok(fallback.includes('for(const channel of LOWER_CHANNELS)'));
- assert.ok(fallback.includes('p.x+channel.outerOffset*.56'));
+test('moulded inlane and outlane profiles match native table geometry',()=>{
+ assert.ok(three.includes('buildClassicRails(T,scene,{X,Y})'));
+ assert.ok(fallback.includes('paintClassicRails(c,{upper:false,lower:true})'));
+ assert.deepEqual(CLASSIC_RAIL_PROFILES.lowLeft[0],[24,566]);
+ assert.deepEqual(CLASSIC_RAIL_PROFILES.lowLeft.at(-1),[116,674]);
+ assert.deepEqual(CLASSIC_RAIL_PROFILES.lowRight[0],[365,566]);
+ assert.deepEqual(CLASSIC_RAIL_PROFILES.lowRight.at(-1),[305,674]);
+ for(const points of [CLASSIC_RAIL_PROFILES.lowLeft,CLASSIC_RAIL_PROFILES.lowRight,
+  CLASSIC_RAIL_PROFILES.inLeft,CLASSIC_RAIL_PROFILES.inRight])
+  assert.ok(points.every(([x,y])=>x>=0&&x<=420&&y>=0&&y<=700));
+ assert.equal(WALLS.length,20,'rail skin must not silently add invisible colliders');
 });
 test('both renderers use tapered flippers and leave an open drain',()=>{
  assert.ok(three.includes('function taperedBat(baseWidth,tipWidth,depth)'));
@@ -82,7 +88,7 @@ test('both renderers use tapered flippers and leave an open drain',()=>{
 
 test('recessed drain remains visually open instead of a raised solid crossbar',()=>{
  assert.ok(three.includes("plane(X(210),Y(685),.274,2.35,.28,drainWell)"));
- assert.ok(three.includes("box(X(210),Y(672),.298,2.55,.036,.025,lowerSteel)"));
+ assert.ok(three.includes("box(X(210),Y(672),.298,2.55,.036,.025,mouldedIvory)"));
  assert.ok(!three.includes("box(X(210),Y(685),.204,2.52,.35,.06,lowerShade)"));
  assert.ok(fallback.includes("rect(c,157,680,106,15,3,'#060912'"));
  assert.ok(!fallback.includes("rect(c,154,670,112,26,5"));
