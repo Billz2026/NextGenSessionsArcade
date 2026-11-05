@@ -10,9 +10,9 @@ export const KICKBACK=Object.freeze({
  right:Object.freeze({x:315,y:640,edge:294,vx:-335,vy:-685})
 });
 export const BUMPERS=Object.freeze([
- {x:150,y:240,r:24,score:250},
- {x:259,y:240,r:24,score:250},
- {x:205,y:310,r:24,score:250}
+ {x:185,y:230,r:24,score:250},
+ {x:239,y:219,r:24,score:250},
+ {x:213,y:270,r:24,score:250}
 ]);
 export const POSTS=Object.freeze([
  {x:112,y:585,r:9},{x:308,y:585,r:9},
