@@ -67,6 +67,14 @@ const P=Object.freeze({
  rightArrows:trace([[621,382],[643,412],[615,454]])
 });
 export const CLASSIC_RAIL_PROFILES=P;
+// Stage 1 only: physical-looking, segmented upper horseshoe. The 19px
+// recessed bed clears a 16px pinball, while the moulding reaches 27px.
+// Other table sections and all physics remain unchanged.
+export const TOP_HORSESHOE_SPEC=Object.freeze({
+ bodyWidth:27,clearChannelWidth:19,couplerWidth:31,couplerDepth:8,
+ profileNames:Object.freeze(['topLeft','topHorseshoe'])
+});
+
 
 // The engine and both renderers use the same outer/inner lower rail centrelines.
 // A visual channel is never allowed to imply a wall somewhere else.
@@ -122,6 +130,35 @@ export function paintClassicRails(c,{upper=true,lower=true}={}){
    pathCanvas(c,side);c.lineWidth=1.8;c.strokeStyle='#e3bc87';c.stroke();
   }
  };
+ const topHorseshoeSection=(pts)=>{
+  const {bodyWidth,clearChannelWidth}=TOP_HORSESHOE_SPEC;
+  const p=ribbon(pts,bodyWidth),bed=ribbon(pts,clearChannelWidth);
+  c.save();c.shadowColor='rgba(0,0,0,.52)';c.shadowBlur=7;c.shadowOffsetY=2;
+  pathCanvas(c,p.polygon,true);c.fillStyle='#56202a';c.fill();
+  c.shadowBlur=0;c.shadowOffsetY=0;
+  c.strokeStyle='#d3a36e';c.lineWidth=1.25;c.stroke();
+  pathCanvas(c,bed.polygon,true);c.fillStyle='#201b1c';c.fill();
+  pathCanvas(c,p.left);c.strokeStyle='#e2ba86';c.lineWidth=2.2;c.stroke();
+  pathCanvas(c,p.right);c.strokeStyle='#b98758';c.lineWidth=2.2;c.stroke();
+  // Fine rubber shadows inside both moulded retaining lips.
+  pathCanvas(c,bed.left);c.strokeStyle='#74313c';c.lineWidth=1.2;c.stroke();
+  pathCanvas(c,bed.right);c.strokeStyle='#74313c';c.lineWidth=1.2;c.stroke();
+  c.restore();
+ };
+ const upperCoupler=(x,y,angle)=>{
+  const {couplerWidth,couplerDepth}=TOP_HORSESHOE_SPEC;
+  c.save();c.translate(x,y);c.rotate(angle);
+  c.shadowColor='rgba(0,0,0,.55)';c.shadowBlur=3;c.shadowOffsetY=2;
+  c.fillStyle='#c6a77d';c.strokeStyle='#f1d5a5';c.lineWidth=1;
+  c.beginPath();c.roundRect(-couplerWidth/2,-couplerDepth/2,
+   couplerWidth,couplerDepth,2);c.fill();c.stroke();
+  c.shadowBlur=0;c.shadowOffsetY=0;
+  c.fillStyle='#3a2426';
+  for(const dx of [-couplerWidth*.38,couplerWidth*.38]){
+   c.beginPath();c.arc(dx,0,1.7,0,Math.PI*2);c.fill();
+  }
+  c.restore();
+ };
  const disk=(x,y,r,fill,stroke='#d7a66e',lw=2)=>{
   c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=fill;c.fill();
   c.lineWidth=lw;c.strokeStyle=stroke;c.stroke();
@@ -134,9 +171,14 @@ export function paintClassicRails(c,{upper=true,lower=true}={}){
   c.restore();
  };
  if(upper){
-  road(P.topLeft,13);road(P.topHorseshoe,14);
+  topHorseshoeSection(P.topLeft);
+  topHorseshoeSection(P.topHorseshoe);
   road(P.leftOrbit,10);
-  for(const [x,y] of P.topBrackets)metalWindow(x,y,16,8,.24);
+  // Five ivory couplers follow the original Space Cadet rail rhythm.
+  for(let i=0;i<P.topBrackets.length;i++){
+   const [x,y]=P.topBrackets[i];
+   upperCoupler(x,y,[.42,.14,.06,.20,.78][i]);
+  }
   // True broad asymmetric deck with multi-level curled launch shell.
   plate(P.leftDeck,'#63242d');plate(P.leftUpper,'#953b45');
   road(P.leftSpiral,18);
@@ -238,10 +280,44 @@ export function buildClassicRails(T,scene,{X,Y}){
   const lens=new T.Mesh(new T.BoxGeometry(w*.014,h*.014,.057),lensMaterial);
   lens.position.z=z+.033;group.add(lens);
  };
- // Two-level upper orbit horseshoe with actual breaks/metal couplings.
- road(P.topLeft,13,.238,.083);road(P.topHorseshoe,14,.239,.093);
+ const upperHorseshoeSection=(pts,z=.253)=>{
+  const {bodyWidth,clearChannelWidth}=TOP_HORSESHOE_SPEC;
+  const outer=ribbon(pts,bodyWidth),inset=ribbon(pts,clearChannelWidth);
+  add(new T.ExtrudeGeometry(geomShape(outer.polygon),{
+   depth:.105,steps:1,bevelEnabled:true,bevelSegments:3,
+   bevelSize:.016,bevelThickness:.013
+  }),red,z);
+  // Non-metal black recess and two retaining lips give the same depth
+  // hierarchy as the reference's original steel/plastic track.
+  add(new T.ShapeGeometry(geomShape(inset.polygon)),dark,z+.121,false);
+  tube(outer.left,z+.159,.028,gold);
+  tube(outer.right,z+.159,.028,gold);
+  tube(inset.left,z+.146,.011,raised);
+  tube(inset.right,z+.146,.011,raised);
+ };
+ const topHorseshoeCoupler=(x,y,angle)=>{
+  const {couplerWidth,couplerDepth}=TOP_HORSESHOE_SPEC;
+  const group=new T.Group();group.position.set(X(x),Y(y),0);
+  group.rotation.z=angle;scene.add(group);
+  const clamp=new T.Mesh(new T.BoxGeometry(couplerWidth*.020,
+   couplerDepth*.020,.056),steel);
+  clamp.position.z=.442;group.add(clamp);
+  const veneer=new T.Mesh(new T.BoxGeometry(couplerWidth*.020*.94,
+   couplerDepth*.020*.70,.012),gold);
+  veneer.position.z=.479;group.add(veneer);
+  for(const dx of [-couplerWidth*.38,couplerWidth*.38]){
+   const bolt=new T.Mesh(new T.CylinderGeometry(.028,.028,.014,12),dark);
+   bolt.rotation.x=Math.PI/2;bolt.position.set(dx*.020,0,.491);
+   group.add(bolt);
+  }
+ };
+ // Stage 1: continuous curved rail with recessed dark bed and five
+ // independent gold/ivory clamps. No other rail geometry is changed.
+ upperHorseshoeSection(P.topLeft);
+ upperHorseshoeSection(P.topHorseshoe);
  road(P.leftOrbit,10,.244,.085);
- P.topBrackets.forEach(([x,y],i)=>window(x,y,16,8,.25+i*.09,.390));
+ P.topBrackets.forEach(([x,y],i)=>
+  topHorseshoeCoupler(x,y,[.42,.14,.06,.20,.78][i]));
  // Broad left Space Cadet-inspired mechanical deck and raised spiral.
  plate(P.leftDeck,.257,.118,red);
  plate(P.leftUpper,.380,.074,raised);
