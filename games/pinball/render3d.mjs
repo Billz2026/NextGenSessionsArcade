@@ -1,10 +1,10 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=18';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=6';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=7';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
@@ -370,16 +370,24 @@ export async function create3DTable(host){
   mesh.receiveShadow=false;mesh.castShadow=false;
   return mesh;
  }
- // Brushed steel side rails and body sidewalls.
+ // Moulded navy perimeter and ivory polymer edging. The ball itself
+ // remains metal, but the sidewalls are satin plastic like classic tables.
+ const perimeterPlastic=new T.MeshPhysicalMaterial({
+  color:'#24233f',metalness:0,roughness:.38,
+  clearcoat:.88,clearcoatRoughness:.23
+ });
+ const perimeterLip=new T.MeshPhysicalMaterial({
+  color:'#b6a7c6',metalness:0,roughness:.42,clearcoat:.76
+ });
  for(const px of [-4.34,4.34]){
-  box(px,0,.34,.18,boardH,.64,gold);
-  box(px,0,.67,.06,boardH,.09,gold);
+  box(px,0,.34,.18,boardH,.64,perimeterPlastic);
+  box(px,0,.67,.06,boardH,.09,perimeterLip);
   for(const y of [6,3,0,-3,-6]){
    const screw=add(new T.SphereGeometry(.071,12,8),chrome,px,y,.78);
    screw.scale.z=.45;
   }
  }
- for(const py of [-7.12,7.12])box(0,py,.46,8.6,.16,.61,gold);
+ for(const py of [-7.12,7.12])box(0,py,.46,8.6,.16,.61,perimeterPlastic);
  // A floating neon wordmark, mounted over the black enamel without a framed plaque.
  const neonMarqueeMaterial=cabinetMarquee();
  const neonGlowMaterial=marqueeGlow();
@@ -552,7 +560,7 @@ export async function create3DTable(host){
  // trajectory through the centre caused unreadable overlapping gold lines.
  const routeHardware=[];
  const laneTrim=new T.MeshPhysicalMaterial({
-  color:'#8c7042',metalness:.08,roughness:.62,transparent:true,opacity:.76,
+  color:'#d4b7a7',metalness:0,roughness:.46,transparent:true,opacity:.83,
   side:T.DoubleSide,depthWrite:false,
   polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1
  });
@@ -587,17 +595,28 @@ export async function create3DTable(host){
   geometry.setIndex(indices);geometry.computeVertexNormals();
   return add(geometry,mat,0,0,0,false);
  }
+ const mouldedEntryGuard=new T.MeshPhysicalMaterial({
+  color:'#b7a8cf',metalness:0,roughness:.37,clearcoat:.83,
+  side:T.DoubleSide,depthWrite:true
+ });
  for(const channel of VISIBLE_CHANNELS){
-  // These physical approaches intentionally stop before the bumper field.
-  // Secondary shots use flush lit markers, not overlapping elevated channels.
+  // Polymer lips follow both edges of the engine-centred shot throat.
+  // The 22px channel stays clear for the 16px ball; no phantom collider.
   channelStrip(channel,0,1,-.025,laneBaseMaterials[channel.kind]);
+  channelStrip(channel,.015,.08,.035,mouldedEntryGuard);
+  channelStrip(channel,.92,.985,.035,mouldedEntryGuard);
   if(channel.trimSide==='right')
    channelStrip(channel,.929,.985,-.015,laneTrim);
   else
    channelStrip(channel,.015,.071,-.015,laneTrim);
   const route=UPPER_ROUTES.find(r=>r.kind===channel.kind);
   const mouth=route.entrance,mx=X(mouth.x),my=Y(mouth.y);
-  const cheek=metal('#33291c',.4,.25),lip=metal('#b89555',.3,.50);
+  const cheek=new T.MeshPhysicalMaterial({
+   color:'#46334c',metalness:0,roughness:.40,clearcoat:.82
+  });
+  const lip=new T.MeshPhysicalMaterial({
+   color:'#d9b6aa',metalness:0,roughness:.42,clearcoat:.79
+  });
   // A wide, flat entry mouth makes the required shot obvious without
   // introducing new posts or changing the sensor capture area.
   box(mx,my,.255,.55,.19,.035,cheek);
@@ -647,10 +666,15 @@ export async function create3DTable(host){
  }
  // Phase 4K.1: hardware around the real lower collision segments.
  // Each guide/elastic is generated from engine.mjs and is visual-only.
- const lowerSteel=metal('#c1c9ca',.23,.90);
-  const lowerShade=metal('#333a49',.43,.72);
+ const mouldedIvory=new T.MeshPhysicalMaterial({
+  color:'#d8c6d9',metalness:0,roughness:.38,clearcoat:.80,
+  clearcoatRoughness:.20
+ });
+ const guideRubber=new T.MeshPhysicalMaterial({
+  color:'#27243a',metalness:0,roughness:.82
+ });
  const lowerElastomer=new T.MeshPhysicalMaterial({
-  color:'#4b303f',roughness:.74,metalness:0
+  color:'#622e54',roughness:.84,metalness:0
  });
  const batEnamel=new T.MeshPhysicalMaterial({
   color:'#f1d8c0',roughness:.25,metalness:.19,clearcoat:.95
@@ -668,11 +692,11 @@ export async function create3DTable(host){
  // cabinet side, instead of four unsupported, floating silver rods.
  // The panels extend OUTSIDE their exact collision edges.
  const channelBody=new T.MeshPhysicalMaterial({
-  color:'#37313b',roughness:.34,metalness:.38,clearcoat:.72,
-  clearcoatRoughness:.22,side:T.DoubleSide
+  color:'#3b2d57',roughness:.32,metalness:0,clearcoat:.94,
+  clearcoatRoughness:.20,side:T.DoubleSide
  });
  const channelRecess=new T.MeshPhysicalMaterial({
-  color:'#111a27',roughness:.72,metalness:.08,clearcoat:.12
+  color:'#1a1c32',roughness:.70,metalness:0,clearcoat:.24
  });
  for(const channel of LOWER_CHANNELS){
   const pts=channel.points;
@@ -687,27 +711,26 @@ export async function create3DTable(host){
    bevelSize:.017,bevelThickness:.017
   }),channelBody,0,0,.276);
   panel.receiveShadow=true;
-  // Very thin continuous contact lip; dark inset visually joins the metal
-  // to the side channel. Every lip segment remains on the true WALLS path.
+  // Rubber and ivory polymer lips sit directly on the true WALLS
+  // collider coordinates: no purely visual obstruction to ball flow.
   for(let i=1;i<pts.length;i++){
    const edge={x1:pts[i-1].x,y1:pts[i-1].y,x2:pts[i].x,y2:pts[i].y};
    mountedRod(edge,.39,.067,channelRecess);
-   mountedRod(edge,.445,.028,lowerSteel);
+   mountedRod(edge,.445,.028,mouldedIvory);
   }
-  // Two short transverse brackets and a joint washer connect the rail to
-  // the moulded housing; no prominent long diagonal rods remain.
+  // Recessed plastic standoffs join each guard to its outside housing.
   for(const p of [pts[0],pts[1],pts[2]]){
    const anchor={x1:p.x,y1:p.y,x2:p.x+channel.outerOffset*.65,y2:p.y};
-   mountedRod(anchor,.385,.034,lowerShade);
+   mountedRod(anchor,.385,.034,guideRubber);
    const sx=X(p.x+channel.outerOffset*.56),sy=Y(p.y);
-   cyl(sx,sy,.424,.094,.051,gold,16);
-   cyl(sx,sy,.466,.047,.02,lowerSteel,12);
+   cyl(sx,sy,.424,.094,.051,channelBody,16);
+   cyl(sx,sy,.466,.047,.02,mouldedIvory,12);
   }
  }
  for(const sling of LOWER_SLINGS){
   // The contact rubber is darker and wider than the narrow metal retaining
   // strip, making the impact surface readable without overpowering the table.
-  mountedRod(sling,.425,.092,lowerShade);
+  mountedRod(sling,.425,.092,guideRubber);
   mountedRod(sling,.505,.079,lowerElastomer);
   for(const [px,py] of [[sling.x1,sling.y1],[sling.x2,sling.y2]]){
    cyl(X(px),Y(py),.45,.117,.089,gold,16);
@@ -716,7 +739,7 @@ export async function create3DTable(host){
  }
  for(const post of LOWER_POSTS){
   const x=X(post.x),y=Y(post.y),r=post.r*SCALE;
-  cyl(x,y,.35,r+.064,.07,lowerShade,20);
+  cyl(x,y,.35,r+.064,.07,guideRubber,20);
   ring(x,y,.57,r+.014,.047,lowerElastomer);
   const head=box(x,y,.82,.11,.024,.018,black);
   head.rotation.z=PI/4;
@@ -726,7 +749,7 @@ export async function create3DTable(host){
  const kickbackLenses=[];
  for(const [side,coil] of Object.entries(KICKBACK)){
   const x=X(coil.x),y=Y(coil.y);
-  cyl(x,y,.30,.234,.056,lowerShade,18);
+  cyl(x,y,.30,.234,.056,guideRubber,18);
   ring(x,y,.36,.176,.030,gold);
   const lens=new T.MeshStandardMaterial({
    color:'#806022',emissive:'#f3c74f',emissiveIntensity:1.4,
@@ -741,11 +764,11 @@ export async function create3DTable(host){
  const drainWell=new T.MeshPhysicalMaterial({
   color:'#070a12',roughness:.92,metalness:.05
  });
- plane(X(210),Y(686),.258,2.68,.43,lowerShade);
+ plane(X(210),Y(686),.258,2.68,.43,guideRubber);
  plane(X(210),Y(685),.274,2.35,.28,drainWell);
- box(X(210),Y(672),.298,2.55,.036,.025,lowerSteel);
+ box(X(210),Y(672),.298,2.55,.036,.025,mouldedIvory);
  for(const x of [155,265]){
-  box(X(x),Y(684),.299,.085,.35,.045,lowerShade);
+  box(X(x),Y(684),.299,.085,.35,.045,guideRubber);
   cyl(X(x),Y(681),.338,.08,.041,gold,14);
  }
  // The return/apron is completely downstream of the active lower guides.
@@ -804,7 +827,7 @@ export async function create3DTable(host){
   });
   flipperAimMarkers.push(ring(x,y,.724,.085,.022,aimMaterial));
   // Stationary plated pivot housing with a visible fixed fastener.
-  cyl(x,y,.42,.31,.17,lowerShade,32);
+  cyl(x,y,.42,.31,.17,guideRubber,32);
   cyl(x,y,.62,.242,.095,rose,32);
   cyl(x,y,.75,.175,.09,chrome,32);
   ring(x,y,.80,.122,.026,gold);

@@ -39,13 +39,16 @@ export const RAMP_PATH=Object.freeze([
  [311,372,.40],[327,333,.65],[320,290,.94],[286,244,1.23],
  [285,203,1.45],[311,170,1.28],[291,150,.95],
  [321,167,.95],[341,222,.85],[339,298,.68],[332,387,.53],
- [316,469,.43],[287,518,.46]
+ // Descend outside the right sling instead of ejecting onto its collider.
+ [347,443,.46],[350,493,.40],[329,537,.38],[310,555,.38],[290,575,.39]
 ].map(p=>Object.freeze(p)));
 export const ORBIT_PATH=Object.freeze([
  [77,373,.39],[59,321,.52],[56,250,.67],[71,204,.78],
  [94,176,.86],[136,152,.9],[214,150,.82],[300,150,.69],
  [273,121,.77],[180,113,.80],[91,129,.71],[50,173,.65],
- [45,268,.55],[48,352,.46],[66,425,.39],[120,519,.46]
+ [45,268,.55],[48,352,.46],[66,425,.39],
+ // The left return passes outside the sling and clears its corner.
+ [70,475,.38],[76,517,.38],[101,551,.38],[130,575,.39]
 ].map(p=>Object.freeze(p)));
 // Phase 3N routes are shared by physics, the 3D hardware and 2D fallback.
 export const CENTER_PATH=Object.freeze([
@@ -93,8 +96,9 @@ export const SHOT_GUIDES=Object.freeze({
 // angle; heel hits, dead flips and weak contacts receive no hidden launch.
 export const FLIPPER_SWEET_SPOT=.68;
 export const RETURN_FEEDS=Object.freeze({
- orbit:Object.freeze({side:'left',x:145,y:577,blend:PLAY_BALANCE.returnBlend}),
- ramp:Object.freeze({side:'right',x:275,y:577,blend:PLAY_BALANCE.returnBlend})
+ // Return feeds aim into the flipper contact zones, not the sling faces.
+ orbit:Object.freeze({side:'left',x:148,y:611,blend:PLAY_BALANCE.returnBlend}),
+ ramp:Object.freeze({side:'right',x:272,y:611,blend:PLAY_BALANCE.returnBlend})
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});

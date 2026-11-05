@@ -1,10 +1,10 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=17';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=18';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=6';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
@@ -451,8 +451,8 @@ function drawWalls(c){
  // Real collisions remain in engine.mjs, independent from the artwork.
  for(const w of WALLS){
   const pts=[[w[0],w[1]],[w[2],w[3]]];
-  line(c,pts,'#101929',6);
-   line(c,pts,'rgba(151,173,189,.67)',2.4);
+  line(c,pts,'#25243b',7);
+  line(c,pts,'rgba(216,198,217,.74)',2.4);
  }
  for(const [x,left] of [[91,true],[329,false]]){
   line(c,[[x,510],[left?122:298,545]],'#794f8c',8);
@@ -469,15 +469,15 @@ function drawWalls(c){
   c.closePath();
   c.fillStyle=G(c,outline[0][0],outline[0][1],
    back[1][0],back[1][1],[
-    [0,'#7b6673'],[.27,'#352c3c'],[.71,'#1c2333'],[1,'#685362']
+    [0,'#84719b'],[.27,'#453459'],[.71,'#252942'],[1,'#65537e']
    ]);
-  c.fill();c.lineWidth=1;c.strokeStyle='#b9a49e';c.stroke();
-  line(c,outline,'#222a35',7);
-  line(c,outline,'#7a8b97',3.2);
-  line(c,outline,'#e4cbb6',1);
+  c.fill();c.lineWidth=1;c.strokeStyle='#c4acca';c.stroke();
+  line(c,outline,'#25243b',7);
+  line(c,outline,'#7c637f',3.2);
+  line(c,outline,'#e9d6e3',1);
   for(const p of pts){
    const bx=p.x+channel.outerOffset*.56,by=p.y;
-   line(c,[[p.x,p.y],[bx,by]],'#a99792',2.1);
+   line(c,[[p.x,p.y],[bx,by]],'#66536e',2.1);
    bolt(c,bx,by,2.7);
   }
  }
