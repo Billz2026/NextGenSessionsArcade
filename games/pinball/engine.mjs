@@ -727,7 +727,10 @@ export class PinballEngine{
   }
   for(const kind of ['orbit','ramp','center','skyline']){
    const s=SHOTS[kind];
-   if(b.vy<-300&&previous.y>=s.y&&b.y<s.y&&Math.abs(b.x-s.x)<s.r){
+   // The centre opening accepts a slightly slower genuine flipper return,
+   // without weakening the faster perimeter ramp/orbit entrances.
+   const minimumSpeed=kind==='center'?260:300;
+   if(b.vy<-minimumSpeed&&previous.y>=s.y&&b.y<s.y&&Math.abs(b.x-s.x)<s.r){
     this.activateShot(kind);return;
    }
   }
