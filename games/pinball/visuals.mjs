@@ -75,6 +75,14 @@ function drawBase(c,anim){
  plastic(c,x=>{x.moveTo(418,8);x.lineTo(392,26);x.lineTo(391,633);x.lineTo(408,697);x.lineTo(419,697);x.closePath()},right,'#dfb862');
  line(c,[[30,64],[32,622]],'rgba(255,249,206,.54)',2);
  line(c,[[388,56],[387,630]],'rgba(255,245,215,.48)',2);
+ // Low-opacity red jet-tail print, equivalent to the 3D lacquer motif.
+ // This has no physics and sits behind every interactive insert and label.
+ c.save();c.globalAlpha=.27;
+ c.beginPath();c.moveTo(172,545);c.lineTo(194,590);c.lineTo(210,638);
+ c.lineTo(226,590);c.lineTo(248,545);c.lineTo(235,635);
+ c.lineTo(210,680);c.lineTo(185,635);c.closePath();
+ c.fillStyle='#8b2a38';c.fill();
+ c.strokeStyle='#c07c51';c.lineWidth=1.2;c.stroke();c.restore();
  // Underlay city / star-map silhouettes preserve original branding identity.
  // Keep the lower playfield free of unreadable ghost lettering.
  c.save();c.globalAlpha=.67;
