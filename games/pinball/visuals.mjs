@@ -7,6 +7,7 @@ import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.m
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
+import {paintClassicRails} from './space-cadet-architecture.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -133,40 +134,8 @@ function drawUpperCrown(c){
  }
 }
 function drawOrbits(c){
- // Space-Cadet-like readability: one sculpted left orbit entry and one
- // sculpted right ramp entry. No complete transport overlays crossing the
- // bumpers or four nested loops around the playfield.
- for(const channel of VISIBLE_CHANNELS){
-  const smooth=roundedWirePoints(channel.points,3);
-  const edges=guideEdges({points:smooth,width:channel.width});
-  const fill=channel.kind==='orbit'?'#15120f':'#1d1411';
-  const accent=channel.kind==='orbit'?'#9c7b47':'#a8624d';
-  c.save();
-  c.beginPath();c.moveTo(edges[0].left.x,edges[0].left.y);
-  for(let i=1;i<edges.length;i++)c.lineTo(edges[i].left.x,edges[i].left.y);
-  for(let i=edges.length-1;i>=0;i--)
-   c.lineTo(edges[i].right.x,edges[i].right.y);
-  c.closePath();c.fillStyle=fill;c.fill();
-  // Only the OUTER edge is accented. No double gold rail outline.
-  const side=channel.trimSide;
-  const points=edges.map(e=>[e[side].x,e[side].y]);
-  c.globalAlpha=.78;
-  line(c,points,accent,1.8);
-  c.globalAlpha=1;
-  // One subtle directional insert per open approach.
-  const n=Math.floor(smooth.length*.40),p=smooth[n],q=smooth[n+2];
-  if(p&&q){
-   const angle=Math.atan2(q.y-p.y,q.x-p.x)+Math.PI/2;
-   c.translate(p.x,p.y);c.rotate(angle);
-   c.beginPath();c.moveTo(0,-6);c.lineTo(4.3,3);
-   c.lineTo(0,1);c.lineTo(-4.3,3);c.closePath();
-   c.fillStyle=channel.kind==='ramp'?'#e9a085':'#e8c88a';
-   c.fill();
-  }
-  c.restore();
- }
- // Two clearly marked physical mouths. Centre/Skyline retain the small
- // mission-controlled shot LEDs instead of long interfering channel bands.
+ // Upper horseshoe, left side chute and right return, coloured for Neon Tilt.
+ paintClassicRails(c,{upper:true,lower:false});
  for(const route of UPPER_ROUTES){
   const ex=route.entrance.x,ey=route.entrance.y;
   if(route.kind==='orbit'||route.kind==='ramp'){
@@ -458,29 +427,9 @@ function drawWalls(c){
   line(c,[[x,510],[left?122:298,545]],'#70252b',8);
   line(c,[[x,510],[left?122:298,545]],'#d18b69',3);
  }
- // Two solid cabinet-mounted channels visually join the four physical
- // wall segments. The coloured body lies outside the collision line.
- for(const channel of LOWER_CHANNELS){
-  const pts=channel.points,outline=pts.map(p=>[p.x,p.y]);
-  const back=pts.slice().reverse().map(p=>[p.x+channel.outerOffset,p.y]);
-  c.beginPath();c.moveTo(...outline[0]);
-  for(const p of outline.slice(1))c.lineTo(...p);
-  for(const p of back)c.lineTo(...p);
-  c.closePath();
-  c.fillStyle=G(c,outline[0][0],outline[0][1],
-   back[1][0],back[1][1],[
-    [0,'#9b5143'],[.27,'#59252a'],[.71,'#261d1a'],[1,'#752f32']
-   ]);
-  c.fill();c.lineWidth=1;c.strokeStyle='#c99567';c.stroke();
-  line(c,outline,'#291c17',7);
-  line(c,outline,'#9d553c',3.2);
-  line(c,outline,'#e5c18a',1);
-  for(const p of pts){
-   const bx=p.x+channel.outerOffset*.56,by=p.y;
-   line(c,[[p.x,p.y],[bx,by]],'#714134',2.1);
-   bolt(c,bx,by,2.7);
-  }
- }
+ // Accurate double-lane lower guides share the 3D architecture.
+ // Physical WALLS and sling/post hardware remain unchanged.
+ paintClassicRails(c,{upper:false,lower:true});
 }
 // A tapered, rounded flipper outline is easier to read than thick,
  // perfectly uniform paint strokes. Ends follow the actual engine bat tip.
