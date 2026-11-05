@@ -1,3 +1,4 @@
+import {MOULDED_COLLISION_RAILS,CLASSIC_RAIL_PROFILES} from './space-cadet-architecture.mjs?v=2';
 // Neon Tilt prototype physics: deterministic fixed-step ball and flipper simulation.
 // Coordinates are pixels in a 420 × 700 playfield, +Y points down.
 export const BOARD = Object.freeze({width:420,height:700,radius:8,step:1/240});
@@ -25,10 +26,12 @@ export const WALLS=Object.freeze([
  [61,41,104,25],[104,25,310,25],[310,25,351,37],
  [351,37,385,74],[385,74,400,118],[400,118,400,659],
  [365,156,365,590], // launch lane divider; upper opening lets ball enter playfield
- [24,566,95,644],[95,644,116,674],
- [365,566,325,639],[325,639,305,674],
- [91,496,120,526],[120,526,142,542],
- [329,496,300,526],[300,526,278,542],
+ ...MOULDED_COLLISION_RAILS.leftOut,
+ ...MOULDED_COLLISION_RAILS.rightOut,
+ ...MOULDED_COLLISION_RAILS.leftIn,
+ ...MOULDED_COLLISION_RAILS.rightIn,
+ [93,489,113,497],[113,497,122,530],
+ [327,489,307,497],[307,497,298,530],
  [53,366,83,419],[336,420,357,365]
 ]);
 export const LANES=Object.freeze([
