@@ -7,6 +7,7 @@ import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.m
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
+import {UPPER_MOULDINGS,SLING_GUIDE_MOULDINGS,LOWER_RAIL_WIDTH} from './rail-mouldings.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -147,12 +148,7 @@ function drawOrbits(c){
   for(let i=edges.length-1;i>=0;i--)
    c.lineTo(edges[i].right.x,edges[i].right.y);
   c.closePath();c.fillStyle=fill;c.fill();
-  // Only the OUTER edge is accented. No double gold rail outline.
-  const side=channel.trimSide;
-  const points=edges.map(e=>[e[side].x,e[side].y]);
-  c.globalAlpha=.78;
-  line(c,points,accent,1.8);
-  c.globalAlpha=1;
+  // Separate moulded housings below replace the old hairline rails.
   // One subtle directional insert per open approach.
   const n=Math.floor(smooth.length*.40),p=smooth[n],q=smooth[n+2];
   if(p&&q){
@@ -163,6 +159,28 @@ function drawOrbits(c){
    c.fillStyle=channel.kind==='ramp'?'#e9a085':'#e8c88a';
    c.fill();
   }
+  c.restore();
+ }
+ // Thick maroon plastic beyond the routed ball channel, matching the 3D
+ // housings. Never draw a complete return around the bumper field.
+ for(const profile of UPPER_MOULDINGS){
+  const smooth=roundedWirePoints(profile.points,6);
+  const edges=guideEdges({points:smooth,width:profile.width});
+  const inner=edges.map(e=>e[profile.side]);
+  const expanded=inner.map((p,i)=>{
+   const a=inner[Math.max(0,i-1)],b=inner[Math.min(inner.length-1,i+1)];
+   const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
+   const sign=profile.side==='left'?1:-1;
+   return {x:p.x-dy/len*sign*profile.bodyWidth,
+    y:p.y+dx/len*sign*profile.bodyWidth};
+  });
+  c.save();c.beginPath();c.moveTo(inner[0].x,inner[0].y);
+  for(const p of inner.slice(1))c.lineTo(p.x,p.y);
+  for(const p of expanded.slice().reverse())c.lineTo(p.x,p.y);
+  c.closePath();c.fillStyle='#66212b';c.fill();
+  c.lineWidth=.9;c.strokeStyle='#a45146';c.stroke();
+  line(c,inner.map(p=>[p.x,p.y]),'#271914',4.2);
+  line(c,inner.map(p=>[p.x,p.y]),'#dbac68',1.8);
   c.restore();
  }
  // Two clearly marked physical mouths. Centre/Skyline retain the small
@@ -458,28 +476,27 @@ function drawWalls(c){
   line(c,[[x,510],[left?122:298,545]],'#70252b',8);
   line(c,[[x,510],[left?122:298,545]],'#d18b69',3);
  }
- // Two solid cabinet-mounted channels visually join the four physical
- // wall segments. The coloured body lies outside the collision line.
- for(const channel of LOWER_CHANNELS){
-  const pts=channel.points,outline=pts.map(p=>[p.x,p.y]);
-  const back=pts.slice().reverse().map(p=>[p.x+channel.outerOffset,p.y]);
-  c.beginPath();c.moveTo(...outline[0]);
-  for(const p of outline.slice(1))c.lineTo(...p);
-  for(const p of back)c.lineTo(...p);
+ // Compact, solid outer guide housings and matching sling feed housings.
+ // Both trace actual WALLS: ball physics and flipper positions are untouched.
+ for(const profile of [
+  ...LOWER_CHANNELS.map(ch=>({...ch,bodyWidth:LOWER_RAIL_WIDTH[ch.side]})),
+  ...SLING_GUIDE_MOULDINGS
+ ]){
+  const pts=roundedWirePoints(profile.points.map(p=>({...p,z:0})),2);
+  const offset=profile.side==='left'?-profile.bodyWidth:profile.bodyWidth;
+  const inner=pts.map(p=>[p.x,p.y]);
+  const outer=pts.slice().reverse().map(p=>[p.x+offset,p.y]);
+  c.save();c.beginPath();c.moveTo(...inner[0]);
+  for(const p of inner.slice(1))c.lineTo(...p);
+  for(const p of outer)c.lineTo(...p);
   c.closePath();
-  c.fillStyle=G(c,outline[0][0],outline[0][1],
-   back[1][0],back[1][1],[
-    [0,'#9b5143'],[.27,'#59252a'],[.71,'#261d1a'],[1,'#752f32']
-   ]);
-  c.fill();c.lineWidth=1;c.strokeStyle='#c99567';c.stroke();
-  line(c,outline,'#291c17',7);
-  line(c,outline,'#9d553c',3.2);
-  line(c,outline,'#e5c18a',1);
-  for(const p of pts){
-   const bx=p.x+channel.outerOffset*.56,by=p.y;
-   line(c,[[p.x,p.y],[bx,by]],'#714134',2.1);
-   bolt(c,bx,by,2.7);
-  }
+  c.fillStyle=G(c,inner[0][0],inner[0][1],outer[0][0],outer[0][1],[
+   [0,'#762832'],[.56,'#512026'],[1,'#291817']
+  ]);
+  c.fill();c.lineWidth=.8;c.strokeStyle='#a65644';c.stroke();
+  line(c,inner,'#271914',5);
+  line(c,inner,'#e0b373',1.9);
+  c.restore();
  }
 }
 // A tapered, rounded flipper outline is easier to read than thick,
