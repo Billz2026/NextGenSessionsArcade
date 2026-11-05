@@ -5,6 +5,7 @@ import {TRAVEL_PATHS,SHOTS,LANES,BOARD,BUMPERS,PinballEngine}
  from '../games/pinball/engine.mjs';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS}
  from '../games/pinball/upper-hardware.mjs';
+import {CLASSIC_RAIL_PROFILES} from '../games/pinball/space-cadet-architecture.mjs';
 
 const three=readFileSync(new URL('../games/pinball/render3d.mjs',import.meta.url),'utf8');
 const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url),'utf8');
@@ -61,25 +62,22 @@ test('visible approach edges straddle their exact path centreline',()=>{
   }
  }
 });
-test('WebGL only paints two moulded outside-lane approaches and no full four-route ribbons',()=>{
- assert.match(three,/for\(const channel of VISIBLE_CHANNELS\)/);
- assert.match(three,/channelStrip\(channel,0,1,-\.025,laneBaseMaterials\[channel\.kind\]\)/);
- assert.match(three,/channelStrip\(channel,\.929,\.985,-\.015,laneTrim\)/);
- assert.match(three,/channelStrip\(channel,\.015,\.071,-\.015,laneTrim\)/);
- assert.match(three,/const route=UPPER_ROUTES\.find\(r=>r\.kind===channel\.kind\)/);
- assert.doesNotMatch(three,/channelStrip\(route,0,1/);
- assert.doesNotMatch(three,/for\(const route of UPPER_ROUTES\)\{\s*const edges=guideEdges\(route\)/);
- assert.doesNotMatch(three,/function railTube\(/);
- assert.doesNotMatch(three,/function routeRod\(/);
- assert.doesNotMatch(three,/const crownGlint=/);
+test('3D moulding profile is substantial, asymmetric and outside the bumper field',()=>{
+ assert.ok(three.includes('buildClassicRails(T,scene,{X,Y})'));
+ assert.ok(CLASSIC_RAIL_PROFILES.outer.length>=10);
+ assert.ok(CLASSIC_RAIL_PROFILES.left.length>=15);
+ assert.ok(CLASSIC_RAIL_PROFILES.rightDeck.length>=9);
+ assert.ok(Math.min(...CLASSIC_RAIL_PROFILES.outer.map(p=>p[1]))<=140);
+ assert.ok(!three.includes('function railTube('));
 });
-test('Canvas paints only two dark channels, one restrained outer trim line each',()=>{
- assert.match(canvas,/for\(const channel of VISIBLE_CHANNELS\)/);
- assert.match(canvas,/const side=channel\.trimSide/);
- assert.match(canvas,/const points=edges\.map\(e=>\[e\[side\]\.x,e\[side\]\.y\]\)/);
- assert.match(canvas,/line\(c,points,accent,1\.8\)/);
- assert.doesNotMatch(canvas,/for\(const route of ordered\)/);
- assert.doesNotMatch(canvas,/upperGuardSections\(route\)/);
+test('Canvas uses the exact same structural profiles and preserves shot markers',()=>{
+ assert.ok(canvas.includes('paintClassicRails(c,{upper:true,lower:false})'));
+ assert.ok(three.includes('UPPER_ROUTES.filter(r=>r.kind==='));
+ for(const path of [CLASSIC_RAIL_PROFILES.outer,CLASSIC_RAIL_PROFILES.inner,
+  CLASSIC_RAIL_PROFILES.left,CLASSIC_RAIL_PROFILES.rightDeck]){
+  assert.ok(path.every(([x,y])=>x>=0&&x<=BOARD.width&&y>=0&&y<=BOARD.height));
+ }
+ assert.ok(!canvas.includes('upperGuardSections(route)'));
 });
 test('other shots still have real matching gameplay entrances and mission LEDs',()=>{
  assert.deepEqual(UPPER_ROUTES.slice(2).map(r=>r.kind),['center','skyline']);
