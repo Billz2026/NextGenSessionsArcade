@@ -47,8 +47,12 @@ const P=Object.freeze({
   [584,459],[608,416],[592,404]]),
  leftSling:trace([[303,677],[323,678],[363,816],[300,796]]),
  rightSling:trace([[685,671],[706,677],[746,801],[663,820]]),
- leftOut:trace([[181,745],[163,783],[146,835],[136,900],[148,920]]),
- rightOut:trace([[764,745],[785,782],[808,836],[820,900],[810,920]]),
+ // Inset the edge guide slightly from the reference silhouette to retain
+ // at least a full ball diameter beside the actual cabinet boundary.
+ leftOut:trace([[181,745],[163,783],[146,835],[136,900],[148,920]])
+  .map(([x,y])=>Object.freeze([x+10,y])),
+ rightOut:trace([[764,745],[785,782],[808,836],[820,900],[810,920]])
+  .map(([x,y])=>Object.freeze([x-15,y])),
  leftIn:trace([[197,824],[239,846],[280,872],[328,916]]),
  rightIn:trace([[745,823],[706,847],[669,872],[613,915]]),
  topBrackets:trace([[285,88],[406,73],[533,61],[640,75],[727,159]]),
@@ -59,6 +63,19 @@ const P=Object.freeze({
  rightArrows:trace([[621,382],[643,412],[615,454]])
 });
 export const CLASSIC_RAIL_PROFILES=P;
+
+// The engine and both renderers use the same outer/inner lower rail centrelines.
+// A visual channel is never allowed to imply a wall somewhere else.
+const wallify=pts=>pts.slice(1).map(([x2,y2],i)=>{
+ const [x1,y1]=pts[i];return Object.freeze([x1,y1,x2,y2]);
+});
+export const MOULDED_COLLISION_RAILS=Object.freeze({
+ leftOut:Object.freeze(wallify(P.leftOut)),
+ rightOut:Object.freeze(wallify(P.rightOut)),
+ leftIn:Object.freeze(wallify(P.leftIn)),
+ rightIn:Object.freeze(wallify(P.rightIn))
+});
+
 function smooth(path,steps=9){
  const o=[];
  for(let i=0;i<path.length-1;i++){
