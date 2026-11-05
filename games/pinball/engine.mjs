@@ -20,13 +20,29 @@ export const POSTS=Object.freeze([
  {x:130,y:641,r:9},{x:290,y:641,r:9}, // outlane rebound posts
  {x:340,y:132,r:9}
 ]);
+// All lower rails are connected physical walls, shared by both renderers.
+export const LOWER_OUTLANES=Object.freeze([
+ Object.freeze({side:'left',points:Object.freeze([[24,566],[31,586],[46,608],
+  [66,628],[86,645],[101,660],[116,674]].map(p=>Object.freeze(p)))}),
+ Object.freeze({side:'right',points:Object.freeze([[365,566],[360,588],[350,610],
+  [337,627],[327,642],[316,659],[305,674]].map(p=>Object.freeze(p)))})
+]);
+export const INLANE_GUIDES=Object.freeze([
+ Object.freeze({side:'left',points:Object.freeze([[112,585],[113,602],
+  [119,622],[130,641]].map(p=>Object.freeze(p)))}),
+ Object.freeze({side:'right',points:Object.freeze([[308,585],[307,602],
+  [301,622],[290,641]].map(p=>Object.freeze(p)))})
+]);
+const segmentsForRail=r=>r.points.slice(1).map(([x2,y2],i)=>{
+ const [x1,y1]=r.points[i];return Object.freeze([x1,y1,x2,y2]);
+});
 export const WALLS=Object.freeze([
  [24,650,24,125],[24,125,33,79],[33,79,61,41],
  [61,41,104,25],[104,25,310,25],[310,25,351,37],
  [351,37,385,74],[385,74,400,118],[400,118,400,659],
  [365,156,365,590], // launch lane divider; upper opening lets ball enter playfield
- [24,566,95,644],[95,644,116,674],
- [365,566,325,639],[325,639,305,674],
+ ...LOWER_OUTLANES.flatMap(segmentsForRail),
+ ...INLANE_GUIDES.flatMap(segmentsForRail),
  [91,496,120,526],[120,526,142,542],
  [329,496,300,526],[300,526,278,542],
  [53,366,83,419],[336,420,357,365]
