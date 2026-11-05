@@ -43,7 +43,9 @@ test('shadow layers are translucent and do not create physical obstacles',()=>{
  assert.ok(three.includes('function contactShadow(x,y,w,h)'));
  assert.ok(three.includes('contactShadow(targetMid,targetY'));
  assert.ok(three.includes('contactShadow(powerX,powerY'));
- assert.ok(three.includes('contactShadow(X(x),Y(y),1.65,1.04)'));
+ // The reference-modelled sling covers create their own real shadows;
+ // target, power-core and bumper shadows must remain nonphysical.
+ assert.ok(three.includes('for(const sling of LOWER_SLINGS)'));
  assert.ok(three.includes('contactShadow(x,y,r*2.8,r*2.8)'));
  assert.ok(!three.includes('new T.RigidBody'));
  assert.ok(canvas.includes("c.shadowBlur=19;c.shadowOffsetY=10"));
