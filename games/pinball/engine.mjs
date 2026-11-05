@@ -110,9 +110,16 @@ export const RETURN_FEEDS=Object.freeze({
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
+// Active rubber is mounted on the diagonals of the tall traced sling covers.
 export const SLINGS=Object.freeze([
- {x1:119,y1:502,x2:163,y2:535,score:100},
- {x1:301,y1:502,x2:257,y2:535,score:100}
+ {x1:CLASSIC_RAIL_PROFILES.leftSling[0][0],
+  y1:CLASSIC_RAIL_PROFILES.leftSling[0][1],
+  x2:CLASSIC_RAIL_PROFILES.leftSling[2][0],
+  y2:CLASSIC_RAIL_PROFILES.leftSling[2][1],score:100},
+ {x1:CLASSIC_RAIL_PROFILES.rightSling[1][0],
+  y1:CLASSIC_RAIL_PROFILES.rightSling[1][1],
+  x2:CLASSIC_RAIL_PROFILES.rightSling[3][0],
+  y2:CLASSIC_RAIL_PROFILES.rightSling[3][1],score:100}
 ]);
 export const ARCADE_MODES=Object.freeze({skillWindow:6,comboWindow:7,hurryWindow:18,overdriveWindow:14,powerShots:3,spinThreshold:5});
 // Classic Windows-era pinball was memorable because a run felt like a career,
