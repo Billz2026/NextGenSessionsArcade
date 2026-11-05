@@ -16,8 +16,8 @@ export const LOWER_POSTS=Object.freeze(
  POSTS.filter(({y})=>y>=580&&y<=650).map(({x,y,r})=>Object.freeze({x,y,r}))
 );
 export const LOWER_FLIPPER_BASES=Object.freeze([
- Object.freeze({side:'left',x:144,y:613,length:58}),
- Object.freeze({side:'right',x:276,y:613,length:58})
+ Object.freeze({side:'left',x:136,y:613,length:58}),
+ Object.freeze({side:'right',x:284,y:613,length:58})
 ]);
 const channel=(side,points,outerOffset)=>Object.freeze({
  side,outerOffset,
