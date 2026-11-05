@@ -149,8 +149,8 @@ export class PinballEngine{
  constructor(){
   this.state='ready';this.score=0;this.best=0;this.ballNumber=0;
   this.ball=null;this.balls=[];this.nextBallId=1;this.leftHeld=false;this.rightHeld=false;
-  this.flippers=[{side:'left',x:144,y:613,a:.40,omega:0,length:PLAY_BALANCE.flipperLength},
-                 {side:'right',x:276,y:613,a:.40,omega:0,length:PLAY_BALANCE.flipperLength}];
+  this.flippers=[{side:'left',x:136,y:613,a:.40,omega:0,length:PLAY_BALANCE.flipperLength},
+                 {side:'right',x:284,y:613,a:.40,omega:0,length:PLAY_BALANCE.flipperLength}];
   this.charging=false;this.charge=.26;this.time=0;this.between=0;
   this.events=[];this.cooldowns=new Map();this.accumulator=0;
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
