@@ -259,16 +259,8 @@ export async function create3DTable(host){
   p.lineWidth=2.5;p.lineJoin='round';p.lineCap='round';
   p.strokeStyle=trim;p.globalAlpha=.56;p.stroke();p.globalAlpha=1;
  }
-  // Bumper field: a recessed six-sided mounting deck groups the three genuine
-  // bumper collision zones. This is underlay only, never a new obstacle.
-  shape([[221,398],[606,398],[652,550],[535,688],[305,688],[185,550]],
-    '#16130e','#af8948',5);
-  shape([[237,412],[589,412],[631,551],[522,671],[317,671],[207,551]],
-    '#221c14','#725b34',3);
-  for(const [cx,cy] of [[300,480],[518,480],[410,620]]){
-   p.beginPath();p.arc(cx,cy,68,0,Math.PI*2);
-   p.strokeStyle='rgba(192,209,219,.24)';p.lineWidth=6;p.stroke();
-  }
+  // Bumpers are separate mechanical pieces on open black lacquer,
+  // like the supplied Space Cadet reference. No large hexagonal island.
   // Power Core, centre feature: vivid circular ring with 16 live 3D inserts
  // on top added below. The printed core itself stays dark and uncluttered.
  const coreX=420,coreY=920;
@@ -439,34 +431,34 @@ export async function create3DTable(host){
   const bayFastener=metal('#d6bc9c',.28,.73);
  for(const l of UPPER_ROLLOVERS){
   const px=X(l.x),py=Y(l.y);
-   plane(px,py,.191,1.10,1.38,bayEnamel);
-   for(const by of [py-.69,py+.69])
-    box(px,by,.24,1.10,.047,.055,bayTrim);
-   for(const bx of [px-.55,px+.55]){
-    box(bx,py,.237,.049,1.40,.05,bayTrim);
-    for(const by of [py-.63,py+.63])
+   plane(px,py,.191,.68,.86,bayEnamel);
+   for(const by of [py-.43,py+.43])
+    box(px,by,.24,.68,.047,.055,bayTrim);
+   for(const bx of [px-.34,px+.34]){
+    box(bx,py,.237,.049,.91,.05,bayTrim);
+    for(const by of [py-.41,py+.41])
      cyl(bx,by,.276,.049,.035,bayFastener,10);
    }
-   box(px,py,.22,.83,.63,.18,black);
-  box(px,py,.35,.63,.45,.16,darkChrome);
+   box(px,py,.22,.50,.45,.12,black);
+  box(px,py,.35,.42,.32,.12,darkChrome);
    // Mounting shoulder and paired captive screws make each lane a
    // distinct piece of playable machine hardware.
-   box(px,py+.575,.275,.91,.075,.055,crownSteel);
-   for(const dx of [-.38,.38])
-    cyl(px+dx,py+.575,.317,.048,.032,bayFastener,12);
-   laneLamps.push(box(px,py,.48,.42,.27,.11,amber));
-  plane(px,py,.56,.52,.31,label(l.label,'#2b1920',95,180,110));
-  for(const d of [-.48,.48])box(px+d,py-.27,.45,.075,.78,.36,nickel);
-  for(const dx of [-.35,.35]){
-   box(px+dx,py+.32,.68,.065,.13,.62,darkChrome);
-   cyl(px+dx,py+.32,.93,.07,.035,gold,12);
+   box(px,py+.36,.275,.57,.062,.055,crownSteel);
+   for(const dx of [-.25,.25])
+    cyl(px+dx,py+.36,.317,.037,.028,bayFastener,12);
+   laneLamps.push(box(px,py,.48,.30,.23,.11,amber));
+  plane(px,py,.56,.35,.25,label(l.label,'#2b1920',95,180,110));
+  for(const d of [-.28,.28])box(px+d,py-.20,.45,.052,.48,.22,nickel);
+  for(const dx of [-.21,.21]){
+   box(px+dx,py+.25,.68,.050,.10,.42,darkChrome);
+   cyl(px+dx,py+.25,.93,.055,.027,gold,12);
   }
-  box(px,py+.32,.99,.78,.065,.055,chrome);
+  box(px,py+.25,.99,.50,.048,.045,chrome);
   const mat=new T.MeshStandardMaterial({
    color:'#e9b780',emissive:'#ee9d5c',emissiveIntensity:.16,
    roughness:.27,metalness:.08
   });
-  box(px,py+.32,1.032,.27,.035,.02,mat);
+  box(px,py+.25,1.032,.21,.03,.02,mat);
   laneGateMaterials.push(mat);
  }
  // Freestanding bumpers sit directly over original lacquer.
@@ -518,7 +510,7 @@ export async function create3DTable(host){
  // Their hit sensors remain unchanged: only lamps respond to real hits.
  const left=Math.min(...MID_TARGETS.map(t=>t.x));
  const right=Math.max(...MID_TARGETS.map(t=>t.x));
- const targetMid=X((left+right)/2),targetY=Y(407);
+ const targetMid=X((left+right)/2),targetY=Y(MID_TARGETS[0].y);
  const bankWidth=(right-left+34)*SCALE;
  contactShadow(targetMid,targetY,bankWidth+.30,1.13);
  const bankMetal=metal('#929ca8',.29,.77);
@@ -526,8 +518,8 @@ export async function create3DTable(host){
   color:'#302b3c',roughness:.37,metalness:.32,clearcoat:.65
  });
  // The target bank receives its own low-profile engraved hardware nameplate.
-  box(targetMid,Y(387),.249,bankWidth+.20,.14,.058,bankMetal);
-  plane(targetMid,Y(383),.295,bankWidth*.84,.145,
+  box(targetMid,Y(MID_TARGETS[0].y-24),.249,bankWidth+.20,.14,.058,bankMetal);
+  plane(targetMid,Y(MID_TARGETS[0].y-28),.295,bankWidth*.84,.145,
    label('TARGET BANK','#e8d4bd',70,560,72,true));
   box(targetMid,targetY,.26,bankWidth,.72,.115,black);
  box(targetMid,targetY,.335,bankWidth-.13,.60,.095,bankMetal);
@@ -572,37 +564,8 @@ export async function create3DTable(host){
   routeHardware.push({kind:route.kind,material:entryMat});
  }
   // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
- for(const [i,s] of SLINGS.entries()){
-  const x=i===0?136:284,y=520;
-  contactShadow(X(x),Y(y),1.65,1.04);
-  const group=new T.Group();scene.add(group);
-  const shape=new T.Shape();
-  if(i===0){shape.moveTo(X(117),Y(500));shape.lineTo(X(164),Y(536));shape.lineTo(X(131),Y(547));}
-  else{shape.moveTo(X(303),Y(500));shape.lineTo(X(256),Y(536));shape.lineTo(X(289),Y(547));}
-  shape.closePath();
-  const backing=new T.Mesh(new T.ExtrudeGeometry(shape,{
-   depth:.09,bevelEnabled:true,bevelSegments:1,steps:1,
-   bevelSize:.02,bevelThickness:.02
-  }),darkChrome);
-  backing.position.z=.235;backing.castShadow=true;group.add(backing);
-  const coverMaterial=new T.MeshPhysicalMaterial({
-    color:i===0?'#644362':'#73404f',
-    metalness:.12,roughness:.29,clearcoat:1,clearcoatRoughness:.13,
-    side:T.DoubleSide
-   });
-   const cover=new T.Mesh(new T.ExtrudeGeometry(shape,{
-   depth:.10,bevelEnabled:true,bevelSegments:2,steps:1,
-   bevelSize:.026,bevelThickness:.027
-  }),coverMaterial);
-   cover.position.z=.345;cover.castShadow=true;group.add(cover);
-   // A small enameled identity inset sits on each spring-mounted sling.
-   const tagX=X(i===0?137:283),tagY=Y(523);
-   plane(tagX,tagY,.485,.44,.24,label(i===0?'L':'R','#ffe6c7',84,180,90,true));
-  // A braced metal undertray, coloured moulding and contact rubber are
-  // visually layered; actual sling collisions stay on SLINGS.
-  cyl(X(i===0?131:289),Y(547),.48,.17,.10,gold,16);
-  cyl(X(i===0?131:289),Y(547),.56,.095,.035,chrome,14);
- }
+ // Tall sling plastics are constructed by the traced architecture.
+ // The real rubber, posts and flipper layers continue below.
  // Phase 4K.1: hardware around the real lower collision segments.
  // Each guide/elastic is generated from engine.mjs and is visual-only.
  const mouldedIvory=new T.MeshPhysicalMaterial({
