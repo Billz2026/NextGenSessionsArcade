@@ -64,7 +64,9 @@ test('visible approach edges straddle their exact path centreline',()=>{
  }
 });
 test('Section 1 upper horseshoe uses a real ball-width recess and attached couplers',()=>{
- assert.equal(TOP_HORSESHOE_SPEC.bodyWidth,27);
+ assert.equal(TOP_HORSESHOE_SPEC.bodyWidth,24);
+ assert.equal(TOP_HORSESHOE_SPEC.couplerWidth,26);
+ assert.equal(TOP_HORSESHOE_SPEC.couplerDepth,6);
  assert.ok(TOP_HORSESHOE_SPEC.clearChannelWidth>=BOARD.radius*2+3,
   'visible recessed ball bed must be wider than the 16px ball');
  assert.ok(TOP_HORSESHOE_SPEC.bodyWidth>TOP_HORSESHOE_SPEC.clearChannelWidth+4);
