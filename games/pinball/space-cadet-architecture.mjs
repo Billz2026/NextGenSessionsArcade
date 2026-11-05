@@ -1,42 +1,62 @@
 /* Space Cadet-inspired structure, custom NextGen red/gold palette.
    Draws visible hardware only; physics remains engine.mjs authoritative.
    Board coordinates are 420 x 700 and deliberately preserve Neon Tilt text. */
-// Layout traced proportionally from the supplied Space Cadet reference, then
-// redrawn as original Neon Tilt pieces. All dimensions use 420x700 playfield.
+// Exact tracing coordinate system for the user-supplied 915×983 reference.
+// The trapezoid correction compensates for Space Cadet's original perspective,
+// then reserves the existing Neon Tilt neon marquee in the upper 104px.
+export const REFERENCE_FRAME=Object.freeze({width:915,height:983});
+export function referenceToTable(x,y){
+ const left=225-.135*y,right=770+.110*y;
+ return Object.freeze([
+  Math.round((24+(x-left)/(right-left)*372)*10)/10,
+  Math.round((104+y*.58)*10)/10
+ ]);
+}
+const trace=pts=>Object.freeze(pts.map(([x,y])=>referenceToTable(x,y)));
+// Coordinates below are traced from the supplied screenshot (NOT
+// guessed from the previous Neon Tilt wall lines). Original colours
+// and branding are intentionally not taken from the reference.
 const P=Object.freeze({
- outer:[[75,365],[60,327],[57,269],[72,215],[91,180],[112,151],
-  [155,137],[211,128],[270,135],[311,154],[343,192],
-  [356,232],[359,278],[349,328],[333,369]],
- inner:[[276,161],[301,178],[326,205],[336,242],[329,281],[310,315]],
- left:[[52,354],[45,330],[56,313],[87,294],[117,296],[151,309],
-  [181,340],[182,364],[162,395],[143,428],[133,452],
-  [130,478],[122,505],[93,519],[67,505],[50,482],[43,450],
-  [43,410]],
- leftUpper:[[63,336],[83,302],[117,291],[151,309],[170,334],
-  [151,353],[120,364],[100,385],[97,407],[79,409],[63,389]],
- chute:[[80,347],[85,329],[102,320],[129,326],[145,341],
-  [144,359],[129,370],[112,370],[104,384],[117,398],[139,394]],
- rightDeck:[[284,184],[312,176],[336,189],[359,215],[371,245],
-  [367,281],[354,313],[344,337],[326,360],[306,368],
-  [304,349],[324,319],[336,281],[339,251],[321,219],[294,207]],
- rightInner:[[294,195],[319,207],[342,234],[352,261],[346,291],
-  [331,314]],
- rightOuter:[[370,310],[378,340],[381,370],[378,410],[369,444],
-  [363,475]],
- fin:[[312,340],[339,343],[347,369],[331,392],[350,405],
-  [322,446],[298,475],[310,440],[292,424],[308,395],[301,379]],
- lowLeft:[[35,557],[33,581],[32,605],[37,638],[53,661],[70,675]],
- lowRight:[[385,557],[387,581],[388,605],[383,638],[367,661],[350,675]],
- inLeft:[[71,555],[72,583],[82,603],[105,623],[132,640]],
- inRight:[[349,555],[348,583],[338,603],[315,623],[288,640]],
- leftSling:[[113,524],[143,531],[160,602],[132,588]],
- rightSling:[[307,524],[277,531],[260,602],[288,588]],
- topBrackets:[[104,165,-.55],[166,140,-.1],[222,132,0],[282,144,.3],[333,184,.65]],
- rightWindows:[[330,218,.55],[348,246,.80],[348,276,1.28],[332,311,1.90]],
- wingWindows:[[73,417,-.2],[87,440,.1],[98,465,.25]],
- wingGears:[[76,454,10],[94,486,11],[113,497,8]],
- rightFasteners:[[365,344],[376,405],[369,453]],
- rightChevrons:[[322,366],[329,393],[312,426]]
+ topLeft:trace([[246,155],[233,128],[246,92],[277,54],[305,38],
+  [336,40],[359,59],[379,88]]),
+ topHorseshoe:trace([[379,89],[410,72],[457,60],[519,50],[583,53],
+  [634,63],[675,87],[707,119],[728,161],[742,215]]),
+ leftOrbit:trace([[260,148],[232,176],[213,217],[202,257],[207,292]]),
+ rightCrescent:trace([[571,133],[613,131],[653,155],[682,185],
+  [703,222],[709,264],[699,300],[682,328]]),
+ rightOuter:trace([[741,290],[758,350],[772,421],[782,492],
+  [795,605],[802,706],[811,839],[824,910]]),
+ leftDeck:trace([[195,326],[224,311],[260,305],[319,318],
+  [372,347],[398,386],[385,417],[347,435],[308,480],
+  [297,543],[283,621],[254,673],[223,694],[191,661],
+  [164,616],[149,567],[169,476],[182,409]]),
+ leftUpper:trace([[214,341],[239,324],[278,325],[330,341],
+  [371,374],[373,407],[351,425],[319,414],[286,392],
+  [260,387],[245,414],[226,410]]),
+ leftSpiral:trace([[239,375],[254,348],[295,351],[333,374],
+  [334,398],[306,418],[280,405],[271,384],[288,377],
+  [305,386],[285,427],[290,463],[313,483]]),
+ rightDeck:trace([[569,124],[612,116],[661,136],[702,170],
+  [728,207],[744,250],[746,293],[716,337],[685,367],
+  [647,403],[631,387],[666,342],[689,295],[700,256],
+  [673,207],[626,171],[585,162]]),
+ rightInner:trace([[592,148],[622,165],[655,192],[675,222],
+  [690,262],[680,293],[657,324]]),
+ rightFlame:trace([[637,353],[664,348],[671,387],[647,418],
+  [676,440],[628,488],[609,524],[616,469],
+  [584,459],[608,416],[592,404]]),
+ leftSling:trace([[303,677],[323,678],[363,816],[300,796]]),
+ rightSling:trace([[685,671],[706,677],[746,801],[663,820]]),
+ leftOut:trace([[181,745],[163,783],[146,835],[136,900],[148,920]]),
+ rightOut:trace([[764,745],[785,782],[808,836],[820,900],[810,920]]),
+ leftIn:trace([[197,824],[239,846],[280,872],[328,916]]),
+ rightIn:trace([[745,823],[706,847],[669,872],[613,915]]),
+ topBrackets:trace([[285,88],[406,73],[533,61],[640,75],[727,159]]),
+ leftGears:trace([[184,505],[258,524],[204,568]]),
+ leftSwitches:trace([[192,443],[223,458],[243,475]]),
+ rightWindows:trace([[588,137],[624,159],[659,189],[689,222],[699,261],[685,299]]),
+ rightBrackets:trace([[597,122],[671,160],[722,221],[730,301],[778,576]]),
+ rightArrows:trace([[621,382],[643,412],[615,454]])
 });
 export const CLASSIC_RAIL_PROFILES=P;
 function smooth(path,steps=9){
@@ -68,144 +88,152 @@ function pathCanvas(c,p,close=false){
 }
 export function paintClassicRails(c,{upper=true,lower=true}={}){
  c.save();c.lineCap='round';c.lineJoin='round';
- const plate=(p,fill='#60202a')=>{
-  pathCanvas(c,smooth([...p,p[0]],5),true);
-  c.fillStyle=fill;c.fill();c.lineWidth=2.5;c.strokeStyle='#d4a267';c.stroke();
+ const plate=(pts,fill='#66232f')=>{
+  pathCanvas(c,smooth([...pts,pts[0]],6),true);
+  c.fillStyle=fill;c.fill();c.lineWidth=2;c.strokeStyle='#d2a16b';c.stroke();
  };
- const road=(p,w)=>{
-  const r=ribbon(p,w);
-  pathCanvas(c,r.polygon,true);c.fillStyle='#67222b';c.fill();
-  c.lineWidth=1.8;c.strokeStyle='#d1a064';c.stroke();
-  pathCanvas(c,r.center);c.lineWidth=w*.61;c.strokeStyle='#211b17';c.stroke();
-  pathCanvas(c,r.left);c.lineWidth=1.8;c.strokeStyle='#edbf88';c.stroke();
-  pathCanvas(c,r.right);c.lineWidth=1.4;c.strokeStyle='#a96740';c.stroke();
+ const road=(pts,w,base='#66242b')=>{
+  const a=ribbon(pts,w);
+  pathCanvas(c,a.polygon,true);c.fillStyle=base;c.fill();
+  c.lineWidth=1.7;c.strokeStyle='#d8a86e';c.stroke();
+  pathCanvas(c,a.center);c.lineWidth=w*.57;c.strokeStyle='#201b1a';c.stroke();
+  for(const side of [a.left,a.right]){
+   pathCanvas(c,side);c.lineWidth=1.8;c.strokeStyle='#e3bc87';c.stroke();
+  }
  };
  const disk=(x,y,r,fill,stroke='#d7a66e',lw=2)=>{
   c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=fill;c.fill();
   c.lineWidth=lw;c.strokeStyle=stroke;c.stroke();
  };
- const rectRotate=(x,y,w,h,angle)=>{
+ const metalWindow=(x,y,w,h,angle)=>{
   c.save();c.translate(x,y);c.rotate(angle);
-  c.fillStyle='#21191a';c.strokeStyle='#d1a064';c.lineWidth=2;
-  c.beginPath();c.roundRect(-w/2,-h/2,w,h,3);c.fill();c.stroke();
-  c.fillStyle='#ab6654';c.fillRect(-w*.34,-h*.33,w*.68,h*.66);
+  c.fillStyle='#1a1a1e';c.strokeStyle='#d6a46b';c.lineWidth=1.4;
+  c.fillRect(-w/2,-h/2,w,h);c.strokeRect(-w/2,-h/2,w,h);
+  c.fillStyle='#8a4e45';c.fillRect(-w*.36,-h*.30,w*.72,h*.60);
   c.restore();
  };
  if(upper){
-  // Bounded perimeter loop with segmented metal-gold couplings.
-  road(P.outer,19);road(P.inner,16);
-  for(const [x,y,a] of P.topBrackets)rectRotate(x,y,19,10,a);
-  // Broad sculpted left deck, with its upper shelf and open spiral chute.
-  plate(P.left,'#6a2834');plate(P.leftUpper,'#8b3543');
-  road(P.chute,20);
-  for(const [x,y,r] of P.wingGears){
-   disk(x,y,r+3,'#181b22');
-   disk(x,y,r,'#c28d58','#f7e4c6',3);
-   disk(x,y,r*.50,'#37435a','#131621',2);
+  road(P.topLeft,13);road(P.topHorseshoe,14);
+  road(P.leftOrbit,10);
+  for(const [x,y] of P.topBrackets)metalWindow(x,y,16,8,.24);
+  // True broad asymmetric deck with multi-level curled launch shell.
+  plate(P.leftDeck,'#63242d');plate(P.leftUpper,'#953b45');
+  road(P.leftSpiral,18);
+  for(const [x,y] of P.leftGears){
+   disk(x,y,15,'#19191f','#e1b273',3);
+   disk(x,y,10,'#bd8a5c','#fff0c7',2);
+   disk(x,y,5,'#385477','#181b24',1.3);
   }
-  for(const [x,y,a] of P.wingWindows)rectRotate(x,y,9,18,a);
-  // Cascading right upper deck and individual dark framed windows.
-  plate(P.rightDeck,'#5b2229');road(P.rightInner,19);
-  for(const [x,y,a] of P.rightWindows)rectRotate(x,y,24,17,a);
-  road(P.rightOuter,20);plate(P.fin,'#8b2d37');
-  for(const [x,y] of P.rightChevrons){
-   pathCanvas(c,[[x-7,y+5],[x+2,y-8],[x+7,y+7]],true);
-   c.fillStyle='#e5a15b';c.fill();
+  for(const [x,y] of P.leftSwitches)metalWindow(x,y,8,16,-.15);
+  // Multisegment right ramp, NOT a vertical solid maroon strip.
+  plate(P.rightDeck,'#5b2229');road(P.rightCrescent,17);
+  road(P.rightInner,14);
+  for(let i=0;i<P.rightWindows.length;i++){
+   const [x,y]=P.rightWindows[i];
+   metalWindow(x,y,20,14,.20+i*.19);
   }
-  for(const [x,y] of P.rightFasteners)disk(x,y,3,'#f5ca7e');
+  for(const [x,y] of P.rightBrackets)metalWindow(x,y,14,6,.30);
+  road(P.rightOuter,11);
+  plate(P.rightFlame,'#8b3039');
+  for(const [x,y] of P.rightArrows){
+   pathCanvas(c,[[x-5,y+5],[x+3,y-8],[x+7,y+5]],true);
+   c.fillStyle='#e9aa6b';c.fill();
+  }
  }
  if(lower){
-  // Outer lanes remain predominantly vertical; inlanes actually bend inward.
-  road(P.lowLeft,11);road(P.lowRight,11);
-  road(P.inLeft,10);road(P.inRight,10);
-  for(const [poly,flip] of [[P.leftSling,false],[P.rightSling,true]]){
-   plate(poly,'#842d35');
-   const midx=flip?282:138;
-   pathCanvas(c,[[midx-11,539],[midx+5,577],[midx+7,590],
-    [midx-13,566]],true);
-   c.fillStyle='#251b1a';c.fill();
-   disk(midx,576,5,'#e1a76a');
+  road(P.leftOut,12);road(P.rightOut,12);
+  road(P.leftIn,9);road(P.rightIn,9);
+  for(const poly of [P.leftSling,P.rightSling]){
+   plate(poly,'#7e2732');
+   const center=poly.reduce((p,[x,y])=>[p[0]+x/4,p[1]+y/4],[0,0]);
+   disk(center[0],center[1],6,'#e6a76c');
   }
  }
  c.restore();
 }
 export function buildClassicRails(T,scene,{X,Y}){
- const mat=(color,roughness=.36)=>new T.MeshPhysicalMaterial({
-  color,metalness:0,roughness,clearcoat:.73,clearcoatRoughness:.26,side:T.DoubleSide
+ const mat=(color,rough=.38)=>new T.MeshPhysicalMaterial({
+  color,metalness:0,roughness:rough,clearcoat:.68,
+  clearcoatRoughness:.30,side:T.DoubleSide
  });
- const red=mat('#68232d'),redRaised=mat('#883342'),gold=mat('#d1a064',.40),
-  dark=mat('#211915',.78),black=mat('#15181d',.84);
- const lamp=new T.MeshStandardMaterial({color:'#f6b77f',emissive:'#b75c34',emissiveIntensity:.35});
- const glass=new T.MeshStandardMaterial({color:'#385071',metalness:.21,roughness:.23});
- const add=(geo,material,z=0,shadow=true)=>{
-  const m=new T.Mesh(geo,material);m.position.z=z;m.castShadow=shadow;
-  m.receiveShadow=true;scene.add(m);return m;
+ const red=mat('#62232c'),raised=mat('#87323e'),
+  gold=mat('#cda064',.41),dark=mat('#211b1b',.77);
+ const steel=mat('#9d8271',.43),blue=mat('#2b4358',.31);
+ const amber=new T.MeshStandardMaterial({color:'#efb784',emissive:'#b76c3c',emissiveIntensity:.24});
+ const add=(geometry,material,z=0,shadow=true)=>{
+  const mesh=new T.Mesh(geometry,material);mesh.position.z=z;
+  mesh.castShadow=shadow;mesh.receiveShadow=true;scene.add(mesh);
+  return mesh;
  };
- const shape=pts=>{
-  const s=new T.Shape();
-  pts.forEach(([x,y],i)=>i?s.lineTo(X(x),Y(y)):s.moveTo(X(x),Y(y)));
-  s.closePath();return s;
+ const geomShape=pts=>{
+  const shape=new T.Shape();
+  pts.forEach(([x,y],i)=>i?shape.lineTo(X(x),Y(y)):shape.moveTo(X(x),Y(y)));
+  shape.closePath();return shape;
  };
  const tube=(pts,z,r,material,closed=false)=>{
-  const curve=new T.CatmullRomCurve3(pts.map(([x,y])=>new T.Vector3(X(x),Y(y),0)),closed,'centripetal');
-  return add(new T.TubeGeometry(curve,Math.max(36,pts.length*2),r,10,closed),material,z,false);
+  const cv=new T.CatmullRomCurve3(pts.map(([x,y])=>new T.Vector3(X(x),Y(y),0)),closed,'centripetal');
+  return add(new T.TubeGeometry(cv,Math.max(28,pts.length*3),r,8,closed),material,z,false);
  };
- const plate=(pts,z=.27,depth=.095,material=red)=>{
-  const outline=smooth([...pts,pts[0]],6);
-  add(new T.ExtrudeGeometry(shape(outline),{depth,steps:1,bevelEnabled:true,
-   bevelSegments:3,bevelSize:.012,bevelThickness:.014}),material,z);
-  tube(outline,z+depth+.024,.025,gold,true);
+ const plate=(pts,z=.25,depth=.09,material=red)=>{
+  const path=smooth([...pts,pts[0]],7);
+  add(new T.ExtrudeGeometry(geomShape(path),{depth,steps:1,bevelEnabled:true,
+   bevelSize:.011,bevelThickness:.010,bevelSegments:2}),material,z);
+  tube(path,z+depth+.018,.023,gold,true);
  };
- const road=(path,width,z=.26,depth=.11)=>{
-  const a=ribbon(path,width),bed=ribbon(path,width*.60);
-  add(new T.ExtrudeGeometry(shape(a.polygon),{depth,steps:1,
-   bevelEnabled:true,bevelSegments:3,bevelSize:.011,bevelThickness:.011}),red,z);
-  add(new T.ShapeGeometry(shape(bed.polygon)),dark,z+depth+.021,false);
-  tube(a.left,z+depth+.046,.025,gold);
-  tube(a.right,z+depth+.046,.022,gold);
+ const road=(pts,width,z=.256,depth=.09)=>{
+  const p=ribbon(pts,width),b=ribbon(pts,width*.63);
+  add(new T.ExtrudeGeometry(geomShape(p.polygon),{depth,steps:1,
+   bevelEnabled:true,bevelSegments:2,bevelSize:.009,bevelThickness:.009}),red,z);
+  add(new T.ShapeGeometry(geomShape(b.polygon)),dark,z+depth+.014,false);
+  tube(p.left,z+depth+.038,.019,gold);
+  tube(p.right,z+depth+.038,.018,gold);
  };
- const cyl=(x,y,r,z,height,material)=>{
-  const m=add(new T.CylinderGeometry(r,r,height,24),material,z);
-  m.rotation.x=Math.PI/2;m.position.x=X(x);m.position.y=Y(y);
-  return m;
+ const disk=(x,y,r,z,material)=>{
+  const m=add(new T.CylinderGeometry(r,r,.045,24),material,z);
+  m.rotation.x=Math.PI/2;m.position.x=X(x);m.position.y=Y(y);return m;
  };
- const insert=(x,y,w,h,angle,z=.42)=>{
-  const group=new T.Group();scene.add(group);
-  group.position.set(X(x),Y(y),0);group.rotation.z=angle;
-  const bezel=new T.Mesh(new T.BoxGeometry(w*.020,h*.020,.058),black);
+ const window=(x,y,w,h,angle=0,z=.405)=>{
+  const group=new T.Group();group.position.set(X(x),Y(y),0);group.rotation.z=angle;scene.add(group);
+  const bezel=new T.Mesh(new T.BoxGeometry(w*.020,h*.020,.05),dark);
   bezel.position.z=z;group.add(bezel);
-  const inset=new T.Mesh(new T.BoxGeometry(w*.014,h*.014,.042),lamp);
-  inset.position.z=z+.036;group.add(inset);
+  const frame=new T.Mesh(new T.BoxGeometry(w*.021,h*.022,.014),steel);
+  frame.position.z=z-.034;group.add(frame);
+  const lens=new T.Mesh(new T.BoxGeometry(w*.014,h*.014,.057),amber);
+  lens.position.z=z+.033;group.add(lens);
  };
- // Segmented top horseshoe; a narrow true-looking channel, not a fat arch.
- road(P.outer,19,.23,.11);road(P.inner,16,.245,.09);
- for(const [x,y,a] of P.topBrackets)insert(x,y,17,9,a,.393);
- // Left raised ramp: broad asymmetric two-level plastic housing and spiral.
- plate(P.left,.26,.12,red);plate(P.leftUpper,.385,.06,redRaised);
- road(P.chute,20,.45,.075);
- for(const [x,y,a] of P.wingWindows)insert(x,y,9,17,a,.442);
- for(const [x,y,r] of P.wingGears){
-  cyl(x,y,r*.020+.06,.435,.055,black);
-  const rim=new T.Mesh(new T.TorusGeometry(r*.020,.052,10,28),gold);
-  rim.position.set(X(x),Y(y),.49);scene.add(rim);
-  const cap=new T.Mesh(new T.CircleGeometry(r*.016,24),glass);
-  cap.position.set(X(x),Y(y),.494);scene.add(cap);
- }
- // Broad stepped right return: separate inset sections curve toward launcher.
- plate(P.rightDeck,.255,.115,red);
- road(P.rightInner,19,.381,.07);
- for(const [x,y,a] of P.rightWindows)insert(x,y,24,17,a,.44);
- road(P.rightOuter,20,.263,.115);
- plate(P.fin,.27,.085,redRaised);
- for(const [x,y] of P.rightChevrons)
-  add(new T.ShapeGeometry(shape([[x-7,y+5],[x+2,y-8],[x+7,y+7]])),gold,.373,false);
- for(const [x,y] of P.rightFasteners)cyl(x,y,.065,.423,.040,gold);
- // Tall lower triangular slings, long wall-side outlanes, inward feed lanes.
- road(P.lowLeft,11,.273,.085);road(P.lowRight,11,.273,.085);
- road(P.inLeft,10,.273,.085);road(P.inRight,10,.273,.085);
- for(const poly of [P.leftSling,P.rightSling]){
-  plate(poly,.268,.10,redRaised);
-  const center=poly.reduce((a,[x,y])=>[a[0]+x/4,a[1]+y/4],[0,0]);
-  cyl(center[0],center[1],.095,.40,.035,lamp);
+ // Two-level upper orbit horseshoe with actual breaks/metal couplings.
+ road(P.topLeft,13,.238,.083);road(P.topHorseshoe,14,.239,.093);
+ road(P.leftOrbit,10,.244,.085);
+ P.topBrackets.forEach(([x,y],i)=>window(x,y,16,8,.25+i*.09,.390));
+ // Broad left Space Cadet-inspired mechanical deck and raised spiral.
+ plate(P.leftDeck,.257,.118,red);
+ plate(P.leftUpper,.380,.074,raised);
+ road(P.leftSpiral,18,.452,.067);
+ P.leftGears.forEach(([x,y],i)=>{
+  const r=i===1?.19:.17;
+  disk(x,y,r+.058,.405,dark);
+  const torus=add(new T.TorusGeometry(r,.042,10,28),gold,.472,false);
+  torus.position.x=X(x);torus.position.y=Y(y);
+  disk(x,y,r*.56,.476,blue);
+  disk(x,y,.041,.502,amber);
+ });
+ P.leftSwitches.forEach(([x,y])=>window(x,y,8,16,-.15,.463));
+ // Layered upper-right curved transport deck with inset windows and side chute.
+ plate(P.rightDeck,.255,.110,red);
+ road(P.rightCrescent,17,.375,.080);
+ road(P.rightInner,14,.388,.064);
+ P.rightWindows.forEach(([x,y],i)=>window(x,y,20,14,.20+i*.19,.477));
+ P.rightBrackets.forEach(([x,y])=>window(x,y,14,6,.30,.400));
+ road(P.rightOuter,11,.265,.115);
+ plate(P.rightFlame,.270,.083,raised);
+ for(const [x,y] of P.rightArrows)
+  add(new T.ShapeGeometry(geomShape([[x-5,y+5],[x+3,y-8],[x+7,y+5]])),gold,.384,false);
+ // Narrow outer channels, distinct inner flipper feeds and tall sling plastics.
+ road(P.leftOut,12,.277,.073);road(P.rightOut,12,.277,.073);
+ road(P.leftIn,9,.274,.077);road(P.rightIn,9,.274,.077);
+ for(const p of [P.leftSling,P.rightSling]){
+  plate(p,.288,.110,raised);
+  const [x,y]=p.reduce((a,[xx,yy])=>[a[0]+xx/4,a[1]+yy/4],[0,0]);
+  disk(x,y,.10,.427,amber);
  }
 }
