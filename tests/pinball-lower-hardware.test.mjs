@@ -59,7 +59,7 @@ test('two connected lower cabinet channels inherit all four real collision guide
 });
 test('channel panels are recessed outside physics walls and mounted at joints',()=>{
  assert.ok(three.includes('shape.lineTo(X(pts[i].x+channel.outerOffset)'));
- assert.ok(three.includes('mountedRod(edge,.445,.028,lowerSteel)'));
+ assert.ok(three.includes('mountedRod(edge,.445,.028,mouldedIvory)'));
  assert.ok(three.includes('for(const p of [pts[0],pts[1],pts[2]])'));
  assert.ok(!three.includes('mountedRod(guide,.40,.052,lowerSteel)'));
  assert.ok(fallback.includes('for(const channel of LOWER_CHANNELS)'));
@@ -82,7 +82,7 @@ test('both renderers use tapered flippers and leave an open drain',()=>{
 
 test('recessed drain remains visually open instead of a raised solid crossbar',()=>{
  assert.ok(three.includes("plane(X(210),Y(685),.274,2.35,.28,drainWell)"));
- assert.ok(three.includes("box(X(210),Y(672),.298,2.55,.036,.025,lowerSteel)"));
+ assert.ok(three.includes("box(X(210),Y(672),.298,2.55,.036,.025,mouldedIvory)"));
  assert.ok(!three.includes("box(X(210),Y(685),.204,2.52,.35,.06,lowerShade)"));
  assert.ok(fallback.includes("rect(c,157,680,106,15,3,'#060912'"));
  assert.ok(!fallback.includes("rect(c,154,670,112,26,5"));
