@@ -102,6 +102,14 @@ export const RETURN_FEEDS=Object.freeze({
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
+// Three playable recessed wormholes, not just painted circles. Both renderers
+// source geometry from these actual engine sensor coordinates.
+export const WORMHOLES=Object.freeze([
+ Object.freeze({id:'green',x:85,y:282,r:16,color:'#73dbaa'}),
+ Object.freeze({id:'red',x:325,y:263,r:16,color:'#ff747b'}),
+ Object.freeze({id:'yellow',x:340,y:473,r:15,color:'#ffce75'})
+]);
+export const WARP_SWITCH=Object.freeze({x:291,y:339,r:10,points:1250});
 export const SLINGS=Object.freeze([
  {x1:119,y1:502,x2:163,y2:535,score:100},
  {x1:301,y1:502,x2:257,y2:535,score:100}
@@ -153,6 +161,7 @@ export class PinballEngine{
   this.streakShots=0;this.streakShieldReady=false;this.streakShieldSpent=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
+  this.warpOpen=false;this.warpSequence=0;this.wormholeEntries=0;
   this.skillShotPending=false;this.skillShotUntil=0;
   this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;
@@ -179,6 +188,7 @@ export class PinballEngine{
   this.streakShots=0;this.streakShieldReady=false;this.streakShieldSpent=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
+  this.warpOpen=false;this.warpSequence=0;this.wormholeEntries=0;
   this.skillShotPending=false;this.skillShotUntil=0;
   this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;
@@ -661,6 +671,40 @@ export class PinballEngine{
      this.activateTarget(i);
    }
   }
+  // A spot target physically opens one cross-table transfer. It reflects the
+  // incoming ball, so the warp cannot be enabled by mere proximity.
+  const dx=b.x-WARP_SWITCH.x,dy=b.y-WARP_SWITCH.y;
+  const wd=Math.hypot(dx,dy);
+  if(wd<WARP_SWITCH.r+b.r && Math.hypot(b.vx,b.vy)>140 &&
+     this.time-(this.cooldowns.get('warpSwitch')??-100)>.45){
+   this.cooldowns.set('warpSwitch',this.time);
+   const nx=wd>.01?dx/wd:0,ny=wd>.01?dy/wd:-1;
+   b.x=WARP_SWITCH.x+nx*(WARP_SWITCH.r+b.r+.6);
+   b.y=WARP_SWITCH.y+ny*(WARP_SWITCH.r+b.r+.6);
+   const approach=b.vx*nx+b.vy*ny;
+   if(approach<0){b.vx-=1.7*approach*nx;b.vy-=1.7*approach*ny;}
+   const awarded=this.addPoints(WARP_SWITCH.points,'WARP SPOT');
+   if(!this.warpOpen){this.warpOpen=true;this.emit('warplit',{points:awarded});}
+   else this.emit('warpswitch',{points:awarded});
+  }
+  // Closed holes eject from the same mouth. A lit warp transfers the ball
+  // to the next coloured exit. This is deterministic during multiball too.
+  for(let i=0;i<WORMHOLES.length;i++){
+   const hole=WORMHOLES[i];
+   if(Math.hypot(b.x-hole.x,b.y-hole.y)>hole.r ||
+      Math.hypot(b.vx,b.vy)<165 ||
+      this.time-(this.cooldowns.get('wormhole'+i)??-100)<.85)continue;
+   const opened=this.warpOpen;
+   const exit=opened?(i+1+(this.warpSequence++%2))%WORMHOLES.length:i;
+   this.warpOpen=false;this.wormholeEntries++;
+   this.cooldowns.set('wormhole'+i,this.time);
+   const points=this.addPoints(opened?7500:2000,opened?'SPACE WARP':'WORMHOLE');
+   b.mode='wormhole';b.wormhole={exit,timer:.38};
+   b.x=hole.x;b.y=hole.y;b.vx=0;b.vy=0;
+   this.emit('wormhole',{source:hole.id,destination:WORMHOLES[exit].id,
+     opened,points,entries:this.wormholeEntries});
+   return;
+  }
   // Spinner and scoop are physical scoring features located in free lanes.
   if(Math.abs(b.x-SPINNER.x)<SPINNER.halfWidth &&
      ((previous.y<SPINNER.y&&b.y>=SPINNER.y) || (previous.y>SPINNER.y&&b.y<=SPINNER.y)) &&
@@ -787,6 +831,23 @@ export class PinballEngine{
   const b=this.ball;
   if(!b)return;
   if(b.mode==='travel'){this.updateTravel(dt);return;}
+  if(b.mode==='wormhole'){
+   b.wormhole.timer-=dt;
+   const hole=WORMHOLES[b.wormhole.exit];
+   if(b.wormhole.timer<=0){
+    const exits=[
+     {dx:24,dy:14,vx:365,vy:180},
+     {dx:-25,dy:13,vx:-350,vy:245},
+     {dx:-32,dy:10,vx:-460,vy:-480}
+    ];
+    const kick=exits[b.wormhole.exit];
+    b.x=hole.x+kick.dx;b.y=hole.y+kick.dy;
+    b.vx=kick.vx;b.vy=kick.vy;b.mode='live';b.wormhole=null;
+    this.cooldowns.set('wormhole'+WORMHOLES.indexOf(hole),this.time);
+    this.emit('wormholeExit',{destination:hole.id});
+   }else{b.x=hole.x;b.y=hole.y;}
+   return;
+  }
   if(b.mode==='scoop'){
    b.scoopTimer-=dt;
    b.x=SCOOP.x;b.y=SCOOP.y;b.vx=0;b.vy=0;
