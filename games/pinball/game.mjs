@@ -17,6 +17,22 @@ const ui={
  mission:{lanes:$('mission-lanes'),frenzy:$('mission-frenzy'),targets:$('mission-targets'),ride:$('mission-ride')},
  progress:{lanes:$('progress-lanes'),frenzy:$('progress-frenzy'),targets:$('progress-targets'),ride:$('progress-ride')}
 };
+// On phones and unfolded Fold layouts, move the SAME Start / Hold & Release
+// buttons above the playfield. Keep their original listeners and keyboard
+// semantics; returning to desktop restores the controls to the HUD console.
+const mobileActionDock=$('mobile-action-dock');
+if(mobileActionDock&&ui.actionPanel){
+ const originalParent=ui.actionPanel.parentNode;
+ const actionAnchor=document.createComment('Neon Tilt original primary-action location');
+ originalParent.insertBefore(actionAnchor,ui.actionPanel);
+ const compactActions=window.matchMedia('(max-width:1120px)');
+ function positionPrimaryAction(){
+  if(compactActions.matches)mobileActionDock.appendChild(ui.actionPanel);
+  else originalParent.insertBefore(ui.actionPanel,actionAnchor.nextSibling);
+ }
+ compactActions.addEventListener?.('change',positionPrimaryAction);
+ positionPrimaryAction();
+}
 // Cabinet-side instrument towers mirror existing engine state. They never
 // control physics or introduce additional timers or duplicate mission rules.
 const arena={
