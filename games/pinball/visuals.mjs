@@ -355,36 +355,33 @@ function drawShotGuidance(c,engine,anim,reducedMotion){
 function drawTargets(c,engine){
  for(let i=0;i<LANES.length;i++){
   const l=LANES[i],on=engine.lanes.has(i)||engine.missions.lanes;
-  rect(c,l.x-21,l.y-16,42,22,8,G(c,l.x-19,l.y-15,l.x+18,l.y+9,[[0,'#a3887c'],[.2,'#45333b'],[1,'#1b1822']]),'#c7a48c',2);
-  neonInsert(c,l.x,l.y-5,l.label,on,on?'#ffe5ac':'#eb826d');
-  line(c,[[l.x,l.y+22],[l.x,l.y+35]],'rgba(246,174,112,.6)',2);
+  rect(c,l.x-9,l.y-12,18,21,3,'#1b1822','#c7a48c',1.5);
+  disk(c,l.x,l.y-3,5,on?'#ffe5ac':'#604c68',
+   on?'#fff5d6':'#b6a4a8',1.2);
+  text(c,l.label,l.x,l.y+12,8,'#ffe6bf','Barlow Condensed',900);
  }
- // Mounted target bank: shared pressed-steel backplate and four illuminated
- // standing switch faces aligned with the game's actual target sensors.
- c.save();c.shadowColor='#000';c.shadowBlur=9;c.shadowOffsetY=6;
- const bankLeft=Math.min(...MID_TARGETS.map(t=>t.x))-16;
- const bankRight=Math.max(...MID_TARGETS.map(t=>t.x))+16;
+ // Four real sensors, presented as two small yellow standing-target pairs.
  const bankY=MID_TARGETS.reduce((sum,t)=>sum+t.y,0)/MID_TARGETS.length;
- rect(c,bankLeft,bankY-22,bankRight-bankLeft,43,5,
-  G(c,bankLeft,bankY-22,bankRight,bankY+21,[[0,'#bdabb3'],[.26,'#50505e'],[.77,'#292d3a'],[1,'#b1a3a4']]),
-  '#ddc7b1',2.1);
- c.restore();
+ for(const group of [MID_TARGETS.slice(0,2),MID_TARGETS.slice(2,4)]){
+  const a=group[0],b=group.at(-1);
+  c.save();c.shadowColor='#080711';c.shadowBlur=8;c.shadowOffsetY=4;
+  rect(c,a.x-13,bankY-13,b.x-a.x+26,27,3,
+   G(c,a.x-13,bankY-13,b.x+13,bankY+14,[
+    [0,'#c1a5a1'],[.33,'#554b55'],[1,'#2a2b39']
+   ]),'#c9af91',1.8);
+  c.restore();
+ }
  for(let i=0;i<MID_TARGETS.length;i++){
   const t=MID_TARGETS[i],on=engine.targets.has(i)||engine.missions.targets;
-  c.save();c.shadowColor='rgba(2,5,14,.72)';c.shadowBlur=8;c.shadowOffsetY=5;
-  rect(c,t.x-13,t.y-18,26,38,3,'#202532','#93949e',2);c.restore();
-  rect(c,t.x-10,t.y-15,20,32,2,
-   G(c,t.x-10,t.y-15,t.x+10,t.y+17,[
-    [0,'#cfc5b9'],[.25,'#9e939b'],[.8,'#3b3443'],[1,'#171d2a']
-   ]),'#e4cbb8',1.1);
-  c.save();c.shadowBlur=on?11:0;c.shadowColor='#ffd4a0';
-  rect(c,t.x-7,t.y-11,14,22,2,on?'#ffe2a5':'#a23c57',
-   on?'#fffae6':'#d3928c',1.2);
-  c.restore();
-  text(c,String(i+1),t.x,t.y+1,10,on?'#392636':'#ffe0c7','Oxanium',900);
-  bolt(c,t.x-9,t.y+15,1.8);bolt(c,t.x+9,t.y+15,1.8);
-  disk(c,t.x,t.y-25,4,on?'#ffe0a5':'#593642',
-   on?'#fff0c5':'#8f7d89',1);
+  c.save();c.shadowColor='rgba(2,5,14,.68)';
+  c.shadowBlur=6;c.shadowOffsetY=3;
+  rect(c,t.x-7,t.y-11,14,22,2,'#4b4047','#d7c1a1',1.4);c.restore();
+  rect(c,t.x-5,t.y-9,10,18,1,on?'#fff2b1':'#cc9f4e',
+   '#ffe4a0',1.0);
+  text(c,String(i+1),t.x,t.y,7,on?'#56412e':'#442a22',
+   'Oxanium',900);
+  disk(c,t.x,t.y-16,2.6,on?'#ffe9ad':'#6b4a47',
+   on?'#fff5cd':'#c29a68',.8);
  }
 
 }
