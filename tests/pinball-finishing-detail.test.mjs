@@ -40,7 +40,7 @@ test('shadow layers are translucent and do not create physical obstacles',()=>{
  assert.ok(three.includes('const contactMaterial=new T.MeshBasicMaterial'));
  assert.ok(three.includes('depthWrite:false'));
  assert.ok(three.includes('function contactShadow(x,y,w,h)'));
- assert.ok(three.includes('contactShadow(targetMid,targetY'));
+ assert.ok(three.includes('contactShadow(mx,my'));
  assert.ok(three.includes('contactShadow(powerX,powerY'));
  assert.ok(three.includes('contactShadow(X(x),Y(y),1.65,1.04)'));
  assert.ok(three.includes('contactShadow(x,y,r*2.8,r*2.8)'));
