@@ -5,7 +5,7 @@ import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=9';
-import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
+import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=5';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=3';
 const TAU=Math.PI*2;
@@ -192,6 +192,27 @@ function drawEnamelDetails(c){
   for(const b of MID_BUMPERS){
    disk(c,b.x,b.y,b.r+14,'#15120e','#5a4832',2);
    disk(c,b.x,b.y,b.r+11,null,'#af956c',1.3);
+  }
+  // Original three-point purple flight emblem, positioned under the
+  // lower hardware like the reference's distinctive lower-playfield shape.
+  // These graphics do not participate in ball collisions.
+  c.save();c.shadowColor='#151027';c.shadowBlur=7;
+  const fork=[[210,632],[190,605],[174,566],[162,523],
+   [181,547],[197,576],[204,591],[204,548],[210,521],
+   [216,548],[216,591],[223,576],[239,547],[258,523],
+   [246,566],[230,605]];
+  c.beginPath();fork.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));
+  c.closePath();c.fillStyle='#593c83';c.fill();
+  c.strokeStyle='#ab7cc8';c.lineWidth=2.2;c.stroke();
+  c.restore();
+  for(const side of [-1,1]){
+   c.save();c.translate(210,0);c.scale(side,1);
+   c.beginPath();c.moveTo(68,505);c.lineTo(105,540);
+   c.lineTo(89,590);c.lineTo(60,565);c.closePath();
+   c.fillStyle='#281d39';c.fill();
+   c.strokeStyle='#c45074';c.lineWidth=2.4;c.stroke();
+   line(c,[[74,515],[84,539],[71,554],[83,575]],'#79c1e2',1.5);
+   c.restore();
   }
   // Printed under-glass lightning arcs & retro arcade scoring ladder.
  c.strokeStyle='rgba(145,209,247,.19)';c.lineWidth=1.0;
