@@ -56,7 +56,7 @@ export const WALLS=Object.freeze([
  [53,366,83,419],[336,420,357,365]
 ]);
 export const LANES=Object.freeze([{x:101,y:173,label:'N'},{x:210,y:169,label:'G'},{x:314,y:174,label:'S'}]);
-export const TARGETS=Object.freeze([{x:165,y:410,r:12},{x:194,y:405,r:12},{x:223,y:405,r:12},{x:252,y:410,r:12}]);
+export const TARGETS=Object.freeze([{x:200,y:410,r:12},{x:229,y:405,r:12},{x:258,y:405,r:12},{x:287,y:410,r:12}]);
 // Single source of truth for guided-ball motion and the raised 3D rail paths.
 // [x, y, 3D height] coordinates; collision physics elsewhere stays 2D.
 export const RAMP_PATH=Object.freeze([
@@ -84,8 +84,8 @@ export const CENTER_PATH=Object.freeze([
 ].map(p=>Object.freeze(p)));
 // The middle-left shot climbs into a real elevated upper launch deck.
 export const SKYLINE_PATH=Object.freeze([
- [124,380,.38],[137,368,.49],[157,348,.74],[165,326,1.03],
- [166,315,1.28],[152,314,1.37],[140,326,1.37]
+ [149,443,.38],[169,428,.50],[184,402,.72],[188,368,.93],
+ [177,340,1.18],[158,318,1.35],[140,326,1.37]
 ].map(p=>Object.freeze(p)));
 export const TRAVEL_PATHS=Object.freeze({
  ramp:RAMP_PATH,orbit:ORBIT_PATH,center:CENTER_PATH,skyline:SKYLINE_PATH
@@ -107,7 +107,7 @@ export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
  ramp:{x:311,y:372,r:27,points:7500},
  center:{x:207,y:426,r:33,points:4500},
- skyline:{x:124,y:380,r:18,points:6000}
+ skyline:{x:149,y:443,r:18,points:6000}
 });
 // Ramp and orbit entries should reward a deliberate outside-lane shot without
 // feeling like a magnetic auto-aim. The spring acts only inside the visible
