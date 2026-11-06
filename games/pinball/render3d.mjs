@@ -1,13 +1,13 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=18';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH} from './engine.mjs?v=21';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=7';
-import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=9';
+import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=5';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
-import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
+import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=4';
 const SCALE=.020;
 const X=x=>(x-BOARD.width/2)*SCALE;
 const Y=y=>(BOARD.height/2-y)*SCALE;
@@ -23,9 +23,11 @@ export async function create3DTable(host){
  // scaling/distorting the 420 × 700 physics canvas or cutting off live walls.
  // Keep the original framing on phones/Fold where tap accuracy matters most.
  const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
- const camera=new T.PerspectiveCamera(compact?33:29.2,0.6,.1,120);
+ const camera=new T.PerspectiveCamera(compact?38:36,0.6,.1,120);
  // Frame the active playfield (all live wall ends fit inside the camera).
- camera.position.set(1.05,-2.0,26.25);
+ // A genuine foreshortened cabinet view: far upper lanes are narrower,
+ // bottom flippers read nearer and larger, as in the reference screenshot.
+ camera.position.set(.60,-12.5,23.5);
  camera.lookAt(0,0,.22);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
@@ -260,11 +262,12 @@ export async function create3DTable(host){
  }
   // Bumper field: a recessed six-sided mounting deck groups the three genuine
   // bumper collision zones. This is underlay only, never a new obstacle.
-  shape([[221,398],[606,398],[652,550],[535,688],[305,688],[185,550]],
-    '#16130e','#af8948',5);
-  shape([[237,412],[589,412],[631,551],[522,671],[317,671],[207,551]],
-    '#221c14','#725b34',3);
-  for(const [cx,cy] of [[300,480],[518,480],[410,620]]){
+  shape([[356,284],[564,252],[656,300],[670,474],[616,568],
+    [442,582],[348,460]],'#16130e','#af8948',5);
+  shape([[370,297],[550,268],[641,312],[651,468],[600,550],
+    [453,560],[363,453]],'#221c14','#725b34',3);
+  for(const b of BUMPERS){
+   const cx=b.x*2,cy=b.y*2;
    p.beginPath();p.arc(cx,cy,68,0,Math.PI*2);
    p.strokeStyle='rgba(192,209,219,.24)';p.lineWidth=6;p.stroke();
   }
@@ -318,7 +321,37 @@ export async function create3DTable(host){
      '#2b2217','#cba45a',2);
    p.restore();
   }
-  // Symmetric lower flipper zones: strongly graphic like a classic arcade game.
+  // The reference has a distinctive purple, three-pronged lower
+ // playfield silhouette between the core and flippers. This is ORIGINAL
+ // lacquer-print artwork, behind the real lower collision hardware.
+ shape([[420,1264],[380,1210],[347,1133],[324,1045],
+  [363,1094],[394,1150],[408,1182],[408,1096],
+  [420,1042],[432,1096],[432,1182],[446,1150],
+  [477,1094],[516,1045],[493,1133],[460,1210]],
+  '#57397d','#9c6eb9',5);
+ shape([[419,1228],[388,1190],[366,1147],[378,1166],
+  [407,1205],[420,1213],[434,1205],[462,1166],
+  [473,1147],[450,1190]],'#7b54a6','#a97ac9',2);
+ for(const side of [-1,1]){
+  p.save();p.translate(420,0);p.scale(side,1);
+  shape([[135,1010],[213,1075],[177,1182],[122,1131]],
+   '#261d38','#c64967',5);
+  p.lineWidth=3;p.strokeStyle='#8bc7e6';p.beginPath();
+  p.moveTo(155,1027);p.lineTo(170,1079);p.lineTo(142,1105);
+  p.lineTo(163,1142);p.stroke();
+  p.restore();
+ }
+ // Sparse custom electrical etching gives the large open centre the
+ // navy sci-fi texture visible in the reference without copying its art.
+ p.save();p.globalAlpha=.21;p.strokeStyle='#6b96d6';p.lineWidth=3;
+ for(const side of [-1,1]){
+  p.beginPath();p.moveTo(420+side*30,618);
+  p.bezierCurveTo(420+side*104,661,420+side*80,707,420+side*165,740);
+  p.bezierCurveTo(420+side*138,785,420+side*205,822,420+side*122,865);
+  p.stroke();
+ }
+ p.restore();
+ // Symmetric lower flipper zones: strongly graphic like a classic arcade game.
  for(const side of [-1,1]){
   p.save();p.translate(420,1200);p.scale(side,1);
   shape([[74,-170],[222,-90],[235,18],[180,20]],'#251912','#c18b45',5);
@@ -335,20 +368,22 @@ export async function create3DTable(host){
   p.fillStyle=color;p.textAlign='center';p.textBaseline='middle';
   p.fillText(text,x,y,width-10);
  }
- inkLabel('N · G · S',420,365,176);
+ inkLabel('N · G · S',436,239,118);
  p.font='900 20px Oxanium,Arial,sans-serif';p.fillStyle='#bcd5e8';
  p.textAlign='center';p.fillText('FLIGHT RANK',420,235);
  p.font='900 18px Oxanium,Arial,sans-serif';p.fillStyle='#bdeeff';
  p.fillText('FUEL',698,460);
- inkLabel('TARGET BANK',417,827,190);
+ inkLabel('TARGET BANK',494,573,192);
  inkLabel('POWER CORE',420,1098,210,'#f3c74f');
  inkLabel('ORBIT',120,738,105);
  inkLabel('RAMP',656,738,105);
  inkLabel('BALL SAVE',420,1184,166);
  const floorTexture=new T.CanvasTexture(paint);floorTexture.colorSpace=T.SRGBColorSpace;floorTexture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);floorTexture.minFilter=T.LinearMipmapLinearFilter;
- plane(0,0,.166,boardW,boardH,new T.MeshPhysicalMaterial({
-  map:floorTexture,roughness:.27,metalness:.12,clearcoat:.83,
-  clearcoatRoughness:.19,envMapIntensity:.8
+ // The original game's dark-blue enamel must stay DARK BLUE; a fully
+ // reflective lacquer was turning our upper board beige under studio lights.
+ // Lighting still falls onto every real metal/plastic item above this surface.
+ plane(0,0,.166,boardW,boardH,new T.MeshBasicMaterial({
+  map:floorTexture,side:T.DoubleSide,toneMapped:false
  }));
  // Soft baked contact shadows give hardware physical separation without
  // additional real-time lights or opaque surfaces over the playfield.
@@ -391,9 +426,10 @@ export async function create3DTable(host){
  // A floating neon wordmark, mounted over the black enamel without a framed plaque.
  const neonMarqueeMaterial=cabinetMarquee();
  const neonGlowMaterial=marqueeGlow();
- plane(0,5.48,.535,5.90,1.58,neonMarqueeMaterial);
- // Slight positive offset prevents z-fighting with the permanent, sharp tube core.
- plane(0,5.48,.548,5.90,1.58,neonGlowMaterial);
+ // Keep branding on the upper apron; the top-left satellite and attack
+ // playfield now begin above the old large NEON TILT title plaque.
+ plane(0,6.43,.535,3.95,.61,neonMarqueeMaterial);
+ plane(0,6.43,.548,3.95,.61,neonGlowMaterial);
  // Collision walls stay in engine.mjs. The Space Cadet-inspired visual
  // treatment replaces metal wall wires with painted enamel / plastic edges.
  for(const point of POSTS){
@@ -429,39 +465,42 @@ export async function create3DTable(host){
   const bayFastener=metal('#d6bc9c',.28,.73);
  for(const l of UPPER_ROLLOVERS){
   const px=X(l.x),py=Y(l.y);
-   plane(px,py,.191,1.10,1.38,bayEnamel);
-   for(const by of [py-.69,py+.69])
-    box(px,by,.24,1.10,.047,.055,bayTrim);
-   for(const bx of [px-.55,px+.55]){
-    box(bx,py,.237,.049,1.40,.05,bayTrim);
-    for(const by of [py-.63,py+.63])
-     cyl(bx,by,.276,.049,.035,bayFastener,10);
+   // Small crown rollover switches, not obstructive N/G/S boxes.
+   plane(px,py,.191,.49,.81,bayEnamel);
+   for(const by of [py-.42,py+.42])
+    box(px,by,.24,.49,.033,.037,bayTrim);
+   for(const bx of [px-.25,px+.25]){
+    box(bx,py,.237,.031,.83,.045,bayTrim);
+    for(const by of [py-.38,py+.38])
+     cyl(bx,by,.276,.036,.025,bayFastener,10);
    }
-   box(px,py,.22,.83,.63,.18,black);
-  box(px,py,.35,.63,.45,.16,darkChrome);
+   box(px,py,.22,.30,.36,.09,black);
+   box(px,py,.35,.26,.31,.09,darkChrome);
    // Mounting shoulder and paired captive screws make each lane a
    // distinct piece of playable machine hardware.
-   box(px,py+.575,.275,.91,.075,.055,crownSteel);
-   for(const dx of [-.38,.38])
-    cyl(px+dx,py+.575,.317,.048,.032,bayFastener,12);
-   laneLamps.push(box(px,py,.48,.42,.27,.11,amber));
-  plane(px,py,.56,.52,.31,label(l.label,'#2b1920',95,180,110));
-  for(const d of [-.48,.48])box(px+d,py-.27,.45,.075,.78,.36,nickel);
-  for(const dx of [-.35,.35]){
-   box(px+dx,py+.32,.68,.065,.13,.62,darkChrome);
-   cyl(px+dx,py+.32,.93,.07,.035,gold,12);
+   box(px,py+.36,.275,.40,.050,.034,crownSteel);
+   for(const dx of [-.15,.15])
+    cyl(px+dx,py+.36,.317,.034,.027,bayFastener,12);
+   laneLamps.push(box(px,py,.42,.19,.18,.047,amber));
+  plane(px,py,.50,.23,.19,label(l.label,'#2b1920',83,180,110));
+  for(const d of [-.26,.26])box(px+d,py-.19,.45,.036,.45,.16,nickel);
+  for(const dx of [-.16,.16]){
+   box(px+dx,py+.23,.61,.033,.09,.31,darkChrome);
+   cyl(px+dx,py+.23,.77,.042,.026,gold,12);
   }
-  box(px,py+.32,.99,.78,.065,.055,chrome);
+  box(px,py+.23,.82,.37,.047,.035,chrome);
   const mat=new T.MeshStandardMaterial({
    color:'#e9b780',emissive:'#ee9d5c',emissiveIntensity:.16,
    roughness:.27,metalness:.08
   });
-  box(px,py+.32,1.032,.27,.035,.02,mat);
+  box(px,py+.23,.86,.16,.026,.020,mat);
   laneGateMaterials.push(mat);
  }
  // Flush cast-metal bumper island, shaped around existing sensor positions.
   // It is a visual deck; ball collisions remain exclusively in engine.mjs.
-  const deckOutline=[[111,201],[305,201],[330,271],[268,347],[141,347],[87,271]];
+  // The three attack bumpers occupy an asymmetric upper-right island.
+  const deckOutline=[[178,142],[282,126],[328,150],[335,237],
+   [308,284],[221,291],[174,230]];
   const deckShape=new T.Shape();
   deckOutline.forEach(([x,y],i)=>i?deckShape.lineTo(X(x),Y(y)):
    deckShape.moveTo(X(x),Y(y)));
@@ -517,43 +556,189 @@ export async function create3DTable(host){
   const light=new T.PointLight('#ff866a',.75,2.3);
   light.position.set(x,y,1.1);scene.add(light);bumperLights.push(light);
  }
- // Four standing drop-target facades on a shared mechanical bank plate.
- // Their hit sensors remain unchanged: only lamps respond to real hits.
- const left=Math.min(...MID_TARGETS.map(t=>t.x));
- const right=Math.max(...MID_TARGETS.map(t=>t.x));
- const targetMid=X((left+right)/2),targetY=Y(407);
- const bankWidth=(right-left+34)*SCALE;
- contactShadow(targetMid,targetY,bankWidth+.30,1.13);
- const bankMetal=metal('#929ca8',.29,.77);
- const targetBacking=new T.MeshPhysicalMaterial({
-  color:'#302b3c',roughness:.37,metalness:.32,clearcoat:.65
+ // Full seven-bumper arrangement: three original main-board attack bumpers,
+ // one free-standing satellite, three *playable* engine bumpers on a raised
+ // left-side launch deck. No layer creates phantom main-board collisions.
+ const satellitePos={x:X(SATELLITE_BUMPER.x),y:Y(SATELLITE_BUMPER.y)};
+ const satelliteRadius=SATELLITE_BUMPER.r*SCALE;
+ cyl(satellitePos.x,satellitePos.y,.34,satelliteRadius+.09,.11,bumperSkirt,32);
+ ring(satellitePos.x,satellitePos.y,.43,satelliteRadius+.035,.040,chrome);
+ cyl(satellitePos.x,satellitePos.y,.50,satelliteRadius-.03,.095,gold,32);
+ const satelliteLamp=new T.MeshStandardMaterial({
+  color:'#d6edff',emissive:'#75b8ed',emissiveIntensity:1.1,roughness:.24
  });
- // The target bank receives its own low-profile engraved hardware nameplate.
-  box(targetMid,Y(387),.249,bankWidth+.20,.14,.058,bankMetal);
-  plane(targetMid,Y(383),.295,bankWidth*.84,.145,
-   label('TARGET BANK','#e8d4bd',70,560,72,true));
-  box(targetMid,targetY,.26,bankWidth,.72,.115,black);
- box(targetMid,targetY,.335,bankWidth-.13,.60,.095,bankMetal);
- box(targetMid,targetY,.40,bankWidth-.25,.47,.08,targetBacking);
+ cyl(satellitePos.x,satellitePos.y,.59,satelliteRadius-.075,.10,satelliteLamp,30);
+ // Deep purple deck with genuine thickness and underside supports: all
+ // dimensions reference the collision/sensor geometry from LAUNCH_PLATFORM.
+ const deckPaint=new T.MeshPhysicalMaterial({
+  color:'#4b315e',roughness:.37,metalness:.15,clearcoat:.94,
+  clearcoatRoughness:.20,side:T.DoubleSide
+ });
+ const deckRim=metal('#c0a2c8',.29,.55);
+ const deckRail=metal('#d0aa72',.22,.74);
+ const deckReturnRail=metal('#9e869d',.35,.57);
+ const launchDeckShape=new T.Shape();
+ LAUNCH_PLATFORM.outline.forEach(([px,py],i)=>{
+  if(i===0)launchDeckShape.moveTo(X(px),Y(py));else launchDeckShape.lineTo(X(px),Y(py));
+ });
+ launchDeckShape.closePath();
+ const deckMesh=add(new T.ExtrudeGeometry(launchDeckShape,{
+  depth:.14,bevelEnabled:true,bevelSegments:2,steps:1,
+  bevelSize:.045,bevelThickness:.028
+ }),deckPaint,0,0,LAUNCH_PLATFORM.z-.22);
+ deckMesh.receiveShadow=true;
+ const raisedDeckOutline=LAUNCH_PLATFORM.outline.map(([px,py])=>
+  new T.Vector3(X(px),Y(py),LAUNCH_PLATFORM.z-.05));
+ scene.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(raisedDeckOutline),
+  new T.LineBasicMaterial({color:'#d9b787'})));
+ for(const [px,py] of [[83,280],[163,304],[80,424],[148,456]]){
+  const h=LAUNCH_PLATFORM.z-.33;
+  cyl(X(px),Y(py),.30+h/2,.105,h,metal('#69525e',.39,.65),14);
+  cyl(X(px),Y(py),LAUNCH_PLATFORM.z-.075,.16,.042,deckRim,16);
+ }
+ // Physically connected entrance ramp and left-flipper bonus return. These
+ // paths contain actual balls in guided travel mode, not just painted decals.
+ function raisedGuide(path,width,color,guard=deckRail){
+  const stations=path.map(([x,y,z])=>new T.Vector3(X(x),Y(y),z));
+  const spline=new T.CatmullRomCurve3(stations);
+  const vertices=[],indexes=[],steps=42;
+  for(let i=0;i<=steps;i++){
+   const q=spline.getPoint(i/steps),t=spline.getTangent(i/steps).normalize();
+   const nx=-t.y,ny=t.x;
+   vertices.push(q.x-nx*width,q.y-ny*width,q.z-.12);
+   vertices.push(q.x+nx*width,q.y+ny*width,q.z-.12);
+   if(i<steps){
+    const v=2*i;indexes.push(v,v+1,v+2,v+1,v+3,v+2);
+   }
+  }
+  const geo=new T.BufferGeometry();
+  geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+  geo.setIndex(indexes);geo.computeVertexNormals();
+  add(geo,new T.MeshPhysicalMaterial({
+   color,roughness:.37,metalness:.30,side:T.DoubleSide,
+   clearcoat:.7
+  }),0,0,0);
+  for(const sign of [-1,1]){
+   const points=[];
+   for(let i=0;i<=steps;i++){
+    const q=spline.getPoint(i/steps),t=spline.getTangent(i/steps).normalize();
+    points.push(new T.Vector3(q.x-sign*t.y*width,q.y+sign*t.x*width,q.z+.08));
+   }
+   add(new T.TubeGeometry(new T.CatmullRomCurve3(points),steps,.036,8,false),
+    guard,0,0,0);
+  }
+ }
+ raisedGuide(SKYLINE_PATH,.205,'#492c61');
+ raisedGuide(DECK_RETURN_PATH,.135,'#332e42',deckReturnRail);
+ // A readable physical entrance at the real launch-ramp shot sensor, BELOW
+ // the raised deck rather than behind it. It funnels the incoming flipper shot.
+ const mouthX=X(SHOTS.skyline.x),mouthY=Y(SHOTS.skyline.y);
+ box(mouthX,mouthY,.267,.72,.22,.065,metal('#503152',.33,.35));
+ ring(mouthX,mouthY,.319,.19,.027,deckRail);
+ for(const side of [-1,1])
+  box(mouthX+side*.36,mouthY+.10,.32,.075,.48,.06,deckRim);
+ plane(mouthX,mouthY-.31,.293,1.14,.20,
+  label('LAUNCH','#fff0ce',60,420,92,true));
+ // Three distinct engine-bumper collision caps and 3 launch-lane switches.
+ const deckBumperMaterials=[],deckLaneMaterials=[];
+ for(const [i,b] of LAUNCH_PLATFORM.bumpers.entries()){
+  const x=X(b.x),y=Y(b.y),r=b.r*SCALE,z=LAUNCH_PLATFORM.z;
+  cyl(x,y,z-.025,r+.105,.073,metal('#c6c0cc',.23,.66),28);
+  ring(x,y,z+.042,r+.059,.036,deckRim);
+  cyl(x,y,z+.094,r+.029,.08,metal('#b79ea5',.30,.58),28);
+  const mat=new T.MeshStandardMaterial({
+   color:'#c9e7ff',emissive:'#4a92dd',emissiveIntensity:.55,roughness:.28
+  });
+  cyl(x,y,z+.17,r-.038,.073,mat,26);
+  deckBumperMaterials.push(mat);
+  const cap=add(new T.SphereGeometry(r*.65,22,12),
+   new T.MeshPhysicalMaterial({color:'#eff3ff',roughness:.16,metalness:.10,
+    transparent:true,opacity:.9}),x,y,z+.219);
+  cap.scale.z=.30;
+ }
+ for(const [i,lane] of LAUNCH_PLATFORM.lanes.entries()){
+  const x=X(lane.x),y=Y(lane.y),z=LAUNCH_PLATFORM.z;
+  box(x,y,z-.035,.36,.42,.055,metal('#1b1a2c',.42,.48));
+  const mat=new T.MeshStandardMaterial({
+   color:'#e6e2fc',emissive:'#6666dc',emissiveIntensity:.30,roughness:.26
+  });
+  cyl(x,y,z+.022,.092,.032,mat,14);deckLaneMaterials.push(mat);
+  plane(x,y-.30,z+.033,.28,.24,label(lane.label,'#ffebc6',70,140,90,true));
+ }
+ plane(X(123),Y(454),LAUNCH_PLATFORM.z+.014,1.43,.25,
+  label('ENGINE BAY','#f7dbbd',48,530,86,true));
+ // Three low, recessed playable wormhole mouths. The actual entry sensors
+ // and physical ball release vectors live in engine.mjs, never in this art.
+ const wormholeLenses=[];
+ for(const [index,hole] of WORMHOLES.entries()){
+  const px=X(hole.x),py=Y(hole.y),r=hole.r*SCALE;
+  contactShadow(px,py,(r+.18)*2,(r+.18)*2);
+  cyl(px,py,.215,r+.155,.065,metal('#ad9d91',.32,.68),36);
+  cyl(px,py,.245,r+.067,.052,metal('#302b34',.36,.38),36);
+  cyl(px,py,.273,r-.035,.021,black,36);
+  ring(px,py,.294,r+.045,.037,chrome);
+  const mat=new T.MeshStandardMaterial({
+   color:hole.color,emissive:hole.color,emissiveIntensity:.18,
+   metalness:.13,roughness:.23
+  });
+  ring(px,py,.313,r-.093,.025,mat);
+  wormholeLenses.push({mat,index});
+  for(let i=0;i<3;i++){
+   const a=i*TAU/3-PI/2;
+   cyl(px+Math.cos(a)*(r+.115),py+Math.sin(a)*(r+.115),.332,.041,.024,gold,12);
+  }
+  plane(px,py-.52,.277,.86,.18,
+   label(hole.id.toUpperCase(),'#f0d7b7',66,350,90,true));
+ }
+ // Warp spot target: a real circular switch that arms the transfer network.
+ const wx=X(WARP_SWITCH.x),wy=Y(WARP_SWITCH.y);
+ cyl(wx,wy,.27,.305,.10,metal('#bb9e83',.24,.76),24);
+ cyl(wx,wy,.335,.211,.07,darkChrome,24);
+ const warpSpotLens=new T.MeshStandardMaterial({
+  color:'#ffb66f',emissive:'#ffb66f',emissiveIntensity:.20,roughness:.3
+ });
+ cyl(wx,wy,.382,.128,.027,warpSpotLens,20);
+ plane(wx,wy+.45,.292,.73,.18,label('WARP','#ffdaa9',70,300,90,true));
+ // Two compact pairs of mission targets mirror the original table's
+ // split, staggered yellow switch banks. The old enormous four-switch
+ // billboard incorrectly dominated the main playfield.
+ const bankMetal=metal('#9e8f83',.33,.64);
+ const targetBacking=new T.MeshPhysicalMaterial({
+  color:'#3b302c',roughness:.45,metalness:.19,clearcoat:.60
+ });
+ const meanY=MID_TARGETS.reduce((sum,t)=>sum+t.y,0)/MID_TARGETS.length;
+ const nameX=X(246);
+ plane(nameX,Y(meanY-29),.288,1.35,.17,
+  label('MISSION','#efdcba',69,440,75,true));
+ for(const group of [MID_TARGETS.slice(0,2),MID_TARGETS.slice(2,4)]){
+  const first=group[0],last=group.at(-1);
+  const mx=X((first.x+last.x)/2);
+  const w=(last.x-first.x+27)*SCALE;
+  const my=Y((first.y+last.y)/2);
+  contactShadow(mx,my,w+.17,.59);
+  box(mx,my,.265,w,.41,.085,bankMetal);
+  box(mx,my,.34,w-.11,.32,.062,black);
+  box(mx,my,.37,w-.19,.28,.04,targetBacking);
+ }
  const targetLamps=[],targetStatusMaterials=[];
  for(const t of MID_TARGETS){
   const x=X(t.x),y=Y(t.y);
-  box(x,y,.46,.47,.56,.16,darkChrome);
-  box(x,y,.55,.365,.46,.075,rose);
+  box(x,y,.43,.276,.42,.105,darkChrome);
+  box(x,y,.50,.220,.34,.066,metal('#bfa56e',.28,.42));
   const lamp=new T.MeshStandardMaterial({
-   color:'#d56f70',emissive:'#a73250',emissiveIntensity:.20,
+   color:'#f3cf74',emissive:'#d4893b',emissiveIntensity:.20,
    roughness:.29,metalness:.12
   });
-  box(x,y,.603,.273,.367,.040,lamp);targetLamps.push(lamp);
+  box(x,y,.55,.156,.272,.039,lamp);targetLamps.push(lamp);
   // Separate shield and status lens so the target body stays legible.
-  box(x,y-.275,.49,.39,.055,.09,nickel);
-  for(const dx of [-.16,.16]){
-   cyl(x+dx,y+.245,.575,.039,.027,chrome,10);
+  box(x,y-.205,.44,.246,.045,.07,nickel);
+  for(const dx of [-.11,.11]){
+   cyl(x+dx,y+.185,.53,.029,.020,chrome,10);
   }
   const status=new T.MeshStandardMaterial({
    color:'#b57677',emissive:'#d75367',emissiveIntensity:.1,roughness:.38
   });
-  cyl(x,Y(t.y-24),.29,.094,.048,status,16);
+  cyl(x,Y(t.y-16),.29,.062,.038,status,16);
   targetStatusMaterials.push(status);
  }
  // Outer-edge plastic lane approaches only. Tracing the complete engine
@@ -990,8 +1175,9 @@ export async function create3DTable(host){
   return add(new T.ExtrudeGeometry(shape,{depth:.1,bevelEnabled:true,
    bevelThickness:.03,bevelSize:.02,bevelSegments:2}),material,0,0,z);
  }
- molded([[39,208],[46,169],[61,148],[80,159],[71,203],
-   [62,249],[47,299],[37,299]],leftAcrylic);
+ // Split this plastic guard: the old solid piece obscured the real satellite.
+ molded([[39,186],[46,169],[61,148],[80,159],[72,188],[53,203],[38,202]],leftAcrylic);
+ molded([[36,282],[47,263],[58,265],[52,309],[37,313]],leftAcrylic);
  molded([[354,115],[369,108],[374,135],[371,346],
    [361,361],[355,292]],rightAcrylic,.26);
  // Phase 4K.2 — the signature Power Core is a recessed machine insert,
@@ -1068,7 +1254,7 @@ export async function create3DTable(host){
  // bumper-side light runs. The upper bumper faces remain unobstructed.
  const upperBankLights=[];
  for(let i=0;i<9;i++){
-   const px=72+i*34,py=131;
+   const px=151+i*18,py=105;
    const material=new T.MeshStandardMaterial({
      color:i%3===0?'#fce2a5':'#94b8ec',
      emissive:i%3===0?'#e89c5a':'#387fbb',
@@ -1078,10 +1264,10 @@ export async function create3DTable(host){
    upperBankLights.push(material);
  }
  const bumperSideLights=[];
- for(const [px,py,index] of [
-   [109,235,0],[111,269,0],[306,235,1],[307,269,1],
-   [165,335,2],[245,335,2]
- ]){
+ for(const [px,py,index] of BUMPERS.flatMap((b,index)=>[
+   [b.x-b.r-14,b.y-3,index],
+   [b.x+b.r+14,b.y+3,index]
+ ])){
    const mat=new T.MeshStandardMaterial({
      color:'#ffbe87',emissive:'#e86b61',emissiveIntensity:.22,
      roughness:.36,metalness:.05
@@ -1168,9 +1354,25 @@ export async function create3DTable(host){
    mesh.position.set(X(b.x),Y(b.y),b.mode==='scoop'?.31:.62);
    if(b.mode==='shooter')mesh.position.z=.55;
    if(b.mode==='scoop')mesh.position.z=.31;
+   if(b.mode==='wormhole')mesh.position.z=.30;
+   if(b.mode==='deck')mesh.position.z=LAUNCH_PLATFORM.z+UPPER_BALL_RADIUS;
    if(b.mode==='travel')
     mesh.position.z=Math.max(.55,(b.travelHeight||.39)+UPPER_BALL_RADIUS);
   }
+  for(const [i,material] of deckLaneMaterials.entries())
+   material.emissiveIntensity=engine.deckLanes?.has(i)?2.7:.30;
+  for(const material of deckBumperMaterials)
+   material.emissiveIntensity=.5+(engine.deckBumperLevel||0)*.55;
+  satelliteLamp.emissiveIntensity=engine.state==='playing'?1.5:.72;
+  // The colour-ring lamps reflect the live space-warp switch. A trapped ball
+  // lights its particular mouth even when the cross-table warp is closed.
+  for(const {mat,index} of wormholeLenses){
+   const hole=WORMHOLES[index];
+   const busy=activeBalls.some(b=>b.mode==='wormhole'&&
+    (b.wormhole?.exit===index||Math.hypot(b.x-hole.x,b.y-hole.y)<2));
+   mat.emissiveIntensity=busy?3.6:engine.warpOpen?2.4:.19;
+  }
+  warpSpotLens.emissiveIntensity=engine.warpOpen?3.6:.22;
   // LEDs expose the one-use outlane recovery charge in actual gameplay.
   for(const {material} of kickbackLenses){
    const ready=engine.kickbackReady&&!engine.tilted;

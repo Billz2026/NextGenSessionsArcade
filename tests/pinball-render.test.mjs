@@ -63,7 +63,7 @@ test('marquee uses standalone red neon tubing without a surrounding plaque',()=>
  assert.doesNotMatch(canvasSource,/fillText\('NEXTGEN SESSIONS'/);
  assert.doesNotMatch(threeSource,/fillText\('NEXTGEN SESSIONS'/);
  for(const source of [canvasSource,threeSource]){
-  assert.match(source,/italic 500/);
+  assert.match(source,/italic (?:500|650)/);
   assert.match(source,/#ec3635/i);
   assert.match(source,/#f3c74f/i);
  }

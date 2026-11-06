@@ -1,6 +1,6 @@
 /* Integrated routed-lane geometry follows the existing authoritative engine
    transport paths. These visual lane surfaces never alter physics or scoring. */
-import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=18';
+import {BOARD,TRAVEL_PATHS,SHOTS,LANES} from './engine.mjs?v=21';
 function makeRoute(kind,width,accent){
  const path=TRAVEL_PATHS[kind],shot=SHOTS[kind];
  if(!path||!shot||path[0][0]!==shot.x||path[0][1]!==shot.y)
@@ -27,7 +27,7 @@ export const VISIBLE_CHANNELS=Object.freeze([
  }),
  Object.freeze({
   kind:'ramp',width:22,trimSide:'left',
-  points:Object.freeze(UPPER_ROUTES[1].points.slice(0,3))
+  points:Object.freeze(UPPER_ROUTES[1].points.slice(0,7))
  })
 ]);
 export const UPPER_ROLLOVERS=Object.freeze(LANES.map((l,index)=>
@@ -50,7 +50,7 @@ export function guideEdges(route){
 // The upper crown follows the outer machine silhouette and stays UNDER the ball.
 // Its y-coordinates never intersect the visible title plaque or alter scoring.
 export const UPPER_ARCH=Object.freeze([
- [48,211],[56,179],[83,153],[120,145],[210,142],
- [300,145],[336,154],[357,181],[365,211]
+ [43,157],[54,116],[91,86],[140,79],[219,79],
+ [294,84],[331,98],[352,123],[361,157]
 ].map(([x,y])=>Object.freeze({x,y})));
 

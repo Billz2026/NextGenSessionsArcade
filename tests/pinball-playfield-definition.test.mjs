@@ -25,20 +25,20 @@ test('three upper scoring bays have real mechanical framing in both renderers',(
  assert.deepEqual(UPPER_ROLLOVERS.map(({x,y})=>[x,y]),LANES.map(({x,y})=>[x,y]));
  assert.match(three,/const bayEnamel=new T\.MeshPhysicalMaterial/);
  assert.match(three,/for\(const l of UPPER_ROLLOVERS\)/);
- assert.match(three,/plane\(px,py,\.191,1\.10,1\.38,bayEnamel\)/);
+ assert.match(three,/plane\(px,py,\.191,\.49,\.81,bayEnamel\)/);
  assert.match(canvas,/for\(const lane of UPPER_ROLLOVERS\)/);
- assert.match(canvas,/rect\(c,lane\.x-28,lane\.y-35,56,70,7/);
+ assert.match(canvas,/rect\(c,lane\.x-12,lane\.y-19,24,38,4/);
 });
 
 test('bumper cluster underlays are decorative and aligned to all three existing impact switches',()=>{
  assert.equal(MID_BUMPERS.length,3);
  assert.deepEqual(MID_BUMPERS.map(({x,y,r})=>[x,y,r]),BUMPERS.map(({x,y,r})=>[x,y,r]));
- assert.match(three,/const deckOutline=\[\[111,201\]/);
+ assert.match(three,/const deckOutline=\[\[178,142\]/);
  assert.match(three,/new T\.ShapeGeometry\(deckShape\)/);
  assert.match(canvas,/for\(let i=0;i<MID_BUMPERS\.length;i\+\+\)/);
  assert.match(three,/for\(const b of MID_BUMPERS\)/);
  assert.equal(MID_TARGETS.length,4);
- assert.match(three,/label\('TARGET BANK'/);
+ assert.match(three,/label\('MISSION'/);
 });
 
 test('lower sling housings and guides remain tied to actual contact geometry',()=>{

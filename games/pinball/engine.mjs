@@ -9,11 +9,40 @@ export const KICKBACK=Object.freeze({
  left:Object.freeze({x:105,y:640,edge:126,vx:335,vy:-685}),
  right:Object.freeze({x:315,y:640,edge:294,vx:-335,vy:-685})
 });
+// Space Cadet's distinct upper-right attack island. This is not a
+// horizontally centred bumper row; the left flank stays clear for the ramp.
 export const BUMPERS=Object.freeze([
- {x:150,y:240,r:24,score:250},
- {x:259,y:240,r:24,score:250},
- {x:205,y:310,r:24,score:250}
+ {x:215,y:180,r:21,score:250},
+ {x:294,y:164,r:21,score:250},
+ {x:257,y:240,r:21,score:250}
 ]);
+// Seven-bumper topology: three existing attack bumpers, one satellite,
+// and three real engine bumpers on the elevated launch platform.
+export const SATELLITE_BUMPER=Object.freeze({x:100,y:90,r:16,score:1500});
+export const LAUNCH_PLATFORM=Object.freeze({
+ z:1.36,
+ // The tall, sculpted launch platform occupies the MIDDLE-LEFT, exactly
+ // as a recognisable separate area; its three bumpers occupy the lower part.
+ outline:Object.freeze([[77,236],[119,240],[164,274],[179,327],
+  [174,428],[157,469],[136,486],[89,470],[58,429],[61,308]]
+  .map(p=>Object.freeze(p))),
+ bounds:Object.freeze({left:63,right:170,top:282,exit:466}),
+ entry:Object.freeze({x:125,y:293}),
+ lanes:Object.freeze([
+  Object.freeze({x:82,y:317,label:'L'}),
+  Object.freeze({x:115,y:317,label:'A'}),
+  Object.freeze({x:148,y:317,label:'B'})
+ ]),
+ bumpers:Object.freeze([
+  Object.freeze({x:79,y:373,r:11}),
+  Object.freeze({x:141,y:389,r:11}),
+  Object.freeze({x:109,y:421,r:11})
+ ])
+});
+export const DECK_RETURN_PATH=Object.freeze([
+ [110,465,1.30],[87,481,1.13],[60,510,.91],[68,538,.63],
+ [87,563,.45],[110,579,.40],[131,597,.39]
+].map(p=>Object.freeze(p)));
 export const POSTS=Object.freeze([
  {x:112,y:585,r:9},{x:308,y:585,r:9},
  {x:135,y:635,r:6},{x:285,y:635,r:6},
@@ -31,16 +60,22 @@ export const WALLS=Object.freeze([
  [329,496,300,526],[300,526,278,542],
  [53,366,83,419],[336,420,357,365]
 ]);
-export const LANES=Object.freeze([{x:101,y:173,label:'N'},{x:210,y:169,label:'G'},{x:314,y:174,label:'S'}]);
-export const TARGETS=Object.freeze([{x:165,y:410,r:12},{x:194,y:405,r:12},{x:223,y:405,r:12},{x:252,y:410,r:12}]);
+// The three narrow re-entry switches are at the crown, not tall billboards
+// spread across the width of the playfield.
+export const LANES=Object.freeze([{x:179,y:123,label:'N'},{x:218,y:121,label:'G'},{x:257,y:123,label:'S'}]);
+// Four standing mission targets beneath the attack island, away from
+// the left launch platform and centre of the table.
+export const TARGETS=Object.freeze([{x:202,y:305,r:10},{x:232,y:310,r:10},{x:262,y:310,r:10},{x:292,y:305,r:10}]);
 // Single source of truth for guided-ball motion and the raised 3D rail paths.
 // [x, y, 3D height] coordinates; collision physics elsewhere stays 2D.
 export const RAMP_PATH=Object.freeze([
- [311,372,.40],[327,333,.65],[320,290,.94],[286,244,1.23],
- [285,203,1.45],[311,170,1.28],[291,150,.95],
- [321,167,.95],[341,222,.85],[339,298,.68],[332,387,.53],
- // Descend outside the right sling instead of ejecting onto its collider.
- [347,443,.46],[350,493,.40],[329,537,.38],[310,555,.38],[290,575,.39]
+ [311,372,.40],[329,340,.61],[340,298,.79],[343,251,1.01],
+ [343,195,1.20],[328,145,1.36],[307,113,1.44],
+ [280,99,1.42],[295,115,1.18],[333,154,1.01],
+ [350,217,.87],[355,301,.67],[352,387,.53],
+ // The outer descent feeds the right return; it does not cut through the
+ // attack-bumper island or terminate halfway along the shooter wall.
+ [349,447,.46],[350,493,.40],[329,537,.38],[310,555,.38],[290,575,.39]
 ].map(p=>Object.freeze(p)));
 export const ORBIT_PATH=Object.freeze([
  [77,373,.39],[59,321,.52],[56,250,.67],[71,204,.78],
@@ -58,31 +93,32 @@ export const CENTER_PATH=Object.freeze([
  [272,205,1.24],[270,273,1.12],[251,349,.84],
  [275,416,.58],[253,505,.46]
 ].map(p=>Object.freeze(p)));
+// The middle-left shot climbs into a real elevated upper launch deck.
 export const SKYLINE_PATH=Object.freeze([
- [124,380,.38],[102,341,.63],[94,304,.92],[94,254,1.23],
- [119,207,1.43],[158,173,1.53],[196,152,1.60],
- [178,219,1.38],[156,283,1.05],[141,360,.76],
- [134,428,.52],[159,508,.46]
+ [169,505,.38],[183,474,.50],[186,444,.68],[189,412,.82],
+ [188,374,1.01],[177,332,1.20],[157,287,1.36],[141,294,1.37]
 ].map(p=>Object.freeze(p)));
 export const TRAVEL_PATHS=Object.freeze({
  ramp:RAMP_PATH,orbit:ORBIT_PATH,center:CENTER_PATH,skyline:SKYLINE_PATH
 });
 // Three-dimensional arc length is shared by all guided rail segments.
+const measureRoute=path=>{
+ const lengths=[0];
+ for(let i=1;i<path.length;i++){
+  const a=path[i-1],b=path[i];
+  lengths.push(lengths.at(-1)+Math.hypot(b[0]-a[0],b[1]-a[1],45*(b[2]-a[2])));
+ }
+ return Object.freeze({lengths:Object.freeze(lengths),total:lengths.at(-1)});
+};
 const TRAVEL_GEOMETRY=Object.freeze(Object.fromEntries(
- Object.entries(TRAVEL_PATHS).map(([kind,path])=>{
-  const lengths=[0];
-  for(let i=1;i<path.length;i++){
-   const a=path[i-1],b=path[i];
-   lengths.push(lengths[i-1]+Math.hypot(b[0]-a[0],b[1]-a[1],45*(b[2]-a[2])));
-  }
-  return [kind,Object.freeze({lengths:Object.freeze(lengths),total:lengths.at(-1)})];
- })
+ Object.entries(TRAVEL_PATHS).map(([kind,path])=>[kind,measureRoute(path)])
 ));
+const DECK_RETURN_GEOMETRY=measureRoute(DECK_RETURN_PATH);
 export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
  ramp:{x:311,y:372,r:27,points:7500},
  center:{x:207,y:426,r:33,points:4500},
- skyline:{x:124,y:380,r:18,points:6000}
+ skyline:{x:169,y:505,r:20,points:6000}
 });
 // Ramp and orbit entries should reward a deliberate outside-lane shot without
 // feeling like a magnetic auto-aim. The spring acts only inside the visible
@@ -102,6 +138,14 @@ export const RETURN_FEEDS=Object.freeze({
 });
 export const SPINNER=Object.freeze({x:204,y:365,halfWidth:20,points:1250});
 export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
+// Three playable recessed wormholes, not just painted circles. Both renderers
+// source geometry from these actual engine sensor coordinates.
+export const WORMHOLES=Object.freeze([
+ Object.freeze({id:'green',x:118,y:173,r:16,color:'#73dbaa'}),
+ Object.freeze({id:'red',x:334,y:268,r:16,color:'#ff747b'}),
+ Object.freeze({id:'yellow',x:333,y:503,r:15,color:'#ffce75'})
+]);
+export const WARP_SWITCH=Object.freeze({x:333,y:354,r:10,points:1250});
 export const SLINGS=Object.freeze([
  {x1:119,y1:502,x2:163,y2:535,score:100},
  {x1:301,y1:502,x2:257,y2:535,score:100}
@@ -153,6 +197,8 @@ export class PinballEngine{
   this.streakShots=0;this.streakShieldReady=false;this.streakShieldSpent=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
+  this.warpOpen=false;this.warpSequence=0;this.wormholeEntries=0;
+  this.deckEntries=0;this.deckLanes=new Set();this.deckBumperLevel=0;
   this.skillShotPending=false;this.skillShotUntil=0;
   this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;
@@ -167,6 +213,7 @@ export class PinballEngine{
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
   this.kickbackReady=true;
   this.lanes.clear();this.targets.clear();this.bumperHits=0;
+  this.deckEntries=0;this.deckLanes.clear();this.deckBumperLevel=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.rankIndex=0;this.rankName=RANKS[0];this.commandFlags=0;
   this.commandMissionReady=false;this.commandMissionIndex=0;this.completedCommands.clear();
@@ -179,6 +226,8 @@ export class PinballEngine{
   this.streakShots=0;this.streakShieldReady=false;this.streakShieldSpent=false;
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
+  this.warpOpen=false;this.warpSequence=0;this.wormholeEntries=0;
+  this.deckEntries=0;this.deckLanes=new Set();this.deckBumperLevel=0;
   this.skillShotPending=false;this.skillShotUntil=0;
   this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;
@@ -606,7 +655,7 @@ export class PinballEngine{
   this.expireArcadeModes();
   this.shots++;this.recordStreakShot();const shotName={
    ramp:'RAMP SHOT',orbit:'LEFT ORBIT',
-   center:'CENTER CROSSOVER',skyline:'SKYLINE LOOP'
+   center:'CENTER CROSSOVER',skyline:'LAUNCH RAMP'
   }[kind];
   this.addPoints(shot.points,shotName);
   this.emit('shot',{kind,points:shot.points});
@@ -634,7 +683,7 @@ export class PinballEngine{
    }
   }
   const b=this.ball;
-  const durations={ramp:.95,orbit:.8,center:1.24,skyline:1.18};
+  const durations={ramp:.95,orbit:.8,center:1.24,skyline:.90};
   const approach=Math.hypot(b.vx,b.vy),base=durations[kind];
   const duration=clip(base*650/clip(approach,500,900),base*.84,base*1.12);
   b.mode='travel';b.travel={kind,t:0,duration,from:{x:b.x,y:b.y}};
@@ -660,6 +709,40 @@ export class PinballEngine{
      this.impactFeedback('target','target'+i,Math.abs(toward),t.x,t.y);
      this.activateTarget(i);
    }
+  }
+  // A spot target physically opens one cross-table transfer. It reflects the
+  // incoming ball, so the warp cannot be enabled by mere proximity.
+  const dx=b.x-WARP_SWITCH.x,dy=b.y-WARP_SWITCH.y;
+  const wd=Math.hypot(dx,dy);
+  if(wd<WARP_SWITCH.r+b.r && Math.hypot(b.vx,b.vy)>140 &&
+     this.time-(this.cooldowns.get('warpSwitch')??-100)>.45){
+   this.cooldowns.set('warpSwitch',this.time);
+   const nx=wd>.01?dx/wd:0,ny=wd>.01?dy/wd:-1;
+   b.x=WARP_SWITCH.x+nx*(WARP_SWITCH.r+b.r+.6);
+   b.y=WARP_SWITCH.y+ny*(WARP_SWITCH.r+b.r+.6);
+   const approach=b.vx*nx+b.vy*ny;
+   if(approach<0){b.vx-=1.7*approach*nx;b.vy-=1.7*approach*ny;}
+   const awarded=this.addPoints(WARP_SWITCH.points,'WARP SPOT');
+   if(!this.warpOpen){this.warpOpen=true;this.emit('warplit',{points:awarded});}
+   else this.emit('warpswitch',{points:awarded});
+  }
+  // Closed holes eject from the same mouth. A lit warp transfers the ball
+  // to the next coloured exit. This is deterministic during multiball too.
+  for(let i=0;i<WORMHOLES.length;i++){
+   const hole=WORMHOLES[i];
+   if(Math.hypot(b.x-hole.x,b.y-hole.y)>hole.r ||
+      Math.hypot(b.vx,b.vy)<165 ||
+      this.time-(this.cooldowns.get('wormhole'+i)??-100)<.85)continue;
+   const opened=this.warpOpen;
+   const exit=opened?(i+1+(this.warpSequence++%2))%WORMHOLES.length:i;
+   this.warpOpen=false;this.wormholeEntries++;
+   this.cooldowns.set('wormhole'+i,this.time);
+   const points=this.addPoints(opened?7500:2000,opened?'SPACE WARP':'WORMHOLE');
+   b.mode='wormhole';b.wormhole={exit,timer:.38};
+   b.x=hole.x;b.y=hole.y;b.vx=0;b.vy=0;
+   this.emit('wormhole',{source:hole.id,destination:WORMHOLES[exit].id,
+     opened,points,entries:this.wormholeEntries});
+   return;
   }
   // Spinner and scoop are physical scoring features located in free lanes.
   if(Math.abs(b.x-SPINNER.x)<SPINNER.halfWidth &&
@@ -720,7 +803,9 @@ export class PinballEngine{
  updateTravel(dt){
   const b=this.ball,tr=b.travel;if(!tr){b.mode='live';return;}
   tr.t+=dt;
-  const path=TRAVEL_PATHS[tr.kind],geo=TRAVEL_GEOMETRY[tr.kind];
+  const deckReturn=tr.kind==='deckReturn';
+  const path=deckReturn?DECK_RETURN_PATH:TRAVEL_PATHS[tr.kind];
+  const geo=deckReturn?DECK_RETURN_GEOMETRY:TRAVEL_GEOMETRY[tr.kind];
   const progress=clip(tr.t/tr.duration,0,1);
   // Unevenly spaced rail supports do not cause uneven ball movement.
   // Slight acceleration on descent keeps shots lively.
@@ -734,6 +819,19 @@ export class PinballEngine{
   b.y=path[i][1]+(path[i+1][1]-path[i][1])*f+(tr.from.y-path[0][1])*entryBlend;
   b.travelHeight=path[i][2]+(path[i+1][2]-path[i][2])*f;
   if(progress>=1){
+   if(tr.kind==='skyline'){
+    b.mode='deck';b.travel=null;b.deckTime=0;
+    // The side of the real launch mouth that the ball enters determines
+    // which one of the three separate raised lanes it can cross. All three
+    // lanes are reachable during real play rather than an automatic award.
+    const bias=clip((tr.from.x-SHOTS.skyline.x)/SHOTS.skyline.r,-1,1);
+    b.x=LAUNCH_PLATFORM.entry.x+bias*20;b.y=LAUNCH_PLATFORM.entry.y;
+    b.vx=bias*140;b.vy=165;b.travelHeight=LAUNCH_PLATFORM.z;b.trail=[];
+    this.deckEntries++;
+    this.emit('deckenter',{visits:this.deckEntries});
+    this.emit('routeexit',{kind:'skyline',stage:'launch-platform',x:b.x,y:b.y});
+    return;
+   }
    const a=path.at(-2),z=path.at(-1),dx=z[0]-a[0],dy=z[1]-a[1];
    const length=Math.hypot(dx,dy)||1;
    const speed=clip(geo.total/tr.duration*.50,260,475),feed=RETURN_FEEDS[tr.kind];
@@ -750,6 +848,44 @@ export class PinballEngine{
   }
  }
 
+ // A genuine raised sub-playfield, advanced by the same 240-Hz fixed step.
+ // While the ball is on this deck, main-board collision sensors are inactive.
+ stepLaunchPlatform(dt){
+  const b=this.ball,p=LAUNCH_PLATFORM,wall=p.bounds;
+  const previousY=b.y;
+  b.deckTime=(b.deckTime||0)+dt;
+  b.vy+=425*dt;b.vx*=1-.11*dt;
+  b.x+=b.vx*dt;b.y+=b.vy*dt;
+  const left=wall.left+b.r,right=wall.right-b.r,top=wall.top+b.r;
+  if(b.x<left){b.x=left;b.vx=Math.abs(b.vx)*.83;}
+  if(b.x>right){b.x=right;b.vx=-Math.abs(b.vx)*.83;}
+  if(b.y<top){b.y=top;b.vy=Math.abs(b.vy)*.83;}
+  for(const [i,lane] of p.lanes.entries()){
+   if(previousY<lane.y&&b.y>=lane.y&&b.vy>70&&
+    Math.abs(b.x-lane.x)<15&&
+    this.time-(this.cooldowns.get('decklane'+i)??-100)>.28){
+    this.cooldowns.set('decklane'+i,this.time);
+    const points=this.addPoints(500,'LAUNCH LANE');
+    this.deckLanes.add(i);
+    this.emit('decklane',{index:i,count:this.deckLanes.size,points});
+    if(this.deckLanes.size===3){
+     this.deckLanes.clear();
+     this.deckBumperLevel=Math.min(3,this.deckBumperLevel+1);
+     this.emit('deckupgrade',{level:this.deckBumperLevel});
+    }
+   }
+  }
+  for(const [i,bumper] of p.bumpers.entries())
+   this.collideCircle(bumper,1.045,'bumperlaunch'+i,1500+this.deckBumperLevel*1000);
+  // This single lower throat feeds a visible, elevated left return chute.
+  // A timed release is a safety catch against indefinite bumper pinning.
+  if(b.y>wall.exit || b.deckTime>6){
+   b.mode='travel';b.travel={kind:'deckReturn',t:0,duration:.79,
+    from:{x:b.x,y:b.y}};
+   b.travelHeight=p.z;
+   this.emit('deckexit',{visits:this.deckEntries});
+  }
+ }
  singleStep(dt){
   if(this.state==='between'){
    this.between-=dt;
@@ -787,6 +923,24 @@ export class PinballEngine{
   const b=this.ball;
   if(!b)return;
   if(b.mode==='travel'){this.updateTravel(dt);return;}
+  if(b.mode==='deck'){this.stepLaunchPlatform(dt);return;}
+  if(b.mode==='wormhole'){
+   b.wormhole.timer-=dt;
+   const hole=WORMHOLES[b.wormhole.exit];
+   if(b.wormhole.timer<=0){
+    const exits=[
+     {dx:24,dy:14,vx:365,vy:180},
+     {dx:-25,dy:13,vx:-350,vy:245},
+     {dx:-32,dy:10,vx:-460,vy:-480}
+    ];
+    const kick=exits[b.wormhole.exit];
+    b.x=hole.x+kick.dx;b.y=hole.y+kick.dy;
+    b.vx=kick.vx;b.vy=kick.vy;b.mode='live';b.wormhole=null;
+    this.cooldowns.set('wormhole'+WORMHOLES.indexOf(hole),this.time);
+    this.emit('wormholeExit',{destination:hole.id});
+   }else{b.x=hole.x;b.y=hole.y;}
+   return;
+  }
   if(b.mode==='scoop'){
    b.scoopTimer-=dt;
    b.x=SCOOP.x;b.y=SCOOP.y;b.vx=0;b.vy=0;
@@ -820,6 +974,7 @@ export class PinballEngine{
    }
    for(let i=0;i<POSTS.length;i++)this.collideCircle(POSTS[i],.69,'post'+i);
    for(let i=0;i<BUMPERS.length;i++)this.collideCircle(BUMPERS[i],1.09,'bumper'+i,250);
+   this.collideCircle(SATELLITE_BUMPER,1.07,'bumpersatellite',SATELLITE_BUMPER.score);
    for(let i=0;i<SLINGS.length;i++){
     const s=SLINGS[i];
     this.collideSegment(s.x1,s.y1,s.x2,s.y2,5,1.01,'sling'+i,100);

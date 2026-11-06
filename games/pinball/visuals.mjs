@@ -1,13 +1,13 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=18';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH} from './engine.mjs?v=21';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
-import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=9';
+import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=5';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
-import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
+import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=4';
 const TAU=Math.PI*2;
 const G=(ctx,x,y,x2,y2,stops)=>{const gr=ctx.createLinearGradient(x,y,x2,y2);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
 const R=(ctx,x,y,r,stops)=>{const gr=ctx.createRadialGradient(x-r*.37,y-r*.43,1,x,y,r);for(const [p,c] of stops)gr.addColorStop(p,c);return gr;};
@@ -89,8 +89,8 @@ function drawNeonMarquee(c,anim){
  c.save();c.textAlign='center';c.textBaseline='middle';c.lineCap='round';c.lineJoin='round';
  for(const side of [-1,1]){
   for(let i=0;i<3;i++){
-   const y=73+i*7;
-   const x1=side<0?52:344,x2=side<0?87:375;
+   const y=22+i*4;
+   const x1=side<0?84:314,x2=side<0?110:339;
    c.shadowColor='#f3c74f';c.shadowBlur=9*pulse;
    c.strokeStyle='#b78024';c.lineWidth=3.4;
    c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.stroke();
@@ -98,26 +98,26 @@ function drawNeonMarquee(c,anim){
    c.beginPath();c.moveTo(x1+2,y-1);c.lineTo(x2-2,y-1);c.stroke();
   }
  }
- c.font='italic 500 43px "Oxanium","Trebuchet MS",Arial,sans-serif';
+ c.font='italic 650 23px "Oxanium","Trebuchet MS",Arial,sans-serif';
  // Layered red halo breathes while a crisp white-hot glass tube remains visible.
  c.globalAlpha=.45+.55*pulse;
  c.shadowColor='#f01b36';c.shadowBlur=26+19*pulse;
- c.lineWidth=8;c.strokeStyle='#a70d20';c.strokeText('NEON TILT',213,85,245);
+ c.lineWidth=8;c.strokeStyle='#a70d20';c.strokeText('NEON TILT',213,34,180);
  c.shadowColor='#ff3649';c.shadowBlur=18+12*pulse;
- c.lineWidth=4.7;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',213,85,245);
+ c.lineWidth=4.7;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',213,34,180);
  c.globalAlpha=1;
  c.shadowColor='#ff5664';c.shadowBlur=7+8*pulse;
- c.lineWidth=2.5;c.strokeStyle='#ff6670';c.strokeText('NEON TILT',213,85,245);
+ c.lineWidth=2.5;c.strokeStyle='#ff6670';c.strokeText('NEON TILT',213,34,180);
  c.shadowColor='#fff0e6';c.shadowBlur=2;
- c.lineWidth=1.2;c.strokeStyle='#fff0e6';c.strokeText('NEON TILT',213,85,245);
+ c.lineWidth=1.2;c.strokeStyle='#fff0e6';c.strokeText('NEON TILT',213,34,180);
  c.restore();
 }
 function drawBackglass(c,anim){
  // Top crown lamps run automatically in attract mode.
  for(let i=0;i<3;i++){
   const power=anim>0 ? (Math.sin(anim*1.8+i*2.1)+1)/2 : .7;
-  disk(c,111+i*102,151,11,R(c,111+i*102,151,11,[[0,'#fff8df'],[.3,'#efac7a'],[1,'#623e4d']]),'#bdb1a1',2);
-  c.save();c.globalAlpha=power*.45;disk(c,111+i*102,151,15,null,'#ffbb81',2);c.restore();
+  disk(c,173+i*42,91,4.8,R(c,173+i*42,91,4.8,[[0,'#fff8df'],[.3,'#efac7a'],[1,'#623e4d']]),'#bdb1a1',1.2);
+  c.save();c.globalAlpha=power*.45;disk(c,173+i*42,91,7,null,'#ffbb81',1.4);c.restore();
  }
 }
 function drawUpperCrown(c){
@@ -184,13 +184,35 @@ function drawEnamelDetails(c){
  // Under-glass bumper island groups the three impact devices in a clean
   // hexagonal machined assembly; sensor positions remain in engine.mjs.
   c.beginPath();
-  for(const [i,pt] of [[110,200],[304,200],[330,272],[269,347],[141,347],[87,272]].entries())
+  for(const [i,pt] of [[178,142],[282,126],[328,150],
+    [335,237],[308,284],[221,291],[174,230]].entries())
    i?c.lineTo(...pt):c.moveTo(...pt);
   c.closePath();c.fillStyle='#16130e';c.fill();
   c.lineWidth=2.2;c.strokeStyle='#9c7845';c.stroke();
   for(const b of MID_BUMPERS){
    disk(c,b.x,b.y,b.r+14,'#15120e','#5a4832',2);
    disk(c,b.x,b.y,b.r+11,null,'#af956c',1.3);
+  }
+  // Original three-point purple flight emblem, positioned under the
+  // lower hardware like the reference's distinctive lower-playfield shape.
+  // These graphics do not participate in ball collisions.
+  c.save();c.shadowColor='#151027';c.shadowBlur=7;
+  const fork=[[210,632],[190,605],[174,566],[162,523],
+   [181,547],[197,576],[204,591],[204,548],[210,521],
+   [216,548],[216,591],[223,576],[239,547],[258,523],
+   [246,566],[230,605]];
+  c.beginPath();fork.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));
+  c.closePath();c.fillStyle='#593c83';c.fill();
+  c.strokeStyle='#ab7cc8';c.lineWidth=2.2;c.stroke();
+  c.restore();
+  for(const side of [-1,1]){
+   c.save();c.translate(210,0);c.scale(side,1);
+   c.beginPath();c.moveTo(68,505);c.lineTo(105,540);
+   c.lineTo(89,590);c.lineTo(60,565);c.closePath();
+   c.fillStyle='#281d39';c.fill();
+   c.strokeStyle='#c45074';c.lineWidth=2.4;c.stroke();
+   line(c,[[74,515],[84,539],[71,554],[83,575]],'#79c1e2',1.5);
+   c.restore();
   }
   // Printed under-glass lightning arcs & retro arcade scoring ladder.
  c.strokeStyle='rgba(145,209,247,.19)';c.lineWidth=1.0;
@@ -222,30 +244,29 @@ function drawEnamelDetails(c){
   // The faceplates are static; only real lane switches illuminate dynamically.
   for(const lane of UPPER_ROLLOVERS){
    c.save();c.shadowColor='#060a17';c.shadowBlur=8;c.shadowOffsetY=4;
-   rect(c,lane.x-28,lane.y-35,56,70,7,
-    G(c,lane.x-29,lane.y-35,lane.x+28,lane.y+37,[
+   rect(c,lane.x-12,lane.y-19,24,38,4,
+    G(c,lane.x-12,lane.y-19,lane.x+12,lane.y+19,[
      [0,'#817156'],[.11,'#32281e'],[.55,'#16130f'],[1,'#33281d']
      ]),'#a88c5d',2);
    c.restore();
-   rect(c,lane.x-24,lane.y-29,48,58,4,'#14110d','#625237',1.2);
+   rect(c,lane.x-10,lane.y-15,20,30,2,'#14110d','#625237',1.2);
    // The top shoulder aligns with the real upper rollover bay.
-   rect(c,lane.x-24,lane.y-35,48,5,1,'#bda16c','#2a2217',1);
-   for(const dx of [-19,19])bolt(c,lane.x+dx,lane.y-33,1.7);
-   for(const dx of [-24,24])for(const dy of [-27,27])
-    bolt(c,lane.x+dx,lane.y+dy,1.8);
+   rect(c,lane.x-11,lane.y-19,22,4,1,'#bda16c','#2a2217',1);
+   for(const dx of [-9,9])bolt(c,lane.x+dx,lane.y-17,1.15);
+   for(const dx of [-11,11])for(const dy of [-14,14])
+    bolt(c,lane.x+dx,lane.y+dy,1.05);
   }
   // Retro upper-playfield inserts and sculpted rollover plastics.
   // Devices remain visible; no rail or elevated structure is painted over them.
- text(c,'FLIGHT RANK',210,116,8,'rgba(222,226,238,.72)','Oxanium',900);
- for(let i=0;i<5;i++)disk(c,142+i*34,131,5,'#172236','#71889c',1.2);
+ text(c,'RE-ENTRY',216,103,8,'rgba(222,226,238,.72)','Oxanium',900);
+ for(let i=0;i<5;i++)disk(c,165+i*25,83,3.4,'#172236','#71889c',1.2);
  for(const lane of UPPER_ROLLOVERS){
-  rect(c,lane.x-22,183,44,21,4,'#211913','#a18a60',1.5);
-  text(c,lane.label,lane.x,193,12,'#ffe5ba','Barlow Condensed',900);
-  line(c,[[lane.x-18,lane.y-16],[lane.x-18,lane.y-22],
-    [lane.x+18,lane.y-22],[lane.x+18,lane.y-16]],'#334458',6);
-  line(c,[[lane.x-18,lane.y-22],[lane.x+18,lane.y-22]],'#c8c8cc',2.4);
-  disk(c,lane.x-18,lane.y-16,3,'#d5b89f');
-  disk(c,lane.x+18,lane.y-16,3,'#d5b89f');
+  text(c,lane.label,lane.x,lane.y+3,9,'#ffe5ba','Barlow Condensed',900);
+  line(c,[[lane.x-10,lane.y-11],[lane.x-10,lane.y-16],
+    [lane.x+10,lane.y-16],[lane.x+10,lane.y-11]],'#334458',3);
+  line(c,[[lane.x-10,lane.y-16],[lane.x+10,lane.y-16]],'#c8c8cc',1.7);
+  disk(c,lane.x-10,lane.y-11,1.7,'#d5b89f');
+  disk(c,lane.x+10,lane.y-11,1.7,'#d5b89f');
  }
  // Dense recessed incandescent insert clusters, like a physical playfield.
  const inserts=[
@@ -355,33 +376,33 @@ function drawShotGuidance(c,engine,anim,reducedMotion){
 function drawTargets(c,engine){
  for(let i=0;i<LANES.length;i++){
   const l=LANES[i],on=engine.lanes.has(i)||engine.missions.lanes;
-  rect(c,l.x-21,l.y-16,42,22,8,G(c,l.x-19,l.y-15,l.x+18,l.y+9,[[0,'#a3887c'],[.2,'#45333b'],[1,'#1b1822']]),'#c7a48c',2);
-  neonInsert(c,l.x,l.y-5,l.label,on,on?'#ffe5ac':'#eb826d');
-  line(c,[[l.x,l.y+22],[l.x,l.y+35]],'rgba(246,174,112,.6)',2);
+  rect(c,l.x-9,l.y-12,18,21,3,'#1b1822','#c7a48c',1.5);
+  disk(c,l.x,l.y-3,5,on?'#ffe5ac':'#604c68',
+   on?'#fff5d6':'#b6a4a8',1.2);
+  text(c,l.label,l.x,l.y+12,8,'#ffe6bf','Barlow Condensed',900);
  }
- // Mounted target bank: shared pressed-steel backplate and four illuminated
- // standing switch faces aligned with the game's actual target sensors.
- c.save();c.shadowColor='#000';c.shadowBlur=9;c.shadowOffsetY=6;
- rect(c,146,387,123,43,5,
-  G(c,146,387,269,430,[[0,'#bdabb3'],[.26,'#50505e'],[.77,'#292d3a'],[1,'#b1a3a4']]),
-  '#ddc7b1',2.1);
- c.restore();
+ // Four real sensors, presented as two small yellow standing-target pairs.
+ const bankY=MID_TARGETS.reduce((sum,t)=>sum+t.y,0)/MID_TARGETS.length;
+ for(const group of [MID_TARGETS.slice(0,2),MID_TARGETS.slice(2,4)]){
+  const a=group[0],b=group.at(-1);
+  c.save();c.shadowColor='#080711';c.shadowBlur=8;c.shadowOffsetY=4;
+  rect(c,a.x-13,bankY-13,b.x-a.x+26,27,3,
+   G(c,a.x-13,bankY-13,b.x+13,bankY+14,[
+    [0,'#c1a5a1'],[.33,'#554b55'],[1,'#2a2b39']
+   ]),'#c9af91',1.8);
+  c.restore();
+ }
  for(let i=0;i<MID_TARGETS.length;i++){
   const t=MID_TARGETS[i],on=engine.targets.has(i)||engine.missions.targets;
-  c.save();c.shadowColor='rgba(2,5,14,.72)';c.shadowBlur=8;c.shadowOffsetY=5;
-  rect(c,t.x-13,t.y-18,26,38,3,'#202532','#93949e',2);c.restore();
-  rect(c,t.x-10,t.y-15,20,32,2,
-   G(c,t.x-10,t.y-15,t.x+10,t.y+17,[
-    [0,'#cfc5b9'],[.25,'#9e939b'],[.8,'#3b3443'],[1,'#171d2a']
-   ]),'#e4cbb8',1.1);
-  c.save();c.shadowBlur=on?11:0;c.shadowColor='#ffd4a0';
-  rect(c,t.x-7,t.y-11,14,22,2,on?'#ffe2a5':'#a23c57',
-   on?'#fffae6':'#d3928c',1.2);
-  c.restore();
-  text(c,String(i+1),t.x,t.y+1,10,on?'#392636':'#ffe0c7','Oxanium',900);
-  bolt(c,t.x-9,t.y+15,1.8);bolt(c,t.x+9,t.y+15,1.8);
-  disk(c,t.x,t.y-25,4,on?'#ffe0a5':'#593642',
-   on?'#fff0c5':'#8f7d89',1);
+  c.save();c.shadowColor='rgba(2,5,14,.68)';
+  c.shadowBlur=6;c.shadowOffsetY=3;
+  rect(c,t.x-7,t.y-11,14,22,2,'#4b4047','#d7c1a1',1.4);c.restore();
+  rect(c,t.x-5,t.y-9,10,18,1,on?'#fff2b1':'#cc9f4e',
+   '#ffe4a0',1.0);
+  text(c,String(i+1),t.x,t.y,7,on?'#56412e':'#442a22',
+   'Oxanium',900);
+  disk(c,t.x,t.y-16,2.6,on?'#ffe9ad':'#6b4a47',
+   on?'#fff5cd':'#c29a68',.8);
  }
 
 }
@@ -531,6 +552,37 @@ function drawBall(c,engine){
  }
 }
 
+// Faithful mechanical vocabulary: real recessed mouths, chrome rims, illuminated
+// coloured inserts and a physical spot switch. All positions come from engine.mjs.
+function drawWormholeHardware(c,engine,reducedMotion=false){
+ const now=reducedMotion?0:performance.now()/1000;
+ for(const [i,hole] of WORMHOLES.entries()){
+  const busy=engine.balls?.some(b=>b.mode==='wormhole'&&
+   (b.wormhole?.exit===i || (Math.hypot(b.x-hole.x,b.y-hole.y)<2)));
+  const lit=engine.warpOpen||busy;
+  const glow=lit?(reducedMotion?1:.75+.25*Math.sin(now*5+i*1.7)):.35;
+  c.save();
+  c.shadowColor=hole.color;c.shadowBlur=lit?15*glow:2;
+  disk(c,hole.x,hole.y,hole.r+7,'#18151c','#b69a83',3);
+  c.restore();
+  disk(c,hole.x,hole.y,hole.r+3,'#807a7d','#e4d6c5',2);
+  disk(c,hole.x,hole.y,hole.r,'#05060b',hole.color,lit?3.3:1.9);
+  disk(c,hole.x-3,hole.y-3,hole.r*.34,lit?hole.color:'#161e29');
+  for(let j=0;j<3;j++){
+   const a=j*TAU/3-Math.PI/2;
+   bolt(c,hole.x+Math.cos(a)*(hole.r+5),hole.y+Math.sin(a)*(hole.r+5),1.8);
+  }
+  text(c,hole.id.toUpperCase(),hole.x,hole.y+hole.r+13,8,
+   lit?'#ffe7c4':'#b8a9a1','Barlow Condensed',900);
+ }
+ const sw=WARP_SWITCH;
+ const active=engine.warpOpen;
+ c.save();c.shadowColor=active?'#ffb966':'transparent';c.shadowBlur=active?12:0;
+ disk(c,sw.x,sw.y,sw.r+6,'#282027','#c8a477',2.2);
+ disk(c,sw.x,sw.y,sw.r+1,active?'#f8c577':'#934e4b','#ffe1ac',1.4);
+ c.restore();
+ text(c,'WARP',sw.x,sw.y-21,9,active?'#fff1c6':'#bda890','Barlow Condensed',900);
+}
 function drawNewFeatures(c,engine,reducedMotion=false){
  const sx=SPINNER.x,sy=SPINNER.y;
  // Steel spinner pivot and hinged amber plate, animated from the engine angle.
@@ -701,6 +753,69 @@ function drawUpperRouteFeedback(c,engine,reducedMotion){
   route.accent==='coral'?'#ffe0d3':'#fff0bd');
  c.restore();
 }
+// Canvas fallback draws the same isolated, elevated mechanical platform as
+// the 3D scene. The four main-board bumpers and the deck use distinct colliders.
+function drawLaunchDeckBase(c){
+ const deck=LAUNCH_PLATFORM;
+ for(const [path,width] of [[SKYLINE_PATH,23],[DECK_RETURN_PATH,19]]){
+  const pts=path.map(p=>[p[0],p[1]]);
+  c.save();c.shadowColor='#06060b';c.shadowBlur=7;c.shadowOffsetY=5;
+  line(c,pts,'#28212f',width+4);
+  c.restore();
+  line(c,pts,'#554168',width);
+  line(c,pts,'#c1a178',2.3);
+ }
+ c.save();c.shadowColor='rgba(0,0,0,.83)';c.shadowBlur=16;c.shadowOffsetY=11;
+ c.beginPath();deck.outline.forEach(([x,y],i)=>{
+  if(!i)c.moveTo(x,y);else c.lineTo(x,y);
+ });c.closePath();c.fillStyle='#201824';c.fill();c.restore();
+ const grad=G(c,78,316,164,419,[[0,'#704b8d'],[.52,'#422f5f'],[1,'#241d39']]);
+ c.beginPath();deck.outline.forEach(([x,y],i)=>{
+  if(!i)c.moveTo(x,y);else c.lineTo(x,y);
+ });c.closePath();c.fillStyle=grad;c.fill();
+ c.strokeStyle='#c1a27b';c.lineWidth=4;c.stroke();
+ c.save();c.globalAlpha=.6;
+ line(c,[[80,330],[80,391],[105,409],[164,406]],'#ddc0a2',1.4);
+ c.restore();
+ for(const [x,y] of [[83,322],[162,327],[83,394],[164,402]])
+  bolt(c,x,y,2.5);
+ text(c,'ENGINE BAY',121,455,11,'#fff0d1','Barlow Condensed',900);
+ // Aimable launch-ramp throat lives below the elevated platform.
+ const shot=SHOTS.skyline;
+ disk(c,shot.x,shot.y,13,'#2c203c','#c9af9e',2.4);
+ disk(c,shot.x,shot.y,7,'#815a87','#f1d4b3',1.5);
+ text(c,'LAUNCH',shot.x,shot.y+22,9,'#f8dfb8','Barlow Condensed',900);
+}
+function drawLaunchDeckLive(c,engine,reducedMotion){
+ const platform=LAUNCH_PLATFORM,active=engine.state==='playing';
+ // Seventh bumper: top-left satellite, genuinely collidable on main board.
+ const sa=SATELLITE_BUMPER;
+ disk(c,sa.x,sa.y,sa.r+8,'#262536','#c2a0b1',2.3);
+ disk(c,sa.x,sa.y,sa.r+3,'#c2c4cd','#f4d8ce',2);
+ disk(c,sa.x,sa.y,sa.r-3,'#a9c9df','#eff9ff',1.8);
+ text(c,'SAT',sa.x,sa.y+sa.r+15,9,'#f0d7b5','Barlow Condensed',900);
+ for(const [i,lane] of platform.lanes.entries()){
+  const lit=engine.deckLanes?.has(i);
+  rect(c,lane.x-12,lane.y-10,24,20,3,'#201f33','#bea7c9',1.4);
+  disk(c,lane.x,lane.y,5.5,lit?'#e9f6ff':'#717bba',
+   lit?'#fff':'#c5b6c9',1.1);
+  text(c,lane.label,lane.x,lane.y-17,9,lit?'#fff1d4':'#ccbadc','Barlow Condensed');
+ }
+ for(const [i,b] of platform.bumpers.entries()){
+  c.save();c.shadowColor='#08080c';c.shadowBlur=9;c.shadowOffsetY=4;
+  disk(c,b.x,b.y,b.r+6,'#292637');c.restore();
+  disk(c,b.x,b.y,b.r+3,'#c9bdc8','#e9d9e0',1.7);
+  disk(c,b.x,b.y,b.r,'#51618d','#e5e9ff',2.1);
+  disk(c,b.x,b.y,b.r*.60,'#d8ebff','#fff',1);
+  const level=engine.deckBumperLevel||0;
+  if(level)disk(c,b.x,b.y,b.r*.36,
+   level>1?'#ffe5a4':'#7effc0');
+  for(let j=0;j<3;j++){
+   const a=j*TAU/3-Math.PI/2;
+   bolt(c,b.x+Math.cos(a)*(b.r+3),b.y+Math.sin(a)*(b.r+3),1.3);
+  }
+ }
+}
 let cachedStatic=null;
 function baseArtwork(){
  if(cachedStatic)return cachedStatic;
@@ -712,6 +827,7 @@ function baseArtwork(){
   drawUpperCrown(c);
   drawOrbits(c);
  drawEnamelDetails(c);
+ drawLaunchDeckBase(c);
  drawSlings(c);
  drawWalls(c);
  cachedStatic=layer;return layer;
@@ -728,6 +844,8 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
  drawWorkingInserts(ctx,engine,anim,reducedMotion);
  drawNewFeatures(ctx,engine,reducedMotion);
+ drawLaunchDeckLive(ctx,engine,reducedMotion);
+ drawWormholeHardware(ctx,engine,reducedMotion);
  drawLower(ctx,engine);
  drawLowerDirectionInserts(ctx,engine,reducedMotion);
  drawFlippers(ctx,engine);

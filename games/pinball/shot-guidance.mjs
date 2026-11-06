@@ -4,10 +4,10 @@ export const SHOT_INDICATORS=Object.freeze([
  Object.freeze({kind:'orbit',x:77,y:363,label:'ORBIT'}),
  Object.freeze({kind:'ramp',x:311,y:360,label:'RAMP'}),
  Object.freeze({kind:'center',x:207,y:425,label:'CROSS'}),
- Object.freeze({kind:'skyline',x:124,y:375,label:'SKY'}),
+ Object.freeze({kind:'skyline',x:169,y:500,label:'LAUNCH'}),
  Object.freeze({kind:'scoop',x:316,y:444,label:'SCOOP'}),
  Object.freeze({kind:'spinner',x:204,y:358,label:'SPIN'}),
- Object.freeze({kind:'target',x:210,y:389,label:'BANK'})
+ Object.freeze({kind:'target',x:246,y:328,label:'BANK'})
 ]);
 const WIZARD_SHOTS=Object.freeze(['ramp','orbit','center','skyline','scoop']);
 export function requiredShot(engine){
