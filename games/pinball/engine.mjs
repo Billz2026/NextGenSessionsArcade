@@ -56,7 +56,7 @@ export const WALLS=Object.freeze([
  [53,366,83,419],[336,420,357,365]
 ]);
 export const LANES=Object.freeze([{x:101,y:173,label:'N'},{x:210,y:169,label:'G'},{x:314,y:174,label:'S'}]);
-export const TARGETS=Object.freeze([{x:200,y:410,r:12},{x:229,y:405,r:12},{x:258,y:405,r:12},{x:287,y:410,r:12}]);
+export const TARGETS=Object.freeze([{x:186,y:403,r:12},{x:215,y:398,r:12},{x:244,y:398,r:12},{x:273,y:403,r:12}]);
 // Single source of truth for guided-ball motion and the raised 3D rail paths.
 // [x, y, 3D height] coordinates; collision physics elsewhere stays 2D.
 export const RAMP_PATH=Object.freeze([
