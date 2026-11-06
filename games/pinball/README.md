@@ -1,5 +1,16 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
+**Current stage:** Phase V2.8 branch — first functional Space Cadet-style structural mechanism (review before merging)
+
+## Phase V2.8 — working three-wormhole network
+
+- Three independent coloured wormhole mouths (upper-left green, upper-right red and lower-right yellow) are **real ball-capture sensors**, not painted-only circles.
+- A real physical WARP spot target between the bumper island and right-side approach arms one cross-table transfer. A coloured mouth then holds the moving ball briefly, sends it to a different exit and ejects it with a deterministic impulse. An unarmed mouth ejects locally.
+- 3D recessed housings, chrome rims and live emissive rings share the precise coordinates used by the physics engine. The 2D fallback depicts the same active features.
+- DMD, sound and score text respond to actual target hits and captures. The ball's own mode controls hold/eject; no visual-only teleport or bonus score is generated.
+- The implementation is intentionally **not** yet a full Space Cadet replica: it still lacks the distinct elevated launch platform and its own bumpers/lanes, advanced chutes and original mission topology. These require dedicated physics and shot-flow design.
+- This is an incremental branch with deterministic physics tests; visual quality, real hardware use and mobile performance remain subject to live-browser validation.
+
 **Current stage:** Phase V2.7.1 — simplified side approaches and unobstructed bumper island (playable 3D beta)
 
 **Play:** https://billz2026.github.io/NextGenSessionsArcade/games/pinball/
