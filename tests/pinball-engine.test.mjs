@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,PLAY_BALANCE,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,PLAY_BALANCE,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,WORMHOLES,WARP_SWITCH,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -903,4 +903,63 @@ test('protected replay keeps earned combo and grid progress for a real streak',(
  assert.equal(g.state,'between');
  for(let i=0;i<340;i++)g.singleStep(BOARD.step);
  assert.equal(g.comboCount,0,'a genuinely new ball resets combo progress');
+});
+
+test('wormhole mouths are three distinct physical sensors with clear exits',()=>{
+ assert.deepEqual(WORMHOLES.map(h=>h.id),['green','red','yellow']);
+ for(const h of WORMHOLES){
+  assert.ok(h.r>=BOARD.radius);
+  assert.ok(h.x-h.r>24&&h.x+h.r<365);
+  assert.ok(h.y>180&&h.y<570);
+  for(const b of BUMPERS)
+   assert.ok(Math.hypot(h.x-b.x,h.y-b.y)>h.r+b.r+BOARD.radius);
+ }
+});
+
+test('warp spot physically arms one cross-table wormhole transfer and resets',()=>{
+ const g=new PinballEngine();g.start();
+ const b=g.ball;b.mode='live';
+ b.x=WARP_SWITCH.x+12;b.y=WARP_SWITCH.y;b.vx=-285;b.vy=-110;
+ g.checkSensors({x:b.x+2,y:b.y+2});
+ assert.equal(g.warpOpen,true);
+ assert.ok(g.consumeEvents().some(e=>e.type==='warplit'));
+ b.x=WORMHOLES[0].x;b.y=WORMHOLES[0].y;b.vx=300;b.vy=0;
+ g.checkSensors({x:b.x-4,y:b.y});
+ assert.equal(b.mode,'wormhole');
+ assert.equal(b.wormhole.exit,1);
+ assert.equal(g.warpOpen,false);
+ assert.equal(g.wormholeEntries,1);
+ const events=g.consumeEvents();
+ assert.ok(events.some(e=>e.type==='wormhole'&&e.opened===true&&
+  e.source==='green'&&e.destination==='red'));
+ g.stepActiveBall(.4);
+ assert.equal(b.mode,'live');
+ assert.equal(b.wormhole,null);
+ assert.ok(b.x<WORMHOLES[1].x);
+ assert.ok(b.vx<0);
+});
+
+test('a closed wormhole ejects from its original mouth without teleporting',()=>{
+ const g=new PinballEngine();g.start();
+ const b=g.ball;b.mode='live';
+ b.x=WORMHOLES[2].x;b.y=WORMHOLES[2].y;b.vx=-275;b.vy=0;
+ g.checkSensors({x:b.x+2,y:b.y});
+ assert.equal(b.mode,'wormhole');assert.equal(b.wormhole.exit,2);
+ const e=g.consumeEvents().find(e=>e.type==='wormhole');
+ assert.equal(e.opened,false);
+ assert.equal(e.destination,'yellow');
+ g.stepActiveBall(.4);
+ assert.equal(b.mode,'live');
+ assert.ok(b.x<WORMHOLES[2].x);
+});
+
+test('wormhole sensors cannot award while tilted and reset on new game',()=>{
+ const g=new PinballEngine();g.start();
+ const b=g.ball;b.mode='live';
+ g.tilted=true;b.x=WORMHOLES[0].x;b.y=WORMHOLES[0].y;b.vx=400;b.vy=0;
+ g.checkSensors({x:b.x,y:b.y});
+ assert.equal(b.mode,'live');assert.equal(g.wormholeEntries,0);
+ g.tilted=false;g.warpOpen=true;g.wormholeEntries=2;
+ g.start();
+ assert.equal(g.warpOpen,false);assert.equal(g.wormholeEntries,0);
 });
