@@ -761,6 +761,11 @@ function drawLaunchDeckBase(c){
  for(const [x,y] of [[83,322],[162,327],[83,394],[164,402]])
   bolt(c,x,y,2.5);
  text(c,'LAUNCH DECK',124,402,11,'#fff0d1','Barlow Condensed',900);
+ // Aimable launch-ramp throat lives below the elevated platform.
+ const shot=SHOTS.skyline;
+ disk(c,shot.x,shot.y,13,'#2c203c','#c9af9e',2.4);
+ disk(c,shot.x,shot.y,7,'#815a87','#f1d4b3',1.5);
+ text(c,'LAUNCH',shot.x,shot.y+22,9,'#f8dfb8','Barlow Condensed',900);
 }
 function drawLaunchDeckLive(c,engine,reducedMotion){
  const platform=LAUNCH_PLATFORM,active=engine.state==='playing';
