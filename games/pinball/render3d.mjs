@@ -1,7 +1,7 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=18';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH} from './engine.mjs?v=19';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=7';
@@ -517,6 +517,38 @@ export async function create3DTable(host){
   const light=new T.PointLight('#ff866a',.75,2.3);
   light.position.set(x,y,1.1);scene.add(light);bumperLights.push(light);
  }
+ // Three low, recessed playable wormhole mouths. The actual entry sensors
+ // and physical ball release vectors live in engine.mjs, never in this art.
+ const wormholeLenses=[];
+ for(const [index,hole] of WORMHOLES.entries()){
+  const px=X(hole.x),py=Y(hole.y),r=hole.r*SCALE;
+  contactShadow(px,py,(r+.18)*2,(r+.18)*2);
+  cyl(px,py,.215,r+.155,.065,metal('#ad9d91',.32,.68),36);
+  cyl(px,py,.245,r+.067,.052,metal('#302b34',.36,.38),36);
+  cyl(px,py,.273,r-.035,.021,black,36);
+  ring(px,py,.294,r+.045,.037,chrome);
+  const mat=new T.MeshStandardMaterial({
+   color:hole.color,emissive:hole.color,emissiveIntensity:.18,
+   metalness:.13,roughness:.23
+  });
+  ring(px,py,.313,r-.093,.025,mat);
+  wormholeLenses.push({mat,index});
+  for(let i=0;i<3;i++){
+   const a=i*TAU/3-PI/2;
+   cyl(px+Math.cos(a)*(r+.115),py+Math.sin(a)*(r+.115),.332,.041,.024,gold,12);
+  }
+  plane(px,py-.52,.277,.86,.18,
+   label(hole.id.toUpperCase(),'#f0d7b7',66,350,90,true));
+ }
+ // Warp spot target: a real circular switch that arms the transfer network.
+ const wx=X(WARP_SWITCH.x),wy=Y(WARP_SWITCH.y);
+ cyl(wx,wy,.27,.305,.10,metal('#bb9e83',.24,.76),24);
+ cyl(wx,wy,.335,.211,.07,darkChrome,24);
+ const warpSpotLens=new T.MeshStandardMaterial({
+  color:'#ffb66f',emissive:'#ffb66f',emissiveIntensity:.20,roughness:.3
+ });
+ cyl(wx,wy,.382,.128,.027,warpSpotLens,20);
+ plane(wx,wy+.45,.292,.73,.18,label('WARP','#ffdaa9',70,300,90,true));
  // Four standing drop-target facades on a shared mechanical bank plate.
  // Their hit sensors remain unchanged: only lamps respond to real hits.
  const left=Math.min(...MID_TARGETS.map(t=>t.x));
@@ -1168,9 +1200,19 @@ export async function create3DTable(host){
    mesh.position.set(X(b.x),Y(b.y),b.mode==='scoop'?.31:.62);
    if(b.mode==='shooter')mesh.position.z=.55;
    if(b.mode==='scoop')mesh.position.z=.31;
+   if(b.mode==='wormhole')mesh.position.z=.30;
    if(b.mode==='travel')
     mesh.position.z=Math.max(.55,(b.travelHeight||.39)+UPPER_BALL_RADIUS);
   }
+  // The colour-ring lamps reflect the live space-warp switch. A trapped ball
+  // lights its particular mouth even when the cross-table warp is closed.
+  for(const {mat,index} of wormholeLenses){
+   const hole=WORMHOLES[index];
+   const busy=activeBalls.some(b=>b.mode==='wormhole'&&
+    (b.wormhole?.exit===index||Math.hypot(b.x-hole.x,b.y-hole.y)<2));
+   mat.emissiveIntensity=busy?3.6:engine.warpOpen?2.4:.19;
+  }
+  warpSpotLens.emissiveIntensity=engine.warpOpen?3.6:.22;
   // LEDs expose the one-use outlane recovery charge in actual gameplay.
   for(const {material} of kickbackLenses){
    const ready=engine.kickbackReady&&!engine.tilted;
