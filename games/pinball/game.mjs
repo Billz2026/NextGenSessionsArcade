@@ -1,6 +1,6 @@
-import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=18';
-import {renderTable} from './visuals.mjs?v=39';
-import {createDotMatrix} from './dmd.mjs?v=17';
+import {BOARD,WALLS,POSTS,BUMPERS,SLINGS,LANES,TARGETS,SHOTS,PinballEngine} from './engine.mjs?v=19';
+import {renderTable} from './visuals.mjs?v=40';
+import {createDotMatrix} from './dmd.mjs?v=18';
 const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
@@ -132,7 +132,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=42');
+  const {create3DTable}=await import('./render3d.mjs?v=43');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -399,7 +399,8 @@ function processEvents(){
   dmd.notify(dmdEvent,performance.now(),engine);
   if(['shot','mission','missionarmed','missionstart','missionprogress','missionfailed','commandcomplete','promotion','extra','scoop','spinner','frenzy','multiplier',
       'skillshot','combo','hurryup','jackpot','overdrive','superSpinner','ballsave','kickback','tiltwarning',
-      'balllock','multiballstart','multiballjackpot','superlit','superjackpot','multiballadd','wizardstart','wizardcomplete','streakshield','streaksave'].includes(e.type)){
+      'balllock','multiballstart','multiballjackpot','superlit','superjackpot','multiballadd','wizardstart','wizardcomplete','streakshield','streaksave',
+      'warplit','wormhole'].includes(e.type)){
    const duration=e.type==='jackpot'||e.type==='extra'?1250:
     e.type==='hurryup'||e.type==='overdrive'||e.type==='skillshot'?950:
     e.type==='mission'?900:550;
@@ -413,6 +414,19 @@ function processEvents(){
    arcadeMessage('STREAK SAVED · RELAUNCH');
    ui.scoreFlash.textContent='STREAK SAVED!';
    sound(1100,.34,'sawtooth',.05);
+  }
+  if(e.type==='warplit'){
+   arcadeMessage('SPACE WARP ARMED · HIT A COLOURED HOLE');
+   ui.scoreFlash.textContent='WARP READY';
+   sound(1040,.20,'triangle',.045);
+  }
+  if(e.type==='wormhole'){
+   const name=String(e.source).toUpperCase();
+   arcadeMessage(e.opened?
+    'SPACE WARP · '+name+' TO '+String(e.destination).toUpperCase():
+    name+' WORMHOLE · +'+fmt(e.points));
+   ui.scoreFlash.textContent=e.opened?'SPACE WARP!':'WORMHOLE!';
+   sound(e.opened?1230:760,.26,'sawtooth',.047);
   }
   if(e.type==='kickback'){
    arcadeMessage('NEON KICKBACK · BALL RECOVERED');
