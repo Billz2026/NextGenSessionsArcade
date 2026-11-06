@@ -1,5 +1,20 @@
 # Game 002 — NextGen Pinball: Neon Tilt
 
+**Current stage:** Phase V2.9 branch — actual raised launch deck, seven bumper layout and connected return chute (review before merging)
+
+## Phase V2.9 — structural reconstruction, original NextGen identity
+
+- Replaced the old **Skyline** free-floating return loop with a **middle-left LAUNCH RAMP** that ascends to a separate physical platform. Its entry point remains a genuine flipper-shot sensor.
+- Added a real raised purple launch deck with collision walls, three independently simulated **Engine Bumpers**, three **Launch Lane** rollovers, and lane-set upgrades that increase only the raised bumper values (1500–4500 points).
+- A deck ball is simulated at the same fixed 240 Hz update as the main table, but on a **separate sub-playfield mode**: main-board targets, bumpers, scoop and wormholes cannot double-score a ball that is physically above them.
+- Exits through a dedicated curved outer-left bonus-return channel, descending toward the left flipper. Both 3D and Canvas are grounded in the actual transport waypoints.
+- Added a fourth **satellite attack bumper** above the green wormhole. Together with the original three attack bumpers and the deck's three engine bumpers, the table now has seven physically scoring bumpers in the same broad arrangement as the Space Cadet original.
+- Preserved the Neon Tilt branding, three-wormhole system, lock/multiball missions, existing shooter lane, tilt and flipper controls. No original copyrighted Space Cadet textures, sounds or names were imported.
+- Added deterministic regression coverage for the raised deck, its 3 launch lanes and upgrade state, separation from the main table, actual ball-return trajectory and seven bumper positions. Re-tuned the satellite location so previously passing centre shots and unattended drains remain viable.
+- Browser smoke checks both renderer integrity and runtime errors; captured real screenshots are a review gate before merging.
+
+**Outstanding fidelity work:** Dedicated fuel and hyperspace chutes, top re-entry gate and more faithful lower-lane/inlane geometry. Do not call this a finished Space Cadet clone or merge on the basis of unit tests alone.
+
 **Current stage:** Phase V2.8 branch — first functional Space Cadet-style structural mechanism (review before merging)
 
 ## Phase V2.8 — working three-wormhole network
