@@ -9,6 +9,7 @@ const canvas=readFileSync(new URL('../games/pinball/visuals.mjs',import.meta.url
 const html=readFileSync(new URL('../games/pinball/index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../games/pinball/table-first.css',import.meta.url),'utf8');
 const game=readFileSync(new URL('../games/pinball/game.mjs',import.meta.url),'utf8');
+const controls=readFileSync(new URL('../games/pinball/mobile-controls.js',import.meta.url),'utf8');
 function distanceToSegment(p,a,b){
  const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy||1;
  const t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/den));
@@ -47,7 +48,9 @@ test('table-first interface keeps a single full HUD and live cabinet score while
  assert.match(html,/id="table-live-score"/);
  assert.match(html,/id="table-live-ball"/);
  assert.match(html,/id="mobile-action-dock"/);
- assert.match(game,/mobileActionDock\.appendChild\(ui\.actionPanel\)/);
+ assert.match(html,/mobile-controls\.js\?v=1/);
+ assert.match(controls,/dock\.appendChild\(panel\)/);
+ assert.match(controls,/hud\.insertBefore\(panel,marker\.nextSibling\)/);
  assert.match(css,/\.machine-top\{display:flex!important\}/);
  assert.match(html,/id="flipper-left"/);
  assert.match(html,/id="flipper-right"/);
