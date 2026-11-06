@@ -67,6 +67,10 @@ export function describeDmdEvent(event,game=null){
   case 'start':return {headline:'PLAYER ONE READY',sub:'BALL 1 OF 3',priority:3,duration:1100};
   case 'nudge':return {headline:'TABLE NUDGE',sub:'WATCH THE TILT!',priority:1,duration:700};
   case 'tiltwarning':return {headline:'TILT WARNING!',sub:'EASE OFF THE NUDGE',priority:4,duration:1700};
+  case 'warplit':return {headline:'SPACE WARP ARMED',sub:'HIT A COLOURED HOLE',priority:4,duration:2300};
+  case 'wormhole':return event.opened?
+   {headline:'SPACE WARP!',sub:String(event.source).toUpperCase()+' TO '+String(event.destination).toUpperCase()+' · +'+FMT(event.points),priority:5,duration:2800}:
+   {headline:String(event.source).toUpperCase()+' WORMHOLE',sub:'+'+FMT(event.points),priority:3,duration:1550};
   case 'kickback':return {headline:'NEON KICKBACK!',sub:String(event.side||'SIDE').toUpperCase()+' OUTLANE SAVE',priority:5,duration:2300};
   case 'tilt':return {headline:'TILT!',sub:'BONUS FORFEITED',priority:5,duration:3200};
   case 'ball':return {headline:'BALL '+(event.ball||1)+' READY',sub:'HOLD TO LAUNCH',priority:3,duration:1700};
