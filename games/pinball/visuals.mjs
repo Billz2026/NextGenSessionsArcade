@@ -184,7 +184,8 @@ function drawEnamelDetails(c){
  // Under-glass bumper island groups the three impact devices in a clean
   // hexagonal machined assembly; sensor positions remain in engine.mjs.
   c.beginPath();
-  for(const [i,pt] of [[110,200],[304,200],[330,272],[269,347],[141,347],[87,272]].entries())
+  for(const [i,pt] of [[178,142],[282,126],[328,150],
+    [335,237],[308,284],[221,291],[174,230]].entries())
    i?c.lineTo(...pt):c.moveTo(...pt);
   c.closePath();c.fillStyle='#16130e';c.fill();
   c.lineWidth=2.2;c.strokeStyle='#9c7845';c.stroke();
@@ -361,10 +362,11 @@ function drawTargets(c,engine){
  // Mounted target bank: shared pressed-steel backplate and four illuminated
  // standing switch faces aligned with the game's actual target sensors.
  c.save();c.shadowColor='#000';c.shadowBlur=9;c.shadowOffsetY=6;
- const bankLeft=Math.min(...MID_TARGETS.map(t=>t.x))-19;
- const bankRight=Math.max(...MID_TARGETS.map(t=>t.x))+19;
- rect(c,bankLeft,387,bankRight-bankLeft,43,5,
-  G(c,bankLeft,387,bankRight,430,[[0,'#bdabb3'],[.26,'#50505e'],[.77,'#292d3a'],[1,'#b1a3a4']]),
+ const bankLeft=Math.min(...MID_TARGETS.map(t=>t.x))-16;
+ const bankRight=Math.max(...MID_TARGETS.map(t=>t.x))+16;
+ const bankY=MID_TARGETS.reduce((sum,t)=>sum+t.y,0)/MID_TARGETS.length;
+ rect(c,bankLeft,bankY-22,bankRight-bankLeft,43,5,
+  G(c,bankLeft,bankY-22,bankRight,bankY+21,[[0,'#bdabb3'],[.26,'#50505e'],[.77,'#292d3a'],[1,'#b1a3a4']]),
   '#ddc7b1',2.1);
  c.restore();
  for(let i=0;i<MID_TARGETS.length;i++){
@@ -759,7 +761,7 @@ function drawLaunchDeckBase(c){
  c.restore();
  for(const [x,y] of [[83,322],[162,327],[83,394],[164,402]])
   bolt(c,x,y,2.5);
- text(c,'LAUNCH DECK',124,402,11,'#fff0d1','Barlow Condensed',900);
+ text(c,'ENGINE BAY',121,455,11,'#fff0d1','Barlow Condensed',900);
  // Aimable launch-ramp throat lives below the elevated platform.
  const shot=SHOTS.skyline;
  disk(c,shot.x,shot.y,13,'#2c203c','#c9af9e',2.4);
