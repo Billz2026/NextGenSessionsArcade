@@ -1,10 +1,10 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH} from './engine.mjs?v=20';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH} from './engine.mjs?v=21';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=8';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=9';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=3';
@@ -89,8 +89,8 @@ function drawNeonMarquee(c,anim){
  c.save();c.textAlign='center';c.textBaseline='middle';c.lineCap='round';c.lineJoin='round';
  for(const side of [-1,1]){
   for(let i=0;i<3;i++){
-   const y=73+i*7;
-   const x1=side<0?52:344,x2=side<0?87:375;
+   const y=22+i*4;
+   const x1=side<0?84:314,x2=side<0?110:339;
    c.shadowColor='#f3c74f';c.shadowBlur=9*pulse;
    c.strokeStyle='#b78024';c.lineWidth=3.4;
    c.beginPath();c.moveTo(x1,y);c.lineTo(x2,y);c.stroke();
@@ -98,26 +98,26 @@ function drawNeonMarquee(c,anim){
    c.beginPath();c.moveTo(x1+2,y-1);c.lineTo(x2-2,y-1);c.stroke();
   }
  }
- c.font='italic 500 43px "Oxanium","Trebuchet MS",Arial,sans-serif';
+ c.font='italic 650 23px "Oxanium","Trebuchet MS",Arial,sans-serif';
  // Layered red halo breathes while a crisp white-hot glass tube remains visible.
  c.globalAlpha=.45+.55*pulse;
  c.shadowColor='#f01b36';c.shadowBlur=26+19*pulse;
- c.lineWidth=8;c.strokeStyle='#a70d20';c.strokeText('NEON TILT',213,85,245);
+ c.lineWidth=8;c.strokeStyle='#a70d20';c.strokeText('NEON TILT',213,34,180);
  c.shadowColor='#ff3649';c.shadowBlur=18+12*pulse;
- c.lineWidth=4.7;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',213,85,245);
+ c.lineWidth=4.7;c.strokeStyle='#ec3635';c.strokeText('NEON TILT',213,34,180);
  c.globalAlpha=1;
  c.shadowColor='#ff5664';c.shadowBlur=7+8*pulse;
- c.lineWidth=2.5;c.strokeStyle='#ff6670';c.strokeText('NEON TILT',213,85,245);
+ c.lineWidth=2.5;c.strokeStyle='#ff6670';c.strokeText('NEON TILT',213,34,180);
  c.shadowColor='#fff0e6';c.shadowBlur=2;
- c.lineWidth=1.2;c.strokeStyle='#fff0e6';c.strokeText('NEON TILT',213,85,245);
+ c.lineWidth=1.2;c.strokeStyle='#fff0e6';c.strokeText('NEON TILT',213,34,180);
  c.restore();
 }
 function drawBackglass(c,anim){
  // Top crown lamps run automatically in attract mode.
  for(let i=0;i<3;i++){
   const power=anim>0 ? (Math.sin(anim*1.8+i*2.1)+1)/2 : .7;
-  disk(c,111+i*102,151,11,R(c,111+i*102,151,11,[[0,'#fff8df'],[.3,'#efac7a'],[1,'#623e4d']]),'#bdb1a1',2);
-  c.save();c.globalAlpha=power*.45;disk(c,111+i*102,151,15,null,'#ffbb81',2);c.restore();
+  disk(c,173+i*42,91,4.8,R(c,173+i*42,91,4.8,[[0,'#fff8df'],[.3,'#efac7a'],[1,'#623e4d']]),'#bdb1a1',1.2);
+  c.save();c.globalAlpha=power*.45;disk(c,173+i*42,91,7,null,'#ffbb81',1.4);c.restore();
  }
 }
 function drawUpperCrown(c){
@@ -222,30 +222,29 @@ function drawEnamelDetails(c){
   // The faceplates are static; only real lane switches illuminate dynamically.
   for(const lane of UPPER_ROLLOVERS){
    c.save();c.shadowColor='#060a17';c.shadowBlur=8;c.shadowOffsetY=4;
-   rect(c,lane.x-28,lane.y-35,56,70,7,
-    G(c,lane.x-29,lane.y-35,lane.x+28,lane.y+37,[
+   rect(c,lane.x-12,lane.y-19,24,38,4,
+    G(c,lane.x-12,lane.y-19,lane.x+12,lane.y+19,[
      [0,'#817156'],[.11,'#32281e'],[.55,'#16130f'],[1,'#33281d']
      ]),'#a88c5d',2);
    c.restore();
-   rect(c,lane.x-24,lane.y-29,48,58,4,'#14110d','#625237',1.2);
+   rect(c,lane.x-10,lane.y-15,20,30,2,'#14110d','#625237',1.2);
    // The top shoulder aligns with the real upper rollover bay.
-   rect(c,lane.x-24,lane.y-35,48,5,1,'#bda16c','#2a2217',1);
-   for(const dx of [-19,19])bolt(c,lane.x+dx,lane.y-33,1.7);
-   for(const dx of [-24,24])for(const dy of [-27,27])
-    bolt(c,lane.x+dx,lane.y+dy,1.8);
+   rect(c,lane.x-11,lane.y-19,22,4,1,'#bda16c','#2a2217',1);
+   for(const dx of [-9,9])bolt(c,lane.x+dx,lane.y-17,1.15);
+   for(const dx of [-11,11])for(const dy of [-14,14])
+    bolt(c,lane.x+dx,lane.y+dy,1.05);
   }
   // Retro upper-playfield inserts and sculpted rollover plastics.
   // Devices remain visible; no rail or elevated structure is painted over them.
- text(c,'FLIGHT RANK',210,116,8,'rgba(222,226,238,.72)','Oxanium',900);
- for(let i=0;i<5;i++)disk(c,142+i*34,131,5,'#172236','#71889c',1.2);
+ text(c,'RE-ENTRY',216,103,8,'rgba(222,226,238,.72)','Oxanium',900);
+ for(let i=0;i<5;i++)disk(c,165+i*25,83,3.4,'#172236','#71889c',1.2);
  for(const lane of UPPER_ROLLOVERS){
-  rect(c,lane.x-22,183,44,21,4,'#211913','#a18a60',1.5);
-  text(c,lane.label,lane.x,193,12,'#ffe5ba','Barlow Condensed',900);
-  line(c,[[lane.x-18,lane.y-16],[lane.x-18,lane.y-22],
-    [lane.x+18,lane.y-22],[lane.x+18,lane.y-16]],'#334458',6);
-  line(c,[[lane.x-18,lane.y-22],[lane.x+18,lane.y-22]],'#c8c8cc',2.4);
-  disk(c,lane.x-18,lane.y-16,3,'#d5b89f');
-  disk(c,lane.x+18,lane.y-16,3,'#d5b89f');
+  text(c,lane.label,lane.x,lane.y+3,9,'#ffe5ba','Barlow Condensed',900);
+  line(c,[[lane.x-10,lane.y-11],[lane.x-10,lane.y-16],
+    [lane.x+10,lane.y-16],[lane.x+10,lane.y-11]],'#334458',3);
+  line(c,[[lane.x-10,lane.y-16],[lane.x+10,lane.y-16]],'#c8c8cc',1.7);
+  disk(c,lane.x-10,lane.y-11,1.7,'#d5b89f');
+  disk(c,lane.x+10,lane.y-11,1.7,'#d5b89f');
  }
  // Dense recessed incandescent insert clusters, like a physical playfield.
  const inserts=[
