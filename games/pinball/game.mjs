@@ -31,6 +31,11 @@ if(mobileActionDock&&ui.actionPanel){
   else originalParent.insertBefore(ui.actionPanel,actionAnchor.nextSibling);
  }
  compactActions.addEventListener?.('change',positionPrimaryAction);
+ // Browser viewport emulation and Fold posture changes may dispatch resize
+ // separately from the media-query change event. Keep the real action node
+ // in the correct location without cloning or rebuilding button listeners.
+ window.addEventListener('resize',positionPrimaryAction,{passive:true});
+ window.visualViewport?.addEventListener?.('resize',positionPrimaryAction,{passive:true});
  positionPrimaryAction();
 }
 // Cabinet-side instrument towers mirror existing engine state. They never
