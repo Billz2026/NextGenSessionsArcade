@@ -9,34 +9,39 @@ export const KICKBACK=Object.freeze({
  left:Object.freeze({x:105,y:640,edge:126,vx:335,vy:-685}),
  right:Object.freeze({x:315,y:640,edge:294,vx:-335,vy:-685})
 });
+// Space Cadet's distinct upper-right attack island. This is not a
+// horizontally centred bumper row; the left flank stays clear for the ramp.
 export const BUMPERS=Object.freeze([
- {x:150,y:240,r:24,score:250},
- {x:259,y:240,r:24,score:250},
- {x:205,y:310,r:24,score:250}
+ {x:215,y:180,r:21,score:250},
+ {x:294,y:164,r:21,score:250},
+ {x:257,y:240,r:21,score:250}
 ]);
 // Seven-bumper topology: three existing attack bumpers, one satellite,
 // and three real engine bumpers on the elevated launch platform.
-export const SATELLITE_BUMPER=Object.freeze({x:90,y:222,r:16,score:1500});
+export const SATELLITE_BUMPER=Object.freeze({x:89,y:93,r:16,score:1500});
 export const LAUNCH_PLATFORM=Object.freeze({
  z:1.36,
- outline:Object.freeze([[73,309],[170,310],[181,349],[178,413],[102,422],[73,404]]
+ // The tall, sculpted launch platform occupies the MIDDLE-LEFT, exactly
+ // as a recognisable separate area; its three bumpers occupy the lower part.
+ outline:Object.freeze([[77,236],[119,240],[164,274],[179,327],
+  [174,428],[157,469],[136,486],[89,470],[58,429],[61,308]]
   .map(p=>Object.freeze(p))),
- bounds:Object.freeze({left:78,right:171,top:316,exit:418}),
- entry:Object.freeze({x:142,y:328}),
+ bounds:Object.freeze({left:63,right:170,top:282,exit:466}),
+ entry:Object.freeze({x:143,y:293}),
  lanes:Object.freeze([
-  Object.freeze({x:89,y:338,label:'L'}),
-  Object.freeze({x:119,y:338,label:'A'}),
-  Object.freeze({x:149,y:338,label:'B'})
+  Object.freeze({x:82,y:317,label:'L'}),
+  Object.freeze({x:115,y:317,label:'A'}),
+  Object.freeze({x:148,y:317,label:'B'})
  ]),
  bumpers:Object.freeze([
-  Object.freeze({x:98,y:363,r:10}),
-  Object.freeze({x:143,y:365,r:10}),
-  Object.freeze({x:121,y:388,r:10})
+  Object.freeze({x:79,y:373,r:11}),
+  Object.freeze({x:141,y:389,r:11}),
+  Object.freeze({x:109,y:421,r:11})
  ])
 });
 export const DECK_RETURN_PATH=Object.freeze([
- [116,414,1.30],[99,427,1.12],[83,451,.87],[75,484,.59],
- [82,520,.45],[107,552,.39],[131,578,.39]
+ [110,465,1.30],[87,481,1.13],[60,510,.91],[68,538,.63],
+ [87,563,.45],[110,579,.40],[131,597,.39]
 ].map(p=>Object.freeze(p)));
 export const POSTS=Object.freeze([
  {x:112,y:585,r:9},{x:308,y:585,r:9},
@@ -55,16 +60,22 @@ export const WALLS=Object.freeze([
  [329,496,300,526],[300,526,278,542],
  [53,366,83,419],[336,420,357,365]
 ]);
-export const LANES=Object.freeze([{x:101,y:173,label:'N'},{x:210,y:169,label:'G'},{x:314,y:174,label:'S'}]);
-export const TARGETS=Object.freeze([{x:186,y:403,r:12},{x:215,y:398,r:12},{x:244,y:398,r:12},{x:273,y:403,r:12}]);
+// The three narrow re-entry switches are at the crown, not tall billboards
+// spread across the width of the playfield.
+export const LANES=Object.freeze([{x:179,y:123,label:'N'},{x:218,y:121,label:'G'},{x:257,y:123,label:'S'}]);
+// Four standing mission targets beneath the attack island, away from
+// the left launch platform and centre of the table.
+export const TARGETS=Object.freeze([{x:202,y:305,r:10},{x:232,y:310,r:10},{x:262,y:310,r:10},{x:292,y:305,r:10}]);
 // Single source of truth for guided-ball motion and the raised 3D rail paths.
 // [x, y, 3D height] coordinates; collision physics elsewhere stays 2D.
 export const RAMP_PATH=Object.freeze([
- [311,372,.40],[327,333,.65],[320,290,.94],[286,244,1.23],
- [285,203,1.45],[311,170,1.28],[291,150,.95],
- [321,167,.95],[341,222,.85],[339,298,.68],[332,387,.53],
- // Descend outside the right sling instead of ejecting onto its collider.
- [347,443,.46],[350,493,.40],[329,537,.38],[310,555,.38],[290,575,.39]
+ [311,372,.40],[329,340,.61],[340,298,.79],[343,251,1.01],
+ [343,195,1.20],[328,145,1.36],[307,113,1.44],
+ [280,99,1.42],[295,115,1.18],[333,154,1.01],
+ [350,217,.87],[355,301,.67],[352,387,.53],
+ // The outer descent feeds the right return; it does not cut through the
+ // attack-bumper island or terminate halfway along the shooter wall.
+ [349,447,.46],[350,493,.40],[329,537,.38],[310,555,.38],[290,575,.39]
 ].map(p=>Object.freeze(p)));
 export const ORBIT_PATH=Object.freeze([
  [77,373,.39],[59,321,.52],[56,250,.67],[71,204,.78],
@@ -84,8 +95,8 @@ export const CENTER_PATH=Object.freeze([
 ].map(p=>Object.freeze(p)));
 // The middle-left shot climbs into a real elevated upper launch deck.
 export const SKYLINE_PATH=Object.freeze([
- [149,443,.38],[169,428,.50],[184,402,.72],[188,368,.93],
- [177,340,1.18],[158,318,1.35],[140,326,1.37]
+ [169,505,.38],[183,474,.50],[186,444,.68],[189,412,.82],
+ [188,374,1.01],[177,332,1.20],[157,287,1.36],[141,294,1.37]
 ].map(p=>Object.freeze(p)));
 export const TRAVEL_PATHS=Object.freeze({
  ramp:RAMP_PATH,orbit:ORBIT_PATH,center:CENTER_PATH,skyline:SKYLINE_PATH
@@ -107,7 +118,7 @@ export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
  ramp:{x:311,y:372,r:27,points:7500},
  center:{x:207,y:426,r:33,points:4500},
- skyline:{x:149,y:443,r:18,points:6000}
+ skyline:{x:169,y:505,r:20,points:6000}
 });
 // Ramp and orbit entries should reward a deliberate outside-lane shot without
 // feeling like a magnetic auto-aim. The spring acts only inside the visible
@@ -130,11 +141,11 @@ export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
 // Three playable recessed wormholes, not just painted circles. Both renderers
 // source geometry from these actual engine sensor coordinates.
 export const WORMHOLES=Object.freeze([
- Object.freeze({id:'green',x:85,y:282,r:16,color:'#73dbaa'}),
- Object.freeze({id:'red',x:337,y:227,r:16,color:'#ff747b'}),
+ Object.freeze({id:'green',x:118,y:173,r:16,color:'#73dbaa'}),
+ Object.freeze({id:'red',x:334,y:268,r:16,color:'#ff747b'}),
  Object.freeze({id:'yellow',x:333,y:503,r:15,color:'#ffce75'})
 ]);
-export const WARP_SWITCH=Object.freeze({x:291,y:339,r:10,points:1250});
+export const WARP_SWITCH=Object.freeze({x:333,y:354,r:10,points:1250});
 export const SLINGS=Object.freeze([
  {x1:119,y1:502,x2:163,y2:535,score:100},
  {x1:301,y1:502,x2:257,y2:535,score:100}
