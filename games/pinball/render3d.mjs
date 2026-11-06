@@ -1,10 +1,10 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH} from './engine.mjs?v=20';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH} from './engine.mjs?v=21';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
-import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=8';
+import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=9';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=3';
@@ -391,9 +391,10 @@ export async function create3DTable(host){
  // A floating neon wordmark, mounted over the black enamel without a framed plaque.
  const neonMarqueeMaterial=cabinetMarquee();
  const neonGlowMaterial=marqueeGlow();
- plane(0,5.48,.535,5.90,1.58,neonMarqueeMaterial);
- // Slight positive offset prevents z-fighting with the permanent, sharp tube core.
- plane(0,5.48,.548,5.90,1.58,neonGlowMaterial);
+ // Keep branding on the upper apron; the top-left satellite and attack
+ // playfield now begin above the old large NEON TILT title plaque.
+ plane(0,6.43,.535,3.95,.61,neonMarqueeMaterial);
+ plane(0,6.43,.548,3.95,.61,neonGlowMaterial);
  // Collision walls stay in engine.mjs. The Space Cadet-inspired visual
  // treatment replaces metal wall wires with painted enamel / plastic edges.
  for(const point of POSTS){
@@ -429,34 +430,35 @@ export async function create3DTable(host){
   const bayFastener=metal('#d6bc9c',.28,.73);
  for(const l of UPPER_ROLLOVERS){
   const px=X(l.x),py=Y(l.y);
-   plane(px,py,.191,1.10,1.38,bayEnamel);
-   for(const by of [py-.69,py+.69])
-    box(px,by,.24,1.10,.047,.055,bayTrim);
-   for(const bx of [px-.55,px+.55]){
-    box(bx,py,.237,.049,1.40,.05,bayTrim);
-    for(const by of [py-.63,py+.63])
-     cyl(bx,by,.276,.049,.035,bayFastener,10);
+   // Small crown rollover switches, not obstructive N/G/S boxes.
+   plane(px,py,.191,.49,.81,bayEnamel);
+   for(const by of [py-.42,py+.42])
+    box(px,by,.24,.49,.033,.037,bayTrim);
+   for(const bx of [px-.25,px+.25]){
+    box(bx,py,.237,.031,.83,.045,bayTrim);
+    for(const by of [py-.38,py+.38])
+     cyl(bx,by,.276,.036,.025,bayFastener,10);
    }
-   box(px,py,.22,.83,.63,.18,black);
-  box(px,py,.35,.63,.45,.16,darkChrome);
+   box(px,py,.22,.30,.36,.09,black);
+   box(px,py,.35,.26,.31,.09,darkChrome);
    // Mounting shoulder and paired captive screws make each lane a
    // distinct piece of playable machine hardware.
-   box(px,py+.575,.275,.91,.075,.055,crownSteel);
-   for(const dx of [-.38,.38])
-    cyl(px+dx,py+.575,.317,.048,.032,bayFastener,12);
-   laneLamps.push(box(px,py,.48,.42,.27,.11,amber));
-  plane(px,py,.56,.52,.31,label(l.label,'#2b1920',95,180,110));
-  for(const d of [-.48,.48])box(px+d,py-.27,.45,.075,.78,.36,nickel);
-  for(const dx of [-.35,.35]){
-   box(px+dx,py+.32,.68,.065,.13,.62,darkChrome);
-   cyl(px+dx,py+.32,.93,.07,.035,gold,12);
+   box(px,py+.36,.275,.40,.050,.034,crownSteel);
+   for(const dx of [-.15,.15])
+    cyl(px+dx,py+.36,.317,.034,.027,bayFastener,12);
+   laneLamps.push(box(px,py,.42,.19,.18,.047,amber));
+  plane(px,py,.50,.23,.19,label(l.label,'#2b1920',83,180,110));
+  for(const d of [-.26,.26])box(px+d,py-.19,.45,.036,.45,.16,nickel);
+  for(const dx of [-.16,.16]){
+   box(px+dx,py+.23,.61,.033,.09,.31,darkChrome);
+   cyl(px+dx,py+.23,.77,.042,.026,gold,12);
   }
-  box(px,py+.32,.99,.78,.065,.055,chrome);
+  box(px,py+.23,.82,.37,.047,.035,chrome);
   const mat=new T.MeshStandardMaterial({
    color:'#e9b780',emissive:'#ee9d5c',emissiveIntensity:.16,
    roughness:.27,metalness:.08
   });
-  box(px,py+.32,1.032,.27,.035,.02,mat);
+  box(px,py+.23,.86,.16,.026,.020,mat);
   laneGateMaterials.push(mat);
  }
  // Flush cast-metal bumper island, shaped around existing sensor positions.
