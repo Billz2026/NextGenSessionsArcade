@@ -132,7 +132,7 @@ async function activate3D(){
  if(!stage||view3d||loading3d||threeFailed)return;
  loading3d=true;updateRenderUI();
  try{
-  const {create3DTable}=await import('./render3d.mjs?v=42');
+  const {create3DTable}=await import('./render3d.mjs?v=43');
   const result=await create3DTable(stage);
   view3d=result;
   webglValidated=false;webglBlankFrames=0;
@@ -203,6 +203,8 @@ desktopFocusMedia?.addEventListener?.('change',event=>{
 document.addEventListener('fullscreenchange',()=>{
  if(document.fullscreenElement&&tableFocusEnabled)setTableFocus(false);
 });
+const liveTableScore=document.getElementById('table-live-score');
+const liveTableBall=document.getElementById('table-live-ball');
 const spinnerCount=document.getElementById('spinner-count');
 const scoopCount=document.getElementById('scoop-count');
 const fmt=n=>Math.max(0,Math.floor(n)).toLocaleString('en-GB');
@@ -212,7 +214,12 @@ function overlay(kicker,title,sub){
 }
 function syncHUD(){
  const state=engine.state,score=engine.score,ball=engine.ballNumber,power=Math.round(engine.charge*100);
- if(lastScore!==score){ui.score.textContent=fmt(score).padStart(7,'0');lastScore=score;}
+ if(lastScore!==score){
+  const displayScore=fmt(score).padStart(7,'0');
+  ui.score.textContent=displayScore;
+  if(liveTableScore)liveTableScore.textContent=displayScore;
+  lastScore=score;
+ }
  const isReady=state==='ready',isOver=state==='gameover';
  const shooterReady=state==='playing'&&engine.ball?.mode==='shooter';
  const ballLive=state==='playing'&&!shooterReady;
@@ -220,6 +227,7 @@ function syncHUD(){
   Math.max(0,engine.ballSaveUntil-engine.time):0;
  if(lastBall!==ball||lastStatus!==state||lastTilt!==engine.tilted||lastActiveBalls!==engine.balls.length){
   ui.ball.textContent=engine.multiballActive?engine.balls.length+' LIVE':ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
+  if(liveTableBall)liveTableBall.textContent=ui.ball.textContent;
   ui.status.textContent=engine.tilted?'TILT':isReady?'STANDBY':shooterReady?'BALL READY':
    ballLive?'BALL LIVE':state==='between'?'BETWEEN BALLS':'GAME OVER';
   lastBall=ball;lastStatus=state;lastTilt=engine.tilted;lastActiveBalls=engine.balls.length;
