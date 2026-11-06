@@ -90,7 +90,9 @@ try{
    };
    return {scrollWidth:document.documentElement.scrollWidth,
     table:rect('#table-stage'),left:rect('#flipper-left'),
-    right:rect('#flipper-right')};
+    right:rect('#flipper-right'),start:rect('#start'),
+    docked:document.querySelector('#start')?.parentElement?.parentElement?.id==='mobile-action-dock',
+    statusVisible:getComputedStyle(document.querySelector('.machine-top')).display!=='none'};
   });
   console.log(vp.name+' layout:',JSON.stringify(layout));
   assert.ok(layout.table.width>150&&layout.table.height>250,
@@ -104,7 +106,13 @@ try{
    assert.ok(r.left>=-3&&r.right<=vp.width+3,
     vp.name+': '+key+' is clipped horizontally');
   }
-  if(vp.width>1120){
+  if(vp.width<=1120){
+   assert.ok(layout.docked,vp.name+': Start/Launch must be docked above table');
+   assert.ok(layout.start.bottom<=layout.table.top+3,
+    vp.name+': player must not scroll below the table to start the game');
+   assert.ok(layout.statusVisible,vp.name+': cabinet score strip is invisible');
+  }else{
+   assert.ok(layout.statusVisible,vp.name+': desktop cabinet score strip is invisible');
    assert.ok(layout.table.bottom<=vp.height+3,
     vp.name+': playfield is clipped below the desktop viewport');
    assert.ok(layout.left.bottom<=vp.height+3&&layout.right.bottom<=vp.height+3,
