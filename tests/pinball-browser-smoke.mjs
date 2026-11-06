@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-import {mkdirSync} from 'node:fs';
+import {mkdirSync,writeFileSync} from 'node:fs';
 
 const base='http://127.0.0.1:8877/games/pinball/';
 mkdirSync('artifacts',{recursive:true});
@@ -9,6 +9,25 @@ const browser=await chromium.launch({
  args:['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader']
 });
 const page=await browser.newPage({viewport:{width:1690,height:920},deviceScaleFactor:1});
+const cdp=await page.context().newCDPSession(page);
+// Direct CDP capture avoids Playwright's screenshot animation/font stabilization
+// timeout, which previously produced no usable image despite green CI.
+async function captureEvidence(path,fullPage=false){
+ const args={format:'png',fromSurface:true,captureBeyondViewport:fullPage};
+ if(fullPage){
+  const size=await page.evaluate(()=>({
+   width:document.documentElement.scrollWidth,
+   height:document.documentElement.scrollHeight
+  }));
+  args.clip={x:0,y:0,width:size.width,height:size.height,scale:1};
+ }
+ const shot=await cdp.send('Page.captureScreenshot',args);
+ assert.ok(shot.data?.startsWith('iVBORw0KGgo'),'CDP did not return valid PNG evidence for '+path);
+ const bytes=Buffer.from(shot.data,'base64');
+ assert.ok(bytes.length>4000,'Screenshot is unexpectedly small: '+path);
+ writeFileSync(path,bytes);
+ console.log('Saved screenshot:',path,bytes.length,'bytes');
+}
 const errors=[],warnings=[];
 page.on('pageerror',err=>errors.push(err.stack||String(err)));
 page.on('console',msg=>{
@@ -119,21 +138,11 @@ try{
    assert.ok(layout.left.bottom<=vp.height+3&&layout.right.bottom<=vp.height+3,
     vp.name+': flipper buttons are clipped below the desktop viewport');
   }
-  try{
-   await page.screenshot({path:'artifacts/neon-tilt-'+vp.name+'.png',
-    animations:'disabled',timeout:3500});
-  }catch(error){
-   console.log(vp.name+' screenshot omitted:',String(error).slice(0,150));
-  }
+  await captureEvidence('artifacts/neon-tilt-'+vp.name+'.png',vp.width<=1120);
  }
  assert.equal(errors.length,0,'Browser runtime errors after control and viewport checks');
- // Best-effort image; pixel assertions above are the authoritative smoke test.
- try{
-  await page.screenshot({path:'artifacts/neon-tilt-browser.png',
-   animations:'disabled',timeout:4500});
- }catch(error){
-  console.log('Screenshot omitted; animated stage did not settle:',String(error).slice(0,150));
- }
+ // Screenshots are mandatory evidence, not optional decoration. The run fails
+ // if any capture above is missing or invalid.
 }finally{
  await browser.close();
 }
