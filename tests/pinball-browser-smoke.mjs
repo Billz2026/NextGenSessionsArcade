@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-import {mkdirSync} from 'node:fs';
+import {mkdirSync,writeFileSync} from 'node:fs';
 
 const base='http://127.0.0.1:8877/games/pinball/';
 mkdirSync('artifacts',{recursive:true});
@@ -9,6 +9,25 @@ const browser=await chromium.launch({
  args:['--no-sandbox','--enable-webgl','--use-gl=angle','--use-angle=swiftshader']
 });
 const page=await browser.newPage({viewport:{width:1690,height:920},deviceScaleFactor:1});
+const cdp=await page.context().newCDPSession(page);
+// Direct CDP capture avoids Playwright's screenshot animation/font stabilization
+// timeout, which previously produced no usable image despite green CI.
+async function captureEvidence(path,fullPage=false){
+ const args={format:'png',fromSurface:true,captureBeyondViewport:fullPage};
+ if(fullPage){
+  const size=await page.evaluate(()=>({
+   width:document.documentElement.scrollWidth,
+   height:document.documentElement.scrollHeight
+  }));
+  args.clip={x:0,y:0,width:size.width,height:size.height,scale:1};
+ }
+ const shot=await cdp.send('Page.captureScreenshot',args);
+ assert.ok(shot.data?.startsWith('iVBORw0KGgo'),'CDP did not return valid PNG evidence for '+path);
+ const bytes=Buffer.from(shot.data,'base64');
+ assert.ok(bytes.length>4000,'Screenshot is unexpectedly small: '+path);
+ writeFileSync(path,bytes);
+ console.log('Saved screenshot:',path,bytes.length,'bytes');
+}
 const errors=[],warnings=[];
 page.on('pageerror',err=>errors.push(err.stack||String(err)));
 page.on('console',msg=>{
@@ -50,13 +69,52 @@ try{
  if(!evidence.active3D)
   assert.ok(evidence.colourful>55,'2D fallback has no visible neon or gold hardware');
  assert.equal(errors.length,0,'Browser runtime errors found');
- // Best-effort image; pixel assertions above are the authoritative smoke test.
- try{
-  await page.screenshot({path:'artifacts/neon-tilt-browser.png',
-   animations:'disabled',timeout:4500});
- }catch(error){
-  console.log('Screenshot omitted; animated stage did not settle:',String(error).slice(0,150));
+ // Check the actual box geometry at common desktop, narrow desktop, Fold and
+ // phone CSS viewport sizes. Mobile pages may scroll vertically, not sideways.
+ const viewports=[
+  {name:'desktop',width:1690,height:920},
+  {name:'laptop',width:1280,height:720},
+  {name:'fold-unfolded',width:760,height:880},
+  {name:'phone',width:390,height:844}
+ ];
+ for(const vp of viewports){
+  await page.setViewportSize({width:vp.width,height:vp.height});
+  await page.waitForTimeout(100);
+  const layout=await page.evaluate(()=>{
+   const rect=sel=>{
+    const e=document.querySelector(sel);
+    if(!e)throw Error('Missing required element '+sel);
+    const r=e.getBoundingClientRect();
+    return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+     width:r.width,height:r.height};
+   };
+   return {scrollWidth:document.documentElement.scrollWidth,
+    table:rect('#table-stage'),left:rect('#flipper-left'),
+    right:rect('#flipper-right')};
+  });
+  console.log(vp.name+' layout:',JSON.stringify(layout));
+  assert.ok(layout.table.width>150&&layout.table.height>250,
+   vp.name+': table size too small');
+  assert.ok(Math.abs(layout.table.width/layout.table.height-.6)<.04,
+   vp.name+': table aspect ratio is distorted');
+  assert.ok(layout.scrollWidth<=vp.width+3,
+   vp.name+': horizontal overflow detected');
+  for(const key of ['table','left','right']){
+   const r=layout[key];
+   assert.ok(r.left>=-3&&r.right<=vp.width+3,
+    vp.name+': '+key+' is clipped horizontally');
+  }
+  if(vp.width>1120){
+   assert.ok(layout.table.bottom<=vp.height+3,
+    vp.name+': playfield is clipped below the desktop viewport');
+   assert.ok(layout.left.bottom<=vp.height+3&&layout.right.bottom<=vp.height+3,
+    vp.name+': flipper buttons are clipped below the desktop viewport');
+  }
+  await captureEvidence('artifacts/neon-tilt-'+vp.name+'.png',vp.width<=1120);
  }
+ assert.equal(errors.length,0,'Browser runtime errors after control and viewport checks');
+ // Screenshots are mandatory evidence, not optional decoration. The run fails
+ // if any capture above is missing or invalid.
 }finally{
  await browser.close();
 }
