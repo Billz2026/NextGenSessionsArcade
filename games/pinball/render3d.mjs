@@ -537,19 +537,19 @@ export async function create3DTable(host){
  });
  const deckRim=metal('#c0a2c8',.29,.55);
  const deckRail=metal('#d0aa72',.22,.74);
- const deckShape=new T.Shape();
+ const launchDeckShape=new T.Shape();
  LAUNCH_PLATFORM.outline.forEach(([px,py],i)=>{
-  if(i===0)deckShape.moveTo(X(px),Y(py));else deckShape.lineTo(X(px),Y(py));
+  if(i===0)launchDeckShape.moveTo(X(px),Y(py));else launchDeckShape.lineTo(X(px),Y(py));
  });
- deckShape.closePath();
- const deckMesh=add(new T.ExtrudeGeometry(deckShape,{
+ launchDeckShape.closePath();
+ const deckMesh=add(new T.ExtrudeGeometry(launchDeckShape,{
   depth:.14,bevelEnabled:true,bevelSegments:2,steps:1,
   bevelSize:.045,bevelThickness:.028
  }),deckPaint,0,0,LAUNCH_PLATFORM.z-.22);
  deckMesh.receiveShadow=true;
- const deckOutline=LAUNCH_PLATFORM.outline.map(([px,py])=>
+ const raisedDeckOutline=LAUNCH_PLATFORM.outline.map(([px,py])=>
   new T.Vector3(X(px),Y(py),LAUNCH_PLATFORM.z-.05));
- scene.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(deckOutline),
+ scene.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(raisedDeckOutline),
   new T.LineBasicMaterial({color:'#d9b787'})));
  for(const [px,py] of [[83,325],[164,334],[84,395],[164,398]]){
   const h=LAUNCH_PLATFORM.z-.33;
