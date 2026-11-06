@@ -591,6 +591,15 @@ export async function create3DTable(host){
  }
  raisedGuide(SKYLINE_PATH,.205,'#492c61');
  raisedGuide(DECK_RETURN_PATH,.135,'#332e42',deckReturnRail);
+ // A readable physical entrance at the real launch-ramp shot sensor, BELOW
+ // the raised deck rather than behind it. It funnels the incoming flipper shot.
+ const mouthX=X(SHOTS.skyline.x),mouthY=Y(SHOTS.skyline.y);
+ box(mouthX,mouthY,.267,.72,.22,.065,metal('#503152',.33,.35));
+ ring(mouthX,mouthY,.319,.19,.027,deckRail);
+ for(const side of [-1,1])
+  box(mouthX+side*.36,mouthY+.10,.32,.075,.48,.06,deckRim);
+ plane(mouthX,mouthY-.31,.293,1.14,.20,
+  label('LAUNCH','#fff0ce',60,420,92,true));
  // Three distinct engine-bumper collision caps and 3 launch-lane switches.
  const deckBumperMaterials=[],deckLaneMaterials=[];
  for(const [i,b] of LAUNCH_PLATFORM.bumpers.entries()){
