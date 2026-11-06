@@ -576,20 +576,39 @@ function setHold(side,held){
   engine.setFlipper(side,active);
   (side==='left'?ui.left:ui.right).classList.toggle('active',active);
  }
-function bindHold(button,down,up){
+// Each physical pointer, keyboard key and playfield touch owns its hold.
+ // A single release must not cancel another still-active input.
+const heldButtonPointers={left:new Set(),right:new Set(),launch:new Set()};
+function syncFlipperHold(side){
+ const keys=side==='left'?leftFlipperKeys:rightFlipperKeys;
+ const pressed=[...keys].some(code=>pressedKeys.has(code));
+ const touched=[...touchPointers.values()].includes(side);
+ setHold(side,pressed||touched||heldButtonPointers[side].size>0);
+}
+function bindHold(button,source,down,up,cancel=up){
+ const pointers=heldButtonPointers[source];
+ const end=(e,cancelled)=>{
+  if(!pointers.delete(e.pointerId))return;
+  if(pointers.size===0)(cancelled?cancel:up)();
+ };
  button.addEventListener('pointerdown',e=>{
   if(e.pointerType==='mouse'&&e.button!==0)return;
-  e.preventDefault();button.setPointerCapture?.(e.pointerId);down();
+  e.preventDefault();
+  pointers.add(e.pointerId);
+  button.setPointerCapture?.(e.pointerId);
+  down();
  });
- button.addEventListener('pointerup',e=>{e.preventDefault();up();});
- button.addEventListener('pointercancel',()=>{if(button===ui.launch){engine.cancelLaunchCharge();ui.launch.classList.remove('pressed')}else up()});
- button.addEventListener('lostpointercapture',up);
+ button.addEventListener('pointerup',e=>{e.preventDefault();end(e,false);});
+ button.addEventListener('pointercancel',e=>end(e,true));
+ button.addEventListener('lostpointercapture',e=>end(e,true));
  button.addEventListener('contextmenu',e=>e.preventDefault());
 }
-bindHold(ui.left,()=>setHold('left',true),()=>setHold('left',false));
-bindHold(ui.right,()=>setHold('right',true),()=>setHold('right',false));
-bindHold(ui.launch,()=>{engine.holdLaunch(true);ui.launch.classList.add('pressed');},
- ()=>{engine.holdLaunch(false);ui.launch.classList.remove('pressed');});
+bindHold(ui.left,'left',()=>syncFlipperHold('left'),()=>syncFlipperHold('left'));
+bindHold(ui.right,'right',()=>syncFlipperHold('right'),()=>syncFlipperHold('right'));
+bindHold(ui.launch,'launch',
+ ()=>{engine.holdLaunch(true);ui.launch.classList.add('pressed');},
+ ()=>{engine.holdLaunch(false);ui.launch.classList.remove('pressed');},
+ ()=>{engine.cancelLaunchCharge();ui.launch.classList.remove('pressed');});
 const isInput=t=>t?.matches?.('input,textarea,select,[contenteditable="true"]');
  const leftFlipperKeys=new Set(['ArrowLeft','KeyA','KeyZ']);
  const rightFlipperKeys=new Set(['ArrowRight','KeyD','Slash']);
@@ -600,8 +619,8 @@ const isInput=t=>t?.matches?.('input,textarea,select,[contenteditable="true"]');
   const k=e.code;
   if(leftFlipperKeys.has(k)||rightFlipperKeys.has(k)||nudgeKeys[k]||
      ['Space','ArrowDown','Enter'].includes(k))e.preventDefault();
-  if(leftFlipperKeys.has(k)){pressedKeys.add(k);setHold('left',true);}
-  if(rightFlipperKeys.has(k)){pressedKeys.add(k);setHold('right',true);}
+  if(leftFlipperKeys.has(k)){pressedKeys.add(k);syncFlipperHold('left');}
+  if(rightFlipperKeys.has(k)){pressedKeys.add(k);syncFlipperHold('right');}
   if(nudgeKeys[k]&&!e.repeat)engine.nudge(nudgeKeys[k]);
   if((k==='Space'||k==='ArrowDown')&&!e.repeat){engine.holdLaunch(true);ui.launch.classList.add('pressed');}
   if(k==='Enter'&&!e.repeat&&(engine.state==='ready'||engine.state==='gameover'))startGame();
@@ -609,8 +628,8 @@ const isInput=t=>t?.matches?.('input,textarea,select,[contenteditable="true"]');
  document.addEventListener('keyup',e=>{
   const k=e.code;
   pressedKeys.delete(k);
-  if(leftFlipperKeys.has(k))setHold('left',[...leftFlipperKeys].some(code=>pressedKeys.has(code)));
-  if(rightFlipperKeys.has(k))setHold('right',[...rightFlipperKeys].some(code=>pressedKeys.has(code)));
+  if(leftFlipperKeys.has(k))syncFlipperHold('left');
+  if(rightFlipperKeys.has(k))syncFlipperHold('right');
   if(k==='Space'||k==='ArrowDown'){
    engine.holdLaunch(false);ui.launch.classList.remove('pressed');
   }
@@ -626,19 +645,21 @@ ui.canvas.addEventListener('pointerdown',e=>{
    return;
   }
   e.preventDefault();ui.canvas.setPointerCapture?.(e.pointerId);
- const side=x<.5?'left':'right';touchPointers.set(e.pointerId,side);setHold(side,true);
+ const side=x<.5?'left':'right';touchPointers.set(e.pointerId,side);syncFlipperHold(side);
 });
 function releaseTouch(id){
  const side=touchPointers.get(id);if(!side)return;
  touchPointers.delete(id);
- // Do not release a side while another finger is still holding the same side.
- if(![...touchPointers.values()].includes(side))setHold(side,false);
+ // Keep a side held if another finger, button pointer or key still owns it.
+ syncFlipperHold(side);
 }
 ui.canvas.addEventListener('pointerup',e=>releaseTouch(e.pointerId));
 ui.canvas.addEventListener('pointercancel',e=>releaseTouch(e.pointerId));
 ui.canvas.addEventListener('lostpointercapture',e=>releaseTouch(e.pointerId));
 function loseFocus(){
- touchPointers.clear();pressedKeys.clear();ui.left.classList.remove('active');ui.right.classList.remove('active');
+ touchPointers.clear();pressedKeys.clear();
+ heldButtonPointers.left.clear();heldButtonPointers.right.clear();heldButtonPointers.launch.clear();
+ ui.left.classList.remove('active');ui.right.classList.remove('active');
  ui.launch.classList.remove('pressed');
  flipperAudioState.left=false;flipperAudioState.right=false;
  engine.setFlipper('left',false);engine.setFlipper('right',false);
