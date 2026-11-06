@@ -16,7 +16,7 @@ export const BUMPERS=Object.freeze([
 ]);
 // Seven-bumper topology: three existing attack bumpers, one satellite,
 // and three real engine bumpers on the elevated launch platform.
-export const SATELLITE_BUMPER=Object.freeze({x:70,y:230,r:16,score:1500});
+export const SATELLITE_BUMPER=Object.freeze({x:90,y:222,r:16,score:1500});
 export const LAUNCH_PLATFORM=Object.freeze({
  z:1.36,
  outline:Object.freeze([[73,309],[170,310],[181,349],[178,413],[102,422],[73,404]]
