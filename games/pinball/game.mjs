@@ -5,6 +5,7 @@ const $=id=>document.getElementById(id);
 const ui={
  canvas:$('playfield'),overlay:$('screen-overlay'),overlayKicker:$('overlay-kicker'),
  overlayTitle:$('overlay-title'),overlaySub:$('overlay-sub'),score:$('score'),
+ tableLiveScore:$('table-live-score'),tableLiveBall:$('table-live-ball'),
  scoreFlash:$('score-flash'),scoreState:$('score-state'),ball:$('ball-number'),
  best:$('best-score'),rank:$('rank-name'),status:$('status-indicator'),power:$('power-fill'),
  powerLabel:$('power-label'),powerTitle:$('power-title'),launchTitle:$('launch-title'),launchHint:$('launch-hint'),launcherPanel:$('launcher-section'),actionPanel:$('primary-action'),start:$('start'),reset:$('reset'),
@@ -203,8 +204,6 @@ desktopFocusMedia?.addEventListener?.('change',event=>{
 document.addEventListener('fullscreenchange',()=>{
  if(document.fullscreenElement&&tableFocusEnabled)setTableFocus(false);
 });
-const liveTableScore=document.getElementById('table-live-score');
-const liveTableBall=document.getElementById('table-live-ball');
 const spinnerCount=document.getElementById('spinner-count');
 const scoopCount=document.getElementById('scoop-count');
 const fmt=n=>Math.max(0,Math.floor(n)).toLocaleString('en-GB');
@@ -217,7 +216,7 @@ function syncHUD(){
  if(lastScore!==score){
   const displayScore=fmt(score).padStart(7,'0');
   ui.score.textContent=displayScore;
-  if(liveTableScore)liveTableScore.textContent=displayScore;
+  if(ui.tableLiveScore)ui.tableLiveScore.textContent=displayScore;
   lastScore=score;
  }
  const isReady=state==='ready',isOver=state==='gameover';
@@ -227,7 +226,7 @@ function syncHUD(){
   Math.max(0,engine.ballSaveUntil-engine.time):0;
  if(lastBall!==ball||lastStatus!==state||lastTilt!==engine.tilted||lastActiveBalls!==engine.balls.length){
   ui.ball.textContent=engine.multiballActive?engine.balls.length+' LIVE':ball?(engine.playingExtraBall?'EXTRA':ball+' / 3'):'— / 3';
-  if(liveTableBall)liveTableBall.textContent=ui.ball.textContent;
+  if(ui.tableLiveBall)ui.tableLiveBall.textContent=ui.ball.textContent;
   ui.status.textContent=engine.tilted?'TILT':isReady?'STANDBY':shooterReady?'BALL READY':
    ballLive?'BALL LIVE':state==='between'?'BETWEEN BALLS':'GAME OVER';
   lastBall=ball;lastStatus=state;lastTilt=engine.tilted;lastActiveBalls=engine.balls.length;
