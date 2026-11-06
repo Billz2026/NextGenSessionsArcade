@@ -1,7 +1,7 @@
 /* NextGen Pinball — original real-time 3D table.
    Uses Three.js for 3D geometry and lighting; game engine remains deterministic 2D.
    Coordinates and moving physical pieces are mapped from engine.mjs. */
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH} from './engine.mjs?v=19';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH} from './engine.mjs?v=20';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=7';
@@ -517,6 +517,107 @@ export async function create3DTable(host){
   const light=new T.PointLight('#ff866a',.75,2.3);
   light.position.set(x,y,1.1);scene.add(light);bumperLights.push(light);
  }
+ // Full seven-bumper arrangement: three original main-board attack bumpers,
+ // one free-standing satellite, three *playable* engine bumpers on a raised
+ // left-side launch deck. No layer creates phantom main-board collisions.
+ const satellitePos={x:X(SATELLITE_BUMPER.x),y:Y(SATELLITE_BUMPER.y)};
+ const satelliteRadius=SATELLITE_BUMPER.r*SCALE;
+ cyl(satellitePos.x,satellitePos.y,.34,satelliteRadius+.09,.11,bumperSkirt,32);
+ ring(satellitePos.x,satellitePos.y,.43,satelliteRadius+.035,.040,chrome);
+ cyl(satellitePos.x,satellitePos.y,.50,satelliteRadius-.03,.095,gold,32);
+ const satelliteLamp=new T.MeshStandardMaterial({
+  color:'#d6edff',emissive:'#75b8ed',emissiveIntensity:1.1,roughness:.24
+ });
+ cyl(satellitePos.x,satellitePos.y,.59,satelliteRadius-.075,.10,satelliteLamp,30);
+ // Deep purple deck with genuine thickness and underside supports: all
+ // dimensions reference the collision/sensor geometry from LAUNCH_PLATFORM.
+ const deckPaint=new T.MeshPhysicalMaterial({
+  color:'#4b315e',roughness:.37,metalness:.15,clearcoat:.94,
+  clearcoatRoughness:.20,side:T.DoubleSide
+ });
+ const deckRim=metal('#c0a2c8',.29,.55);
+ const deckRail=metal('#d0aa72',.22,.74);
+ const deckShape=new T.Shape();
+ LAUNCH_PLATFORM.outline.forEach(([px,py],i)=>{
+  if(i===0)deckShape.moveTo(X(px),Y(py));else deckShape.lineTo(X(px),Y(py));
+ });
+ deckShape.closePath();
+ const deckMesh=add(new T.ExtrudeGeometry(deckShape,{
+  depth:.14,bevelEnabled:true,bevelSegments:2,steps:1,
+  bevelSize:.045,bevelThickness:.028
+ }),deckPaint,0,0,LAUNCH_PLATFORM.z-.22);
+ deckMesh.receiveShadow=true;
+ const deckOutline=LAUNCH_PLATFORM.outline.map(([px,py])=>
+  new T.Vector3(X(px),Y(py),LAUNCH_PLATFORM.z-.05));
+ scene.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(deckOutline),
+  new T.LineBasicMaterial({color:'#d9b787'})));
+ for(const [px,py] of [[83,325],[164,334],[84,395],[164,398]]){
+  const h=LAUNCH_PLATFORM.z-.33;
+  cyl(X(px),Y(py),.30+h/2,.105,h,metal('#69525e',.39,.65),14);
+  cyl(X(px),Y(py),LAUNCH_PLATFORM.z-.075,.16,.042,deckRim,16);
+ }
+ // Physically connected entrance ramp and left-flipper bonus return. These
+ // paths contain actual balls in guided travel mode, not just painted decals.
+ function raisedGuide(path,width,color){
+  const stations=path.map(([x,y,z])=>new T.Vector3(X(x),Y(y),z));
+  const spline=new T.CatmullRomCurve3(stations);
+  const vertices=[],indexes=[],steps=42;
+  for(let i=0;i<=steps;i++){
+   const q=spline.getPoint(i/steps),t=spline.getTangent(i/steps).normalize();
+   const nx=-t.y,ny=t.x;
+   vertices.push(q.x-nx*width,q.y-ny*width,q.z-.12);
+   vertices.push(q.x+nx*width,q.y+ny*width,q.z-.12);
+   if(i<steps){
+    const v=2*i;indexes.push(v,v+1,v+2,v+1,v+3,v+2);
+   }
+  }
+  const geo=new T.BufferGeometry();
+  geo.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+  geo.setIndex(indexes);geo.computeVertexNormals();
+  add(geo,new T.MeshPhysicalMaterial({
+   color,roughness:.37,metalness:.30,side:T.DoubleSide,
+   clearcoat:.7
+  }),0,0,0);
+  for(const sign of [-1,1]){
+   const points=[];
+   for(let i=0;i<=steps;i++){
+    const q=spline.getPoint(i/steps),t=spline.getTangent(i/steps).normalize();
+    points.push(new T.Vector3(q.x-sign*t.y*width,q.y+sign*t.x*width,q.z+.08));
+   }
+   add(new T.TubeGeometry(new T.CatmullRomCurve3(points),steps,.036,8,false),
+    deckRail,0,0,0);
+  }
+ }
+ raisedGuide(SKYLINE_PATH,.205,'#492c61');
+ raisedGuide(DECK_RETURN_PATH,.17,'#332e42');
+ // Three distinct engine-bumper collision caps and 3 launch-lane switches.
+ const deckBumperMaterials=[],deckLaneMaterials=[];
+ for(const [i,b] of LAUNCH_PLATFORM.bumpers.entries()){
+  const x=X(b.x),y=Y(b.y),r=b.r*SCALE,z=LAUNCH_PLATFORM.z;
+  cyl(x,y,z-.025,r+.105,.073,metal('#c6c0cc',.23,.66),28);
+  ring(x,y,z+.042,r+.059,.036,deckRim);
+  cyl(x,y,z+.094,r+.029,.08,metal('#b79ea5',.30,.58),28);
+  const mat=new T.MeshStandardMaterial({
+   color:'#c9e7ff',emissive:'#4a92dd',emissiveIntensity:.55,roughness:.28
+  });
+  cyl(x,y,z+.17,r-.038,.073,mat,26);
+  deckBumperMaterials.push(mat);
+  const cap=add(new T.SphereGeometry(r*.65,22,12),
+   new T.MeshPhysicalMaterial({color:'#eff3ff',roughness:.16,metalness:.10,
+    transparent:true,opacity:.9}),x,y,z+.219);
+  cap.scale.z=.30;
+ }
+ for(const [i,lane] of LAUNCH_PLATFORM.lanes.entries()){
+  const x=X(lane.x),y=Y(lane.y),z=LAUNCH_PLATFORM.z;
+  box(x,y,z-.035,.36,.42,.055,metal('#1b1a2c',.42,.48));
+  const mat=new T.MeshStandardMaterial({
+   color:'#e6e2fc',emissive:'#6666dc',emissiveIntensity:.30,roughness:.26
+  });
+  cyl(x,y,z+.022,.092,.032,mat,14);deckLaneMaterials.push(mat);
+  plane(x,y-.30,z+.033,.28,.24,label(lane.label,'#ffebc6',70,140,90,true));
+ }
+ plane(X(124),Y(404),LAUNCH_PLATFORM.z+.014,1.38,.25,
+  label('LAUNCH DECK','#f7dbbd',48,530,86,true));
  // Three low, recessed playable wormhole mouths. The actual entry sensors
  // and physical ball release vectors live in engine.mjs, never in this art.
  const wormholeLenses=[];
@@ -1201,9 +1302,15 @@ export async function create3DTable(host){
    if(b.mode==='shooter')mesh.position.z=.55;
    if(b.mode==='scoop')mesh.position.z=.31;
    if(b.mode==='wormhole')mesh.position.z=.30;
+   if(b.mode==='deck')mesh.position.z=LAUNCH_PLATFORM.z+UPPER_BALL_RADIUS;
    if(b.mode==='travel')
     mesh.position.z=Math.max(.55,(b.travelHeight||.39)+UPPER_BALL_RADIUS);
   }
+  for(const [i,material] of deckLaneMaterials.entries())
+   material.emissiveIntensity=engine.deckLanes?.has(i)?2.7:.30;
+  for(const material of deckBumperMaterials)
+   material.emissiveIntensity=.5+(engine.deckBumperLevel||0)*.55;
+  satelliteLamp.emissiveIntensity=engine.state==='playing'?1.5:.72;
   // The colour-ring lamps reflect the live space-warp switch. A trapped ball
   // lights its particular mouth even when the cross-table warp is closed.
   for(const {mat,index} of wormholeLenses){
