@@ -50,8 +50,8 @@ test('table-first interface keeps a single full HUD and live cabinet score while
  assert.match(html,/id="flipper-right"/);
  assert.match(html,/id="start"/);
  assert.match(html,/id="launch"/);
- assert.match(game,/liveTableScore\.textContent=displayScore/);
- assert.match(game,/liveTableBall\.textContent=ui\.ball\.textContent/);
+ assert.match(game,/ui\.tableLiveScore\.textContent=displayScore/);
+ assert.match(game,/ui\.tableLiveBall\.textContent=ui\.ball\.textContent/);
  assert.match(css,/\.machine-arena>\.arena-wing\{display:none!important\}/);
  assert.match(css,/position:sticky;top:0;z-index:15/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(285px,312px\)/);
