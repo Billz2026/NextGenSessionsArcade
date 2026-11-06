@@ -18,7 +18,7 @@ export const BUMPERS=Object.freeze([
 ]);
 // Seven-bumper topology: three existing attack bumpers, one satellite,
 // and three real engine bumpers on the elevated launch platform.
-export const SATELLITE_BUMPER=Object.freeze({x:89,y:93,r:16,score:1500});
+export const SATELLITE_BUMPER=Object.freeze({x:100,y:90,r:16,score:1500});
 export const LAUNCH_PLATFORM=Object.freeze({
  z:1.36,
  // The tall, sculpted launch platform occupies the MIDDLE-LEFT, exactly
@@ -27,7 +27,7 @@ export const LAUNCH_PLATFORM=Object.freeze({
   [174,428],[157,469],[136,486],[89,470],[58,429],[61,308]]
   .map(p=>Object.freeze(p))),
  bounds:Object.freeze({left:63,right:170,top:282,exit:466}),
- entry:Object.freeze({x:143,y:293}),
+ entry:Object.freeze({x:125,y:293}),
  lanes:Object.freeze([
   Object.freeze({x:82,y:317,label:'L'}),
   Object.freeze({x:115,y:317,label:'A'}),
@@ -821,8 +821,12 @@ export class PinballEngine{
   if(progress>=1){
    if(tr.kind==='skyline'){
     b.mode='deck';b.travel=null;b.deckTime=0;
-    b.x=LAUNCH_PLATFORM.entry.x;b.y=LAUNCH_PLATFORM.entry.y;
-    b.vx=-130;b.vy=165;b.travelHeight=LAUNCH_PLATFORM.z;b.trail=[];
+    // The side of the real launch mouth that the ball enters determines
+    // which one of the three separate raised lanes it can cross. All three
+    // lanes are reachable during real play rather than an automatic award.
+    const bias=clip((tr.from.x-SHOTS.skyline.x)/SHOTS.skyline.r,-1,1);
+    b.x=LAUNCH_PLATFORM.entry.x+bias*20;b.y=LAUNCH_PLATFORM.entry.y;
+    b.vx=bias*140;b.vy=165;b.travelHeight=LAUNCH_PLATFORM.z;b.trail=[];
     this.deckEntries++;
     this.emit('deckenter',{visits:this.deckEntries});
     this.emit('routeexit',{kind:'skyline',stage:'launch-platform',x:b.x,y:b.y});
