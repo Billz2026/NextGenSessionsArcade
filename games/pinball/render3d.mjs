@@ -5,7 +5,7 @@ import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=9';
-import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
+import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=5';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=3';
 const SCALE=.020;
@@ -319,7 +319,37 @@ export async function create3DTable(host){
      '#2b2217','#cba45a',2);
    p.restore();
   }
-  // Symmetric lower flipper zones: strongly graphic like a classic arcade game.
+  // The reference has a distinctive purple, three-pronged lower
+ // playfield silhouette between the core and flippers. This is ORIGINAL
+ // lacquer-print artwork, behind the real lower collision hardware.
+ shape([[420,1264],[380,1210],[347,1133],[324,1045],
+  [363,1094],[394,1150],[408,1182],[408,1096],
+  [420,1042],[432,1096],[432,1182],[446,1150],
+  [477,1094],[516,1045],[493,1133],[460,1210]],
+  '#57397d','#9c6eb9',5);
+ shape([[419,1228],[388,1190],[366,1147],[378,1166],
+  [407,1205],[420,1213],[434,1205],[462,1166],
+  [473,1147],[450,1190]],'#7b54a6','#a97ac9',2);
+ for(const side of [-1,1]){
+  p.save();p.translate(420,0);p.scale(side,1);
+  shape([[135,1010],[213,1075],[177,1182],[122,1131]],
+   '#261d38','#c64967',5);
+  p.lineWidth=3;p.strokeStyle='#8bc7e6';p.beginPath();
+  p.moveTo(155,1027);p.lineTo(170,1079);p.lineTo(142,1105);
+  p.lineTo(163,1142);p.stroke();
+  p.restore();
+ }
+ // Sparse custom electrical etching gives the large open centre the
+ // navy sci-fi texture visible in the reference without copying its art.
+ p.save();p.globalAlpha=.21;p.strokeStyle='#6b96d6';p.lineWidth=3;
+ for(const side of [-1,1]){
+  p.beginPath();p.moveTo(420+side*30,618);
+  p.bezierCurveTo(420+side*104,661,420+side*80,707,420+side*165,740);
+  p.bezierCurveTo(420+side*138,785,420+side*205,822,420+side*122,865);
+  p.stroke();
+ }
+ p.restore();
+ // Symmetric lower flipper zones: strongly graphic like a classic arcade game.
  for(const side of [-1,1]){
   p.save();p.translate(420,1200);p.scale(side,1);
   shape([[74,-170],[222,-90],[235,18],[180,20]],'#251912','#c18b45',5);
