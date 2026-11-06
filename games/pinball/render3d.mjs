@@ -260,11 +260,12 @@ export async function create3DTable(host){
  }
   // Bumper field: a recessed six-sided mounting deck groups the three genuine
   // bumper collision zones. This is underlay only, never a new obstacle.
-  shape([[221,398],[606,398],[652,550],[535,688],[305,688],[185,550]],
-    '#16130e','#af8948',5);
-  shape([[237,412],[589,412],[631,551],[522,671],[317,671],[207,551]],
-    '#221c14','#725b34',3);
-  for(const [cx,cy] of [[300,480],[518,480],[410,620]]){
+  shape([[356,284],[564,252],[656,300],[670,474],[616,568],
+    [442,582],[348,460]],'#16130e','#af8948',5);
+  shape([[370,297],[550,268],[641,312],[651,468],[600,550],
+    [453,560],[363,453]],'#221c14','#725b34',3);
+  for(const b of BUMPERS){
+   const cx=b.x*2,cy=b.y*2;
    p.beginPath();p.arc(cx,cy,68,0,Math.PI*2);
    p.strokeStyle='rgba(192,209,219,.24)';p.lineWidth=6;p.stroke();
   }
@@ -335,12 +336,12 @@ export async function create3DTable(host){
   p.fillStyle=color;p.textAlign='center';p.textBaseline='middle';
   p.fillText(text,x,y,width-10);
  }
- inkLabel('N · G · S',420,365,176);
+ inkLabel('N · G · S',436,239,118);
  p.font='900 20px Oxanium,Arial,sans-serif';p.fillStyle='#bcd5e8';
  p.textAlign='center';p.fillText('FLIGHT RANK',420,235);
  p.font='900 18px Oxanium,Arial,sans-serif';p.fillStyle='#bdeeff';
  p.fillText('FUEL',698,460);
- inkLabel('TARGET BANK',417,827,190);
+ inkLabel('TARGET BANK',494,573,192);
  inkLabel('POWER CORE',420,1098,210,'#f3c74f');
  inkLabel('ORBIT',120,738,105);
  inkLabel('RAMP',656,738,105);
