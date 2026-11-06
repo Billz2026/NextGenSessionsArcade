@@ -665,44 +665,46 @@ export async function create3DTable(host){
  });
  cyl(wx,wy,.382,.128,.027,warpSpotLens,20);
  plane(wx,wy+.45,.292,.73,.18,label('WARP','#ffdaa9',70,300,90,true));
- // Four standing drop-target facades on a shared mechanical bank plate.
- // Their hit sensors remain unchanged: only lamps respond to real hits.
- const left=Math.min(...MID_TARGETS.map(t=>t.x));
- const right=Math.max(...MID_TARGETS.map(t=>t.x));
- const meanY=MID_TARGETS.reduce((sum,t)=>sum+t.y,0)/MID_TARGETS.length;
- const targetMid=X((left+right)/2),targetY=Y(meanY);
- const bankWidth=(right-left+34)*SCALE;
- contactShadow(targetMid,targetY,bankWidth+.30,1.13);
- const bankMetal=metal('#929ca8',.29,.77);
+ // Two compact pairs of mission targets mirror the original table's
+ // split, staggered yellow switch banks. The old enormous four-switch
+ // billboard incorrectly dominated the main playfield.
+ const bankMetal=metal('#9e8f83',.33,.64);
  const targetBacking=new T.MeshPhysicalMaterial({
-  color:'#302b3c',roughness:.37,metalness:.32,clearcoat:.65
+  color:'#3b302c',roughness:.45,metalness:.19,clearcoat:.60
  });
- // The target bank receives its own low-profile engraved hardware nameplate.
-  box(targetMid,Y(meanY-24),.249,bankWidth+.20,.14,.058,bankMetal);
-  plane(targetMid,Y(meanY-29),.295,bankWidth*.84,.145,
-   label('TARGET BANK','#e8d4bd',70,560,72,true));
-  box(targetMid,targetY,.26,bankWidth,.72,.115,black);
- box(targetMid,targetY,.335,bankWidth-.13,.60,.095,bankMetal);
- box(targetMid,targetY,.40,bankWidth-.25,.47,.08,targetBacking);
+ const meanY=MID_TARGETS.reduce((sum,t)=>sum+t.y,0)/MID_TARGETS.length;
+ const nameX=X(246);
+ plane(nameX,Y(meanY-29),.288,1.35,.17,
+  label('MISSION','#efdcba',69,440,75,true));
+ for(const group of [MID_TARGETS.slice(0,2),MID_TARGETS.slice(2,4)]){
+  const first=group[0],last=group.at(-1);
+  const mx=X((first.x+last.x)/2);
+  const w=(last.x-first.x+27)*SCALE;
+  const my=Y((first.y+last.y)/2);
+  contactShadow(mx,my,w+.17,.59);
+  box(mx,my,.265,w,.41,.085,bankMetal);
+  box(mx,my,.34,w-.11,.32,.062,black);
+  box(mx,my,.37,w-.19,.28,.04,targetBacking);
+ }
  const targetLamps=[],targetStatusMaterials=[];
  for(const t of MID_TARGETS){
   const x=X(t.x),y=Y(t.y);
-  box(x,y,.46,.47,.56,.16,darkChrome);
-  box(x,y,.55,.365,.46,.075,rose);
+  box(x,y,.43,.276,.42,.105,darkChrome);
+  box(x,y,.50,.220,.34,.066,metal('#bfa56e',.28,.42));
   const lamp=new T.MeshStandardMaterial({
-   color:'#d56f70',emissive:'#a73250',emissiveIntensity:.20,
+   color:'#f3cf74',emissive:'#d4893b',emissiveIntensity:.20,
    roughness:.29,metalness:.12
   });
-  box(x,y,.603,.273,.367,.040,lamp);targetLamps.push(lamp);
+  box(x,y,.55,.156,.272,.039,lamp);targetLamps.push(lamp);
   // Separate shield and status lens so the target body stays legible.
-  box(x,y-.275,.49,.39,.055,.09,nickel);
-  for(const dx of [-.16,.16]){
-   cyl(x+dx,y+.245,.575,.039,.027,chrome,10);
+  box(x,y-.205,.44,.246,.045,.07,nickel);
+  for(const dx of [-.11,.11]){
+   cyl(x+dx,y+.185,.53,.029,.020,chrome,10);
   }
   const status=new T.MeshStandardMaterial({
    color:'#b57677',emissive:'#d75367',emissiveIntensity:.1,roughness:.38
   });
-  cyl(x,Y(t.y-24),.29,.094,.048,status,16);
+  cyl(x,Y(t.y-16),.29,.062,.038,status,16);
   targetStatusMaterials.push(status);
  }
  // Outer-edge plastic lane approaches only. Tracing the complete engine
