@@ -26,7 +26,7 @@ test('four genuine playable transport routes are preserved in the physics engine
 });
 test('only two short perimeter approaches are visually shown, not four entire paths',()=>{
  assert.deepEqual(VISIBLE_CHANNELS.map(r=>r.kind),['orbit','ramp']);
- assert.deepEqual(VISIBLE_CHANNELS.map(r=>r.points.length),[4,3]);
+ assert.deepEqual(VISIBLE_CHANNELS.map(r=>r.points.length),[4,7]);
  for(const ch of VISIBLE_CHANNELS){
   assert.ok(ch.points.length<UPPER_ROUTES.find(r=>r.kind===ch.kind).points.length/2);
   assert.deepEqual(ch.points,UPPER_ROUTES.find(r=>r.kind===ch.kind).points.slice(0,ch.points.length));
@@ -47,7 +47,12 @@ test('every exposed channel stays outside all three bumpers and ends before top 
    }
   }
   const last=ch.points.at(-1);
-  assert.ok(last.y>195,'do not draw a channel across upper rollover switches');
+  // The real upper-right chute should reach the crown, but it must not
+  // pass through the *actual* re-entry lane switch positions.
+  for(const lane of UPPER_ROLLOVERS)
+   for(let i=1;i<ch.points.length;i++)
+    assert.ok(distanceToSegment(lane,ch.points[i-1],ch.points[i])>21,
+     'visible channel crosses a working re-entry lane');
  }
 });
 test('visible approach edges straddle their exact path centreline',()=>{
@@ -101,7 +106,7 @@ test('3D ball continues to follow the complete hidden return trajectory without 
 });
 test('top crown is flush printed enamel, not another shiny suspended arch',()=>{
  assert.equal(UPPER_ARCH.length,9);
- assert.ok(UPPER_ARCH.every(p=>p.y>=140&&p.y<=212));
+ assert.ok(UPPER_ARCH.every(p=>p.y>=70&&p.y<=160));
  assert.match(three,/new T\.ShapeGeometry\(crownShape\)/);
  assert.match(canvas,/drawUpperCrown\(c\)/);
  assert.doesNotMatch(three,/new T\.TubeGeometry\(crownPath/);
