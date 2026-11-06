@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK} from './engine.mjs?v=18';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH} from './engine.mjs?v=19';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
@@ -531,6 +531,37 @@ function drawBall(c,engine){
  }
 }
 
+// Faithful mechanical vocabulary: real recessed mouths, chrome rims, illuminated
+// coloured inserts and a physical spot switch. All positions come from engine.mjs.
+function drawWormholeHardware(c,engine,reducedMotion=false){
+ const now=reducedMotion?0:performance.now()/1000;
+ for(const [i,hole] of WORMHOLES.entries()){
+  const busy=engine.balls?.some(b=>b.mode==='wormhole'&&
+   (b.wormhole?.exit===i || (Math.hypot(b.x-hole.x,b.y-hole.y)<2)));
+  const lit=engine.warpOpen||busy;
+  const glow=lit?(reducedMotion?1:.75+.25*Math.sin(now*5+i*1.7)):.35;
+  c.save();
+  c.shadowColor=hole.color;c.shadowBlur=lit?15*glow:2;
+  disk(c,hole.x,hole.y,hole.r+7,'#18151c','#b69a83',3);
+  c.restore();
+  disk(c,hole.x,hole.y,hole.r+3,'#807a7d','#e4d6c5',2);
+  disk(c,hole.x,hole.y,hole.r,'#05060b',hole.color,lit?3.3:1.9);
+  disk(c,hole.x-3,hole.y-3,hole.r*.34,lit?hole.color:'#161e29');
+  for(let j=0;j<3;j++){
+   const a=j*TAU/3-Math.PI/2;
+   bolt(c,hole.x+Math.cos(a)*(hole.r+5),hole.y+Math.sin(a)*(hole.r+5),1.8);
+  }
+  text(c,hole.id.toUpperCase(),hole.x,hole.y+hole.r+13,8,
+   lit?'#ffe7c4':'#b8a9a1','Barlow Condensed',900);
+ }
+ const sw=WARP_SWITCH;
+ const active=engine.warpOpen;
+ c.save();c.shadowColor=active?'#ffb966':'transparent';c.shadowBlur=active?12:0;
+ disk(c,sw.x,sw.y,sw.r+6,'#282027','#c8a477',2.2);
+ disk(c,sw.x,sw.y,sw.r+1,active?'#f8c577':'#934e4b','#ffe1ac',1.4);
+ c.restore();
+ text(c,'WARP',sw.x,sw.y-21,9,active?'#fff1c6':'#bda890','Barlow Condensed',900);
+}
 function drawNewFeatures(c,engine,reducedMotion=false){
  const sx=SPINNER.x,sy=SPINNER.y;
  // Steel spinner pivot and hinged amber plate, animated from the engine angle.
@@ -728,6 +759,7 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
  drawWorkingInserts(ctx,engine,anim,reducedMotion);
  drawNewFeatures(ctx,engine,reducedMotion);
+ drawWormholeHardware(ctx,engine,reducedMotion);
  drawLower(ctx,engine);
  drawLowerDirectionInserts(ctx,engine,reducedMotion);
  drawFlippers(ctx,engine);
