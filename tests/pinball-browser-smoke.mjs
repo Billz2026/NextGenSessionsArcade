@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-import {mkdirSync} from 'node:fs';
+import {mkdirSync,writeFileSync} from 'node:fs';
 
 const base='http://127.0.0.1:8877/games/pinball/';
 mkdirSync('artifacts',{recursive:true});
@@ -50,13 +50,33 @@ try{
  if(!evidence.active3D)
   assert.ok(evidence.colourful>55,'2D fallback has no visible neon or gold hardware');
  assert.equal(errors.length,0,'Browser runtime errors found');
- // Best-effort image; pixel assertions above are the authoritative smoke test.
+ // CDP grabs the current compositor frame without Playwright waiting for
+ // a continuously animated pinball scene to become visually stable.
+ // Capture both the complete dashboard and a cropped physical playfield.
  try{
-  await page.screenshot({path:'artifacts/neon-tilt-browser.png',
-   animations:'disabled',timeout:4500});
+  const cdp=await page.context().newCDPSession(page);
+  await cdp.send('Page.enable');
+  async function capture(name,clip){
+   const result=await cdp.send('Page.captureScreenshot',{
+    format:'png',fromSurface:true,captureBeyondViewport:true,
+    ...(clip?{clip}: {})
+   });
+   writeFileSync('artifacts/'+name,Buffer.from(result.data,'base64'));
+   console.log('Saved browser screenshot:',name);
+  }
+  await capture('neon-tilt-browser.png');
+  const stage=await page.locator('#table-stage').boundingBox();
+  if(stage&&stage.width>200&&stage.height>300){
+   await capture('neon-tilt-playfield.png',{
+    x:Math.max(0,stage.x),y:Math.max(0,stage.y),
+    width:stage.width,height:stage.height,scale:1
+   });
+  }
+  await cdp.detach();
  }catch(error){
-  console.log('Screenshot omitted; animated stage did not settle:',String(error).slice(0,150));
+  console.log('Compositor screenshot unavailable:',String(error).slice(0,300));
  }
+
 }finally{
  await browser.close();
 }
