@@ -585,6 +585,14 @@ function syncFlipperHold(side){
  const touched=[...touchPointers.values()].includes(side);
  setHold(side,pressed||touched||heldButtonPointers[side].size>0);
 }
+function syncLaunchHold(cancelled=false){
+ const active=heldButtonPointers.launch.size>0||
+  pressedKeys.has('Space')||pressedKeys.has('ArrowDown');
+ if(active)engine.holdLaunch(true);
+ else if(cancelled)engine.cancelLaunchCharge();
+ else engine.holdLaunch(false);
+ ui.launch.classList.toggle('pressed',active);
+}
 function bindHold(button,source,down,up,cancel=up){
  const pointers=heldButtonPointers[source];
  const end=(e,cancelled)=>{
@@ -606,9 +614,7 @@ function bindHold(button,source,down,up,cancel=up){
 bindHold(ui.left,'left',()=>syncFlipperHold('left'),()=>syncFlipperHold('left'));
 bindHold(ui.right,'right',()=>syncFlipperHold('right'),()=>syncFlipperHold('right'));
 bindHold(ui.launch,'launch',
- ()=>{engine.holdLaunch(true);ui.launch.classList.add('pressed');},
- ()=>{engine.holdLaunch(false);ui.launch.classList.remove('pressed');},
- ()=>{engine.cancelLaunchCharge();ui.launch.classList.remove('pressed');});
+ ()=>syncLaunchHold(),()=>syncLaunchHold(),()=>syncLaunchHold(true));
 const isInput=t=>t?.matches?.('input,textarea,select,[contenteditable="true"]');
  const leftFlipperKeys=new Set(['ArrowLeft','KeyA','KeyZ']);
  const rightFlipperKeys=new Set(['ArrowRight','KeyD','Slash']);
@@ -622,7 +628,10 @@ const isInput=t=>t?.matches?.('input,textarea,select,[contenteditable="true"]');
   if(leftFlipperKeys.has(k)){pressedKeys.add(k);syncFlipperHold('left');}
   if(rightFlipperKeys.has(k)){pressedKeys.add(k);syncFlipperHold('right');}
   if(nudgeKeys[k]&&!e.repeat)engine.nudge(nudgeKeys[k]);
-  if((k==='Space'||k==='ArrowDown')&&!e.repeat){engine.holdLaunch(true);ui.launch.classList.add('pressed');}
+  if((k==='Space'||k==='ArrowDown')&&!e.repeat){
+   pressedKeys.add(k);
+   syncLaunchHold();
+  }
   if(k==='Enter'&&!e.repeat&&(engine.state==='ready'||engine.state==='gameover'))startGame();
  });
  document.addEventListener('keyup',e=>{
@@ -630,9 +639,7 @@ const isInput=t=>t?.matches?.('input,textarea,select,[contenteditable="true"]');
   pressedKeys.delete(k);
   if(leftFlipperKeys.has(k))syncFlipperHold('left');
   if(rightFlipperKeys.has(k))syncFlipperHold('right');
-  if(k==='Space'||k==='ArrowDown'){
-   engine.holdLaunch(false);ui.launch.classList.remove('pressed');
-  }
+  if(k==='Space'||k==='ArrowDown')syncLaunchHold();
  });
 // Pointer controls work directly on the lower playfield, including two simultaneous touches.
 ui.canvas.addEventListener('pointerdown',e=>{
