@@ -106,8 +106,8 @@ export const SCOOP=Object.freeze({x:316,y:444,r:17,points:8000,hold:.67});
 // source geometry from these actual engine sensor coordinates.
 export const WORMHOLES=Object.freeze([
  Object.freeze({id:'green',x:85,y:282,r:16,color:'#73dbaa'}),
- Object.freeze({id:'red',x:330,y:203,r:16,color:'#ff747b'}),
- Object.freeze({id:'yellow',x:333,y:488,r:15,color:'#ffce75'})
+ Object.freeze({id:'red',x:337,y:227,r:16,color:'#ff747b'}),
+ Object.freeze({id:'yellow',x:333,y:503,r:15,color:'#ffce75'})
 ]);
 export const WARP_SWITCH=Object.freeze({x:291,y:339,r:10,points:1250});
 export const SLINGS=Object.freeze([
