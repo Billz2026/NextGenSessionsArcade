@@ -67,6 +67,10 @@ export function describeDmdEvent(event,game=null){
   case 'start':return {headline:'PLAYER ONE READY',sub:'BALL 1 OF 3',priority:3,duration:1100};
   case 'nudge':return {headline:'TABLE NUDGE',sub:'WATCH THE TILT!',priority:1,duration:700};
   case 'tiltwarning':return {headline:'TILT WARNING!',sub:'EASE OFF THE NUDGE',priority:4,duration:1700};
+  case 'deckenter':return {headline:'LAUNCH PLATFORM',sub:'ENGINE BUMPERS ACTIVE',priority:4,duration:1800};
+  case 'decklane':return {headline:'LAUNCH LANE '+event.count+'/3',sub:'ENGINE LIGHTS',priority:2,duration:1050};
+  case 'deckupgrade':return {headline:'ENGINE BUMPERS UP!',sub:'LEVEL '+event.level,priority:5,duration:2600};
+  case 'deckexit':return {headline:'BONUS RETURN',sub:'LEFT FLIPPER FEED',priority:2,duration:1200};
   case 'warplit':return {headline:'SPACE WARP ARMED',sub:'HIT A COLOURED HOLE',priority:4,duration:2300};
   case 'wormhole':return event.opened?
    {headline:'SPACE WARP!',sub:String(event.source).toUpperCase()+' TO '+String(event.destination).toUpperCase()+' · +'+FMT(event.points),priority:5,duration:2800}:
@@ -78,7 +82,7 @@ export function describeDmdEvent(event,game=null){
   case 'shot':return {
    headline:({
     ramp:'RAMP SHOT',orbit:'ORBIT SHOT',
-    center:'CROSSOVER!',skyline:'SKYLINE LOOP'
+    center:'CROSSOVER!',skyline:'LAUNCH RAMP'
    })[event.kind]||'SHOT COMPLETE',
    sub:bonus(event.points||0,game),
    priority:3,duration:1900
