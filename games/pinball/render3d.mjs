@@ -537,6 +537,7 @@ export async function create3DTable(host){
  });
  const deckRim=metal('#c0a2c8',.29,.55);
  const deckRail=metal('#d0aa72',.22,.74);
+ const deckReturnRail=metal('#9e869d',.35,.57);
  const launchDeckShape=new T.Shape();
  LAUNCH_PLATFORM.outline.forEach(([px,py],i)=>{
   if(i===0)launchDeckShape.moveTo(X(px),Y(py));else launchDeckShape.lineTo(X(px),Y(py));
@@ -558,7 +559,7 @@ export async function create3DTable(host){
  }
  // Physically connected entrance ramp and left-flipper bonus return. These
  // paths contain actual balls in guided travel mode, not just painted decals.
- function raisedGuide(path,width,color){
+ function raisedGuide(path,width,color,guard=deckRail){
   const stations=path.map(([x,y,z])=>new T.Vector3(X(x),Y(y),z));
   const spline=new T.CatmullRomCurve3(stations);
   const vertices=[],indexes=[],steps=42;
@@ -585,11 +586,11 @@ export async function create3DTable(host){
     points.push(new T.Vector3(q.x-sign*t.y*width,q.y+sign*t.x*width,q.z+.08));
    }
    add(new T.TubeGeometry(new T.CatmullRomCurve3(points),steps,.036,8,false),
-    deckRail,0,0,0);
+    guard,0,0,0);
   }
  }
  raisedGuide(SKYLINE_PATH,.205,'#492c61');
- raisedGuide(DECK_RETURN_PATH,.17,'#332e42');
+ raisedGuide(DECK_RETURN_PATH,.135,'#332e42',deckReturnRail);
  // Three distinct engine-bumper collision caps and 3 launch-lane switches.
  const deckBumperMaterials=[],deckLaneMaterials=[];
  for(const [i,b] of LAUNCH_PLATFORM.bumpers.entries()){
@@ -1123,8 +1124,9 @@ export async function create3DTable(host){
   return add(new T.ExtrudeGeometry(shape,{depth:.1,bevelEnabled:true,
    bevelThickness:.03,bevelSize:.02,bevelSegments:2}),material,0,0,z);
  }
- molded([[39,208],[46,169],[61,148],[80,159],[71,203],
-   [62,249],[47,299],[37,299]],leftAcrylic);
+ // Split this plastic guard: the old solid piece obscured the real satellite.
+ molded([[39,186],[46,169],[61,148],[80,159],[72,188],[53,203],[38,202]],leftAcrylic);
+ molded([[36,282],[47,263],[58,265],[52,309],[37,313]],leftAcrylic);
  molded([[354,115],[369,108],[374,135],[371,346],
    [361,361],[355,292]],rightAcrylic,.26);
  // Phase 4K.2 — the signature Power Core is a recessed machine insert,
