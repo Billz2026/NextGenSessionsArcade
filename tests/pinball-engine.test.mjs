@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,PLAY_BALANCE,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,WORMHOLES,WARP_SWITCH,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,GRAVITY,PLAY_BALANCE,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -467,15 +467,28 @@ test('centre crossover travels above middle bumper and returns towards right fli
  assert.ok(g.ball.vx<0&&g.ball.vy>0);
  assert.ok(g.ball.x>40&&g.ball.x<BOARD.width);
 });
-test('skyline loop guides ball into left return lane with positive exit velocity',()=>{
+test('the real left launch ramp feeds an isolated deck, rollover lanes and left return',()=>{
  const g=new PinballEngine();g.start();g.ball.mode='live';
- g.activateShot('skyline');steps(g,.65,BOARD.step);
- assert.equal(g.ball.mode,'travel');
- assert.ok(g.ball.travelHeight>.4);
- steps(g,.7,BOARD.step);
+ g.activateShot('skyline');
+ assert.equal(g.ball.travel.kind,'skyline');
+ assert.ok(g.ball.travel.duration>.3);
+ let deckSeen=false,returnSeen=false,all=[];
+ for(let i=0;i<8/BOARD.step;i++){
+  g.singleStep(BOARD.step);
+  if(g.ball?.mode==='deck')deckSeen=true;
+  if(g.ball?.travel?.kind==='deckReturn')returnSeen=true;
+  all.push(...g.consumeEvents());
+  if(deckSeen&&returnSeen&&g.ball?.mode==='live')break;
+ }
+ assert.equal(deckSeen,true,'ball must occupy a separate raised sub-playfield');
+ assert.equal(returnSeen,true,'the launch deck must release into a real outer chute');
+ assert.ok(all.some(e=>e.type==='deckenter'));
+ assert.ok(all.some(e=>e.type==='decklane'));
+ assert.ok(all.some(e=>e.type==='deckexit'));
+ assert.ok(all.some(e=>e.type==='routeexit'&&e.kind==='deckReturn'));
  assert.equal(g.ball.mode,'live');
- assert.ok(g.ball.vx>0&&g.ball.vy>0);
- assert.ok(g.ball.x>35&&g.ball.x<BOARD.width);
+ assert.ok(g.ball.x>50&&g.ball.x<BOARD.width/2);
+ assert.ok(g.ball.vx>0&&g.ball.vy>0,'bonus chute returns to left flipper');
 });
 test('new routes add honest combos and Power Grid charges without free repeat points',()=>{
  const g=new PinballEngine();g.start();
@@ -962,4 +975,51 @@ test('wormhole sensors cannot award while tilted and reset on new game',()=>{
  g.tilted=false;g.warpOpen=true;g.wormholeEntries=2;
  g.start();
  assert.equal(g.warpOpen,false);assert.equal(g.wormholeEntries,0);
+});
+
+test('Space Cadet-style architecture has seven real bumper collision positions',()=>{
+ const cluster=[...BUMPERS,SATELLITE_BUMPER,...LAUNCH_PLATFORM.bumpers];
+ assert.equal(cluster.length,7);
+ assert.equal(LAUNCH_PLATFORM.bumpers.length,3);
+ assert.equal(LAUNCH_PLATFORM.lanes.length,3);
+ assert.ok(LAUNCH_PLATFORM.z>1.1);
+ assert.equal(DECK_RETURN_PATH.at(-1)[0]<BOARD.width/2,true);
+ for(const a of LAUNCH_PLATFORM.bumpers){
+  assert.ok(a.x>LAUNCH_PLATFORM.bounds.left&&a.x<LAUNCH_PLATFORM.bounds.right);
+  assert.ok(a.y>LAUNCH_PLATFORM.bounds.top&&a.y<LAUNCH_PLATFORM.bounds.exit);
+ }
+ for(const b of BUMPERS)
+  for(const l of LAUNCH_PLATFORM.bumpers)
+   assert.ok(Math.hypot(b.x-l.x,b.y-l.y)>b.r+l.r+5,
+    'deck bumper must not overlap an attack bumper');
+});
+test('deck bumper collisions and lane switches are real, never free during transport',()=>{
+ const g=new PinballEngine();g.start();
+ const b=g.ball;
+ b.mode='deck';b.deckTime=0;b.x=LAUNCH_PLATFORM.bumpers[0].x;
+ b.y=LAUNCH_PLATFORM.bumpers[0].y-19;b.vx=0;b.vy=450;
+ const before=g.score;
+ for(let i=0;i<18;i++)g.singleStep(BOARD.step);
+ const events=g.consumeEvents();
+ assert.ok(g.score>before,'physical raised-engine collision must pay points');
+ assert.ok(events.some(e=>e.type==='hit'&&e.target.startsWith('bumperlaunch')));
+ // This cannot award anything when the ball is in a guided transport state.
+ const total=g.score;
+ b.mode='travel';b.travel={kind:'deckReturn',t:0,duration:.8,
+  from:{x:116,y:414}};b.x=116;b.y=414;
+ for(let i=0;i<60;i++)g.singleStep(BOARD.step);
+ assert.equal(g.score,total,'a return chute cannot mine collision points');
+});
+test('deck lane completion upgrades engine bumpers, not the attack bumpers',()=>{
+ const g=new PinballEngine();g.start();g.ball.mode='live';
+ g.activateShot('skyline');
+ let level=0;
+ for(let i=0;i<8/BOARD.step;i++){
+  g.singleStep(BOARD.step);
+  if(g.deckBumperLevel>level){level=g.deckBumperLevel;break;}
+ }
+ assert.ok(level>=1,'three real switch crossings can upgrade engine bumpers');
+ assert.equal(BUMPERS[0].score,250,'main attack bumper base score unchanged');
+ g.start();assert.equal(g.deckBumperLevel,0);assert.equal(g.deckEntries,0);
+ assert.equal(g.deckLanes.size,0);
 });
