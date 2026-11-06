@@ -93,3 +93,40 @@ html:fullscreen .machine-top .table-live{font-size:10px}
  html .machine-arena>.cabinet{width:min(100%,520px)}
  html .cabinet-lights{margin-bottom:3px}
 }
+
+/* The legacy desktop cockpit intentionally hid .machine-top with !important.
+   This physical cabinet score strip explicitly replaces that obsolete rule. */
+@media(min-width:1121px){
+ html:not(:fullscreen):not(.pinball-focus) .machine-top{display:flex!important}
+ html:not(:fullscreen):not(.pinball-focus) .cabinet{
+  --table-height:clamp(200px,calc(100dvh - 162px),925px)
+ }
+ html:not(:fullscreen):not(.pinball-focus) .playfield-wrap{
+  max-height:calc(100dvh - 162px)
+ }
+ html:not(:fullscreen):not(.pinball-focus) .hud.hud-v2:not(:has(.console-more[open])){
+  justify-content:space-between
+ }
+}
+/* No cloned actions. The original Start/Launch controls dock above the board
+   when compact; hide the empty dock on desktop. */
+.mobile-action-dock{display:none}
+@media(max-width:1120px){
+ html .mobile-action-dock{
+  display:block;width:100%;padding:0 4px;
+  position:sticky;top:29px;z-index:14;background:#100d14;
+ }
+ html .mobile-action-dock>.action-panel{
+  display:flex;justify-content:center;gap:7px;width:100%;
+  padding:4px 2px 6px;margin:0
+ }
+ html .mobile-action-dock>.action-panel[hidden]{display:none!important}
+ html .mobile-action-dock .start-button,
+ html .mobile-action-dock .launch-button{
+  min-height:42px;height:42px;width:100%;font-size:17px
+ }
+}
+@media(max-width:520px){
+ html .mobile-action-dock .start-button,
+ html .mobile-action-dock .launch-button{min-height:40px;height:40px;font-size:16px}
+}
