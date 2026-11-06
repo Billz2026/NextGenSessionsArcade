@@ -1023,3 +1023,16 @@ test('deck lane completion upgrades engine bumpers, not the attack bumpers',()=>
  g.start();assert.equal(g.deckBumperLevel,0);assert.equal(g.deckEntries,0);
  assert.equal(g.deckLanes.size,0);
 });
+
+test('satellite and visible launch mouth stay clear of other physical devices',()=>{
+ for(const b of BUMPERS)
+  assert.ok(Math.hypot(SATELLITE_BUMPER.x-b.x,SATELLITE_BUMPER.y-b.y)>
+   SATELLITE_BUMPER.r+b.r+BOARD.radius);
+ for(const w of WORMHOLES)
+  assert.ok(Math.hypot(SATELLITE_BUMPER.x-w.x,SATELLITE_BUMPER.y-w.y)>
+   SATELLITE_BUMPER.r+w.r+BOARD.radius);
+ assert.ok(SHOTS.skyline.y>Math.max(...LAUNCH_PLATFORM.outline.map(p=>p[1]))+10,
+  'launch mouth must be exposed below the raised platform');
+ assert.equal(SKYLINE_PATH[0][0],SHOTS.skyline.x);
+ assert.equal(SKYLINE_PATH[0][1],SHOTS.skyline.y);
+});
