@@ -63,6 +63,21 @@ try{
  assert.equal(await leftFlipper.evaluate(el=>el.classList.contains('active')),false,
   'left flipper must release once all input sources are released');
 
+ // A pointer release on the launcher must not prematurely fire a plunger
+ // while the keyboard Space key still owns the charge.
+ await page.locator('#start').click();
+ await page.evaluate(()=>document.activeElement?.blur?.());
+ const launch=page.locator('#launch');
+ await page.keyboard.down('Space');
+ assert.equal(await launch.evaluate(el=>el.classList.contains('pressed')),true,
+  'Space should begin charging the plunger');
+ await launch.click();
+ assert.equal(await launch.evaluate(el=>el.classList.contains('pressed')),true,
+  'releasing a launcher pointer must not cancel a Space-held charge');
+ await page.keyboard.up('Space');
+ assert.equal(await launch.evaluate(el=>el.classList.contains('pressed')),false,
+  'the final release should stop charging the plunger');
+
  // Check the actual box geometry at common desktop, narrow desktop, Fold and
  // phone CSS viewport sizes. Mobile pages may scroll vertically, not sideways.
  const viewports=[
