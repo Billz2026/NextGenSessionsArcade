@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a090d">
-<meta name="ngs-pinball-build" content="nextgen-rail-palette-v62">
+<meta name="ngs-pinball-build" content="table-first-phase-a-v63">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="NextGen Pinball: Neon Tilt — original arcade pinball work in progress with mechanical-style artwork, flippers, ramps, missions and personal high scores.">
 <title>Neon Tilt — NextGen Pinball | NextGen Sessions Arcade</title>
@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="./console.css?v=7">
 <link rel="stylesheet" href="./focus.css?v=1">
 <link rel="stylesheet" href="./side-towers.css?v=1">
+<link rel="stylesheet" href="./table-first.css?v=1">
 </head>
 <body>
 <a href="#game" class="skip">Skip to pinball game</a>
@@ -44,7 +45,14 @@
   <div class="game-layout">
     <section class="machine" aria-label="Playable pinball table">
       <button id="focus-exit" type="button" class="focus-exit" aria-label="Exit table focus mode" aria-keyshortcuts="Escape" hidden>EXIT TABLE FOCUS <span aria-hidden="true">↗</span></button>
-      <div class="machine-top"><span>✦ NEXTGEN ARCADE MACHINE</span><span id="render-status">LOADING 3D TABLE</span></div>
+      <div class="machine-top">
+        <span>✦ NEXTGEN PINBALL / TABLE 001</span>
+        <div class="table-live" aria-label="Live score and ball">
+          <span>SCORE <strong id="table-live-score">000,000</strong></span>
+          <span>BALL <strong id="table-live-ball">— / 3</strong></span>
+        </div>
+        <span id="render-status">LOADING 3D TABLE</span>
+      </div>
       <div class="machine-arena" id="machine-arena">
         <aside class="arena-wing arena-wing--missions" aria-label="Flight mission progress">
           <div class="wing-heading"><span class="wing-kicker">01 / FLIGHT DECK</span><span class="wing-led" aria-hidden="true"></span></div>
@@ -180,6 +188,6 @@
   <div class="development-note"><strong>REAL-TIME 3D PREVIEW:</strong> Moulded arcade-red plastic, warm-gold guide lips and dark rubber replace the bright metallic guard rails. Orbit and Ramp returns follow outer inlanes around the slings towards the flippers. Centre and Skyline use unobstructed markers. The physics runs in 2D with active lower-wall collisions; raised route surfaces are visual guides, not extra colliders. A 2D fallback is available. No prizes, purchases or real-money play.</div>
 </main>
 <footer class="footer"><strong>NEXTGEN SESSIONS <span>ARCADE</span></strong><span>GAME 002 · NEON TILT · 3D TABLE PREVIEW</span><a href="../../">BACK TO ARCADE ↗</a></footer>
-<script type="module" src="./game.mjs?v=62"></script>
+<script type="module" src="./game.mjs?v=63"></script>
 </body>
 </html>
