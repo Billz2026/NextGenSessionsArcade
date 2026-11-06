@@ -42,10 +42,13 @@ test('3D return rails and Canvas fallback both use exactly the same return descr
  assert.doesNotMatch(three,/channelStrip\(route,0,1/);
 });
 test('table-first interface keeps a single full HUD and live cabinet score while retaining the original controls',()=>{
- assert.match(html,/table-first\.css\?v=1/);
- assert.ok(html.indexOf('table-first.css?v=1')>html.indexOf('side-towers.css?v=1'));
+ assert.match(html,/table-first\.css\?v=2/);
+ assert.ok(html.indexOf('table-first.css?v=2')>html.indexOf('side-towers.css?v=1'));
  assert.match(html,/id="table-live-score"/);
  assert.match(html,/id="table-live-ball"/);
+ assert.match(html,/id="mobile-action-dock"/);
+ assert.match(game,/mobileActionDock\.appendChild\(ui\.actionPanel\)/);
+ assert.match(css,/\.machine-top\{display:flex!important\}/);
  assert.match(html,/id="flipper-left"/);
  assert.match(html,/id="flipper-right"/);
  assert.match(html,/id="start"/);
