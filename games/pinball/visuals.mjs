@@ -5,6 +5,7 @@ import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
+import {PERIMETER_RETURNS} from './perimeter-returns.mjs?v=1';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {SHOT_INDICATORS,shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
@@ -164,6 +165,30 @@ function drawOrbits(c){
    c.fill();
   }
   c.restore();
+ }
+ // Matching 2D presentation for the two real perimeter return feeds.
+ // Only the outer exit sections are represented; no ribbons cross bumpers.
+ for(const returnLane of PERIMETER_RETURNS){
+  const smooth=roundedWirePoints(returnLane.points,3);
+  const edges=guideEdges({points:smooth,width:returnLane.width});
+  c.save();c.shadowColor='rgba(0,0,0,.75)';c.shadowBlur=7;c.shadowOffsetY=4;
+  c.beginPath();c.moveTo(edges[0].left.x,edges[0].left.y);
+  for(let i=1;i<edges.length;i++)c.lineTo(edges[i].left.x,edges[i].left.y);
+  for(let i=edges.length-1;i>=0;i--)
+   c.lineTo(edges[i].right.x,edges[i].right.y);
+  c.closePath();c.fillStyle='#251a1c';c.fill();c.restore();
+  const edgeColor=returnLane.kind==='orbit'?'#bea987':'#c8a18c';
+  for(const side of ['left','right']){
+   const pts=edges.map(e=>[e[side].x,e[side].y]);
+   line(c,pts,'#211922',4.6);
+   line(c,pts,edgeColor,1.8);
+  }
+  const indexes=[0,Math.floor(edges.length/2),edges.length-1];
+  for(const index of [...new Set(indexes)]){
+   const p=edges[index].left;
+   disk(c,p.x,p.y,3.6,'#30242c','#aa916c',1.4);
+   bolt(c,p.x,p.y,1.7);
+  }
  }
  // Two clearly marked physical mouths. Centre/Skyline retain the small
  // mission-controlled shot LEDs instead of long interfering channel bands.

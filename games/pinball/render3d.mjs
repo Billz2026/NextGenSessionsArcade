@@ -5,6 +5,7 @@ import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_FLIPPER_BASES,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges,UPPER_BALL_RADIUS} from './upper-hardware.mjs?v=7';
+import {PERIMETER_RETURNS} from './perimeter-returns.mjs?v=1';
 import {NEON_FINISH,GRID_LIGHTS,gridIllumination,roundedWirePoints} from './classic-finish.mjs?v=4';
 import {LOWER_DIRECTION_INSERTS,directionInsertActive} from './finishing-detail.mjs?v=1';
 import {shotIndicatorState,shotIndicatorBrightness} from './shot-guidance.mjs?v=2';
@@ -631,6 +632,37 @@ export async function create3DTable(host){
   plane(mx,my-.37,.247,.66,.17,label(route.kind.toUpperCase(),
    '#f3debd',55,280,70,true));
   routeHardware.push({kind:route.kind,material:entryMat});
+ }
+ // Raised OUTER transport returns: the actual orbit and ramp lead back to
+ // the lower flippers. Their centre/upper transit remains concealed, not
+ // traced across the bumpers as a cluttered network of phantom wireforms.
+ const returnDeck=new T.MeshPhysicalMaterial({
+  color:'#241c20',metalness:.14,roughness:.45,clearcoat:.63,
+  transparent:true,opacity:.95,side:T.DoubleSide,depthWrite:false
+ });
+ const returnRail=metal('#c9bbb0',.28,.75);
+ const returnMount=metal('#7a5745',.40,.48);
+ for(const returnLane of PERIMETER_RETURNS){
+  channelStrip(returnLane,0,1,-.072,returnDeck);
+  const rounded=roundedWirePoints(returnLane.points,4);
+  const edges=guideEdges({points:rounded,width:returnLane.width});
+  for(const side of ['left','right']){
+   const nodes=edges.map((edge,i)=>
+    new T.Vector3(X(edge[side].x),Y(edge[side].y),rounded[i].z+.075));
+   const path=new T.CatmullRomCurve3(nodes,false,'centripetal');
+   add(new T.TubeGeometry(path,Math.max(24,nodes.length*3),.022,7,false),
+    returnRail,0,0,0,false);
+  }
+  // Visible but widely spaced stanchions are mounted beside the path, never
+  // in the live ball's centre lane. No new physics collider is created.
+  const indices=[0,Math.floor(edges.length/3),Math.floor(edges.length*2/3),edges.length-1];
+  for(const index of [...new Set(indices)]){
+   const edge=edges[index].left;
+   const z=rounded[index].z;
+   const rise=Math.max(.08,z-.27);
+   cyl(X(edge.x),Y(edge.y),.25+rise/2,.052,rise,returnMount,12);
+   cyl(X(edge.x),Y(edge.y),z+.045,.064,.025,gold,12);
+  }
  }
   // Mechanically faithful side lanes & slingshots, sculpted plastic guards.
  for(const [i,s] of SLINGS.entries()){

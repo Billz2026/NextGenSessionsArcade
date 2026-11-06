@@ -1,0 +1,132 @@
+/* Neon Tilt — table-first cabinet layout (Phase A).
+   Deliberately keep the 420x700 physics coordinate system and 3:5 field.
+   These rules remove unrelated wing dashboards; they do not stretch the table. */
+
+/* Machine information is concise and part of the cabinet, not a third dashboard. */
+html .machine-arena>.arena-wing{display:none!important}
+html .machine-arena{display:flex;justify-content:center;align-items:center;min-width:0;width:100%}
+html .machine-arena>.cabinet{grid-column:auto;grid-row:auto;align-self:center;justify-self:center;min-width:0;margin-inline:auto}
+html .machine-top{
+ position:relative;z-index:4;display:flex;align-items:center;justify-content:space-between;
+ width:100%;gap:9px;min-height:29px;height:29px;flex:0 0 29px;
+ padding:3px clamp(5px,1vw,12px);border-bottom:1px solid rgba(255,206,136,.23);
+ background:linear-gradient(90deg,rgba(20,13,17,.96),rgba(18,13,23,.92));
+ white-space:nowrap;
+}
+html .machine-top .table-live{
+ display:flex;align-items:center;justify-content:center;gap:clamp(7px,1.1vw,18px);
+ font:800 10px/1 var(--display);color:#b7b4c0;letter-spacing:.035em;
+}
+html .machine-top .table-live strong{font:900 15px/1 var(--display);color:#ffe2ac;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+html .machine-top #render-status{font-size:9px;text-align:right}
+html .machine-top .table-live>span{display:inline-flex;align-items:baseline;gap:5px}
+html .machine{isolation:isolate}
+
+/* Desktop machine + ONE score console: allocate width to the actual cabinet. */
+@media(min-width:1121px){
+ html:not(:fullscreen):not(.pinball-focus) .shell{
+  width:min(calc(100% - 18px),1120px);max-width:1120px;
+ }
+ html:not(:fullscreen):not(.pinball-focus) .game-layout{
+  grid-template-columns:minmax(0,1fr) minmax(285px,312px);
+  gap:12px;align-items:stretch;
+ }
+ html:not(:fullscreen):not(.pinball-focus) .machine{
+  padding:2px 7px 3px;justify-content:flex-start;
+  border-color:#a18463;border-radius:12px;
+  background:radial-gradient(ellipse 68% 86% at 50% 44%,rgba(110,45,52,.22),transparent 85%),
+  linear-gradient(90deg,#120d12,#08090c 20%,#131016 50%,#08090c 80%,#120d12);
+ }
+ html:not(:fullscreen):not(.pinball-focus) .machine::before,
+ html:not(:fullscreen):not(.pinball-focus) .machine::after{display:none!important}
+ html:not(:fullscreen):not(.pinball-focus) .machine-arena{flex:1;min-height:0}
+ html:not(:fullscreen):not(.pinball-focus) .cabinet{
+  --table-height:clamp(225px,calc(100dvh - 128px),960px);
+  max-height:100%;width:calc(var(--table-height)*.6 + 24px);
+  padding:3px 5px 4px;border:3px solid #a57950;
+  box-shadow:0 0 0 1px #e3bc79,0 0 0 3px #251319,
+   0 16px 42px #000c,inset 0 1px #ffe9ad44;
+ }
+ html:not(:fullscreen):not(.pinball-focus) .playfield-wrap{
+  height:var(--table-height);width:calc(var(--table-height)*.6);
+  max-height:calc(100dvh - 128px);max-width:100%;
+ }
+ html:not(:fullscreen):not(.pinball-focus) .flipper-controls{height:35px;min-height:35px;flex-basis:35px;margin-top:3px}
+ html:not(:fullscreen):not(.pinball-focus) .flipper-control{height:35px;min-height:35px}
+ html:not(:fullscreen):not(.pinball-focus) .hud.hud-v2{width:100%;min-width:0;padding:7px;gap:5px}
+ html:not(:fullscreen):not(.pinball-focus) .hud-v2 .score-number{font-size:clamp(27px,2.4vw,39px)}
+ html:not(:fullscreen):not(.pinball-focus) .hud-v2 .game-banner strong{font-size:clamp(17px,1.8vw,25px)}
+ html:not(:fullscreen):not(.pinball-focus) .hud-v2 .dmd-display{min-height:95px}
+ html:not(:fullscreen):not(.pinball-focus) .hud-v2 .hud-stat{padding-inline:4px}
+ html:not(:fullscreen):not(.pinball-focus) .hud-v2 .hud-stat strong{font-size:clamp(13px,1.2vw,20px)}
+}
+@media(min-width:1121px) and (max-height:680px){
+ html:not(:fullscreen):not(.pinball-focus) .cabinet{
+  --table-height:clamp(195px,calc(100dvh - 119px),600px)
+ }
+ html:not(:fullscreen):not(.pinball-focus) .playfield-wrap{max-height:calc(100dvh - 119px)}
+ html .machine-top{min-height:25px;height:25px;flex-basis:25px}
+}
+/* Focus and browser fullscreen continue to use their dedicated stage rules. */
+html.pinball-focus .machine-top .table-live,
+html:fullscreen .machine-top .table-live{font-size:10px}
+
+/* Fold and phone: compact, sticky live scoring on the MACHINE while scrolling.
+   Controls are not moved into a fixed overlay or on top of the ball. */
+@media(max-width:1120px){
+ html .machine{overflow:visible;max-height:none}
+ html .machine-arena{height:auto}
+ html .machine-top{position:sticky;top:0;z-index:15}
+ html .machine-top>span:first-child{display:none}
+ html .machine-top .table-live{flex:1;justify-content:flex-start}
+ html .machine-top #render-status{font-size:8px}
+ html .machine-arena>.cabinet{width:min(100%,520px)}
+}
+@media(max-width:520px){
+ html .machine-top{padding:5px 7px;gap:4px}
+ html .machine-top .table-live{gap:8px;font-size:9px}
+ html .machine-top .table-live strong{font-size:13px}
+ html .machine-top #render-status{max-width:90px;white-space:normal;line-height:1.1}
+ html .intro{margin-bottom:7px}
+ html .intro p{display:none}
+ html .machine{padding:4px}
+ html .machine-arena>.cabinet{width:min(100%,520px)}
+ html .cabinet-lights{margin-bottom:3px}
+}
+
+/* The legacy desktop cockpit intentionally hid .machine-top with !important.
+   This physical cabinet score strip explicitly replaces that obsolete rule. */
+@media(min-width:1121px){
+ html:not(:fullscreen):not(.pinball-focus) .machine-top{display:flex!important}
+ html:not(:fullscreen):not(.pinball-focus) .cabinet{
+  --table-height:clamp(200px,calc(100dvh - 162px),925px)
+ }
+ html:not(:fullscreen):not(.pinball-focus) .playfield-wrap{
+  max-height:calc(100dvh - 162px)
+ }
+ html:not(:fullscreen):not(.pinball-focus) .hud.hud-v2:not(:has(.console-more[open])){
+  justify-content:space-between
+ }
+}
+/* No cloned actions. The original Start/Launch controls dock above the board
+   when compact; hide the empty dock on desktop. */
+.mobile-action-dock{display:none}
+@media(max-width:1120px){
+ html .mobile-action-dock{
+  display:block;width:100%;padding:0 4px;
+  position:sticky;top:29px;z-index:14;background:#100d14;
+ }
+ html .mobile-action-dock>.action-panel{
+  display:flex;justify-content:center;gap:7px;width:100%;
+  padding:4px 2px 6px;margin:0
+ }
+ html .mobile-action-dock>.action-panel[hidden]{display:none!important}
+ html .mobile-action-dock .start-button,
+ html .mobile-action-dock .launch-button{
+  min-height:42px;height:42px;width:100%;font-size:17px
+ }
+}
+@media(max-width:520px){
+ html .mobile-action-dock .start-button,
+ html .mobile-action-dock .launch-button{min-height:40px;height:40px;font-size:16px}
+}
