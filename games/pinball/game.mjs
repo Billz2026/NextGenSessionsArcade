@@ -21,15 +21,20 @@ const ui={
 // buttons above the playfield. Keep their original listeners and keyboard
 // semantics; returning to desktop restores the controls to the HUD console.
 const mobileActionDock=$('mobile-action-dock');
+let positionActionControls=()=>{};
 if(mobileActionDock&&ui.actionPanel){
  const originalParent=ui.actionPanel.parentNode;
  const actionAnchor=document.createComment('Neon Tilt original primary-action location');
  originalParent.insertBefore(actionAnchor,ui.actionPanel);
  const compactActions=window.matchMedia('(max-width:1120px)');
  function positionPrimaryAction(){
-  if(compactActions.matches)mobileActionDock.appendChild(ui.actionPanel);
-  else originalParent.insertBefore(ui.actionPanel,actionAnchor.nextSibling);
+  if(compactActions.matches){
+   if(ui.actionPanel.parentNode!==mobileActionDock)mobileActionDock.appendChild(ui.actionPanel);
+  }else if(ui.actionPanel.parentNode!==originalParent){
+   originalParent.insertBefore(ui.actionPanel,actionAnchor.nextSibling);
+  }
  }
+ positionActionControls=positionPrimaryAction;
  compactActions.addEventListener?.('change',positionPrimaryAction);
  // Browser viewport emulation and Fold posture changes may dispatch resize
  // separately from the media-query change event. Keep the real action node
@@ -713,6 +718,10 @@ function resize(){
  ctx.setTransform(width/BOARD.width,0,0,height/BOARD.height,0,0);
 }
 function loop(now){
+ // Some Fold/browser viewport changes do not reliably deliver media-query
+ // callbacks. Cheap parent-node validation ensures the original control
+ // remains docked where the current layout expects it, without rebuilding it.
+ positionActionControls();
  const dt=lastTime?Math.min(.05,(now-lastTime)/1000):0;lastTime=now;
  if(!document.hidden){
   engine.advance(dt);processEvents();syncHUD();syncArena();dmd.update(engine,now);
