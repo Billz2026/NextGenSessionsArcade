@@ -14,6 +14,30 @@ export const BUMPERS=Object.freeze([
  {x:259,y:240,r:24,score:250},
  {x:205,y:310,r:24,score:250}
 ]);
+// Seven-bumper topology: three existing attack bumpers, one satellite,
+// and three real engine bumpers on the elevated launch platform.
+export const SATELLITE_BUMPER=Object.freeze({x:73,y:214,r:16,score:1500});
+export const LAUNCH_PLATFORM=Object.freeze({
+ z:1.36,
+ outline:Object.freeze([[73,309],[170,310],[181,349],[178,413],[102,422],[73,404]]
+  .map(p=>Object.freeze(p))),
+ bounds:Object.freeze({left:78,right:171,top:316,exit:418}),
+ entry:Object.freeze({x:142,y:328}),
+ lanes:Object.freeze([
+  Object.freeze({x:89,y:338,label:'L'}),
+  Object.freeze({x:119,y:338,label:'A'}),
+  Object.freeze({x:149,y:338,label:'B'})
+ ]),
+ bumpers:Object.freeze([
+  Object.freeze({x:98,y:363,r:10}),
+  Object.freeze({x:143,y:365,r:10}),
+  Object.freeze({x:121,y:388,r:10})
+ ])
+});
+export const DECK_RETURN_PATH=Object.freeze([
+ [116,414,1.30],[99,427,1.12],[83,451,.87],[75,484,.59],
+ [82,520,.45],[107,552,.39],[131,578,.39]
+].map(p=>Object.freeze(p)));
 export const POSTS=Object.freeze([
  {x:112,y:585,r:9},{x:308,y:585,r:9},
  {x:135,y:635,r:6},{x:285,y:635,r:6},
@@ -58,26 +82,27 @@ export const CENTER_PATH=Object.freeze([
  [272,205,1.24],[270,273,1.12],[251,349,.84],
  [275,416,.58],[253,505,.46]
 ].map(p=>Object.freeze(p)));
+// The middle-left shot climbs into a real elevated upper launch deck.
 export const SKYLINE_PATH=Object.freeze([
- [124,380,.38],[102,341,.63],[94,304,.92],[94,254,1.23],
- [119,207,1.43],[158,173,1.53],[196,152,1.60],
- [178,219,1.38],[156,283,1.05],[141,360,.76],
- [134,428,.52],[159,508,.46]
+ [124,380,.38],[137,368,.49],[157,348,.74],[165,326,1.03],
+ [166,315,1.28],[152,314,1.37],[140,326,1.37]
 ].map(p=>Object.freeze(p)));
 export const TRAVEL_PATHS=Object.freeze({
  ramp:RAMP_PATH,orbit:ORBIT_PATH,center:CENTER_PATH,skyline:SKYLINE_PATH
 });
 // Three-dimensional arc length is shared by all guided rail segments.
+const measureRoute=path=>{
+ const lengths=[0];
+ for(let i=1;i<path.length;i++){
+  const a=path[i-1],b=path[i];
+  lengths.push(lengths.at(-1)+Math.hypot(b[0]-a[0],b[1]-a[1],45*(b[2]-a[2])));
+ }
+ return Object.freeze({lengths:Object.freeze(lengths),total:lengths.at(-1)});
+};
 const TRAVEL_GEOMETRY=Object.freeze(Object.fromEntries(
- Object.entries(TRAVEL_PATHS).map(([kind,path])=>{
-  const lengths=[0];
-  for(let i=1;i<path.length;i++){
-   const a=path[i-1],b=path[i];
-   lengths.push(lengths[i-1]+Math.hypot(b[0]-a[0],b[1]-a[1],45*(b[2]-a[2])));
-  }
-  return [kind,Object.freeze({lengths:Object.freeze(lengths),total:lengths.at(-1)})];
- })
+ Object.entries(TRAVEL_PATHS).map(([kind,path])=>[kind,measureRoute(path)])
 ));
+const DECK_RETURN_GEOMETRY=measureRoute(DECK_RETURN_PATH);
 export const SHOTS=Object.freeze({
  orbit:{x:77,y:373,r:26,points:5000},
  ramp:{x:311,y:372,r:27,points:7500},
@@ -162,6 +187,7 @@ export class PinballEngine{
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
   this.warpOpen=false;this.warpSequence=0;this.wormholeEntries=0;
+  this.deckEntries=0;this.deckLanes=new Set();this.deckBumperLevel=0;
   this.skillShotPending=false;this.skillShotUntil=0;
   this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;
@@ -176,6 +202,7 @@ export class PinballEngine{
   this.tilted=false;this.tiltMeter=0;this.lastNudgeAt=-100;
   this.kickbackReady=true;
   this.lanes.clear();this.targets.clear();this.bumperHits=0;
+  this.deckEntries=0;this.deckLanes.clear();this.deckBumperLevel=0;
   this.missions={lanes:false,frenzy:false,targets:false,ride:false};
   this.rankIndex=0;this.rankName=RANKS[0];this.commandFlags=0;
   this.commandMissionReady=false;this.commandMissionIndex=0;this.completedCommands.clear();
@@ -189,6 +216,7 @@ export class PinballEngine{
   this.ballLaunchedAt=null;this.bonus=0;this.shots=0;this.playingExtraBall=false;
   this.spinnerTurns=0;this.spinnerAngle=0;this.scoopHits=0;this.lastScoopTime=-100;
   this.warpOpen=false;this.warpSequence=0;this.wormholeEntries=0;
+  this.deckEntries=0;this.deckLanes=new Set();this.deckBumperLevel=0;
   this.skillShotPending=false;this.skillShotUntil=0;
   this.comboCount=0;this.comboUntil=0;
   this.powerCharges=0;this.hurryUpUntil=0;
@@ -616,7 +644,7 @@ export class PinballEngine{
   this.expireArcadeModes();
   this.shots++;this.recordStreakShot();const shotName={
    ramp:'RAMP SHOT',orbit:'LEFT ORBIT',
-   center:'CENTER CROSSOVER',skyline:'SKYLINE LOOP'
+   center:'CENTER CROSSOVER',skyline:'LAUNCH RAMP'
   }[kind];
   this.addPoints(shot.points,shotName);
   this.emit('shot',{kind,points:shot.points});
@@ -644,7 +672,7 @@ export class PinballEngine{
    }
   }
   const b=this.ball;
-  const durations={ramp:.95,orbit:.8,center:1.24,skyline:1.18};
+  const durations={ramp:.95,orbit:.8,center:1.24,skyline:.90};
   const approach=Math.hypot(b.vx,b.vy),base=durations[kind];
   const duration=clip(base*650/clip(approach,500,900),base*.84,base*1.12);
   b.mode='travel';b.travel={kind,t:0,duration,from:{x:b.x,y:b.y}};
@@ -764,7 +792,9 @@ export class PinballEngine{
  updateTravel(dt){
   const b=this.ball,tr=b.travel;if(!tr){b.mode='live';return;}
   tr.t+=dt;
-  const path=TRAVEL_PATHS[tr.kind],geo=TRAVEL_GEOMETRY[tr.kind];
+  const deckReturn=tr.kind==='deckReturn';
+  const path=deckReturn?DECK_RETURN_PATH:TRAVEL_PATHS[tr.kind];
+  const geo=deckReturn?DECK_RETURN_GEOMETRY:TRAVEL_GEOMETRY[tr.kind];
   const progress=clip(tr.t/tr.duration,0,1);
   // Unevenly spaced rail supports do not cause uneven ball movement.
   // Slight acceleration on descent keeps shots lively.
@@ -778,6 +808,15 @@ export class PinballEngine{
   b.y=path[i][1]+(path[i+1][1]-path[i][1])*f+(tr.from.y-path[0][1])*entryBlend;
   b.travelHeight=path[i][2]+(path[i+1][2]-path[i][2])*f;
   if(progress>=1){
+   if(tr.kind==='skyline'){
+    b.mode='deck';b.travel=null;b.deckTime=0;
+    b.x=LAUNCH_PLATFORM.entry.x;b.y=LAUNCH_PLATFORM.entry.y;
+    b.vx=-130;b.vy=165;b.travelHeight=LAUNCH_PLATFORM.z;b.trail=[];
+    this.deckEntries++;
+    this.emit('deckenter',{visits:this.deckEntries});
+    this.emit('routeexit',{kind:'skyline',stage:'launch-platform',x:b.x,y:b.y});
+    return;
+   }
    const a=path.at(-2),z=path.at(-1),dx=z[0]-a[0],dy=z[1]-a[1];
    const length=Math.hypot(dx,dy)||1;
    const speed=clip(geo.total/tr.duration*.50,260,475),feed=RETURN_FEEDS[tr.kind];
@@ -794,6 +833,44 @@ export class PinballEngine{
   }
  }
 
+ // A genuine raised sub-playfield, advanced by the same 240-Hz fixed step.
+ // While the ball is on this deck, main-board collision sensors are inactive.
+ stepLaunchPlatform(dt){
+  const b=this.ball,p=LAUNCH_PLATFORM,wall=p.bounds;
+  const previousY=b.y;
+  b.deckTime=(b.deckTime||0)+dt;
+  b.vy+=425*dt;b.vx*=1-.11*dt;
+  b.x+=b.vx*dt;b.y+=b.vy*dt;
+  const left=wall.left+b.r,right=wall.right-b.r,top=wall.top+b.r;
+  if(b.x<left){b.x=left;b.vx=Math.abs(b.vx)*.83;}
+  if(b.x>right){b.x=right;b.vx=-Math.abs(b.vx)*.83;}
+  if(b.y<top){b.y=top;b.vy=Math.abs(b.vy)*.83;}
+  for(const [i,lane] of p.lanes.entries()){
+   if(previousY<lane.y&&b.y>=lane.y&&b.vy>70&&
+    Math.abs(b.x-lane.x)<15&&
+    this.time-(this.cooldowns.get('decklane'+i)??-100)>.28){
+    this.cooldowns.set('decklane'+i,this.time);
+    const points=this.addPoints(500,'LAUNCH LANE');
+    this.deckLanes.add(i);
+    this.emit('decklane',{index:i,count:this.deckLanes.size,points});
+    if(this.deckLanes.size===3){
+     this.deckLanes.clear();
+     this.deckBumperLevel=Math.min(3,this.deckBumperLevel+1);
+     this.emit('deckupgrade',{level:this.deckBumperLevel});
+    }
+   }
+  }
+  for(const [i,bumper] of p.bumpers.entries())
+   this.collideCircle(bumper,1.045,'bumperlaunch'+i,1500+this.deckBumperLevel*1000);
+  // This single lower throat feeds a visible, elevated left return chute.
+  // A timed release is a safety catch against indefinite bumper pinning.
+  if(b.y>wall.exit || b.deckTime>6){
+   b.mode='travel';b.travel={kind:'deckReturn',t:0,duration:.79,
+    from:{x:b.x,y:b.y}};
+   b.travelHeight=p.z;
+   this.emit('deckexit',{visits:this.deckEntries});
+  }
+ }
  singleStep(dt){
   if(this.state==='between'){
    this.between-=dt;
@@ -831,6 +908,7 @@ export class PinballEngine{
   const b=this.ball;
   if(!b)return;
   if(b.mode==='travel'){this.updateTravel(dt);return;}
+  if(b.mode==='deck'){this.stepLaunchPlatform(dt);return;}
   if(b.mode==='wormhole'){
    b.wormhole.timer-=dt;
    const hole=WORMHOLES[b.wormhole.exit];
@@ -881,6 +959,7 @@ export class PinballEngine{
    }
    for(let i=0;i<POSTS.length;i++)this.collideCircle(POSTS[i],.69,'post'+i);
    for(let i=0;i<BUMPERS.length;i++)this.collideCircle(BUMPERS[i],1.09,'bumper'+i,250);
+   this.collideCircle(SATELLITE_BUMPER,1.07,'bumpersatellite',SATELLITE_BUMPER.score);
    for(let i=0;i<SLINGS.length;i++){
     const s=SLINGS[i];
     this.collideSegment(s.x1,s.y1,s.x2,s.y2,5,1.01,'sling'+i,100);
