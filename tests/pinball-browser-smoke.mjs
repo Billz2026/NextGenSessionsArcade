@@ -92,6 +92,10 @@ try{
     table:rect('#table-stage'),left:rect('#flipper-left'),
     right:rect('#flipper-right'),start:rect('#start'),
     docked:document.querySelector('#start')?.parentElement?.parentElement?.id==='mobile-action-dock',
+    actionParent:document.querySelector('#primary-action')?.parentElement?.id,
+    dockExists:Boolean(document.getElementById('mobile-action-dock')),
+    compactMatch:window.matchMedia('(max-width:1120px)').matches,
+    viewportWidth:window.innerWidth,
     statusVisible:getComputedStyle(document.querySelector('.machine-top')).display!=='none'};
   });
   console.log(vp.name+' layout:',JSON.stringify(layout));
