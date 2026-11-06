@@ -23,9 +23,11 @@ export async function create3DTable(host){
  // scaling/distorting the 420 × 700 physics canvas or cutting off live walls.
  // Keep the original framing on phones/Fold where tap accuracy matters most.
  const compact=window.matchMedia?.('(max-width: 1120px)').matches??false;
- const camera=new T.PerspectiveCamera(compact?33:29.2,0.6,.1,120);
+ const camera=new T.PerspectiveCamera(compact?38:36,0.6,.1,120);
  // Frame the active playfield (all live wall ends fit inside the camera).
- camera.position.set(1.05,-2.0,26.25);
+ // A genuine foreshortened cabinet view: far upper lanes are narrower,
+ // bottom flippers read nearer and larger, as in the reference screenshot.
+ camera.position.set(.60,-12.5,23.5);
  camera.lookAt(0,0,.22);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,compact?1.25:1.8));
@@ -377,9 +379,11 @@ export async function create3DTable(host){
  inkLabel('RAMP',656,738,105);
  inkLabel('BALL SAVE',420,1184,166);
  const floorTexture=new T.CanvasTexture(paint);floorTexture.colorSpace=T.SRGBColorSpace;floorTexture.anisotropy=Math.min(8,renderer.capabilities?.getMaxAnisotropy?.()||4);floorTexture.minFilter=T.LinearMipmapLinearFilter;
- plane(0,0,.166,boardW,boardH,new T.MeshPhysicalMaterial({
-  map:floorTexture,roughness:.27,metalness:.12,clearcoat:.83,
-  clearcoatRoughness:.19,envMapIntensity:.8
+ // The original game's dark-blue enamel must stay DARK BLUE; a fully
+ // reflective lacquer was turning our upper board beige under studio lights.
+ // Lighting still falls onto every real metal/plastic item above this surface.
+ plane(0,0,.166,boardW,boardH,new T.MeshBasicMaterial({
+  map:floorTexture,side:T.DoubleSide,toneMapped:false
  }));
  // Soft baked contact shadows give hardware physical separation without
  // additional real-time lights or opaque surfaces over the playfield.
