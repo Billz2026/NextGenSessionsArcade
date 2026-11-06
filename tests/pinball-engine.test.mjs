@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BOARD,GRAVITY,PLAY_BALANCE,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH,PinballEngine} from '../games/pinball/engine.mjs';
+import {BOARD,LANES,TARGETS,GRAVITY,PLAY_BALANCE,KICKBACK,POSTS,BUMPERS,SHOTS,SHOT_GUIDES,FLIPPER_SWEET_SPOT,RETURN_FEEDS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,TRAVEL_PATHS,ARCADE_MODES,RANKS,FLIGHT_MISSIONS,MISSION_FUEL,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH,PinballEngine} from '../games/pinball/engine.mjs';
 
 const steps=(game,seconds,frame=1/60)=>{for(let t=0;t<seconds-1e-8;t+=frame)game.advance(Math.min(frame,seconds-t))};
 
@@ -923,7 +923,7 @@ test('wormhole mouths are three distinct physical sensors with clear exits',()=>
  for(const h of WORMHOLES){
   assert.ok(h.r>=BOARD.radius);
   assert.ok(h.x-h.r>24&&h.x+h.r<365);
-  assert.ok(h.y>180&&h.y<570);
+  assert.ok(h.y>135&&h.y<570);
   for(const b of BUMPERS)
    assert.ok(Math.hypot(h.x-b.x,h.y-b.y)>h.r+b.r+BOARD.radius);
  }
@@ -1010,15 +1010,30 @@ test('deck bumper collisions and lane switches are real, never free during trans
  for(let i=0;i<60;i++)g.singleStep(BOARD.step);
  assert.equal(g.score,total,'a return chute cannot mine collision points');
 });
-test('deck lane completion upgrades engine bumpers, not the attack bumpers',()=>{
- const g=new PinballEngine();g.start();g.ball.mode='live';
- g.activateShot('skyline');
- let level=0;
- for(let i=0;i<8/BOARD.step;i++){
-  g.singleStep(BOARD.step);
-  if(g.deckBumperLevel>level){level=g.deckBumperLevel;break;}
+test('every engine rollover can be hit by a distinct real launch-ramp trajectory',()=>{
+ const g=new PinballEngine();g.start();
+ const switches=new Set();
+ for(const offset of [-18,0,18]){
+  g.ball.mode='live';
+  g.ball.x=SHOTS.skyline.x+offset;
+  g.ball.y=SHOTS.skyline.y-2;
+  g.ball.vx=0;g.ball.vy=-550;
+  g.activateShot('skyline');
+  assert.equal(g.ball.mode,'travel');
+  let deckSeen=false,returnSeen=false;
+  for(let i=0;i<8/BOARD.step;i++){
+   g.singleStep(BOARD.step);
+   if(g.ball?.mode==='deck')deckSeen=true;
+   if(g.ball?.travel?.kind==='deckReturn')returnSeen=true;
+   for(const event of g.consumeEvents())
+    if(event.type==='decklane')switches.add(event.index);
+   if(deckSeen&&returnSeen&&g.ball?.mode==='live')break;
+  }
+  assert.ok(deckSeen&&returnSeen,'every entry must cross the raised deck');
  }
- assert.ok(level>=1,'three real switch crossings can upgrade engine bumpers');
+ assert.deepEqual([...switches].sort(),[0,1,2],
+  'all three real lane switches must be reachable by deliberate shot offsets');
+ assert.ok(g.deckBumperLevel>=1,'lighting all three lanes must upgrade raised bumpers');
  assert.equal(BUMPERS[0].score,250,'main attack bumper base score unchanged');
  g.start();assert.equal(g.deckBumperLevel,0);assert.equal(g.deckEntries,0);
  assert.equal(g.deckLanes.size,0);
@@ -1035,4 +1050,23 @@ test('satellite and visible launch mouth stay clear of other physical devices',(
   'launch mouth must be exposed below the raised platform');
  assert.equal(SKYLINE_PATH[0][0],SHOTS.skyline.x);
  assert.equal(SKYLINE_PATH[0][1],SHOTS.skyline.y);
+});
+
+test('main bumper island and tall left platform follow reference table proportions',()=>{
+ assert.equal(BUMPERS.length,3);
+ assert.ok(BUMPERS.every(b=>b.x>185&&b.y<290),
+  'attack bumpers belong in the upper-right, not centred across the table');
+ assert.ok(SATELLITE_BUMPER.x<130&&SATELLITE_BUMPER.y<130,
+  'the independent satellite belongs at the top-left');
+ const platform=LAUNCH_PLATFORM;
+ assert.ok(Math.max(...platform.outline.map(p=>p[1]))-
+  Math.min(...platform.outline.map(p=>p[1]))>=200,
+  'the long purple platform must span the middle-left, not a small rectangle');
+ assert.ok(Math.max(...platform.outline.map(p=>p[0]))<190);
+ assert.ok(SHOTS.skyline.y>Math.max(...platform.outline.map(p=>p[1]))+10);
+ assert.ok(LANES.every(l=>l.y<155),
+  're-entry gates belong at the top of the playfield');
+ for(const t of TARGETS)
+  assert.ok(t.x>190&&t.y>285&&t.y<340,
+   'mission target bank must not cover the launch platform');
 });
