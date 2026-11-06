@@ -1,7 +1,7 @@
 // NEON TILT · Cabinet artwork, Version 3
 // An original layered pseudo-3D pinball playfield. All mechanical object positions
 // come from the actual physics engine; moving a collider must move its art.
-import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH} from './engine.mjs?v=19';
+import {BOARD,WALLS,BUMPERS,POSTS,SLINGS,LANES,TARGETS,SHOTS,SPINNER,SCOOP,RAMP_PATH,ORBIT_PATH,CENTER_PATH,SKYLINE_PATH,FLIPPER_SWEET_SPOT,KICKBACK,WORMHOLES,WARP_SWITCH,LAUNCH_PLATFORM,SATELLITE_BUMPER,DECK_RETURN_PATH} from './engine.mjs?v=20';
 import {LOWER_GUIDES,LOWER_SLINGS,LOWER_POSTS,LOWER_CHANNELS} from './lower-hardware.mjs?v=5';
 import {MID_BUMPERS,MID_TARGETS,POWER_CORE,midTableState} from './mid-hardware.mjs?v=2';
 import {UPPER_ROUTES,VISIBLE_CHANNELS,UPPER_ROLLOVERS,UPPER_ARCH,guideEdges} from './upper-hardware.mjs?v=7';
@@ -732,6 +732,64 @@ function drawUpperRouteFeedback(c,engine,reducedMotion){
   route.accent==='coral'?'#ffe0d3':'#fff0bd');
  c.restore();
 }
+// Canvas fallback draws the same isolated, elevated mechanical platform as
+// the 3D scene. The four main-board bumpers and the deck use distinct colliders.
+function drawLaunchDeckBase(c){
+ const deck=LAUNCH_PLATFORM;
+ for(const [path,width] of [[SKYLINE_PATH,23],[DECK_RETURN_PATH,19]]){
+  const pts=path.map(p=>[p[0],p[1]]);
+  c.save();c.shadowColor='#06060b';c.shadowBlur=7;c.shadowOffsetY=5;
+  line(c,pts,'#28212f',width+4);
+  c.restore();
+  line(c,pts,'#554168',width);
+  line(c,pts,'#c1a178',2.3);
+ }
+ c.save();c.shadowColor='rgba(0,0,0,.83)';c.shadowBlur=16;c.shadowOffsetY=11;
+ c.beginPath();deck.outline.forEach(([x,y],i)=>{
+  if(!i)c.moveTo(x,y);else c.lineTo(x,y);
+ });c.closePath();c.fillStyle='#201824';c.fill();c.restore();
+ const grad=G(c,78,316,164,419,[[0,'#704b8d'],[.52,'#422f5f'],[1,'#241d39']]);
+ c.beginPath();deck.outline.forEach(([x,y],i)=>{
+  if(!i)c.moveTo(x,y);else c.lineTo(x,y);
+ });c.closePath();c.fillStyle=grad;c.fill();
+ c.strokeStyle='#c1a27b';c.lineWidth=4;c.stroke();
+ c.save();c.globalAlpha=.6;
+ line(c,[[80,330],[80,391],[105,409],[164,406]],'#ddc0a2',1.4);
+ c.restore();
+ for(const [x,y] of [[83,322],[162,327],[83,394],[164,402]])
+  bolt(c,x,y,2.5);
+ text(c,'LAUNCH DECK',124,402,11,'#fff0d1','Barlow Condensed',900);
+}
+function drawLaunchDeckLive(c,engine,reducedMotion){
+ const platform=LAUNCH_PLATFORM,active=engine.state==='playing';
+ // Seventh bumper: top-left satellite, genuinely collidable on main board.
+ const sa=SATELLITE_BUMPER;
+ disk(c,sa.x,sa.y,sa.r+8,'#262536','#c2a0b1',2.3);
+ disk(c,sa.x,sa.y,sa.r+3,'#c2c4cd','#f4d8ce',2);
+ disk(c,sa.x,sa.y,sa.r-3,'#a9c9df','#eff9ff',1.8);
+ text(c,'SAT',sa.x,sa.y+sa.r+15,9,'#f0d7b5','Barlow Condensed',900);
+ for(const [i,lane] of platform.lanes.entries()){
+  const lit=engine.deckLanes?.has(i);
+  rect(c,lane.x-12,lane.y-10,24,20,3,'#201f33','#bea7c9',1.4);
+  disk(c,lane.x,lane.y,5.5,lit?'#e9f6ff':'#717bba',
+   lit?'#fff':'#c5b6c9',1.1);
+  text(c,lane.label,lane.x,lane.y-17,9,lit?'#fff1d4':'#ccbadc','Barlow Condensed');
+ }
+ for(const [i,b] of platform.bumpers.entries()){
+  c.save();c.shadowColor='#08080c';c.shadowBlur=9;c.shadowOffsetY=4;
+  disk(c,b.x,b.y,b.r+6,'#292637');c.restore();
+  disk(c,b.x,b.y,b.r+3,'#c9bdc8','#e9d9e0',1.7);
+  disk(c,b.x,b.y,b.r,'#51618d','#e5e9ff',2.1);
+  disk(c,b.x,b.y,b.r*.60,'#d8ebff','#fff',1);
+  const level=engine.deckBumperLevel||0;
+  if(level)disk(c,b.x,b.y,b.r*.36,
+   level>1?'#ffe5a4':'#7effc0');
+  for(let j=0;j<3;j++){
+   const a=j*TAU/3-Math.PI/2;
+   bolt(c,b.x+Math.cos(a)*(b.r+3),b.y+Math.sin(a)*(b.r+3),1.3);
+  }
+ }
+}
 let cachedStatic=null;
 function baseArtwork(){
  if(cachedStatic)return cachedStatic;
@@ -743,6 +801,7 @@ function baseArtwork(){
   drawUpperCrown(c);
   drawOrbits(c);
  drawEnamelDetails(c);
+ drawLaunchDeckBase(c);
  drawSlings(c);
  drawWalls(c);
  cachedStatic=layer;return layer;
@@ -759,6 +818,7 @@ export function renderTable(ctx,engine,{reducedMotion=false,bumperFlash=null}={}
  drawBumpers(ctx,engine,anim,reducedMotion,bumperFlash);
  drawWorkingInserts(ctx,engine,anim,reducedMotion);
  drawNewFeatures(ctx,engine,reducedMotion);
+ drawLaunchDeckLive(ctx,engine,reducedMotion);
  drawWormholeHardware(ctx,engine,reducedMotion);
  drawLower(ctx,engine);
  drawLowerDirectionInserts(ctx,engine,reducedMotion);
