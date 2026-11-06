@@ -463,7 +463,9 @@ export async function create3DTable(host){
  }
  // Flush cast-metal bumper island, shaped around existing sensor positions.
   // It is a visual deck; ball collisions remain exclusively in engine.mjs.
-  const deckOutline=[[111,201],[305,201],[330,271],[268,347],[141,347],[87,271]];
+  // The three attack bumpers occupy an asymmetric upper-right island.
+  const deckOutline=[[178,142],[282,126],[328,150],[335,237],
+   [308,284],[221,291],[174,230]];
   const deckShape=new T.Shape();
   deckOutline.forEach(([x,y],i)=>i?deckShape.lineTo(X(x),Y(y)):
    deckShape.moveTo(X(x),Y(y)));
@@ -554,7 +556,7 @@ export async function create3DTable(host){
   new T.Vector3(X(px),Y(py),LAUNCH_PLATFORM.z-.05));
  scene.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(raisedDeckOutline),
   new T.LineBasicMaterial({color:'#d9b787'})));
- for(const [px,py] of [[83,325],[164,334],[84,395],[164,398]]){
+ for(const [px,py] of [[83,280],[163,304],[80,424],[148,456]]){
   const h=LAUNCH_PLATFORM.z-.33;
   cyl(X(px),Y(py),.30+h/2,.105,h,metal('#69525e',.39,.65),14);
   cyl(X(px),Y(py),LAUNCH_PLATFORM.z-.075,.16,.042,deckRim,16);
@@ -628,8 +630,8 @@ export async function create3DTable(host){
   cyl(x,y,z+.022,.092,.032,mat,14);deckLaneMaterials.push(mat);
   plane(x,y-.30,z+.033,.28,.24,label(lane.label,'#ffebc6',70,140,90,true));
  }
- plane(X(124),Y(404),LAUNCH_PLATFORM.z+.014,1.38,.25,
-  label('LAUNCH DECK','#f7dbbd',48,530,86,true));
+ plane(X(123),Y(454),LAUNCH_PLATFORM.z+.014,1.43,.25,
+  label('ENGINE BAY','#f7dbbd',48,530,86,true));
  // Three low, recessed playable wormhole mouths. The actual entry sensors
  // and physical ball release vectors live in engine.mjs, never in this art.
  const wormholeLenses=[];
@@ -666,7 +668,8 @@ export async function create3DTable(host){
  // Their hit sensors remain unchanged: only lamps respond to real hits.
  const left=Math.min(...MID_TARGETS.map(t=>t.x));
  const right=Math.max(...MID_TARGETS.map(t=>t.x));
- const targetMid=X((left+right)/2),targetY=Y(407);
+ const meanY=MID_TARGETS.reduce((sum,t)=>sum+t.y,0)/MID_TARGETS.length;
+ const targetMid=X((left+right)/2),targetY=Y(meanY);
  const bankWidth=(right-left+34)*SCALE;
  contactShadow(targetMid,targetY,bankWidth+.30,1.13);
  const bankMetal=metal('#929ca8',.29,.77);
@@ -674,8 +677,8 @@ export async function create3DTable(host){
   color:'#302b3c',roughness:.37,metalness:.32,clearcoat:.65
  });
  // The target bank receives its own low-profile engraved hardware nameplate.
-  box(targetMid,Y(387),.249,bankWidth+.20,.14,.058,bankMetal);
-  plane(targetMid,Y(383),.295,bankWidth*.84,.145,
+  box(targetMid,Y(meanY-24),.249,bankWidth+.20,.14,.058,bankMetal);
+  plane(targetMid,Y(meanY-29),.295,bankWidth*.84,.145,
    label('TARGET BANK','#e8d4bd',70,560,72,true));
   box(targetMid,targetY,.26,bankWidth,.72,.115,black);
  box(targetMid,targetY,.335,bankWidth-.13,.60,.095,bankMetal);
@@ -1214,7 +1217,7 @@ export async function create3DTable(host){
  // bumper-side light runs. The upper bumper faces remain unobstructed.
  const upperBankLights=[];
  for(let i=0;i<9;i++){
-   const px=72+i*34,py=131;
+   const px=151+i*18,py=105;
    const material=new T.MeshStandardMaterial({
      color:i%3===0?'#fce2a5':'#94b8ec',
      emissive:i%3===0?'#e89c5a':'#387fbb',
@@ -1224,10 +1227,10 @@ export async function create3DTable(host){
    upperBankLights.push(material);
  }
  const bumperSideLights=[];
- for(const [px,py,index] of [
-   [109,235,0],[111,269,0],[306,235,1],[307,269,1],
-   [165,335,2],[245,335,2]
- ]){
+ for(const [px,py,index] of BUMPERS.flatMap((b,index)=>[
+   [b.x-b.r-14,b.y-3,index],
+   [b.x+b.r+14,b.y+3,index]
+ ])){
    const mat=new T.MeshStandardMaterial({
      color:'#ffbe87',emissive:'#e86b61',emissiveIntensity:.22,
      roughness:.36,metalness:.05
