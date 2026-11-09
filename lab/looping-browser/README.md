@@ -32,3 +32,7 @@ After validation, the page creates a temporary `blob:` URL and passes it to the 
 References:
 - https://github.com/mamedev/mame/blob/mame0243/src/mame/drivers/looping.cpp
 - https://www.emulatorjs.com/core/arcade.html
+
+## Fix for observed “Unsupported Game” error (9 Nov 2026)
+
+The user screenshot confirmed 14/14 chips matched but displayed “Unsupported Game” inside the third-party emulator. One plausible root cause is that the earlier `blob:` URL stripped the `.zip` filename, a known arcade emulation issue. We replaced the blob URL with an ephemeral service-worker-backed same-origin `/local/looping.zip` request. This may resolve file-extension detection; **actual gameplay is still not confirmed** until a new browser test. The third-party mame0.243 core may have other unsupported-game limitations.

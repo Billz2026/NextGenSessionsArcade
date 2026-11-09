@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 const html=readFileSync(new URL('../lab/looping-browser/index.html',import.meta.url),'utf8');
 const js=readFileSync(new URL('../lab/looping-browser/app.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../lab/looping-browser/style.css',import.meta.url),'utf8');
+const sw=readFileSync(new URL('../lab/looping-browser/rom-service-worker.js',import.meta.url),'utf8');
 test('unlinked page, local ROM picker, MAME 0.243 integration',()=>{
   assert.match(html,/type="file"/);
   assert.match(html,/NOT LIVE CABINET 001/);
@@ -13,6 +14,13 @@ test('unlinked page, local ROM picker, MAME 0.243 integration',()=>{
   assert.match(js,/window\.EJS_gameUrl=blobUrl/);
   assert.match(js,/document\.createElement\('script'\)/);
   assert.doesNotMatch(html,/src="https:\/\/www\.emulatorjs\.com\/loader\.js"/);
+});
+test('service worker responds with local ROM on a named ZIP URL without persistence',()=>{
+  assert.match(sw,/event\\.request\\.url/);
+  assert.match(sw,/NGS_GET_LOOPING_ROM/);
+  assert.match(sw,/new Response\\(buffer/);
+  assert.match(sw,/application\\/zip/);
+  assert.doesNotMatch(sw,/caches\\.open|indexedDB\\.open/);
 });
 test('ROM compatibility preflight covers expected 14 chips',()=>{
   const m=js.match(/'[^']+'\s*:\s*\[\d+,\s*0x[a-f0-9]+\]/g)||[];

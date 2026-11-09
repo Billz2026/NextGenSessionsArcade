@@ -17,7 +17,7 @@ const MAME_EXPECTED = Object.freeze({
 });
 const get = id => document.getElementById(id);
 const rom = get('rom'), upload=get('drop-zone'), start=get('start');
-let selected=null, launching=false, blobUrl=null, selectionToken=0;
+let selected=null, launching=false, selectionToken=0;
 function status(message,tone='info'){get('status').textContent=message;get('status').dataset.tone=tone;}
 function checked(state,message){get('verification').dataset.state=state;get('verification').querySelector('b').textContent=message;}
 function reset(){if(launching)return;selectionToken++;selected=null;rom.value='';start.disabled=true;get('selected').hidden=true;checked('','AWAITING FILE');status('Ready to inspect your ROM. No game has been loaded.');}
@@ -82,27 +82,71 @@ get('remove').addEventListener('click',reset);
 for(const type of ['dragenter','dragover'])upload.addEventListener(type,e=>{e.preventDefault();if(!launching)upload.classList.add('drag');});
 for(const type of ['dragleave','drop'])upload.addEventListener(type,e=>{e.preventDefault();upload.classList.remove('drag');});
 upload.addEventListener('drop',e=>{if(!launching)choose(e.dataTransfer?.files?.[0]);});
-start.addEventListener('click',()=>{
+// Keep the ROM in page memory. A scoped service worker serves it only when
+// the emulator requests a genuine same-origin URL ending in /looping.zip.
+// No ROM file is committed, uploaded to GitHub, or persisted to browser storage.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message',async event=>{
+    if(event.data?.type!=='NGS_GET_LOOPING_ROM'||!event.ports?.[0])return;
+    const port=event.ports[0];
+    try{
+      if(!selected)throw Error('No ROM currently selected.');
+      const buffer=await selected.arrayBuffer();
+      port.postMessage({buffer},[buffer]);
+    }catch(error){port.postMessage({error:String(error.message||error)});}
+  });
+}
+async function localRomUrl(){
+  if(!('serviceWorker' in navigator))throw Error('Chrome service workers are required for this arcade ROM test.');
+  const registration=await navigator.serviceWorker.register('./rom-service-worker.js',{scope:'./',updateViaCache:'none'});
+  await navigator.serviceWorker.ready;
+  if(!navigator.serviceWorker.controller){
+    // clients.claim() in the worker should control the current page without a refresh.
+    await new Promise((resolve,reject)=>{
+      const deadline=setTimeout(()=>reject(Error('Local ROM loader did not take control. Please reload the page and retry.')),10000);
+      function onChange(){
+        if(navigator.serviceWorker.controller){
+          clearTimeout(deadline);
+          navigator.serviceWorker.removeEventListener('controllerchange',onChange);
+          resolve();
+        }
+      }
+      navigator.serviceWorker.addEventListener('controllerchange',onChange);
+      onChange();
+      registration.active?.postMessage({type:'NGS_CLAIM_CLIENTS'});
+    });
+  }
+  // The .zip suffix is essential for arcade cores that determine ROM type from URLs.
+  return new URL('./local/looping.zip',window.location.href).href;
+}
+start.addEventListener('click',async()=>{
   if(!selected||launching)return;
   launching=true;start.hidden=true;upload.style.pointerEvents='none';rom.disabled=true;get('remove').disabled=true;get('again').hidden=false;
   get('standby').hidden=true;
-  get('machine-state').textContent='LOADING EMULATOR / EXTERNAL CORE';
-  status('ROM validated. Connecting to the third-party MAME 0.243 browser emulator…');
-  blobUrl=URL.createObjectURL(selected);
-  // Publicly documented API from emulatorjs.com: MAME0.243 core + game URL.
-  window.EJS_player='#game';
-  window.EJS_core='mame0.243';
-  window.EJS_gameUrl=blobUrl;
-  window.EJS_gameName='looping';
-  window.EJS_startOnLoaded=false;
-  window.EJS_color='#ff5b50';
-  window.EJS_ready=()=>{status('MAME loaded. Use the START GAME control inside the monitor.','ok');get('machine-state').textContent='EMULATOR READY';};
-  window.EJS_onGameStart=()=>{status('Game launched. Press 5 to insert a coin, then 1 to start.','ok');get('machine-state').textContent='ARCADE IN PLAY';};
-  const script=document.createElement('script');
-  script.src='https://www.emulatorjs.com/loader.js';
-  script.async=true;
-  script.onerror=()=>{status('The third-party emulator download failed. Browser loading is not verified. You can reload the page to retry.','bad');get('machine-state').textContent='CORE DOWNLOAD FAILED';get('standby').hidden=false;};
-  document.head.append(script);
+  get('machine-state').textContent='PREPARING LOCAL ROM LOADER';
+  status('Checking the local browser ROM loader before starting MAME…');
+  try{
+    const romUrl=await localRomUrl();
+    // Third-party MAME0.243 core. Correct filename URL resolves via scoped SW.
+    window.EJS_player='#game';
+    window.EJS_core='mame0.243';
+    window.EJS_gameUrl=romUrl;
+    window.EJS_gameName='looping';
+    window.EJS_startOnLoaded=false;
+    window.EJS_color='#ff5b50';
+    window.EJS_ready=()=>{status('MAME loaded. Use START GAME inside the monitor.','ok');get('machine-state').textContent='EMULATOR READY';};
+    window.EJS_onGameStart=()=>{status('Game launched. Press 5 to insert a coin, then 1 to start.','ok');get('machine-state').textContent='ARCADE IN PLAY';};
+    status('Local looping.zip URL prepared. Loading third-party MAME 0.243…');
+    get('machine-state').textContent='LOADING MAME 0.243';
+    const script=document.createElement('script');
+    script.src='https://www.emulatorjs.com/loader.js';
+    script.async=true;
+    script.onerror=()=>{status('The third-party emulator could not be downloaded. Reload the page to retry.','bad');get('machine-state').textContent='CORE DOWNLOAD FAILED';get('standby').hidden=false;};
+    document.head.append(script);
+  }catch(error){
+    status('Could not prepare local ROM loader: '+String(error.message||error),'bad');
+    get('machine-state').textContent='LOCAL ROM LOADER FAILED';
+    get('standby').hidden=false;
+  }
 });
 get('again').addEventListener('click',()=>location.reload());
-window.addEventListener('pagehide',()=>{if(blobUrl)URL.revokeObjectURL(blobUrl);});
