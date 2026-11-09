@@ -26,4 +26,6 @@ jobs:
         with:
           node-version: '22'
       - name: Check homepage archive state and layout
-        run: node --test tests/site.test.mjs
+        run: node --test tests/site.test.mjs tests/looping-browser.test.mjs
+      - name: Check browser lab JavaScript syntax
+        run: node --check lab/looping-browser/app.js
