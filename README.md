@@ -1,25 +1,25 @@
 # NextGen Sessions Arcade
 
-A browser arcade project under active design. The live website currently has **no playable games**; this is intentional while the interface and arcade identity are established.
+The arcade is being designed as a tile-first website. There are currently **zero playable games**.
 
-## Current homepage
-- A NextGen Sessions-branded arcade lobby with a stylised virtual cabinet, an attract-screen-style standby display and a six-bay arcade floor.
-- Six **unassigned** cabinet positions, not promises of particular games or genres.
-- "00 GAMES LIVE" is accurate. The page does not link to unfinished games.
-- Responsive desktop, phone and folding-screen layouts, using static HTML/CSS and no JavaScript or build step.
-- The official NextGen Sessions image at `assets/nextgen-header-wordmark-2026.webp` is preserved unchanged. The arcade sub-brand uses `assets/arcade-wordmark.svg`.
+## Homepage (tile system)
+- A compact gaming-division masthead and status panel sit above the game-selection area.
+- The primary interface is **six uniform arcade-cabinet tiles**, ordered 001–006.
+- Each tile follows an identical contract: numbered header, cabinet-inspired art, game identity area, and status/footer. No tile is clickable while no game exists.
+- Slots are unassigned; no game selection is implied.
+- Desktop: a compact 3×2 tile grid that is designed to fit within a typical desktop viewport at 100% browser zoom (short viewport heights may still scroll).
+- Tablets and unfolded phones: 2 columns. Narrow phone screens: 1 column.
+- Existing official brand assets are preserved unchanged: `assets/nextgen-header-wordmark-2026.webp` and `assets/arcade-wordmark.svg`.
+- Static HTML/CSS only; no JavaScript framework or build step.
+- Tests: `node --test tests/site.test.mjs`.
 
-## Archived games
-On 9 November 2026, High Roll Run roulette and Neon Tilt pinball, including their game source, game-specific tests, and workflows, were preserved intact on branch:
+## Archive
+High Roll Run roulette and Neon Tilt pinball, including their source, original workflows and tests, were preserved intact on:
+`archive/roulette-pinball-before-arcade-redesign-2026-11-09`.
 
-`archive/roulette-pinball-before-arcade-redesign-2026-11-09`
+These prototypes are not published on the live `main` branch. The archive is a public source-control branch, not a game collection on the website.
 
-These games are **not deployed in the main GitHub Pages branch**. The archive remains a public GitHub branch, so the code is accessible on GitHub but the game URLs are no longer served as working pages.
+## Future game integration
+Once a game is chosen and reaches release quality, its slot can receive unique title/art, a genuine play link, and a live status without changing the surrounding layout. Keep the tiles uniform and retain separate desktop/fold/phone layouts.
 
-No game has been selected for cabinet 001. Interface design comes first.
-
-## Technical and testing
-- Live website: https://billz2026.github.io/NextGenSessionsArcade/
-- GitHub Pages source: `main`, `/ (root)`.
-- Site files: `index.html`, `styles.css`, `404.html`, `assets/`.
-- Automated site checks: `node --test tests/site.test.mjs`.
+Live URL: https://billz2026.github.io/NextGenSessionsArcade/
