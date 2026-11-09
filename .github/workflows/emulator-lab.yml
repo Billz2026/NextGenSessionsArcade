@@ -1,0 +1,24 @@
+name: Emulator lab checks
+on:
+  push:
+    branches:
+      - prototype/arcade-emulator-local-rom-2026-11-09
+    paths:
+      - 'lab/arcade-emulator/**'
+      - 'tests/emulator-lab.test.mjs'
+      - '.github/workflows/emulator-lab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate prototype JavaScript
+        run: node --check lab/arcade-emulator/app.js
+      - name: Test isolated local-ROM prototype
+        run: node --test tests/emulator-lab.test.mjs
