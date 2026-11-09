@@ -1,37 +1,25 @@
 # NextGen Sessions Arcade
 
-A compact, gaming-first browser arcade branded as a division of NextGen Sessions.
+A browser arcade project under active design. The live website currently has **no playable games**; this is intentional while the interface and arcade identity are established.
 
-## Branding
-The gold NextGen Sessions wordmark at `assets/nextgen-header-wordmark-2026.webp` is an exact, unmodified copy of the official music-site artwork. The red `assets/arcade-wordmark.svg` is the dedicated Arcade sub-brand. These assets have not been modified.
+## Current homepage
+- A NextGen Sessions-branded arcade lobby with a stylised virtual cabinet, an attract-screen-style standby display and a six-bay arcade floor.
+- Six **unassigned** cabinet positions, not promises of particular games or genres.
+- "00 GAMES LIVE" is accurate. The page does not link to unfinished games.
+- Responsive desktop, phone and folding-screen layouts, using static HTML/CSS and no JavaScript or build step.
+- The official NextGen Sessions image at `assets/nextgen-header-wordmark-2026.webp` is preserved unchanged. The arcade sub-brand uses `assets/arcade-wordmark.svg`.
 
-## Homepage
-- Single-screen **desktop dashboard** targeted at standard desktop viewports, with a compact header, one welcome heading, an instantly visible six-tile library and slim footer.
-- Two playable betas: High Roll Run roulette (Game 001) and Neon Tilt pinball (Game 002), plus four future-category previews (Reflex, Puzzle, Strategy, Sports).
-- Roulette uses fictional credits only; Pinball uses points. No purchases, real-money stakes or prizes.
-- Both playable game cards have direct launch links; future-category cards are non-interactive.
-- On mobile and small screens, the layout reflows into a scrollable grid for legibility. It is not possible to fit all tiles onto every device size without sacrificing usability.
+## Archived games
+On 9 November 2026, High Roll Run roulette and Neon Tilt pinball, including their game source, game-specific tests, and workflows, were preserved intact on branch:
 
-## Technical
-- Static HTML and CSS; no build step.
-- CSS was rewritten cleanly, rather than stacking additional conflicting override blocks.
-- HTML: `index.html`; CSS: `styles.css`; art: `assets/`.
-- GitHub Pages: `main` branch, `/(root)`, at `https://billz2026.github.io/NextGenSessionsArcade/`.
+`archive/roulette-pinball-before-arcade-redesign-2026-11-09`
 
-The former Football Lab Manager is archived on the `archive/football-lab-manager-2026-10-30` branch and not part of the active site.
+These games are **not deployed in the main GitHub Pages branch**. The archive remains a public GitHub branch, so the code is accessible on GitHub but the game URLs are no longer served as working pages.
 
-## Game 001: High Roll Run
-- Playable at [games/roulette/](./games/roulette/)
-- Standard 37-pocket European roulette using secure, unbiased random selection.
-- 100 fictional credits per run, exact roulette payouts, bank-or-bust score runs.
-- Wheel animation, recent outcomes, local run recovery and personal best scores.
-- No accounts, prizes, purchased credits, real-money stakes, or public leaderboards.
-- Run math tests using `node --test tests/roulette-engine.test.mjs`.
+No game has been selected for cabinet 001. Interface design comes first.
 
-## Game 002: Neon Tilt Pinball
-- Playable visual beta at [games/pinball/](./games/pinball/), linked from the homepage.
-- Original cabinet, 3D table and Canvas fallback with flippers, shots, missions, jackpots and on-device scores.
-- The 3D table uses a 2D physics simulation and guided routes; real multiball has not yet been built.
-- Phase 4C homepage integration retains six tiles on desktop: two playable games and four future categories.
-- Real Chrome desktop and Samsung Fold 7 visual/performance review remains outstanding.
-- Homepage regression: `node --test tests/arcade-home.test.mjs`.
+## Technical and testing
+- Live website: https://billz2026.github.io/NextGenSessionsArcade/
+- GitHub Pages source: `main`, `/ (root)`.
+- Site files: `index.html`, `styles.css`, `404.html`, `assets/`.
+- Automated site checks: `node --test tests/site.test.mjs`.
