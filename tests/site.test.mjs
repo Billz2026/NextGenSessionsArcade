@@ -20,7 +20,7 @@ test('six uniform cabinet tiles are reserved, none present as playable links',()
   assert.equal((homepage.match(/class="cabinet-monitor"/g)||[]).length,6);
   assert.equal((homepage.match(/AWAITING GAME/g)||[]).length,6);
   for(let i=1;i<=6;i++) assert.match(homepage,new RegExp('CABINET<br><em>00'+i+'\\.'));
-  assert.doesNotMatch(homepage,/<a[^>]*class="machine-tile/);
+  assert.doesNotMatch(homepage,/<a\s[^>]*class="machine-tile/);
 });
 test('tile-first homepage uses responsive grid and keeps official wordmarks',()=>{
   assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
