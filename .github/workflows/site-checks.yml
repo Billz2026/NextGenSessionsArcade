@@ -1,31 +1,37 @@
-name: Arcade homepage checks
+name: The Motor Trade site checks
 on:
   push:
     branches: [main]
     paths:
       - 'index.html'
       - 'styles.css'
+      - 'simulator.js'
+      - 'favicon.svg'
       - '404.html'
+      - 'assets/**'
       - 'tests/**'
       - '.github/workflows/site-checks.yml'
   pull_request:
     paths:
       - 'index.html'
       - 'styles.css'
+      - 'simulator.js'
+      - 'favicon.svg'
       - '404.html'
+      - 'assets/**'
       - 'tests/**'
       - '.github/workflows/site-checks.yml'
 permissions:
   contents: read
 jobs:
-  homepage:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check homepage archive state and layout
-        run: node --test tests/site.test.mjs tests/looping-browser.test.mjs
-      - name: Check browser lab JavaScript syntax
-        run: node --check lab/looping-browser/app.js
+      - name: Check simulator JavaScript syntax
+        run: node --check simulator.js
+      - name: Validate simulator foundation
+        run: node --test tests/site.test.mjs

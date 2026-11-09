@@ -1,51 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 const root=new URL('../',import.meta.url);
 const html=readFileSync(new URL('index.html',root),'utf8');
 const css=readFileSync(new URL('styles.css',root),'utf8');
-const js=readFileSync(new URL('arcade-home.js',root),'utf8');
-const embeddedHtml=readFileSync(new URL('lab/looping-browser/index.html',root),'utf8');
-const embeddedJs=readFileSync(new URL('lab/looping-browser/app.js',root),'utf8');
-const embeddedCss=readFileSync(new URL('lab/looping-browser/style.css',root),'utf8');
-test('exactly one physical arcade machine replaces the six-tile floor',()=>{
-  assert.equal((html.match(/class="arcade-machine"/g)||[]).length,1);
-  assert.equal((html.match(/<iframe\b/g)||[]).length,1);
-  assert.doesNotMatch(html,/class="machine-grid"|class="machine-tile/);
-  assert.match(html,/LOOPING <em>'82<\/em>/);
-  assert.match(html,/id="game-screen"/);
-  assert.match(html,/class="machine-marquee"/);
-  assert.match(html,/class="machine-deck"/);
+const js=readFileSync(new URL('simulator.js',root),'utf8');
+test('renamed site contains no playable arcade or legacy URL',()=>{
+  assert.match(html,/<title>The Motor Trade \| UK Car Dealer Simulator<\/title>/);
+  assert.match(html,/billz2026\.github\.io\/TheMotorTrade\//);
+  assert.doesNotMatch(html,/NextGenSessionsArcade|looping\.zip|arcade-home\.js|<iframe/);
+  assert.equal(existsSync(new URL('lab/',root)),false);
+  assert.equal(existsSync(new URL('arcade-home.js',root)),false);
 });
-test('playable screen embeds existing same-origin MAME browser lab in kiosk mode',()=>{
-  assert.match(html,/src="\.\/lab\/looping-browser\/\?embed=1"/);
-  assert.match(html,/id="game-frame"/);
-  assert.match(html,/allowfullscreen/);
-  assert.match(embeddedHtml,/embed-mode/);
-  assert.match(embeddedJs,/document\.documentElement\.classList\.contains\('embed-mode'\)/);
-  assert.match(embeddedCss,/html\.embed-mode body/);
-  assert.match(embeddedCss,/html\.embed-mode body\.embed-loading \.config/);
-  assert.match(embeddedJs,/classList\.add\('embed-loading'\)/);
-  assert.match(embeddedJs,/window\.EJS_core='mame0\.243'/);
-  assert.doesNotMatch(html,/href="[^"]+\.zip"|src="[^"]+\.zip"/);
+test('initial website clearly identifies its pre-alpha concept status',()=>{
+  assert.match(html,/PRE-ALPHA CONCEPT/);
+  assert.match(html,/FOUNDATION BUILD/);
+  assert.match(html,/ILLUSTRATIVE LOT/);
+  assert.match(html,/FICTIONAL EXAMPLE/);
+  assert.match(html,/not net profit/i);
+  assert.match(html,/PLANNED GAME SYSTEMS/);
 });
-test('real fullscreen and inner-machine reset are wired, not decorative',()=>{
-  assert.match(html,/id="fullscreen-top"/);
-  assert.match(html,/id="fullscreen-machine"/);
-  assert.match(html,/id="reset-machine"/);
-  assert.match(js,/machine\.requestFullscreen\(\)/);
-  assert.match(js,/document\.exitFullscreen\(\)/);
-  assert.match(js,/frame\.src=/);
-  assert.match(css,/\.arcade-machine:fullscreen/);
-  assert.match(js,/event\.origin!==window\.location\.origin/);
-  assert.match(js,/event\.source!==frame\.contentWindow/);
+test('deal calculator can model buyer fee VAT, prep and customer negotiation',()=>{
+  for(const id of ['hammer','fee','transport','prep','asking','offer','landed','fee-vat','profit-asking','profit-offer','cash-left','deal-status'])
+    assert.match(html,new RegExp('id="'+id+'"'));
+  assert.match(js,/values\.fee\*20\)\/100/);
+  assert.match(js,/values\.hammer\+values\.fee\+feeVat\+values\.transport\+values\.prep/);
+  assert.match(js,/values\.asking-landed/);
+  assert.match(js,/values\.offer-landed/);
+  assert.match(js,/reset-calc/);
+  assert.match(js,/Intl\.NumberFormat\('en-GB'/);
 });
-test('official branding and mobile layouts survive the redesign',()=>{
+test('branding, semantic structure and responsive layouts are intact',()=>{
   assert.match(html,/assets\/nextgen-header-wordmark-2026\.webp/);
-  assert.match(html,/assets\/arcade-wordmark\.svg/);
   assert.ok(existsSync(new URL('assets/nextgen-header-wordmark-2026.webp',root)));
-  assert.match(css,/@media\(max-width:800px\)/);
+  assert.ok(existsSync(new URL('assets/hatchback-study.svg',root)));
+  assert.match(html,/aria-labelledby="page-heading"/);
+  assert.match(css,/@media\(max-width:860px\)/);
   assert.match(css,/@media\(max-width:600px\)/);
   assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-  assert.doesNotMatch(html,/games\/(roulette|pinball)/);
 });
