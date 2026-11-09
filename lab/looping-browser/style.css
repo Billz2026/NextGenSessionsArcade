@@ -105,3 +105,8 @@ body.is-playing main{padding-top:14px}
 }
 .audio-button:hover{background:rgba(246,198,110,.15)}
 .input-legend b{font-weight:800}
+
+/* Dedicated repair control makes the difference between emulated audio
+   and the independent browser speaker check explicit. */
+.audio-test-button{color:#dcc6b2;border-color:#ffffff40;background:#ffffff08}
+.audio-test-button:hover{border-color:var(--gold)}

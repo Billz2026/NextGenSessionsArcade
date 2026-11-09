@@ -16,6 +16,48 @@ const MAME_EXPECTED = Object.freeze({
   'loopaa6.bin':[2048,0xc434c14c],'loopvp1.bin':[32,0x6a0c7d87]
 });
 const get = id => document.getElementById(id);
+// Save a pristine constructor for the separate beep diagnostic so test tones
+// never get mistaken for audio devices created by the arcade emulator.
+const nativeBrowserAudioContext=window.AudioContext||window.webkitAudioContext;
+const emulatorAudioContexts=new Set();
+let audioCaptureInstalled=false;
+function captureEmulatorAudioContexts(){
+  if(audioCaptureInstalled)return;
+  audioCaptureInstalled=true;
+  // Capture the browser AudioContext instances made by the third-party
+  // emulator after it is loaded. This is intentionally prototype-only.
+  const wrappers=new Map();
+  for(const key of ['AudioContext','webkitAudioContext']){
+    const Native=window[key];
+    if(typeof Native!=='function')continue;
+    if(wrappers.has(Native)){window[key]=wrappers.get(Native);continue;}
+    try{
+      const Tracked=class extends Native {
+        constructor(...args){
+          super(...args);
+          emulatorAudioContexts.add(this);
+        }
+      };
+      window[key]=Tracked;
+      wrappers.set(Native,Tracked);
+    }catch(error){console.info('Audio context tracking was unavailable.',error);}
+  }
+}
+function getEmulatorAudioContexts(){
+  const all=new Set(emulatorAudioContexts);
+  // Some Emscripten/libretro builds publish their context via a Module
+  // instead of using the top-level browser AudioContext constructor.
+  try{
+    const emu=window.EJS_emulator;
+    for(const module of [emu?.Module,emu?.gameManager?.Module,window.Module]){
+      for(const context of [module?.SDL2?.audioContext,module?.SDL?.audioContext,module?.AL?.currentCtx]){
+        if(context&&typeof context.resume==='function')all.add(context);
+      }
+    }
+  }catch(error){console.info('Core audio internals are not accessible.',error);}
+  return [...all].filter(context=>context.state!=='closed');
+}
+
 const rom = get('rom'), upload=get('drop-zone'), start=get('start');
 let selected=null, launching=false, selectionToken=0;
 function status(message,tone='info'){
@@ -44,6 +86,27 @@ get('rom-reload').addEventListener('click',()=>{window.location.reload();});
 // This user-gesture-based tone checks Chrome/Windows sound output only.
 // It is intentionally separate from Looping gameplay audio.
 // The third-party MAME core has its own sound implementation and may still be silent.
+// Explicit user interaction is required to unlock contexts Chrome suspended
+// when the third-party MAME core initialised its sound output.
+get('audio-unlock').addEventListener('click',async()=>{
+  const contexts=getEmulatorAudioContexts();
+  const before=contexts.filter(context=>context.state==='suspended').length;
+  const attempts=contexts.filter(context=>context.state==='suspended').map(context=>{
+    try{return context.resume();}catch(error){return Promise.reject(error);}
+  });
+  let volumeRequested=false;
+  try{
+    const emu=window.EJS_emulator;
+    if(emu&&typeof emu.setVolume==='function'){emu.setVolume(1);volumeRequested=true;}
+  }catch(error){console.info('Emulator audio volume was not adjustable.',error);}
+  await Promise.allSettled(attempts);
+  const after=contexts.filter(context=>context.state==='suspended').length;
+  const running=contexts.filter(context=>context.state==='running').length;
+  const details=contexts.length
+    ?('Found '+contexts.length+' audio context(s): '+running+' running, '+after+' suspended (previously '+before+' suspended).')
+    :'No page-level MAME audio context was detected; the emulator may use a worker or a different audio backend.';
+  status(details+' '+(volumeRequested?'Maximum emulator volume requested. ':'')+'If Looping remains silent despite the game playing, its browser MAME core may not be producing audio.','info');
+});
 get('audio-check').addEventListener('click',()=>{
   let gameVolumeRequested=false;
   try{
@@ -53,7 +116,7 @@ get('audio-check').addEventListener('click',()=>{
       gameVolumeRequested=true;
     }
   }catch(error){console.info('The emulator did not accept a volume adjustment.',error);}
-  const AudioCtor=window.AudioContext||window.webkitAudioContext;
+  const AudioCtor=nativeBrowserAudioContext;
   if(!AudioCtor){
     status('This browser has no supported Web Audio output. Check Chrome sound settings.','bad');
     return;
@@ -207,6 +270,7 @@ start.addEventListener('click',async()=>{
   status('Checking the local browser ROM loader before starting MAME…');
   try{
     const romUrl=await localRomUrl();
+    captureEmulatorAudioContexts();
     // Third-party MAME0.243 core. Correct filename URL resolves via scoped SW.
     window.EJS_player='#game';
     window.EJS_core='mame0.243';

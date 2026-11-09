@@ -70,3 +70,16 @@ test('audio diagnostics distinguish system test tone from emulated game sound',(
   assert.match(js,/emulator\.setVolume\(1\)/);
   assert.match(js,/Test tone sent/);
 });
+
+test('browser audio unlock runs only on user click and reports game audio context state',()=>{
+  assert.match(html,/id="audio-unlock"/);
+  assert.match(html,/UNLOCK GAME AUDIO/);
+  assert.match(html,/id="audio-check"/);
+  assert.ok(js.includes("get('audio-unlock').addEventListener('click',async()=>"));
+  assert.match(js,/getEmulatorAudioContexts\(\)/);
+  assert.match(js,/context\.resume\(\)/);
+  assert.match(js,/captureEmulatorAudioContexts\(\)/);
+  assert.match(js,/nativeBrowserAudioContext/);
+  assert.match(js,/emulator may use a worker/);
+  assert.doesNotMatch(js,/AudioContext\.prototype\.resume\s*=/);
+});

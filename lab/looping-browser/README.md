@@ -59,3 +59,15 @@ The user confirmed no audible game sound. We do **not** yet know whether the pro
 - Do not claim audio is repaired until tested on the user's hardware.
 
 References: https://emulatorjs.org/docs/options/#ejs_volume and https://mametesters.org/view.php?id=8289.
+
+## Game-audio unlock investigation (9 November 2026)
+
+After the user confirmed the independently synthesized speaker-test beep was audible but game sound was not, we added an **UNLOCK GAME AUDIO** button:
+- On the LOAD action, the page wraps top-level browser AudioContext constructors for *observation* only. Original contexts remain native subclasses, and no sound is synthesized or mixed into Looping.
+- On an explicit button click, suspended contexts tracked from the emulator are resumed. Known Emscripten `Module` context locations are also checked if available. The UI reports observed context counts/states.
+- The separate speaker-test beep uses the saved original audio constructor, so it does not create a misleading detected "game" audio context.
+- The third-party emulator may use a Web Worker or other audio backend not visible through page-level contexts; zero observed contexts **does not prove** audio cannot work.
+- The documented volume option remains `EJS_volume=1`; the core may ignore it or have broken audio.
+- Success is not established until a real user hears actual Looping effects. If none, compare audio in native MAME 0.289 and consider changing the browser core rather than injecting fake audio.
+
+No ROMs are hosted and the homepage remains unchanged.
