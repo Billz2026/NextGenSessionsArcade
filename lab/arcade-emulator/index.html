@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0910">
+<meta name="description" content="NextGen Sessions arcade emulator development lab. Local ROM files only; no games are included.">
+<meta name="robots" content="noindex,nofollow">
+<title>Arcade Emulator Lab | NextGen Sessions</title>
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css">
+<script src="./app.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to emulator</a>
+<div class="top-rule"></div>
+<header class="header">
+  <div class="header-inner">
+    <a class="brand" href="../../" aria-label="NextGen Sessions Arcade home">
+      <img src="../../assets/nextgen-header-wordmark-2026.webp" width="1600" height="663" alt="NextGen Sessions">
+      <img class="arcade-wordmark" src="../../assets/arcade-wordmark.svg" width="1060" height="220" alt="Arcade">
+    </a>
+    <span class="header-centre"><span class="status-light" aria-hidden="true"></span> DEVELOPMENT LAB <span class="slash">/</span> LOCAL ROM TEST</span>
+    <a class="exit-link" href="../../">EXIT TO ARCADE <span aria-hidden="true">↗</span></a>
+  </div>
+</header>
+<main id="main" class="container">
+  <section class="intro">
+    <div><p class="eyebrow">NEXTGEN ARCADE / SYSTEMS TEST 001</p><h1>THE <em>EMULATOR LAB.</em></h1><p class="lede">Test a legally obtained arcade or console ROM inside the NextGen cabinet shell. No games are bundled or published.</p></div>
+    <span class="dev-chip">PROTOTYPE ONLY <span>•</span> NOT THE LIVE ARCADE</span>
+  </section>
+  <div class="lab-grid">
+    <section class="config-panel" aria-labelledby="config-title">
+      <div class="panel-bar"><span>01 / MACHINE SETUP</span><span class="bar-accent">PLAYER ONE</span></div>
+      <div class="config-inner">
+        <h2 id="config-title">PREPARE A <em>CARTRIDGE.</em></h2>
+        <p class="small-description">Choose a system and a compatible game file from this device. The file is not added to our GitHub repository.</p>
+        <label class="field-label" for="system">EMULATION SYSTEM</label>
+        <select id="system">
+          <option value="arcade">ARCADE / FBNeo</option>
+          <option value="mame2003">ARCADE / MAME 2003</option>
+          <option value="nes">CONSOLE / Nintendo NES</option>
+          <option value="snes">CONSOLE / Super Nintendo</option>
+          <option value="segaMD">CONSOLE / Sega Mega Drive</option>
+          <option value="gb">CONSOLE / Game Boy / Color</option>
+        </select>
+        <p id="core-description" class="core-note">FBNeo uses specific arcade ROM sets. A random MAME ZIP may not work. No BIOS or parent-ROM dependencies are supplied.</p>
+        <label class="field-label" for="rom-file">GAME FILE — FROM YOUR COMPUTER</label>
+        <label class="file-zone" id="drop-zone" for="rom-file">
+          <span class="file-icon" aria-hidden="true">⤓</span>
+          <strong>CHOOSE A ROM FILE</strong>
+          <span>Or drop your file here</span>
+          <small id="file-hint">Arcade ZIP ROM set (.zip), up to 64 MB</small>
+        </label>
+        <input type="file" id="rom-file" class="file-input" accept=".zip" aria-describedby="file-hint file-note">
+        <div class="selected-file" id="file-card" hidden><span class="file-disc" aria-hidden="true">✓</span><div><strong id="file-name">—</strong><small id="file-meta">—</small></div><button id="clear-file" type="button">REMOVE</button></div>
+        <p id="file-note" class="legal-note">Use only a ROM you are authorised to use. For example, MAME's free Looping ROM is permitted for non-commercial use when obtained under its stated terms, but that does not grant public redistribution rights.</p>
+        <button id="launch" class="launch" type="button" disabled><span aria-hidden="true">▶</span> LOAD INTO CABINET <span aria-hidden="true">↗</span></button>
+        <button id="change" class="change-button" type="button" hidden>↺ RELOAD TO CHOOSE ANOTHER GAME</button>
+        <div id="status" class="status" role="status" aria-live="polite"><span class="status-led" aria-hidden="true"></span> Choose a ROM to begin. No game has been loaded.</div>
+      </div>
+    </section>
+    <section class="play-panel" aria-labelledby="machine-title">
+      <div class="panel-bar"><span>02 / ARCADE DISPLAY</span><span class="bar-accent">NGS MACHINE 001</span></div>
+      <div class="machine-shell">
+        <div class="machine-marquee" id="machine-title"><span>✦</span> NEXTGEN <em>ARCADE</em> <span>✦</span></div>
+        <div class="cabinet-bezel">
+          <div class="monitor">
+            <div id="game" aria-label="Arcade emulator game screen"></div>
+            <div class="monitor-placeholder" id="placeholder" aria-hidden="true">
+              <div class="crt-grid"></div>
+              <span class="insert-line">NEXTGEN SYSTEM / READY</span>
+              <strong>INSERT<br><em>GAME.</em></strong>
+              <p>LOCAL ROM LOADER</p>
+              <span class="screen-footer">NO CARTRIDGE DETECTED <i>●</i></span>
+            </div>
+          </div>
+        </div>
+        <div class="control-deck"><div class="deck-title">PLAYER 1 CONTROL PANEL</div><div class="deck-controls" aria-hidden="true"><div class="joystick"><i></i></div><div class="buttons"><i></i><i></i><i></i><i></i></div></div><div class="deck-note">KEYBOARD <span>/</span> GAMEPAD <span>/</span> TOUCH</div></div>
+      </div>
+      <div class="display-foot"><span><i class="foot-light" aria-hidden="true"></i> SYSTEM STANDBY</span><span>16:9 SHELL / ORIGINAL GAME ASPECT PRESERVED BY EMULATOR</span></div>
+    </section>
+  </div>
+  <section class="lab-notes" aria-label="Development testing notes">
+    <div><strong>ARCADE ROM COMPATIBILITY</strong><p>FBNeo and MAME 2003 expect particular ROM sets. An unsupported game, missing parent ROM or unavailable BIOS can prevent booting.</p></div>
+    <div><strong>ABOUT LOADING</strong><p>The interface uses EmulatorJS 4.2.3 assets from its public CDN. The selected file is passed as a browser-generated local blob URL, not uploaded by this page.</p></div>
+    <div><strong>CONTROLS</strong><p>Use EmulatorJS's in-player settings to remap keys, enable on-screen controls, adjust sound or enter fullscreen. Controls vary by system.</p></div>
+  </section>
+</main>
+<footer class="footer"><div class="container footer-inner"><span>NEXTGEN SESSIONS <b>ARCADE</b></span><span>DEVELOPMENT BRANCH ONLY · NO INCLUDED ROMS</span><a href="../../">RETURN TO ARCADE ↗</a></div></footer>
+</body>
+</html>
