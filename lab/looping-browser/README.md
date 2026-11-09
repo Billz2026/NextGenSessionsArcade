@@ -47,3 +47,15 @@ The existing MAME 0.243 core and scoped in-memory ROM service worker have **not 
 - CSS adapts the active view for desktop, narrow phone and unfolded/folded layouts; actual hardware testing remains to be done.
 
 No game is automatically hosted or loaded, and no royalty/licensing claim is made.
+
+## Audio troubleshooting added (9 Nov 2026)
+
+The user confirmed no audible game sound. We do **not** yet know whether the problem is browser mute/output, the emulator fork or MAME's imperfect Looping sound driver. The MAME source marks Looping as `MACHINE_IMPERFECT_SOUND`; an older major regression was resolved in MAME 0.243, but not every sound issue is fixed.
+
+- The prototype now requests `EJS_volume=1` at startup. Existing saved user mute state may take precedence.
+- When running, the **TEST SOUND** button attempts `EJS_emulator.setVolume(1)` if available, then plays a *short synthesized browser test beep* via a new AudioContext directly in the click handler. The beep is a diagnostic only, not music or a replacement for Looping audio.
+- If the beep is audible while Looping remains silent, check the emulator speaker icon, Windows audio mixer and try the same ROM in local MAME 0.289. A working test beep establishes browser output, **not** core audio health.
+- If the beep is also silent, check Windows output device, Chrome tab/site mute, sound mixer and volume.
+- Do not claim audio is repaired until tested on the user's hardware.
+
+References: https://emulatorjs.org/docs/options/#ejs_volume and https://mametesters.org/view.php?id=8289.

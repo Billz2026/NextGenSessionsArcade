@@ -97,3 +97,11 @@ body.is-playing main{padding-top:14px}
   body.is-playing .deck{min-height:54px}
   .cabinet:fullscreen .marquee,.cabinet:fullscreen .bezel,.cabinet:fullscreen .deck{width:min(100%,calc((100dvh - 140px) * 1.333))}
 }
+
+/* Audio diagnosis control: this is a speaker test, NOT a game-sound substitute. */
+.audio-button{
+  color:var(--gold);border-color:rgba(246,198,110,.6);
+  background:rgba(246,198,110,.07);
+}
+.audio-button:hover{background:rgba(246,198,110,.15)}
+.input-legend b{font-weight:800}

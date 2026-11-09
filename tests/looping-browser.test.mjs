@@ -59,3 +59,14 @@ test('game view retains usable native emulator controls',()=>{
   assert.match(html,/<kbd>1<\/kbd> START/);
   assert.doesNotMatch(js,/dispatchEvent\(new KeyboardEvent/);
 });
+
+test('audio diagnostics distinguish system test tone from emulated game sound',()=>{
+  assert.match(html,/id="audio-check"/);
+  assert.match(html,/TEST SOUND/);
+  assert.match(js,/window\.EJS_volume=1/);
+  assert.match(js,/get\('audio-check'\)\.addEventListener\('click'/);
+  assert.match(js,/window\.AudioContext\|\|window\.webkitAudioContext/);
+  assert.match(js,/oscillator\.start\(context\.currentTime\)/);
+  assert.match(js,/emulator\.setVolume\(1\)/);
+  assert.match(js,/Test tone sent/);
+});

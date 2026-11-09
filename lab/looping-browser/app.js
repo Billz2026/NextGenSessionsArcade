@@ -41,6 +41,44 @@ function enterArcadeView(){
   }
 }
 get('rom-reload').addEventListener('click',()=>{window.location.reload();});
+// This user-gesture-based tone checks Chrome/Windows sound output only.
+// It is intentionally separate from Looping gameplay audio.
+// The third-party MAME core has its own sound implementation and may still be silent.
+get('audio-check').addEventListener('click',()=>{
+  let gameVolumeRequested=false;
+  try{
+    const emulator=window.EJS_emulator;
+    if(emulator&&typeof emulator.setVolume==='function'){
+      emulator.setVolume(1);
+      gameVolumeRequested=true;
+    }
+  }catch(error){console.info('The emulator did not accept a volume adjustment.',error);}
+  const AudioCtor=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtor){
+    status('This browser has no supported Web Audio output. Check Chrome sound settings.','bad');
+    return;
+  }
+  try{
+    // Create and start the context *inside this click* to satisfy autoplay rules.
+    const context=new AudioCtor();
+    if(context.state==='suspended')context.resume().catch(()=>{});
+    const oscillator=context.createOscillator();
+    const gain=context.createGain();
+    oscillator.type='sine';
+    oscillator.frequency.setValueAtTime(660,context.currentTime);
+    gain.gain.setValueAtTime(0.0001,context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.045,context.currentTime+0.025);
+    gain.gain.exponentialRampToValueAtTime(0.0001,context.currentTime+0.24);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start(context.currentTime);
+    oscillator.stop(context.currentTime+0.25);
+    oscillator.addEventListener('ended',()=>{void context.close();},{once:true});
+    status((gameVolumeRequested?'Emulator volume requested at maximum. ':'')+'Test tone sent. Did you hear the short beep? If yes, Chrome audio works; if Looping is silent, check its in-game speaker/mute and MAME audio emulation.','info');
+  }catch(error){
+    status('Could not play browser test tone: '+String(error.message||error),'bad');
+  }
+});
+
 get('cabinet-expand').addEventListener('click',async()=>{
   const cabinet=get('cabinet');
   try{
@@ -176,6 +214,7 @@ start.addEventListener('click',async()=>{
     window.EJS_gameName='looping';
     window.EJS_startOnLoaded=false;
     window.EJS_color='#ff5b50';
+    window.EJS_volume=1; // documented default-volume setting; saved mute state may override
     window.EJS_backgroundColor='#08070d';
     // Keep the emulation controls accessible, but avoid redundant toolbar actions.
     // Third-party MAME fork may ignore this optional upstream EmulatorJS setting.

@@ -40,6 +40,7 @@
       <span><kbd>CTRL</kbd> FIRE</span>
     </div>
     <div class="play-actions">
+      <button class="tool-button audio-button" id="audio-check" type="button" title="Play a short browser test tone, and request full emulator volume">♪ TEST SOUND</button>
       <button class="tool-button focus-button" id="cabinet-expand" type="button" aria-pressed="false" aria-label="Enter cabinet fullscreen">⛶ FULLSCREEN</button>
       <button class="tool-button reload-button" id="rom-reload" type="button">↺ CHANGE ROM</button>
       <a class="tool-button exit-button" href="../../">↗ ARCADE HOME</a>
@@ -68,7 +69,7 @@
         <button type="button" id="start" class="primary" disabled><span aria-hidden="true">▶</span> LOAD INTO ARCADE CABINET <span aria-hidden="true">↗</span></button>
         <button type="button" id="again" class="secondary" hidden>↺ RELOAD PAGE / CHANGE ROM</button>
         <p id="status" class="status" role="status" aria-live="polite">Ready to inspect your ROM. No game has been loaded.</p>
-        <div class="input-legend"><b>ARCADE CONTROLS</b><div><kbd>5</kbd> Insert coin <span>·</span> <kbd>1</kbd> Start</div><div><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Direction <span>·</span> <kbd>CTRL</kbd> Shoot</div><div><kbd>TAB</kbd> MAME settings (if supported)</div></div>
+        <div class="input-legend"><b>ARCADE CONTROLS</b><div><kbd>5</kbd> Insert coin <span>·</span> <kbd>1</kbd> Start</div><div><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Direction <span>·</span> <kbd>CTRL</kbd> Shoot</div><div><kbd>TAB</kbd> MAME settings (if supported)</div><div>Audio: after starting, click <b>TEST SOUND</b> above the cabinet. This plays a separate test tone, not a Looping sound effect.</div></div>
       </div>
     </section>
     <section class="display card" aria-label="Arcade game monitor">
