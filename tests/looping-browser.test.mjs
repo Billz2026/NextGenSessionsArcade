@@ -10,17 +10,19 @@ test('unlinked page, local ROM picker, MAME 0.243 integration',()=>{
   assert.match(html,/NOT LIVE CABINET 001/);
   assert.match(html,/NO ROM DISTRIBUTION/);
   assert.match(js,/window\.EJS_core='mame0\.243'/);
-  assert.match(js,/URL\.createObjectURL\(selected\)/);
-  assert.match(js,/window\.EJS_gameUrl=blobUrl/);
+  assert.ok(js.includes('navigator.serviceWorker.register'));
+  assert.ok(js.includes('window.EJS_gameUrl=romUrl'));
+  assert.ok(js.includes("new URL('./local/looping.zip'"));
+  assert.doesNotMatch(js,/URL\.createObjectURL\(selected\)/);
   assert.match(js,/document\.createElement\('script'\)/);
   assert.doesNotMatch(html,/src="https:\/\/www\.emulatorjs\.com\/loader\.js"/);
 });
 test('service worker responds with local ROM on a named ZIP URL without persistence',()=>{
-  assert.match(sw,/event\\.request\\.url/);
-  assert.match(sw,/NGS_GET_LOOPING_ROM/);
-  assert.match(sw,/new Response\\(buffer/);
-  assert.match(sw,/application\\/zip/);
-  assert.doesNotMatch(sw,/caches\\.open|indexedDB\\.open/);
+  assert.ok(sw.includes('event.request.url'));
+  assert.ok(sw.includes('NGS_GET_LOOPING_ROM'));
+  assert.ok(sw.includes('new Response(buffer'));
+  assert.ok(sw.includes('application/zip'));
+  assert.doesNotMatch(sw,/caches\.open|indexedDB\.open/);
 });
 test('ROM compatibility preflight covers expected 14 chips',()=>{
   const m=js.match(/'[^']+'\s*:\s*\[\d+,\s*0x[a-f0-9]+\]/g)||[];
