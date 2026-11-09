@@ -36,3 +36,14 @@ References:
 ## Fix for observed “Unsupported Game” error (9 Nov 2026)
 
 The user screenshot confirmed 14/14 chips matched but displayed “Unsupported Game” inside the third-party emulator. One plausible root cause is that the earlier `blob:` URL stripped the `.zip` filename, a known arcade emulation issue. We replaced the blob URL with an ephemeral service-worker-backed same-origin `/local/looping.zip` request. This may resolve file-extension detection; **actual gameplay is still not confirmed** until a new browser test. The third-party mame0.243 core may have other unsupported-game limitations.
+
+## Focus-first cabinet UX update (9 November 2026)
+
+The existing MAME 0.243 core and scoped in-memory ROM service worker have **not changed**. After the third-party core emits the game-start callback:
+- The ROM upload/configuration column is hidden and the running game moves to the centre as a larger cabinet.
+- A compact command strip supplies real on-screen fullscreen and change-ROM controls, keyboard instructions, an arcade exit link, and current status messages.
+- Fullscreen expands the outer cabinet via the browser Fullscreen API; the emulator's own fullscreen button is retained.
+- The third-party EmulatorJS toolbar is requested to show fewer nonessential buttons using the supported upstream `EJS_Buttons` interface; the fork might ignore that optional setting. The underlying controls remain available.
+- CSS adapts the active view for desktop, narrow phone and unfolded/folded layouts; actual hardware testing remains to be done.
+
+No game is automatically hosted or loaded, and no royalty/licensing claim is made.

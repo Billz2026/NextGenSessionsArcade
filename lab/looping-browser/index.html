@@ -28,6 +28,23 @@
     <div><p class="overline">NEXTGEN SESSIONS / AUTHENTIC ARCADE TEST</p><h1>LOOPING <em>1982.</em></h1><p class="subtitle">A real coin-operated arcade game. Running the <b>original game</b> is the goal—no remake or recreation.</p></div>
     <span class="lab-badge">UNLINKED TEST PAGE <i>•</i> NOT LIVE CABINET 001</span>
   </section>
+  <section class="play-tools" id="play-tools" aria-label="Active arcade controls" hidden>
+    <div class="play-identity">
+      <span class="play-live-dot" aria-hidden="true"></span>
+      <div><b>LOOPING / CABINET 001</b><small id="play-message">ORIGINAL ARCADE GAME RUNNING IN YOUR BROWSER</small></div>
+    </div>
+    <div class="play-keys" aria-label="Keyboard controls">
+      <span><kbd>5</kbd> COIN</span>
+      <span><kbd>1</kbd> START</span>
+      <span><kbd>ARROWS</kbd> MOVE</span>
+      <span><kbd>CTRL</kbd> FIRE</span>
+    </div>
+    <div class="play-actions">
+      <button class="tool-button focus-button" id="cabinet-expand" type="button" aria-pressed="false" aria-label="Enter cabinet fullscreen">⛶ FULLSCREEN</button>
+      <button class="tool-button reload-button" id="rom-reload" type="button">↺ CHANGE ROM</button>
+      <a class="tool-button exit-button" href="../../">↗ ARCADE HOME</a>
+    </div>
+  </section>
   <div class="layout">
     <section class="config card" aria-labelledby="setup-title">
       <div class="card-head"><span>01 / PREPARE GAME</span><span class="gold">MAME 0.243</span></div>
@@ -56,7 +73,7 @@
     </section>
     <section class="display card" aria-label="Arcade game monitor">
       <div class="card-head"><span>02 / THE ARCADE MACHINE</span><span class="gold">ORIGINAL ARCADE ROM</span></div>
-      <div class="cabinet">
+      <div class="cabinet" id="cabinet">
         <div class="marquee"><span>✦</span><b>LOOPING</b><span>✦</span></div>
         <div class="bezel">
           <div class="screen" id="screen">
@@ -71,10 +88,10 @@
         </div>
         <div class="deck"><div><b>1 PLAYER</b><small>CLASSIC ARCADE</small></div><div class="decoration"><span class="stick"></span><span class="button red"></span><span class="button amber"></span></div><div><b>JOYSTICK</b><small>+ FIRE</small></div></div>
       </div>
-      <p class="monitor-note"><span class="yellow-dot"></span> <span id="machine-state">CABINET IN STANDBY</span><span class="note-right">ROTATED VERTICAL PLAYFIELD · ORIGINAL PIXEL ART</span></p>
+      <p class="monitor-note"><span class="yellow-dot"></span> <span id="machine-state">CABINET IN STANDBY</span><span class="note-right">ORIGINAL ARCADE DISPLAY · PRESS ESC TO LEAVE FULLSCREEN</span></p>
     </section>
   </div>
-  <div class="footnotes"><article><b>WHY MAME 0.243?</b><p>Your European Looping ROM matches the chip checksums recorded for this MAME version. The earlier MAME 2003 core requires a different ROM set.</p></article><article><b>HOW THIS TEST WORKS</b><p>ROM validation happens in this page. To run the game, third-party EmulatorJS code from emulatorjs.com loads in your browser, with access to the selected file. Nothing is uploaded by our own page.</p></article><article><b>PROTOTYPE STATUS</b><p>The file format is verified, but actual browser emulation, controls, sound and Samsung Z Fold 7 compatibility still need your real-device test. The public homepage remains unchanged.</p></article></div>
+  <div class="footnotes"><article><b>WHY MAME 0.243?</b><p>Your European Looping ROM matches the chip checksums recorded for this MAME version. The earlier MAME 2003 core requires a different ROM set.</p></article><article><b>HOW THIS TEST WORKS</b><p>ROM validation happens in this page. To run the game, third-party EmulatorJS code from emulatorjs.com loads in your browser, with access to the selected file. Nothing is uploaded by our own page.</p></article><article><b>PROTOTYPE STATUS</b><p>Browser loading and the original title screen have been confirmed. Coin/start, movement, shooting, sound, fullscreen and Samsung Z Fold 7 compatibility still need real-device testing. The homepage remains unchanged.</p></article></div>
 </main>
 <footer><div class="page footer-inner"><span>NEXTGEN SESSIONS <b>ARCADE</b></span><span>UNLINKED TECHNICAL TEST · NO ROM DISTRIBUTION</span><a href="../../">EXIT TO ARCADE ↗</a></div></footer>
 </body></html>

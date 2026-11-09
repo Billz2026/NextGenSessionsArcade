@@ -38,3 +38,24 @@ test('responsive cabinet reuses official project brand without embedding a ROM',
   assert.match(css,/@media\(max-width:640px\)/);
   assert.doesNotMatch(html,/src="[^"]*\.(zip|bin)"/i);
 });
+
+test('active arcade view keeps the game screen while hiding the ROM setup',()=>{
+  assert.match(html,/id="play-tools"/);
+  assert.match(html,/id="cabinet"/);
+  assert.match(html,/id="cabinet-expand"/);
+  assert.match(html,/id="rom-reload"/);
+  assert.match(js,/window\.EJS_onGameStart=\(\)=>/);
+  assert.match(js,/enterArcadeView\(\)/);
+  assert.match(js,/requestFullscreen\(\)/);
+  assert.match(js,/document\.fullscreenElement/);
+  assert.match(css,/body\.is-playing \.config\{display:none\}/);
+  assert.match(css,/\.cabinet:fullscreen/);
+  assert.match(css,/body\.is-playing \.cabinet/);
+});
+test('game view retains usable native emulator controls',()=>{
+  assert.match(js,/window\.EJS_Buttons/);
+  assert.match(js,/settings:true,fullscreen:true,volume:true/);
+  assert.match(html,/<kbd>5<\/kbd> COIN/);
+  assert.match(html,/<kbd>1<\/kbd> START/);
+  assert.doesNotMatch(js,/dispatchEvent\(new KeyboardEvent/);
+});

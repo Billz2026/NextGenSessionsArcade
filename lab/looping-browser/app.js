@@ -18,7 +18,49 @@ const MAME_EXPECTED = Object.freeze({
 const get = id => document.getElementById(id);
 const rom = get('rom'), upload=get('drop-zone'), start=get('start');
 let selected=null, launching=false, selectionToken=0;
-function status(message,tone='info'){get('status').textContent=message;get('status').dataset.tone=tone;}
+function status(message,tone='info'){
+  get('status').textContent=message;
+  get('status').dataset.tone=tone;
+  const activeMessage=get('play-message');
+  if(document.body.classList.contains('is-playing')&&activeMessage){
+    activeMessage.textContent=message;
+    activeMessage.dataset.tone=tone;
+  }
+}
+// Switch to a screen-first cabinet only after the emulator reports a running game.
+// No game reload or emulator DOM replacement occurs during the mode change.
+function enterArcadeView(){
+  document.body.classList.add('is-playing');
+  get('play-tools').hidden=false;
+  get('play-message').textContent='ARCADE RUNNING · PRESS 5 FOR COIN, THEN 1 TO START';
+  get('play-message').dataset.tone='ok';
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    get('play-tools').scrollIntoView({block:'start',behavior:'instant'});
+  }else{
+    get('play-tools').scrollIntoView({block:'start',behavior:'smooth'});
+  }
+}
+get('rom-reload').addEventListener('click',()=>{window.location.reload();});
+get('cabinet-expand').addEventListener('click',async()=>{
+  const cabinet=get('cabinet');
+  try{
+    if(document.fullscreenElement){
+      await document.exitFullscreen();
+    }else{
+      if(!cabinet.requestFullscreen)throw Error('Fullscreen is not available in this browser.');
+      await cabinet.requestFullscreen();
+    }
+  }catch(error){
+    status('Could not switch fullscreen: '+String(error.message||error),'bad');
+  }
+});
+document.addEventListener('fullscreenchange',()=>{
+  const active=document.fullscreenElement===get('cabinet');
+  const button=get('cabinet-expand');
+  button.setAttribute('aria-pressed',String(active));
+  button.setAttribute('aria-label',active?'Exit cabinet fullscreen':'Enter cabinet fullscreen');
+  button.textContent=active?'⛶ EXIT FULLSCREEN':'⛶ FULLSCREEN';
+});
 function checked(state,message){get('verification').dataset.state=state;get('verification').querySelector('b').textContent=message;}
 function reset(){if(launching)return;selectionToken++;selected=null;rom.value='';start.disabled=true;get('selected').hidden=true;checked('','AWAITING FILE');status('Ready to inspect your ROM. No game has been loaded.');}
 function readCentralDirectory(arrayBuffer) {
@@ -134,8 +176,21 @@ start.addEventListener('click',async()=>{
     window.EJS_gameName='looping';
     window.EJS_startOnLoaded=false;
     window.EJS_color='#ff5b50';
+    window.EJS_backgroundColor='#08070d';
+    // Keep the emulation controls accessible, but avoid redundant toolbar actions.
+    // Third-party MAME fork may ignore this optional upstream EmulatorJS setting.
+    window.EJS_Buttons={
+      saveState:false,loadState:false,saveSavFiles:false,loadSavFiles:false,
+      quickSave:false,quickLoad:false,screenRecord:false,screenshot:false,
+      cacheManager:false,cheat:false,gamepad:false,restart:false,
+      playPause:true,mute:true,settings:true,fullscreen:true,volume:true
+    };
     window.EJS_ready=()=>{status('MAME loaded. Use START GAME inside the monitor.','ok');get('machine-state').textContent='EMULATOR READY';};
-    window.EJS_onGameStart=()=>{status('Game launched. Press 5 to insert a coin, then 1 to start.','ok');get('machine-state').textContent='ARCADE IN PLAY';};
+    window.EJS_onGameStart=()=>{
+      get('machine-state').textContent='ARCADE IN PLAY';
+      enterArcadeView();
+      status('Game running. Press 5 to insert a coin, then 1 to start.','ok');
+    };
     status('Local looping.zip URL prepared. Loading third-party MAME 0.243…');
     get('machine-state').textContent='LOADING MAME 0.243';
     const script=document.createElement('script');

@@ -17,3 +17,83 @@ main{flex:1;padding-top:19px;padding-bottom:19px}.hero{display:flex;align-items:
 @media(max-width:1020px){.layout{grid-template-columns:1fr}.cabinet{width:min(100% - 35px,700px)}.footnotes{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.page,.head-wrap{width:calc(100% - 28px)}.head-wrap{min-height:64px}.brand{width:135px}.head-status{display:none}.exit{font-size:9px;padding:8px}.hero{display:block}h1{font-size:61px}.lab-badge{margin-top:12px;font-size:8px}.config-body{padding:17px}.cabinet{width:calc(100% - 18px)}.marquee{height:40px;font-size:28px}.bezel{padding:8px}.screen{border-width:5px;border-radius:8px}.deck{min-height:64px}.deck>div:first-child,.deck>div:last-child{font-size:8px}.deck small{font-size:7px}.decoration{gap:4px}.stick{transform:scale(.7);margin-right:0}.button{width:16px;height:13px}.note-right{display:none}.footnotes{grid-template-columns:1fr}.footer-inner{justify-content:center;text-align:center}.screen-label,.screen-bottom{font-size:7px}.insert-screen strong{font-size:55px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+
+/* Active cabinet: remove the setup stage only after EmulatorJS starts gameplay.
+   Keep game DOM mounted; avoid unexpected emulator reinitialisation. */
+.play-tools[hidden]{display:none!important}
+.play-tools{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin:0 auto 17px;padding:12px 16px;max-width:1180px;
+  border:1px solid rgba(246,198,110,.27);border-radius:11px;
+  background:linear-gradient(110deg,#2a1421,#15131a 56%,#221622);
+  box-shadow:0 6px 24px #0004;
+}
+.play-identity{display:flex;align-items:center;gap:12px;min-width:0}
+.play-live-dot{width:9px;height:9px;border-radius:100%;background:#8ce7aa;box-shadow:0 0 14px #8ce7aa83;flex-shrink:0}
+.play-identity>div{display:flex;flex-direction:column;gap:2px}
+.play-identity b{font:900 14px var(--tech);white-space:nowrap}
+.play-identity small{font:700 9px/1.4 var(--tech);color:#d1bec5;max-width:440px}
+.play-identity small[data-tone="bad"]{color:#fcaeae}
+.play-keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px}
+.play-keys>span{display:flex;align-items:center;gap:4px;white-space:nowrap;font:800 9px var(--tech);color:#d5c4c4}
+.play-keys kbd{padding:3px 6px;margin:0;color:#f2d9aa;background:#120d14;border-color:#94745b}
+.play-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px}
+.tool-button{border:1px solid #ffffff32;border-radius:6px;background:#ffffff08;display:inline-flex;align-items:center;justify-content:center;min-height:35px;gap:5px;padding:0 11px;font:800 9px var(--tech);white-space:nowrap;color:#e6d7d3;transition:background .16s,border-color .16s}
+.tool-button:hover{border-color:var(--gold);background:#ffffff15}
+.focus-button{background:#f7c96a;color:#1a1319;border-color:#f7c96a}
+.focus-button:hover{background:#ffdda0;color:#1a1319}
+.exit-button{color:var(--gold);border-color:#f6c66e55}
+body.is-playing .layout{display:block}
+body.is-playing .config{display:none}
+body.is-playing .display{margin:0 auto;max-width:1180px;width:100%;border-color:#fc9e6499;background:linear-gradient(150deg,#28131f,#0d0d13)}
+body.is-playing .display .card-head{min-height:30px}
+body.is-playing .cabinet{width:min(calc(100% - 32px),880px);margin:12px auto 0}
+body.is-playing .hero{max-width:1180px;margin:0 auto 12px;align-items:center}
+body.is-playing .hero h1{font-size:clamp(43px,4vw,63px);margin:2px 0 5px}
+body.is-playing .hero .subtitle{font-size:11px}
+body.is-playing .footnotes{display:none}
+body.is-playing .monitor-note{padding:7px 13px;max-width:900px;margin:auto}
+body.is-playing .deck{min-height:66px}
+body.is-playing .cabinet .marquee{height:44px}
+body.is-playing .cabinet .bezel{padding:10px 14px 12px}
+body.is-playing .screen{border-width:7px}
+body.is-playing main{padding-top:14px}
+/* The host fullscreen button expands the cabinet, not the entire document.
+   Avoid altering EmulatorJS internal canvas dimensions. */
+.cabinet:fullscreen{
+  box-sizing:border-box;max-width:none;width:100%;height:100%;margin:0;
+  padding:clamp(9px,2vmin,22px);background:radial-gradient(ellipse at center,#291423,#06060a);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:auto;filter:none
+}
+.cabinet:fullscreen .marquee,.cabinet:fullscreen .bezel,.cabinet:fullscreen .deck{
+  flex-shrink:0;width:min(100%,calc((100dvh - 190px) * 1.333),1050px)
+}
+.cabinet:fullscreen .screen{min-height:0}
+@media(max-width:1170px){
+  .play-tools{flex-wrap:wrap;justify-content:center;gap:12px}
+  .play-identity{flex:1 1 230px}
+  .play-keys{flex:1 1 210px}
+  .play-actions{flex:1 1 250px}
+}
+@media(max-width:640px){
+  body.is-playing .hero{margin-bottom:10px}
+  body.is-playing .hero h1{font-size:45px}
+  body.is-playing .hero .subtitle{display:none}
+  body.is-playing .hero .lab-badge{display:none}
+  .play-tools{padding:11px 10px;align-items:center;gap:10px}
+  .play-identity{flex:1 1 100%;justify-content:center}
+  .play-identity b{font-size:12px}
+  .play-identity small{font-size:8px}
+  .play-keys{order:3;flex:1 1 100%;gap:6px 11px}
+  .play-keys>span{font-size:8px}
+  .play-actions{flex:1 1 100%;justify-content:center}
+  .tool-button{font-size:8px;padding:0 7px;min-height:34px}
+  body.is-playing .cabinet{width:calc(100% - 12px)}
+  body.is-playing .cabinet .marquee{height:35px}
+  body.is-playing .cabinet .bezel{padding:7px}
+  body.is-playing .screen{border-width:4px}
+  body.is-playing .deck{min-height:54px}
+  .cabinet:fullscreen .marquee,.cabinet:fullscreen .bezel,.cabinet:fullscreen .deck{width:min(100%,calc((100dvh - 140px) * 1.333))}
+}
