@@ -62,7 +62,7 @@ test('game view retains usable native emulator controls',()=>{
 
 test('audio diagnostics distinguish system test tone from emulated game sound',()=>{
   assert.match(html,/id="audio-check"/);
-  assert.match(html,/TEST SOUND/);
+  assert.match(html,/TEST SPEAKERS/);
   assert.match(js,/window\.EJS_volume=1/);
   assert.match(js,/get\('audio-check'\)\.addEventListener\('click'/);
   assert.match(js,/window\.AudioContext\|\|window\.webkitAudioContext/);
