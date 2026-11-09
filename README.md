@@ -1,44 +1,55 @@
 # The Motor Trade
 
-**A NextGen Sessions project** — a realistic UK used-car dealer business simulation in early development.
+A **NextGen Sessions** UK used-car dealership management game, built around an ongoing career, inbox and calendar rather than a static promotional page.
 
-Public site: https://billz2026.github.io/TheMotorTrade/
+**Play:** https://billz2026.github.io/TheMotorTrade/
 
-## Current stage
+## Current playable foundation (v0.2)
 
-This is a **foundation/concept build**, not a complete game. The new public homepage is a responsive dashboard concept and a working, clearly labelled **illustrative auction-to-retail deal calculator**. It includes a fictional 2016 Ford Focus Zetec, a sample Grade 3 report and editable figures for hammer price, buyer's fee, transport, preparation, asking price and customer offer.
+The site opens to a branded **main menu** if this browser has no valid save. Choosing **New Career** takes the player through a dealership setup screen (name, £12,500 starting capital, two-vehicle forecourt), then into a Football Manager-inspired career dashboard.
 
-The calculator reports landed cost, VAT on the buyer's fee, gross spread at the asking price, gross spread at the offered price, and illustrative remaining capital. The figures are **not** live market data and **not** net profit. It does not yet model HMRC VAT margin scheme calculations, warranty liabilities, MOT/repair reinspection, funding, fixed costs, tax or consumer rights. All values are local browser demo values; no data is stored.
+If a valid save is present, **the site automatically opens the career dashboard on the next visit**. Players can return to the main menu and resume from there. The single career slot is stored in the browser's localStorage under the key the-motor-trade-career-v1, not on a server; the save is not synchronised across devices or browsers. Starting another career replaces the saved career after confirmation. If browser storage is blocked or unavailable, the game shows an explicit warning.
 
-## Core game design — long-term target
+### Working interactions
 
-1. **Auction**: lots, inspection reports, photographic condition evidence, grades, trade valuation, guide prices, bidding strategy and auctioneer-specific fee tables; different buyer/account and VAT rules.
-2. **Acquisition**: won hammer, invoice, buyer's fee, appropriate VAT treatment, transport, payment settlement, and cash-flow impact.
-3. **Preparation**: repair estimates, unexpected faults, trade suppliers, stock ageing, MOT, valeting, servicing and job allocation.
-4. **Retail**: live stock adverts, market competition, price reductions, enquiries, customer personalities, financing/part exchanges where modelled responsibly, test drives, negotiation and compliant handover.
-5. **Business**: accounting, warranties/claims, returns and consumer law, stock holding risk, premises, employees, reputation and longer-term dealership expansion.
+- **Career dashboard:** dealership name, balance, empty-stock count, career day and reputation, with truthful starter values.
+- **Inbox:** initial adviser, auction and finance messages, detail view, unread badges, mark-as-read, mark-all-read, related navigation links.
+- **Continue:** advances the simulated date by one day and triggers introductory inbox messages on days 2, 3, 5 and 7. It updates the browser save.
+- **Navigation:** Dashboard, Inbox, Auction Desk, Vehicle Stock, Sales Office, Finances and My Dealership. Every navigation control opens the relevant section.
+- **Auction preview:** one clearly identified **fictional** Ford Focus lot and sample condition report. Bidding is not yet implemented.
+- **Responsive interface:** desktop management sidebar, compact mobile navigation, foldable-friendly layouts, reduced-motion support.
+- **Save:** automatic on career creation, day advance and inbox changes, plus a manual Save Career action.
 
-### First playable slice (next milestone)
+### Not yet simulated
 
-One fictional vehicle, a complete purchase decision and a simulated auction bid, a generated invoice/fee breakdown, a condition/preparation decision, then a customer offer with a final cash/profit outcome. No elaborate dealership management until this single complete transaction is fun and accurate.
+There are **no** live or fictional auction bids, bought cars, stock preparation jobs, dealer expenses, customer enquiries, completed sales or profit figures. Advancing the calendar does **not** invent money, stock or business results. The current balance remains £12,500. The Grade 3 condition report and hatchback illustration are fictional and are not verified auction data.
 
-### Rules for realism
+The next development milestone is a **complete playable single-car loop**:
 
-- Fee schedules are configurable by auctioneer, account, purchase type and VAT treatment: no universal buyer fee.
-- Condition grade is an **inspection aid**, not a repair-cost guarantee; a report may miss faults.
-- Separate **gross spread**, **margin before overhead**, **actual net profit**, **cash flow**, and **VAT**. They are not interchangeable.
-- Distinguish retail sale price from any VAT accounting for the vehicle and services.
-- Treat all current on-page prices, reports, and fees as **fictional illustrative data** until a source/fixture is clearly labelled.
-- Validate the economics and edge cases with motor-trade expertise before turning the demo calculator into the game engine.
+1. Research multiple fictional auction lots, fees and risk.
+2. Bid competitively, purchase one car and record the actual invoice.
+3. Receive inspection findings, choose preparation work and pay costs.
+4. Advertise the car, negotiate with customers and choose an offer.
+5. Record the sale, update cash and gross-versus-net returns.
+6. Trigger consequences for stock ageing, vehicle issues and buyer rights.
 
-## Technical
+**Accuracy principles:** distinguish cash flow, vehicle stock value, gross spread, VAT liability and realised profit; auction fees differ by auctioneer and buyer type; the condition grade is not a repair guarantee; and customer/consumer rights cannot be treated as optional. All financial values are sample game data until a rule has been independently verified.
 
-Static GitHub Pages HTML/CSS/JavaScript with no build dependency. Launch locally using any simple static server. JavaScript entry point: `simulator.js`.
+## Files and development
 
-Checks: `node --check simulator.js` and `node --test tests/site.test.mjs`.
+This is a lightweight static GitHub Pages app (HTML, CSS and vanilla JavaScript):
 
-## Archive
+- index.html — menu, setup, dashboard and management screens.
+- styles.css — responsive game design.
+- simulator.js — in-browser career state, mail, time progression and local save.
+- tests/site.test.mjs — Node built-in tests covering markup, functionality, persistence, and invalid save handling.
+- assets/nextgen-header-wordmark-2026.webp — the unchanged official NextGen Sessions logo.
+- assets/hatchback-study.svg — generic vehicle illustration.
 
-The complete previous NextGen Sessions Arcade, including the original games archive and Looping emulator experiment, is preserved on the Git branch `archive/nextgen-arcade-before-motor-trade-2026-11-09`. Arcade source files are removed from the **new public branch** so old game pages are not inadvertently presented under the new brand.
+Run checks with: node --check simulator.js && node --test tests/site.test.mjs.
+
+## Archived project
+
+The pre-pivot Arcade project is preserved on the Git branch archive/nextgen-arcade-before-motor-trade-2026-11-09.
 
 © 2026 NextGen Sessions.

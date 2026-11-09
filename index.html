@@ -3,147 +3,222 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0b1219">
+  <meta name="theme-color" content="#0c151c">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="The Motor Trade — a realistic UK car dealer business simulator in development. Buy at auction, manage preparation, negotiate with customers, and build your dealership.">
+  <meta name="description" content="The Motor Trade by NextGen Sessions. Start a career and build a UK used-car dealership in a management simulation.">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="The Motor Trade">
-  <meta property="og:title" content="The Motor Trade | UK Car Dealer Simulator">
-  <meta property="og:description" content="Every car is a decision. Buy smart. Price right. Build a dealership.">
+  <meta property="og:site_name" content="NextGen Sessions">
+  <meta property="og:title" content="The Motor Trade | UK Car Dealership Simulator">
+  <meta property="og:description" content="Every car is a decision. Start a dealership career.">
   <meta property="og:url" content="https://billz2026.github.io/TheMotorTrade/">
   <link rel="canonical" href="https://billz2026.github.io/TheMotorTrade/">
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=2">
-  <script src="./simulator.js?v=1" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=3">
+  <script src="./simulator.js?v=3" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to simulator</a>
-  <div class="app-layout">
-    <aside class="side-panel" aria-label="Project navigation">
-      <a class="identity" href="./" aria-label="NextGen Sessions — The Motor Trade home">
-        <img class="brand-parent" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
-        <span class="motor-wordmark" aria-hidden="true"><span>MOTOR</span> <b>TRADE<span class="wordmark-dot">.</span></b></span>
-        <span class="brand-caption">UK CAR DEALER SIMULATOR</span>
-      </a>
-      <div class="side-divider"></div>
-      <div class="nav-title">THE DEALERSHIP</div>
-      <nav class="side-nav" aria-label="On-page navigation">
-        <a href="#overview" aria-current="page"><span class="nav-glyph" aria-hidden="true">▦</span> Dashboard <span class="nav-tag">01</span></a>
-        <a href="#auction"><span class="nav-glyph" aria-hidden="true">◈</span> Auction Desk</a>
-        <a href="#deal-calculator"><span class="nav-glyph" aria-hidden="true">£</span> Deal Calculator</a>
-        <a href="#roadmap"><span class="nav-glyph" aria-hidden="true">↗</span> Game Roadmap</a>
-      </nav>
-      <div class="side-grow"></div>
-      <div class="project-status">
-        <span class="status-top"><i aria-hidden="true"></i> PROJECT STATUS</span>
-        <strong>FOUNDATION BUILD</strong>
-        <p>This is a working finance demonstration, not a complete playable business simulation.</p>
-      </div>
-      <div class="side-credit">
-        <span>AN ORIGINAL NEXTGEN SESSIONS SIMULATION</span>
-      </div>
-    </aside>
-
-    <div class="main-shell">
-      <header class="top-bar">
-        <div><span class="top-breadcrumb">THE MOTOR TRADE</span><span class="breadcrumb-divider">/</span><strong>DASHBOARD</strong></div>
-        <div class="top-right"><span class="uk-pill">UK EDITION</span><span class="build-pill"><i aria-hidden="true"></i> PRE-ALPHA CONCEPT</span></div>
+  <a class="skip-link" href="#app">Skip to game</a>
+  <div class="top-stripe" aria-hidden="true"></div>
+  <div id="app" role="main">
+    <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
+      <header class="menu-top">
+        <span class="top-kicker">NEXTGEN SESSIONS // MANAGEMENT SIMULATIONS</span>
+        <span class="top-version"><span class="live-light"></span> CAREER FOUNDATION · PRE-ALPHA</span>
       </header>
-
-      <main class="content" id="main">
-        <section class="hero" id="overview" aria-labelledby="page-heading">
-          <div class="hero-copy">
-            <p class="eyebrow"><span class="hairline"></span> NEXTGEN SESSIONS PRESENTS</p>
-            <h1 id="page-heading">EVERY CAR <span>IS A DECISION.</span></h1>
-            <p class="hero-lede">Buy from auction. Read the condition report. Calculate every cost. Negotiate with real-world pressure. Build a dealership that survives on its margins.</p>
-            <a href="#deal-calculator" class="hero-cta">TEST A DEAL <span aria-hidden="true">↗</span></a>
+      <div class="menu-layout">
+        <div class="menu-lead">
+          <div class="brand-lockup brand-lockup-large">
+            <img class="parent-wordmark" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
+            <span class="trade-wordmark" aria-hidden="true">MOTOR <b>TRADE<span>.</span></b></span>
+            <span class="logo-caption">THE UK CAR DEALERSHIP MANAGEMENT SIMULATOR</span>
           </div>
-          <div class="hero-flair" aria-hidden="true">
-            <span>THE</span><b>MOTOR</b><b>TRADE.</b>
-            <div class="flair-rule"></div>
-            <small>FROM THE BLOCK TO THE FORECOURT</small>
+          <div class="menu-message">
+            <p class="section-overline">WELCOME TO THE TRADE</p>
+            <h1 id="menu-title">EVERY CAR IS <em>A DECISION.</em></h1>
+            <p>From your first auction purchase to a forecourt of your own. Manage the money, the stock, the customers and the consequences.</p>
           </div>
-        </section>
-
-        <section class="status-grid" aria-label="Illustrative starting scenario">
-          <div class="stat-card"><span>STARTING CAPITAL <small>SCENARIO</small></span><strong>£12,500</strong><p>A lean start. One bad buy matters.</p></div>
-          <div class="stat-card"><span>VEHICLES IN STOCK <small>PLANNED</small></span><strong>00 <em>/ 02</em></strong><p>Build your first small forecourt.</p></div>
-          <div class="stat-card"><span>YOUR FIRST TARGET <small>PLANNED</small></span><strong>01 <em>SALE</em></strong><p>Turn an auction win into profit.</p></div>
-          <div class="stat-card stat-card-accent"><span>BUILD STAGE <small>NOW</small></span><strong>DEMO</strong><p>Deal economics before full gameplay.</p></div>
-        </section>
-
-        <div class="section-heading" id="auction">
-          <div><p class="section-eyebrow">THE FIRST BUSINESS DECISION</p><h2>THE <em>AUCTION DESK</em></h2></div>
-          <span class="scenario-badge">ILLUSTRATIVE LOT · NOT A LIVE AUCTION</span>
+          <div class="menu-actions">
+            <button type="button" class="action-btn action-btn-primary" data-action="new-career"><span class="button-mark">＋</span><span><strong>NEW CAREER</strong><small>Build your dealership from the ground up</small></span><span class="arrow">↗</span></button>
+            <button type="button" class="action-btn" id="menu-continue" data-action="resume" hidden><span class="button-mark">▶</span><span><strong>CONTINUE CAREER</strong><small id="menu-resume-description">Return to your saved dealership</small></span><span class="arrow">↗</span></button>
+            <button type="button" class="action-btn action-btn-muted" data-action="toggle-guide" aria-controls="menu-guide" aria-expanded="false"><span class="button-mark">?</span><span><strong>HOW IT WORKS</strong><small>See the direction of the simulation</small></span><span class="arrow">⌄</span></button>
+          </div>
+          <div class="menu-guide" id="menu-guide" hidden>
+            <p><strong>Manage the business, not the steering wheel.</strong> The career dashboard, inbox, calendar and local saving work now. Auction bidding, preparation, customer negotiation and business economics are the next playable systems.</p>
+          </div>
         </div>
+        <aside class="menu-aside" aria-label="Game information">
+          <div class="menu-aside-head"><span>THE MOTOR TRADE</span><span>UK EDITION</span></div>
+          <div class="feature-visual">
+            <span class="visual-index">001 / THE FIRST LOT</span>
+            <img src="./assets/hatchback-study.svg" alt="Illustration of a generic hatchback representing future auction stock" width="940" height="390">
+            <div class="visual-footer"><span>THE AUCTION BLOCK</span><strong>YOUR NEXT MOVE?</strong></div>
+          </div>
+          <div class="menu-aside-body">
+            <p class="section-overline">CAREER PATH</p>
+            <p class="feature-title">START SMALL. TRADE SMART. GROW BIG.</p>
+            <div class="feature-line"><span>01</span><strong>Source your stock</strong><small>Auction buying</small></div>
+            <div class="feature-line"><span>02</span><strong>Prepare for retail</strong><small>Repairs & risk</small></div>
+            <div class="feature-line"><span>03</span><strong>Win the customer</strong><small>Negotiation</small></div>
+            <div class="feature-line"><span>04</span><strong>Build the business</strong><small>Cash flow & growth</small></div>
+          </div>
+          <div class="aside-status"><span class="live-light"></span><span>MANAGEMENT CAREER SHELL AVAILABLE <small>CORE TRADING GAMEPLAY IN DEVELOPMENT</small></span></div>
+        </aside>
+      </div>
+      <footer class="menu-footer"><span>© 2026 NEXTGEN SESSIONS</span><span>THE MOTOR TRADE · EARLY ACCESS FOUNDATION</span><a href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">NEXTGEN SESSIONS ↗</a></footer>
+    </section>
 
-        <div class="workbench">
-          <section class="lot-card" aria-labelledby="lot-title">
-            <div class="card-top"><span><i class="live-pin" aria-hidden="true"></i> SAMPLE VEHICLE REPORT</span><span>LOT 084 / DEMO</span></div>
-            <div class="vehicle-art">
-              <div class="art-grid" aria-hidden="true"></div>
-              <img src="./assets/hatchback-study.svg" alt="Illustration of a generic five-door hatchback; not a photograph of a real auction vehicle" width="940" height="390">
-              <div class="vehicle-art-caption"><span>TRADE STOCK / HATCHBACK</span><span>CONDITION BEFORE PROFIT</span></div>
+    <section class="setup-screen" id="screen-setup" hidden aria-labelledby="setup-title">
+      <header class="setup-header"><button type="button" class="quiet-button" data-action="menu">← MAIN MENU</button><span>NEW CAREER / STEP 01</span></header>
+      <div class="setup-layout">
+        <div class="setup-intro">
+          <div class="brand-lockup brand-lockup-setup">
+            <img class="parent-wordmark" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
+            <span class="trade-wordmark" aria-hidden="true">MOTOR <b>TRADE<span>.</span></b></span>
+          </div>
+          <p class="section-overline">THE JOURNEY BEGINS</p>
+          <h1 id="setup-title">BUILD YOUR <em>DEALERSHIP.</em></h1>
+          <p>Every trader starts somewhere. Name your business, take control of your starting cash, and enter your new office.</p>
+        </div>
+        <div class="setup-card">
+          <div class="setup-card-top"><span>DEALERSHIP REGISTRATION</span><span>01 / 01</span></div>
+          <form id="career-form">
+            <label class="input-label" for="dealership-name">DEALERSHIP NAME</label>
+            <input id="dealership-name" name="dealershipName" type="text" maxlength="36" minlength="2" value="First Lot Motors" autocomplete="organization" required>
+            <p class="field-help">Use 2–36 characters. You can build your own dealership identity.</p>
+            <div class="setup-facts">
+              <div><span>STARTING CASH</span><strong>£12,500</strong></div>
+              <div><span>FORECOURT CAPACITY</span><strong>2 vehicles</strong></div>
+              <div><span>CAREER TYPE</span><strong>Independent trader</strong></div>
+              <div><span>STARTING STOCK</span><strong>None</strong></div>
             </div>
-            <div class="vehicle-info">
-              <div class="vehicle-title-row"><div><p class="section-eyebrow">UK USED VEHICLE · FICTIONAL EXAMPLE</p><h3 id="lot-title">2016 Ford Focus Zetec</h3><p>1.5 TDCi · Manual · Diesel · 5 doors</p></div><span class="grade-tag">GRADE <strong>3</strong></span></div>
-              <div class="vehicle-facts"><div><span>MILEAGE</span><strong>81,240 mi</strong></div><div><span>SERVICE HISTORY</span><strong>Partial</strong></div><div><span>LOCATION</span><strong>Midlands</strong></div></div>
-              <div class="report">
-                <div class="report-heading"><strong>CONDITION REPORT</strong><span>EXAMPLE, NOT VERIFIED VEHICLE DATA</span></div>
-                <div class="report-line"><span class="report-index">01</span><span>Cosmetic paintwork marks on offside doors</span><span class="report-risk">BODY</span></div>
-                <div class="report-line"><span class="report-index">02</span><span>Front tyres approaching replacement</span><span class="report-risk">TYRES</span></div>
-                <div class="report-line"><span class="report-index">03</span><span>Service history requires documentation check</span><span class="report-risk">CHECK</span></div>
+            <p class="notice-box">This initial release contains the management dashboard, inbox, calendar and saved career. Trading systems are being built next. All scenario values are fictional.</p>
+            <button class="primary-button setup-submit" type="submit">BEGIN CAREER <span aria-hidden="true">→</span></button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="game-screen" id="screen-career" hidden aria-label="Career mode">
+      <div class="career-layout">
+        <aside class="career-sidebar">
+          <button type="button" class="sidebar-logo" data-action="dashboard" aria-label="Go to dashboard">
+            <img class="parent-wordmark" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
+            <span class="trade-wordmark" aria-hidden="true">MOTOR <b>TRADE<span>.</span></b></span>
+            <span class="logo-caption">DEALERSHIP MANAGEMENT</span>
+          </button>
+          <div class="sidebar-rule"></div>
+          <p class="nav-heading">YOUR BUSINESS</p>
+          <nav class="career-nav" aria-label="Career navigation">
+            <button type="button" data-page="dashboard" aria-current="page"><span class="nav-icon">▦</span> Dashboard</button>
+            <button type="button" data-page="inbox"><span class="nav-icon">✉</span> Inbox <span class="nav-unread" data-bind="unread" hidden>3</span></button>
+            <button type="button" data-page="auctions"><span class="nav-icon">◆</span> Auction Desk</button>
+            <button type="button" data-page="stock"><span class="nav-icon">▤</span> Vehicle Stock</button>
+            <button type="button" data-page="sales"><span class="nav-icon">♧</span> Sales Office</button>
+            <button type="button" data-page="finance"><span class="nav-icon">£</span> Finances</button>
+            <button type="button" data-page="business"><span class="nav-icon">▣</span> My Dealership</button>
+          </nav>
+          <div class="sidebar-bottom">
+            <div class="sidebar-career">
+              <span class="section-overline">CURRENT CAREER</span>
+              <strong data-bind="company">FIRST LOT MOTORS</strong>
+              <small>INDEPENDENT MOTOR TRADER</small>
+            </div>
+            <button type="button" class="sidebar-exit" data-action="menu">← MAIN MENU</button>
+          </div>
+        </aside>
+
+        <div class="career-main">
+          <header class="career-topbar">
+            <div class="topbar-location"><small>THE MOTOR TRADE <span>/</span> CAREER</small><strong id="topbar-page">DASHBOARD</strong></div>
+            <div class="topbar-actions">
+              <div class="game-clock"><span class="clock-icon">▣</span><div><small>GAME DATE</small><strong data-bind="date">MON 09 NOV 2026</strong></div></div>
+              <button type="button" id="continue-day" class="continue-button" data-action="continue"><span>CONTINUE</span><b aria-hidden="true">▶</b></button>
+            </div>
+          </header>
+          <div class="game-notice" id="save-warning" role="status" hidden>Browser storage is unavailable. This career is playable in this tab, but progress may not be saved after you leave.</div>
+          <div class="game-notice game-event" id="event-notice" role="status" hidden></div>
+
+          <div class="career-content">
+            <section class="career-panel" data-panel="dashboard" aria-labelledby="dashboard-title">
+              <div class="page-heading">
+                <div><p class="section-overline">YOUR DEALERSHIP / OVERVIEW</p><h1 id="dashboard-title">GOOD MORNING, <em>BOSS.</em></h1><p>Welcome to <strong data-bind="company">First Lot Motors</strong>. Here's what needs your attention.</p></div>
+                <span class="career-chip"><span class="live-light"></span> CAREER ACTIVE</span>
               </div>
-            </div>
-          </section>
-
-          <section class="calculator-card" id="deal-calculator" aria-labelledby="calculator-title">
-            <div class="card-top"><span>DEAL WORKBENCH</span><span>LIVE CALCULATOR / DEMO</span></div>
-            <div class="calc-content">
-              <div class="calc-heading"><div><p class="section-eyebrow">RUN THE NUMBERS</p><h3 id="calculator-title">Does the deal <em>stack up?</em></h3></div><button type="button" class="reset" id="reset-calc">RESET</button></div>
-              <p class="calc-desc">Change the figures to see how auction fees, preparation and haggling affect the deal. All starting figures are fictional.</p>
-              <form id="deal-form" autocomplete="off">
-                <div class="field-grid">
-                  <label class="field"><span>HAMMER PRICE <small>£</small></span><input id="hammer" name="hammer" type="number" inputmode="decimal" min="0" max="10000000" step="50" value="4800" required></label>
-                  <label class="field"><span>BUYER'S FEE <small>EX VAT</small></span><input id="fee" name="fee" type="number" inputmode="decimal" min="0" max="10000000" step="10" value="350" required></label>
-                  <label class="field"><span>TRANSPORT <small>£</small></span><input id="transport" name="transport" type="number" inputmode="decimal" min="0" max="10000000" step="10" value="140" required></label>
-                  <label class="field"><span>PREP / REPAIRS <small>£</small></span><input id="prep" name="prep" type="number" inputmode="decimal" min="0" max="10000000" step="10" value="460" required></label>
-                  <label class="field"><span>ASKING PRICE <small>£</small></span><input id="asking" name="asking" type="number" inputmode="decimal" min="0" max="10000000" step="50" value="7250" required></label>
-                  <label class="field"><span>CUSTOMER OFFER <small>£</small></span><input id="offer" name="offer" type="number" inputmode="decimal" min="0" max="10000000" step="50" value="6750" required></label>
+              <div class="stat-grid">
+                <div class="stat-tile"><span>AVAILABLE CASH</span><strong data-bind="cash">£12,500</strong><small>Funds available</small></div>
+                <div class="stat-tile"><span>VEHICLES IN STOCK</span><strong data-bind="stock">0 <i>/ 2</i></strong><small>Your forecourt</small></div>
+                <div class="stat-tile"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Career total</small></div>
+                <div class="stat-tile stat-tile-gold"><span>TRADE REPUTATION</span><strong data-bind="reputation">NEWCOMER</strong><small>Build trust through deals</small></div>
+              </div>
+              <div class="dashboard-grid">
+                <section class="panel-card inbox-widget" aria-labelledby="widget-inbox-title">
+                  <div class="panel-card-header"><div><p class="section-overline">COMMUNICATIONS</p><h2 id="widget-inbox-title">INBOX <small id="widget-unread-label">3 UNREAD</small></h2></div><button type="button" class="text-link" data-page="inbox">VIEW ALL ↗</button></div>
+                  <div id="dashboard-inbox" class="inbox-preview"></div>
+                </section>
+                <div class="dashboard-right">
+                  <section class="panel-card priorities" aria-labelledby="priorities-title">
+                    <div class="panel-card-header"><div><p class="section-overline">MANAGER'S DIARY</p><h2 id="priorities-title">TODAY'S PRIORITIES</h2></div><span class="tiny-index" data-bind="day-label">DAY 01</span></div>
+                    <div class="priority-row"><span class="priority-index">01</span><div><strong>Review your inbox</strong><p>Read your welcome brief and starting position.</p></div></div>
+                    <div class="priority-row"><span class="priority-index">02</span><div><strong>Inspect the Auction Desk</strong><p>The first sample lot and its condition report are available to study.</p></div></div>
+                    <button type="button" class="subtle-action" data-page="auctions">OPEN AUCTION DESK <span>→</span></button>
+                  </section>
+                  <section class="panel-card calendar-widget">
+                    <p class="section-overline">GAME CALENDAR</p>
+                    <div class="calendar-date"><span data-bind="weekday">MONDAY</span><strong data-bind="date-long">09 NOVEMBER 2026</strong></div>
+                    <div class="calendar-copy" id="calendar-message">Your first day in business. Review your briefing before advancing.</div>
+                    <p class="simulation-note">CONTINUE advances one simulated day. Finances do not change until trading is implemented.</p>
+                  </section>
                 </div>
-                <p class="fee-note">Demo assumption: 20% VAT added to the buyer's fee only. Real auctioneer tariffs and vehicle VAT treatments vary.</p>
-                <div class="divider"></div>
-                <div class="numbers">
-                  <div class="number-row"><span>Hammer + buyer's fee + fee VAT + transport + prep</span><strong id="landed">£5,820</strong></div>
-                  <div class="number-row detail"><span>VAT on buyer's fee</span><strong id="fee-vat">£70</strong></div>
-                  <div class="number-row"><span>Gross spread at asking price</span><strong id="profit-asking" class="positive">£1,430</strong></div>
-                  <div class="number-row highlighted"><span>Gross spread if you accept the offer</span><strong id="profit-offer" class="positive">£930</strong></div>
-                  <div class="spread-bar" aria-label="Proportion of the customer offer absorbed by modelled vehicle costs"><span id="cost-fill"></span><span id="spread-fill"></span></div>
-                  <div class="number-row detail"><span>Cash remaining from £12,500 after purchase</span><strong id="cash-left">£6,680</strong></div>
-                  <div id="deal-status" class="deal-status" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="deal-message">Illustrative positive spread — before overheads and tax.</span></div>
-                </div>
-              </form>
-              <p class="calc-disclaimer">Illustrative gross spreads are not net profit. Excludes VAT accounting on the car/sale, warranty exposure, advertising, funding, overheads, tax and unplanned repairs. Not an auction valuation or financial advice.</p>
-            </div>
-          </section>
-        </div>
+              </div>
+              <div class="dashboard-bottom panel-card"><div><p class="section-overline">THE FIRST MILESTONE</p><h2>FROM THE BLOCK TO THE FORECOURT.</h2><p>Start with £12,500, research the first lot and prepare for your opening trade. Auctions and sales are the next gameplay milestone.</p></div><button type="button" class="secondary-button" data-page="auctions">VIEW SAMPLE LOT ↗</button></div>
+            </section>
 
-        <section class="roadmap" id="roadmap" aria-labelledby="roadmap-heading">
-          <div class="section-heading"><div><p class="section-eyebrow">THE ROAD AHEAD</p><h2 id="roadmap-heading">FROM FIRST LOT <em>TO DEALERSHIP.</em></h2></div><span class="scenario-badge">PLANNED GAME SYSTEMS · NOT YET PLAYABLE</span></div>
-          <div class="phase-grid">
-            <article><span class="phase-number">01 / SOURCE</span><h3>Auction day</h3><p>Timed bids, competing traders, graded vehicles, inspection reports and auction-specific fees.</p></article>
-            <article><span class="phase-number">02 / PREPARE</span><h3>Make it retail-ready</h3><p>Discover faults, allocate workshops, approve repairs and control your preparation budget.</p></article>
-            <article><span class="phase-number">03 / NEGOTIATE</span><h3>Close the deal</h3><p>Advertise stock, handle enquiries, test drives, part exchanges and customer haggling.</p></article>
-            <article><span class="phase-number">04 / GROW</span><h3>Build the business</h3><p>Manage cash flow, stock age, staff, premises, reputation and the risk of overtrading.</p></article>
+            <section class="career-panel" data-panel="inbox" hidden aria-labelledby="inbox-title">
+              <div class="page-heading"><div><p class="section-overline">DEALERSHIP COMMUNICATIONS</p><h1 id="inbox-title">YOUR <em>INBOX.</em></h1><p>Updates from advisers and your business contacts.</p></div><button type="button" class="secondary-button" data-action="mark-all-read">MARK ALL READ</button></div>
+              <div class="inbox-layout panel-card"><div class="inbox-column"><div class="inbox-column-head">MESSAGES <span id="inbox-unread-count">0 UNREAD</span></div><div class="inbox-list" id="inbox-list"></div></div><div class="inbox-detail" id="inbox-detail"><p>Select a message to read it.</p></div></div>
+            </section>
+
+            <section class="career-panel" data-panel="auctions" hidden aria-labelledby="auctions-title">
+              <div class="page-heading"><div><p class="section-overline">BUYING / MARKETPLACE</p><h1 id="auctions-title">AUCTION <em>DESK.</em></h1><p>Research your first vehicle before committing a pound.</p></div><span class="coming-tag">BIDDING COMING NEXT</span></div>
+              <div class="auction-grid">
+                <div class="panel-card">
+                  <div class="panel-card-header"><div><p class="section-overline">SAMPLE VEHICLE / LOT 084</p><h2>2016 FORD FOCUS ZETEC</h2></div><span class="grade-pill">GRADE 3</span></div>
+                  <div class="auction-art"><img src="./assets/hatchback-study.svg" width="940" height="390" alt="Illustrated generic hatchback, not a photograph of the sample Ford Focus"></div>
+                  <div class="vehicle-fact-grid"><div><span>MILEAGE</span><strong>81,240 mi</strong></div><div><span>FUEL</span><strong>Diesel</strong></div><div><span>GEARBOX</span><strong>Manual</strong></div><div><span>HISTORY</span><strong>Partial</strong></div></div>
+                </div>
+                <div class="panel-card sample-report"><div class="panel-card-header"><div><p class="section-overline">TRADE ASSESSMENT</p><h2>CONDITION REPORT</h2></div></div><p>Fictional example — not verified vehicle data or a live auction listing.</p><div class="report-item"><span>01 / BODY</span><strong>Cosmetic paint marks on offside doors</strong></div><div class="report-item"><span>02 / TYRES</span><strong>Front tyres approaching replacement</strong></div><div class="report-item"><span>03 / HISTORY</span><strong>Service paperwork requires checking</strong></div><div class="notice-box">Auction bidding, rival traders, buyer fees and vehicle purchases are planned for the next gameplay stage. This report is for inspection only.</div></div>
+              </div>
+            </section>
+
+            <section class="career-panel" data-panel="stock" hidden aria-labelledby="stock-title">
+              <div class="page-heading"><div><p class="section-overline">VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Every vehicle will need preparation, pricing and a stock-ageing strategy.</p></div></div>
+              <div class="empty-state panel-card"><span class="empty-symbol">▤</span><h2>YOUR FORECOURT IS EMPTY.</h2><p>You have no vehicles in stock. Your first purchase will appear here when auction gameplay launches.</p><div class="empty-metrics"><span>CAPACITY <b>2</b></span><span>IN STOCK <b data-bind="stock-count">0</b></span></div><button type="button" class="secondary-button" data-page="auctions">VIEW AUCTION PREVIEW ↗</button></div>
+            </section>
+
+            <section class="career-panel" data-panel="sales" hidden aria-labelledby="sales-title">
+              <div class="page-heading"><div><p class="section-overline">CUSTOMERS / NEGOTIATIONS</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Manage enquiries, test drives and customer offers when your stock is live.</p></div></div>
+              <div class="empty-state panel-card"><span class="empty-symbol">♧</span><h2>NO ACTIVE ENQUIRIES.</h2><p>Sales appointments will start once you have purchased and advertised a vehicle. Customer personalities, offers and haggling are planned for the trading release.</p><button type="button" class="secondary-button" data-page="stock">VIEW VEHICLE STOCK ↗</button></div>
+            </section>
+
+            <section class="career-panel" data-panel="finance" hidden aria-labelledby="finance-title">
+              <div class="page-heading"><div><p class="section-overline">FINANCIAL CONTROL</p><h1 id="finance-title">BUSINESS <em>FINANCES.</em></h1><p>Know your numbers before you place a bid.</p></div></div>
+              <div class="finance-grid"><div class="panel-card finance-primary"><p class="section-overline">AVAILABLE BUSINESS CASH</p><strong data-bind="cash">£12,500</strong><p>No auction purchases or trading expenses have been recorded.</p></div><div class="panel-card ledger"><h2>OPENING BALANCE</h2><div><span>Starting capital</span><b>+£12,500</b></div><div><span>Vehicles purchased</span><b>£0</b></div><div><span>Sales completed</span><b>£0</b></div><div class="notice-box">Financial statements will separate cash flow, gross spread, VAT, preparation, overheads and realised profit as the game develops. No income is simulated in this foundation.</div></div></div>
+            </section>
+
+            <section class="career-panel" data-panel="business" hidden aria-labelledby="business-title">
+              <div class="page-heading"><div><p class="section-overline">YOUR CLUBHOUSE / YOUR BUSINESS</p><h1 id="business-title">MY <em>DEALERSHIP.</em></h1><p>Your career identity and development plan.</p></div><button type="button" class="secondary-button" data-action="save">SAVE CAREER</button></div>
+              <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong>2 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>Source vehicles, prepare them for retail, handle customers and develop from a one-person trader into an established motor dealership.</p><ol><li>Auction & acquisition engine</li><li>Workshop & stock preparation</li><li>Customer negotiation & retail sales</li><li>Premises, staffing & reputation</li></ol></div></div>
+            </section>
           </div>
-        </section>
-      </main>
-      <footer class="footer"><span>THE MOTOR TRADE <i>•</i> A NEXTGEN SESSIONS PROJECT</span><span>CONCEPT BUILD / DEMO VALUES / © 2026</span></footer>
-    </div>
+          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA FOUNDATION / LOCAL BROWSER SAVE</span></footer>
+        </div>
+      </div>
+    </section>
   </div>
+  <noscript><p class="noscript">JavaScript is required for career mode. Enable JavaScript to start The Motor Trade.</p></noscript>
 </body>
 </html>
