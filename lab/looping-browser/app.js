@@ -16,6 +16,16 @@ const MAME_EXPECTED = Object.freeze({
   'loopaa6.bin':[2048,0xc434c14c],'loopvp1.bin':[32,0x6a0c7d87]
 });
 const get = id => document.getElementById(id);
+const isEmbedded=()=>document.documentElement.classList.contains('embed-mode');
+function reportToArcade(type){
+  if(isEmbedded()&&window.parent!==window){
+    window.parent.postMessage({channel:'ngs-arcade',type},window.location.origin);
+  }
+}
+function clearEmbedBoot(){
+  const banner=get('embed-boot');
+  if(banner)banner.hidden=true;
+}
 // Save a pristine constructor for the separate beep diagnostic so test tones
 // never get mistaken for audio devices created by the arcade emulator.
 const nativeBrowserAudioContext=window.AudioContext||window.webkitAudioContext;
@@ -76,6 +86,7 @@ function enterArcadeView(){
   get('play-tools').hidden=false;
   get('play-message').textContent='ARCADE RUNNING · PRESS 5 FOR COIN, THEN 1 TO START';
   get('play-message').dataset.tone='ok';
+  if(isEmbedded()){clearEmbedBoot();reportToArcade('playing');return;}
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
     get('play-tools').scrollIntoView({block:'start',behavior:'instant'});
   }else{
@@ -218,6 +229,7 @@ async function choose(file){
     checked('ok','14 / 14 ROM CHIPS PASS');
     start.disabled=false;
     status('ROM set verified. Press LOAD INTO ARCADE CABINET to try MAME in Chrome.','ok');
+    reportToArcade('rom-ready');
   }catch(e){if(token===selectionToken){checked('bad','ZIP VALIDATION FAILED');status(e.message||'Cannot read ZIP file.','bad');}}
 }
 rom.addEventListener('change',()=>choose(rom.files?.[0]));
@@ -268,6 +280,11 @@ start.addEventListener('click',async()=>{
   get('standby').hidden=true;
   get('machine-state').textContent='PREPARING LOCAL ROM LOADER';
   status('Checking the local browser ROM loader before starting MAME…');
+  if(isEmbedded()){
+    document.body.classList.add('embed-loading');
+    get('embed-boot').hidden=false;
+  }
+  reportToArcade('loading');
   try{
     const romUrl=await localRomUrl();
     captureEmulatorAudioContexts();
@@ -288,7 +305,12 @@ start.addEventListener('click',async()=>{
       cacheManager:false,cheat:false,gamepad:false,restart:false,
       playPause:true,mute:true,settings:true,fullscreen:true,volume:true
     };
-    window.EJS_ready=()=>{status('MAME loaded. Use START GAME inside the monitor.','ok');get('machine-state').textContent='EMULATOR READY';};
+    window.EJS_ready=()=>{
+      clearEmbedBoot();
+      status('MAME loaded. Use START GAME inside the monitor.','ok');
+      get('machine-state').textContent='EMULATOR READY';
+      reportToArcade('ready');
+    };
     window.EJS_onGameStart=()=>{
       get('machine-state').textContent='ARCADE IN PLAY';
       enterArcadeView();
@@ -299,9 +321,19 @@ start.addEventListener('click',async()=>{
     const script=document.createElement('script');
     script.src='https://www.emulatorjs.com/loader.js';
     script.async=true;
-    script.onerror=()=>{status('The third-party emulator could not be downloaded. Reload the page to retry.','bad');get('machine-state').textContent='CORE DOWNLOAD FAILED';get('standby').hidden=false;};
+    script.onerror=()=>{
+      clearEmbedBoot();
+      document.body.classList.remove('embed-loading');
+      status('The third-party emulator could not be downloaded. Reload the page to retry.','bad');
+      get('machine-state').textContent='CORE DOWNLOAD FAILED';
+      get('standby').hidden=false;
+      reportToArcade('error');
+    };
     document.head.append(script);
   }catch(error){
+    clearEmbedBoot();
+    document.body.classList.remove('embed-loading');
+    reportToArcade('error');
     status('Could not prepare local ROM loader: '+String(error.message||error),'bad');
     get('machine-state').textContent='LOCAL ROM LOADER FAILED';
     get('standby').hidden=false;

@@ -23,3 +23,7 @@ These prototypes are not published on the live `main` branch. The archive is a p
 Once a game is chosen and reaches release quality, its slot can receive unique title/art, a genuine play link, and a live status without changing the surrounding layout. Keep the tiles uniform and retain separate desktop/fold/phone layouts.
 
 Live URL: https://billz2026.github.io/NextGenSessionsArcade/
+
+
+## Single-machine homepage (2026-11-09)
+The main page now features exactly one large NextGen Sessions cabinet showing an embedded version of the existing Looping MAME 0.243 player. The embedded URL uses `?embed=1`, which presents the local ROM selector inside the CRT, not an external upload column. When LOAD is pressed, the embedded layout switches to the live emulator screen without reloading it. Both on-cabinet and top-row fullscreen controls use the browser Fullscreen API. The page never uploads, stores or distributes `looping.zip`; the visitor selects a file locally every time. Game audio remains unverified and is explicitly disclosed. The previous six-tile homepage is retained in the archive branch `archive/six-tile-arcade-before-single-cabinet-2026-11-09`.

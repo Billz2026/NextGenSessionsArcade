@@ -83,3 +83,19 @@ test('browser audio unlock runs only on user click and reports game audio contex
   assert.match(js,/emulator may use a worker/);
   assert.doesNotMatch(js,/AudioContext\.prototype\.resume\s*=/);
 });
+
+
+test('embedded player keeps the working ROM loader and reports its status to the parent',()=>{
+  assert.match(html,/embed-mode/);
+  assert.match(html,/id="embed-boot"/);
+  assert.match(js,/function reportToArcade\(type\)/);
+  assert.match(js,/window\.parent\.postMessage/);
+  assert.match(js,/classList\.add\('embed-loading'\)/);
+  assert.match(js,/reportToArcade\('rom-ready'\)/);
+  assert.match(js,/reportToArcade\('ready'\)/);
+  assert.match(js,/reportToArcade\('playing'\)/);
+  assert.match(css,/html\.embed-mode body\.embed-loading \.config/);
+  assert.match(css,/html\.embed-mode \.display #game/);
+  assert.match(js,/window\.EJS_gameUrl=romUrl/);
+  assert.match(js,/navigator\.serviceWorker\.register/);
+});

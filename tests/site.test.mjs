@@ -2,36 +2,50 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 const root=new URL('../',import.meta.url);
-const homepage=readFileSync(new URL('index.html',root),'utf8');
+const html=readFileSync(new URL('index.html',root),'utf8');
 const css=readFileSync(new URL('styles.css',root),'utf8');
-
-test('archived prototypes remain off the published site',()=>{
-  assert.equal(existsSync(new URL('games/',root)),false);
-  assert.doesNotMatch(homepage,/games\/(roulette|pinball)/i);
-  assert.doesNotMatch(homepage,/PLAY NOW|PLAY PINBALL|LIVE BETA|href="\.\/games\//i);
-  assert.match(homepage,/>00<\/strong><span>GAMES/);
-  assert.match(homepage,/No games are currently available to play/);
+const js=readFileSync(new URL('arcade-home.js',root),'utf8');
+const embeddedHtml=readFileSync(new URL('lab/looping-browser/index.html',root),'utf8');
+const embeddedJs=readFileSync(new URL('lab/looping-browser/app.js',root),'utf8');
+const embeddedCss=readFileSync(new URL('lab/looping-browser/style.css',root),'utf8');
+test('exactly one physical arcade machine replaces the six-tile floor',()=>{
+  assert.equal((html.match(/class="arcade-machine"/g)||[]).length,1);
+  assert.equal((html.match(/<iframe\b/g)||[]).length,1);
+  assert.doesNotMatch(html,/class="machine-grid"|class="machine-tile/);
+  assert.match(html,/LOOPING <em>'82<\/em>/);
+  assert.match(html,/id="game-screen"/);
+  assert.match(html,/class="machine-marquee"/);
+  assert.match(html,/class="machine-deck"/);
 });
-test('six uniform cabinet tiles are reserved, none present as playable links',()=>{
-  assert.equal((homepage.match(/class="machine-tile /g)||[]).length,6);
-  assert.equal((homepage.match(/class="tile-heading"/g)||[]).length,6);
-  assert.equal((homepage.match(/class="tile-content"/g)||[]).length,6);
-  assert.equal((homepage.match(/class="tile-footer"/g)||[]).length,6);
-  assert.equal((homepage.match(/class="cabinet-monitor"/g)||[]).length,6);
-  assert.equal((homepage.match(/AWAITING GAME/g)||[]).length,6);
-  for(let i=1;i<=6;i++) assert.match(homepage,new RegExp('CABINET<br><em>00'+i+'\\.'));
-  assert.doesNotMatch(homepage,/<a\s[^>]*class="machine-tile/);
+test('playable screen embeds existing same-origin MAME browser lab in kiosk mode',()=>{
+  assert.match(html,/src="\.\/lab\/looping-browser\/\?embed=1"/);
+  assert.match(html,/id="game-frame"/);
+  assert.match(html,/allowfullscreen/);
+  assert.match(embeddedHtml,/embed-mode/);
+  assert.match(embeddedJs,/document\.documentElement\.classList\.contains\('embed-mode'\)/);
+  assert.match(embeddedCss,/html\.embed-mode body/);
+  assert.match(embeddedCss,/html\.embed-mode body\.embed-loading \.config/);
+  assert.match(embeddedJs,/classList\.add\('embed-loading'\)/);
+  assert.match(embeddedJs,/window\.EJS_core='mame0\.243'/);
+  assert.doesNotMatch(html,/href="[^"]+\.zip"|src="[^"]+\.zip"/);
 });
-test('tile-first homepage uses responsive grid and keeps official wordmarks',()=>{
-  assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(css,/@media\(max-width:1100px\)/);
-  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(css,/@media\(max-width:700px\)/);
-  assert.match(css,/grid-template-columns:1fr/);
-  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-  assert.match(homepage,/id="floor"/);
-  assert.match(homepage,/id="vision"/);
-  assert.match(homepage,/assets\/nextgen-header-wordmark-2026\.webp/);
-  assert.match(homepage,/assets\/arcade-wordmark\.svg/);
+test('real fullscreen and inner-machine reset are wired, not decorative',()=>{
+  assert.match(html,/id="fullscreen-top"/);
+  assert.match(html,/id="fullscreen-machine"/);
+  assert.match(html,/id="reset-machine"/);
+  assert.match(js,/machine\.requestFullscreen\(\)/);
+  assert.match(js,/document\.exitFullscreen\(\)/);
+  assert.match(js,/frame\.src=/);
+  assert.match(css,/\.arcade-machine:fullscreen/);
+  assert.match(js,/event\.origin!==window\.location\.origin/);
+  assert.match(js,/event\.source!==frame\.contentWindow/);
+});
+test('official branding and mobile layouts survive the redesign',()=>{
+  assert.match(html,/assets\/nextgen-header-wordmark-2026\.webp/);
+  assert.match(html,/assets\/arcade-wordmark\.svg/);
   assert.ok(existsSync(new URL('assets/nextgen-header-wordmark-2026.webp',root)));
+  assert.match(css,/@media\(max-width:800px\)/);
+  assert.match(css,/@media\(max-width:600px\)/);
+  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+  assert.doesNotMatch(html,/games\/(roulette|pinball)/);
 });

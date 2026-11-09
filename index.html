@@ -3,127 +3,98 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#09090e">
+  <meta name="theme-color" content="#08080e">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="NextGen Sessions Arcade — a collection of original browser arcade machines. The game floor is being designed.">
+  <meta name="description" content="NextGen Sessions Arcade — an authentic arcade cabinet experience. Play a classic arcade ROM from your own device.">
   <link rel="canonical" href="https://billz2026.github.io/NextGenSessionsArcade/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="NextGen Sessions Arcade">
-  <meta property="og:title" content="NextGen Sessions Arcade | The Arcade Floor">
-  <meta property="og:description" content="Six arcade cabinets. Original high-score challenges on the way.">
+  <meta property="og:title" content="NextGen Sessions Arcade | Cabinet 001">
+  <meta property="og:description" content="Step up to the machine. The NextGen arcade is taking shape, one cabinet at a time.">
   <meta property="og:url" content="https://billz2026.github.io/NextGenSessionsArcade/">
   <meta property="og:image" content="https://billz2026.github.io/NextGenSessionsArcade/assets/nextgen-header-wordmark-2026.webp">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Oxanium:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=10">
-  <title>NextGen Sessions Arcade | The Arcade Floor</title>
+  <link rel="stylesheet" href="./styles.css?v=11">
+  <script src="./arcade-home.js?v=1" defer></script>
+  <title>NextGen Sessions Arcade | Cabinet 001</title>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to arcade floor</a>
+  <a class="skip-link" href="#game-screen">Skip to the arcade machine</a>
   <div class="top-rule" aria-hidden="true"></div>
   <header class="site-header">
     <div class="header-inner container">
       <a class="brand" href="./" aria-label="NextGen Sessions Arcade home">
-        <img class="brand-parent" src="./assets/nextgen-header-wordmark-2026.webp" width="1600" height="663" alt="NextGen Sessions">
-        <img class="arcade-wordmark" src="./assets/arcade-wordmark.svg" width="1060" height="220" alt="Arcade">
+        <img class="brand-parent" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
+        <img class="arcade-wordmark" src="./assets/arcade-wordmark.svg" alt="Arcade" width="1060" height="220">
       </a>
-      <nav class="nav" aria-label="Main navigation">
-        <a class="nav-active" href="#floor" aria-current="page">GAME SELECT</a>
-        <a href="#vision">THE ARCADE</a>
-      </nav>
-      <div class="header-actions">
-        <span class="build-indicator"><span class="indicator-dot" aria-hidden="true"></span> ARCADE IN DEVELOPMENT</span>
-        <a class="music-link" href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">MUSIC SITE <span aria-hidden="true">↗</span></a>
-      </div>
+      <span class="header-label"><span class="header-led" aria-hidden="true"></span> THE REAL ARCADE EXPERIENCE <span class="slash">/</span> CABINET 001</span>
+      <a class="music-link" href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">MUSIC SITE <span aria-hidden="true">↗</span></a>
     </div>
   </header>
 
-  <main class="container" id="main">
-    <section class="intro" aria-labelledby="intro-title">
-      <div class="intro-copy">
-        <p class="eyebrow"><span aria-hidden="true">✳</span> NEXTGEN SESSIONS <i aria-hidden="true">/</i> THE GAMING DIVISION</p>
-        <h1 id="intro-title">THE ARCADE <em>FLOOR.</em></h1>
-        <p class="intro-sub">Six cabinets. One destination. Original arcade experiences built to keep you coming back.</p>
+  <main class="arcade-floor container" id="main">
+    <section class="floor-heading" aria-labelledby="page-title">
+      <div class="heading-copy">
+        <p class="eyebrow"><span aria-hidden="true">✳</span> NEXTGEN SESSIONS ARCADE <span class="line">/</span> CLASSIC COIN-OP</p>
+        <h1 id="page-title">STEP UP. <em>PRESS START.</em></h1>
+        <p class="tagline">One machine. Original 1982 arcade gameplay. Your browser is the arcade.</p>
       </div>
-      <div class="intro-stats" aria-label="Arcade development status">
-        <div class="stat"><strong>00</strong><span>GAMES<br>LIVE</span></div>
-        <span class="stat-separator" aria-hidden="true"></span>
-        <div class="stat"><strong>06</strong><span>CABINET<br>SLOTS</span></div>
-        <span class="stat-separator" aria-hidden="true"></span>
-        <div class="stat-build"><span class="status-led" aria-hidden="true"></span><span>BUILDING<br>THE FLOOR</span></div>
+      <div class="floor-actions">
+        <span class="machine-state"><span id="state-dot" class="state-dot" aria-hidden="true"></span><span id="cabinet-state" role="status" aria-live="polite">INSERT YOUR ROM TO PLAY</span></span>
+        <button type="button" id="fullscreen-top" class="top-fullscreen"><span aria-hidden="true">⛶</span> FULLSCREEN</button>
       </div>
     </section>
 
-    <section class="library" id="floor" aria-labelledby="select-title">
-      <div class="library-header">
-        <div class="section-title"><span class="title-marker" aria-hidden="true"></span><h2 id="select-title">SELECT YOUR <em>MACHINE</em></h2></div>
-        <p><span class="status-led" aria-hidden="true"></span> 00 ONLINE <span class="text-divider">/</span> 06 RESERVED</p>
+    <section class="spotlight" aria-labelledby="machine-title">
+      <div class="ambient-light" aria-hidden="true"></div>
+      <div id="arcade-machine" class="arcade-machine">
+        <div class="machine-marquee">
+          <span class="marquee-side" aria-hidden="true">★</span>
+          <div class="marquee-copy">
+            <span class="marquee-brand">NEXTGEN SESSIONS <b>ARCADE</b></span>
+            <h2 id="machine-title">LOOPING <em>'82</em></h2>
+          </div>
+          <span class="marquee-side" aria-hidden="true">★</span>
+        </div>
+
+        <div class="machine-body">
+          <div class="bezel-top"><span>001 <i>/</i> CLASSIC ARCADE</span><span><b class="ready-led" aria-hidden="true"></b> MACHINE ONLINE</span></div>
+          <div class="monitor-surround" id="game-screen">
+            <iframe id="game-frame"
+              title="Looping 1982 arcade game — select your local ROM to play"
+              src="./lab/looping-browser/?embed=1"
+              allow="autoplay; fullscreen"
+              allowfullscreen
+              loading="eager"></iframe>
+          </div>
+          <div class="bezel-foot"><span>© NEXTGEN SESSIONS</span><span>ORIGINAL ARCADE EMULATION</span></div>
+        </div>
+
+        <div class="machine-deck">
+          <div class="control-label"><span>PLAYER 1</span><small>JOYSTICK / FIRE</small></div>
+          <div class="joystick-set" aria-hidden="true"><span class="joystick-shaft"></span><span class="joystick-ball"></span></div>
+          <div class="button-set" aria-hidden="true"><span class="red-button"></span><span class="gold-button"></span><span class="white-button"></span></div>
+          <div class="coin-slot" aria-hidden="true"><span class="coin-mark">INSERT COIN</span><span class="coin-groove"></span></div>
+          <button type="button" id="fullscreen-machine" class="machine-fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span> FULLSCREEN</button>
+        </div>
+        <div class="machine-bottom"><span>NGS // 001</span><span>NO TOKENS REQUIRED</span></div>
       </div>
-      <div class="machine-grid" aria-label="Six reserved arcade game tiles; no playable games are available yet">
-        <article class="machine-tile tile-one">
-          <div class="tile-heading"><span><b>001</b> <i>/</i> ARCADE CABINET</span><span class="tile-state"><span aria-hidden="true"></span> IN DESIGN</span></div>
-          <div class="tile-content">
-            <div class="tile-copy"><span class="tile-kicker">NEXTGEN SESSIONS ARCADE</span><h3>CABINET<br><em>001.</em></h3><p>First game yet to be selected.</p></div>
-            <div class="tile-visual" aria-hidden="true"><div class="cabinet"><div class="cabinet-marquee">NEXTGEN <b>ARCADE</b></div><div class="cabinet-body"><div class="cabinet-monitor"><span class="crt-glint"></span><b>01</b><small>STANDBY</small></div><div class="control-shelf"><span class="stick"></span><span class="buttons"><i></i><i></i><i></i></span></div><div class="cabinet-coin"><i></i><span>NGS</span></div></div></div></div>
-          </div>
-          <div class="tile-footer"><span><i class="footer-pip" aria-hidden="true"></i> AWAITING GAME</span><span>SPACE 01 <b>/ 06</b></span></div>
-        </article>
-        <article class="machine-tile tile-two">
-          <div class="tile-heading"><span><b>002</b> <i>/</i> ARCADE CABINET</span><span class="tile-state"><span aria-hidden="true"></span> RESERVED</span></div>
-          <div class="tile-content">
-            <div class="tile-copy"><span class="tile-kicker">NEXTGEN SESSIONS ARCADE</span><h3>CABINET<br><em>002.</em></h3><p>Ready for a future game.</p></div>
-            <div class="tile-visual" aria-hidden="true"><div class="cabinet"><div class="cabinet-marquee">NEXTGEN <b>ARCADE</b></div><div class="cabinet-body"><div class="cabinet-monitor"><span class="crt-glint"></span><b>02</b><small>STANDBY</small></div><div class="control-shelf"><span class="stick"></span><span class="buttons"><i></i><i></i><i></i></span></div><div class="cabinet-coin"><i></i><span>NGS</span></div></div></div></div>
-          </div>
-          <div class="tile-footer"><span><i class="footer-pip" aria-hidden="true"></i> AWAITING GAME</span><span>SPACE 02 <b>/ 06</b></span></div>
-        </article>
-        <article class="machine-tile tile-three">
-          <div class="tile-heading"><span><b>003</b> <i>/</i> ARCADE CABINET</span><span class="tile-state"><span aria-hidden="true"></span> RESERVED</span></div>
-          <div class="tile-content">
-            <div class="tile-copy"><span class="tile-kicker">NEXTGEN SESSIONS ARCADE</span><h3>CABINET<br><em>003.</em></h3><p>Ready for a future game.</p></div>
-            <div class="tile-visual" aria-hidden="true"><div class="cabinet"><div class="cabinet-marquee">NEXTGEN <b>ARCADE</b></div><div class="cabinet-body"><div class="cabinet-monitor"><span class="crt-glint"></span><b>03</b><small>STANDBY</small></div><div class="control-shelf"><span class="stick"></span><span class="buttons"><i></i><i></i><i></i></span></div><div class="cabinet-coin"><i></i><span>NGS</span></div></div></div></div>
-          </div>
-          <div class="tile-footer"><span><i class="footer-pip" aria-hidden="true"></i> AWAITING GAME</span><span>SPACE 03 <b>/ 06</b></span></div>
-        </article>
-        <article class="machine-tile tile-four">
-          <div class="tile-heading"><span><b>004</b> <i>/</i> ARCADE CABINET</span><span class="tile-state"><span aria-hidden="true"></span> RESERVED</span></div>
-          <div class="tile-content">
-            <div class="tile-copy"><span class="tile-kicker">NEXTGEN SESSIONS ARCADE</span><h3>CABINET<br><em>004.</em></h3><p>Ready for a future game.</p></div>
-            <div class="tile-visual" aria-hidden="true"><div class="cabinet"><div class="cabinet-marquee">NEXTGEN <b>ARCADE</b></div><div class="cabinet-body"><div class="cabinet-monitor"><span class="crt-glint"></span><b>04</b><small>STANDBY</small></div><div class="control-shelf"><span class="stick"></span><span class="buttons"><i></i><i></i><i></i></span></div><div class="cabinet-coin"><i></i><span>NGS</span></div></div></div></div>
-          </div>
-          <div class="tile-footer"><span><i class="footer-pip" aria-hidden="true"></i> AWAITING GAME</span><span>SPACE 04 <b>/ 06</b></span></div>
-        </article>
-        <article class="machine-tile tile-five">
-          <div class="tile-heading"><span><b>005</b> <i>/</i> ARCADE CABINET</span><span class="tile-state"><span aria-hidden="true"></span> RESERVED</span></div>
-          <div class="tile-content">
-            <div class="tile-copy"><span class="tile-kicker">NEXTGEN SESSIONS ARCADE</span><h3>CABINET<br><em>005.</em></h3><p>Ready for a future game.</p></div>
-            <div class="tile-visual" aria-hidden="true"><div class="cabinet"><div class="cabinet-marquee">NEXTGEN <b>ARCADE</b></div><div class="cabinet-body"><div class="cabinet-monitor"><span class="crt-glint"></span><b>05</b><small>STANDBY</small></div><div class="control-shelf"><span class="stick"></span><span class="buttons"><i></i><i></i><i></i></span></div><div class="cabinet-coin"><i></i><span>NGS</span></div></div></div></div>
-          </div>
-          <div class="tile-footer"><span><i class="footer-pip" aria-hidden="true"></i> AWAITING GAME</span><span>SPACE 05 <b>/ 06</b></span></div>
-        </article>
-        <article class="machine-tile tile-six">
-          <div class="tile-heading"><span><b>006</b> <i>/</i> ARCADE CABINET</span><span class="tile-state"><span aria-hidden="true"></span> RESERVED</span></div>
-          <div class="tile-content">
-            <div class="tile-copy"><span class="tile-kicker">NEXTGEN SESSIONS ARCADE</span><h3>CABINET<br><em>006.</em></h3><p>Ready for a future game.</p></div>
-            <div class="tile-visual" aria-hidden="true"><div class="cabinet"><div class="cabinet-marquee">NEXTGEN <b>ARCADE</b></div><div class="cabinet-body"><div class="cabinet-monitor"><span class="crt-glint"></span><b>06</b><small>STANDBY</small></div><div class="control-shelf"><span class="stick"></span><span class="buttons"><i></i><i></i><i></i></span></div><div class="cabinet-coin"><i></i><span>NGS</span></div></div></div></div>
-          </div>
-          <div class="tile-footer"><span><i class="footer-pip" aria-hidden="true"></i> AWAITING GAME</span><span>SPACE 06 <b>/ 06</b></span></div>
-        </article>
-      </div>
-      <p class="library-note">All six positions are placeholders. No games are currently available to play.</p>
+      <div class="floor-shadow" aria-hidden="true"></div>
     </section>
 
-    <section class="vision-strip" id="vision" aria-label="NextGen Sessions Arcade philosophy">
-      <span>✳ BUILT FOR HIGH SCORES</span><i aria-hidden="true">/</i><span>MADE FOR ONE MORE GO</span><i aria-hidden="true">/</i><span>ORIGINAL ARCADE EXPERIENCES</span>
+    <section class="under-machine" aria-label="Game controls and ROM information">
+      <div class="keyboard-guide"><strong>HOW TO PLAY</strong><span><kbd>5</kbd> COIN</span><span><kbd>1</kbd> START</span><span><kbd>← → ↑ ↓</kbd> MOVE</span><span><kbd>CTRL</kbd> FIRE</span></div>
+      <div class="game-notes">
+        <p><strong>LOCAL ROM TEST</strong> — Choose your own authorised <code>looping.zip</code> inside the screen. No ROM files are hosted here. Game audio remains under investigation.</p>
+        <button type="button" id="reset-machine" class="reset-machine">↺ RELOAD MACHINE</button>
+      </div>
     </section>
   </main>
   <footer class="site-footer">
-    <div class="footer-inner container">
-      <span>NEXTGEN SESSIONS <b>ARCADE</b></span>
-      <span>FREE BROWSER ARCADE <i aria-hidden="true">•</i> CURRENTLY IN DEVELOPMENT</span>
-      <span>© 2026 NEXTGEN SESSIONS</span>
-    </div>
+    <div class="container footer-inner"><span>NEXTGEN SESSIONS <b>ARCADE</b></span><span>CABINET 001 <i>•</i> ORIGINAL ARCADE ERA</span><span>© 2026 NEXTGEN SESSIONS</span></div>
   </footer>
 </body>
 </html>
