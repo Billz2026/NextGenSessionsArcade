@@ -2385,3 +2385,67 @@ test('dealership cancellation returns all held deposit and leaves its preparatio
   assert.equal(C.stats(state,1,state.day).refunds,1);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
+
+test('legacy v8 reservations keep their original full-refund promise after upgrade', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  const old=JSON.parse(JSON.stringify(state)),cost=old.customerCases['1'].prepCost;
+  old.version=8;
+  delete old.customerFunds;
+  old.cash+=cost;
+  old.ledger=old.ledger.filter(x=>
+    !x.note.startsWith('Customer-specific collection preparation:'));
+  for(const vehicle of old.vehicles){
+    delete vehicle.color;delete vehicle.generation;
+  }
+  delete old.customerCases['1'].terms;
+  delete old.customerCases['1'].prepCost;
+  const migrated=E.normalize(old);
+  assert.ok(migrated);
+  assert.equal(migrated.customerCases['1'].terms,'legacy-refundable');
+  assert.equal(C.heldDeposits(migrated),250);
+  const balance=migrated.cash;
+  assert.ok(E.cancelCustomer(migrated,v.id,'buyer').ok);
+  assert.equal(migrated.cash,balance);
+  assert.equal(C.stats(migrated,1,migrated.day).retainedAmount,0);
+  assert.equal(C.heldDeposits(migrated),0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(migrated))));
+});
+test('buyer applying deposit to part exchange pays only the net cash amount', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let result=null;
+  for(let i=0;i<140;i++){
+    const {state,v}=readyForRetail(E,'PX Collection '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);
+    const c=C.caseFor(state,v.id);
+    if(c.preferredMode!=='part-ex')continue;
+    E.bookCustomer(state,v.id);
+    state.day=c.appointmentDay;E.advanceCustomers(state);
+    if(c.status!=='arrived'||!E.testDrive(state,v.id).ok)continue;
+    const buyer=E.buyers(v,state);
+    if(!buyer?.exchange)continue;
+    assert.ok(E.agreeCustomer(state,v.id,'part-ex',buyer.exchange.ask).ok);
+    if(!E.depositCustomer(state,v.id).ok)continue;
+    const balance=C.balanceDue(c);
+    state.day=c.collectionDay;E.advanceCustomers(state);
+    if(c.status!=='collectable')continue;
+    const before=state.cash;
+    const sale=E.completeSale(state,v.id,'part-ex',null);
+    if(!sale.ok)continue;
+    result={state,c,balance,cashDelta:state.cash-before};
+    break;
+  }
+  assert.ok(result,'A deposit-paying part-ex customer should occasionally collect');
+  const {state,c,balance,cashDelta}=result;
+  assert.equal(balance,c.price-c.allowance-250);
+  assert.equal(cashDelta,balance+250);
+  assert.equal(state.sold[0].customerBalancePaid,balance);
+  assert.equal(state.sold[0].depositApplied,250);
+  assert.equal(state.ledger.slice(-3).reduce((n,x)=>n+x.delta,0),balance+250);
+  assert.ok(state.ledger.some(x=>x.delta===0&&
+    x.note.startsWith('Part-exchange acquisition:')));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
