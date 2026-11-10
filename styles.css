@@ -380,3 +380,80 @@
  .people-metrics{gap:7px}.people-metrics>div{padding:12px 9px}.people-metrics strong{font-size:19px}
  .reputation-highlight{padding:19px}.people-section{padding:15px}
  .people-card-footer{align-items:stretch;flex-direction:column}.people-actions .trade-button{flex:1}}
+
+/* v0.6 monthly business reporting. Uses the existing calm dark/gold palette. */
+.monthly-dashboard-target,.finance-monthly-target{margin:0 0 17px}
+.report-teaser{display:flex;justify-content:space-between;gap:16px;align-items:center;
+  border:1px solid #6b6955;border-left:4px solid #e1b879;
+  border-radius:7px;padding:17px 19px;background:linear-gradient(115deg,#203942,#132832)}
+.report-teaser small{color:#d8b678;font:700 10px/1.4 var(--mono);letter-spacing:.05em}
+.report-teaser h3{font:850 26px/1 var(--title);color:#f8ebd2;margin:6px 0}
+.report-teaser p{color:#bbd0d2;font:600 11px/1.5 var(--body)}
+.report-teaser-side{display:flex;align-items:center;gap:15px}
+.report-teaser-side>strong{font:900 32px var(--title);color:#e5bd7d;white-space:nowrap}
+.report-teaser-side .secondary-button{white-space:nowrap;font-size:11px}
+.report-picker{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 16px}
+.report-picker button{cursor:pointer;border:1px solid #415863;border-radius:5px;background:#172e39;
+ color:#bacece;font:700 11px/1.4 var(--mono);padding:10px 13px}
+.report-picker button[aria-current="true"]{border-color:#caa26c;background:#33443f;color:#f4d4a5}
+.report-picker button:hover{background:#294451;color:#fff}
+.report-heading{display:flex;gap:13px;justify-content:space-between;align-items:flex-start;
+ background:linear-gradient(125deg,#2a3c40,#182d37);
+ border:1px solid #46606a;border-radius:8px;padding:21px 24px;margin:0 0 16px}
+.report-heading h2{font:850 clamp(29px,4vw,43px)/1 var(--title);margin:6px 0;color:#f4e4c7;letter-spacing:.02em}
+.report-heading small{color:#c7ad7b;font:700 9px/1.5 var(--mono)}
+.report-heading p{font:500 12px/1.55 var(--body);color:#c4d2d3;max-width:660px}
+.report-heading>span{border:1px solid #bd9b70;border-radius:4px;padding:7px 9px;
+ font:700 9px/1.4 var(--mono);color:#ebcca0;max-width:170px;text-align:right}
+.report-heading.report-good>span{border-color:#7bab90;color:#afdfba}
+.report-heading.report-risk>span{border-color:#c29f75;color:#efca96}
+.report-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:0 0 16px}
+.report-metric{background:linear-gradient(150deg,#1b3540,#132832);border:1px solid #3c5660;
+ border-radius:7px;min-width:0;padding:16px;display:flex;flex-direction:column;gap:7px}
+.report-metric small{color:#aac1c8;font:700 9px/1.5 var(--mono)}
+.report-metric strong{color:#f3d295;font:900 clamp(22px,2.9vw,34px)/1 var(--title);overflow-wrap:anywhere}
+.report-metric span{color:#a7b9c0;font:500 10px/1.45 var(--body)}
+.report-value-positive strong{color:#9dd3af}
+.report-value-negative strong{color:#efa28f}
+.report-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.report-section{padding:19px 20px;margin:0;min-width:0}
+.report-section h3{font:850 26px/1.1 var(--title);color:#ecd0a0;margin:0 0 15px}
+.report-section h4{font:800 17px var(--title);color:#e5c28c;margin:18px 0 8px}
+.report-section hr{height:1px;border:0;background:#47606a;margin:13px 0}
+.report-line,.report-stock-row{display:flex;justify-content:space-between;align-items:start;gap:13px;
+ padding:9px 0;border-bottom:1px solid #344c57;color:#b6cbd0;font:500 11px/1.5 var(--body)}
+.report-line>strong,.report-stock-row>strong{font:800 16px/1.1 var(--title);
+ color:#f2d8a7;text-align:right;flex-shrink:0}
+.report-line .report-negative,.report-event .report-negative{color:#eba48f}
+.report-line .report-positive,.report-event .report-positive{color:#9fdbba}
+.report-progress{display:flex;flex-direction:column;gap:7px;margin:0 0 14px}
+.report-progress-head{display:flex;justify-content:space-between;gap:10px;
+ font:600 11px/1.45 var(--body);color:#c6d1d1}
+.report-progress-head strong{font:800 13px var(--mono);color:#f4d09b}
+.report-track{height:8px;border-radius:8px;overflow:hidden;background:#34505a}
+.report-track>span{display:block;height:100%;background:linear-gradient(90deg,#9d814e,#e8c07d);border-radius:8px}
+.report-muted{font:500 10px/1.6 var(--body);color:#a7bdc4;margin:12px 0 0}
+.report-alert{font:650 11px/1.6 var(--body);color:#f3b4a7;background:#493632;border-left:3px solid #d78e78;padding:10px 12px}
+.report-highlow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.report-highlow p{background:#142833;color:#e2d6c0;font:700 12px var(--body);
+ border:1px solid #3b535d;border-radius:5px;padding:11px;overflow-wrap:anywhere}
+.report-highlow small{display:block;color:#9aafb7;font:700 8px var(--mono);margin-bottom:7px}
+.report-stock-row small{display:block;color:#9eb5bc;font:600 9px var(--mono);margin-top:4px}
+.report-staff-row{display:grid;grid-template-columns:minmax(100px,1.5fr) repeat(3,minmax(65px,1fr)) auto;
+ align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #334d57}
+.report-staff-row strong{display:block;font:850 16px var(--title);color:#f4e0b9;overflow-wrap:anywhere}
+.report-staff-row span,.report-staff-row small{font:700 8px/1.5 var(--mono);color:#a7bdc0}
+.report-staff-row .report-staff-result{color:#d7bc8d;text-align:right;max-width:85px}
+.report-event{display:grid;grid-template-columns:60px 24px minmax(0,1fr);align-items:start;gap:8px;
+ padding:10px 0;border-bottom:1px solid #334c57;color:#b4c8cd}
+.report-event span{font:700 9px var(--mono)}
+.report-event b{font:850 13px var(--title)}
+.report-event p{font:500 11px/1.45 var(--body);margin:0}
+.report-caveat{margin-top:16px}
+@media(max-width:1180px){.report-columns{grid-template-columns:1fr}.report-staff-row{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:800px){.report-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:570px){.report-heading{padding:16px;flex-direction:column}.report-heading>span{text-align:left;max-width:100%}
+ .report-metric{padding:12px}.report-metric strong{font-size:22px}.report-section{padding:15px}
+ .report-highlow{grid-template-columns:1fr}.report-staff-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .report-teaser{padding:13px;flex-direction:column;align-items:stretch}.report-teaser-side{justify-content:space-between}
+ .report-teaser-side .secondary-button{white-space:normal}.report-line>strong{font-size:14px}}

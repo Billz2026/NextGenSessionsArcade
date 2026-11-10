@@ -7,8 +7,10 @@
 (() => {
   const E = window.MotorTradeEngine;
   const PV = window.MotorTradePeopleView;
-  if (!E || !PV) throw new Error('Trading and people modules must load before simulator.js');
+  const MV = window.MotorTradeMonthlyView;
+  if (!E || !PV || !MV) throw new Error('Game report modules must load before simulator.js');
   const P = E.people;
+  const M = E.monthly;
   const STORAGE_KEY = 'the-motor-trade-career-v1';
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
   const SAVE_VERSION = E.VERSION;
@@ -24,6 +26,7 @@
     stock: 'VEHICLE STOCK',
     sales: 'SALES OFFICE',
     finance: 'FINANCES',
+    reports: 'MANAGEMENT REPORTS',
     staff: 'STAFF & RECRUITMENT',
     reputation: 'REPUTATION',
     business: 'MY DEALERSHIP'
@@ -125,7 +128,8 @@
   let eventNotice = '';
   let lastTradeResult = null;
   let expandedReportId = null;
-  let offerDrafts = {}; // Current-day input, retained while opening a report.
+  let offerDrafts = {};
+  let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
   function gameDate(day) {
     return new Date(START_DATE_UTC + (day - 1) * MS_PER_DAY);
@@ -381,6 +385,13 @@
       (entry.delta < 0 ? '−' : '+') + cashText(Math.abs(entry.delta)) + '</b></div>'
     ).join('');
   }
+  function renderMonthly() {
+    const r=M.statement(career);
+    byId('monthly-dashboard-target').innerHTML=MV.liveGoals(career,M);
+    byId('finance-monthly-target').innerHTML=MV.liveGoals(career,M);
+    byId('monthly-report-view').innerHTML=MV.renderReport(career,M,selectedMonth);
+    bindText('monthly-target',r.soldUnits+' / '+r.targetUnits);
+  }
   function renderPeople() {
     byId('people-totals').innerHTML=PV.totals(career,P);
     byId('people-roster').innerHTML=PV.roster(career,P);
@@ -393,6 +404,7 @@
     renderSales();
     renderLedger();
     renderPeople();
+    renderMonthly();
   }
 
   function render() {
@@ -475,7 +487,14 @@
   }
   function advanceDay() {
     if (!career || career.day >= MAX_DAY) return;
+    // Close the completed 30-day period BEFORE charging the next day's wage.
+    // This keeps reports internally reconcilable with recorded ledger dates.
+    const closed=career.day===career.monthPlan.endDay?M.close(career):null;
     career.day += 1;
+    if(closed) {
+      M.next(career);
+      selectedMonth=String(closed.month);
+    }
     const workforceEvent=E.staffDay(career);
     lastTradeResult = null;
     expandedReportId = null;
@@ -498,6 +517,25 @@
       if(workforceEvent.departures.length)
         eventNotice+=' Departures: '+workforceEvent.departures.join(', ')+'.';
     }
+    if(closed){
+      const id=career.messages.reduce((n,message)=>Math.max(n,message.id),0)+1;
+      const status=closed.targetMet?'ACHIEVED':'MISSED';
+      const shortReport='Sold '+closed.soldUnits+'/'+closed.targetUnits+
+        ' cars. Turnover '+money.format(closed.turnover)+
+        '. Gross trade margin '+money.format(closed.grossMargin)+
+        '. Cash '+money.format(closed.closingCash)+'.';
+      career.messages.push(makeMessage(id,career.day,'MANAGEMENT OFFICE',
+        'Month '+closed.month+' report — target '+status,
+        shortReport,
+        'Your month '+closed.month+' management report is ready.\n\n'+shortReport+
+        '\nStaff costs '+money.format(closed.staffCosts)+
+        '. Unsold stock '+closed.stockCount+' cars, including '+
+        closed.agedStock+' aged 14+ days.\n\nVisit Management Reports for the full financial statement, individual salesperson targets, stock position and reputation review.',
+        'reports'));
+      eventNotice='Month '+closed.month+' management review ready — company sales target '+
+        status+'. Open MANAGEMENT REPORTS or your inbox for the full results. '+
+        eventNotice;
+    }
     persistCareer();
     render();
   }
@@ -514,6 +552,7 @@
     career = E.create(name, welcomeMessages());
     selectedMessageId = null;
     lastTradeResult = null;
+    selectedMonth = 'current';
     expandedReportId = null;
     offerDrafts = {};
     screen = 'career';
@@ -584,7 +623,16 @@
         }
         break;
       case 'hire-staff':
-        if (career) saveResult(P.hire(career,button.dataset.id));
+        if (career) saveResult(E.hireStaff(career,button.dataset.id));
+        break;
+      case 'select-report':
+        if(career){
+          const chosen=button.dataset.month;
+          if(chosen==='current'||career.monthlyReports.some(r=>String(r.month)===chosen)){
+            selectedMonth=chosen;
+            render();
+          }
+        }
         break;
       case 'train-staff':
         if (career) saveResult(P.train(career,Number(button.dataset.id)));

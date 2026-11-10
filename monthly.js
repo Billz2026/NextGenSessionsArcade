@@ -1,0 +1,259 @@
+'use strict';
+/*
+ * The Motor Trade v0.6 — 30-day operating months and recorded management
+ * results. No real tax, DVLA records, warranty-cost accrual or statutory
+ * accounts. Historical reports are snapshots, not regenerated forecasts.
+ */
+(() => {
+  const PERIOD=30, HISTORY_LIMIT=120;
+  const unitBase=score=>score>=80?6:score>=60?5:score>=40?4:score>=20?3:2;
+  const money=n=>Math.round(n/100)*100;
+  const dayStart=day=>Math.floor((day-1)/PERIOD)*PERIOD+1;
+  const monthOf=day=>Math.floor((day-1)/PERIOD)+1;
+  const whole=n=>Number.isSafeInteger(n);
+  const sum=(list,field)=>list.reduce((n,item)=>n+item[field],0);
+  const limit=(n,min,max)=>Math.max(min,Math.min(max,n));
+  const completed=(sold,start,end)=>sold.filter(v=>v.day>=start&&v.day<=end);
+  const transactions=(ledger,start,end)=>ledger.filter(v=>v.day>=start&&v.day<=end);
+  const targetFor=(score,days=PERIOD)=>{
+    const tier=unitBase(score);
+    // Two-space independent forecourt: targets rise with trust, but never
+    // assume the player already owns a larger premises or workshop.
+    const unitTarget=days<PERIOD?Math.max(1,Math.ceil(tier*days/PERIOD)):tier;
+    const retailGuide=score>=80?8500:score>=60?7750:
+      score>=40?7000:score>=20?6000:5250;
+    return {unitTarget,turnoverTarget:money(unitTarget*retailGuide),
+      marginTarget:money(unitTarget*(score>=60?850:score>=20?700:600))};
+  };
+  function staffTarget(plan,employee,day){
+    if(employee.role!=='sales')return null;
+    const first=Math.max(day+1,employee.startDay,plan.startDay);
+    const days=Math.max(0,plan.endDay-first+1);
+    const units=days<7?0:Math.max(1,Math.ceil(plan.unitTarget*days/
+      Math.max(1,plan.endDay-plan.startDay+1)));
+    return {id:employee.id,name:employee.name,role:'sales',
+      startDay:first,expectedDays:days,unitTarget:units};
+  }
+  function openingCash(state,startDay){
+    // A migrated career may have already traded within the current period.
+    // Derive its opening balance from recorded ledger, not a guess.
+    const movements=state.ledger.filter(x=>x.day>=startDay&&x.day<=state.day)
+      .reduce((n,x)=>n+x.delta,0);
+    return state.cash-movements;
+  }
+  function plan(state,{migrating=false}={}){
+    const start=migrating?state.day:dayStart(state.day);
+    const end=dayStart(state.day)+PERIOD-1;
+    const days=end-start+1;
+    const target=targetFor(state.reputationScore,days);
+    const next={
+      month:monthOf(state.day),startDay:start,endDay:end,
+      standardStartDay:dayStart(state.day),partial:start!==dayStart(state.day),
+      openingCash:migrating?openingCash(state,start):state.cash,
+      startingReputation:state.reputationScore,
+      ...target,staffTargets:[]
+    };
+    for(const employee of state.staff){
+      const assigned=staffTarget(next,employee,Math.max(start-1,employee.hiredDay));
+      if(assigned)next.staffTargets.push(assigned);
+    }
+    return next;
+  }
+  function initialize(state,{migrating=false}={}){
+    state.monthlyReports=[];
+    state.monthPlan=plan(state,{migrating});
+    return state;
+  }
+  function onHire(state,employee){
+    const p=state.monthPlan;
+    if(!p||employee.role!=='sales'||p.staffTargets.some(x=>x.id===employee.id))return;
+    p.staffTargets.push(staffTarget(p,employee,state.day));
+  }
+  function categorize(note){
+    if(note.startsWith('Retail sale:'))return 'retailReceipts';
+    if(note.startsWith('Auction purchase:'))return 'auctionPurchases';
+    if(note.startsWith('Direct purchase:'))return 'sellerPurchases';
+    if(note.startsWith('Part-exchange acquisition:'))return 'partExchangePurchases';
+    if(note.startsWith('Preparation and inspection:'))return 'preparation';
+    if(note.startsWith('Pre-purchase inspection:'))return 'inspections';
+    if(note.startsWith('Staff payroll'))return 'payroll';
+    if(note.startsWith('Sales commission:'))return 'commission';
+    if(note.startsWith('Recruitment and onboarding:'))return 'recruitment';
+    if(note.startsWith('Staff development:'))return 'training';
+    if(note.startsWith('Staff exit and provisional notice payment:'))return 'staffExit';
+    return 'other';
+  }
+  const categories=['retailReceipts','auctionPurchases','sellerPurchases',
+    'partExchangePurchases','preparation','inspections','payroll','commission',
+    'recruitment','training','staffExit','other'];
+  function statement(state){
+    const p=state.monthPlan;
+    const sales=completed(state.sold,p.startDay,p.endDay);
+    const ledger=transactions(state.ledger,p.startDay,p.endDay);
+    const bucket=Object.fromEntries(categories.map(k=>[k,0]));
+    for(const row of ledger)bucket[categorize(row.note)]+=row.delta;
+    const saleCount=sales.length;
+    const turnover=sum(sales,'price');
+    const grossMargin=sum(sales,'profit');
+    const inflow=ledger.filter(x=>x.delta>0).reduce((n,x)=>n+x.delta,0);
+    const outflow=-ledger.filter(x=>x.delta<0).reduce((n,x)=>n+x.delta,0);
+    const payrollCost=-(bucket.payroll+bucket.commission+bucket.recruitment+
+      bucket.training+bucket.staffExit);
+    const prepCost=-bucket.preparation;
+    const acquisitions=-(bucket.auctionPurchases+bucket.sellerPurchases+
+      bucket.partExchangePurchases);
+    const soldModes={
+      cash:sales.filter(v=>v.mode==='cash').length,
+      partExchange:sales.filter(v=>v.mode==='part-ex').length
+    };
+    const salespersonStats=p.staffTargets.map(item=>{
+      const theirDeals=sales.filter(s=>s.salespersonId===item.id);
+      const count=theirDeals.length;
+      const onTeam=state.staff.some(s=>s.id===item.id);
+      return {...item,sold:count,turnover:sum(theirDeals,'price'),
+        grossMargin:sum(theirDeals,'profit'),
+        hit:item.unitTarget>0&&count>=item.unitTarget,
+        exempt:item.unitTarget===0,employedAtClose:onTeam};
+    });
+    const stock=state.vehicles.map(v=>({
+      id:v.id,title:v.title,status:v.status,source:v.source,
+      age:Math.max(0,state.day-v.acquiredDay),
+      cashInvested:v.cost+v.prepSpent,
+      asking:v.asking,repairToPay:v.status==='acquired'?v.prepBudget:0
+    }));
+    const met=saleCount>=p.unitTarget && grossMargin>0;
+    const report={
+      month:p.month,monthLabel:'MONTH '+p.month,
+      startDay:p.startDay,endDay:p.endDay,partial:p.partial,
+      startingReputation:p.startingReputation,
+      closingReputation:state.reputationScore,
+      targetUnits:p.unitTarget,targetTurnover:p.turnoverTarget,
+      targetMargin:p.marginTarget,
+      soldUnits:saleCount,turnover,grossMargin,
+      averageMargin:saleCount?Math.round(grossMargin/saleCount):0,
+      targetMet:met,turnoverMet:turnover>=p.turnoverTarget,
+      marginMet:grossMargin>=p.marginTarget,
+      grossAfterStaff:grossMargin-payrollCost,
+      openingCash:p.openingCash,closingCash:state.cash,
+      cashIn:inflow,cashOut:outflow,netCashChange:inflow-outflow,
+      totalAcquisitions:acquisitions,prepCost,staffCosts:payrollCost,
+      ledgerBreakdown:bucket,salesModes:soldModes,
+      sellers:salespersonStats,
+      stock,stockCount:stock.length,
+      stockCapital:stock.reduce((n,x)=>n+x.cashInvested,0),
+      agedStock:stock.filter(x=>x.age>=14).length,
+      stockAwaitingPrep:stock.filter(x=>x.status==='acquired').length,
+      payrollArrears:state.payrollArrears,staffHeadcount:state.staff.length,
+      customerTrustEvents:state.reputationHistory.filter(x=>x.day>=p.startDay&&x.day<=p.endDay).map(x=>({...x})),
+      bestDeal:sales.length?[...sales].sort((a,b)=>b.profit-a.profit)[0].title:null,
+      worstDeal:sales.length?[...sales].sort((a,b)=>a.profit-b.profit)[0].title:null
+    };
+    return report;
+  }
+  function close(state){
+    const p=state.monthPlan;
+    if(state.day!==p.endDay)return null;
+    const r=statement(state);
+    const staffConsequences=[];
+    for(const staff of r.sellers){
+      const employee=state.staff.find(s=>s.id===staff.id);
+      if(!employee||staff.exempt)continue;
+      const change=staff.hit?3:-5;
+      employee.morale=limit(employee.morale+change,0,100);
+      staffConsequences.push({id:staff.id,name:staff.name,met:staff.hit,moraleChange:change});
+    }
+    // Volume never rewards repeated loss-making deals. Penalty for a
+    // serious shortfall is small and reversible through good customer care.
+    let repDelta=0;
+    if(r.targetMet&&r.grossMargin>0)repDelta=1;
+    else if(r.soldUnits<Math.ceil(r.targetUnits*.5))repDelta=-1;
+    const old=state.reputationScore;
+    state.reputationScore=limit(old+repDelta,0,100);
+    repDelta=state.reputationScore-old;
+    if(repDelta!==0){
+      const reason=repDelta>0?'Monthly sales goal achieved with positive margin':
+        'Monthly sales volume significantly below plan';
+      const event={day:state.day,delta:repDelta,reason};
+      state.reputationHistory.push(event);
+      r.customerTrustEvents.push({...event});
+      if(state.reputationHistory.length>90)state.reputationHistory.shift();
+    }
+    state.reputation=window.MotorTradePeople.tier(state.reputationScore);
+    r.closingReputation=state.reputationScore;
+    r.reputationChange=r.closingReputation-r.startingReputation;
+    r.staffOutcomes=staffConsequences;
+    r.managementComment=r.targetMet?
+      'Company sales target achieved with a positive gross margin.':
+      r.soldUnits>=r.targetUnits?
+        'Volume reached, but trading margin was not positive. Review purchase discipline.':
+        'Sales target missed. Review stock age, sales performance and operating costs.';
+    state.monthlyReports.push(r);
+    if(state.monthlyReports.length>HISTORY_LIMIT)state.monthlyReports.shift();
+    return r;
+  }
+  function next(state){
+    if(state.day!==dayStart(state.day))throw Error('New month must begin on its first day');
+    state.monthPlan=plan(state);
+  }
+  const nonneg=n=>whole(n)&&n>=0&&n<=100000000;
+  function validPlan(p,day){
+    return p&&typeof p==='object'&&!Array.isArray(p)&&
+      whole(p.month)&&p.month===monthOf(day)&&
+      whole(p.startDay)&&p.startDay>=dayStart(day)&&p.startDay<=day&&
+      whole(p.endDay)&&p.endDay===dayStart(day)+PERIOD-1&&
+      whole(p.standardStartDay)&&p.standardStartDay===dayStart(day)&&
+      typeof p.partial==='boolean'&&p.partial===(p.startDay!==p.standardStartDay)&&
+      whole(p.openingCash)&&p.openingCash>=0&&p.openingCash<=100000000&&
+      whole(p.startingReputation)&&p.startingReputation>=0&&p.startingReputation<=100&&
+      whole(p.unitTarget)&&p.unitTarget>=1&&p.unitTarget<=6&&
+      nonneg(p.turnoverTarget)&&nonneg(p.marginTarget)&&
+      Array.isArray(p.staffTargets)&&p.staffTargets.length<=100&&
+      p.staffTargets.every(s=>s&&whole(s.id)&&s.id>0&&
+        typeof s.name==='string'&&s.name.length<60&&s.role==='sales'&&
+        whole(s.startDay)&&s.startDay>=p.startDay&&s.startDay<=p.endDay+1&&
+        whole(s.expectedDays)&&s.expectedDays>=0&&s.expectedDays<=30&&
+        whole(s.unitTarget)&&s.unitTarget>=0&&s.unitTarget<=6)&&
+      new Set(p.staffTargets.map(x=>x.id)).size===p.staffTargets.length;
+  }
+  function validReport(r){
+    if(!r||typeof r!=='object'||Array.isArray(r)||!whole(r.month)||r.month<1||
+      typeof r.monthLabel!=='string'||r.monthLabel.length>30||
+      !whole(r.startDay)||!whole(r.endDay)||r.startDay>r.endDay||
+      typeof r.partial!=='boolean'||!nonneg(r.soldUnits)||
+      !nonneg(r.targetUnits)||!nonneg(r.turnover)||!whole(r.grossMargin)||
+      !whole(r.averageMargin)||typeof r.targetMet!=='boolean'||
+      !whole(r.openingCash)||!whole(r.closingCash)||
+      !nonneg(r.cashIn)||!nonneg(r.cashOut)||!whole(r.netCashChange)||
+      !Array.isArray(r.stock)||r.stock.length>100||
+      !Array.isArray(r.sellers)||r.sellers.length>100||
+      !Array.isArray(r.customerTrustEvents)||r.customerTrustEvents.length>200||
+      !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
+      !categories.every(k=>whole(r.ledgerBreakdown[k]))||
+      !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
+    return r.openingCash+r.netCashChange===r.closingCash &&
+      r.cashIn-r.cashOut===r.netCashChange &&
+      r.sellers.every(s=>s&&whole(s.id)&&typeof s.name==='string'&&
+        nonneg(s.sold)&&nonneg(s.unitTarget));
+  }
+  function restore(state,saved){
+    if(saved.version<5){
+      initialize(state,{migrating:true});
+      return true;
+    }
+    if(!validPlan(saved.monthPlan,state.day)||
+      !Array.isArray(saved.monthlyReports)||
+      saved.monthlyReports.length>HISTORY_LIMIT||
+      !saved.monthlyReports.every(validReport))return false;
+    const p=saved.monthPlan;
+    const cashSince=state.ledger.filter(l=>l.day>=p.startDay&&l.day<=state.day)
+      .reduce((n,l)=>n+l.delta,0);
+    if(p.openingCash+cashSince!==state.cash)return false;
+    state.monthPlan=JSON.parse(JSON.stringify(p));
+    state.monthlyReports=JSON.parse(JSON.stringify(saved.monthlyReports));
+    return true;
+  }
+  window.MotorTradeMonthly=Object.freeze({
+    PERIOD,monthOf,dayStart,targetFor,initialize,onHire,
+    statement,close,next,restore,validPlan,validReport
+  });
+})();

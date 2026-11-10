@@ -221,7 +221,8 @@
       expense(state,paid,'Sales commission: '+worker.name);
       state.payrollArrears+=commission-paid;
     }
-    return {reputationDelta:applied,reason,commission};
+    return {reputationDelta:applied,reason,commission,
+      salespersonId:worker?.id??null,salespersonName:worker?.name??'Owner-managed'};
   }
   function worked(state){
     const tech=active(state,'technician');

@@ -12,6 +12,8 @@ const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
 const people = readFileSync(new URL('people.js', root), 'utf8');
 const peopleView = readFileSync(new URL('people-view.js', root), 'utf8');
+const monthly = readFileSync(new URL('monthly.js', root), 'utf8');
+const monthlyView = readFileSync(new URL('monthly-view.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -32,7 +34,7 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
 });
 
 test('dashboard has inbox, calendar and navigable management areas', () => {
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'staff', 'reputation', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'reports', 'staff', 'reputation', 'business']) {
     assert.match(html, new RegExp('data-panel="' + page + '"'));
     assert.match(html, new RegExp('data-page="' + page + '"'));
   }
@@ -46,7 +48,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
   assert.match(html, /people\.js\?v=1/);
-  assert.match(html, /trading\.js\?v=4/);
+  assert.match(html, /monthly\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=5/);
+  assert.match(html, /monthly-view\.js\?v=1/);
   assert.match(html, /people-view\.js\?v=1/);
   assert.match(html, /vehicle-view\.js\?v=1/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
@@ -94,7 +98,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   }
   const panels = [];
   const nav = [];
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'staff', 'reputation', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'reports', 'staff', 'reputation', 'business']) {
     const panel = new Node();
     panel.dataset.panel = page;
     panels.push(panel);
@@ -135,9 +139,11 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
+  vm.runInNewContext(monthly, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
   vm.runInNewContext(vehicleView, context, { timeout: 1500 });
   vm.runInNewContext(peopleView, context, { timeout: 1500 });
+  vm.runInNewContext(monthlyView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const button = { dataset: { action, ...extras }, setAttribute() {} };
@@ -254,7 +260,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=13/);
+  assert.match(html, /styles\.css\?v=14/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -272,7 +278,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 4);
+  assert.equal(opening.version, 5);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -397,7 +403,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,4);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,5);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -627,7 +633,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,4);
+  assert.equal(migrated.version,5);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -706,7 +712,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,4);
+  assert.equal(saved.version,5);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
@@ -716,7 +722,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,4);
+  assert.equal(app.engine.VERSION,5);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
@@ -902,7 +908,7 @@ test('v0.4 career migrates with stock, sold vehicles and financial balances unto
   assert.equal(newApp.nodes.get('menu-continue').hidden,false);
   newApp.click('resume');newApp.click('save');
   const restored=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(restored.version,4);
+  assert.equal(restored.version,5);
   assert.equal(restored.cash,v3.cash);
   assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
   assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
@@ -981,4 +987,211 @@ test('legacy career reputation tiers are respected when converting past sale mil
   assert.ok(P.legacyScore(5)>=20,'Old LOCAL TRADER should migrate to Local Dealer or higher');
   assert.ok(P.legacyScore(12)>=40,'Old ESTABLISHED trader should not lose earned standing');
   assert.ok(P.legacyScore(200)<=75,'Historical sales alone do not unlock prestige');
+});
+
+test('new dealerships receive achievable company targets and a live monthly dashboard', () => {
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Monthly Review Motors');
+  const E=app.engine,state=E.create('Standalone',[]);
+  assert.equal(E.VERSION,5);
+  assert.equal(state.monthPlan.month,1);
+  assert.equal(state.monthPlan.startDay,1);
+  assert.equal(state.monthPlan.endDay,30);
+  assert.equal(state.monthPlan.unitTarget,2);
+  assert.equal(state.monthlyReports.length,0);
+  assert.equal(app.bindings.get('monthly-target')[0].textContent,'0 / 2');
+  assert.match(app.nodes.get('monthly-dashboard-target').innerHTML,/MONTHLY SALES TARGET/);
+  assert.match(app.nodes.get('monthly-report-view').innerHTML,/MANAGEMENT REVIEW/);
+  assert.match(app.nodes.get('monthly-report-view').innerHTML,/STAFF COSTS|Wages paid/i);
+  assert.match(app.nodes.get('monthly-report-view').innerHTML,/STOCK & WORKING CAPITAL/);
+  assert.match(html,/data-panel="reports"/);
+});
+test('sales targets scale by reputation but stay fixed during a month', () => {
+  const E=browser(new Map()).engine,M=E.monthly,state=E.create('Target Trader',[]);
+  const expectations=[[5,2],[20,3],[40,4],[60,5],[80,6]];
+  for(const [score,target] of expectations)assert.equal(M.targetFor(score).unitTarget,target);
+  assert.equal(state.monthPlan.unitTarget,2);
+  state.reputationScore=41;
+  assert.equal(state.monthPlan.unitTarget,2,'Better reputation cannot rewrite existing targets');
+  state.day=30;
+  const closed=M.close(state);
+  assert.equal(closed.targetUnits,2);
+  state.day=31;M.next(state);
+  assert.equal(state.monthPlan.unitTarget,4,'New month uses the improved reputation tier');
+  assert.equal(state.monthPlan.month,2);
+  assert.ok(M.validPlan(state.monthPlan,state.day));
+});
+test('hiring assigns a fair salesperson target and late-month hires are exempt', () => {
+  const E=browser(new Map()).engine,P=E.people,state=E.create('People Targets',[]);
+  const first=P.applicants(1).find(x=>x.role==='sales');
+  assert.ok(E.hireStaff(state,first.id).ok);
+  assert.equal(state.monthPlan.staffTargets.length,1);
+  assert.equal(state.monthPlan.staffTargets[0].unitTarget,2);
+  state.day=30;
+  const r=E.monthly.close(state);
+  assert.equal(r.sellers.length,1);
+  assert.equal(r.sellers[0].sold,0);
+  assert.equal(r.sellers[0].unitTarget,2);
+  assert.equal(r.sellers[0].hit,false);
+  assert.equal(state.staff[0].morale,67,'Missed targets affect morale without artificial cash fines');
+  const late=E.create('Late Recruitment',[]);
+  late.day=26;
+  const second=P.applicants(26).find(x=>x.role==='sales');
+  assert.ok(E.hireStaff(late,second.id).ok);
+  assert.equal(late.monthPlan.staffTargets[0].unitTarget,0);
+  late.day=30;
+  const report=E.monthly.close(late);
+  assert.equal(report.sellers[0].exempt,true);
+  assert.equal(late.staff[0].morale,72,'Late hires should not be punished for days before joining');
+});
+test('completed cash and part-ex deals count towards real sales targets', () => {
+  const E=browser(new Map()).engine,state=E.create('Performance Motors',[]);
+  const first=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(state,first.id,first.ask).ok);
+  assert.ok(E.prepare(state,1).ok);
+  assert.ok(E.advertise(state,1,Math.round(state.vehicles[0].retail/50)*50).ok);
+  const firstBuyer=E.buyers(state.vehicles[0],state);
+  assert.ok(E.completeSale(state,1,'cash',null).ok);
+  assert.equal(state.sold[0].price,firstBuyer.cashOffer);
+  const second=E.market(1).sellers[1];
+  assert.ok(E.acquireSeller(state,second.id,second.ask).ok);
+  assert.ok(E.prepare(state,2).ok);
+  assert.ok(E.advertise(state,2,Math.round(state.vehicles[0].retail/50)*50).ok);
+  const px=E.buyers(state.vehicles[0],state).exchange;
+  assert.ok(E.completeSale(state,2,'part-ex',px.ask).ok);
+  assert.equal(state.sold.length,2);
+  state.day=30;
+  const r=E.monthly.close(state);
+  assert.equal(r.soldUnits,2);
+  assert.equal(r.salesModes.cash,1);
+  assert.equal(r.salesModes.partExchange,1);
+  assert.equal(r.turnover,state.sold[0].price+state.sold[1].price);
+  assert.equal(r.grossMargin,state.sold[0].profit+state.sold[1].profit);
+  assert.equal(r.targetMet,true);
+  assert.equal(state.monthlyReports.length,1);
+  assert.equal(r.openingCash+r.netCashChange,r.closingCash);
+  assert.ok(E.monthly.validReport(r));
+});
+test('monthly report distinguishes cash flow, gross margin, staff costs and tied-up stock', () => {
+  const E=browser(new Map()).engine,state=E.create('Cash Flow Motors',[]);
+  const P=E.people,employee=P.applicants(1).find(x=>x.role==='sales');
+  assert.ok(E.hireStaff(state,employee.id).ok);
+  state.day=2;E.staffDay(state);
+  const first=E.market(2).sellers[0];
+  assert.ok(E.acquireSeller(state,first.id,first.ask).ok);
+  assert.ok(E.prepare(state,1).ok);
+  assert.ok(E.advertise(state,1,Math.round(state.vehicles[0].retail/50)*50).ok);
+  assert.ok(E.completeSale(state,1,'cash',null).ok);
+  assert.equal(state.sold[0].salespersonId,state.staff[0].id);
+  assert.equal(state.sold[0].salespersonName,state.staff[0].name);
+  state.day=30;
+  const r=E.monthly.close(state);
+  assert.equal(r.sellers[0].sold,1);
+  assert.equal(r.sellers[0].turnover,state.sold[0].price);
+  assert.ok(r.ledgerBreakdown.payroll<0);
+  assert.ok(r.ledgerBreakdown.commission<0);
+  assert.equal(r.cashIn-r.cashOut,r.netCashChange);
+  assert.equal(r.openingCash+r.netCashChange,r.closingCash);
+  assert.equal(r.grossAfterStaff,r.grossMargin-r.staffCosts);
+  assert.equal(r.stockCount,state.vehicles.length);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('day 30 close generates an inbox message and immutable archived review', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Month End Cars');
+  for(let i=0;i<30;i++)app.click('continue');
+  let state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.day,31);
+  assert.equal(state.monthPlan.month,2);
+  assert.equal(state.monthlyReports.length,1);
+  assert.equal(state.monthlyReports[0].month,1);
+  assert.equal(state.monthlyReports[0].targetMet,false);
+  assert.equal(state.reputationScore,4);
+  assert.equal(state.monthlyReports[0].closingCash,12500);
+  assert.ok(state.messages.some(m=>m.linkPage==='reports'&&/Month 1 report/.test(m.subject)));
+  assert.match(app.nodes.get('event-notice').textContent,/management review ready/i);
+  assert.match(app.nodes.get('monthly-report-view').innerHTML,/MONTH 1/);
+  assert.match(app.nodes.get('monthly-report-view').innerHTML,/TARGET MISSED/);
+  const archived=JSON.stringify(state.monthlyReports[0]);
+  app.click('select-report',{month:'current'});
+  assert.match(app.nodes.get('monthly-report-view').innerHTML,/MONTH 2/);
+  app.click('continue');
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(JSON.stringify(state.monthlyReports[0]),archived);
+  const resumed=browser(storage);
+  resumed.click('resume');
+  assert.equal(resumed.engine.VERSION,5);
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).monthlyReports.length,1);
+});
+test('monthly targets credit salesperson performance only during active duty', () => {
+  const E=browser(new Map()).engine,P=E.people,state=E.create('Service Scores',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='sales'&&x.skills.sales>=16);
+  assert.ok(E.hireStaff(state,candidate.id).ok);
+  state.day=2;E.staffDay(state);
+  const a=E.market(2).sellers[0],b=E.market(2).sellers[1];
+  for (const car of [a,b]){
+    assert.ok(E.acquireSeller(state,car.id,car.ask).ok);
+    const v=state.vehicles.at(-1);
+    assert.ok(E.prepare(state,v.id).ok);
+    assert.ok(E.advertise(state,v.id,Math.round(v.retail/50)*50).ok);
+    assert.ok(E.completeSale(state,v.id,'cash',null).ok);
+  }
+  state.day=30;
+  const r=E.monthly.close(state);
+  assert.equal(r.sellers.length,1);
+  assert.equal(r.sellers[0].sold,2);
+  assert.equal(r.sellers[0].hit,true);
+  assert.equal(r.sellers[0].unitTarget,2);
+  assert.ok(state.staff[0].morale>=77,'Good sales performance improves morale');
+});
+test('migration from v0.5 preserves staff, outstanding balances and day without fabricated reports', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Established Example');
+  const applicant=app.engine.people.applicants(1).find(x=>x.role==='sales');
+  app.click('hire-staff',{id:applicant.id});
+  for(let i=0;i<8;i++)app.click('continue');
+  const before=JSON.parse(storage.get(STORAGE_KEY));
+  before.version=4;delete before.monthPlan;delete before.monthlyReports;
+  storage.set(STORAGE_KEY,JSON.stringify(before));
+  const resumed=browser(storage);
+  assert.equal(resumed.nodes.get('menu-continue').hidden,false);
+  resumed.click('resume');resumed.click('save');
+  const after=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(after.version,5);
+  assert.equal(after.day,before.day);
+  assert.equal(after.cash,before.cash);
+  assert.equal(after.ledger.length,before.ledger.length);
+  assert.equal(after.staff.length,1);
+  assert.equal(after.staff[0].name,before.staff[0].name);
+  assert.equal(after.payrollArrears,before.payrollArrears);
+  assert.deepEqual(after.monthlyReports,[]);
+  assert.equal(after.monthPlan.partial,true);
+  assert.equal(after.monthPlan.startDay,after.day);
+  assert.equal(after.monthPlan.month,1);
+  assert.match(resumed.nodes.get('monthly-report-view').innerHTML,/PARTIAL|MONTH 1/);
+});
+test('monthly report saved snapshots must reconcile cash and reject tampering', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Audit Motors');
+  for(let i=0;i<30;i++)app.click('continue');
+  const saved=JSON.parse(storage.get(STORAGE_KEY));
+  const corrupted=JSON.parse(JSON.stringify(saved));
+  corrupted.monthlyReports[0].closingCash+=250;
+  storage.set(STORAGE_KEY,JSON.stringify(corrupted));
+  assert.equal(browser(storage).nodes.get('menu-continue').hidden,true);
+  const corruptedPlan=JSON.parse(JSON.stringify(saved));
+  corruptedPlan.monthPlan.openingCash+=100;
+  storage.set(STORAGE_KEY,JSON.stringify(corruptedPlan));
+  assert.equal(browser(storage).nodes.get('menu-continue').hidden,true);
+});
+test('monthly reports never mislabel vehicle counts as currency amounts', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Presentation Motors');
+  const html=app.nodes.get('monthly-report-view').innerHTML;
+  assert.match(html,/Cash retail sales/);
+  assert.match(html,/Vehicles on forecourt/);
+  assert.doesNotMatch(html,/Cash retail sales<\/span><strong>£/);
+  assert.doesNotMatch(html,/Reputation opening<\/span><strong>£/);
+  assert.match(html,/GROSS TRADE MARGIN/);
+  assert.match(html,/SALES TEAM SCORECARDS/);
 });

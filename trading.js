@@ -7,7 +7,9 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 2;
-  const VERSION = 4;
+  const VERSION = 5;
+  const M = window.MotorTradeMonthly;
+  if (!M) throw new Error('Load monthly.js before trading.js');
   const P = window.MotorTradePeople;
   if (!P) throw new Error('Load people.js before trading.js');
   const I = window.MotorTradeIntel;
@@ -79,15 +81,16 @@
     };
   }
   function create(name, messages) {
-    return {
+    const state={
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       ...P.initial()
     };
+    return M.initialize(state);
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -95,7 +98,7 @@
       m && integer(m.id) && integer(m.day) && typeof m.from === 'string' &&
       typeof m.subject === 'string' && typeof m.preview === 'string' &&
       typeof m.body === 'string' && typeof m.read === 'boolean' &&
-      (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','business'].includes(m.linkPage)));
+      (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','staff','reputation','reports','business'].includes(m.linkPage)));
     if (!validMessages) return null;
     const messages = saved.messages.map(m => ({
       id:m.id,day:m.day,from:m.from,subject:m.subject,preview:m.preview,
@@ -104,7 +107,9 @@
     if (saved.version === 1) {
       // Previous release contained no trade transactions; keep name, day and inbox.
       if (saved.cash !== STARTING_CASH || saved.capacity !== CAPACITY) return null;
-      return {...create(saved.name.trim(),messages),day:saved.day};
+      const legacy=create(saved.name.trim(),messages);
+      legacy.day=saved.day;
+      return M.initialize(legacy,{migrating:true});
     }
     if (saved.capacity !== CAPACITY || !Array.isArray(saved.vehicles) ||
       !Array.isArray(saved.sold) || !Array.isArray(saved.ledger) ||
@@ -155,14 +160,14 @@
       /^(A|S)-[0-9]+-[0-9]+$/.test(key) && record &&
       cashValue(record.fee) && record.fee<=250 && record.day===saved.day);
     if (!validNegotiations || !validBids || !validReports) return null;
-    const workforce=saved.version===VERSION ? saved :
+    const workforce=saved.version>=4 ? saved :
       {...P.initial(),reputationScore:P.legacyScore(saved.sold.length)};
     if (!P.valid(workforce,saved.day)) return null;
     const ids = [...saved.vehicles,...saved.sold].map(v => v.id);
     if (new Set(ids).size !== ids.length || ids.some(id => id >= saved.nextId)) return null;
     const balance = STARTING_CASH + sum(saved.ledger,'delta');
     if (balance !== saved.cash || balance < 0 || balance > 100000000) return null;
-    return {
+    const restored={
       version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:CAPACITY,
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
@@ -182,6 +187,8 @@
       reports:Object.fromEntries(Object.entries(reports).map(([k,v])=>[k,{...v}])),
       ...P.clone(workforce)
     };
+    if(!M.restore(restored,saved))return null;
+    return restored;
   }
   const fail = (code, message) => ({ok:false,code,message});
   const success = message => ({ok:true,message});
@@ -424,6 +431,8 @@
     const completed=state.sold[state.sold.length-1];
     completed.reputationDelta=review.reputationDelta;
     completed.salesCommission=review.commission;
+    completed.salespersonId=review.salespersonId ?? null;
+    completed.salespersonName=review.salespersonName ?? 'Owner-managed';
     return success(
       vehicle.title + ' sold for ' + price +
       (px ? '; accepted ' + px.title + ' in part-ex for ' + allowance + '.' : '.') +
@@ -438,8 +447,16 @@
     state.reputation=P.tier(state.reputationScore);
     return out;
   }
+  function hireStaff(state,id){
+    const result=P.hire(state,id);
+    if(result.ok){
+      const newest=state.staff[state.staff.length-1];
+      M.onHire(state,newest);
+    }
+    return result;
+  }
   window.MotorTradeEngine = Object.freeze({
-    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,
+    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,hireStaff,
     market,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     prepare,advertise,buyers,counter,completeSale,totalMargin
