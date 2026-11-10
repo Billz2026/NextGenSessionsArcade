@@ -97,10 +97,12 @@
       const ask=Math.max(750,base.ask+adjustment);
       const delta=ask-base.ask;
       const miles=Math.max(3000,base.miles+((mix(key+'|miles')%105)-52)*100);
-      const wantsQuickSale=chance(key+'|urgency',conditions(day,name).privateChance);
+      const id='S-'+day+'-'+(10+phase*10+i);
+      const wantsQuickSale=chance('private|'+name+'|'+day+'|'+id,
+        conditions(day,name).privateChance);
       return {...base,ask,floor:Math.max(100,base.floor+delta),
         retail:Math.max(1100,base.retail+delta),miles,
-        id:'S-'+day+'-'+(10+phase*10+i),day,kind:'seller',
+        id,day,kind:'seller',
         note:base.note+(wantsQuickSale?
           ' · Owner hopes to complete today but will negotiate.':
           ' · Owner is checking the market and may walk away.')};
