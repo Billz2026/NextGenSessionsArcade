@@ -8,9 +8,11 @@
   const E = window.MotorTradeEngine;
   const PV = window.MotorTradePeopleView;
   const MV = window.MotorTradeMonthlyView;
-  if (!E || !PV || !MV) throw new Error('Game report modules must load before simulator.js');
+  const EV = window.MotorTradeEventsView;
+  if (!E || !PV || !MV || !EV) throw new Error('Game event and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
+  const D = E.events;
   const STORAGE_KEY = 'the-motor-trade-career-v1';
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
   const SAVE_VERSION = E.VERSION;
@@ -27,6 +29,7 @@
     sales: 'SALES OFFICE',
     finance: 'FINANCES',
     reports: 'MANAGEMENT REPORTS',
+    events: 'EVENTS & MEETINGS',
     staff: 'STAFF & RECRUITMENT',
     reputation: 'REPUTATION',
     business: 'MY DEALERSHIP'
@@ -247,7 +250,7 @@
     return cashText(E.quote(car,kind,price,!!career.reports?.[car.id]).expectedMargin);
   }
   function renderMarket() {
-    const {auctions,sellers} = E.market(career.day,career.reputationScore);
+    const {auctions,sellers} = E.market(career.day,career.reputationScore,career.deadlineSession);
     const auctionsHtml = auctions.length ? auctions.map(lot => {
       const state = (career.auctionBids || {})[lot.id];
       const owned = career.vehicles.some(v => v.origin === lot.id);
@@ -277,7 +280,10 @@
         '" max="100000" step="25" id="auction-bid-'+lot.id+'" value="'+guide+'"></label>'+
         '<button type="button" class="trade-button" data-action="bid-auction" data-id="'+lot.id+
         '"'+(closed?' disabled':'')+'>'+(closed?'CLOSED':'PLACE BID')+'</button></div></div></article>';
-    }).join('') : '<div class="trade-empty">No auction session today. Check direct sellers or advance to the next game day.</div>';
+    }).join('') : D.isDealDay(career.day) ?
+      '<div class="trade-empty deadline-auction-closed"><h2>AUCTIONS CLOSED — DEAL DAY.</h2>'+
+      '<p>Today is reserved for private sellers, retail customers and part-exchanges. Auction houses resume tomorrow.</p></div>' :
+      '<div class="trade-empty">No auction session today. Check direct sellers or advance to the next game day.</div>';
     const sellersHtml = sellers.length ? sellers.map(car => {
       const negotiation = (career.negotiations || {})[car.id];
       const owned = career.vehicles.some(v => v.origin === car.id);
@@ -342,11 +348,15 @@
   function renderSales() {
     const listed = career.vehicles.filter(car => car.status === 'listed');
     const holder = byId('sales-list');
+    const deadlineNote=D.isDealDay(career.day)?
+      '<div class="deadline-retail-intro"><strong>DEAL DAY · '+D.dealSession(career).time+'</strong>'+
+      '<p>Motivated retail buyers are ready to negotiate cash and part-exchanges. These are still genuine valuations, not guaranteed profit.</p></div>':'';
     if (!listed.length) {
-      holder.innerHTML = '<div class="trade-empty"><h2>NO RETAIL ENQUIRIES YET.</h2><p>Prepare a vehicle and advertise it from Vehicle Stock to attract a buyer.</p></div>';
+      holder.innerHTML = deadlineNote+'<div class="trade-empty"><h2>NO RETAIL ENQUIRIES YET.</h2>'+
+        '<p>Prepare a vehicle and advertise it from Vehicle Stock to attract a buyer.</p></div>';
       return;
     }
-    holder.innerHTML = listed.map(car => {
+    holder.innerHTML = deadlineNote+listed.map(car => {
       const buyer = E.buyers(car,career);
       const px = buyer.exchange;
       return '<article class="trade-card">' + cardHeader(car, 'CUSTOMER ENQUIRY / STOCK ' + car.id) +
@@ -385,6 +395,10 @@
       (entry.delta < 0 ? '−' : '+') + cashText(Math.abs(entry.delta)) + '</b></div>'
     ).join('');
   }
+  function renderEvents() {
+    byId('events-banner').innerHTML=EV.banner(career);
+    byId('events-view').innerHTML=EV.render(career);
+  }
   function renderMonthly() {
     const r=M.statement(career);
     byId('monthly-dashboard-target').innerHTML=MV.liveGoals(career,M);
@@ -405,6 +419,7 @@
     renderLedger();
     renderPeople();
     renderMonthly();
+    renderEvents();
   }
 
   function render() {
@@ -457,10 +472,14 @@
     }
     byId('topbar-page').textContent = PAGES[currentPage];
     byId('continue-day').disabled = career.day >= MAX_DAY;
+    byId('continue-label').textContent=D.isDealDay(career.day)?
+      (career.deadlineSession>=D.PHASES.length-1?'CLOSE MONTH':'NEXT SESSION'):'CONTINUE';
     const calendarCopy = byId('calendar-message');
-    calendarCopy.textContent = career.day === 1
-      ? 'Your first day in business. Review your briefing before advancing.'
-      : career.day <= 7
+    calendarCopy.textContent = D.isDealDay(career.day)?
+      'DEAL DAY '+D.dealSession(career).time+': customer-only retail trading. Auctions are closed and this game day advances in five sessions.' :
+      D.meetingDue(career)?
+        'FIRST-DAY MEETING: review the previous month and agree this month’s management priority.' :
+      career.day <= 7
         ? 'Day ' + career.day + ' of your career. Check the inbox for business updates.'
         : 'Auction lots, direct sellers and customer opportunities refresh daily. Check your stock age and cash.';
     byId('save-warning').hidden = storageAvailable;
@@ -487,13 +506,35 @@
   }
   function advanceDay() {
     if (!career || career.day >= MAX_DAY) return;
+    if(D.meetingBlocksContinue(career)){
+      currentPage='events';
+      eventNotice='Your monthly management meeting is due. Review the previous month and agree one priority before advancing to the next day.';
+      render();
+      return;
+    }
+    if(D.isDealDay(career.day)&&career.deadlineSession<D.PHASES.length-1){
+      const event=D.advanceSession(career);
+      expandedReportId=null;
+      offerDrafts={};
+      lastTradeResult=null;
+      currentPage='events';
+      eventNotice=event.message;
+      persistCareer();
+      render();
+      return;
+    }
+    const enteringDealDay=(career.day+1)%30===0;
     // Close the completed 30-day period BEFORE charging the next day's wage.
     // This keeps reports internally reconcilable with recorded ledger dates.
     const closed=career.day===career.monthPlan.endDay?M.close(career):null;
     career.day += 1;
+    career.deadlineSession=0;
     if(closed) {
       M.next(career);
       selectedMonth=String(closed.month);
+      currentPage='events'; // Show the first-day management meeting.
+    } else if(enteringDealDay){
+      currentPage='events'; // Surface the special event automatically.
     }
     const workforceEvent=E.staffDay(career);
     lastTradeResult = null;
@@ -574,7 +615,7 @@
     const match=/^(auction-bid-|seller-offer-)([AS]-[0-9]+-[0-9]+)$/.exec(event.target.id);
     if (!match) return;
     const kind=match[1]==='auction-bid-'?'auction':'seller';
-    const catalogue=E.market(career.day,career.reputationScore);
+    const catalogue=E.market(career.day,career.reputationScore,career.deadlineSession);
     const car=(kind==='auction'?catalogue.auctions:catalogue.sellers).find(v=>v.id===match[2]);
     const output=byId('projection-'+match[2]);
     if (!car || !output) return;
@@ -607,6 +648,16 @@
         break;
       case 'continue':
         advanceDay();
+        break;
+      case 'hold-meeting':
+        if(career){
+          const r=D.holdMeeting(career,button.dataset.focus);
+          eventNotice=r.message;
+          lastTradeResult=null;
+          if(r.ok)persistCareer();
+          currentPage='events';
+          render();
+        }
         break;
       case 'toggle-report':
         if (career) {

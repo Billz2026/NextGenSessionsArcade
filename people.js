@@ -204,6 +204,8 @@
     if(price>fair+250){change-=1;reason+='; price exceeded expected retail value';}
     if(service>=16){change+=1;reason+='; excellent sales care';}
     if(service<=7){change-=1;reason+='; poor customer care';}
+    const careImpact=window.MotorTradeEvents?.careBonus(state,vehicle,price)||0;
+    if(careImpact){change+=careImpact;reason+='; management focus on customer care';}
     if(state.payrollArrears>0){change-=1;reason+='; outstanding staff obligations';}
     const before=state.reputationScore;
     state.reputationScore=clamp(before+change,0,100);

@@ -457,3 +457,91 @@
  .report-highlow{grid-template-columns:1fr}.report-staff-row{grid-template-columns:repeat(2,minmax(0,1fr))}
  .report-teaser{padding:13px;flex-direction:column;align-items:stretch}.report-teaser-side{justify-content:space-between}
  .report-teaser-side .secondary-button{white-space:normal}.report-line>strong{font-size:14px}}
+
+/* v0.7 customer-only Deal Day and first-day monthly board meetings. */
+.events-banner{margin:0 0 16px}
+.event-banner{display:flex;align-items:center;justify-content:space-between;gap:15px;
+  background:linear-gradient(115deg,#203c46,#102630);border:1px solid #49616a;
+  border-left:4px solid #cfab74;padding:14px 18px;border-radius:7px}
+.event-banner small,.deadline-hero small,.meeting-hero small{color:#e5be82;
+  font:750 9px/1.5 var(--mono);letter-spacing:.05em}
+.event-banner h3{font:850 25px/1.1 var(--title);color:#f6e4c4;margin:4px 0}
+.event-banner p{font:500 11px/1.5 var(--body);color:#bad0d2;max-width:810px}
+.event-banner button{flex-shrink:0}
+.event-deadline-banner{border-left-color:#eab46f;background:linear-gradient(110deg,#41362b,#193039)}
+.event-meeting-banner{border-left-color:#98c5b0}
+.deadline-hero,.meeting-hero{padding:26px 28px;border:1px solid #8e775b;border-radius:10px;
+ background:linear-gradient(120deg,#352e29 2%,#21353b 65%,#152831);margin-bottom:14px}
+.deadline-hero{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.deadline-hero h2,.meeting-hero h2{font:900 clamp(42px,6vw,76px)/1 var(--title);
+ color:#f2c788;letter-spacing:.025em;margin:9px 0}
+.deadline-hero p,.meeting-hero p{font:500 12px/1.6 var(--body);color:#c2d1d2;max-width:650px}
+.deadline-time{font:900 60px/1 var(--title);color:#f3d6a7}
+.deadline-alert{display:flex;align-items:end;flex-direction:column;gap:8px;text-align:right}
+.deadline-alert span{color:#c6b697;font:700 10px var(--mono)}
+.deadline-alert strong{color:#f4dfb7;font:850 24px var(--title)}
+.deadline-timeline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-bottom:14px}
+.deadline-phase{padding:11px 9px;background:#142731;border:1px solid #3c525b;border-radius:6px}
+.deadline-phase span{display:block;font:800 19px var(--title);color:#9caeb2;margin-bottom:5px}
+.deadline-phase strong{font:700 9px/1.3 var(--mono);color:#91a7b1}
+.deadline-phase.deadline-done{border-color:#647966;background:#203832}
+.deadline-phase.deadline-now{border-color:#f4c783;background:#4b3a2c}
+.deadline-phase.deadline-now span,.deadline-phase.deadline-now strong{color:#f8d9a8}
+.event-metrics,.meeting-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:0 0 16px}
+.event-metrics>div,.meeting-metrics>div{padding:16px;border:1px solid #405963;border-radius:7px;background:#152d38;min-width:0}
+.event-metrics span,.meeting-metrics small{display:block;color:#99b6be;
+ font:700 9px/1.5 var(--mono);margin-bottom:7px}
+.event-metrics strong,.meeting-metrics strong{display:block;color:#f0d39f;
+ font:850 clamp(20px,2.6vw,28px)/1 var(--title);overflow-wrap:anywhere}
+.event-good,.event-attention,.event-note{font:600 11px/1.65 var(--body);
+ padding:13px 15px;margin:12px 0;border-radius:5px}
+.event-good{background:#213c34;border:1px solid #6f987d;color:#d4e8d6}
+.event-attention{background:#40382c;border:1px solid #b99a6b;color:#f0dbc2}
+.event-note{background:#142831;border:1px solid #39515c;color:#aec3cb}
+.event-action-grid,.meeting-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}
+.event-action-grid>div{padding:20px;background:#182d38;border:1px solid #435965;border-radius:7px}
+.event-action-grid h3,.event-section h3{font:850 26px/1.1 var(--title);
+ color:#f1d4a2;margin:0 0 10px}
+.event-action-grid p,.event-section p{color:#b9cacc;font:500 12px/1.55 var(--body);margin:0 0 14px}
+.event-section{padding:19px 22px;margin:0 0 15px}
+.meeting-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+.meeting-notes>div{display:flex;gap:12px;border-bottom:1px solid #39505a;padding:12px 0}
+.meeting-notes b{font:850 18px var(--title);color:#d7b47c}
+.meeting-notes p{margin:0}
+.meeting-staff-row,.meeting-minute{display:flex;justify-content:space-between;
+ gap:10px;padding:11px 0;border-bottom:1px solid #3b525d;font:600 11px/1.5 var(--body);color:#bcd1d2}
+.meeting-staff-row strong,.meeting-minute strong{color:#f2d49c}
+.meeting-minute span{font:700 9px var(--mono);color:#a7c0c7}
+.meeting-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.meeting-choice{display:flex;flex-direction:column;text-align:left;gap:11px;
+ padding:17px 15px;background:#1e363e;border:1px solid #708078;border-radius:7px;
+ color:#e1d4b9;cursor:pointer}
+.meeting-choice strong{font:850 22px/1.1 var(--title);color:#efd5a7}
+.meeting-choice span{font:500 11px/1.55 var(--body);color:#bcd1d2;flex:1}
+.meeting-choice small{font:700 9px var(--mono);color:#e6bd7e}
+.meeting-choice:hover:not(:disabled){background:#2a4547;border-color:#e9c080}
+.meeting-choice:disabled{cursor:default;opacity:.65}
+.deadline-retail-intro{padding:14px 17px;border:1px solid #a8885e;background:#342e27;
+ border-radius:6px;margin:0 0 14px;grid-column:1/-1}
+.deadline-retail-intro strong{color:#f1c383;font:800 19px var(--title)}
+.deadline-retail-intro p{font:500 11px/1.5 var(--body);color:#d3c6b7;margin:6px 0 0}
+.deadline-auction-closed{border:1px solid #986f50;background:#2c2b2a}
+@media(max-width:1120px){.meeting-options{grid-template-columns:1fr}.deadline-hero{align-items:flex-start}}
+@media(max-width:780px){.event-banner{flex-direction:column;align-items:stretch}
+ .deadline-timeline{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .event-action-grid,.meeting-columns{grid-template-columns:1fr}
+ .event-metrics,.meeting-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:570px){.deadline-hero{flex-direction:column;padding:18px}
+ .deadline-alert{align-items:flex-start;text-align:left}
+ .deadline-time{font-size:46px}.meeting-hero{padding:18px}
+ .deadline-timeline{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .event-metrics>div,.meeting-metrics>div{padding:12px}
+ .event-section{padding:15px}.event-action-grid>div{padding:15px}
+ .event-banner h3{font-size:23px}}
+
+/* Keep every department and the bottom career controls reachable at laptop height. */
+@media(min-width:1021px){
+  .career-sidebar{height:100dvh;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin;scrollbar-color:#526570 #10202a}
+  .sidebar-logo,.sidebar-bottom{flex-shrink:0}
+}
