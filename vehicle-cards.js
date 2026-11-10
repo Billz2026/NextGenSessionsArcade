@@ -44,12 +44,16 @@
   }
   function heading(car,source='stock',identifier=''){
     const id=P.identity(car);
+    const fuel=String(car.fuel||'Unverified');
+    const fuelType=['Petrol','Diesel','Hybrid','Electric','Plug-in Hybrid'].includes(fuel)?fuel:'Unverified';
+    const className=fuelType.toLowerCase().replace(/[^a-z]+/g,'-');
     return photo(car,source)+
       '<div class="vehicle-card-heading"><div><small>'+
       esc(identifier||kindText[source]||source)+'</small><h3>'+esc(car.title)+'</h3>'+
-      '<p>'+esc(car.color||'Colour unverified')+' · '+esc(id.generation)+
-      ' · '+esc(car.fuel||'Fuel unverified')+' · '+esc(car.gearbox||'Gearbox unverified')+
-      '</p></div></div>'+
+      '<p>'+esc(car.color||'Colour unverified')+' · '+esc(id.generation)+'</p>'+
+      '<div class="vehicle-powertrain-row"><span class="vehicle-powertrain vehicle-powertrain-'+className+'">'+
+      esc(fuelType.toUpperCase())+'</span><span>'+esc(car.gearbox||'Gearbox unverified')+'</span></div>'+
+      '</div></div>'+
       '<div class="vehicle-card-statline">'+
       '<div><small>MILEAGE</small><strong>'+mileage(car.miles)+'</strong></div>'+
       '<div><small>OWNERS</small><strong>'+esc(car.profile?.owners??'—')+'</strong></div>'+
