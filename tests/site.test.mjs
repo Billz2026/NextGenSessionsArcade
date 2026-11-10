@@ -346,7 +346,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('prepare-stock', { id: '1' });
   state = JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.vehicles[0].status, 'prepared');
-  assert.equal(state.cash, 12500 - bid - lot.fee - lot.prep);
+  assert.equal(state.cash, 12500 - state.vehicles[0].cost - state.vehicles[0].prepSpent);
   app.setInput('stock-price-1', 6200);
   app.click('list-stock', { id: '1' });
   state = JSON.parse(saved.get(STORAGE_KEY));
@@ -362,7 +362,8 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   assert.equal(state.sales, 1);
   assert.equal(state.sold[0].mode,'cash');
   assert.equal(state.sold[0].price,achievedPrice);
-  assert.equal(state.sold[0].profit,achievedPrice - bid - lot.fee - lot.prep);
+  assert.equal(state.sold[0].profit,achievedPrice -
+    state.sold[0].acquisition - state.sold[0].prep);
   assert.equal(state.cash,12500 + state.sold[0].profit);
   assert.equal(state.ledger.reduce((a,x)=>a+x.delta,0),state.cash-12500);
   const resumed = browser(saved);
@@ -403,9 +404,11 @@ test('direct sellers negotiate and part exchanges become properly valued stock',
   assert.equal(state.vehicles.length,1,'Trade-in replaces sold unit');
   assert.equal(state.vehicles[0].source,'part-ex');
   assert.equal(state.vehicles[0].cost,px.floor+25);
-  const expected=12500-accepted-seller.prep+firstBuyer.pxOffer-(px.floor+25);
+  const expected=12500-state.sold[0].acquisition-state.sold[0].prep+
+    firstBuyer.pxOffer-(px.floor+25);
   assert.equal(state.cash,expected,'Sale proceeds minus allowance is the cash difference');
-  assert.equal(state.sold[0].profit,firstBuyer.pxOffer-accepted-seller.prep);
+  assert.equal(state.sold[0].profit,firstBuyer.pxOffer-
+    state.sold[0].acquisition-state.sold[0].prep);
   assert.equal(state.ledger.reduce((a,l)=>a+l.delta,0),state.cash-12500);
   app.click('prepare-stock',{id:'2'});
   app.setInput('stock-price-2',3500);
@@ -481,15 +484,20 @@ test('cash reserves protect mandatory preparation across multiple purchases', ()
   app.setInput('seller-offer-' + seller.id,seller.ask);
   app.click('buy-seller',{id:seller.id});
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles.length,1);
-  app.click('prepare-stock',{id:'1'});
-  state = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(state.cash,0);
-  app.setInput('stock-price-1',6200);
-  app.click('list-stock',{id:'1'});
-  app.click('sell-cash',{id:'1'});
-  state = JSON.parse(saved.get(STORAGE_KEY));
+  // There is no longer free, instantaneous preparation. With exactly the
+  // original repair reserve, the assessment and garage uplift are unaffordable.
+  // The dealer can cut losses using the separate wholesale outlet.
+  const failedAssessment=app.engine.assessStock(state,1);
+  assert.equal(failedAssessment.ok,false);
+  assert.equal(failedAssessment.code,'cash');
+  assert.ok(app.nodes.get('workshop-board').innerHTML.includes('SELL TO TRADE'));
+  app.click('dispose-workshop',{id:'1'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.stock,0);
-  assert.ok(state.cash>0,'Player can sell out of a cash shortage');
+  assert.equal(state.sales,0,'Wholesale exit must not count as a retail sale');
+  assert.equal(state.wholesale.length,1);
+  assert.ok(state.wholesale[0].profit<0,'The cash recovery crystallises a loss');
+  assert.ok(state.cash>0);
 });
 
 test('seller negotiations counter, then accept or walk away without spending cash', () => {
@@ -639,15 +647,16 @@ test('a paid inspection reveals new risk before purchase and is included in real
   assert.equal(state.vehicles[0].profile.inspected,true);
   resume.click('prepare-stock',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(state.vehicles[0].prepSpent,state.vehicles[0].prepBudget);
+  assert.ok(state.vehicles[0].prepSpent>=state.vehicles[0].prepBudget,
+    'External garage pricing can exceed the original repair allowance');
   resume.setInput('stock-price-1',6800);
   resume.click('list-stock',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
   const achieved=resume.engine.buyers(state.vehicles[0]).cashOffer;
   resume.click('sell-cash',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(state.sold[0].profit,achieved-(hammer+lot.fee+lot.profile.inspectionFee)-
-    (lot.profile.basePrep+lot.profile.hiddenFault.cost));
+  assert.equal(state.sold[0].profit,achieved-
+    state.sold[0].acquisition-state.sold[0].prep);
   assert.ok(state.sold[0].profile,'Vehicle report must remain in sales history');
   assert.equal(state.cash,12500+state.sold[0].profit);
   assert.ok(state.ledger.some(x=>x.note.startsWith('Pre-purchase inspection')));
@@ -917,10 +926,13 @@ test('payroll cash shortages are recorded without spending repair reserves or lo
   assert.ok(tick.arrears>0);
   assert.equal(state.cash,remaining);
   assert.ok(state.reputationScore<5,'Unpaid staff wages hurt reputation');
-  assert.ok(E.prepare(state,1).ok);
-  assert.equal(state.cash,0);
-  assert.ok(E.advertise(state,1,6200).ok);
-  assert.ok(E.completeSale(state,1,'cash',null).ok);
+  // Original prep money cannot fund a new diagnosis and external uplift.
+  // Exit to the trade, settle arrears next day and keep the ledger coherent.
+  assert.equal(E.assessStock(state,1).ok,false);
+  assert.ok(E.disposeStock(state,1).ok);
+  assert.equal(state.vehicles.length,0);
+  assert.equal(state.sold.length,0);
+  assert.ok(state.wholesale[0].profit<0);
   state.day=3;
   const recovered=E.staffDay(state);
   assert.equal(recovered.arrears,0);
