@@ -926,3 +926,51 @@ test('tampered staff ratings or payroll liabilities invalidate a career save', (
   storage.set(STORAGE_KEY,JSON.stringify(bad));
   assert.equal(browser(storage).nodes.get('menu-continue').hidden,true);
 });
+
+test('sales commission never consumes the reserved preparation cash of incoming stock', () => {
+  const E=browser(new Map()).engine,P=E.people;
+  const state=E.create('Commission Reserve Motors',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='sales');
+  assert.ok(P.hire(state,candidate.id).ok);
+  state.day=2;E.staffDay(state);
+  const lot=E.market(2).auctions[0];
+  assert.ok(E.acquireAuction(state,lot.id,lot.rival+50).ok);
+  const prepDue=state.vehicles[0].prepBudget;
+  // Simulate a tight cash position with reserved workshop money. Use a
+  // valid trade to move cash into stock, then assess commission in isolation.
+  state.cash=prepDue;
+  state.ledger.push({day:2,delta:-(state.ledger.reduce((n,l)=>n+l.delta,12500)-prepDue),
+    note:'Test fixture: settled separate business expense'});
+  const before=state.cash;
+  const out=P.sale(state,{profile:{grade:2,likelySale:5000}},4800,10000);
+  assert.ok(out.commission>0);
+  assert.equal(state.cash,before,'Reserved workshop funds must remain available');
+  assert.equal(state.payrollArrears,out.commission);
+  assert.equal(state.ledger.filter(x=>x.note.startsWith('Sales commission')).length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('reputation attracts additional direct sellers only after trust threshold', () => {
+  const E=browser(new Map()).engine;
+  const day=Array.from({length:30},(_,i)=>i+2).find(d=>{
+    const baseline=E.market(d,5).sellers.length;
+    return baseline>0&&baseline<4;
+  });
+  assert.ok(day);
+  const owner=E.market(day,5),trusted=E.market(day,42);
+  assert.equal(trusted.sellers.length,owner.sellers.length+1);
+  assert.equal(trusted.auctions.length,owner.auctions.length);
+  assert.equal(new Set(trusted.sellers.map(s=>s.id)).size,trusted.sellers.length);
+});
+test('releasing staff records notice costs and any unpaid amount as a liability', () => {
+  const E=browser(new Map()).engine,P=E.people,state=E.create('Employer Test',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='technician');
+  assert.ok(P.hire(state,candidate.id).ok);
+  const staff=state.staff[0], notice=P.dailyCost(staff)*7;
+  const result=P.release(state,staff.id);
+  assert.ok(result.ok);
+  assert.equal(state.staff.length,0);
+  assert.equal(state.cash,12500-P.HIRING_FEE-notice);
+  assert.equal(state.payrollArrears,0);
+  assert.ok(state.ledger.some(x=>x.note.startsWith('Staff exit')));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
