@@ -121,6 +121,7 @@
   let eventNotice = '';
   let lastTradeResult = null;
   let expandedReportId = null;
+  let offerDrafts = {}; // Current-day input, retained while opening a report.
 
   function gameDate(day) {
     return new Date(START_DATE_UTC + (day - 1) * MS_PER_DAY);
@@ -244,7 +245,9 @@
       const owned = career.vehicles.some(v => v.origin === lot.id);
       const closed = owned || state?.status === 'lost';
       const warning = purchaseWarning(lot.guide + lot.fee + repairReserve(lot));
-      const guide = state?.lastBid ? Math.max(lot.guide,state.lastBid + 150) : lot.guide + 250;
+      const guide = Number.isSafeInteger(offerDrafts[lot.id]) ?
+        offerDrafts[lot.id] : state?.lastBid ?
+          Math.max(lot.guide,state.lastBid + 150) : lot.guide + 250;
       const outcome = owned ? '<div class="trade-inline-feedback trade-feedback-success">PURCHASED — see Vehicle Stock.</div>' :
         state?.status === 'lost' ? '<div class="trade-inline-feedback trade-feedback-warning">OUTBID — lot closed. No fee charged.</div>' :
         state?.status === 'outbid' ? '<div class="trade-inline-feedback trade-feedback-warning">OUTBID — one more bid available. No fee charged.</div>' : '';
@@ -268,7 +271,8 @@
       const owned = career.vehicles.some(v => v.origin === car.id);
       const closed = owned || negotiation?.status === 'walked';
       const warning = purchaseWarning(car.ask + repairReserve(car));
-      const asking = negotiation?.status === 'counter' ? negotiation.counter : car.ask;
+      const asking = Number.isSafeInteger(offerDrafts[car.id]) ?
+        offerDrafts[car.id] : negotiation?.status === 'counter' ? negotiation.counter : car.ask;
       const offerStatus = owned ? '<div class="trade-inline-feedback trade-feedback-success">PURCHASED — car added to Vehicle Stock.</div>' :
         negotiation?.status === 'walked' ? '<div class="trade-inline-feedback trade-feedback-warning">OWNER WALKED AWAY — enquiry closed for today.</div>' :
         negotiation?.status === 'counter' ?
@@ -455,6 +459,7 @@
     lastTradeResult = null;
     expandedReportId = null;
     career.reports = {};
+    offerDrafts = {};
     // Prior negotiations are tied to that day's leads. Keep the save bounded.
     career.negotiations = {};
     career.auctionBids = {};
@@ -482,6 +487,7 @@
     selectedMessageId = null;
     lastTradeResult = null;
     expandedReportId = null;
+    offerDrafts = {};
     screen = 'career';
     currentPage = 'dashboard';
     const saved = persistCareer();
@@ -506,6 +512,8 @@
     const output=byId('projection-'+match[2]);
     if (!car || !output) return;
     const price=Number(event.target.value);
+    offerDrafts[match[2]]=Number.isSafeInteger(price) && event.target.value!==''?
+      price:null;
     output.textContent=Number.isSafeInteger(price) && event.target.value!==''?
       expectedMarginText(car,kind,price):'ENTER A VALID OFFER';
   });
