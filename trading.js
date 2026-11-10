@@ -99,7 +99,7 @@
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
-      customerCases:{},customerHistory:[],
+      customerCases:{},customerHistory:[],customerFunds:[],
       ...P.initial()
     };
     M.initialize(state);
@@ -451,7 +451,7 @@
   const bookCustomer=(state,id)=>C.book(state,id);
   const testDrive=(state,id)=>C.testDrive(state,id);
   const depositCustomer=(state,id)=>C.deposit(state,id);
-  const cancelCustomer=(state,id)=>C.cancel(state,id);
+  const cancelCustomer=(state,id,reason='buyer')=>C.cancel(state,id,reason);
   const advanceCustomers=state=>C.advanceDay(state);
   const nextCustomerSession=state=>C.nextSession(state);
   function agreeCustomer(state,id,mode,allowance){
@@ -492,14 +492,20 @@
     const result=C.complete(state,id);
     if(!result.ok)return result;
     const realised=price-v.cost-v.prepSpent;
-    // Customer deposits are held separately from trading cash.
-    // Full purchase consideration settles into trading cash on handover.
-    pay(state,price,'Retail sale: '+v.title+' ('+mode+')');
+    // The customer paid the deposit earlier. On collection they pay only
+    // the remaining cash balance; the existing deposit transfers from its
+    // segregated holding account. Both credits total the agreed sale price.
+    const depositApplied=result.appliedDeposit||0;
+    pay(state,price-depositApplied,'Retail balance received on collection: '+v.title+
+      ' ('+mode+')');
+    if(depositApplied)pay(state,depositApplied,
+      'Customer deposit applied to retail sale: '+v.title);
     if(px)pay(state,-agreedAllowance,'Part-exchange acquisition: '+px.title);
     state.vehicles=state.vehicles.filter(x=>x.id!==id);
     state.sold.push({
       id:v.id,title:v.title,source:v.source,day:state.day,mode,price,
       color:v.color,generation:v.generation,origin:v.origin,
+      depositApplied,customerBalancePaid:price-depositApplied,
       acquisition:v.cost,prep:v.prepSpent,profit:realised,
       profile:v.profile?{...v.profile}:null,
       exchange:px?px.title:null,allowance:px?agreedAllowance:0
@@ -514,6 +520,9 @@
     completed.salespersonId=review.salespersonId??null;
     completed.salespersonName=review.salespersonName??'Owner-managed';
     return success(v.title+' handed over to '+c.name+' for £'+price+
+      (depositApplied?' (deposit £'+depositApplied+
+        ' already paid; balance £'+(price-depositApplied)+
+        ' received at collection)':'')+
       (px?'; part-exchange allowance £'+agreedAllowance+'.':'.')+
       ' Gross trading margin: £'+realised+' before overheads, tax and aftersales.');
   }
