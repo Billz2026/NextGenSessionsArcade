@@ -4,6 +4,27 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## v0.9.3 — Modern UK Used-Car Market & Luxury Progression
+
+**Dealer career:** A new dealership still starts with £12,500 and four spaces. Its first catalogue mixes affordable 2016–2020 higher-mileage stock with a few accessible newer vehicles (including a high-mileage Nissan Leaf). As cash and reputation rise, the buying desk unlocks progressively newer **Modern**, **Premium** and **Luxury** stock. Older cars never disappear entirely; established traders can still look for low-cost opportunities. The buying desk shows the next unlock thresholds.
+
+**Eligibility (both conditions):**
+
+| Market access | Opening cash | Monthly opening reputation |
+|---|---:|---:|
+| Starter | Any | Any |
+| Modern | £18,500 | 15 |
+| Premium | £42,000 | 40 |
+| Luxury | £110,000 | 65 |
+
+Listings are **fixed per game day** using opening-day cash and the reputation at the start of the current 30-day management period. Purchases, sales and inspection fees do not reroll the day's lots or shift their IDs. After advancing days, cash changes can unlock the next tier; reputation access is reviewed at the next management period. Both thresholds measure resources, **not an extra fee or purchase**. Existing save format v9 and historic stock costs are unchanged.
+
+**Catalogue:** 49 distinct, curated fictional UK used-car model/derivative entries, including modern Vauxhall Corsa and Peugeot 208, Toyota Yaris and Corolla hybrids, Honda Jazz e:HEV, MG4 EV, Corsa-e, e-208, Nissan Leaf, Tesla Model 3 / Y, BMW 3 Series, Audi A3, Volvo XC40, Porsche Macan / Taycan, Range Rover and Mercedes-Benz luxury models. Five fuel categories now display as prominent card labels: petrol, diesel, hybrid, plug-in hybrid and electric. Model-specific engines/motors replace the previous generic powertrain guess. Electric and hybrid workshop risk descriptions no longer generate irrelevant diesel DPF or clutch faults. All valuation, battery condition and MOT-style data remain fictional, not live DVLA/DVSA or actual auction/retail quotes.
+
+**Photography:** Eight additional source-credited Wikimedia Commons photographs depict modern counterparts; images are restricted by generation, colour, year and, when identified, fuel. A different body, paint or electric/petrol derivative is never presented as an exact match. Missing matches retain the explicit photograph-unavailable panel rather than using unlicensed dealer listing photos. New vehicle data can be revised each release without a live data dependency.
+
+Market context: [SMMT UK used-car market, Q3 2026](https://www.smmt.co.uk/used-car-market-records-second-quarter-of-growth-with-one-in-20-drivers-going-electric/) and [AA Cars used vehicle asking price trends, Q3 2026](https://www.theaa.com/used-cars/used-car-market-trends/q3-2026). These are sector context and broad pricing guides; **none of the game's individual prices is a scraped live listing**.
+
 ## v0.9.2 — Vehicle card reliability and first catalogue expansion
 
 - Three additional real, licence-checked Wikimedia Commons photographs: red 2014 Vauxhall Corsa D Excite (Harvey Bold, CC BY 4.0); silver 2016 Peugeot 208 Allure facelift (Harvey Bold, CC0 1.0); and grey 2014 Honda Jazz GE ES Plus (Harvey Bold, CC BY 4.0). The curated catalogue increases from five to eight images. Each photograph represents a matching model, generation and colour, not the exact fictional car.
