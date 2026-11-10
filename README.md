@@ -4,6 +4,13 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## v0.9.2 — Vehicle card reliability and first catalogue expansion
+
+- Three additional real, licence-checked Wikimedia Commons photographs: red 2014 Vauxhall Corsa D Excite (Harvey Bold, CC BY 4.0); silver 2016 Peugeot 208 Allure facelift (Harvey Bold, CC0 1.0); and grey 2014 Honda Jazz GE ES Plus (Harvey Bold, CC BY 4.0). The curated catalogue increases from five to eight images. Each photograph represents a matching model, generation and colour, not the exact fictional car.
+- Failed remote image requests now reveal a visible unavailable-image panel while preserving the vehicle's controls and source attribution.
+- Fixed both career setup and business profile labels to show four forecourt spaces, matching the game engine. This does not change capital, capacity logic or saved careers.
+- This is *not* full model and colour coverage. Other vehicles (including i20, Kia Rio, Corsa E and Golf) still require matching, licensed photos. Previously saved paint colours are never overwritten.
+
 ## v0.9.1 — Real Vehicle Photograph Cards & Deposit Part-Payments
 
 **Real representative car photos, never synthetic substitutes.** Auctions, Private & Walk-in Sellers, Stock, Workshop, incoming customer part-exchanges, Reserved vehicles and recent Sold cars share a premium large-photo card system. Every card shows its true matching **make/model, generation/face-style, colour and year-band**; it continues with simulated mileage/owner/MOT and relevant prices and actions. If the photo library lacks a matching real picture, the game displays **PHOTO UNAVAILABLE** rather than a wrong car, mismatched paint colour or computer-generated substitute. A photo of a *similar trim* can be used only with a visible disclosure; none is presented as a photograph of the exact fictional vehicle.
