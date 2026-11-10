@@ -4,6 +4,34 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## Monthly Management Reports & Targets (v0.6)
+
+The game now operates in **30-game-day management months** (a transparent simulation rule, not UK calendar-month payroll). The dealership must achieve a **monthly unit sales target and a positive gross vehicle margin**. Turnover and gross-margin guides are secondary objectives. Targets are locked at each month's start and recalculate for the *next* month as reputation rises:
+
+| Reputation | Required vehicles per operating month |
+|---|---:|
+| New Trader (0–19) | 2 |
+| Local Dealer (20–39) | 3 |
+| Trusted Dealer (40–59) | 4 |
+| Regional Specialist (60–79) | 5 |
+| Prestige Dealer (80–100) | 6 |
+
+Targets suit the existing two-space forecourt at entry level; they assume stock can turn over more than once in a month. A future premises/workshop release will revisit this operational capacity. Employees can also receive **individual sales-unit targets**, calculated from the days they are actually eligible to work in the month. Staff hired with less than seven eligible days remaining are exempt from that month's target. Sales personally closed by an active salesperson are credited to that employee, not automatically to every employee.
+
+At the end of day 30, 60, 90 and so on, press CONTINUE to close the period. A **Management Office inbox message** announces the result, and the complete archive appears in the **Management Reports** navigation. The result snapshot cannot change later. Reaching the company sales target with a positive gross margin earns a small reputation bonus; severe shortfalls can slightly reduce it. Employees gain morale when their own targets are met and lose morale for missed achievable targets. No artificial cash bonuses are awarded.
+
+### What each management report records
+
+- **Sales targets:** Actual units vs required units, turnover vs planning guide, gross margin vs guide and end-of-month status.
+- **Financial statement:** Opening and closing cash, money received/paid, exact ledger reconciliation, completed-sales gross margin, gross margin after paid staff expenses and category-by-category auction, private purchase, part-exchange, repair, inspection, wages, commission, training, hiring and notice outgoings.
+- **Stock and buying:** Unsold inventory, car-by-car stock ageing, cars older than 14 days, preparation waiting and money invested in stock; sales split by cash/part-exchange and best/worst-margin vehicle.
+- **Employee performance:** Per-salesperson sales quota, sales achieved, customer turnover, gross contribution and whether their monthly target was met. Players operating without a salesperson can still satisfy the overall dealership target themselves.
+- **Customer trust:** Opening/closing reputation, actual recorded reputation events, unpaid employee liabilities and a clear warning about absent customer-satisfaction and warranty-claim modelling.
+
+The **live** report is updated as transactions happen. Historical reports are fixed snapshots, with the most recent 120 archived. Existing v1–v4 careers migrate safely to save schema v5. A previously played career begins *partial-period reporting at the actual upgrade day* instead of inventing financial history or retrospectively changing old transactions.
+
+**Accounting disclaimer:** These reports are management game summaries, not statutory accounts or taxable net profit. In particular, outstanding stock cash, unrecovered inspection fees, working capital, cash flow and realised vehicle margins are different quantities; UK payroll obligations, pensions, VAT, warranty liabilities, property costs, corporation tax and finance charges are not yet fully modelled. Historical vehicle contributions are not silently recalculated when upgrading.
+
 ## Staff & Reputation (v0.5)
 
 Careers start as **NEW TRADER, 5/100 reputation**, with no employees. Open **Staff & Recruitment** to review six fictional candidates (two per role) in a weekly rotating shortlist, inspect 1–20 skills, salaries and experience, and hire up to three employees (one per role at the first dealership).
@@ -80,6 +108,8 @@ Customers are currently deterministic examples rather than a fully simulated mar
 - `index.html` — game menu and interactive management screens.
 - `styles.css` — responsive premium game interface.
 - `people.js` — candidate selection, staff salaries, training, performance and reputation engine.
+- `monthly.js` — operating-month goals, cash/stock reporting, month close and archived reports.
+- `monthly-view.js` — responsive monthly report cards, staff scorecards and financial breakdown.
 - `people-view.js` — responsive personnel and reputation management UI.
 - `vehicle-intel.js` — stable fictional vehicle profile generation, repair forecasts and appraisal arithmetic.
 - `vehicle-view.js` — inline report UI for buying and stock.
@@ -97,6 +127,8 @@ node --check vehicle-intel.js
 node --check vehicle-view.js
 node --check people.js
 node --check people-view.js
+node --check monthly.js
+node --check monthly-view.js
 node --check trading.js
 node --check simulator.js
 node --test tests/site.test.mjs
