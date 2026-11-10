@@ -16,15 +16,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=14">
+  <link rel="stylesheet" href="./styles.css?v=15">
   <script src="./vehicle-intel.js?v=1" defer></script>
-  <script src="./people.js?v=1" defer></script>
+  <script src="./people.js?v=2" defer></script>
   <script src="./monthly.js?v=1" defer></script>
-  <script src="./trading.js?v=5" defer></script>
+  <script src="./events.js?v=1" defer></script>
+  <script src="./trading.js?v=6" defer></script>
   <script src="./vehicle-view.js?v=1" defer></script>
   <script src="./people-view.js?v=1" defer></script>
   <script src="./monthly-view.js?v=1" defer></script>
-  <script src="./simulator.js?v=10" defer></script>
+  <script src="./events-view.js?v=1" defer></script>
+  <script src="./simulator.js?v=11" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -32,7 +34,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.6</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.7</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -101,6 +103,7 @@
             <button type="button" data-page="sales"><span class="nav-icon">♧</span> Sales Office</button>
             <button type="button" data-page="finance"><span class="nav-icon">£</span> Finances</button>
             <button type="button" data-page="reports"><span class="nav-icon">▦</span> Management Reports</button>
+            <button type="button" data-page="events"><span class="nav-icon">◷</span> Deal Day & Meetings</button>
             <button type="button" data-page="staff"><span class="nav-icon">♟</span> Staff & Recruitment</button>
             <button type="button" data-page="reputation"><span class="nav-icon">★</span> Reputation</button>
             <button type="button" data-page="business"><span class="nav-icon">▣</span> My Dealership</button>
@@ -120,7 +123,7 @@
             <div class="topbar-location"><small>THE MOTOR TRADE <span>/</span> CAREER</small><strong id="topbar-page">DASHBOARD</strong></div>
             <div class="topbar-actions">
               <div class="game-clock"><span class="clock-icon">▣</span><div><small>GAME DATE</small><strong data-bind="date">MON 09 NOV 2026</strong></div></div>
-              <button type="button" id="continue-day" class="continue-button" data-action="continue"><span>CONTINUE</span><b aria-hidden="true">▶</b></button>
+              <button type="button" id="continue-day" class="continue-button" data-action="continue"><span id="continue-label">CONTINUE</span><b aria-hidden="true">▶</b></button>
             </div>
           </header>
           <div class="game-notice" id="save-warning" role="status" hidden>Browser storage is unavailable. This career is playable in this tab, but progress may not be saved after you leave.</div>
@@ -128,6 +131,7 @@
           <button type="button" id="trade-feedback-toast" class="trade-feedback-toast" data-action="dismiss-feedback" role="status" aria-live="polite" aria-label="Trading result, click to dismiss" hidden></button>
 
           <div class="career-content">
+            <div id="events-banner" class="events-banner" aria-live="polite"></div>
             <section class="career-panel" data-panel="dashboard" aria-labelledby="dashboard-title">
               <div class="page-heading">
                 <div><p class="section-overline">YOUR DEALERSHIP / OVERVIEW</p><h1 id="dashboard-title">GOOD MORNING, <em>BOSS.</em></h1><p>Welcome to <strong data-bind="company">First Lot Motors</strong>. Here's what needs your attention.</p></div>
@@ -205,6 +209,11 @@
               <p class="trade-alert">These are game economics only. Figures are not tax-adjusted net profit: VAT, applicable margin-scheme rules, operating overheads, finance, warranties and consumer rights liabilities are not calculated.</p>
             </section>
 
+            <section class="career-panel" data-panel="events" hidden aria-labelledby="events-title">
+              <div class="page-heading"><div><p class="section-overline">MONTH-END RETAIL TRADING / MANAGEMENT DIARY</p><h1 id="events-title">DEAL DAY & <em>MEETINGS.</em></h1><p>Five customer-only trading sessions at each month end, followed by a first-day management review and strategy decision.</p></div><span class="career-chip">MONTHLY EVENTS</span></div>
+              <div id="events-view"></div>
+            </section>
+
             <section class="career-panel" data-panel="reports" hidden aria-labelledby="reports-title">
               <div class="page-heading"><div><p class="section-overline">BOARD REPORTS / MONTHLY PERFORMANCE</p><h1 id="reports-title">MANAGEMENT <em>REPORTS.</em></h1><p>Review every 30-day operating period: targets, vehicle profitability, cash movements, employee sales, stock ageing and customer trust.</p></div><span class="career-chip">30-DAY OPERATING MONTHS</span></div>
               <div class="trade-alert">Company sales targets are locked each month and scale as reputation improves. A good month must achieve its vehicle-sales target with positive gross trading margin. Every salesperson has a separate, tenure-adjusted monthly unit target. Completed reports are archived in your saved career.</div>
@@ -229,7 +238,7 @@
               <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong>2 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div><div class="profile-row"><span>Employees</span><strong data-bind="staff-count">0</strong></div><div class="profile-row"><span>Reputation</span><strong data-bind="reputation-score">5 / 100</strong></div><div class="profile-row"><span>Monthly sales target</span><strong data-bind="monthly-target">0 / 2</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Live: recruitment, staff effects and evolving reputation</li><li>Next: workshop queues, complaints and aftersales</li></ol></div></div>
             </section>
           </div>
-          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA MONTHLY REPORTS / LOCAL SAVE</span></footer>
+          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA DEAL DAY & MEETINGS / LOCAL SAVE</span></footer>
         </div>
       </div>
     </section>
