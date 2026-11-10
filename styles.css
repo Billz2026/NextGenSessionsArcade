@@ -545,3 +545,8 @@
     scrollbar-width:thin;scrollbar-color:#526570 #10202a}
   .sidebar-logo,.sidebar-bottom{flex-shrink:0}
 }
+
+/* Deal Day climate notice: distinct from a promised sale or reward. */
+.deadline-climate{margin-top:11px!important;padding:10px 12px;border-left:3px solid #d8b478;
+  background:rgba(7,20,27,.58);font:650 11px/1.5 var(--body);color:#e3d5bb}
+.deadline-climate strong{font-weight:900;color:#f1c98e}
