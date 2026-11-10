@@ -99,7 +99,8 @@
   }
   function reserve(state){
     return state.vehicles.filter(v=>v.status==='acquired')
-      .reduce((n,v)=>n+v.prepBudget,0);
+      .reduce((n,v)=>n+(['in-progress','quality-check'].includes(v.workshop?.stage)?
+        0:v.prepBudget),0);
   }
   function expense(state,amount,label){
     if(amount<=0)return;
