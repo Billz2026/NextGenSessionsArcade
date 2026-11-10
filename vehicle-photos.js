@@ -77,7 +77,7 @@
       note:'First-generation white MG4 EV; pictured trim may differ'},
     {id:'model3-white-pre-refresh',model:'Tesla Model 3',generation:'Pre-refresh',start:2019,end:2023,
       color:'White',fuel:'Electric',file:'2022-01-28 Tesla Model 3.jpg',
-      author:'Photo author credited on Commons source',license:'CC BY-SA 4.0',
+      author:'Lobester00',license:'CC BY-SA 4.0',
       licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
       note:'Pre-2024 body style and white paint; photographed market-spec trim may differ'}
   ]);
