@@ -302,12 +302,14 @@ test('direct sellers negotiate and part exchanges become properly valued stock',
   const seller = app.engine.market(1).sellers[0];
   app.setInput('seller-offer-' + seller.id,seller.floor - 100);
   app.click('buy-seller',{id:seller.id});
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles.length,0,'Rejected offer cannot acquire stock');
-  app.setInput('seller-offer-' + seller.id,seller.floor + 25);
-  app.click('buy-seller',{id:seller.id});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles.length,0,'A counteroffer does not purchase stock');
   let state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.negotiations[seller.id].status,'counter','Negotiation must persist');
+  const accepted = state.negotiations[seller.id].counter;
+  app.click('accept-seller-counter',{id:seller.id});
+  state = JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.vehicles[0].source,'seller');
-  assert.equal(state.vehicles[0].cost,seller.floor + 25);
+  assert.equal(state.vehicles[0].cost,accepted);
   app.click('prepare-stock',{id:'1'});
   app.setInput('stock-price-1',5000);
   app.click('list-stock',{id:'1'});
@@ -324,9 +326,9 @@ test('direct sellers negotiate and part exchanges become properly valued stock',
   assert.equal(state.vehicles.length,1,'Trade-in replaces sold unit');
   assert.equal(state.vehicles[0].source,'part-ex');
   assert.equal(state.vehicles[0].cost,px.floor+25);
-  const expected=12500-(seller.floor+25)-seller.prep+(5000-220)-(px.floor+25);
+  const expected=12500-accepted-seller.prep+(5000-220)-(px.floor+25);
   assert.equal(state.cash,expected,'Sale proceeds minus allowance is the cash difference');
-  assert.equal(state.sold[0].profit,(5000-220)-(seller.floor+25)-seller.prep);
+  assert.equal(state.sold[0].profit,(5000-220)-accepted-seller.prep);
   assert.equal(state.ledger.reduce((a,l)=>a+l.delta,0),state.cash-12500);
   app.click('prepare-stock',{id:'2'});
   app.setInput('stock-price-2',3500);
@@ -409,4 +411,95 @@ test('cash reserves protect mandatory preparation across multiple purchases', ()
   state = JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.stock,0);
   assert.ok(state.cash>0,'Player can sell out of a cash shortage');
+});
+
+test('seller negotiations counter, then accept or walk away without spending cash', () => {
+  const saved = new Map();
+  const app = browser(saved);
+  app.click('new-career');
+  app.submitCareer('Negotiation Autos');
+  const seller = app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-' + seller.id,seller.floor-75);
+  app.click('buy-seller',{id:seller.id});
+  let state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles.length,0);
+  assert.equal(state.cash,12500);
+  assert.equal(state.negotiations[seller.id].status,'counter');
+  assert.match(app.nodes.get('market-sellers').innerHTML,/SELLER COUNTEROFFER/);
+  assert.match(app.nodes.get('market-sellers').innerHTML,/ACCEPT/);
+  assert.equal(app.nodes.get('trade-feedback-toast').hidden,false);
+  const counter = state.negotiations[seller.id].counter;
+  const revisited=browser(saved);
+  revisited.click('resume');
+  assert.match(revisited.nodes.get('market-sellers').innerHTML,/SELLER COUNTEROFFER/);
+  revisited.click('accept-seller-counter',{id:seller.id});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].cost,counter);
+  assert.equal(state.cash,12500-counter);
+  const second=app.engine.market(1).sellers[1];
+  app.setInput('seller-offer-' + second.id,second.floor-300);
+  app.click('buy-seller',{id:second.id});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).negotiations[second.id].status,'walked');
+  assert.equal(app.nodes.get('trade-feedback-toast').hidden,false);
+  const leftCash=JSON.parse(saved.get(STORAGE_KEY)).cash;
+  app.setInput('seller-offer-' + second.id,second.ask);
+  app.click('buy-seller',{id:second.id});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).cash,leftCash);
+  assert.match(app.nodes.get('market-sellers').innerHTML,/OWNER WALKED AWAY/);
+});
+test('auction losses are visible and charge no fee; winning fee is recorded', () => {
+  const saved = new Map();
+  const app = browser(saved);
+  app.click('new-career');
+  app.submitCareer('Auction Trader');
+  const lot=app.engine.market(1).auctions[0];
+  app.setInput('auction-bid-'+lot.id,lot.guide);
+  app.click('bid-auction',{id:lot.id});
+  assert.match(app.nodes.get('trade-feedback-toast').textContent,/Outbid/);
+  assert.match(app.nodes.get('market-auctions').innerHTML,/OUTBID/);
+  let state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.cash,12500);
+  assert.equal(state.ledger.length,0);
+  assert.equal(state.auctionBids[lot.id].status,'outbid');
+  const back=browser(saved);back.click('resume');
+  assert.match(back.nodes.get('market-auctions').innerHTML,/OUTBID/);
+  back.setInput('auction-bid-'+lot.id,lot.rival+100);
+  back.click('bid-auction',{id:lot.id});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].source,'auction');
+  assert.equal(state.vehicles[0].cost,lot.rival+100+lot.fee);
+  assert.equal(state.cash,12500-lot.rival-100-lot.fee);
+  assert.match(state.ledger[0].note,/buyer fee/);
+});
+test('daily listings vary in source quantity and vehicle selection without duplicates', () => {
+  const engine = browser(new Map()).engine;
+  const daily = Array.from({length:20},(_,day)=>engine.market(day+1));
+  assert.equal(daily[0].auctions.length,3);
+  assert.equal(daily[0].sellers.length,2);
+  assert.ok(daily.some(d=>d.auctions.length !== 3));
+  assert.ok(daily.some(d=>d.sellers.length === 0));
+  assert.ok(daily.some(d=>d.sellers.length >= 2));
+  for(const d of daily){
+    assert.ok(d.auctions.length+d.sellers.length >= 1,'At least one sourcing opportunity a day');
+    assert.equal(d.auctions.length,new Set(d.auctions.map(v=>v.title)).size,'No duplicate auction model on same day');
+    assert.equal(d.sellers.length,new Set(d.sellers.map(v=>v.title)).size,'No duplicate seller car on same day');
+  }
+  assert.deepEqual(JSON.stringify(engine.market(8)),JSON.stringify(engine.market(8)),'Same day market reproducible after reload');
+});
+test('every market buying action remains clickable and shows a capacity warning', () => {
+  const saved=new Map();
+  const app=browser(saved);
+  app.click('new-career');app.submitCareer();
+  const market=app.engine.market(1);
+  for(const seller of market.sellers) {
+    app.setInput('seller-offer-'+seller.id,seller.ask);
+    app.click('buy-seller',{id:seller.id});
+  }
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).stock,2);
+  assert.match(app.nodes.get('market-auctions').innerHTML,/FORECOURT FULL/);
+  assert.doesNotMatch(app.nodes.get('market-auctions').innerHTML,/data-action="bid-auction"[^>]* disabled/);
+  app.setInput('auction-bid-'+market.auctions[0].id,market.auctions[0].rival+100);
+  app.click('bid-auction',{id:market.auctions[0].id});
+  assert.match(app.nodes.get('trade-feedback-toast').textContent,/forecourt is full/i);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).stock,2);
 });
