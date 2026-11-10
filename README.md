@@ -4,6 +4,25 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## v0.9.1 — Real Vehicle Photograph Cards & Deposit Part-Payments
+
+**Real representative car photos, never synthetic substitutes.** Auctions, Private & Walk-in Sellers, Stock, Workshop, incoming customer part-exchanges, Reserved vehicles and recent Sold cars share a premium large-photo card system. Every card shows its true matching **make/model, generation/face-style, colour and year-band**; it continues with simulated mileage/owner/MOT and relevant prices and actions. If the photo library lacks a matching real picture, the game displays **PHOTO UNAVAILABLE** rather than a wrong car, mismatched paint colour or computer-generated substitute. A photo of a *similar trim* can be used only with a visible disclosure; none is presented as a photograph of the exact fictional vehicle.
+
+**Five initial genuine, source-credited Wikimedia Commons photographs:**
+- Black Nissan Qashqai J11 (2014–17), © M 93, CC BY-SA 3.0 DE; car in photo is Tekna and simulation may be Acenta.
+- Black Ford Focus Mk3, © Damian B Oh, CC BY-SA 4.0; trim/body details can differ and broader facelift matching needs expansion.
+- Red Ford Fiesta Mk7 facelift (2013–17), © Elise240SX, CC BY-SA 4.0; photo is North American SE trim.
+- White Volkswagen Polo 6R facelift (2014–17), © EurovisionNim, CC BY-SA 4.0; photographed regional Trendline trim.
+- Silver Toyota Yaris XP130 (2011–14), © OSX, released to public domain; photographed Australian YR trim.
+
+Photographs are delivered from Wikimedia Commons URLs, not downloaded into the repository, so connectivity and Commons availability matter. The cards link to the **exact source page and licence** and disclose the display cropping. Original photographers must be credited; this is not permission to grab copyrighted dealer listing photos. The curated catalogue will be expanded model/colour/generation by model/colour/generation.
+
+**Deposit handling:** The new customer reservation holds the £250 deposit in a **separate virtual customer-funds ledger** until collection. The player pays a real, vehicle-specific simulated collection/valet/administration expense of £75–£250 on reservation. On completion the **customer pays only the remaining balance** after both previous deposit and any part-exchange allowance; the previously held funds transfer into business cash, and a non-cash part-ex allowance is recorded without fictitious incoming/outgoing cash. No sale is recorded until handover; receipts are not double-counted.
+
+A buyer cancelling a new **in-person** reservation may have up to the **documented, actually incurred customer-specific expense** retained from the £250. Any remainder is refunded. A cancellation caused by dealership fault refunds the deposit in full; the dealer bears their own preparation loss. A buyer whose existing v0.9 career deposit explicitly promised a full refund **keeps that promise after save migration**, so previous agreements are not retroactively changed. More detailed UK consumer-law scenarios, distance selling and contract terms need a later release. **This is a deliberately limited gameplay interpretation of deposit fairness, not legal compliance software, and does not mean any deposit can always be retained.**
+
+**Saves and authenticity:** v1–v8 careers migrate into schema **v9** preserving money, stock, historical sales, staff, monthly reports, workshop progress, customer cases and existing held deposits. Previously unrecorded colour is assigned once deterministically based on the vehicle's stable origin and persists through stock acquisition and resale. Photos remain representative of simulated cars, not exact registrations. Logo, showroom and main menu stay unchanged.
+
 ## v0.9 — Four-Space Forecourt & Customer Sales Journey
 
 **Every dealership now starts with four forecourt spaces** (formerly two), without increasing the existing £12,500 initial working capital. Having four spaces does not guarantee enough funds to fill them or prepare all four vehicles. Existing v1–v7 careers migrate to save schema **v8** with four spaces and retain their vehicles, sales, money, workshop jobs, employees, historical reports and progress. Original branding and home screen are unchanged.
@@ -14,11 +33,11 @@ The **Sales Office** now runs a customer process instead of allowing a single in
 - **Appointments and no-shows.** Ordinary enquiries require booking a viewing 1–3 game days ahead. Customer attendance is uncertain. No-shows and missed follow-ups are tracked.
 - **Test drives and customer objections.** The customer must attend and complete a test drive. Some customers decline to proceed; higher condition risk makes that more likely. Cash and part-exchange preferences differ between customers.
 - **Negotiation and agreement.** Once a test drive succeeds, an offer can be negotiated; a counteroffer may be rejected or cause the customer to walk away. Retail values remain based on the vehicle-specific intelligence and existing employee/reputation effects.
-- **Handover or deposit.** A mutually accepted agreement can be handed over on the same day, or a fully refundable **£250 reservation deposit** can be recorded for a later collection. Deposits are held in a separate *virtual* customer-holding balance and **never enter spendable dealership cash**; a later cancellation returns the held balance without creating income or an expense. On collection, the full agreed vehicle price is recorded in the actual business cash ledger. Collection can still be cancelled.
+- **Handover or deposit (v0.9 historical behaviour).** A mutually accepted agreement can be handed over on the same day, or a fully refundable **£250 reservation deposit** can be recorded for a later collection. Deposits are held in a separate *virtual* customer-holding balance and **never enter spendable dealership cash**; a later cancellation returns the held balance without creating income or an expense. On collection, the full agreed vehicle price is recorded in the actual business cash ledger. Collection can still be cancelled.
 - **Deal Day walk-ins.** The final day retains five slow trading sessions and variable quiet/busy market conditions. Interested walk-ins may proceed to a same-session test drive, but not a guaranteed sale. Unresolved walk-in cases expire between sessions; reserved vehicles persist to collection.
 - **Monthly performance.** Management reports and the first-day meeting now include real recorded enquiry-to-sale conversion, appointments, no-shows, test drives, agreements and deposits/refunds. Sales count only at handover, never when someone books, agrees or deposits.
 
-**Design limits:** Customer identities and behaviour are invented, not real people or live third-party leads. Appointment dates are game operating days, not staff-hour calendars. The fully refundable deposit and segregated-holding approach are a gameplay simplification, not a claim to model UK deposit contracts or consumer law, and legal documentation, identity checks, vehicle warranties, finance, insurance and actual card/bank processing require dedicated future releases.
+**Design limits:** Customer identities and behaviour are invented, not real people or live third-party leads. Appointment dates are game operating days, not staff-hour calendars. The original v0.9 refundable deposit and segregated-holding approach were gameplay simplifications, not a claim to model UK deposit contracts or consumer law, and legal documentation, identity checks, vehicle warranties, finance, insurance and actual card/bank processing require dedicated future releases.
 
 ## v0.8 Workshop Operations & Vehicle Lifecycle
 
@@ -29,7 +48,7 @@ The **Sales Office** now runs a customer process instead of allowing a single in
 
 Repair bookings charge cash **when authorised**, then progress once per *game day*, not per Deal Day session. Repair duration is a fictional estimate based on car condition, diagnosed repairs, technician efficiency and parts availability. Once work is complete, a **final quality check** must be performed. A proportion of cars need paid rectification and one extra repair day; it is possible for the final repair cost to exceed the original estimate. The car cannot be advertised or sold before passing quality control.
 
-**Financial integrity:** Assessment cash is added to the vehicle's acquisition basis; repair booking, outsourcing and rework are counted in the actual preparation cost, recognised as vehicle cost on completion. Money reserved for other unprepared vehicles is protected. Workshop charges are tracked in the ledger and monthly management reports; cash tied up in unfinished jobs is included in stock working capital. Hiring a mechanic is not automatically the best option for a two-space dealership. In extreme cash shortages, a player can accept a simplified, below-cost **wholesale disposal offer** for stock that has not yet entered the repair queue; the recorded trading loss is not counted as a retail sale and reduces overall realised trading contribution. Reports now distinguish ongoing repair jobs and outstanding final checks.
+**Financial integrity:** Assessment cash is added to the vehicle's acquisition basis; repair booking, outsourcing and rework are counted in the actual preparation cost, recognised as vehicle cost on completion. Money reserved for other unprepared vehicles is protected. Workshop charges are tracked in the ledger and monthly management reports; cash tied up in unfinished jobs is included in stock working capital. Hiring a mechanic is not automatically the best option for a four-space starter dealership. In extreme cash shortages, a player can accept a simplified, below-cost **wholesale disposal offer** for stock that has not yet entered the repair queue; the recorded trading loss is not counted as a retail sale and reduces overall realised trading contribution. Reports now distinguish ongoing repair jobs and outstanding final checks.
 
 **Save compatibility:** Existing v1–v6 careers migrate to schema v7 without altering historic cash, acquired stock, recorded sales, margins, archived monthly reports or employee records. Previously prepared and advertised stock remains immediately usable; previously acquired but unprepared cars start at the new assessment stage. The original homepage, NextGen Sessions logo, Motor Trade SVG and showroom background remain untouched.
 
@@ -171,6 +190,8 @@ Customers are currently deterministic examples rather than a fully simulated mar
 - `monthly-view.js` — responsive monthly report cards, staff scorecards and financial breakdown.
 - `people-view.js` — responsive personnel and reputation management UI.
 - `vehicle-intel.js` — stable fictional vehicle profile generation, repair forecasts and appraisal arithmetic.
+- `vehicle-photos.js` — source-credited real photograph catalogue, exact colour/generation mapping and safe matching.
+- `vehicle-cards.js` — single premium photographic card design with honest unavailable-image fallbacks.
 - `workshop.js` — timed vehicle assessment, repair sourcing, capacity, financial commitment and final QC.
 - `workshop-view.js` — responsive repair board with quote comparisons, queue progress and status.
 - `customers.js` — persistent customer cases, deterministic leads, appointments, no-shows, test drives, offers and refundable holds.
