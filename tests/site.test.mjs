@@ -60,8 +60,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=1/);
   assert.match(html, /customers\.js\?v=2/);
-  assert.match(html, /vehicle-photos\.js\?v=1/);
-  assert.match(html, /vehicle-cards\.js\?v=1/);
+  assert.match(html, /vehicle-photos\.js\?v=2/);
+  assert.match(html, /vehicle-cards\.js\?v=2/);
   assert.match(html, /trading\.js\?v=10/);
   assert.match(html, /customers-view\.js\?v=2/);
   assert.match(html, /workshop-view\.js\?v=2/);
@@ -80,6 +80,42 @@ test('responsive dashboard supports mobile and reduced motion', () => {
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
   assert.match(css, /\.career-nav/);
   assert.match(css, /\.parent-wordmark/);
+});
+
+test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
+  assert.match(html, /PRE-ALPHA · v0\.9\.2/);
+  assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
+  assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
+  assert.match(engine, /const CAPACITY = 4/);
+  assert.match(css, /\.vehicle-photo-missing\[hidden\]/);
+  const registered = {};
+  const context = {
+    window: {}, Intl,
+    document: { addEventListener(name,handler,capture) {registered[name]={handler,capture};} }
+  };
+  vm.runInNewContext(photos,context,{timeout:1500});
+  vm.runInNewContext(cards,context,{timeout:1500});
+  const P=context.window.MotorTradePhotos;
+  for (const [title,generation,color,id] of [
+    ['2014 Vauxhall Corsa Excite','D','Red','corsa-d-red'],
+    ['2016 Peugeot 208 Allure','Mk1 facelift','Silver','208-facelift-silver'],
+    ['2014 Honda Jazz ES','GE','Grey','jazz-ge-grey']
+  ]) {
+    const car={title,generation,color};
+    assert.equal(P.select(car)?.id,id);
+    assert.ok(P.url(P.select(car)).includes('commons.wikimedia.org'));
+  }
+  const markup=context.window.MotorTradeCards.photo({
+    title:'2014 Vauxhall Corsa Excite',generation:'D',color:'Red'
+  },'auction');
+  assert.match(markup,/data-vehicle-photo="true"/);
+  assert.match(markup,/vehicle-photo-failed" hidden/);
+  assert.equal(registered.error?.capture,true);
+  const fallback={hidden:true,classList:{contains:name=>name==='vehicle-photo-failed'}};
+  const img={tagName:'IMG',hidden:false,hasAttribute:name=>name==='data-vehicle-photo',nextElementSibling:fallback};
+  registered.error.handler({target:img});
+  assert.equal(img.hidden,true);
+  assert.equal(fallback.hidden,false);
 });
 
 function browser(storageData = new Map(), { denyStorage = false } = {}) {
@@ -2323,7 +2359,7 @@ test('the player can occupy all four forecourt spaces but a fifth purchase is bl
 
 test('real-photo cards never use an incorrect model, generation or paint colour', () => {
   const app=browser(new Map()),P=app.photos,V=app.cards;
-  assert.equal(P.LIBRARY.length,5);
+  assert.equal(P.LIBRARY.length,8);
   for(const item of P.LIBRARY){
     assert.ok(item.file.endsWith('.jpg'));
     assert.ok(item.author&&item.license&&item.licenseUrl);

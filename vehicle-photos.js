@@ -1,5 +1,5 @@
 'use strict';
-/* V0.9.1 real-vehicle photograph catalogue.
+/* V0.9.2 real-vehicle photograph catalogue.
  * Each photograph below is a genuine Wikimedia Commons file with a verified
  * model/generation and colour. Never recolour a photograph or use another
  * colour/model when the exact match is absent.
@@ -31,7 +31,22 @@
       color:'Silver',file:'2012 Toyota Yaris (NCP130R) YR 5-door hatchback (2012-06-04).jpg',
       author:'OSX',license:'Public domain',
       licenseUrl:'https://creativecommons.org/publicdomain/mark/1.0/',
-      note:'Same XP130 generation and silver colour; regional trim may differ'}
+      note:'Same XP130 generation and silver colour; regional trim may differ'},
+    {id:'corsa-d-red',model:'Vauxhall Corsa',generation:'D',start:2006,end:2014,
+      color:'Red',file:'2014 Vauxhall Corsa Excite - 1229cc 1.2 (85PS) Petrol - Flame Red - 03-2024, Front.jpg',
+      author:'Harvey Bold',license:'CC BY 4.0',
+      licenseUrl:'https://creativecommons.org/licenses/by/4.0/',
+      note:'Same Corsa D generation and red colour; photographed 2014 Excite trim'},
+    {id:'208-facelift-silver',model:'Peugeot 208',generation:'Mk1 facelift',start:2015,end:2019,
+      color:'Silver',file:'2016 Peugeot 208 Allure PureTech - 1200cc 1.2 (100PS) Petrol - Silver - 07-2024, Front.jpg',
+      author:'Harvey Bold',license:'CC0 1.0',
+      licenseUrl:'https://creativecommons.org/publicdomain/zero/1.0/',
+      note:'Same facelift generation, silver colour and Allure trim; specification may differ'},
+    {id:'jazz-ge-grey',model:'Honda Jazz',generation:'GE',start:2008,end:2015,
+      color:'Grey',file:'2014 Honda Jazz ES Plus i-VTEC - 1339cc 1.3 (100PS) Petrol - Grey - 02-2024, Front.jpg',
+      author:'Harvey Bold',license:'CC BY 4.0',
+      licenseUrl:'https://creativecommons.org/licenses/by/4.0/',
+      note:'Same GE generation and grey colour; photographed ES Plus trim'}
   ]);
   const PHOTO_LIBRARY=Object.freeze(IMG.map(x=>Object.freeze(x)));
   const RANGES=Object.freeze([
