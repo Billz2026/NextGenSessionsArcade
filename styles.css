@@ -605,3 +605,51 @@
 .workshop-disposal strong{font:850 16px var(--title);color:#e5ae97}
 .workshop-disposal p{font:500 11px/1.6 var(--body);color:#b9cbd0;margin:7px 0 12px}
 .workshop-disposal .trade-button{border-color:#937868;background:#293039;color:#efc2ad}
+
+/* v0.9 — customer enquiry, appointment and handover journey. */
+.sales-pipeline-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:0 0 14px}
+.sales-pipeline-summary>div{padding:16px 17px;border:1px solid #47616b;
+ background:linear-gradient(135deg,#1b3843,#142b36);border-radius:7px;min-width:0}
+.sales-pipeline-summary small{display:block;color:#b3c6c9;
+ font:700 9px/1.4 var(--mono);margin:0 0 7px}
+.sales-pipeline-summary strong{display:block;color:#f0d2a2;
+ font:900 clamp(20px,2.6vw,31px)/1 var(--title);overflow-wrap:anywhere}
+.sales-pipeline-note{padding:13px 15px;margin:0 0 12px;
+ border:1px solid #445b63;background:#142b35;border-radius:6px;
+ font:500 11px/1.6 var(--body);color:#bacbd0}
+.sales-pipeline-activity{border:1px solid #51646a;background:#213943;
+ padding:10px 14px;margin-bottom:16px;border-radius:5px;
+ color:#e3d0a8;font:750 10px/1.45 var(--mono)}
+.sales-case-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));
+ gap:15px;margin:0 0 22px}
+.sales-case-card{min-width:0}
+.sales-case-card .trade-card-top small{color:#adbecc;font:700 9px/1.4 var(--mono)}
+.sales-case-highlight{padding:16px 17px;background:#273b37;border:1px solid #789a79;
+ border-radius:6px;display:flex;flex-direction:column;gap:10px}
+.sales-case-highlight strong,.sales-case-highlight h4{color:#d9e5bf;
+ font:850 20px/1.1 var(--title);margin:0}
+.sales-case-highlight p{font:500 11px/1.55 var(--body);color:#d0ded4;margin:0}
+.sales-case-quiet{padding:16px 17px;background:#2a302e;border:1px solid #586c70;
+ border-radius:6px}
+.sales-case-quiet strong{color:#c0c8c5;font:850 19px var(--title)}
+.sales-case-quiet p{font:500 11px/1.6 var(--body);color:#bcc8c5;margin:10px 0 0}
+.sales-customer-meta{display:flex;flex-wrap:wrap;gap:8px;padding:13px 14px;
+ margin:10px 0 0;border:1px solid #405a63;background:#19323c;border-radius:5px}
+.sales-customer-meta span{font:700 10px/1.4 var(--mono);color:#ecd1a1}
+.sales-customer-meta span:first-child{color:#f2e3cc}
+.sales-case-content{padding:15px 5px 8px}
+.sales-case-content>p{font:500 12px/1.6 var(--body);color:#c0d0d2;margin:0 0 14px}
+.sales-case-content .trade-button{margin:5px 3px 5px 0}
+.sales-offer-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.sales-offer-mode{padding:14px;background:#172f39;border:1px solid #516873;
+ border-radius:6px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.sales-offer-mode h4{font:850 20px/1 var(--title);color:#efd2a8;margin:0}
+.sales-offer-mode small,.sales-offer-mode label{font:700 9px/1.4 var(--mono);color:#b5c7cf}
+.sales-offer-mode>strong{font:850 29px/1.2 var(--title);color:#f2dfbe}
+.sales-offer-mode p{font:500 11px/1.55 var(--body);color:#bacbd2;margin:0}
+.sales-offer-mode>.trade-button{margin-top:auto}
+@media(max-width:1150px){.sales-offer-modes{grid-template-columns:1fr}}
+@media(max-width:780px){.sales-pipeline-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:570px){.sales-case-grid{grid-template-columns:1fr}
+ .sales-pipeline-summary>div{padding:11px}.sales-pipeline-activity{font-size:9px}
+ .sales-customer-meta{padding:11px}.sales-case-content{padding:11px 0}}
