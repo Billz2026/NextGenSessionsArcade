@@ -10,6 +10,8 @@ const js = readFileSync(new URL('simulator.js', root), 'utf8');
 const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
+const people = readFileSync(new URL('people.js', root), 'utf8');
+const peopleView = readFileSync(new URL('people-view.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -30,7 +32,7 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
 });
 
 test('dashboard has inbox, calendar and navigable management areas', () => {
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'staff', 'reputation', 'business']) {
     assert.match(html, new RegExp('data-panel="' + page + '"'));
     assert.match(html, new RegExp('data-page="' + page + '"'));
   }
@@ -43,7 +45,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
-  assert.match(html, /trading\.js\?v=3/);
+  assert.match(html, /people\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=4/);
+  assert.match(html, /people-view\.js\?v=1/);
   assert.match(html, /vehicle-view\.js\?v=1/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
@@ -90,7 +94,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   }
   const panels = [];
   const nav = [];
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'staff', 'reputation', 'business']) {
     const panel = new Node();
     panel.dataset.panel = page;
     panels.push(panel);
@@ -130,8 +134,10 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   };
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
+  vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
   vm.runInNewContext(vehicleView, context, { timeout: 1500 });
+  vm.runInNewContext(peopleView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const button = { dataset: { action, ...extras }, setAttribute() {} };
@@ -248,7 +254,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=12/);
+  assert.match(html, /styles\.css\?v=13/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -266,7 +272,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 3);
+  assert.equal(opening.version, 4);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -350,7 +356,8 @@ test('direct sellers negotiate and part exchanges become properly valued stock',
   state=JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.sales,2);
   assert.equal(state.stock,0);
-  assert.equal(state.reputation,'UP-AND-COMING');
+  assert.equal(state.reputation,'NEW TRADER');
+  assert.ok(state.reputationScore>5,'Satisfactory completed deals should improve the reputation score');
 });
 test('forecourt and funds prevent impossible purchases, days refresh leads without invented profit', () => {
   const saved = new Map();
@@ -390,7 +397,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,3);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,4);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -620,7 +627,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,3);
+  assert.equal(migrated.version,4);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -699,7 +706,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,3);
+  assert.equal(saved.version,4);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
