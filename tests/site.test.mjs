@@ -2434,8 +2434,14 @@ test('the player can occupy all four forecourt spaces but a fifth purchase is bl
   assert.equal(state.capacity,4);
   assert.equal(state.stock,4);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
-  state.day++;
-  const fifth=E.market(state.day).sellers[0];
+  // Some market days legitimately have no direct sellers. Locate the next
+  // valid seller rather than assuming the very next date has an enquiry.
+  let fifth=null;
+  for(let date=state.day+1;date<=state.day+30&&!fifth;date++){
+    state.day=date;
+    fifth=E.market(date).sellers[0]||null;
+  }
+  assert.ok(fifth,'A later market day should produce a seller');
   const rejected=E.acquireSeller(state,fifth.id,fifth.ask);
   assert.equal(rejected.ok,false);
   assert.equal(rejected.code,'capacity');
