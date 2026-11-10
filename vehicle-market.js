@@ -12,17 +12,17 @@
   const rows = Object.freeze({
     // Starter: older, higher-mileage runabouts plus affordable newer stock.
     starter: [
-      ['2016 Ford Focus Zetec',118300,'Diesel','Manual','1.5 TDCi',2450,4750,450,4,'Partial'],
+      ['2016 Ford Focus Zetec',118300,'Diesel','Manual','1.5 TDCi',1950,4250,450,4,'Partial'],
       ['2020 Vauxhall Corsa SE Premium',103600,'Petrol','Manual','1.2 Turbo 100',4550,7850,395,3,'Partial'],
       ['2018 Volkswagen Polo SE',98000,'Petrol','Manual','1.0 TSI',3650,6300,355,3,'Partial'],
       ['2019 Honda Jazz SE',108000,'Petrol','Manual','1.3 i-VTEC',3450,5900,325,3,'Full'],
-      ['2017 Ford Fiesta Zetec',104500,'Petrol','Manual','1.0 EcoBoost',2750,5050,425,4,'Partial'],
+      ['2017 Ford Fiesta Zetec',104500,'Petrol','Manual','1.0 EcoBoost',1750,3950,425,4,'Partial'],
       ['2018 Toyota Yaris Icon Hybrid',114300,'Hybrid','Automatic','1.5 VVT-i hybrid e-CVT',4550,7250,360,3,'Partial'],
-      ['2018 Vauxhall Corsa Energy',112200,'Petrol','Manual','1.4 16v',2400,4650,390,4,'Partial'],
+      ['2018 Vauxhall Corsa Energy',112200,'Petrol','Manual','1.4 16v',1850,4000,390,4,'Partial'],
       ['2017 Nissan Qashqai Acenta',127000,'Diesel','Manual','1.5 dCi',3400,6350,550,4,'Partial'],
       ['2019 Kia Rio 2',99600,'Petrol','Manual','1.25 CVVT',3750,6500,375,3,'Full'],
       ['2019 Hyundai i20 SE',106500,'Petrol','Manual','1.2 MPI',3450,6150,375,3,'Partial'],
-      ['2018 Peugeot 208 Active',113800,'Petrol','Manual','1.2 PureTech',2850,5400,475,4,'Partial'],
+      ['2018 Peugeot 208 Active',113800,'Petrol','Manual','1.2 PureTech',1850,4150,475,4,'Partial'],
       ['2020 Nissan Leaf Acenta',89600,'Electric','Automatic','40 kWh EV',4300,7350,560,3,'Partial'],
       ['2018 Volkswagen Golf SE',131100,'Diesel','Manual','1.6 TDI',4400,7600,535,4,'Partial'],
       ['2017 Toyota Yaris Icon',96000,'Petrol','Manual','1.33 Dual VVT-i',3600,6000,310,3,'Full']
@@ -120,8 +120,12 @@
       tier==='premium'?['starter','modern','modern','premium','premium','premium']:
       ['modern','premium','premium','luxury','luxury','luxury'];
     const desired=weighting[hash(group+'|'+day+'|'+index)%weighting.length];
-    const candidates=CATALOGUE[desired].filter(v=>!seen.has(v.title));
-    const fallback=accessible.filter(v=>!seen.has(v.title));
+    // Direct seller leads skew toward retailable, middle-grade cars; auctions
+    // retain genuinely high-risk grade-4 bargains. Retail care can therefore
+    // improve trust instead of every early direct seller harming reputation.
+    const suitable=v=>!seen.has(v.title)&&(group!=='seller'||v.grade<=3);
+    const candidates=CATALOGUE[desired].filter(suitable);
+    const fallback=accessible.filter(suitable);
     const list=candidates.length?candidates:fallback;
     if(!list.length)return null;
     const chosen=list[hash(group+'|'+day+'|slot|'+index)%list.length];
@@ -136,8 +140,14 @@
   }
   function exchangeFor(vehicle){
     const tier=vehicle.retail>=38000?'premium':vehicle.retail>=18000?'modern':'starter';
-    const poolRows=CATALOGUE[tier].filter(v=>v.guide<=vehicle.retail*.42);
-    const affordable=poolRows.length?poolRows:CATALOGUE.starter;
+    // A routine part-exchange should normally be a cheaper, retailable car,
+    // not an unexpectedly dear or poor-grade liability. Condition exceptions
+    // still exist in auction stock and explicit vehicle inspections.
+    const fairExchange=v=>v.grade<=3&&v.guide<=vehicle.retail*.42&&
+      v.retail<=Math.max(6500,vehicle.retail*1.15);
+    const poolRows=CATALOGUE[tier].filter(fairExchange);
+    const fallback=CATALOGUE.starter.filter(fairExchange);
+    const affordable=poolRows.length?poolRows:fallback.length?fallback:CATALOGUE.starter;
     const id=Number(vehicle.id)||0;
     return affordable[hash('part-ex|'+vehicle.origin+'|'+id)%affordable.length];
   }
