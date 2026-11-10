@@ -132,10 +132,12 @@
   }
   function canBuy(state, cost, preparation) {
     if (state.vehicles.length >= state.capacity) return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
-    // The first career has no lending or trade disposal. Reserve essential prep
-    // at acquisition so an overbid cannot leave a vehicle permanently unsellable.
-    if (cost + preparation > state.cash)
-      return fail('cash','Not enough cash to buy this car and reserve its required preparation cost.');
+    // No lending or wholesale exit yet: reserve preparation for *all* acquired cars.
+    // Otherwise a second purchase could consume the cash needed to retail the first.
+    const pendingPrep = state.vehicles.filter(v => v.status === 'acquired')
+      .reduce((total, v) => total + v.prepBudget, 0);
+    if (cost + preparation + pendingPrep > state.cash)
+      return fail('cash','Not enough cash to buy this car while reserving all required stock preparation.');
     return null;
   }
   function acquireAuction(state, id, bid) {
@@ -220,7 +222,10 @@
       if (!integer(allowance) || allowance < px.floor || allowance > px.ask)
         return fail('part-ex','Part-exchange allowance rejected by the customer. Revalue within their acceptable range.');
       if (allowance >= price) return fail('part-ex','Part-exchange allowance must be below the agreed sale price.');
-      if (state.cash + price < allowance) return fail('cash','Not enough cash to fund the exchange.');
+      const pendingPrep = state.vehicles.filter(v => v.status === 'acquired')
+        .reduce((total, v) => total + v.prepBudget, 0);
+      if (state.cash + price - allowance < pendingPrep + px.prep)
+        return fail('cash','This part-exchange would leave too little cash to prepare your existing and incoming stock.');
     }
     const realised = price - vehicle.cost - vehicle.prepSpent;
     pay(state,price,'Retail sale: ' + vehicle.title + ' (' + mode + ')');
