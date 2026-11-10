@@ -18,6 +18,8 @@
   const D = E.events;
   const W = E.workshop;
   const C = E.customers;
+  const VC = window.MotorTradeCards;
+  if(!VC)throw new Error('Load vehicle-cards.js before simulator.js');
   const STORAGE_KEY = 'the-motor-trade-career-v1';
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
   const SAVE_VERSION = E.VERSION;
@@ -234,11 +236,12 @@
       (vehicle.profile?'<span>'+escapeText(vehicle.profile.ref)+'</span>':'') +
       '<span>History: ' + escapeText(vehicle.history) + '</span></div>';
   }
-  function cardHeader(car, source) {
-    return '<div class="trade-card-top"><div><span class="trade-card-kicker">' + escapeText(source) +
-      '</span><h3>' + escapeText(car.title) + '</h3></div>' +
-      '<span class="trade-source">GRADE ' + (car.profile?.grade||car.grade||3) + '</span></div>' +
-      details(car) + '<p class="trade-card-note">' + escapeText(car.note) + '</p>';
+  function cardHeader(car,source) {
+    const kind=source.startsWith('AUCTION')?'auction':
+      source.startsWith('PRIVATE')||source.startsWith('SELLER')?'seller':
+      source.startsWith('PART-EX')?'part-ex':'stock';
+    return VC.heading(car,kind,source)+
+      '<p class="trade-card-note">'+escapeText(car.note||'')+'</p>';
   }
   function reportCard(car,kind,price) {
     const key=kind+':'+car.id;
@@ -768,8 +771,12 @@
         if(career)saveResult(E.depositCustomer(career,Number(button.dataset.id)));
         break;
       case 'cancel-customer':
-        if(career&&window.confirm('Cancel this customer deal? Any held £250 deposit will be fully refunded from separate customer funds.'))
-          saveResult(E.cancelCustomer(career,Number(button.dataset.id)));
+        if(career&&window.confirm('Cancel the deal because of a dealership issue? The full held customer deposit will be refunded.'))
+          saveResult(E.cancelCustomer(career,Number(button.dataset.id),'dealer'));
+        break;
+      case 'customer-withdrawal':
+        if(career&&window.confirm('The customer has changed their mind. Only real customer-specific costs already recorded can be retained from their £250 deposit; the rest is refunded. Record the withdrawal?'))
+          saveResult(E.cancelCustomer(career,Number(button.dataset.id),'buyer'));
         break;
       case 'handover-customer':
         if(career)saveResult(E.completeSale(career,Number(button.dataset.id),button.dataset.mode,null));

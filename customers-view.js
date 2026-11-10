@@ -4,6 +4,8 @@
   const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const cash=x=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',
     maximumFractionDigits:0}).format(x);
+  const VC=window.MotorTradeCards;
+  if(!VC)throw new Error('Load vehicle-cards.js before customers-view.js');
   const statuses={
     enquiry:'NEW ENQUIRY',booked:'APPOINTMENT BOOKED',
     arrived:'CUSTOMER ON SITE',discussing:'NEGOTIATION IN PROGRESS',
@@ -27,7 +29,9 @@
     const who='<div class="sales-customer-meta"><span>'+esc(c.name)+'</span>'+
       '<span>'+esc(c.channel)+'</span><span>'+esc(statuses[c.status])+'</span></div>';
     const cancel='<button type="button" class="trade-button trade-button-outline" data-action="cancel-customer" data-id="'+id+
-      '">CANCEL CUSTOMER CASE</button>';
+      '">DEALERSHIP CANCELS / REFUND</button>';
+    const buyerWithdraw='<button type="button" class="trade-button trade-button-secondary" data-action="customer-withdrawal" data-id="'+id+
+      '">CUSTOMER CHANGES MIND</button>';
     let body='';
     switch(c.status){
       case 'enquiry':
@@ -57,6 +61,7 @@
           '">AGREE CASH PRICE</button></div></section>';
         const part=b.exchange?'<section class="sales-offer-mode"><h4>PART-EXCHANGE PROPOSAL</h4>'+
           '<small>CUSTOMER OFFER FOR YOUR CAR</small><strong>'+cash(b.pxOffer)+'</strong>'+
+          VC.mini(b.exchange,'part-ex')+
           '<p>Trade-in: '+esc(b.exchange.title)+' · '+cash(b.exchange.retail)+
           ' indicative retail · '+cash(b.exchange.prep)+' original prep estimate.</p>'+
           '<label for="px-allowance-'+id+'">AGREED PART-EX ALLOWANCE (£)</label>'+
@@ -81,19 +86,32 @@
           '<div class="trade-action-row"><button type="button" class="trade-button" data-action="handover-customer" data-mode="'+
           c.preferredMode+'" data-id="'+id+'">COMPLETE HANDOVER</button>'+
           '<button type="button" class="trade-button trade-button-secondary" data-action="deposit-customer" data-id="'+id+
-          '">HOLD £250 DEPOSIT / LATER COLLECTION</button></div></div>'+cancel;
+          '">TAKE £250 DEPOSIT / LATER COLLECTION</button></div>'+
+          '<p class="sales-deposit-terms">The reservation funds are held separately. Customer withdrawal may cause fair cost-based retention, while dealership fault requires a refund.</p></div>'+cancel;
         break;
       case 'reserved':
-        body='<div class="sales-case-highlight"><h4>£250 CUSTOMER DEPOSIT HELD</h4>'+
-          '<p>Collection booked for <strong>DAY '+c.collectionDay+'</strong>. The £250 is held separately from trading cash and remains refundable if this sale falls through. '+
-          'The vehicle is reserved and cannot be repriced or sold early.</p></div>'+cancel;
+        body='<div class="sales-case-highlight"><h4>£250 CUSTOMER DEPOSIT RECEIVED</h4>'+
+          '<div class="sales-payment-breakdown">'+
+          '<span>Agreed price</span><strong>'+cash(c.price)+'</strong>'+
+          '<span>Part-exchange allowance</span><strong>'+cash(c.allowance||0)+'</strong>'+
+          '<span>Already paid</span><strong>'+cash(c.held)+'</strong>'+
+          '<span>BALANCE DUE AT COLLECTION</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
+          '<p>Collection booked for <strong>DAY '+c.collectionDay+'</strong>. '+
+          'Additional customer-specific preparation charged: '+cash(c.prepCost||0)+'. '+
+          'Buyer withdrawal can result in fair retention against these recorded costs; dealer fault means a full deposit refund. '+
+          'No revenue or completed vehicle sale is recorded until handover.</p></div>'+buyerWithdraw+' '+cancel;
         break;
       case 'collectable':
         body='<div class="sales-case-highlight"><h4>CUSTOMER READY TO COLLECT</h4>'+
-          '<p>'+esc(c.name)+' is due to collect. Agreed price <strong>'+cash(c.price)+
-          '</strong>; held deposit <strong>'+cash(c.held)+'</strong> transfers into the full sale proceeds at handover.</p>'+
+          '<div class="sales-payment-breakdown">'+
+          '<span>Agreed sale price</span><strong>'+cash(c.price)+'</strong>'+
+          '<span>Part-exchange allowance</span><strong>'+cash(c.allowance||0)+'</strong>'+
+          '<span>Deposit already paid</span><strong>'+cash(c.held)+'</strong>'+
+          '<span>BALANCE TO COLLECT TODAY</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
+          '<p>'+esc(c.name)+' is collecting. Receive only the remaining balance. The previously held deposit transfers to the sale ledger without being charged twice.</p>'+
           '<button type="button" class="trade-button" data-action="handover-customer" data-mode="'+
-          c.preferredMode+'" data-id="'+id+'">COMPLETE COLLECTION / HANDOVER</button></div>'+cancel;
+          c.preferredMode+'" data-id="'+id+'">COLLECT '+cash(C.balanceDue(c))+' / HANDOVER</button></div>'+
+          buyerWithdraw+' '+cancel;
         break;
       case 'lost':
         body='<div class="trade-inline-feedback trade-feedback-warning"><strong>CUSTOMER DID NOT PROCEED</strong>'+
@@ -114,14 +132,27 @@
       ['APPOINTMENTS BOOKED',active.filter(c=>c.status==='booked').length],
       ['HELD CUSTOMER DEPOSITS',cash(held)]].map(([label,value])=>
         '<div><small>'+label+'</small><strong>'+value+'</strong></div>').join('')+'</div>'+
-      '<p class="sales-pipeline-note">This is a simulated retail process. Customers may fail to attend, reject a test drive, negotiate unsuccessfully or cancel before collection. '+
-      'No sale counts until the handover takes place. Reservation deposits sit in a separate virtual holding account, not spendable dealership cash.</p>'+
+      '<p class="sales-pipeline-note">Appointments, test drives and negotiations may fail. '+
+      'Deposits are part-payment, held in a separate customer account until collection. '+
+      'Buyer cancellations can lose a fair portion linked to actual extra costs, not automatically the full amount; dealer fault requires a refund. The remaining cash balance is collected on handover.</p>'+
       '<div class="sales-pipeline-activity">THIS MONTH · '+stats.enquiries+' ENQUIRIES · '+
       stats.appointments+' APPOINTMENTS · '+stats.noShows+' NO-SHOWS · '+
       stats.testDrives+' TEST DRIVES · '+stats.completedSales+' COMPLETED SALES</div>';
+    const soldCards=state.sold.slice(-4).reverse().map(v=>
+      '<article class="vehicle-sold-card">'+VC.photo(v,'sold')+
+      '<div class="vehicle-sold-copy"><h4>'+esc(v.title)+'</h4>'+
+      '<span>'+esc(v.color||'Colour unverified')+' · Sold day '+v.day+'</span>'+
+      '<div class="sales-payment-breakdown">'+
+      '<span>Completed sale</span><strong>'+cash(v.price)+'</strong>'+
+      '<span>Deposit already paid</span><strong>'+cash(v.depositApplied||0)+'</strong>'+
+      '<span>Final balance received</span><strong>'+cash(v.customerBalancePaid??v.price)+'</strong>'+
+      '<span>Gross vehicle margin</span><strong>'+cash(v.profit)+'</strong>'+
+      '</div></div></article>').join('');
+    const salesHistory=soldCards?'<section class="sales-sold-recent"><h3>RECENT COMPLETED HANDOVERS</h3>'+
+      '<div class="sales-sold-grid">'+soldCards+'</div></section>':'';
     if(!listed.length)return top+'<div class="trade-empty"><h2>NO CARS READY FOR RETAIL.</h2>'+
       '<p>Assess, repair, pass quality control and advertise a vehicle before expecting customer enquiries.</p>'+
-      '<button type="button" class="trade-button" data-page="stock">OPEN VEHICLE STOCK →</button></div>';
+      '<button type="button" class="trade-button" data-page="stock">OPEN VEHICLE STOCK →</button></div>'+salesHistory;
     const deadline=E.events.isDealDay(state.day);
     const header=deadline?'<div class="deadline-retail-intro"><strong>DEAL DAY · '+
       esc(E.events.outlook(state).label)+' · '+esc(E.events.dealSession(state).time)+
@@ -129,14 +160,13 @@
       'Unfinished walk-in cases expire when the next session begins.</p></div>':'';
     return top+header+'<div class="sales-case-grid">'+listed.map(v=>
       '<article class="trade-card sales-case-card">'+
-      '<div class="trade-card-top"><div><small>STOCK '+v.id+' · '+
-      Math.max(0,state.day-v.listedDay)+' DAYS ADVERTISED</small><h3>'+esc(v.title)+'</h3></div>'+
-      '<span class="trade-source">GRADE '+(v.profile?.grade||3)+'</span></div>'+
+      VC.heading(v,C.caseFor(state,v.id)?.held?'reserved':'stock',
+        'STOCK '+v.id+' · '+Math.max(0,state.day-v.listedDay)+' DAYS ADVERTISED')+
       '<div class="trade-pricing"><div><small>YOUR ASKING PRICE</small><strong>'+cash(v.asking)+
       '</strong></div><div><small>BUY / PREP COST</small><strong>'+cash(v.cost+v.prepSpent)+
       '</strong></div><div><small>LIKELY SALE GUIDE</small><strong>'+
       cash(v.profile?.likelySale||v.retail)+'</strong></div></div>'+
-      actions(state,v,E)+'</article>').join('')+'</div>';
+      actions(state,v,E)+'</article>').join('')+'</div>'+salesHistory;
   }
   window.MotorTradeCustomersView=Object.freeze({render});
 })();

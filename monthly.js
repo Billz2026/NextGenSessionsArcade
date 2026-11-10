@@ -70,7 +70,9 @@
     p.staffTargets.push(staffTarget(p,employee,state.day));
   }
   function categorize(note){
-    if(note.startsWith('Retail sale:'))return 'retailReceipts';
+    if(note.startsWith('Retail sale:')||
+       note.startsWith('Retail balance received on collection:')||
+       note.startsWith('Customer deposit applied to retail sale:'))return 'retailReceipts';
     if(note.startsWith('Auction purchase:'))return 'auctionPurchases';
     if(note.startsWith('Direct purchase:'))return 'sellerPurchases';
     if(note.startsWith('Part-exchange acquisition:'))return 'partExchangePurchases';
@@ -164,6 +166,10 @@
         window.MotorTradeCustomers.stats(state,p.startDay,Math.min(state.day,p.endDay)):null,
       customerHoldingAtClose:window.MotorTradeCustomers?
         window.MotorTradeCustomers.heldDeposits(state):0,
+      customerPreparationExpense:-ledger.filter(x=>x.note.startsWith(
+        'Customer-specific collection preparation:')).reduce((n,x)=>n+x.delta,0),
+      cancellationCostRecovery:ledger.filter(x=>x.note.startsWith(
+        'Fair cancellation cost recovery:')).reduce((n,x)=>n+x.delta,0),
       bestDeal:sales.length?[...sales].sort((a,b)=>b.profit-a.profit)[0].title:null,
       worstDeal:sales.length?[...sales].sort((a,b)=>a.profit-b.profit)[0].title:null
     };
@@ -261,6 +267,8 @@
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.customerHoldingAtClose!==undefined&&
       (!nonneg(r.customerHoldingAtClose)||r.customerHoldingAtClose>1000))return false;
+    if(r.customerPreparationExpense!==undefined&&
+      (!nonneg(r.customerPreparationExpense)||!nonneg(r.cancellationCostRecovery??0)))return false;
     if(r.customerJourney!=null){
       const j=r.customerJourney;
       const keys=['enquiries','appointments','attended','noShows','testDrives',

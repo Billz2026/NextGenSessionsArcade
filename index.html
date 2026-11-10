@@ -16,21 +16,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=19">
+  <link rel="stylesheet" href="./styles.css?v=20">
   <script src="./vehicle-intel.js?v=1" defer></script>
+  <script src="./vehicle-photos.js?v=1" defer></script>
   <script src="./people.js?v=3" defer></script>
-  <script src="./monthly.js?v=4" defer></script>
+  <script src="./monthly.js?v=5" defer></script>
   <script src="./events.js?v=2" defer></script>
   <script src="./workshop.js?v=1" defer></script>
-  <script src="./customers.js?v=1" defer></script>
-  <script src="./trading.js?v=9" defer></script>
+  <script src="./customers.js?v=2" defer></script>
+  <script src="./trading.js?v=10" defer></script>
+  <script src="./vehicle-cards.js?v=1" defer></script>
   <script src="./vehicle-view.js?v=2" defer></script>
   <script src="./people-view.js?v=1" defer></script>
-  <script src="./monthly-view.js?v=4" defer></script>
+  <script src="./monthly-view.js?v=5" defer></script>
   <script src="./events-view.js?v=3" defer></script>
-  <script src="./workshop-view.js?v=1" defer></script>
-  <script src="./customers-view.js?v=1" defer></script>
-  <script src="./simulator.js?v=14" defer></script>
+  <script src="./workshop-view.js?v=2" defer></script>
+  <script src="./customers-view.js?v=2" defer></script>
+  <script src="./simulator.js?v=15" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -38,7 +40,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.1</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -201,8 +203,8 @@
             </section>
 
             <section class="career-panel" data-panel="sales" hidden aria-labelledby="sales-title">
-              <div class="page-heading"><div><p class="section-overline">RETAIL ENQUIRIES / NEGOTIATION</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Manage genuine enquiries, appointments, test drives, negotiations, refundable deposits and vehicle handovers.</p></div></div>
-              <div class="trade-alert">Buyer offers now take the vehicle's likely achieved market value into account. A retail enquiry is not a completed sale. A part-exchange requires an agreed allowance, and the incoming car becomes stock needing workshop preparation. Reservation deposits are held separately from business cash and remain fully refundable in this simulation.</div>
+              <div class="page-heading"><div><p class="section-overline">RETAIL ENQUIRIES / NEGOTIATION</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Manage customer enquiries, test drives and deposits. Buyers pay the remaining balance at collection; fair cancellation costs may be retained.</p></div></div>
+              <div class="trade-alert">Buyer offers now take the vehicle's likely achieved market value into account. A retail enquiry is not a completed sale. A part-exchange requires an agreed allowance, and the incoming car becomes stock needing workshop preparation. Reservation deposits are part-payments held separately from business cash. Buyer cancellations can forfeit a fair amount for customer-specific costs already incurred; dealer fault requires a full refund. Only the outstanding balance is collected at handover.</div>
               <div id="sales-list" class="trade-card-grid trade-sales-grid"></div>
             </section>
 

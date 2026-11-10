@@ -9,6 +9,8 @@ const css = readFileSync(new URL('styles.css', root), 'utf8');
 const js = readFileSync(new URL('simulator.js', root), 'utf8');
 const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
+const photos = readFileSync(new URL('vehicle-photos.js', root), 'utf8');
+const cards = readFileSync(new URL('vehicle-cards.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
 const people = readFileSync(new URL('people.js', root), 'utf8');
 const peopleView = readFileSync(new URL('people-view.js', root), 'utf8');
@@ -54,15 +56,17 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
   assert.match(html, /people\.js\?v=3/);
-  assert.match(html, /monthly\.js\?v=4/);
+  assert.match(html, /monthly\.js\?v=5/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=1/);
-  assert.match(html, /customers\.js\?v=1/);
-  assert.match(html, /trading\.js\?v=9/);
-  assert.match(html, /customers-view\.js\?v=1/);
-  assert.match(html, /workshop-view\.js\?v=1/);
+  assert.match(html, /customers\.js\?v=2/);
+  assert.match(html, /vehicle-photos\.js\?v=1/);
+  assert.match(html, /vehicle-cards\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=10/);
+  assert.match(html, /customers-view\.js\?v=2/);
+  assert.match(html, /workshop-view\.js\?v=2/);
   assert.match(html, /events-view\.js\?v=3/);
-  assert.match(html, /monthly-view\.js\?v=4/);
+  assert.match(html, /monthly-view\.js\?v=5/);
   assert.match(html, /people-view\.js\?v=1/);
   assert.match(html, /vehicle-view\.js\?v=2/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
@@ -150,12 +154,14 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   };
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
+  vm.runInNewContext(photos, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
   vm.runInNewContext(events, context, { timeout: 1500 });
   vm.runInNewContext(workshop, context, { timeout: 1500 });
   vm.runInNewContext(customers, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
+  vm.runInNewContext(cards, context, { timeout: 1500 });
   // Test-fixture shortcut for PRE-v0.8 financial/reputation assertions only.
   // It is not included in production scripts. Dedicated workshop tests below
   // verify real day progression, blocked retail listings, quality and cash.
@@ -196,7 +202,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
         name:'Legacy Fixture Buyer',channel:'FIXTURE ONLY',status:'discussing',
         preferredMode:mode,appointmentDay:null,agreedDay:null,
         price:null,allowance:null,collectionDay:null,held:0,counters:0,
-        reason:'',exchange:null
+        reason:'',terms:'in-person',prepCost:0,exchange:null
       };
     }
   }
@@ -261,7 +267,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards };
 }
 
 test('first visit and saved career show the minimal main menu', () => {
@@ -359,7 +365,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=19/);
+  assert.match(html, /styles\.css\?v=20/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -377,7 +383,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 8);
+  assert.equal(opening.version, 9);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -508,7 +514,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,8);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,9);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -744,7 +750,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,8);
+  assert.equal(migrated.version,9);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -823,7 +829,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,8);
+  assert.equal(saved.version,9);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
@@ -833,7 +839,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,8);
+  assert.equal(app.engine.VERSION,9);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
@@ -1022,7 +1028,7 @@ test('v0.4 career migrates with stock, sold vehicles and financial balances unto
   assert.equal(newApp.nodes.get('menu-continue').hidden,false);
   newApp.click('resume');newApp.click('save');
   const restored=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(restored.version,8);
+  assert.equal(restored.version,9);
   assert.equal(restored.cash,v3.cash);
   assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
   assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
@@ -1107,7 +1113,7 @@ test('new dealerships receive achievable company targets and a live monthly dash
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Monthly Review Motors');
   const E=app.engine,state=E.create('Standalone',[]);
-  assert.equal(E.VERSION,8);
+  assert.equal(E.VERSION,9);
   assert.equal(state.monthPlan.month,1);
   assert.equal(state.monthPlan.startDay,1);
   assert.equal(state.monthPlan.endDay,30);
@@ -1234,7 +1240,7 @@ test('day 30 close generates an inbox message and immutable archived review', ()
   assert.equal(JSON.stringify(state.monthlyReports[0]),archived);
   const resumed=browser(storage);
   resumed.click('resume');
-  assert.equal(resumed.engine.VERSION,8);
+  assert.equal(resumed.engine.VERSION,9);
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).monthlyReports.length,1);
 });
 test('monthly targets credit salesperson performance only during active duty', () => {
@@ -1271,7 +1277,7 @@ test('migration from v0.5 preserves staff, outstanding balances and day without 
   assert.equal(resumed.nodes.get('menu-continue').hidden,false);
   resumed.click('resume');resumed.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,8);
+  assert.equal(after.version,9);
   assert.equal(after.day,before.day);
   assert.equal(after.cash,before.cash);
   assert.equal(after.ledger.length,before.ledger.length);
@@ -1502,7 +1508,7 @@ test('old v0.6 saved careers migrate without losing sales, staff, stock or cash'
   next.click('resume');
   next.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,8);
+  assert.equal(after.version,9);
   assert.equal(after.cash,old.cash);
   assert.equal(after.staff.length,1);
   assert.equal(after.vehicles.length,1);
@@ -1858,7 +1864,7 @@ test('v0.7.1 saved stock migrates without adding hidden charges or altering comp
   for(const v of old.vehicles)delete v.workshop;
   const restored=E.normalize(old);
   assert.ok(restored,'Historic save should migrate instead of being discarded');
-  assert.equal(restored.version,8);
+  assert.equal(restored.version,9);
   assert.equal(restored.cash,old.cash);
   assert.equal(restored.ledger.length,old.ledger.length);
   assert.equal(restored.vehicles[0].prepSpent,old.vehicles[0].prepSpent);
@@ -1958,7 +1964,7 @@ test('v0.9 gives four spaces to fresh and existing two-space dealerships without
   delete old.customerCases;delete old.customerHistory;
   const upgraded=E.normalize(old);
   assert.ok(upgraded);
-  assert.equal(upgraded.version,8);
+  assert.equal(upgraded.version,9);
   assert.equal(upgraded.capacity,4);
   assert.equal(upgraded.cash,old.cash);
   assert.equal(upgraded.vehicles.length,old.vehicles.length);
@@ -2071,11 +2077,13 @@ test('£250 deposit is segregated, blocks premature collection and settles at ha
   const price=c.price;
   assert.ok(E.completeSale(state,v.id,'cash',null).ok);
   assert.equal(state.cash,cashBefore+price);
-  assert.equal(state.ledger.length,ledgerBefore+1);
+  assert.equal(state.ledger.length,ledgerBefore+2);
+  assert.equal(state.sold[0].customerBalancePaid,price-250);
+  assert.equal(state.sold[0].depositApplied,250);
   assert.equal(C.heldDeposits(state),0);
   assert.equal(state.sold.length,1);
-  assert.ok(!state.ledger.some(x=>/deposit/i.test(x.note)),
-    'Customer holding funds never enter the business ledger separately');
+  assert.equal(state.ledger.slice(-2).reduce((n,x)=>n+x.delta,0),price,
+    'Balance plus applied deposit must equal the full agreed sale once');
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
 test('customer cancellation always returns held deposits without adding or losing business cash', () => {
@@ -2089,10 +2097,11 @@ test('customer cancellation always returns held deposits without adding or losin
   assert.equal(c.status,'lost');
   assert.equal(c.held,0);
   assert.equal(C.heldDeposits(state),0);
-  assert.equal(state.cash,before);
-  assert.equal(state.ledger.length,ledger);
+  assert.equal(state.cash,before+c.prepCost,
+    'Only documented customer-specific expense is recovered, not an unearned £250 penalty');
+  assert.equal(state.ledger.length,ledger+1);
   assert.equal(state.sold.length,0);
-  assert.equal(C.stats(state,1,state.day).refunds,1);
+  assert.equal(C.stats(state,1,state.day).retainedAmount,c.prepCost);
   assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
@@ -2118,7 +2127,9 @@ test('some customers cancel before collecting despite a paid reservation', () =>
   assert.equal(c.held,0);
   assert.equal(C.heldDeposits(state),0);
   assert.equal(state.sold.length,0);
-  assert.equal(C.stats(state,1,state.day).refunds,1);
+  assert.equal(C.stats(state,1,state.day).retainedAmount,c.prepCost);
+  assert.equal(C.stats(state,1,state.day).retainedDeposits,1);
+  assert.equal(C.stats(state,1,state.day).refunds,c.prepCost<250?1:0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
 test('counteroffer rejection and walkaways mean negotiations do not guarantee extra money', () => {
@@ -2235,7 +2246,7 @@ test('the sales office UI supports a saved multi-day appointment and collection'
   app.click('test-drive',{id:'1'});
   assert.match(app.nodes.get('sales-list').innerHTML,/AGREE CASH PRICE/);
   app.click('agree-cash',{id:'1'});
-  assert.match(app.nodes.get('sales-list').innerHTML,/HOLD £250 DEPOSIT/);
+  assert.match(app.nodes.get('sales-list').innerHTML,/TAKE £250 DEPOSIT/);
   app.click('deposit-customer',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
   assert.equal(state.customerCases['1'].held,250);
@@ -2267,9 +2278,9 @@ test('overdue collection cancels a reserved agreement and returns customer holdi
     state.day=c.collectionDay+3;
     const notices=E.advanceCustomers(state);
     assert.equal(c.status,'lost');
-    assert.ok(notices.some(x=>x.includes('refunded')));
+    assert.ok(notices.some(x=>x.includes('retained')||x.includes('refunded')));
     assert.equal(E.customers.heldDeposits(state),0);
-    assert.equal(state.cash,before);
+    assert.equal(state.cash,before+c.prepCost);
     assert.equal(state.sold.length,0);
     assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
   }
@@ -2307,5 +2318,134 @@ test('the player can occupy all four forecourt spaces but a fifth purchase is bl
   assert.equal(rejected.code,'capacity');
   assert.equal(state.stock,4);
   assert.equal(state.vehicles.length,4);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('real-photo cards never use an incorrect model, generation or paint colour', () => {
+  const app=browser(new Map()),P=app.photos,V=app.cards;
+  assert.equal(P.LIBRARY.length,5);
+  for(const item of P.LIBRARY){
+    assert.ok(item.file.endsWith('.jpg'));
+    assert.ok(item.author&&item.license&&item.licenseUrl);
+    const car={title:item.start+' '+item.model+' Test',color:item.color,
+      generation:item.generation,miles:78000,profile:{grade:3,owners:2,mot:{monthsRemaining:6}}};
+    assert.equal(P.select(car)?.id,item.id);
+    assert.equal(P.select({...car,color:item.color==='Black'?'White':'Black'}),null);
+    assert.equal(P.select({...car,generation:'wrong'}),null);
+    assert.match(V.photo(car,'auction'),/REAL PHOTO:/);
+    assert.match(V.photo({...car,color:'Purple'},'auction'),/PHOTO UNAVAILABLE/);
+  }
+  assert.equal(P.select({title:'2024 Nissan Qashqai Tekna',
+    generation:'J11',color:'Black'}),null);
+  assert.equal(P.select({title:'2015 Nissan Qashqai Acenta',
+    generation:'J11',color:'Black'})?.id,'qashqai-j11-black');
+});
+test('live photo identity survives buying, saving, and v8 migration', () => {
+  const app=browser(new Map()),E=app.productionEngine,P=app.photos;
+  const state=E.create('Photo Trader',[]),seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
+  assert.equal(state.vehicles[0].color,seller.color);
+  assert.equal(state.vehicles[0].generation,seller.generation);
+  const old=JSON.parse(JSON.stringify(state));
+  old.version=8;delete old.customerFunds;
+  delete old.vehicles[0].color;delete old.vehicles[0].generation;
+  const migrated=E.normalize(old);
+  assert.ok(migrated);
+  assert.equal(migrated.version,9);
+  assert.equal(migrated.cash,state.cash);
+  assert.ok(P.COLOURS.includes(migrated.vehicles[0].color));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(migrated))));
+});
+test('buyer cancellation cannot retain more than actual customer-specific costs', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  const before=state.cash;
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  assert.equal(C.balanceDue(c),c.price-250);
+  const spent=c.prepCost;
+  assert.ok(spent>=75&&spent<=250);
+  assert.equal(state.cash,before-spent);
+  assert.ok(E.cancelCustomer(state,v.id,'buyer').ok);
+  assert.equal(state.cash,before);
+  assert.equal(C.stats(state,1,state.day).retainedAmount,spent);
+  assert.equal(C.heldDeposits(state),0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('dealership cancellation returns all held deposit and leaves its preparation loss', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  const before=state.cash;
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  assert.ok(E.cancelCustomer(state,v.id,'dealer').ok);
+  assert.equal(state.cash,before-c.prepCost);
+  assert.equal(C.heldDeposits(state),0);
+  assert.equal(C.stats(state,1,state.day).retainedAmount,0);
+  assert.equal(C.stats(state,1,state.day).refunds,1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('legacy v8 reservations keep their original full-refund promise after upgrade', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  const old=JSON.parse(JSON.stringify(state)),cost=old.customerCases['1'].prepCost;
+  old.version=8;
+  delete old.customerFunds;
+  old.cash+=cost;
+  old.ledger=old.ledger.filter(x=>
+    !x.note.startsWith('Customer-specific collection preparation:'));
+  for(const vehicle of old.vehicles){
+    delete vehicle.color;delete vehicle.generation;
+  }
+  delete old.customerCases['1'].terms;
+  delete old.customerCases['1'].prepCost;
+  const migrated=E.normalize(old);
+  assert.ok(migrated);
+  assert.equal(migrated.customerCases['1'].terms,'legacy-refundable');
+  assert.equal(C.heldDeposits(migrated),250);
+  const balance=migrated.cash;
+  assert.ok(E.cancelCustomer(migrated,v.id,'buyer').ok);
+  assert.equal(migrated.cash,balance);
+  assert.equal(C.stats(migrated,1,migrated.day).retainedAmount,0);
+  assert.equal(C.heldDeposits(migrated),0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(migrated))));
+});
+test('buyer applying deposit to part exchange pays only the net cash amount', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let result=null;
+  for(let i=0;i<140;i++){
+    const {state,v}=readyForRetail(E,'PX Collection '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);
+    const c=C.caseFor(state,v.id);
+    if(c.preferredMode!=='part-ex')continue;
+    E.bookCustomer(state,v.id);
+    state.day=c.appointmentDay;E.advanceCustomers(state);
+    if(c.status!=='arrived'||!E.testDrive(state,v.id).ok)continue;
+    const buyer=E.buyers(v,state);
+    if(!buyer?.exchange)continue;
+    assert.ok(E.agreeCustomer(state,v.id,'part-ex',buyer.exchange.ask).ok);
+    if(!E.depositCustomer(state,v.id).ok)continue;
+    const balance=C.balanceDue(c);
+    state.day=c.collectionDay;E.advanceCustomers(state);
+    if(c.status!=='collectable')continue;
+    const before=state.cash;
+    const sale=E.completeSale(state,v.id,'part-ex',null);
+    if(!sale.ok)continue;
+    result={state,c,balance,cashDelta:state.cash-before};
+    break;
+  }
+  assert.ok(result,'A deposit-paying part-ex customer should occasionally collect');
+  const {state,c,balance,cashDelta}=result;
+  assert.equal(balance,c.price-c.allowance-250);
+  assert.equal(cashDelta,balance+250);
+  assert.equal(state.sold[0].customerBalancePaid,balance);
+  assert.equal(state.sold[0].depositApplied,250);
+  assert.equal(state.ledger.slice(-3).reduce((n,x)=>n+x.delta,0),balance+250);
+  assert.ok(state.ledger.some(x=>x.delta===0&&
+    x.note.startsWith('Part-exchange acquisition:')));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
