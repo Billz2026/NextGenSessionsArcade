@@ -2359,7 +2359,7 @@ test('the player can occupy all four forecourt spaces but a fifth purchase is bl
 
 test('real-photo cards never use an incorrect model, generation or paint colour', () => {
   const app=browser(new Map()),P=app.photos,V=app.cards;
-  assert.equal(P.LIBRARY.length,5);
+  assert.equal(P.LIBRARY.length,8);
   for(const item of P.LIBRARY){
     assert.ok(item.file.endsWith('.jpg'));
     assert.ok(item.author&&item.license&&item.licenseUrl);
