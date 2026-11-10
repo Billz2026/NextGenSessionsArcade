@@ -310,7 +310,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards };
 }
 
-test('v0.9.3 curated catalogue contains 49 correctly modelled UK vehicles',()=>{
+test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
   const app=browser(),M=app.market,P=app.photos;
   const all=Object.values(M.CATALOGUE).flat();
   assert.equal(all.length,50);
