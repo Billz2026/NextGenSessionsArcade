@@ -16,8 +16,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=9">
-  <script src="./simulator.js?v=5" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=10">
+  <script src="./trading.js?v=1" defer></script>
+  <script src="./simulator.js?v=6" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -69,7 +70,7 @@
               <div><span>CAREER TYPE</span><strong>Independent trader</strong></div>
               <div><span>STARTING STOCK</span><strong>None</strong></div>
             </div>
-            <p class="notice-box">This initial release contains the management dashboard, inbox, calendar and saved career. Trading systems are being built next. All scenario values are fictional.</p>
+            <p class="notice-box">Trade in a fictional UK market: auction bids, walk-in sellers, stock preparation, retail enquiries and part-exchanges. Prices and margins are illustrative; VAT, taxes, overheads and consumer claims are not yet modelled.</p>
             <button class="primary-button setup-submit" type="submit">BEGIN CAREER <span aria-hidden="true">→</span></button>
           </form>
         </div>
@@ -89,7 +90,7 @@
           <nav class="career-nav" aria-label="Career navigation">
             <button type="button" data-page="dashboard" aria-current="page"><span class="nav-icon">▦</span> Dashboard</button>
             <button type="button" data-page="inbox"><span class="nav-icon">✉</span> Inbox <span class="nav-unread" data-bind="unread" hidden>3</span></button>
-            <button type="button" data-page="auctions"><span class="nav-icon">◆</span> Auction Desk</button>
+            <button type="button" data-page="auctions"><span class="nav-icon">◆</span> Buying Desk</button>
             <button type="button" data-page="stock"><span class="nav-icon">▤</span> Vehicle Stock</button>
             <button type="button" data-page="sales"><span class="nav-icon">♧</span> Sales Office</button>
             <button type="button" data-page="finance"><span class="nav-icon">£</span> Finances</button>
@@ -124,7 +125,7 @@
               </div>
               <div class="stat-grid">
                 <div class="stat-tile"><span>AVAILABLE CASH</span><strong data-bind="cash">£12,500</strong><small>Funds available</small></div>
-                <div class="stat-tile"><span>VEHICLES IN STOCK</span><strong data-bind="stock">0 <i>/ 2</i></strong><small>Your forecourt</small></div>
+                <div class="stat-tile"><span>VEHICLES IN STOCK</span><strong data-bind="stock">0 / 2</strong><small>Your forecourt</small></div>
                 <div class="stat-tile"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Career total</small></div>
                 <div class="stat-tile stat-tile-gold"><span>TRADE REPUTATION</span><strong data-bind="reputation">NEWCOMER</strong><small>Build trust through deals</small></div>
               </div>
@@ -137,18 +138,18 @@
                   <section class="panel-card priorities" aria-labelledby="priorities-title">
                     <div class="panel-card-header"><div><p class="section-overline">MANAGER'S DIARY</p><h2 id="priorities-title">TODAY'S PRIORITIES</h2></div><span class="tiny-index" data-bind="day-label">DAY 01</span></div>
                     <div class="priority-row"><span class="priority-index">01</span><div><strong>Review your inbox</strong><p>Read your welcome brief and starting position.</p></div></div>
-                    <div class="priority-row"><span class="priority-index">02</span><div><strong>Inspect the Auction Desk</strong><p>The first sample lot and its condition report are available to study.</p></div></div>
-                    <button type="button" class="subtle-action" data-page="auctions">OPEN AUCTION DESK <span>→</span></button>
+                    <div class="priority-row"><span class="priority-index">02</span><div><strong>Find your next vehicle</strong><p>Auctions and private sellers bring new stock opportunities each day.</p></div></div>
+                    <button type="button" class="subtle-action" data-page="auctions">OPEN BUYING DESK <span>→</span></button>
                   </section>
                   <section class="panel-card calendar-widget">
                     <p class="section-overline">GAME CALENDAR</p>
                     <div class="calendar-date"><span data-bind="weekday">MONDAY</span><strong data-bind="date-long">09 NOVEMBER 2026</strong></div>
                     <div class="calendar-copy" id="calendar-message">Your first day in business. Review your briefing before advancing.</div>
-                    <p class="simulation-note">CONTINUE advances one simulated day. Finances do not change until trading is implemented.</p>
+                    <p class="simulation-note">CONTINUE advances one game day and refreshes auction lots, direct sellers and enquiries. No automatic profit is invented.</p>
                   </section>
                 </div>
               </div>
-              <div class="dashboard-bottom panel-card"><div><p class="section-overline">THE FIRST MILESTONE</p><h2>FROM THE BLOCK TO THE FORECOURT.</h2><p>Start with £12,500, research the first lot and prepare for your opening trade. Auctions and sales are the next gameplay milestone.</p></div><button type="button" class="secondary-button" data-page="auctions">VIEW SAMPLE LOT ↗</button></div>
+              <div class="dashboard-bottom panel-card"><div><p class="section-overline">TRADE PERFORMANCE</p><h2>EVERY DEAL COUNTS.</h2><p>Realised gross trading margin: <strong data-bind="trade-profit">£0</strong>. This excludes taxes, VAT adjustments and business overheads. Buy at auction or from a customer, prepare the car, then sell for cash or with a part-exchange.</p></div><button type="button" class="secondary-button" data-page="auctions">FIND STOCK ↗</button></div>
             </section>
 
             <section class="career-panel" data-panel="inbox" hidden aria-labelledby="inbox-title">
@@ -157,30 +158,38 @@
             </section>
 
             <section class="career-panel" data-panel="auctions" hidden aria-labelledby="auctions-title">
-              <div class="page-heading"><div><p class="section-overline">BUYING / MARKETPLACE</p><h1 id="auctions-title">AUCTION <em>DESK.</em></h1><p>Research your first vehicle before committing a pound.</p></div><span class="coming-tag">BIDDING COMING NEXT</span></div>
-              <div class="auction-grid">
-                <div class="panel-card">
-                  <div class="panel-card-header"><div><p class="section-overline">SAMPLE VEHICLE / LOT 084</p><h2>2016 FORD FOCUS ZETEC</h2></div><span class="grade-pill">GRADE 3</span></div>
-                  <div class="auction-art"><img src="./assets/hatchback-study.svg" width="940" height="390" alt="Illustrated generic hatchback, not a photograph of the sample Ford Focus"></div>
-                  <div class="vehicle-fact-grid"><div><span>MILEAGE</span><strong>81,240 mi</strong></div><div><span>FUEL</span><strong>Diesel</strong></div><div><span>GEARBOX</span><strong>Manual</strong></div><div><span>HISTORY</span><strong>Partial</strong></div></div>
-                </div>
-                <div class="panel-card sample-report"><div class="panel-card-header"><div><p class="section-overline">TRADE ASSESSMENT</p><h2>CONDITION REPORT</h2></div></div><p>Fictional example — not verified vehicle data or a live auction listing.</p><div class="report-item"><span>01 / BODY</span><strong>Cosmetic paint marks on offside doors</strong></div><div class="report-item"><span>02 / TYRES</span><strong>Front tyres approaching replacement</strong></div><div class="report-item"><span>03 / HISTORY</span><strong>Service paperwork requires checking</strong></div><div class="notice-box">Auction bidding, rival traders, buyer fees and vehicle purchases are planned for the next gameplay stage. This report is for inspection only.</div></div>
-              </div>
+              <div class="page-heading"><div><p class="section-overline">VEHICLE SOURCING / UK MARKET</p><h1 id="auctions-title">BUYING <em>DESK.</em></h1><p>Buy through auction or negotiate directly with customers looking to sell. Stock changes every game day.</p></div><span class="career-chip">FICTIONAL MARKET</span></div>
+              <div class="trade-alert">Buyer fees, condition estimates and asking prices are fictional. A winning bid or seller agreement is final for this simulation; keep enough cash for preparation.</div>
+              <section class="panel-card trade-section" aria-labelledby="auction-list-title">
+                <div class="panel-card-header"><div><p class="section-overline">COMPETE WITH OTHER DEALERS</p><h2 id="auction-list-title">AUCTION LOTS</h2></div><span class="tiny-index">TODAY'S CATALOGUE</span></div>
+                <div id="market-auctions" class="trade-card-grid"></div>
+              </section>
+              <section class="panel-card trade-section" aria-labelledby="seller-list-title">
+                <div class="panel-card-header"><div><p class="section-overline">CUSTOMERS SELLING TO YOU</p><h2 id="seller-list-title">PRIVATE & WALK-IN SELLERS</h2></div><span class="tiny-index">DIRECT PURCHASES</span></div>
+                <div id="market-sellers" class="trade-card-grid"></div>
+              </section>
             </section>
 
             <section class="career-panel" data-panel="stock" hidden aria-labelledby="stock-title">
-              <div class="page-heading"><div><p class="section-overline">VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Every vehicle will need preparation, pricing and a stock-ageing strategy.</p></div></div>
-              <div class="empty-state panel-card"><span class="empty-symbol">▤</span><h2>YOUR FORECOURT IS EMPTY.</h2><p>You have no vehicles in stock. Your first purchase will appear here when auction gameplay launches.</p><div class="empty-metrics"><span>CAPACITY <b>2</b></span><span>IN STOCK <b data-bind="stock-count">0</b></span></div><button type="button" class="secondary-button" data-page="auctions">VIEW AUCTION PREVIEW ↗</button></div>
+              <div class="page-heading"><div><p class="section-overline">THE FORECOURT / VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Every acquired vehicle, including a customer part-exchange, must be prepared before retail advertising.</p></div><span class="career-chip">SPACE <span data-bind="stock">0 / 2</span></span></div>
+              <div id="stock-list" class="trade-card-grid trade-stock-grid"></div>
             </section>
 
             <section class="career-panel" data-panel="sales" hidden aria-labelledby="sales-title">
-              <div class="page-heading"><div><p class="section-overline">CUSTOMERS / NEGOTIATIONS</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Manage enquiries, test drives and customer offers when your stock is live.</p></div></div>
-              <div class="empty-state panel-card"><span class="empty-symbol">♧</span><h2>NO ACTIVE ENQUIRIES.</h2><p>Sales appointments will start once you have purchased and advertised a vehicle. Customer personalities, offers and haggling are planned for the trading release.</p><button type="button" class="secondary-button" data-page="stock">VIEW VEHICLE STOCK ↗</button></div>
+              <div class="page-heading"><div><p class="section-overline">RETAIL ENQUIRIES / NEGOTIATION</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Customers can pay cash or offer their existing car in part-exchange. Negotiate each deal carefully.</p></div></div>
+              <div class="trade-alert">A part-exchange is a second acquisition. The customer pays the difference between the agreed sale price and the accepted allowance; the traded-in vehicle becomes stock.</div>
+              <div id="sales-list" class="trade-card-grid trade-sales-grid"></div>
             </section>
 
             <section class="career-panel" data-panel="finance" hidden aria-labelledby="finance-title">
-              <div class="page-heading"><div><p class="section-overline">FINANCIAL CONTROL</p><h1 id="finance-title">BUSINESS <em>FINANCES.</em></h1><p>Know your numbers before you place a bid.</p></div></div>
-              <div class="finance-grid"><div class="panel-card finance-primary"><p class="section-overline">AVAILABLE BUSINESS CASH</p><strong data-bind="cash">£12,500</strong><p>No auction purchases or trading expenses have been recorded.</p></div><div class="panel-card ledger"><h2>OPENING BALANCE</h2><div><span>Starting capital</span><b>+£12,500</b></div><div><span>Vehicles purchased</span><b>£0</b></div><div><span>Sales completed</span><b>£0</b></div><div class="notice-box">Financial statements will separate cash flow, gross spread, VAT, preparation, overheads and realised profit as the game develops. No income is simulated in this foundation.</div></div></div>
+              <div class="page-heading"><div><p class="section-overline">ACCOUNTING / CASH FLOW</p><h1 id="finance-title">BUSINESS <em>FINANCES.</em></h1><p>Track the cash, acquisition costs and realised gross trading margins for every deal.</p></div></div>
+              <div class="trade-finance-grid">
+                <div class="panel-card trade-money"><span>AVAILABLE CASH</span><strong data-bind="cash">£12,500</strong><small>Starting capital and recorded cash transactions</small></div>
+                <div class="panel-card trade-money"><span>REALISED GROSS TRADE MARGIN</span><strong data-bind="trade-profit">£0</strong><small>Sale proceeds less vehicle acquisition and preparation</small></div>
+                <div class="panel-card trade-money"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Completed customer transactions</small></div>
+              </div>
+              <section class="panel-card trade-section"><div class="panel-card-header"><div><p class="section-overline">TRANSACTION HISTORY</p><h2>TRADING LEDGER</h2></div></div><div id="ledger-list" class="trade-ledger"></div></section>
+              <p class="trade-alert">These are game economics only. Figures are not tax-adjusted net profit: VAT, applicable margin-scheme rules, operating overheads, finance, warranties and consumer rights liabilities are not calculated.</p>
             </section>
 
             <section class="career-panel" data-panel="business" hidden aria-labelledby="business-title">
