@@ -16,9 +16,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=10">
-  <script src="./trading.js?v=1" defer></script>
-  <script src="./simulator.js?v=6" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=11">
+  <script src="./trading.js?v=2" defer></script>
+  <script src="./simulator.js?v=7" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -26,7 +26,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.3</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.3.1</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -116,6 +116,7 @@
           </header>
           <div class="game-notice" id="save-warning" role="status" hidden>Browser storage is unavailable. This career is playable in this tab, but progress may not be saved after you leave.</div>
           <div class="game-notice game-event" id="event-notice" role="status" hidden></div>
+          <button type="button" id="trade-feedback-toast" class="trade-feedback-toast" data-action="dismiss-feedback" role="status" aria-live="polite" aria-label="Trading result, click to dismiss" hidden></button>
 
           <div class="career-content">
             <section class="career-panel" data-panel="dashboard" aria-labelledby="dashboard-title">

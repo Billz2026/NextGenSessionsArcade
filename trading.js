@@ -31,22 +31,48 @@
   const cashValue = value => integer(value) && value >= 0 && value <= 100000000;
   const own = (arr, id) => arr.find(v => v.id === id);
   const sum = (items, key) => items.reduce((total, item) => total + item[key], 0);
+  // Seeded, stable daily supply: the same career day gives the same listings
+  // after reload, while volume, models, valuations and mileage vary across days.
+  const sample = (day,index,salt) => {
+    let v = ((day * 374761393) ^ (index * 668265263) ^ salt) >>> 0;
+    v = Math.imul(v ^ (v >>> 13),1274126177) >>> 0;
+    return (v ^ (v >>> 16)) >>> 0;
+  };
+  const nearest25 = n => Math.round(n / 25) * 25;
   function market(day) {
-    const auctions = Array.from({length:3}, (_,i) => ({
-      ...AUCTIONS[(day - 1 + i) % AUCTIONS.length],
-      id:'A-' + day + '-' + i, kind:'auction', day
-    }));
-    const sellers = Array.from({length:2}, (_,i) => ({
-      ...SELLERS[(day - 1 + i) % SELLERS.length],
-      id:'S-' + day + '-' + i, kind:'seller', day
-    }));
+    const auctionCount = day === 1 ? 3 :
+      (sample(day,0,17) % 7 === 0 ? 0 : 1 + (sample(day,1,29) % 3));
+    const sellerCount = day === 1 ? 2 :
+      (sample(day,0,31) % 5 === 0 ? 0 : 1 + (sample(day,1,37) % 3));
+    // Some days have no auctions or no private sellers, but never an empty market.
+    const aCount = auctionCount || sellerCount ? auctionCount : 1;
+    const auctions = Array.from({length:aCount}, (_,i) => {
+      const base = AUCTIONS[day === 1 ? i : (sample(day,0,8) % AUCTIONS.length + i * 2) % AUCTIONS.length];
+      const offset = day === 1 ? 0 : nearest25((sample(day,i,91) % 851) - 425);
+      const guide = Math.max(850,base.guide + offset);
+      const delta = guide - base.guide;
+      const miles = base.miles + (day === 1 ? 0 : ((sample(day,i,54) % 250) - 125) * 100);
+      const fee = base.fee + (day === 1 ? 0 : 25 * ((sample(day,i,82) % 3) - 1));
+      return {...base,guide,reserve:base.reserve+delta,rival:base.rival+delta,
+        retail:base.retail+delta, miles, fee,
+        id:'A-' + day + '-' + i,kind:'auction',day};
+    });
+    const sellers = Array.from({length:sellerCount}, (_,i) => {
+      const base = SELLERS[day === 1 ? i : (sample(day,0,21) % SELLERS.length + i) % SELLERS.length];
+      const offset = day === 1 ? 0 : nearest25((sample(day,i,51) % 601) - 300);
+      const ask = Math.max(950,base.ask + offset);
+      const delta = ask - base.ask;
+      const miles = base.miles + (day === 1 ? 0 : ((sample(day,i,44) % 250) - 125) * 100);
+      return {...base,ask,floor:base.floor+delta,retail:base.retail+delta,
+        miles,id:'S-' + day + '-' + i,kind:'seller',day};
+    });
     return {auctions,sellers};
   }
   function create(name, messages) {
     return {
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
       stock:0,sales:0,reputation:'NEWCOMER',messages,
-      vehicles:[],sold:[],ledger:[],nextId:1
+      vehicles:[],sold:[],ledger:[],nextId:1,negotiations:{},auctionBids:{}
     };
   }
   function normalize(saved) {
@@ -94,6 +120,21 @@
       typeof l.note === 'string' && l.note.length < 200;
     if (!saved.vehicles.every(goodVehicle) || !saved.sold.every(goodSold) ||
         !saved.ledger.every(goodLedger)) return null;
+    // Older v2 careers do not yet have negotiation history.
+    const negotiations = saved.negotiations ?? {};
+    const auctionBids = saved.auctionBids ?? {};
+    const isPlain = x => x && typeof x === 'object' && !Array.isArray(x);
+    if (!isPlain(negotiations) || !isPlain(auctionBids) ||
+      Object.keys(negotiations).length > 200 || Object.keys(auctionBids).length > 200) return null;
+    const validNegotiations = Object.entries(negotiations).every(([id,v]) =>
+      /^S-[0-9]+-[0-9]+$/.test(id) && v && ['counter','walked'].includes(v.status) &&
+      integer(v.rounds) && v.rounds >= 1 && v.rounds <= 3 &&
+      cashValue(v.counter) && cashValue(v.lastOffer));
+    const validBids = Object.entries(auctionBids).every(([id,v]) =>
+      /^A-[0-9]+-[0-9]+$/.test(id) && v && ['outbid','lost'].includes(v.status) &&
+      integer(v.attempts) && v.attempts >= 1 && v.attempts <= 2 &&
+      cashValue(v.lastBid));
+    if (!validNegotiations || !validBids) return null;
     const ids = [...saved.vehicles,...saved.sold].map(v => v.id);
     if (new Set(ids).size !== ids.length || ids.some(id => id >= saved.nextId)) return null;
     const balance = STARTING_CASH + sum(saved.ledger,'delta');
@@ -104,7 +145,9 @@
       reputation:reputation(saved.sold.length),messages,
       vehicles:saved.vehicles.map(v => ({...v})),
       sold:saved.sold.map(v => ({...v})),
-      ledger:saved.ledger.map(v => ({...v})),nextId:saved.nextId
+      ledger:saved.ledger.map(v => ({...v})),nextId:saved.nextId,
+      negotiations:Object.fromEntries(Object.entries(negotiations).map(([k,v])=>[k,{...v}])),
+      auctionBids:Object.fromEntries(Object.entries(auctionBids).map(([k,v])=>[k,{...v}]))
     };
   }
   function reputation(sales) {
@@ -140,31 +183,76 @@
       return fail('cash','Not enough cash to buy this car while reserving all required stock preparation.');
     return null;
   }
-  function acquireAuction(state, id, bid) {
+  // An unsuccessful maximum bid does not incur a buyer's fee in this
+  // fictional auction. Winning removes the hammer amount + buyer fee.
+  function acquireAuction(state,id,bid) {
     const lot = market(state.day).auctions.find(v => v.id === id);
-    if (!lot) return fail('expired','This auction lot is no longer available today.');
-    if (!integer(bid) || bid < lot.guide || bid > 100000) return fail('bid','Bid at least the displayed guide with a valid whole-pound amount.');
+    if (!lot) return fail('expired','This auction listing has expired. Advance the day for new vehicles.');
+    const activity = (state.auctionBids ??= {})[id];
+    if (activity?.status === 'lost') return fail('closed','This lot is closed to your dealership for today.');
+    if (!integer(bid) || bid < lot.guide || bid > 100000)
+      return fail('bid','Enter a valid maximum bid of at least the guide price.');
+    if (state.vehicles.some(v => v.origin === lot.id)) return fail('owned','You have already bought this lot. Check Vehicle Stock.');
     const blocked = canBuy(state,bid + lot.fee,lot.prep);
     if (blocked) return blocked;
-    if (state.vehicles.some(v => v.origin === lot.id)) return fail('owned','This lot is already on your forecourt.');
-    if (bid < Math.max(lot.rival,lot.reserve))
-      return fail('outbid','Outbid by another trader. Increase your maximum bid or walk away.');
-    pay(state,-(bid + lot.fee),'Auction purchase: ' + lot.title + ' (bid ' + bid + ', buyer fee ' + lot.fee + ')');
-    addCar(state,lot,'auction',bid + lot.fee,lot.id);
-    return success('You won ' + lot.title + ' for ' + bid + ' plus ' + lot.fee + ' in auction fees.');
+    if (bid < Math.max(lot.rival,lot.reserve)) {
+      const attempts = (activity?.attempts ?? 0) + 1;
+      const closed = attempts >= 2;
+      state.auctionBids[id] = {status:closed?'lost':'outbid',attempts,lastBid:bid};
+      return {...fail(closed?'lost':'outbid',
+        closed ? 'A rival dealer has secured this lot. No fee charged; look at another car.' :
+        'Outbid on this lot. No fee charged. You can raise your maximum bid once more.'),changed:true};
+    }
+    pay(state,-(bid+lot.fee),'Auction purchase: '+lot.title+' (bid '+bid+', buyer fee '+lot.fee+')');
+    addCar(state,lot,'auction',bid+lot.fee,lot.id);
+    if(activity) delete state.auctionBids[id];
+    return success('Won '+lot.title+' at £'+bid.toLocaleString('en-GB')+
+      '. Buyer fee £'+lot.fee.toLocaleString('en-GB')+' charged. Vehicle added to stock.');
   }
-  function acquireSeller(state, id, offer) {
+  function acquireSeller(state,id,offer) {
     const car = market(state.day).sellers.find(v => v.id === id);
-    if (!car) return fail('expired','That private seller is no longer available today.');
+    if (!car) return fail('expired','This seller is no longer available. Check the next day’s leads.');
+    if (state.vehicles.some(v => v.origin === car.id)) return fail('owned','This vehicle has already been purchased. View Vehicle Stock.');
+    const previous = (state.negotiations ??= {})[id];
+    if (previous?.status === 'walked') return fail('walked','The owner has left. This opportunity has closed.');
     if (!integer(offer) || offer < 100 || offer > car.ask)
-      return fail('offer','Offer a valid whole-pound amount no higher than the asking price.');
+      return fail('offer','Enter an offer between £100 and the seller’s asking price.');
     const blocked = canBuy(state,offer,car.prep);
     if (blocked) return blocked;
-    if (state.vehicles.some(v => v.origin === car.id)) return fail('owned','This seller’s car is already yours.');
-    if (offer < car.floor) return fail('rejected','The owner rejected your offer. They may accept a stronger price.');
-    pay(state,-offer,'Direct purchase: ' + car.title);
-    addCar(state,car,'seller',offer,car.id);
-    return success('The owner accepted ' + offer + ' for ' + car.title + '. Added to your stock.');
+    if (previous?.status === 'counter' && offer >= previous.counter) {
+      pay(state,-offer,'Direct purchase: '+car.title);
+      addCar(state,car,'seller',offer,car.id);
+      delete state.negotiations[id];
+      return success('Deal agreed at £'+offer.toLocaleString('en-GB')+'. '+car.title+' is now in Vehicle Stock.');
+    }
+    if (!previous && offer >= car.floor + 25) {
+      pay(state,-offer,'Direct purchase: '+car.title);
+      addCar(state,car,'seller',offer,car.id);
+      return success('Owner accepted £'+offer.toLocaleString('en-GB')+'. '+car.title+' added to stock.');
+    }
+    if (offer < car.floor - 175 || (previous && previous.rounds >= 2)) {
+      state.negotiations[id] = {status:'walked',counter:0,
+        rounds:Math.min(3,(previous?.rounds ?? 0)+1),lastOffer:offer};
+      return {...fail('walked','The owner rejected £'+offer.toLocaleString('en-GB')+
+        ' and walked away. No purchase or fee recorded.'),changed:true};
+    }
+    const rounds=(previous?.rounds ?? 0)+1;
+    const counter = previous
+      ? Math.max(car.floor+25,previous.counter-50)
+      : Math.min(car.ask,car.floor+125);
+    state.negotiations[id]={status:'counter',counter,rounds,lastOffer:offer};
+    return {...fail('counter','Seller declined £'+offer.toLocaleString('en-GB')+
+      ' and countered at £'+counter.toLocaleString('en-GB')+
+      '. Accept the counter or make one final offer.'),changed:true};
+  }
+  function walkSeller(state,id) {
+    const car = market(state.day).sellers.find(v => v.id === id);
+    if (!car) return fail('expired','This seller is no longer available.');
+    if (state.vehicles.some(v => v.origin === id)) return fail('owned','You already bought this car.');
+    const previous = (state.negotiations ??= {})[id];
+    state.negotiations[id]={status:'walked',counter:0,
+      rounds:Math.max(1,Math.min(3,previous?.rounds ?? 1)),lastOffer:previous?.lastOffer ?? 0};
+    return {...success('You walked away from '+car.title+'. No cash was spent.'),changed:true};
   }
   function prepare(state, id) {
     const vehicle = own(state.vehicles,id);
@@ -250,7 +338,7 @@
   function totalMargin(state) { return sum(state.sold,'profit'); }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, CAPACITY,
-    market,create,normalize,acquireAuction,acquireSeller,
+    market,create,normalize,acquireAuction,acquireSeller,walkSeller,
     prepare,advertise,buyers,counter,completeSale,totalMargin
   });
 })();
