@@ -21,10 +21,10 @@
       ['Eleanor Price',15,19,16,19,17,2900,10]
     ],
     technician:[
-      ['Michael Turner',10,11,13,18,17,2525,8],
+      ['Michael Turner',10,11,13,13,15,1925,3],
       ['Ryan Foster',9,10,14,10,11,1650,1],
-      ['Priya Morgan',10,12,17,16,19,2700,7],
-      ['Ben Walker',8,9,12,13,14,1950,4]
+      ['Priya Morgan',17,12,17,18,19,2700,7],
+      ['Ben Walker',13,9,12,13,14,2250,4]
     ]
   });
   const integer=n=>Number.isSafeInteger(n);
