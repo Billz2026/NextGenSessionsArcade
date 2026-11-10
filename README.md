@@ -4,6 +4,28 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## Customer Deal Day & Monthly Management Meetings (v0.7)
+
+The **last day of each 30-day game operating month** is now **Deal Day**, inspired by transfer deadline day. Instead of one ordinary Continue, it runs through five sessions **09:00, 11:00, 13:00, 15:00 and 17:00**. Each early Continue moves the *session clock*, not the calendar, so payroll is **not charged again**. The final Continue closes the month, generates the existing full management report and begins the next month's first-day board meeting.
+
+**Deal Day is strictly for ordinary retail customers and private sellers, never auction houses.** The auction catalogue is empty and auction purchase attempts are rejected on days 30, 60, 90 and so on. Every session brings a different group of direct sellers with time-sensitive offers. Seller negotiation floors soften modestly; existing listed cars attract more motivated cash and part-exchange customers. These offers remain subject to market value and the asking price, not guaranteed profits. **Part-exchanges still bring incoming stock and preparation liabilities.** The deadline is a sales opportunity, not a free cash or reputation reward.
+
+A new **Deal Day & Meetings** page and dashboard banner show the active event and phase. Private enquiries expire when a new phase starts; a paid inspection is non-refundable. Cars already purchased and recorded sales persist normally. Prepare and advertise your stock in advance to take advantage of the event.
+
+### First-day management meeting
+
+Every **first day of a game operating month** (days 1, 31, 61, etc.) features a board meeting in Deal Day & Meetings. The day-1 startup meeting is available as an optional introductory briefing. For later months, you **must hold the meeting before continuing to the next day**.
+
+The meeting draws from the actual completed monthly report: total cars sold vs targets, turnover, gross trade margin, cash, staff expenses, stock ageing, employee performance and unpaid wage risks. It gives specific management discussion points and asks the dealer to choose **one** monthly priority:
+
+- **Retail sales:** a moderate improvement in customer offers on listed stock.
+- **Buying discipline:** a small improvement in acceptable private seller purchase offers.
+- **Customer care:** a modest additional reputation gain *only when* a fairly-priced, good-condition vehicle is sold.
+
+Meeting decisions, chosen priority and historical meeting minutes are saved. They do not confer a guaranteed sale, directly add money or make auctions easier. The same monthly operating targets and historical management report archive remain.
+
+Existing v1–v5 local careers migrate to save schema v6 without changing their money, employees, stock, ledger, historical sales, archived reports or reputation. Earlier historical meetings are not invented. The original homepage showroom, both logo assets and main-menu design are unchanged.
+
 ## Monthly Management Reports & Targets (v0.6)
 
 The game now operates in **30-game-day management months** (a transparent simulation rule, not UK calendar-month payroll). The dealership must achieve a **monthly unit sales target and a positive gross vehicle margin**. Turnover and gross-margin guides are secondary objectives. Targets are locked at each month's start and recalculate for the *next* month as reputation rises:
@@ -109,6 +131,8 @@ Customers are currently deterministic examples rather than a fully simulated mar
 - `styles.css` — responsive premium game interface.
 - `people.js` — candidate selection, staff salaries, training, performance and reputation engine.
 - `monthly.js` — operating-month goals, cash/stock reporting, month close and archived reports.
+- `events.js` — customer-only Deal Day sessions, offer adjustments, board meeting decisions and save migration.
+- `events-view.js` — Deal Day timeline, management discussion and meeting decisions.
 - `monthly-view.js` — responsive monthly report cards, staff scorecards and financial breakdown.
 - `people-view.js` — responsive personnel and reputation management UI.
 - `vehicle-intel.js` — stable fictional vehicle profile generation, repair forecasts and appraisal arithmetic.
@@ -129,6 +153,8 @@ node --check people.js
 node --check people-view.js
 node --check monthly.js
 node --check monthly-view.js
+node --check events.js
+node --check events-view.js
 node --check trading.js
 node --check simulator.js
 node --test tests/site.test.mjs
