@@ -255,7 +255,8 @@
     const money=settle(state,c,'buyer');
     c.status='lost';
     c.reason=reason;
-    append(state,c,type,reason);
+    append(state,c,type==='deposit-refunded'&&!money.refunded?'cancelled':
+      type==='deposit-refunded'?'cancelled':type,reason);
     if(money.refunded)append(state,c,'deposit-refunded','£'+money.refunded+' returned');
     if(money.retained)append(state,c,'deposit-retained','£'+money.retained+' direct costs recovered');
     return reason+(money.retained?' £'+money.retained+' of the deposit retained against costs.':'')+
