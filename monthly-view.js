@@ -167,7 +167,10 @@
       amount('Gross trade margin on Deal Day',d.grossMargin)+
       '<p class="report-muted">Available enquiries are not guaranteed purchases. Results depend on which cars you listed, negotiations, available funds and customer demand. A busy month can still be unprofitable.</p></section>':
       '<section class="panel-card report-section"><h3>MONTH-END DEAL DAY REVIEW</h3>'+
-      '<p class="report-muted">This historical report predates detailed Deal Day market tracking. No figures have been invented.</p></section>';
+      '<p class="report-muted">'+(isClosed?
+        'This historical report predates detailed Deal Day market tracking. No figures have been invented.':
+        'Deal Day outcomes are not known yet. The completed results will be recorded when the month closes.')+
+      '</p></section>';
     return archivePicker(state,selected)+reportHeader+badges+targets+
       '<div class="report-columns">'+cash+saleLine+inventory+staff+trust+dealDaySection+'</div>'+
       '<p class="trade-alert report-caveat">Operating months currently contain 30 game days. '+
