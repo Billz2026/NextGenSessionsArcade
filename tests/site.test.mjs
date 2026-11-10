@@ -216,19 +216,24 @@ test('homepage uses a sharp full-resolution showroom background and matched silv
   assert.ok(existsSync(background));
   assert.ok(statSync(background).size > 250_000, 'Avoid the prior highly compressed 36 KB background');
   assert.match(css, /\.trade-wordmark-hero \.trade-the,\s*#screen-menu \.trade-wordmark-hero \.trade-motor/);
-  assert.match(css, /linear-gradient\(180deg,#fff 1%,#eff1f2/);
+  assert.match(css, /linear-gradient\(180deg,#ffffff 0%,#f6f8fa/);
   assert.match(html, /nextgen-header-wordmark-2026\.webp/);
   assert.doesNotMatch(html, /class="[^"]*trade-the[^"]*badge/);
 });
 
-test('metallic title has unclipped glyph boxes in Chromium', () => {
+test('metallic title has unclipped glyph boxes and premium full-title plaque', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
   const spanStyles = css.match(/#screen-menu \.trade-wordmark-hero span \{([\s\S]*?)\}/)?.[1] ?? '';
-  assert.match(titleStyles, /line-height:1\.15/);
-  assert.match(titleStyles, /padding:\.06em \.05em \.11em/);
+  const plaqueStyles = css.match(/#screen-menu \.trade-wordmark-hero::before \{([\s\S]*?)\}/)?.[1] ?? '';
+  assert.match(titleStyles, /display:inline-flex/);
+  assert.match(titleStyles, /line-height:1\.22/);
+  assert.match(titleStyles, /margin:-10px 0 0/);
   assert.match(titleStyles, /overflow:visible/);
+  assert.match(spanStyles, /line-height:1\.18/);
   assert.match(spanStyles, /display:inline-block/);
-  assert.match(spanStyles, /padding:\.05em 0 \.09em/);
-  assert.match(html, /styles\.css\?v=7/);
+  assert.match(spanStyles, /padding:\.07em 0 \.12em/);
+  assert.match(plaqueStyles, /rgba\(7,10,14,\.88\)/);
+  assert.match(plaqueStyles, /z-index:0/);
+  assert.match(html, /styles\.css\?v=8/);
   assert.match(html, /assets\/nextgen-header-wordmark-2026\.webp/);
 });
