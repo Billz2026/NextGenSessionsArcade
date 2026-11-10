@@ -33,12 +33,13 @@
             <h1 id="menu-title" class="trade-wordmark trade-wordmark-hero"><span class="trade-the">THE</span> <span class="trade-motor">MOTOR</span> <span class="trade-trade">TRADE</span></h1>
           </div>
           <nav class="menu-actions" aria-label="Main menu">
-            <button type="button" class="action-btn action-btn-primary" id="menu-continue" data-action="resume" hidden><span class="button-mark" aria-hidden="true">▶</span><span><strong>CONTINUE CAREER</strong><small id="menu-resume-description">Resume your dealership</small></span><span class="arrow" aria-hidden="true">›</span></button>
+            <button type="button" class="action-btn action-btn-primary" id="menu-continue" data-action="resume" hidden><span class="button-mark" aria-hidden="true">▶</span><span><strong>CONTINUE</strong><small id="menu-resume-description" class="menu-visually-hidden">Resume your dealership</small></span><span class="arrow" aria-hidden="true">›</span></button>
             <button type="button" class="action-btn action-btn-primary" id="menu-new-career" data-action="new-career"><span class="button-mark" aria-hidden="true">＋</span><span><strong>NEW CAREER</strong></span><span class="arrow" aria-hidden="true">›</span></button>
-            <button type="button" class="action-btn action-btn-muted" data-action="toggle-guide" aria-controls="menu-guide" aria-expanded="false"><span class="button-mark" aria-hidden="true">?</span><span><strong>HOW TO PLAY</strong></span><span class="arrow" aria-hidden="true">›</span></button>
+            <button type="button" class="action-btn action-btn-muted" data-action="toggle-settings" aria-controls="menu-guide" aria-expanded="false"><span class="button-mark" aria-hidden="true">⚙</span><span><strong>SETTINGS</strong></span><span class="arrow" aria-hidden="true">›</span></button>
           </nav>
-          <div class="menu-guide" id="menu-guide" hidden>
-            <p>Run your dealership, manage your cash and advance the game calendar. Auction bidding, repairs and customer sales are still in development.</p>
+          <div class="menu-guide" id="menu-guide" hidden aria-label="Display settings">
+            <div class="menu-setting-row"><span>SHOWROOM BACKGROUND</span><button type="button" id="menu-setting-bg" data-action="toggle-showroom" aria-pressed="true">ON</button></div>
+            <div class="menu-setting-row"><span>MENU ANIMATION</span><button type="button" id="menu-setting-motion" data-action="toggle-motion" aria-pressed="true">ON</button></div>
           </div>
         </div>
       </div>
