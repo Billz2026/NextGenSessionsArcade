@@ -122,11 +122,6 @@
       asking:v.asking,repairToPay:v.status==='acquired'?v.prepBudget:0
     }));
     const met=saleCount>=p.unitTarget && grossMargin>0;
-    const D=window.MotorTradeEvents;
-    const climate=D?.conditions(p.endDay,state.name)||null;
-    const sellerEnquiries=D?D.PHASES.reduce((n,_,phase)=>
-      n+D.leadCount(p.endDay,p.startingReputation,phase,state.name),0):0;
-    const deadlineSales=sales.filter(v=>v.day===p.endDay);
     const report={
       month:p.month,monthLabel:'MONTH '+p.month,
       startDay:p.startDay,endDay:p.endDay,partial:p.partial,
@@ -151,12 +146,7 @@
       payrollArrears:state.payrollArrears,staffHeadcount:state.staff.length,
       customerTrustEvents:state.reputationHistory.filter(x=>x.day>=p.startDay&&x.day<=p.endDay).map(x=>({...x})),
       bestDeal:sales.length?[...sales].sort((a,b)=>b.profit-a.profit)[0].title:null,
-      worstDeal:sales.length?[...sales].sort((a,b)=>a.profit-b.profit)[0].title:null,
-      dealDay:climate?{
-        type:climate.type,label:climate.label,
-        sellerEnquiries,retailSales:deadlineSales.length,
-        turnover:sum(deadlineSales,'price'),grossMargin:sum(deadlineSales,'profit')
-      }:null
+      worstDeal:sales.length?[...sales].sort((a,b)=>a.profit-b.profit)[0].title:null
     };
     return report;
   }
@@ -164,6 +154,16 @@
     const p=state.monthPlan;
     if(state.day!==p.endDay)return null;
     const r=statement(state);
+    const D=window.MotorTradeEvents;
+    const climate=D?.conditions(p.endDay,state.name)||null;
+    const deadlineSales=state.sold.filter(v=>v.day===p.endDay);
+    r.dealDay=climate?{
+      type:climate.type,label:climate.label,
+      sellerEnquiries:D.PHASES.reduce((n,_,phase)=>
+        n+D.leadCount(p.endDay,p.startingReputation,phase,state.name),0),
+      retailSales:deadlineSales.length,
+      turnover:sum(deadlineSales,'price'),grossMargin:sum(deadlineSales,'profit')
+    }:null;
     const staffConsequences=[];
     for(const staff of r.sellers){
       const employee=state.staff.find(s=>s.id===staff.id);
