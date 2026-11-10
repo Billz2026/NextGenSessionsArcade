@@ -7,6 +7,18 @@
   function render(car,kind,{open=false,inspected=false,price=null}={}) {
     if(!car?.profile)return '';
     const p=car.profile,E=window.MotorTradeEngine;
+    const evidence=window.MotorTradeAccuracy?.lookup(car)||
+      {status:'pending',note:'No specification source registry available.'};
+    const proof=evidence.status==='manufacturer'?
+      '<div class="vehicle-spec-proof"><strong>UK MODEL SPECIFICATION SOURCED</strong>'+
+      '<p>'+esc(evidence.note)+'</p><a target="_blank" rel="noopener noreferrer" href="'+
+      esc(evidence.url)+'">VIEW MANUFACTURER EVIDENCE</a></div>':
+      evidence.status==='corroborated'?
+      '<div class="vehicle-spec-proof vehicle-spec-pending"><strong>SPECIFICATION CORROBORATED · NOT FACTORY VERIFIED</strong>'+
+      '<p>'+esc(evidence.note)+'</p><a target="_blank" rel="noopener noreferrer" href="'+
+      esc(evidence.url)+'">VIEW SUPPORTING SOURCE</a></div>':
+      '<div class="vehicle-spec-proof vehicle-spec-pending"><strong>MODEL SPECIFICATION · REVIEW PENDING</strong>'+
+      '<p>'+esc(evidence.note)+'</p></div>';
     const quote=kind==='stock'?null:E.quote(car,kind,price,inspected);
     const totalPrep=p.basePrep+(p.hiddenFault?.cost||0);
     const booked=car.workshop?.repairCost||0;
@@ -55,7 +67,8 @@
       '<div><small>LAST RECORDED MOT MILEAGE</small><strong>'+miles(p.mot.recordedMiles)+'</strong></div>'+
       '<div><small>LOCAL DEMAND</small><strong>'+esc(p.demand)+'</strong></div>'+
       '<div><small>RETAIL ASKING GUIDE</small><strong>'+money(p.retail)+'</strong></div></div>'+
-      '<p class="intel-disclaimer">All registration, MOT and valuation information is fictional. Not connected to DVLA, DVSA or a pricing provider.</p>'+
+      proof+
+      '<p class="intel-disclaimer">Mileage, prior keepers, MOT, service history, buying and selling valuations are fictional gameplay estimates. They are not DVLA, DVSA, CAP HPI or Auto Trader records. Manufacturer evidence, when linked, verifies only the model derivative and powertrain.</p>'+
       '<h4>MOT ADVISORIES</h4><p class="intel-small">'+
         (p.mot.advisories.length?esc(p.mot.advisories.join(' · ')):'No advisories recorded in this fictional report')+'</p>'+
       '<h4>KNOWN PREPARATION ITEMS</h4>'+known+
