@@ -6,8 +6,8 @@
  */
 (() => {
   const STARTING_CASH = 12500;
-  const CAPACITY = 2;
-  const VERSION = 7;
+  const CAPACITY = 4;
+  const VERSION = 8;
   const W = window.MotorTradeWorkshop;
   if (!W) throw new Error('Load workshop.js before trading.js');
   const D = window.MotorTradeEvents;
@@ -102,7 +102,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -118,12 +118,12 @@
     }));
     if (saved.version === 1) {
       // Previous release contained no trade transactions; keep name, day and inbox.
-      if (saved.cash !== STARTING_CASH || saved.capacity !== CAPACITY) return null;
+      if (saved.cash !== STARTING_CASH || ![2,CAPACITY].includes(saved.capacity)) return null;
       const legacy=create(saved.name.trim(),messages);
       legacy.day=saved.day;
       return M.initialize(legacy,{migrating:true});
     }
-    if (saved.capacity !== CAPACITY || !Array.isArray(saved.vehicles) ||
+    if ((saved.version===VERSION?saved.capacity!==CAPACITY:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
       !Array.isArray(saved.sold) || !Array.isArray(saved.ledger) ||
       !integer(saved.nextId) || saved.nextId < 1 ||
       !cashValue(saved.cash) || saved.vehicles.length > CAPACITY ||
@@ -136,7 +136,7 @@
       ['acquired','prepared','listed'].includes(v.status) &&
       cashValue(v.cost) && cashValue(v.prepBudget) && cashValue(v.prepSpent) &&
       (v.prepSpent === 0 || (v.prepSpent>0 &&
-        (saved.version===VERSION? v.prepSpent<=100000 : v.prepSpent<=v.prepBudget))) &&
+        (saved.version>=7? v.prepSpent<=100000 : v.prepSpent<=v.prepBudget))) &&
       cashValue(v.retail) && integer(v.acquiredDay) &&
       v.acquiredDay >= 1 && v.acquiredDay <= saved.day &&
       (v.status !== 'listed' || (cashValue(v.asking) && v.asking > 0)) &&
@@ -145,7 +145,7 @@
       (saved.version === 2 || I.validProfile(v.profile)) &&
       (saved.version === 2 || v.prepBudget === v.profile.basePrep +
         (v.profile.hiddenFault?.cost || 0)) &&
-      (saved.version!==VERSION || W.valid(v,saved.day));
+      (saved.version<7 || W.valid(v,saved.day));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
       cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
@@ -194,7 +194,7 @@
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
-        ...v,workshop:saved.version===VERSION?{...v.workshop}:W.initial(v),
+        ...v,workshop:saved.version>=7?{...v.workshop}:W.initial(v),
         profile:saved.version===2?I.legacyProfile(v):
           {...v.profile,knownRepairs:v.profile.knownRepairs.map(x=>({...x})),
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
