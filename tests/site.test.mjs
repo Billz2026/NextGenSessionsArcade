@@ -192,3 +192,20 @@ test('new career name remains plain text even if it contains markup', () => {
   assert.equal(app.bindings.get('company')[0].textContent, '<img src=x onerror=alert(1)>');
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).name, '<img src=x onerror=alert(1)>');
 });
+
+test('settings display controls operate and persist separately from career', () => {
+  const saved = new Map();
+  const app = browser(saved);
+  app.click('toggle-settings');
+  assert.equal(app.nodes.get('menu-guide').hidden, false);
+  app.click('toggle-showroom');
+  assert.equal(app.nodes.get('menu-setting-bg').textContent, 'OFF');
+  assert.match(app.nodes.get('screen-menu').className, /menu-no-showroom/);
+  app.click('toggle-motion');
+  assert.equal(app.nodes.get('menu-setting-motion').textContent, 'OFF');
+  assert.match(app.nodes.get('screen-menu').className, /menu-no-motion/);
+  assert.equal(JSON.parse(saved.get('the-motor-trade-display-v1')).showroom, false);
+  const revisited = browser(saved);
+  assert.equal(revisited.nodes.get('menu-setting-bg').textContent, 'OFF');
+  assert.equal(revisited.nodes.get('menu-setting-motion').textContent, 'OFF');
+});
