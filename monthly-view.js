@@ -165,6 +165,22 @@
       '<h4>RECORDED REPUTATION EVENTS</h4>'+recent+
       '<p class="report-muted">Customer surveys, warranty claims and formal complaints are not simulated yet. '+
       'This report includes only trust signals and financial events that the current game actually records.</p></section>';
+    const journey=r.customerJourney;
+    const customerSection=journey?
+      '<section class="panel-card report-section"><h3>RETAIL CUSTOMER JOURNEY</h3>'+
+      countLine('Customer enquiries',journey.enquiries)+
+      countLine('Viewings booked',journey.appointments)+
+      countLine('Attended viewings',journey.attended)+
+      countLine('Customer no-shows',journey.noShows)+
+      countLine('Test drives held',journey.testDrives)+
+      countLine('Test drives declined',journey.declinedTestDrives)+
+      countLine('Agreements reached',journey.agreements)+
+      countLine('Deposits received into separate holding',journey.deposits)+
+      countLine('Deposits refunded',journey.refunds)+
+      countLine('Vehicles handed over',journey.completedSales)+
+      '<p class="report-muted">Deposits are separately held customer funds, not sales revenue. Only completed handovers count towards the company target.</p></section>':
+      '<section class="panel-card report-section"><h3>RETAIL CUSTOMER JOURNEY</h3>'+
+      '<p class="report-muted">This historical record was created before customer appointment metrics were available.</p></section>';
     const d=r.dealDay;
     const dealDaySection=d?'<section class="panel-card report-section"><h3>MONTH-END DEAL DAY REVIEW</h3>'+
       '<p class="report-muted">Market conditions: <strong>'+esc(d.label)+
@@ -180,7 +196,7 @@
         'Deal Day outcomes are not known yet. The completed results will be recorded when the month closes.')+
       '</p></section>';
     return archivePicker(state,selected)+reportHeader+badges+targets+
-      '<div class="report-columns">'+cash+saleLine+inventory+staff+trust+dealDaySection+'</div>'+
+      '<div class="report-columns">'+cash+saleLine+customerSection+inventory+staff+trust+dealDaySection+'</div>'+
       '<p class="trade-alert report-caveat">Operating months currently contain 30 game days. '+
       'Actual calendar months, UK payroll law, VAT, tax, rents, financing, warranties and statutory accounts '+
       'require a future business-economics release. All transactions, figures and vehicle markets are fictional.</p>';
