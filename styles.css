@@ -657,3 +657,75 @@
 /* Sales Office now contains a complete pipeline dashboard above its card grid. */
 #sales-list.trade-sales-grid{display:block;min-width:0}
 #sales-list .sales-case-grid{width:100%}
+
+/* v0.9.1 PREMIUM REAL VEHICLE PHOTOGRAPHIC FLASHCARDS */
+.trade-card,.sales-case-card,.workshop-job,.vehicle-sold-card{min-width:0}
+.vehicle-photo-block{overflow:hidden;margin:0;border-radius:6px 6px 0 0;background:#111f2a}
+.vehicle-photo-frame{position:relative;aspect-ratio:16/9;min-height:145px;max-height:285px;
+ overflow:hidden;background:radial-gradient(circle at 50% 24%,#304955,#111f29 75%)}
+.vehicle-photo-frame img{display:block;width:100%;height:100%;object-fit:cover;
+ object-position:center 56%;filter:contrast(1.03);transition:transform .25s ease}
+.trade-card:hover .vehicle-photo-frame img,.vehicle-sold-card:hover .vehicle-photo-frame img{transform:scale(1.025)}
+.vehicle-photo-frame .vehicle-origin-tag,.vehicle-photo-frame .vehicle-grade-tag{position:absolute;top:11px;
+ border:1px solid rgba(255,219,161,.45);background:rgba(10,24,31,.88);
+ padding:6px 10px;color:#ffe0ad;border-radius:4px;font:800 10px/1.2 var(--mono);
+ text-shadow:0 1px 2px #101820}
+.vehicle-origin-tag{left:11px}.vehicle-grade-tag{right:11px}
+.vehicle-photo-missing{height:100%;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;text-align:center;gap:7px;padding:18px}
+.vehicle-photo-missing>span{display:block;font:900 68px/1 var(--title);color:#536c78}
+.vehicle-photo-missing strong{font:900 22px/1 var(--title);letter-spacing:.06em;color:#d2d9dd}
+.vehicle-photo-missing small{font:600 11px/1.4 var(--body);color:#a8bec5}
+.vehicle-photo-credit{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;
+ padding:7px 11px;background:#142a34;border-bottom:1px solid #384b55;color:#92aeb8;
+ font:600 9px/1.45 var(--body)}
+.vehicle-photo-credit a{color:#f3c98c;text-decoration:underline;text-decoration-color:rgba(243,201,140,.3)}
+.vehicle-photo-credit span{font-style:italic}
+.vehicle-card-heading{padding:16px 16px 10px}
+.vehicle-card-heading small{font:800 9px var(--mono);color:#c3a578}
+.vehicle-card-heading h3{font:900 clamp(25px,2.7vw,33px)/1.05 var(--title);
+ color:#f0e2cf;margin:6px 0;overflow-wrap:anywhere}
+.vehicle-card-heading p{font:600 11px/1.4 var(--body);color:#c0cdd0;margin:8px 0 0}
+.vehicle-card-statline{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:7px;margin:0 15px 10px}
+.vehicle-card-statline>div{background:#142c36;border:1px solid #38505b;border-radius:4px;
+ padding:9px 9px;min-width:0}
+.vehicle-card-statline small{display:block;font:800 8px/1.3 var(--mono);color:#9baeb8}
+.vehicle-card-statline strong{display:block;margin-top:4px;font:800 12px/1.4 var(--body);color:#f3ddbd}
+.vehicle-card-money{min-width:0;padding:12px;border:1px solid #45606a;background:#182f3a}
+.vehicle-card-money small{display:block;color:#b8c7c9;font:700 10px var(--mono)}
+.vehicle-card-money strong{font:900 24px var(--title);color:#f0ce92}
+.vehicle-mini{display:grid;grid-template-columns:145px minmax(0,1fr);gap:12px;
+ align-items:center;padding:10px;background:#1c3743;border:1px solid #526974;border-radius:5px;margin:8px 0}
+.vehicle-mini .vehicle-photo-frame{aspect-ratio:16/10;min-height:90px;max-height:100px}
+.vehicle-mini .vehicle-photo-credit{padding:5px;font-size:8px}
+.vehicle-mini .vehicle-photo-credit span,.vehicle-mini .vehicle-grade-tag{display:none}
+.vehicle-mini .vehicle-origin-tag{font-size:8px;padding:3px 5px;top:5px;left:5px}
+.vehicle-mini .vehicle-photo-missing>span{font-size:28px}
+.vehicle-mini .vehicle-photo-missing strong{font-size:12px}
+.vehicle-mini .vehicle-photo-missing small{display:none}
+.vehicle-mini-copy{display:flex;flex-direction:column;gap:7px;min-width:0}
+.vehicle-mini-copy strong{font:850 20px var(--title);color:#edd4a9}
+.vehicle-mini-copy span{font:600 11px/1.55 var(--body);color:#bad0d6}
+.workshop-job>.vehicle-photo-block .vehicle-photo-frame{max-height:290px}
+.sales-deposit-terms{font:600 10px/1.5 var(--body);color:#c5d5d0;margin:6px 0}
+.sales-payment-breakdown{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;
+ row-gap:8px;padding:10px;background:#102b33;border:1px solid #42645b;border-radius:5px}
+.sales-payment-breakdown span{font:650 11px/1.4 var(--body);color:#b9cacc}
+.sales-payment-breakdown strong{font:850 15px/1.25 var(--title);color:#edd5aa}
+.sales-payment-breakdown span:nth-last-child(2),.sales-payment-breakdown strong:last-child{
+ color:#f7d398;border-top:1px solid #55726a;padding-top:9px}
+.sales-sold-recent{margin:22px 0 0}
+.sales-sold-recent h3{font:850 27px var(--title);color:#edd2a9}
+.sales-sold-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,350px),1fr));gap:12px}
+.vehicle-sold-card{border:1px solid #45646d;background:#18323d;border-radius:7px;overflow:hidden}
+.vehicle-sold-card .vehicle-photo-frame{max-height:205px}
+.vehicle-sold-copy{padding:14px}
+.vehicle-sold-copy h4{font:900 24px var(--title);color:#f1ddbb;margin:0 0 5px}
+.vehicle-sold-copy>span{display:block;color:#b1c7ce;font:600 11px var(--body);margin:0 0 12px}
+@media(max-width:580px){
+ .vehicle-photo-frame{max-height:230px}.vehicle-mini{grid-template-columns:110px minmax(0,1fr)}
+ .vehicle-card-statline{margin:0 10px 12px}.vehicle-card-heading{padding:12px}
+ .vehicle-photo-credit span{display:block}
+ .vehicle-card-statline strong{font-size:11px}
+}
