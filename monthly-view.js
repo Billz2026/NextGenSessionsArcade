@@ -177,10 +177,16 @@
       countLine('Agreements reached',journey.agreements)+
       countLine('Deposits received into separate holding',journey.deposits)+
       countLine('Deposits refunded',journey.refunds)+
+      (Number.isSafeInteger(journey.retainedDeposits)?
+        countLine('Customer deposits partially or fully retained',journey.retainedDeposits)+
+        amount('Retention applied against real preparation costs',journey.retainedAmount):'')+
+      (Number.isSafeInteger(r.customerPreparationExpense)?
+        amount('Customer-specific preparation expenses',r.customerPreparationExpense)+
+        amount('Direct costs recovered from cancelled deals',r.cancellationCostRecovery):'')+
       (Number.isSafeInteger(r.customerHoldingAtClose)?
         amount('Customer deposits currently held separately',r.customerHoldingAtClose):'')+
       countLine('Vehicles handed over',journey.completedSales)+
-      '<p class="report-muted">Deposits are separately held customer funds, not sales revenue. Only completed handovers count towards the company target.</p></section>':
+      '<p class="report-muted">Deposits are separate part-payments, not sales on receipt. Buyer withdrawals may lead to cost-based retention; dealer fault refunds are required. Only completed handovers count towards sales targets.</p></section>':
       '<section class="panel-card report-section"><h3>RETAIL CUSTOMER JOURNEY</h3>'+
       '<p class="report-muted">This historical record was created before customer appointment metrics were available.</p></section>';
     const d=r.dealDay;
