@@ -154,6 +154,16 @@
     const p=state.monthPlan;
     if(state.day!==p.endDay)return null;
     const r=statement(state);
+    const D=window.MotorTradeEvents;
+    const climate=D?.conditions(p.endDay,state.name)||null;
+    const deadlineSales=state.sold.filter(v=>v.day===p.endDay);
+    r.dealDay=climate?{
+      type:climate.type,label:climate.label,
+      sellerEnquiries:D.PHASES.reduce((n,_,phase)=>
+        n+D.leadCount(p.endDay,p.startingReputation,phase,state.name),0),
+      retailSales:deadlineSales.length,
+      turnover:sum(deadlineSales,'price'),grossMargin:sum(deadlineSales,'profit')
+    }:null;
     const staffConsequences=[];
     for(const staff of r.sellers){
       const employee=state.staff.find(s=>s.id===staff.id);
@@ -230,6 +240,14 @@
       !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
       !categories.every(k=>whole(r.ledgerBreakdown[k]))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
+    if(r.dealDay!=null&&(
+      typeof r.dealDay!=='object'||
+      !['quiet','subdued','steady','busy','exceptional'].includes(r.dealDay.type)||
+      typeof r.dealDay.label!=='string'||r.dealDay.label.length>40||
+      !nonneg(r.dealDay.sellerEnquiries)||r.dealDay.sellerEnquiries>25||
+      !nonneg(r.dealDay.retailSales)||!nonneg(r.dealDay.turnover)||
+      !whole(r.dealDay.grossMargin)
+    ))return false;
     return r.openingCash+r.netCashChange===r.closingCash &&
       r.cashIn-r.cashOut===r.netCashChange &&
       r.sellers.every(s=>s&&whole(s.id)&&typeof s.name==='string'&&

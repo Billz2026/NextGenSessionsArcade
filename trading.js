@@ -47,9 +47,10 @@
     return (v ^ (v >>> 16)) >>> 0;
   };
   const nearest25 = n => Math.round(n / 25) * 25;
-  function market(day, reputationScore=0, session=0) {
+  function market(day, reputationScore=0, session=0, dealershipName='',periodReputation=reputationScore) {
     // Customer-only Deal Day; auction-house sessions never operate at month end.
-    const special=D.customers(day,reputationScore,session,SELLERS,I.profile);
+    // The period's opening reputation remains fixed when sales are made.
+    const special=D.customers(day,periodReputation,session,SELLERS,I.profile,dealershipName);
     if(special)return special;
     const auctionCount = day === 1 ? 3 :
       (sample(day,0,17) % 7 === 0 ? 0 : 1 + (sample(day,1,29) % 3));
@@ -85,6 +86,8 @@
       sellers:sellers.map(car=>({...car,profile:I.profile(car)}))
     };
   }
+  const marketFor=state=>market(state.day,state.reputationScore,state.deadlineSession,
+    state.name,state.monthPlan?.startingReputation??state.reputationScore);
   function create(name, messages) {
     const state={
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
@@ -237,7 +240,7 @@
   // An unsuccessful maximum bid does not incur a buyer's fee in this
   // fictional auction. Winning removes the hammer amount + buyer fee.
   function acquireAuction(state,id,bid) {
-    const lot = market(state.day,state.reputationScore,state.deadlineSession).auctions.find(v => v.id === id);
+    const lot = marketFor(state).auctions.find(v => v.id === id);
     if (!lot) return fail('expired','This auction listing has expired. Advance the day for new vehicles.');
     const activity = (state.auctionBids ??= {})[id];
     if (activity?.status === 'lost') return fail('closed','This lot is closed to your dealership for today.');
@@ -262,7 +265,7 @@
       '. Buyer fee £'+lot.fee.toLocaleString('en-GB')+' charged. Vehicle added to stock.');
   }
   function acquireSeller(state,id,offer) {
-    const car = market(state.day,state.reputationScore,state.deadlineSession).sellers.find(v => v.id === id);
+    const car = marketFor(state).sellers.find(v => v.id === id);
     if (!car) return fail('expired','This seller is no longer available. Check the next day’s leads.');
     if (state.vehicles.some(v => v.origin === car.id)) return fail('owned','This vehicle has already been purchased. View Vehicle Stock.');
     const previous = (state.negotiations ??= {})[id];
@@ -279,7 +282,7 @@
       return success('Deal agreed at £'+offer.toLocaleString('en-GB')+'. '+car.title+' is now in Vehicle Stock.');
     }
     const effectiveFloor=Math.max(100,car.floor-P.buyerDiscount(state)-
-      D.sellerDiscount(state)-D.meetingBonus(state,'buying'));
+      D.sellerDiscount(state,car.id)-D.meetingBonus(state,'buying'));
     if (!previous && offer >= effectiveFloor + 25) {
       pay(state,-offer,'Direct purchase: '+car.title);
       addCar(state,car,'seller',offer,car.id);
@@ -301,7 +304,7 @@
       '. Accept the counter or make one final offer.'),changed:true};
   }
   function walkSeller(state,id) {
-    const car = market(state.day,state.reputationScore,state.deadlineSession).sellers.find(v => v.id === id);
+    const car = marketFor(state).sellers.find(v => v.id === id);
     if (!car) return fail('expired','This seller is no longer available.');
     if (state.vehicles.some(v => v.origin === id)) return fail('owned','You already bought this car.');
     const previous = (state.negotiations ??= {})[id];
@@ -312,7 +315,7 @@
 
   function inspectLead(state,kind,id) {
     if (!['auction','seller'].includes(kind)) return fail('source','Unknown vehicle source.');
-    const catalogue=market(state.day,state.reputationScore,state.deadlineSession);
+    const catalogue=marketFor(state);
     const leads = kind==='auction'?catalogue.auctions:catalogue.sellers;
     const car=leads.find(v=>v.id===id);
     if (!car) return fail('expired','That vehicle is no longer offered for sale.');
@@ -338,7 +341,7 @@
       const car=own(state.vehicles,Number(id));
       return car?{...car,profile:car.profile,inspected:!!car.profile?.inspected}:null;
     }
-    const catalogue=market(state.day,state.reputationScore,state.deadlineSession);
+    const catalogue=marketFor(state);
     const leads=kind==='auction'?catalogue.auctions:
       kind==='seller'?catalogue.sellers:[];
     const car=leads.find(x=>x.id===id);
@@ -376,11 +379,12 @@
   function pxTemplate(vehicle) { return EXCHANGES[(vehicle.id - 1) % EXCHANGES.length]; }
   function buyers(vehicle,state=null) {
     if (vehicle.status !== 'listed') return null;
+    if(state && D.isDealDay(state.day) && !D.retailActive(state,vehicle))return null;
     // Buyers benchmark against a market-derived achievable retail value.
     // An inflated asking price does not force an unrealistically high offer.
     const fair = vehicle.profile?.likelySale ?? (vehicle.asking - 250);
     const support=state?P.salesBonus(state):0;
-    const motivation=state?D.customerBonus(state):0;
+    const motivation=state?D.customerBonus(state,vehicle):0;
     const meetingPush=state?D.meetingBonus(state,'sales'):0;
     const reputationAdvantage=state&&state.reputationScore>=40?50:0;
     const limit=Math.max(500,Math.min(vehicle.asking-90,
@@ -390,8 +394,10 @@
       motivation+meetingPush,fair-125+support+motivation+meetingPush));
     const standardPx=pxTemplate(vehicle);
     const px=state&&D.isDealDay(state.day)?
-      {...standardPx,floor:Math.max(100,standardPx.floor-
-        D.partExchangeDiscount(state))}:standardPx;
+      D.partExchangeAvailable(state,vehicle)?
+        {...standardPx,floor:Math.max(100,standardPx.floor-
+          D.partExchangeDiscount(state,vehicle))}:null:
+      standardPx;
     return {
       cashOffer:vehicle.cashOffer === null ? start : vehicle.cashOffer,
       cashLimit:limit,
@@ -406,6 +412,7 @@
     const vehicle = own(state.vehicles,id);
     if (!vehicle || vehicle.status !== 'listed') return fail('missing','Advertise a vehicle first.');
     const buyer = buyers(vehicle,state);
+    if(!buyer)return fail('no-buyer','No retail customer is interested in this vehicle during the current session. Try the next session.');
     if (buyer.cashOffer + 150 > buyer.cashLimit)
       return fail('rejected','The cash buyer refuses to increase their offer again.');
     vehicle.cashOffer = buyer.cashOffer + 150;
@@ -416,6 +423,9 @@
     if (!vehicle || vehicle.status !== 'listed') return fail('missing','Advertise a car before making a sale.');
     if (!['cash','part-ex'].includes(mode)) return fail('mode','Unknown sale type.');
     const buyer = buyers(vehicle,state);
+    if(!buyer)return fail('no-buyer','No retail customer enquiry for this car in the current session. A later session may be different.');
+    if(mode==='part-ex'&&!buyer.exchange)
+      return fail('no-part-ex','The current customer is not offering a part-exchange. Try a cash sale or wait for another enquiry.');
     const price = mode === 'cash' ? buyer.cashOffer : buyer.pxOffer;
     let px = null;
     if (mode === 'part-ex') {

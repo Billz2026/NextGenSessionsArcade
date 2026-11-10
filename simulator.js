@@ -250,7 +250,8 @@
     return cashText(E.quote(car,kind,price,!!career.reports?.[car.id]).expectedMargin);
   }
   function renderMarket() {
-    const {auctions,sellers} = E.market(career.day,career.reputationScore,career.deadlineSession);
+    const {auctions,sellers} = E.market(career.day,career.reputationScore,career.deadlineSession,
+      career.name,career.monthPlan.startingReputation);
     const auctionsHtml = auctions.length ? auctions.map(lot => {
       const state = (career.auctionBids || {})[lot.id];
       const owned = career.vehicles.some(v => v.origin === lot.id);
@@ -311,7 +312,10 @@
         '<div class="trade-actions"><span class="trade-extra">The owner can accept your offer, negotiate, or leave. Each enquiry is limited to two rounds.</span>'+
         (warning && !closed ? '<div class="trade-purchase-warning">'+escapeText(warning)+'</div>' : '')+
         offerStatus+leadFeedback(car.id)+controls+'</div></article>';
-    }).join('') : '<div class="trade-empty">No private or walk-in seller leads today. Check auction lots or the next game day.</div>';
+    }).join('') : D.isDealDay(career.day)?
+      '<div class="trade-empty"><h2>NO PRIVATE SELLER ENQUIRIES THIS SESSION.</h2>'+
+      '<p>This month may be quiet. The next session could bring new sellers, but nothing is guaranteed. Auctions are closed.</p></div>' :
+      '<div class="trade-empty">No private or walk-in seller leads today. Check auction lots or the next game day.</div>';
     byId('market-auctions').innerHTML = auctionsHtml;
     byId('market-sellers').innerHTML = sellersHtml;
   }
@@ -346,39 +350,54 @@
     }).join('');
   }
   function renderSales() {
-    const listed = career.vehicles.filter(car => car.status === 'listed');
-    const holder = byId('sales-list');
-    const deadlineNote=D.isDealDay(career.day)?
-      '<div class="deadline-retail-intro"><strong>DEAL DAY · '+D.dealSession(career).time+'</strong>'+
-      '<p>Motivated retail buyers are ready to negotiate cash and part-exchanges. These are still genuine valuations, not guaranteed profit.</p></div>':'';
-    if (!listed.length) {
-      holder.innerHTML = deadlineNote+'<div class="trade-empty"><h2>NO RETAIL ENQUIRIES YET.</h2>'+
-        '<p>Prepare a vehicle and advertise it from Vehicle Stock to attract a buyer.</p></div>';
+    const listed=career.vehicles.filter(car=>car.status==='listed');
+    const holder=byId('sales-list');
+    const outlook=D.isDealDay(career.day)?D.outlook(career):null;
+    const deadlineNote=outlook?
+      '<div class="deadline-retail-intro"><strong>DEAL DAY · '+D.dealSession(career).time+
+      ' · '+escapeText(outlook.label)+'</strong>'+
+      '<p>Customer interest is uncertain. Some sessions bring cash buyers or part-exchanges; others bring no enquiries. Stronger negotiating terms are possible, not guaranteed.</p></div>':'';
+    if(!listed.length){
+      holder.innerHTML=deadlineNote+'<div class="trade-empty"><h2>NO RETAIL ENQUIRIES YET.</h2>'+
+        '<p>Prepare a vehicle and advertise it from Vehicle Stock. A quiet Deal Day may finish without any sales.</p></div>';
       return;
     }
-    holder.innerHTML = deadlineNote+listed.map(car => {
-      const buyer = E.buyers(car,career);
-      const px = buyer.exchange;
-      return '<article class="trade-card">' + cardHeader(car, 'CUSTOMER ENQUIRY / STOCK ' + car.id) +
-        '<div class="trade-pricing"><div><small>YOUR ASKING PRICE</small><strong>' + cashText(car.asking) +
-        '</strong></div><div><small>YOUR COST + PREP</small><strong>' + cashText(car.cost + car.prepSpent) +
-        '</strong></div></div>' +
-        '<div class="trade-buyer-modes"><div><h4>CASH BUYER</h4><p>Customer offers</p><strong>' + cashText(buyer.cashOffer) +
-        '</strong><p>Negotiate another £150, or accept this price.</p>' +
-        '<div class="trade-action-row"><button class="trade-button trade-button-secondary" type="button" data-action="counter-sale" data-id="' + car.id +
-        '">COUNTER +£150</button><button class="trade-button" type="button" data-action="sell-cash" data-id="' + car.id +
-        '">ACCEPT CASH</button></div></div>' +
-        '<div><h4>PART-EXCHANGE BUYER</h4><p>Customer wants ' + cashText(buyer.pxOffer) +
-        ' for your car and offers <strong>' + escapeText(px.title) + '</strong> (' + milesText(px.miles) +
-        ') as part-exchange.</p><span class="trade-extra">Customer requests ' + cashText(px.ask) +
-        ' allowance; negotiate the valuation.</span>' +
-        '<label class="trade-extra" for="px-allowance-' + car.id + '">YOUR PART-EX ALLOWANCE (£)</label>' +
-        '<input class="trade-input" id="px-allowance-' + car.id + '" type="number" inputmode="numeric" min="0" max="' + px.ask +
-        '" step="25" value="' + px.ask + '">' +
-        '<span class="trade-extra">Estimated trade-in retail ' + cashText(px.retail) + ', prep ' + cashText(px.prep) +
-        '. The incoming car occupies the space of the sold car.</span>' +
-        '<button class="trade-button" type="button" data-action="sell-part-ex" data-id="' + car.id +
-        '">ACCEPT PART-EX DEAL</button></div></div></article>';
+    holder.innerHTML=deadlineNote+listed.map(car=>{
+      const buyer=E.buyers(car,career);
+      const top=cardHeader(car,'CUSTOMER ENQUIRY / STOCK '+car.id);
+      const pricing='<div class="trade-pricing"><div><small>YOUR ASKING PRICE</small><strong>'+
+        cashText(car.asking)+'</strong></div><div><small>YOUR COST + PREP</small><strong>'+
+        cashText(car.cost+car.prepSpent)+'</strong></div></div>';
+      if(!buyer){
+        return '<article class="trade-card">'+top+pricing+
+          '<div class="trade-actions"><div class="trade-inline-feedback trade-feedback-warning">'+
+          'NO INTERESTED CUSTOMER THIS SESSION — this vehicle has no retail buyer right now. '+
+          'Wait for another session or review your asking price. This does not guarantee a later enquiry.'+
+          '</div></div></article>';
+      }
+      const cash='<div><h4>CASH BUYER</h4><p>Customer offers</p><strong>'+
+        cashText(buyer.cashOffer)+'</strong><p>Negotiate another £150, or accept this price.</p>'+
+        '<div class="trade-action-row"><button class="trade-button trade-button-secondary" type="button" data-action="counter-sale" data-id="'+car.id+
+        '">COUNTER +£150</button><button class="trade-button" type="button" data-action="sell-cash" data-id="'+car.id+
+        '">ACCEPT CASH</button></div></div>';
+      const px=buyer.exchange;
+      const tradeIn=px?'<div><h4>PART-EXCHANGE BUYER</h4><p>Customer wants '+
+        cashText(buyer.pxOffer)+' for your car and offers <strong>'+
+        escapeText(px.title)+'</strong> ('+milesText(px.miles)+
+        ') as part-exchange.</p><span class="trade-extra">Customer requests '+
+        cashText(px.ask)+' allowance; negotiate the valuation.</span>'+
+        '<label class="trade-extra" for="px-allowance-'+car.id+'">YOUR PART-EX ALLOWANCE (£)</label>'+
+        '<input class="trade-input" id="px-allowance-'+car.id+
+        '" type="number" inputmode="numeric" min="0" max="'+px.ask+
+        '" step="25" value="'+px.ask+'">'+
+        '<span class="trade-extra">Estimated trade-in retail '+cashText(px.retail)+
+        ', prep '+cashText(px.prep)+'. The incoming car occupies the space of the sold car.</span>'+
+        '<button class="trade-button" type="button" data-action="sell-part-ex" data-id="'+car.id+
+        '">ACCEPT PART-EX DEAL</button></div>':
+        '<div><h4>NO PART-EXCHANGE ENQUIRY</h4><p>Customers are interested in purchasing this vehicle for cash, but none is offering a part-exchange in this session.</p>'+
+        '<span class="trade-extra">A later session may attract a trade-in, but it is not guaranteed.</span></div>';
+      return '<article class="trade-card">'+top+pricing+
+        '<div class="trade-buyer-modes">'+cash+tradeIn+'</div></article>';
     }).join('');
   }
   function renderLedger() {
@@ -615,7 +634,8 @@
     const match=/^(auction-bid-|seller-offer-)([AS]-[0-9]+-[0-9]+)$/.exec(event.target.id);
     if (!match) return;
     const kind=match[1]==='auction-bid-'?'auction':'seller';
-    const catalogue=E.market(career.day,career.reputationScore,career.deadlineSession);
+    const catalogue=E.market(career.day,career.reputationScore,career.deadlineSession,
+      career.name,career.monthPlan.startingReputation);
     const car=(kind==='auction'?catalogue.auctions:catalogue.sellers).find(v=>v.id===match[2]);
     const output=byId('projection-'+match[2]);
     if (!car || !output) return;

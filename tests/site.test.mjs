@@ -50,11 +50,11 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
   assert.match(html, /people\.js\?v=2/);
-  assert.match(html, /monthly\.js\?v=1/);
-  assert.match(html, /events\.js\?v=1/);
-  assert.match(html, /trading\.js\?v=6/);
-  assert.match(html, /events-view\.js\?v=1/);
-  assert.match(html, /monthly-view\.js\?v=1/);
+  assert.match(html, /monthly\.js\?v=2/);
+  assert.match(html, /events\.js\?v=2/);
+  assert.match(html, /trading\.js\?v=7/);
+  assert.match(html, /events-view\.js\?v=2/);
+  assert.match(html, /monthly-view\.js\?v=2/);
   assert.match(html, /people-view\.js\?v=1/);
   assert.match(html, /vehicle-view\.js\?v=1/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
@@ -266,7 +266,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=15/);
+  assert.match(html, /styles\.css\?v=16/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -1202,7 +1202,7 @@ test('monthly reports never mislabel vehicle counts as currency amounts', () => 
   assert.match(html,/SALES TEAM SCORECARDS/);
 });
 
-test('the last day is five customer-only sessions; auctions never operate', () => {
+test('Deal Day is five customer-only sessions, with some sessions legitimately empty', () => {
   const E=browser(new Map()).engine,D=E.events;
   const state=E.create('Deal Day Motors',[]);
   state.day=30;
@@ -1212,11 +1212,13 @@ test('the last day is five customer-only sessions; auctions never operate', () =
   const seen=new Set();
   for(let stage=0;stage<5;stage++){
     state.deadlineSession=stage;
-    const m=E.market(30,state.reputationScore,stage);
-    assert.equal(m.auctions.length,0,'No auction catalogue in any Deal Day session');
-    assert.ok(m.sellers.length>=2,'Every phase brings private sellers');
+    const params=[30,state.reputationScore,stage,state.name,state.monthPlan.startingReputation];
+    const m=E.market(...params);
+    assert.equal(m.auctions.length,0,'No auctions at any phase');
+    assert.deepEqual(JSON.parse(JSON.stringify(E.market(...params))),
+      JSON.parse(JSON.stringify(m)),'Catalogue must remain deterministic');
     for(const car of m.sellers){
-      assert.ok(!seen.has(car.id),'Customer opportunities must have unique phase IDs');
+      assert.ok(!seen.has(car.id),'Lead IDs stay unique across sessions');
       seen.add(car.id);
     }
     assert.equal(E.acquireAuction(state,'A-30-0',4000).ok,false);
@@ -1225,6 +1227,7 @@ test('the last day is five customer-only sessions; auctions never operate', () =
   assert.equal(state.ledger.length,0);
   assert.equal(D.PHASES[0].time,'09:00');
   assert.equal(D.PHASES[4].time,'17:00');
+  assert.ok(['quiet','subdued','steady','busy','exceptional'].includes(D.outlook(state).type));
 });
 test('pressing continue on Deal Day advances hours, not game days or wages', () => {
   const saved=new Map(),app=browser(saved);
@@ -1261,53 +1264,62 @@ test('pressing continue on Deal Day advances hours, not game days or wages', () 
   assert.match(app.nodes.get('events-view').innerHTML,/BOARD MEETING/);
   assert.equal(app.nodes.get('continue-label').textContent,'CONTINUE');
 });
-test('deadline private sellers accept modest discounts; inspected expired leads do not refund', () => {
+test('some, but not all, deadline sellers accept bargains and inspections remain non-refundable', () => {
   const E=browser(new Map()).engine,D=E.events;
-  const state=E.create('Urgent Offers',[]);
-  state.day=30;
-  const seller=E.market(30,state.reputationScore,0).sellers[0];
-  const belowFloor=seller.floor-30;
+  const chosen=Array.from({length:150},(_,i)=>'Bargain Trader '+i).map(name=>{
+    const state=E.create(name,[]);state.day=30;
+    const sellers=E.market(30,state.reputationScore,0,name,state.monthPlan.startingReputation).sellers;
+    const bargain=sellers.find(x=>D.sellerDiscount(state,x.id)>=60);
+    return {state,sellers,bargain};
+  }).find(x=>x.sellers.length>=2&&x.bargain);
+  assert.ok(chosen,'At least one dealer-month should include a motivated owner');
+  const {state,sellers,bargain}=chosen;
+  const belowFloor=bargain.floor-30;
   assert.ok(belowFloor>=100);
-  assert.ok(E.acquireSeller(state,seller.id,belowFloor).ok,
-    'Motivated private seller should accept a reasonable quick-close offer');
-  assert.equal(state.vehicles.length,1);
+  assert.ok(E.acquireSeller(state,bargain.id,belowFloor).ok,
+    'This particular motivated seller can agree slightly below their normal floor');
   assert.equal(state.vehicles[0].cost,belowFloor);
-  const second=E.market(30,state.reputationScore,0).sellers[1];
+  const second=sellers.find(x=>x.id!==bargain.id);
   const inspect=E.inspectLead(state,'seller',second.id);
   assert.ok(inspect.ok);
-  const amount=state.cash;
-  const ledger=state.ledger.length;
-  const phase=D.advanceSession(state);
-  assert.ok(phase.ok);
+  const amount=state.cash,ledger=state.ledger.length;
+  assert.ok(D.advanceSession(state).ok);
   assert.equal(state.day,30);
   assert.equal(state.deadlineSession,1);
   assert.equal(Object.keys(state.reports).length,0);
   assert.equal(state.cash,amount);
   assert.equal(state.ledger.length,ledger);
   assert.equal(E.acquireSeller(state,second.id,second.ask).ok,false,
-    'Expired seller enquiry cannot be purchased after session changes');
+    'Expired seller cannot be purchased next session');
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
-test('motivated retail customers and part exchanges still respect asking-price limits', () => {
-  const E=browser(new Map()).engine,state=E.create('Retail Closing',[]);
+test('Deal Day retail interest and part-exchanges vary, with valuation limits enforced', () => {
+  const E=browser(new Map()).engine,D=E.events;
+  const selected=Array.from({length:200},(_,i)=>'Retail Closing '+i).map(name=>{
+    const state=E.create(name,[]);
+    const car={id:1,origin:'S-1-0'};
+    const phase=[0,1,2,3,4].find(phase=>{
+      state.day=30;state.deadlineSession=phase;
+      return D.retailActive(state,car)&&D.partExchangeAvailable(state,car);
+    });
+    return {name,phase};
+  }).find(x=>x.phase!==undefined);
+  assert.ok(selected,'A buyer with a part-exchange should sometimes appear');
+  const state=E.create(selected.name,[]);
   const seller=E.market(1).sellers[0];
   assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
   assert.ok(E.prepare(state,1).ok);
   const car=state.vehicles[0];
   assert.ok(E.advertise(state,car.id,Math.round(car.retail/50)*50).ok);
-  const normal=E.buyers(car,state);
-  state.day=30;
-  const morning=E.buyers(car,state);
-  assert.ok(morning.cashOffer>=normal.cashOffer);
-  assert.ok(morning.pxOffer>=normal.pxOffer);
-  assert.ok(morning.cashOffer<=morning.cashLimit);
-  assert.ok(morning.pxOffer<=car.asking);
-  state.deadlineSession=4;
-  const final=E.buyers(car,state);
-  assert.ok(final.cashOffer>=morning.cashOffer);
-  assert.ok(final.pxOffer>=morning.pxOffer);
-  assert.ok(final.exchange.floor<=normal.exchange.floor);
-  assert.ok(E.completeSale(state,car.id,'part-ex',final.exchange.ask).ok);
+  const ordinary=E.buyers(car,state);
+  state.day=30;state.deadlineSession=selected.phase;
+  const active=E.buyers(car,state);
+  assert.ok(active&&active.exchange);
+  assert.ok(active.cashOffer>=ordinary.cashOffer);
+  assert.ok(active.cashOffer<=active.cashLimit);
+  assert.ok(active.pxOffer<=car.asking);
+  assert.ok(active.exchange.floor<=ordinary.exchange.floor);
+  assert.ok(E.completeSale(state,car.id,'part-ex',active.exchange.ask).ok);
   assert.equal(state.sold[0].day,30);
   assert.equal(state.sold[0].mode,'part-ex');
   assert.equal(state.vehicles[0].source,'part-ex');
@@ -1451,4 +1463,102 @@ test('customer-care meeting priority improves genuine good-condition retail serv
   assert.equal(focused.sold[0].price,plain.sold[0].price);
   assert.equal(focused.reputationScore,plain.reputationScore+1);
   assert.ok(focused.reputationHistory[0].reason.includes('management focus on customer care'));
+});
+
+test('month-end market conditions vary across many months and quiet periods have no sellers', () => {
+  const E=browser(new Map()).engine,D=E.events;
+  const byType=new Map(),quietTotals=[],busyTotals=[];
+  let emptyPhases=0,nonBargainBusy=0;
+  for(let month=1;month<=120;month++){
+    const day=month*30,name='First Lot Motors',c=D.conditions(day,name);
+    assert.deepEqual(JSON.parse(JSON.stringify(D.conditions(day,name))),
+      JSON.parse(JSON.stringify(c)),'Climate cannot reroll on reload');
+    byType.set(c.type,(byType.get(c.type)||0)+1);
+    let sellerTotal=0;
+    for(let phase=0;phase<5;phase++){
+      const count=D.leadCount(day,5,phase,name);
+      sellerTotal+=count;
+      if(count===0)emptyPhases++;
+      if(c.type==='busy'||c.type==='exceptional'){
+        const market=E.market(day,5,phase,name,5);
+        nonBargainBusy+=market.sellers.filter(x=>
+          D.sellerDiscount({day,name,deadlineSession:phase},x.id)===0).length;
+      }
+    }
+    if(c.type==='quiet')quietTotals.push(sellerTotal);
+    if(c.type==='busy'||c.type==='exceptional')busyTotals.push(sellerTotal);
+  }
+  assert.equal(byType.size,5,'All five conditions should appear over a long career');
+  assert.ok(emptyPhases>0,'Some sessions should have no private sellers');
+  assert.ok(quietTotals.some(n=>n===0),'An entire month-end can be silent');
+  const mean=a=>a.reduce((n,x)=>n+x,0)/a.length;
+  assert.ok(mean(busyTotals)>mean(quietTotals)*2,'Busy climates generate more seller footfall on average');
+  assert.ok(nonBargainBusy>0,'Busy trading must not guarantee below-floor bargains');
+});
+test('Deal Day buying interest varies with the market and is stable within sessions', () => {
+  const D=browser(new Map()).engine.events;
+  const values={quiet:[],exceptional:[],busy:[]};
+  const car={id:1,origin:'S-1-0'};
+  for(let month=1;month<=400;month++){
+    const day=month*30,name='First Lot Motors',climate=D.conditions(day,name);
+    const arr=values[climate.type];
+    if(!arr)continue;
+    for(let phase=0;phase<5;phase++){
+      const state={day,name,deadlineSession:phase,monthPlan:{startingReputation:5}};
+      const interested=D.retailActive(state,car);
+      assert.equal(D.retailActive(state,car),interested,'Re-render cannot reroll buyer demand');
+      arr.push(Number(interested));
+    }
+  }
+  assert.ok(values.quiet.includes(0)&&values.quiet.includes(1));
+  const mean=a=>a.reduce((n,x)=>n+x,0)/a.length;
+  assert.ok(mean(values.exceptional)>mean(values.quiet)*2);
+  assert.ok(mean(values.busy)>mean(values.quiet));
+});
+test('a quiet Deal Day can leave a listed car with no buyer, so selling is disallowed', () => {
+  const E=browser(new Map()).engine,D=E.events;
+  const chosen=Array.from({length:100},(_,i)=>'Quiet Test '+i).find(name=>{
+    const state={name,day:30,deadlineSession:0,monthPlan:{startingReputation:5}};
+    return D.conditions(30,name).type==='quiet'&&
+      !D.retailActive(state,{id:1,origin:'S-1-0'});
+  });
+  assert.ok(chosen,'We should find a quiet dealer-month with no retail enquiry');
+  const store=new Map(),app=browser(store);
+  app.click('new-career');app.submitCareer(chosen);
+  const seller=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+seller.id,seller.ask);
+  app.click('buy-seller',{id:seller.id});
+  app.click('prepare-stock',{id:'1'});
+  app.setInput('stock-price-1',5200);
+  app.click('list-stock',{id:'1'});
+  for(let i=0;i<29;i++)app.click('continue');
+  const before=JSON.parse(store.get(STORAGE_KEY));
+  assert.equal(before.day,30);
+  assert.match(app.nodes.get('events-view').innerHTML,/QUIET MONTH/);
+  assert.match(app.nodes.get('sales-list').innerHTML,/NO INTERESTED CUSTOMER THIS SESSION/);
+  assert.doesNotMatch(app.nodes.get('sales-list').innerHTML,/ACCEPT CASH/);
+  const fail=app.engine.completeSale(before,1,'cash',null);
+  assert.equal(fail.ok,false);
+  assert.equal(fail.code,'no-buyer');
+  assert.equal(before.sold.length,0);
+  const n=app.engine.normalize(JSON.parse(JSON.stringify(before)));
+  assert.ok(n);
+});
+test('month-end management report records actual Deal Day results without spoiling future supply', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Uncertain Reports');
+  const current=JSON.parse(storage.get(STORAGE_KEY));
+  const report=app.engine.monthly.statement(current);
+  assert.equal('dealDay' in report,false,'Cannot forecast exact future Deal Day footfall');
+  assert.match(app.nodes.get('monthly-report-view').innerHTML,/Deal Day outcomes are not known yet/);
+  for(let i=0;i<34;i++)app.click('continue');
+  const closed=JSON.parse(storage.get(STORAGE_KEY)).monthlyReports[0];
+  assert.ok(closed.dealDay);
+  assert.ok(['quiet','subdued','steady','busy','exceptional'].includes(closed.dealDay.type));
+  assert.equal(closed.dealDay.sellerEnquiries,app.engine.events.PHASES.reduce(
+    (n,_,stage)=>n+app.engine.events.leadCount(30,closed.startingReputation,stage,'Uncertain Reports'),0));
+  assert.equal(closed.dealDay.retailSales,0);
+  assert.equal(closed.dealDay.turnover,0);
+  assert.ok(app.engine.monthly.validReport(closed));
+  assert.match(app.nodes.get('monthly-report-view').innerHTML,/MONTH-END DEAL DAY REVIEW/);
 });
