@@ -189,7 +189,7 @@
     const v = {
       id:state.nextId++,title:template.title,miles:template.miles,
       fuel:template.fuel,gearbox:template.gearbox,history:template.history,
-      note:template.note,retail:template.retail,
+      note:template.note,retail:p.retail,
       source,origin:ref,cost:cost+inspectionFee,
       profile,prepBudget:p.basePrep+(p.hiddenFault?.cost||0),
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
@@ -323,7 +323,10 @@
     pay(state,-vehicle.prepBudget,'Preparation and inspection: ' + vehicle.title);
     vehicle.prepSpent = vehicle.prepBudget;
     vehicle.status = 'prepared';
-    return success(vehicle.title + ' is prepared for retail. Set an asking price.');
+    const extra=vehicle.profile?.hiddenFault;
+    return success(vehicle.title + ' prepared for £'+vehicle.prepBudget.toLocaleString('en-GB')+
+      (extra?' including '+extra.item+' (£'+extra.cost+'). ':'. ')+
+      'Set an asking price and advertise it.');
   }
   function advertise(state, id, asking) {
     const vehicle = own(state.vehicles,id);
@@ -340,13 +343,16 @@
   function pxTemplate(vehicle) { return EXCHANGES[(vehicle.id - 1) % EXCHANGES.length]; }
   function buyers(vehicle) {
     if (vehicle.status !== 'listed') return null;
-    const start = Math.max(500,vehicle.asking - 400);
-    const limit = Math.max(start,vehicle.asking - 90);
+    // Buyers benchmark against a market-derived achievable retail value.
+    // An inflated asking price does not force an unrealistically high offer.
+    const fair = vehicle.profile?.likelySale ?? (vehicle.asking - 250);
+    const limit = Math.max(500,Math.min(vehicle.asking - 90,fair));
+    const start = Math.max(500,Math.min(limit,vehicle.asking - 400,fair - 125));
     const px = pxTemplate(vehicle);
     return {
       cashOffer:vehicle.cashOffer === null ? start : vehicle.cashOffer,
       cashLimit:limit,
-      pxOffer:Math.max(500,vehicle.asking - 220),
+      pxOffer:Math.max(500,Math.min(vehicle.asking - 220,fair + 50)),
       exchange:px
     };
   }
