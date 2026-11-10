@@ -82,8 +82,24 @@
       sellers:sellers.map(car=>({...car,...PH.describe(car),profile:I.profile(car)}))
     };
   }
-  const marketFor=state=>market(state.day,state.reputationScore,state.deadlineSession,
-    state.name,state.monthPlan?.startingReputation??state.reputationScore,state.cash);
+  // Daily catalogues must never reroll after a purchase, inspection or sale.
+  // Opening cash is reconstructed from the existing ledger, avoiding a new
+  // save field and preserving all v1-v9 careers. Reputation access is reviewed
+  // at each 30-day management period, not halfway through a trading session.
+  function marketStatus(state){
+    const todaysMovement=state.ledger.reduce((n,x)=>n+(x.day===state.day?x.delta:0),0);
+    const openingCash=state.cash-todaysMovement;
+    const periodRep=state.monthPlan?.startingReputation??state.reputationScore;
+    return MARKET.progress(openingCash,periodRep);
+  }
+  const marketFor=state=>{
+    const status=marketStatus(state);
+    const todaysMovement=state.ledger.reduce((n,x)=>n+(x.day===state.day?x.delta:0),0);
+    return market(state.day,state.monthPlan?.startingReputation??state.reputationScore,
+      state.deadlineSession,state.name,
+      state.monthPlan?.startingReputation??state.reputationScore,
+      state.cash-todaysMovement);
+  };
   function create(name, messages) {
     const state={
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
@@ -563,7 +579,7 @@
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
     wholesaleOffer,disposeStock,hireStaff,
-    market,create,normalize,acquireAuction,acquireSeller,walkSeller,
+    market,marketFor,marketStatus,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     advertise,buyers,counter,completeSale,totalMargin
   });
