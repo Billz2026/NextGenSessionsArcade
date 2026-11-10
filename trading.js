@@ -10,6 +10,8 @@
   const VERSION = 9;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
+  const MARKET = window.MotorTradeMarket;
+  if(!MARKET)throw new Error('Load vehicle-market.js before trading.js');
   const C = window.MotorTradeCustomers;
   if(!C)throw new Error('Load customers.js before trading.js');
   const W = window.MotorTradeWorkshop;
@@ -23,24 +25,8 @@
   const I = window.MotorTradeIntel;
   if (!I) throw new Error('Load vehicle-intel.js before trading.js');
   const MAX_DAY = 36500;
-  const AUCTIONS = Object.freeze([
-    {title:'2016 Ford Focus Zetec',miles:81240,fuel:'Diesel',gearbox:'Manual',grade:'3',history:'Partial',guide:2950,reserve:3200,rival:3525,fee:285,prep:430,retail:6350,note:'Door paint marks, front tyres and incomplete service paperwork'},
-    {title:'2014 Vauxhall Corsa Excite',miles:65410,fuel:'Petrol',gearbox:'Manual',grade:'2',history:'Full',guide:1900,reserve:2150,rival:2380,fee:225,prep:250,retail:4850,note:'Minor cosmetic wear and routine service due'},
-    {title:'2017 Volkswagen Polo Match',miles:72880,fuel:'Petrol',gearbox:'Manual',grade:'3',history:'Partial',guide:3650,reserve:4100,rival:4430,fee:315,prep:390,retail:7250,note:'Scuffed alloy and brake advisory requiring attention'},
-    {title:'2015 Nissan Qashqai Acenta',miles:96820,fuel:'Diesel',gearbox:'Manual',grade:'4',history:'Partial',guide:3400,reserve:3800,rival:4090,fee:335,prep:570,retail:7800,note:'Suspension knock and bodywork repairs in estimate'},
-    {title:'2016 Peugeot 208 Allure',miles:60320,fuel:'Petrol',gearbox:'Manual',grade:'2',history:'Full',guide:2450,reserve:2700,rival:2970,fee:245,prep:260,retail:5450,note:'Recent MOT; tyres and servicing to confirm'}
-  ]);
-  const SELLERS = Object.freeze([
-    {title:'2015 Hyundai i20 SE',miles:68700,fuel:'Petrol',gearbox:'Manual',history:'Full',ask:3300,floor:2975,prep:260,retail:5250,note:'Owner changing cars; service due soon'},
-    {title:'2012 Toyota Yaris TR',miles:79300,fuel:'Petrol',gearbox:'Manual',history:'Partial',ask:2800,floor:2475,prep:230,retail:4450,note:'Walk-in seller; fresh MOT recommended'},
-    {title:'2017 Ford Fiesta Zetec',miles:59340,fuel:'Petrol',gearbox:'Manual',history:'Full',ask:4950,floor:4580,prep:330,retail:7480,note:'Private seller upgrading; cosmetic scratches'},
-    {title:'2014 Honda Jazz ES',miles:72550,fuel:'Petrol',gearbox:'Manual',history:'Full',ask:3450,floor:3150,prep:250,retail:5400,note:'Independent inspection advised before resale'}
-  ]);
-  const EXCHANGES = Object.freeze([
-    {title:'2012 Vauxhall Corsa SXi',miles:99200,fuel:'Petrol',gearbox:'Manual',history:'Partial',ask:1900,floor:1650,prep:310,retail:3700,note:'Part-ex valuation; clutch and tyres require inspection'},
-    {title:'2014 Kia Rio 2',miles:85420,fuel:'Petrol',gearbox:'Manual',history:'Partial',ask:2250,floor:1975,prep:290,retail:4550,note:'Part-ex valuation; cosmetic damage and service due'},
-    {title:'2013 Ford Focus Titanium',miles:103800,fuel:'Diesel',gearbox:'Manual',history:'Partial',ask:2700,floor:2400,prep:480,retail:4950,note:'Part-ex valuation; higher-mileage risk'}
-  ]);
+  // Stock templates are maintained in vehicle-market.js. Never mutate the
+  // curated rows: daily price, mileage and identifiers are generated below.
   const integer = value => Number.isSafeInteger(value);
   const cashValue = value => integer(value) && value >= 0 && value <= 100000000;
   const own = (arr, id) => arr.find(v => v.id === id);
@@ -53,39 +39,43 @@
     return (v ^ (v >>> 16)) >>> 0;
   };
   const nearest25 = n => Math.round(n / 25) * 25;
-  function market(day, reputationScore=0, session=0, dealershipName='',periodReputation=reputationScore) {
-    // Customer-only Deal Day; auction-house sessions never operate at month end.
-    // The period's opening reputation remains fixed when sales are made.
-    const special=D.customers(day,periodReputation,session,SELLERS,I.profile,dealershipName);
+  function market(day,reputationScore=0,session=0,dealershipName='',
+    periodReputation=reputationScore,cash=STARTING_CASH) {
+    const tier=MARKET.tierFor(cash,reputationScore).key;
+    const dealSellers=MARKET.sellersForDealDay(cash,reputationScore);
+    const special=D.customers(day,periodReputation,session,dealSellers,I.profile,dealershipName);
     if(special)return {auctions:[],sellers:special.sellers.map(x=>({...x,...PH.describe(x)}))};
-    const auctionCount = day === 1 ? 3 :
-      (sample(day,0,17) % 7 === 0 ? 0 : 1 + (sample(day,1,29) % 3));
-    const baselineSellers = day === 1 ? 2 :
-      (sample(day,0,31) % 5 === 0 ? 0 : 1 + (sample(day,1,37) % 3));
-    // Established traders attract an extra seller enquiry on busier days.
-    const sellerCount = Math.min(4,baselineSellers +
-      (day>1 && reputationScore>=40 && baselineSellers>0 ? 1 : 0));
-    // Some days have no auctions or no private sellers, but never an empty market.
-    const aCount = auctionCount || sellerCount ? auctionCount : 1;
-    const auctions = Array.from({length:aCount}, (_,i) => {
-      const base = AUCTIONS[day === 1 ? i : (sample(day,0,8) % AUCTIONS.length + i * 2) % AUCTIONS.length];
-      const offset = day === 1 ? 0 : nearest25((sample(day,i,91) % 851) - 425);
-      const guide = Math.max(850,base.guide + offset);
-      const delta = guide - base.guide;
-      const miles = base.miles + (day === 1 ? 0 : ((sample(day,i,54) % 250) - 125) * 100);
-      const fee = base.fee + (day === 1 ? 0 : 25 * ((sample(day,i,82) % 3) - 1));
+    const auctionCount=day===1?3:
+      (sample(day,0,17)%7===0?0:1+(sample(day,1,29)%3));
+    const baselineSellers=day===1?2:
+      (sample(day,0,31)%5===0?0:1+(sample(day,1,37)%3));
+    const sellerCount=Math.min(4,baselineSellers+
+      (day>1&&reputationScore>=40&&baselineSellers>0?1:0));
+    const aCount=auctionCount||sellerCount?auctionCount:1;
+    const usedAuction=new Set(),usedSeller=new Set();
+    const starter=MARKET.CATALOGUE.starter;
+    const auctions=Array.from({length:aCount},(_,i)=>{
+      const base=day===1?starter[i]:MARKET.pick('auction',tier,day,i,usedAuction);
+      const offset=day===1?0:nearest25((sample(day,i,91)%851)-425);
+      const guide=Math.max(850,base.guide+offset);
+      const delta=guide-base.guide;
+      const miles=Math.max(3500,base.miles+
+        (day===1?0:((sample(day,i,54)%250)-125)*100));
+      const fee=base.fee+(day===1?0:25*((sample(day,i,82)%3)-1));
       return {...base,guide,reserve:base.reserve+delta,rival:base.rival+delta,
-        retail:base.retail+delta, miles, fee,
-        id:'A-' + day + '-' + i,kind:'auction',day};
+        retail:base.retail+delta,miles,fee,
+        id:'A-'+day+'-'+i,kind:'auction',day};
     });
-    const sellers = Array.from({length:sellerCount}, (_,i) => {
-      const base = SELLERS[day === 1 ? i : (sample(day,0,21) % SELLERS.length + i) % SELLERS.length];
-      const offset = day === 1 ? 0 : nearest25((sample(day,i,51) % 601) - 300);
-      const ask = Math.max(950,base.ask + offset);
-      const delta = ask - base.ask;
-      const miles = base.miles + (day === 1 ? 0 : ((sample(day,i,44) % 250) - 125) * 100);
-      return {...base,ask,floor:base.floor+delta,retail:base.retail+delta,
-        miles,id:'S-' + day + '-' + i,kind:'seller',day};
+    const sellers=Array.from({length:sellerCount},(_,i)=>{
+      const base=day===1?starter[3+i]:MARKET.pick('seller',tier,day,i,usedSeller);
+      const offset=day===1?0:nearest25((sample(day,i,51)%601)-300);
+      const ask=Math.max(950,base.ask+offset);
+      const delta=ask-base.ask;
+      const miles=Math.max(3500,base.miles+
+        (day===1?0:((sample(day,i,44)%250)-125)*100));
+      return {...base,ask,floor:Math.max(100,base.floor+delta),
+        retail:base.retail+delta,miles,
+        id:'S-'+day+'-'+i,kind:'seller',day};
     });
     return {
       auctions:auctions.map(car=>({...car,...PH.describe(car),profile:I.profile(car)})),
@@ -93,7 +83,7 @@
     };
   }
   const marketFor=state=>market(state.day,state.reputationScore,state.deadlineSession,
-    state.name,state.monthPlan?.startingReputation??state.reputationScore);
+    state.name,state.monthPlan?.startingReputation??state.reputationScore,state.cash);
   function create(name, messages) {
     const state={
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
@@ -399,7 +389,7 @@
     return success(vehicle.title + ' is advertised at ' + asking + '. Check the Sales Office.');
   }
   function pxTemplate(vehicle) {
-    const base=EXCHANGES[(vehicle.id-1)%EXCHANGES.length];
+    const base=MARKET.exchangeFor(vehicle);
     const origin='PX-'+vehicle.acquiredDay+'-'+vehicle.id;
     return {...base,origin,...PH.describe({...base,origin})};
   }
