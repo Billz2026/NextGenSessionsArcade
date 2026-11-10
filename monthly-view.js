@@ -177,6 +177,8 @@
       countLine('Agreements reached',journey.agreements)+
       countLine('Deposits received into separate holding',journey.deposits)+
       countLine('Deposits refunded',journey.refunds)+
+      (Number.isSafeInteger(r.customerHoldingAtClose)?
+        amount('Customer deposits currently held separately',r.customerHoldingAtClose):'')+
       countLine('Vehicles handed over',journey.completedSales)+
       '<p class="report-muted">Deposits are separately held customer funds, not sales revenue. Only completed handovers count towards the company target.</p></section>':
       '<section class="panel-card report-section"><h3>RETAIL CUSTOMER JOURNEY</h3>'+
