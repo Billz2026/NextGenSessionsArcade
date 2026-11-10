@@ -73,6 +73,9 @@
     if(!car)return null;
     const id=identity(car);
     const colour=car.color;
+    // A stored vehicle generation must agree with the generation derived
+    // from its title; never silently use a mismatched photograph.
+    if(car.generation!==id.generation)return null;
     if(typeof colour!=='string'||!COLOURS.includes(colour))return null;
     return PHOTO_LIBRARY.find(x=>x.model===id.model&&
       x.generation===id.generation&&x.color===colour&&
