@@ -393,7 +393,7 @@
   function pxTemplate(vehicle) { return EXCHANGES[(vehicle.id - 1) % EXCHANGES.length]; }
   function buyers(vehicle,state=null) {
     if (vehicle.status !== 'listed') return null;
-    if(state && D.isDealDay(state.day) && !D.retailActive(state,vehicle))return null;
+    if(state && D.isDealDay(state.day) && !C.caseFor(state,vehicle.id) && !D.retailActive(state,vehicle))return null;
     // Buyers benchmark against a market-derived achievable retail value.
     // An inflated asking price does not force an unrealistically high offer.
     const fair = vehicle.profile?.likelySale ?? (vehicle.asking - 250);
@@ -472,7 +472,7 @@
       if(allowance!==undefined&&allowance!==null&&allowance!==agreedAllowance)
         return fail('part-ex','The allowance cannot change after the customer agreement.');
       const pendingPrep=W.reserved(state);
-      const pxProfile=I.profile({...px,id:'PX-'+state.day+'-'+v.id,kind:'part-ex'});
+      const pxProfile=I.profile({...px,id:'PX-'+c.agreedDay+'-'+v.id,kind:'part-ex'});
       if(state.cash+price-agreedAllowance<pendingPrep+
         pxProfile.basePrep+(pxProfile.hiddenFault?.cost||0))
         return fail('cash','Insufficient funds to complete this part-exchange and reserve vehicle preparation.');
@@ -491,7 +491,7 @@
       profile:v.profile?{...v.profile}:null,
       exchange:px?px.title:null,allowance:px?agreedAllowance:0
     });
-    if(px)addCar(state,px,'part-ex',agreedAllowance,'PX-'+state.day+'-'+v.id);
+    if(px)addCar(state,px,'part-ex',agreedAllowance,'PX-'+c.agreedDay+'-'+v.id);
     state.stock=state.vehicles.length;state.sales=state.sold.length;
     const review=P.sale(state,v,price,realised);
     state.reputation=P.tier(state.reputationScore);
