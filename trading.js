@@ -7,7 +7,9 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 4;
-  const VERSION = 8;
+  const VERSION = 9;
+  const PH = window.MotorTradePhotos;
+  if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const C = window.MotorTradeCustomers;
   if(!C)throw new Error('Load customers.js before trading.js');
   const W = window.MotorTradeWorkshop;
@@ -55,7 +57,7 @@
     // Customer-only Deal Day; auction-house sessions never operate at month end.
     // The period's opening reputation remains fixed when sales are made.
     const special=D.customers(day,periodReputation,session,SELLERS,I.profile,dealershipName);
-    if(special)return special;
+    if(special)return {auctions:[],sellers:special.sellers.map(x=>({...x,...PH.describe(x)}))};
     const auctionCount = day === 1 ? 3 :
       (sample(day,0,17) % 7 === 0 ? 0 : 1 + (sample(day,1,29) % 3));
     const baselineSellers = day === 1 ? 2 :
@@ -86,8 +88,8 @@
         miles,id:'S-' + day + '-' + i,kind:'seller',day};
     });
     return {
-      auctions:auctions.map(car=>({...car,profile:I.profile(car)})),
-      sellers:sellers.map(car=>({...car,profile:I.profile(car)}))
+      auctions:auctions.map(car=>({...car,...PH.describe(car),profile:I.profile(car)})),
+      sellers:sellers.map(car=>({...car,...PH.describe(car),profile:I.profile(car)}))
     };
   }
   const marketFor=state=>market(state.day,state.reputationScore,state.deadlineSession,
@@ -105,7 +107,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -133,6 +135,9 @@
       saved.vehicles.length > 250 || saved.sold.length > 20000 ||
       saved.ledger.length > 60000 ||
       (saved.version===VERSION&&(!Array.isArray(saved.wholesale)||saved.wholesale.length>20000)))return null;
+    const validLook=v=>typeof v.color==='string'&&PH.COLOURS.includes(v.color)&&
+      typeof v.generation==='string'&&v.generation.length>0&&v.generation.length<48&&
+      (PH.identity(v).generation===v.generation);
     const goodVehicle = v => v && integer(v.id) && v.id > 0 && typeof v.title === 'string' &&
       v.title.length > 2 && v.title.length < 100 &&
       ['auction','seller','part-ex'].includes(v.source) &&
@@ -148,7 +153,8 @@
       (saved.version === 2 || I.validProfile(v.profile)) &&
       (saved.version === 2 || v.prepBudget === v.profile.basePrep +
         (v.profile.hiddenFault?.cost || 0)) &&
-      (saved.version<7 || W.valid(v,saved.day));
+      (saved.version<7 || W.valid(v,saved.day)) &&
+      (saved.version<VERSION || validLook(v));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
       cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
@@ -197,14 +203,14 @@
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
-        ...v,workshop:saved.version>=7?{...v.workshop}:W.initial(v),
+        ...v,...(saved.version<VERSION?PH.describe(v):{}),workshop:saved.version>=7?{...v.workshop}:W.initial(v),
         profile:saved.version===2?I.legacyProfile(v):
           {...v.profile,knownRepairs:v.profile.knownRepairs.map(x=>({...x})),
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
             hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}
       })),
-      wholesale:wholesale.map(d=>({...d})),
-      sold:saved.sold.map(v => ({...v,profile:v.profile?{...v.profile,
+      wholesale:wholesale.map(d=>({...d,...(saved.version<VERSION?PH.describe(d):{})})),
+      sold:saved.sold.map(v => ({...v,...(saved.version<VERSION?PH.describe(v):{}),profile:v.profile?{...v.profile,
         knownRepairs:v.profile.knownRepairs.map(r=>({...r})),
         mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
         hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}:null})),
@@ -239,7 +245,9 @@
       source,origin:ref,cost:cost+inspectionFee,
       profile,prepBudget:p.basePrep+(p.hiddenFault?.cost||0),
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
-      listedDay:null
+      listedDay:null,
+      color:car.color||PH.describe({...car,origin}).color,
+      generation:car.generation||PH.identity(car).generation
     };
     v.workshop=W.initial(v);
     state.vehicles.push(v);
@@ -487,6 +495,7 @@
     state.vehicles=state.vehicles.filter(x=>x.id!==id);
     state.sold.push({
       id:v.id,title:v.title,source:v.source,day:state.day,mode,price,
+      color:v.color,generation:v.generation,origin:v.origin,
       acquisition:v.cost,prep:v.prepSpent,profit:realised,
       profile:v.profile?{...v.profile}:null,
       exchange:px?px.title:null,allowance:px?agreedAllowance:0
@@ -519,7 +528,8 @@
     const basis=vehicle.cost;
     pay(state,proceeds,'Wholesale stock disposal: '+vehicle.title);
     state.wholesale.push({id:vehicle.id,title:vehicle.title,day:state.day,
-      proceeds,basis,profit:proceeds-basis});
+      proceeds,basis,profit:proceeds-basis,color:vehicle.color,
+      generation:vehicle.generation});
     state.vehicles=state.vehicles.filter(v=>v.id!==id);
     state.stock=state.vehicles.length;
     return success(vehicle.title+' disposed of to a fictional trade buyer for £'+
