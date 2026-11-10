@@ -671,6 +671,8 @@
  padding:6px 10px;color:#ffe0ad;border-radius:4px;font:800 10px/1.2 var(--mono);
  text-shadow:0 1px 2px #101820}
 .vehicle-origin-tag{left:11px}.vehicle-grade-tag{right:11px}
+/* Hidden image and fallback states must beat their display rules. */
+.vehicle-photo-frame img[hidden],.vehicle-photo-missing[hidden]{display:none!important}
 .vehicle-photo-missing{height:100%;display:flex;flex-direction:column;
  align-items:center;justify-content:center;text-align:center;gap:7px;padding:18px}
 .vehicle-photo-missing>span{display:block;font:900 68px/1 var(--title);color:#536c78}
