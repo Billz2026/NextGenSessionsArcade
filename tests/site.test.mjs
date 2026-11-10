@@ -17,6 +17,9 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
   assert.match(html, /id="screen-career" hidden/);
   assert.match(html, /data-action="new-career"/);
   assert.match(html, /id="menu-continue" data-action="resume" hidden/);
+  assert.match(html, /id="menu-new-career" data-action="new-career"/);
+  assert.match(html, /THE MANAGER'S DESK/);
+  assert.match(html, /INTERFACE PREVIEW/);
   assert.match(html, /id="career-form"/);
   assert.match(html, /id="dealership-name"/);
   assert.ok(existsSync(new URL('assets/nextgen-header-wordmark-2026.webp', root)));
@@ -125,7 +128,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   return { nodes, bindings, panels, nav, storageData, click, go, submitCareer };
 }
 
-test('first visit shows menu, setup creates career, next visit auto-resumes', () => {
+test('first visit and saved career show menu, with explicit continue', () => {
   const saved = new Map();
   const first = browser(saved);
   assert.equal(first.nodes.get('screen-menu').hidden, false);
@@ -142,14 +145,15 @@ test('first visit shows menu, setup creates career, next visit auto-resumes', ()
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).day, 2);
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).messages.length, 4);
   const resumed = browser(saved);
+  assert.equal(resumed.nodes.get('screen-menu').hidden, false);
+  assert.equal(resumed.nodes.get('screen-career').hidden, true);
+  assert.equal(resumed.nodes.get('menu-continue').hidden, false);
+  assert.equal(resumed.nodes.get('menu-continue').className, 'action-btn action-btn-primary');
+  assert.equal(resumed.nodes.get('menu-new-career').className, 'action-btn action-btn-secondary');
+  resumed.click('resume');
   assert.equal(resumed.nodes.get('screen-career').hidden, false);
   assert.equal(resumed.bindings.get('company')[0].textContent, 'My Trade Centre');
   assert.match(resumed.bindings.get('date')[0].textContent, /10 NOV 2026/);
-  resumed.click('menu');
-  assert.equal(resumed.nodes.get('screen-menu').hidden, false);
-  assert.equal(resumed.nodes.get('menu-continue').hidden, false);
-  resumed.click('resume');
-  assert.equal(resumed.nodes.get('screen-career').hidden, false);
 });
 
 test('inbox is interactive, read status persists, navigation changes panels', () => {
