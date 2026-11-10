@@ -714,6 +714,16 @@
       case 'outsource-workshop':
         if(career)saveResult(E.transferPrep(career,Number(button.dataset.id)));
         break;
+      case 'dispose-workshop':
+        if(career){
+          const vehicle=career.vehicles.find(v=>v.id===Number(button.dataset.id));
+          if(vehicle&&window.confirm('Dispose of '+vehicle.title+
+            ' to the trade for '+money.format(E.wholesaleOffer(vehicle))+
+            '? This records a trading loss and frees the stock space.')){
+            saveResult(E.disposeStock(career,vehicle.id));
+          }
+        }
+        break;
       case 'toggle-report':
         if (career) {
           const key=button.dataset.kind+':'+button.dataset.id;
