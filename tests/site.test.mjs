@@ -2122,13 +2122,16 @@ test('some customers cancel before collecting despite a paid reservation', () =>
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
 test('counteroffer rejection and walkaways mean negotiations do not guarantee extra money', () => {
-  const E=browser(new Map()).productionEngine;
+  const E=browser(new Map()).productionEngine,C=E.customers;
   let accepted=0,rejected=0,walked=0;
-  for(let i=0;i<130;i++){
-    const {state,v,c}=findCompletedDrive(E,()=>true);
-    // findCompletedDrive returns the first qualifying dealership. Change the
-    // lead for repeated simulated customers by adding a distinct enquiry ID.
-    c.id+='-'+i;
+  for(let i=0;i<175;i++){
+    const {state,v}=readyForRetail(E,'Counter Trader '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);
+    E.bookCustomer(state,v.id);
+    const c=C.caseFor(state,v.id);
+    state.day=c.appointmentDay;E.advanceCustomers(state);
+    if(c.status!=='arrived'||!E.testDrive(state,v.id).ok)continue;
     const b=E.buyers(v,state);
     if(b.cashOffer+150>b.cashLimit)continue;
     const r=E.counter(state,v.id);
@@ -2136,9 +2139,11 @@ test('counteroffer rejection and walkaways mean negotiations do not guarantee ex
     else rejected++;
     if(r.code==='walked')walked++;
     if(!r.ok)assert.ok(r.changed);
+    assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
   }
   assert.ok(accepted>0);
   assert.ok(rejected>0);
+  assert.ok(walked>0);
 });
 test('Deal Day customers can arrive as walk-ins, but still need a test drive and agreement', () => {
   const E=browser(new Map()).productionEngine,C=E.customers;
@@ -2184,4 +2189,88 @@ test('daily customer conversion statistics enter management accounts and reject 
   const wrong=JSON.parse(JSON.stringify(state));
   wrong.customerCases['1']={id:'INVALID',vehicleId:1,held:999,status:'reserved'};
   assert.equal(E.normalize(wrong),null);
+});
+
+test('the sales office UI supports a saved multi-day appointment and collection', () => {
+  const probe=browser(new Map()).productionEngine,C=probe.customers;
+  let name=null;
+  for(let i=0;i<180;i++){
+    const n='UI Customer '+i;
+    const s=probe.create(n,[]);
+    const seller=probe.market(1).sellers[0];
+    probe.acquireSeller(s,seller.id,seller.ask);
+    const v=s.vehicles[0];
+    v.status='listed';v.asking=5200;v.listedDay=1;
+    if(!C.demand(s,v))continue;
+    probe.openCustomer(s,v.id);
+    probe.bookCustomer(s,v.id);
+    const c=C.caseFor(s,v.id);
+    s.day=c.appointmentDay;probe.advanceCustomers(s);
+    if(c.status!=='arrived'||!probe.testDrive(s,v.id).ok)continue;
+    probe.agreeCustomer(s,v.id,'cash',null);
+    probe.depositCustomer(s,v.id);
+    s.day=c.collectionDay;probe.advanceCustomers(s);
+    if(c.status==='collectable'){name=n;break;}
+  }
+  assert.ok(name,'Find a stable full customer journey');
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer(name);
+  const seller=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+seller.id,seller.ask);
+  app.click('buy-seller',{id:seller.id});
+  app.click('prepare-stock',{id:'1'}); // Test fixture for older prep workflow.
+  app.setInput('stock-price-1',5200);
+  app.click('list-stock',{id:'1'});
+  assert.match(app.nodes.get('sales-list').innerHTML,/NEW CUSTOMER ENQUIRY/);
+  assert.doesNotMatch(app.nodes.get('sales-list').innerHTML,/COMPLETE HANDOVER/);
+  app.click('open-customer',{id:'1'});
+  assert.match(app.nodes.get('sales-list').innerHTML,/BOOK VIEWING/);
+  app.click('book-customer',{id:'1'});
+  let state=JSON.parse(storage.get(STORAGE_KEY));
+  const due=state.customerCases['1'].appointmentDay;
+  for(let d=state.day;d<due;d++)app.click('continue');
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.customerCases['1'].status,'arrived');
+  assert.match(app.nodes.get('sales-list').innerHTML,/OFFER TEST DRIVE/);
+  app.click('test-drive',{id:'1'});
+  assert.match(app.nodes.get('sales-list').innerHTML,/AGREE CASH PRICE/);
+  app.click('agree-cash',{id:'1'});
+  assert.match(app.nodes.get('sales-list').innerHTML,/HOLD £250 DEPOSIT/);
+  app.click('deposit-customer',{id:'1'});
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.customerCases['1'].held,250);
+  assert.equal(app.bindings.get('customer-deposits')[0].textContent,'£250');
+  assert.equal(state.sold.length,0);
+  const resumed=browser(storage);
+  assert.equal(resumed.nodes.get('menu-continue').hidden,false);
+  resumed.click('resume');
+  const collection=state.customerCases['1'].collectionDay;
+  for(let d=state.day;d<collection;d++)resumed.click('continue');
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.customerCases['1'].status,'collectable');
+  resumed.click('handover-customer',{id:'1',mode:'cash'});
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.sold.length,1);
+  assert.equal(state.vehicles.length,0);
+  assert.equal(resumed.bindings.get('customer-deposits')[0].textContent,'£0');
+  assert.ok(resumed.productionEngine.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('overdue collection cancels a reserved agreement and returns customer holding funds', () => {
+  const E=browser(new Map()).productionEngine;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  const before=state.cash;
+  state.day=c.collectionDay;
+  E.advanceCustomers(state);
+  if(c.status==='collectable'){
+    state.day=c.collectionDay+3;
+    const notices=E.advanceCustomers(state);
+    assert.equal(c.status,'lost');
+    assert.ok(notices.some(x=>x.includes('refunded')));
+    assert.equal(E.customers.heldDeposits(state),0);
+    assert.equal(state.cash,before);
+    assert.equal(state.sold.length,0);
+    assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+  }
 });
