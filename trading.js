@@ -246,8 +246,8 @@
       profile,prepBudget:p.basePrep+(p.hiddenFault?.cost||0),
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
       listedDay:null,
-      color:car.color||PH.describe({...car,origin}).color,
-      generation:car.generation||PH.identity(car).generation
+      color:template.color||PH.describe({...template,origin:ref}).color,
+      generation:template.generation||PH.identity(template).generation
     };
     v.workshop=W.initial(v);
     state.vehicles.push(v);
