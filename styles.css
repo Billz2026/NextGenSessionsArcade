@@ -86,17 +86,24 @@
   font-weight:900;
   font-style:italic;
   font-size:clamp(51px,7.4vw,104px);
-  line-height:.91;
+  /* The condensed italic glyphs extend below their nominal line box. */
+  line-height:1.15;
+  padding:.06em .05em .11em;
+  overflow:visible;
   letter-spacing:-.028em;
   white-space:nowrap;
   margin:clamp(12px,2vh,21px) 0 0;
   text-align:center;
-  text-shadow:0 3px 6px #000a;
-  filter:drop-shadow(0 4px 3px #0009);
+  text-shadow:0 2px 4px #0009;
+  filter:none;
 }
 #screen-menu .trade-wordmark-hero span {
-  display:inline;
+  /* Give individually gradient-clipped words full glyph boxes in Chromium. */
+  display:inline-block;
   font-weight:900;
+  line-height:1.15;
+  padding:.05em 0 .09em;
+  vertical-align:baseline;
 }
 /* THE and MOTOR share the exact silver/chrome finish; no badge or outline around THE. */
 #screen-menu .trade-wordmark-hero .trade-the {
