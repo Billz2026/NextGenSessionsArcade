@@ -8,12 +8,12 @@
   function banner(state){
     const d=D();
     if(d.isDealDay(state.day)){
-      const p=d.dealSession(state);
+      const p=d.dealSession(state),climate=d.outlook(state);
       return '<div class="event-banner event-deadline-banner"><div><small>FINAL DAY OF MONTH '+d.monthOf(state.day)+
         ' · '+esc(p.time)+' · '+(state.deadlineSession+1)+' OF 5</small>'+
-        '<h3>DEAL DAY — CUSTOMERS ONLY</h3>'+
-        '<p>Auctions are closed. Private sellers, retail customers and part-exchanges have extra reason to negotiate. '+
-        'Advance each session to welcome fresh opportunities.</p></div>'+
+        '<h3>DEAL DAY · '+esc(climate.label)+'</h3>'+
+        '<p>Auctions are closed. '+esc(climate.description)+
+        ' New enquiries and better terms are never guaranteed. Advance each session to check trading conditions.</p></div>'+
         '<button type="button" class="secondary-button" data-page="events">OPEN DEAL DAY ↗</button></div>';
     }
     if(d.meetingDue(state)){
@@ -28,11 +28,13 @@
     return '<div class="event-banner event-neutral-banner"><div><small>MONTHLY EVENTS</small>'+
       '<h3>NEXT DEAL DAY IN '+days+' GAME DAYS</h3><p>On day '+
       (Math.floor((state.day-1)/30)+1)*30+
-      ', customers get more motivated to trade. No auctions run that day. Monthly management meetings occur on each new month’s first day.</p></div>'+
+      ', a customer-only Deal Day takes place. The result varies: some months may be very quiet, while others are busy. No auctions run that day.</p></div>'+
       '<button type="button" class="secondary-button" data-page="events">VIEW CALENDAR ↗</button></div>';
   }
   function deadline(state){
     const d=D(),p=d.dealSession(state),phase=state.deadlineSession;
+    const climate=d.outlook(state),sellerCount=d.leadCount(state.day,
+      state.monthPlan.startingReputation,phase,state.name);
     const phases=d.PHASES.map((x,i)=>'<div class="deadline-phase '+(i===phase?'deadline-now':i<phase?'deadline-done':'')+'">'+
       '<span>'+esc(x.time)+'</span><strong>'+esc(x.name)+'</strong></div>').join('');
     const listed=state.vehicles.filter(x=>x.status==='listed').length;
@@ -41,10 +43,12 @@
     const total=today.reduce((n,x)=>n+x.price,0);
     const month=state.monthPlan;
     const monthSold=state.sold.filter(x=>x.day>=month.startDay&&x.day<=state.day).length;
-    const noListed='<p class="event-attention">You currently have no advertised vehicles. Prepare and list stock to take advantage of motivated cash and part-exchange customers.</p>';
+    const noListed='<p class="event-attention">You currently have no advertised vehicles. Prepare and list stock if you want to attract buyers, although some sessions may produce no interest.</p>';
     return '<div class="deadline-hero"><div><small>MONTH '+d.monthOf(state.day)+
       ' · FINAL TRADING DAY · NO AUCTIONS</small><h2>DEAL DAY.</h2>'+
-      '<p>'+esc(p.detail)+'</p><strong class="deadline-time">'+esc(p.time)+'</strong>'+
+      '<p>'+esc(climate.description)+'</p><strong class="deadline-time">'+esc(p.time)+'</strong>'+
+      '<p class="deadline-climate"><strong>'+esc(climate.label)+'</strong> · '+sellerCount+
+        ' private seller '+(sellerCount===1?'enquiry':'enquiries')+' this session</p>'+
       '</div><div class="deadline-alert"><span>SESSION '+(phase+1)+' / '+d.PHASES.length+
       '</span><strong>'+esc(p.name)+'</strong></div></div>'+
       '<div class="deadline-timeline">'+phases+'</div>'+
@@ -53,13 +57,14 @@
       '<div><span>TODAY’S SALES TURNOVER</span><strong>'+money(total)+'</strong></div>'+
       '<div><span>MONTHLY UNIT TARGET</span><strong>'+monthSold+' / '+month.unitTarget+'</strong></div>'+
       '<div><span>LISTED / NEED PREP</span><strong>'+listed+' / '+prep+'</strong></div></div>'+
-      (listed?'<p class="event-good">Your advertised vehicles can attract motivated cash buyers and customers offering part-exchanges.</p>':noListed)+
+      (listed?'<p class="event-note">Your advertised cars can attract enquiries, but buyer interest and part-exchanges vary between sessions. A busy month never guarantees a sale or profit.</p>':noListed)+
+      (sellerCount===0?'<p class="event-attention">No direct sellers have arrived for this session. A later session may be different.</p>':'')+
       '<div class="event-action-grid">'+
-      '<div><h3>SELL TO WALK-IN CUSTOMERS</h3><p>Customers are more willing to agree a fair deal as the deadline approaches, but buying decisions still depend on vehicle value. Part-exchange negotiations are also more flexible.</p>'+
+      '<div><h3>SELL TO WALK-IN CUSTOMERS</h3><p>Customer demand changes each month and each session. Some will negotiate cash deals, others want to part-exchange, and occasionally nobody is interested in your cars.</p>'+
       '<button type="button" class="trade-button" data-page="sales">GO TO SALES OFFICE →</button></div>'+
-      '<div><h3>BUY FROM PRIVATE SELLERS</h3><p>New walk-in and private-seller leads arrive every session. Some owners will accept slightly lower offers to complete a sale today. You still need cash and forecourt space.</p>'+
+      '<div><h3>BUY FROM PRIVATE SELLERS</h3><p>Not every session produces private-seller leads. Some owners will be flexible, others will refuse low offers or walk away. Cash, preparation cost and forecourt space remain important.</p>'+
       '<button type="button" class="trade-button" data-page="auctions">VIEW PRIVATE SELLERS →</button></div></div>'+
-      '<p class="event-note">Auctions are unavailable throughout Deal Day. Each NEXT SESSION advances only the event clock, not the career day or daily payroll. At 17:00, CLOSE MONTH finishes the period and generates the management report. Earlier customer enquiries expire when each new session begins.</p>';
+      '<p class="event-note">This is a fictional month-specific market model, not a prediction of real UK demand. Auctions remain closed. NEXT SESSION changes only the event clock, not the career day or wages. CLOSE MONTH at 17:00 generates the full management report. Earlier seller enquiries and buyer offers expire between sessions; paid inspections are not refunded.</p>';
   }
   function suggestions(report){
     if(!report)return ['Set a realistic retail price before accepting offers.',
