@@ -313,7 +313,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
 test('v0.9.3 curated catalogue contains 49 correctly modelled UK vehicles',()=>{
   const app=browser(),M=app.market,P=app.photos;
   const all=Object.values(M.CATALOGUE).flat();
-  assert.equal(all.length,49);
+  assert.equal(all.length,50);
   assert.equal(new Set(all.map(x=>x.title)).size,all.length);
   const fuels=new Set(all.map(x=>x.fuel));
   for(const x of ['Petrol','Diesel','Hybrid','Plug-in Hybrid','Electric'])assert.ok(fuels.has(x));
