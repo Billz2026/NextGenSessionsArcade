@@ -225,6 +225,9 @@
         }else{
           notices.push(failCase(state,c,'deposit-refunded','Customer cancelled before collection.'));
         }
+      }else if(c.status==='collectable'&&state.day>c.collectionDay+2){
+        notices.push(failCase(state,c,'deposit-refunded',
+          'Customer withdrew after the agreed collection date passed.'));
       }else if(['enquiry','arrived','discussing','agreed'].includes(c.status)&&
         c.createdDay<state.day){
         notices.push(failCase(state,c,'expired','Customer enquiry expired without a completed agreement.'));
@@ -235,6 +238,10 @@
   function nextSession(state){
     for(const c of Object.values(state.customerCases)){
       if(['reserved','collectable'].includes(c.status))continue;
+      if(c.status==='lost'){
+        delete state.customerCases[String(c.vehicleId)];
+        continue;
+      }
       if(c.createdDay!==state.day||c.createdSession===state.deadlineSession)continue;
       failCase(state,c,'expired','Customer left as the next Deal Day session began.');
       delete state.customerCases[String(c.vehicleId)];
@@ -279,7 +286,12 @@
       (!['reserved','collectable'].includes(c.status)||c.held===250)&&
       (!['agreed','reserved','collectable'].includes(c.status)||
         no(c.price)&&c.price>=500)&&
-      (c.status!=='lost'||c.held===0);
+      (c.status!=='lost'||c.held===0)&&
+      (!['agreed','reserved','collectable'].includes(c.status)||
+        c.price<=state.vehicles.find(v=>v.id===c.vehicleId).asking)&&
+      (c.preferredMode!=='part-ex'||!['agreed','reserved','collectable'].includes(c.status)||
+        (c.exchange&&c.allowance>=c.exchange.floor&&
+          c.allowance<=c.exchange.ask&&c.allowance<c.price));
     if(!Object.entries(cases).every(validCase))return false;
     const types=['enquiry','appointment','test-drive-pass','test-drive-reject',
       'counter-accepted','counter-rejected','agreement','deposit','deposit-refunded',
