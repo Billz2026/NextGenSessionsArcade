@@ -2274,3 +2274,38 @@ test('overdue collection cancels a reserved agreement and returns customer holdi
     assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
   }
 });
+
+test('the player can occupy all four forecourt spaces but a fifth purchase is blocked', () => {
+  const E=browser(new Map()).productionEngine;
+  const state=E.create('Four Cars Reality',[]);
+  for(let day=1;day<=20&&state.vehicles.length<4;day++){
+    state.day=day;
+    const m=E.market(day);
+    const options=[
+      ...m.auctions.map(car=>({kind:'auction',car,
+        price:Math.max(car.rival,car.reserve)+50,
+        total:Math.max(car.rival,car.reserve)+50+car.fee+
+          car.profile.basePrep+(car.profile.hiddenFault?.cost||0)})),
+      ...m.sellers.map(car=>({kind:'seller',car,
+        price:car.ask,total:car.ask+
+          car.profile.basePrep+(car.profile.hiddenFault?.cost||0)}))
+    ].sort((a,b)=>a.total-b.total);
+    for(const opt of options){
+      if(state.vehicles.length===4)break;
+      if(opt.kind==='auction')E.acquireAuction(state,opt.car.id,opt.price);
+      else E.acquireSeller(state,opt.car.id,opt.price);
+    }
+  }
+  assert.equal(state.vehicles.length,4,'Four vehicles can be genuinely financed from starting cash');
+  assert.equal(state.capacity,4);
+  assert.equal(state.stock,4);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+  state.day++;
+  const fifth=E.market(state.day).sellers[0];
+  const rejected=E.acquireSeller(state,fifth.id,fifth.ask);
+  assert.equal(rejected.ok,false);
+  assert.equal(rejected.code,'capacity');
+  assert.equal(state.stock,4);
+  assert.equal(state.vehicles.length,4);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
