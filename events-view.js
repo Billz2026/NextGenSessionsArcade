@@ -75,6 +75,16 @@
       result.push('Month-end customer traffic was '+report.dealDay.label.toLowerCase()+
         ' with '+report.dealDay.sellerEnquiries+
         ' private-seller enquiries offered. Do not assume the deadline will always rescue a missed sales target.');
+    if(report.customerJourney){
+      const j=report.customerJourney;
+      if(j.noShows>0)result.push(j.noShows+
+        ' customer(s) missed their viewing. Review follow-up procedures and avoid assuming booked appointments will convert.');
+      if(j.enquiries>0&&j.completedSales*3<j.enquiries)
+        result.push('Only '+j.completedSales+' of '+j.enquiries+
+          ' recorded enquiries converted to completed handovers. Examine pricing, test drives and objections.');
+      if(j.deposits>j.completedSales)
+        result.push('Some customers paid deposits but have not collected. Check reserved stock and pending appointments.');
+    }
     if(report.soldUnits<report.targetUnits)
       result.push('Sales volume was '+report.soldUnits+'/'+report.targetUnits+
         '. Review advertised pricing, customer conversions and whether enough cars were prepared.');

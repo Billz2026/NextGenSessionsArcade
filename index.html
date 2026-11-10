@@ -16,19 +16,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=17">
+  <link rel="stylesheet" href="./styles.css?v=19">
   <script src="./vehicle-intel.js?v=1" defer></script>
   <script src="./people.js?v=3" defer></script>
-  <script src="./monthly.js?v=3" defer></script>
+  <script src="./monthly.js?v=4" defer></script>
   <script src="./events.js?v=2" defer></script>
   <script src="./workshop.js?v=1" defer></script>
-  <script src="./trading.js?v=8" defer></script>
+  <script src="./customers.js?v=1" defer></script>
+  <script src="./trading.js?v=9" defer></script>
   <script src="./vehicle-view.js?v=2" defer></script>
   <script src="./people-view.js?v=1" defer></script>
-  <script src="./monthly-view.js?v=3" defer></script>
-  <script src="./events-view.js?v=2" defer></script>
+  <script src="./monthly-view.js?v=4" defer></script>
+  <script src="./events-view.js?v=3" defer></script>
   <script src="./workshop-view.js?v=1" defer></script>
-  <script src="./simulator.js?v=13" defer></script>
+  <script src="./customers-view.js?v=1" defer></script>
+  <script src="./simulator.js?v=14" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -36,7 +38,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.8</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -142,7 +144,7 @@
               </div>
               <div class="stat-grid">
                 <div class="stat-tile"><span>AVAILABLE CASH</span><strong data-bind="cash">£12,500</strong><small>Funds available</small></div>
-                <div class="stat-tile"><span>VEHICLES IN STOCK</span><strong data-bind="stock">0 / 2</strong><small>Your forecourt</small></div>
+                <div class="stat-tile"><span>VEHICLES IN STOCK</span><strong data-bind="stock">0 / 4</strong><small>Your forecourt</small></div>
                 <div class="stat-tile"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Career total</small></div>
                 <div class="stat-tile stat-tile-gold"><span>TRADE REPUTATION</span><strong data-bind="reputation">NEW TRADER</strong><small data-bind="reputation-score">5 / 100</small></div>
               </div>
@@ -189,7 +191,7 @@
             </section>
 
             <section class="career-panel" data-panel="stock" hidden aria-labelledby="stock-title">
-              <div class="page-heading"><div><p class="section-overline">THE FORECOURT / VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Track each vehicle's acquisition, repair progress, true cost and readiness to advertise. Preparation now takes game days.</p></div><span class="career-chip">SPACE <span data-bind="stock">0 / 2</span></span></div>
+              <div class="page-heading"><div><p class="section-overline">THE FORECOURT / VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Track each vehicle's acquisition, repair progress, true cost and readiness to advertise. Preparation now takes game days.</p></div><span class="career-chip">SPACE <span data-bind="stock">0 / 4</span></span></div>
               <div id="stock-list" class="trade-card-grid trade-stock-grid"></div>
             </section>
 
@@ -199,8 +201,8 @@
             </section>
 
             <section class="career-panel" data-panel="sales" hidden aria-labelledby="sales-title">
-              <div class="page-heading"><div><p class="section-overline">RETAIL ENQUIRIES / NEGOTIATION</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Customers can pay cash or offer their existing car in part-exchange. Negotiate each deal carefully.</p></div></div>
-              <div class="trade-alert">Buyer offers now take the vehicle's likely achieved market value into account. A part-exchange is a separate acquisition: the customer pays the difference and the incoming car joins stock with its own inspection and repair profile.</div>
+              <div class="page-heading"><div><p class="section-overline">RETAIL ENQUIRIES / NEGOTIATION</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Manage genuine enquiries, appointments, test drives, negotiations, refundable deposits and vehicle handovers.</p></div></div>
+              <div class="trade-alert">Buyer offers now take the vehicle's likely achieved market value into account. A retail enquiry is not a completed sale. A part-exchange requires an agreed allowance, and the incoming car becomes stock needing workshop preparation. Reservation deposits are held separately from business cash and remain fully refundable in this simulation.</div>
               <div id="sales-list" class="trade-card-grid trade-sales-grid"></div>
             </section>
 
@@ -209,7 +211,8 @@
               <div class="trade-finance-grid">
                 <div class="panel-card trade-money"><span>AVAILABLE CASH</span><strong data-bind="cash">£12,500</strong><small>Starting capital and recorded cash transactions</small></div>
                 <div class="panel-card trade-money"><span>REALISED GROSS TRADE MARGIN</span><strong data-bind="trade-profit">£0</strong><small>Sale proceeds less vehicle acquisition and preparation</small></div>
-                <div class="panel-card trade-money"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Completed customer transactions</small></div>
+                <div class="panel-card trade-money"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Completed customer handovers only</small></div>
+                <div class="panel-card trade-money"><span>REFUNDABLE CUSTOMER DEPOSITS HELD</span><strong data-bind="customer-deposits">£0</strong><small>Segregated virtual holding funds — not spendable dealership cash</small></div>
               </div>
               <div id="finance-monthly-target" class="finance-monthly-target" aria-live="polite"></div>
               <div class="people-finance-note">Staff wage settlement: <strong data-bind="staff-daily-pay">£0/day</strong> · Unpaid wage/notice obligations: <strong data-bind="staff-arrears">£0</strong>. Staff expenses appear in the ledger but are excluded from gross vehicle margin.</div>
@@ -243,7 +246,7 @@
 
             <section class="career-panel" data-panel="business" hidden aria-labelledby="business-title">
               <div class="page-heading"><div><p class="section-overline">YOUR CLUBHOUSE / YOUR BUSINESS</p><h1 id="business-title">MY <em>DEALERSHIP.</em></h1><p>Your career identity and development plan.</p></div><button type="button" class="secondary-button" data-action="save">SAVE CAREER</button></div>
-              <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong>2 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div><div class="profile-row"><span>Employees</span><strong data-bind="staff-count">0</strong></div><div class="profile-row"><span>Reputation</span><strong data-bind="reputation-score">5 / 100</strong></div><div class="profile-row"><span>Monthly sales target</span><strong data-bind="monthly-target">0 / 2</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Live: recruitment, staff effects and evolving reputation</li><li>Next: workshop queues, complaints and aftersales</li></ol></div></div>
+              <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong>2 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div><div class="profile-row"><span>Employees</span><strong data-bind="staff-count">0</strong></div><div class="profile-row"><span>Reputation</span><strong data-bind="reputation-score">5 / 100</strong></div><div class="profile-row"><span>Monthly sales target</span><strong data-bind="monthly-target">0 / 4</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Live: recruitment, staff effects and evolving reputation</li><li>Next: workshop queues, complaints and aftersales</li></ol></div></div>
             </section>
           </div>
           <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA WORKSHOP & VEHICLE LIFECYCLE / LOCAL SAVE</span></footer>

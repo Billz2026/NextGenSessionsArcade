@@ -160,6 +160,10 @@
       workshopWaiting:stock.filter(x=>['unassessed','quoted'].includes(x.workshopStage)).length,
       payrollArrears:state.payrollArrears,staffHeadcount:state.staff.length,
       customerTrustEvents:state.reputationHistory.filter(x=>x.day>=p.startDay&&x.day<=p.endDay).map(x=>({...x})),
+      customerJourney:window.MotorTradeCustomers?
+        window.MotorTradeCustomers.stats(state,p.startDay,Math.min(state.day,p.endDay)):null,
+      customerHoldingAtClose:window.MotorTradeCustomers?
+        window.MotorTradeCustomers.heldDeposits(state):0,
       bestDeal:sales.length?[...sales].sort((a,b)=>b.profit-a.profit)[0].title:null,
       worstDeal:sales.length?[...sales].sort((a,b)=>a.profit-b.profit)[0].title:null
     };
@@ -255,6 +259,15 @@
       !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
       !categories.every(k=>whole(r.ledgerBreakdown[k]))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
+    if(r.customerHoldingAtClose!==undefined&&
+      (!nonneg(r.customerHoldingAtClose)||r.customerHoldingAtClose>1000))return false;
+    if(r.customerJourney!=null){
+      const j=r.customerJourney;
+      const keys=['enquiries','appointments','attended','noShows','testDrives',
+        'declinedTestDrives','agreements','deposits','refunds','completedSales','counterRejections'];
+      if(typeof j!=='object'||Array.isArray(j)||
+         !keys.every(k=>nonneg(j[k])&&j[k]<=10000))return false;
+    }
     if(r.dealDay!=null&&(
       typeof r.dealDay!=='object'||
       !['quiet','subdued','steady','busy','exceptional'].includes(r.dealDay.type)||

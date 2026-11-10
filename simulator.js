@@ -10,17 +10,19 @@
   const MV = window.MotorTradeMonthlyView;
   const EV = window.MotorTradeEventsView;
   const WV = window.MotorTradeWorkshopView;
-  if (!E || !PV || !MV || !EV || !WV)
-    throw new Error('Workshop and report modules must load before simulator.js');
+  const CV = window.MotorTradeCustomersView;
+  if (!E || !PV || !MV || !EV || !WV || !CV)
+    throw new Error('Customer, workshop and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
   const D = E.events;
   const W = E.workshop;
+  const C = E.customers;
   const STORAGE_KEY = 'the-motor-trade-career-v1';
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
   const SAVE_VERSION = E.VERSION;
   const STARTING_CASH = 12500;
-  const CAPACITY = 2;
+  const CAPACITY = E.CAPACITY;
   const START_DATE_UTC = Date.UTC(2026, 10, 9);
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
   const MAX_DAY = 36500;
@@ -63,7 +65,7 @@
     return [
       makeMessage(1,1,'BUSINESS SUPPORT','Welcome to the motor trade',
         'Run your first dealership, with £12,500 in capital.',
-        'Your dealership starts with £12,500 in cash and two spaces on your forecourt. Visit the Buying Desk to view auction lots and customers who want to sell their cars directly.\n\nA car needs paid preparation before it can be advertised. Once listed, customers will bring cash offers or propose a part-exchange. A part-exchange becomes your next vehicle in stock.',
+        'Your dealership starts with £12,500 in cash and four forecourt spaces. Visit the Buying Desk to view auction lots and customers who want to sell their cars directly.\n\nA car needs workshop assessment, timed repairs and a passed final quality check before advertising. Once listed, customer enquiries are not guaranteed: book appointments, arrange test drives, negotiate and complete handover. A part-exchange becomes your next stock vehicle.',
         'auctions'),
       makeMessage(2,1,'BUYING DESK','Three ways to find your next car',
         'Auctions, direct sellers and part-exchanges all supply vehicles.',
@@ -82,7 +84,7 @@
       'auctions'),
     3: () => makeMessage(5,3,'SALES ADVISER','Cash sale or part-exchange?',
       'Both deals can move your stock, but they affect your cash differently.',
-      'A cash customer pays the agreed sale price. A part-exchange customer brings a car and pays only the balance after their agreed allowance. You own that incoming car and must prepare it before advertising it.',
+      'A cash customer pays the agreed sale price at handover. A part-exchange customer brings a car and pays only the balance after the agreed allowance. You own that incoming car and must prepare it before advertising it.',
       'sales'),
     5: () => makeMessage(6,5,'ACCOUNTS OFFICE','Review your trading margins',
       'Check the ledger for purchases, costs and completed sales.',
@@ -369,55 +371,7 @@
     byId('workshop-board').innerHTML=WV.render(career,W);
   }
   function renderSales() {
-    const listed=career.vehicles.filter(car=>car.status==='listed');
-    const holder=byId('sales-list');
-    const outlook=D.isDealDay(career.day)?D.outlook(career):null;
-    const deadlineNote=outlook?
-      '<div class="deadline-retail-intro"><strong>DEAL DAY · '+D.dealSession(career).time+
-      ' · '+escapeText(outlook.label)+'</strong>'+
-      '<p>Customer interest is uncertain. Some sessions bring cash buyers or part-exchanges; others bring no enquiries. Stronger negotiating terms are possible, not guaranteed.</p></div>':'';
-    if(!listed.length){
-      holder.innerHTML=deadlineNote+'<div class="trade-empty"><h2>NO RETAIL ENQUIRIES YET.</h2>'+
-        '<p>Prepare a vehicle and advertise it from Vehicle Stock. A quiet Deal Day may finish without any sales.</p></div>';
-      return;
-    }
-    holder.innerHTML=deadlineNote+listed.map(car=>{
-      const buyer=E.buyers(car,career);
-      const top=cardHeader(car,'CUSTOMER ENQUIRY / STOCK '+car.id);
-      const pricing='<div class="trade-pricing"><div><small>YOUR ASKING PRICE</small><strong>'+
-        cashText(car.asking)+'</strong></div><div><small>YOUR COST + PREP</small><strong>'+
-        cashText(car.cost+car.prepSpent)+'</strong></div></div>';
-      if(!buyer){
-        return '<article class="trade-card">'+top+pricing+
-          '<div class="trade-actions"><div class="trade-inline-feedback trade-feedback-warning">'+
-          'NO INTERESTED CUSTOMER THIS SESSION — this vehicle has no retail buyer right now. '+
-          'Wait for another session or review your asking price. This does not guarantee a later enquiry.'+
-          '</div></div></article>';
-      }
-      const cash='<div><h4>CASH BUYER</h4><p>Customer offers</p><strong>'+
-        cashText(buyer.cashOffer)+'</strong><p>Negotiate another £150, or accept this price.</p>'+
-        '<div class="trade-action-row"><button class="trade-button trade-button-secondary" type="button" data-action="counter-sale" data-id="'+car.id+
-        '">COUNTER +£150</button><button class="trade-button" type="button" data-action="sell-cash" data-id="'+car.id+
-        '">ACCEPT CASH</button></div></div>';
-      const px=buyer.exchange;
-      const tradeIn=px?'<div><h4>PART-EXCHANGE BUYER</h4><p>Customer wants '+
-        cashText(buyer.pxOffer)+' for your car and offers <strong>'+
-        escapeText(px.title)+'</strong> ('+milesText(px.miles)+
-        ') as part-exchange.</p><span class="trade-extra">Customer requests '+
-        cashText(px.ask)+' allowance; negotiate the valuation.</span>'+
-        '<label class="trade-extra" for="px-allowance-'+car.id+'">YOUR PART-EX ALLOWANCE (£)</label>'+
-        '<input class="trade-input" id="px-allowance-'+car.id+
-        '" type="number" inputmode="numeric" min="0" max="'+px.ask+
-        '" step="25" value="'+px.ask+'">'+
-        '<span class="trade-extra">Estimated trade-in retail '+cashText(px.retail)+
-        ', prep '+cashText(px.prep)+'. The incoming car occupies the space of the sold car.</span>'+
-        '<button class="trade-button" type="button" data-action="sell-part-ex" data-id="'+car.id+
-        '">ACCEPT PART-EX DEAL</button></div>':
-        '<div><h4>NO PART-EXCHANGE ENQUIRY</h4><p>Customers are interested in purchasing this vehicle for cash, but none is offering a part-exchange in this session.</p>'+
-        '<span class="trade-extra">A later session may attract a trade-in, but it is not guaranteed.</span></div>';
-      return '<article class="trade-card">'+top+pricing+
-        '<div class="trade-buyer-modes">'+cash+tradeIn+'</div></article>';
-    }).join('');
+    byId('sales-list').innerHTML=CV.render(career,E);
   }
   function renderLedger() {
     const history = byId('ledger-list');
@@ -484,6 +438,7 @@
     const short = dateShort.format(date).toUpperCase();
     bindText('company', career.name);
     bindText('cash', money.format(career.cash));
+    bindText('customer-deposits',money.format(C.heldDeposits(career)));
     bindText('stock', career.stock + ' / ' + career.capacity);
     bindText('stock-count', String(career.stock));
     bindText('trade-profit', money.format(E.totalMargin(career)));
@@ -553,6 +508,7 @@
     }
     if(D.isDealDay(career.day)&&career.deadlineSession<D.PHASES.length-1){
       const event=D.advanceSession(career);
+      E.nextCustomerSession(career);
       expandedReportId=null;
       offerDrafts={};
       lastTradeResult=null;
@@ -577,6 +533,7 @@
     }
     const workforceEvent=E.staffDay(career);
     const workshopEvents=E.advanceWorkshop(career);
+    const customerEvents=E.advanceCustomers(career);
     lastTradeResult = null;
     expandedReportId = null;
     career.reports = {};
@@ -600,6 +557,8 @@
     }
     if(workshopEvents.length)
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
+    if(customerEvents.length)
+      eventNotice+=' CUSTOMERS: '+customerEvents.join(' ');
     if(closed){
       const id=career.messages.reduce((n,message)=>Math.max(n,message.id),0)+1;
       const status=closed.targetMet?'ACHIEVED':'MISSED';
@@ -788,6 +747,32 @@
       case 'list-stock':
         if (career) saveResult(E.advertise(career,Number(button.dataset.id),
           inputNumber('stock-price-' + button.dataset.id)));
+        break;
+      case 'open-customer':
+        if(career)saveResult(E.openCustomer(career,Number(button.dataset.id)));
+        break;
+      case 'book-customer':
+        if(career)saveResult(E.bookCustomer(career,Number(button.dataset.id)));
+        break;
+      case 'test-drive':
+        if(career)saveResult(E.testDrive(career,Number(button.dataset.id)));
+        break;
+      case 'agree-cash':
+        if(career)saveResult(E.agreeCustomer(career,Number(button.dataset.id),'cash',null));
+        break;
+      case 'agree-part-ex':
+        if(career)saveResult(E.agreeCustomer(career,Number(button.dataset.id),'part-ex',
+          inputNumber('px-allowance-'+button.dataset.id)));
+        break;
+      case 'deposit-customer':
+        if(career)saveResult(E.depositCustomer(career,Number(button.dataset.id)));
+        break;
+      case 'cancel-customer':
+        if(career&&window.confirm('Cancel this customer deal? Any held £250 deposit will be fully refunded from separate customer funds.'))
+          saveResult(E.cancelCustomer(career,Number(button.dataset.id)));
+        break;
+      case 'handover-customer':
+        if(career)saveResult(E.completeSale(career,Number(button.dataset.id),button.dataset.mode,null));
         break;
       case 'counter-sale':
         if (career) saveResult(E.counter(career,Number(button.dataset.id)));

@@ -6,8 +6,10 @@
  */
 (() => {
   const STARTING_CASH = 12500;
-  const CAPACITY = 2;
-  const VERSION = 7;
+  const CAPACITY = 4;
+  const VERSION = 8;
+  const C = window.MotorTradeCustomers;
+  if(!C)throw new Error('Load customers.js before trading.js');
   const W = window.MotorTradeWorkshop;
   if (!W) throw new Error('Load workshop.js before trading.js');
   const D = window.MotorTradeEvents;
@@ -95,6 +97,7 @@
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
+      customerCases:{},customerHistory:[],
       ...P.initial()
     };
     M.initialize(state);
@@ -102,7 +105,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -110,7 +113,7 @@
       m && integer(m.id) && integer(m.day) && typeof m.from === 'string' &&
       typeof m.subject === 'string' && typeof m.preview === 'string' &&
       typeof m.body === 'string' && typeof m.read === 'boolean' &&
-      (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','staff','reputation','reports','business'].includes(m.linkPage)));
+      (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','staff','reputation','reports','business','workshop','events'].includes(m.linkPage)));
     if (!validMessages) return null;
     const messages = saved.messages.map(m => ({
       id:m.id,day:m.day,from:m.from,subject:m.subject,preview:m.preview,
@@ -118,12 +121,12 @@
     }));
     if (saved.version === 1) {
       // Previous release contained no trade transactions; keep name, day and inbox.
-      if (saved.cash !== STARTING_CASH || saved.capacity !== CAPACITY) return null;
+      if (saved.cash !== STARTING_CASH || ![2,CAPACITY].includes(saved.capacity)) return null;
       const legacy=create(saved.name.trim(),messages);
       legacy.day=saved.day;
       return M.initialize(legacy,{migrating:true});
     }
-    if (saved.capacity !== CAPACITY || !Array.isArray(saved.vehicles) ||
+    if ((saved.version===VERSION?saved.capacity!==CAPACITY:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
       !Array.isArray(saved.sold) || !Array.isArray(saved.ledger) ||
       !integer(saved.nextId) || saved.nextId < 1 ||
       !cashValue(saved.cash) || saved.vehicles.length > CAPACITY ||
@@ -136,7 +139,7 @@
       ['acquired','prepared','listed'].includes(v.status) &&
       cashValue(v.cost) && cashValue(v.prepBudget) && cashValue(v.prepSpent) &&
       (v.prepSpent === 0 || (v.prepSpent>0 &&
-        (saved.version===VERSION? v.prepSpent<=100000 : v.prepSpent<=v.prepBudget))) &&
+        (saved.version>=7? v.prepSpent<=100000 : v.prepSpent<=v.prepBudget))) &&
       cashValue(v.retail) && integer(v.acquiredDay) &&
       v.acquiredDay >= 1 && v.acquiredDay <= saved.day &&
       (v.status !== 'listed' || (cashValue(v.asking) && v.asking > 0)) &&
@@ -145,7 +148,7 @@
       (saved.version === 2 || I.validProfile(v.profile)) &&
       (saved.version === 2 || v.prepBudget === v.profile.basePrep +
         (v.profile.hiddenFault?.cost || 0)) &&
-      (saved.version!==VERSION || W.valid(v,saved.day));
+      (saved.version<7 || W.valid(v,saved.day));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
       cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
@@ -194,7 +197,7 @@
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
-        ...v,workshop:saved.version===VERSION?{...v.workshop}:W.initial(v),
+        ...v,workshop:saved.version>=7?{...v.workshop}:W.initial(v),
         profile:saved.version===2?I.legacyProfile(v):
           {...v.profile,knownRepairs:v.profile.knownRepairs.map(x=>({...x})),
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
@@ -213,6 +216,7 @@
     };
     if(!M.restore(restored,saved))return null;
     if(!D.restore(restored,saved))return null;
+    if(!C.valid(restored,saved))return null;
     return restored;
   }
   const fail = (code, message) => ({ok:false,code,message});
@@ -379,6 +383,9 @@
       return fail('price','Enter a retail price between £500 and £75,000.');
     if (asking < Math.floor(vehicle.retail * .5) || asking > Math.ceil(vehicle.retail * 1.8))
       return fail('price','Choose a plausible asking price based on the fictional market estimate.');
+    const current=C.caseFor(state,id);
+    if(current&&['agreed','reserved','collectable'].includes(current.status))
+      return fail('reserved','An agreed or reserved vehicle cannot be repriced until the customer arrangement is cancelled.');
     vehicle.asking = asking;vehicle.status = 'listed';vehicle.listedDay = state.day;
     vehicle.cashOffer = null;
     return success(vehicle.title + ' is advertised at ' + asking + '. Check the Sales Office.');
@@ -386,7 +393,7 @@
   function pxTemplate(vehicle) { return EXCHANGES[(vehicle.id - 1) % EXCHANGES.length]; }
   function buyers(vehicle,state=null) {
     if (vehicle.status !== 'listed') return null;
-    if(state && D.isDealDay(state.day) && !D.retailActive(state,vehicle))return null;
+    if(state && D.isDealDay(state.day) && !C.caseFor(state,vehicle.id) && !D.retailActive(state,vehicle))return null;
     // Buyers benchmark against a market-derived achievable retail value.
     // An inflated asking price does not force an unrealistically high offer.
     const fair = vehicle.profile?.likelySale ?? (vehicle.asking - 250);
@@ -400,11 +407,17 @@
     const start=Math.max(500,Math.min(limit,vehicle.asking-400+support+
       motivation+meetingPush,fair-125+support+motivation+meetingPush));
     const standardPx=pxTemplate(vehicle);
-    const px=state&&D.isDealDay(state.day)?
-      D.partExchangeAvailable(state,vehicle)?
-        {...standardPx,floor:Math.max(100,standardPx.floor-
-          D.partExchangeDiscount(state,vehicle))}:null:
-      standardPx;
+    const customer=state?C.caseFor(state,vehicle.id):null;
+    const px=customer?
+      customer.preferredMode==='part-ex'?
+        (state&&D.isDealDay(state.day)?
+          {...standardPx,floor:Math.max(100,standardPx.floor-
+            D.partExchangeDiscount(state,vehicle))}:standardPx):null:
+      state&&D.isDealDay(state.day)?
+        D.partExchangeAvailable(state,vehicle)?
+          {...standardPx,floor:Math.max(100,standardPx.floor-
+            D.partExchangeDiscount(state,vehicle))}:null:
+        standardPx;
     return {
       cashOffer:vehicle.cashOffer === null ? start : vehicle.cashOffer,
       cashLimit:limit,
@@ -415,65 +428,81 @@
       exchange:px
     };
   }
-  function counter(state, id) {
-    const vehicle = own(state.vehicles,id);
-    if (!vehicle || vehicle.status !== 'listed') return fail('missing','Advertise a vehicle first.');
-    const buyer = buyers(vehicle,state);
-    if(!buyer)return fail('no-buyer','No retail customer is interested in this vehicle during the current session. Try the next session.');
-    if (buyer.cashOffer + 150 > buyer.cashLimit)
-      return fail('rejected','The cash buyer refuses to increase their offer again.');
-    vehicle.cashOffer = buyer.cashOffer + 150;
-    return success('Your counteroffer was accepted. Cash buyer now offers ' + vehicle.cashOffer + '.');
+  function counter(state,id){
+    const v=own(state.vehicles,id);
+    if(!v||v.status!=='listed')return fail('missing','Advertise the vehicle first.');
+    const buyer=buyers(v,state);
+    if(!buyer)return fail('no-buyer','No interested customer is currently available.');
+    return C.negotiate(state,v,buyer.cashOffer,buyer.cashLimit);
   }
-  function completeSale(state, id, mode, allowance) {
-    const vehicle = own(state.vehicles,id);
-    if (!vehicle || vehicle.status !== 'listed') return fail('missing','Advertise a car before making a sale.');
-    if (!['cash','part-ex'].includes(mode)) return fail('mode','Unknown sale type.');
-    const buyer = buyers(vehicle,state);
-    if(!buyer)return fail('no-buyer','No retail customer enquiry for this car in the current session. A later session may be different.');
-    if(mode==='part-ex'&&!buyer.exchange)
-      return fail('no-part-ex','The current customer is not offering a part-exchange. Try a cash sale or wait for another enquiry.');
-    const price = mode === 'cash' ? buyer.cashOffer : buyer.pxOffer;
-    let px = null;
-    if (mode === 'part-ex') {
-      px = buyer.exchange;
-      if (!integer(allowance) || allowance < px.floor || allowance > px.ask)
-        return fail('part-ex','Part-exchange allowance rejected by the customer. Revalue within their acceptable range.');
-      if (allowance >= price) return fail('part-ex','Part-exchange allowance must be below the agreed sale price.');
+  const openCustomer=(state,id)=>C.open(state,id);
+  const bookCustomer=(state,id)=>C.book(state,id);
+  const testDrive=(state,id)=>C.testDrive(state,id);
+  const depositCustomer=(state,id)=>C.deposit(state,id);
+  const cancelCustomer=(state,id)=>C.cancel(state,id);
+  const advanceCustomers=state=>C.advanceDay(state);
+  const nextCustomerSession=state=>C.nextSession(state);
+  function agreeCustomer(state,id,mode,allowance){
+    const v=own(state.vehicles,id),c=C.caseFor(state,id);
+    if(!v||v.status!=='listed')return fail('missing','Vehicle must be advertised.');
+    if(!c||c.status!=='discussing')
+      return fail('stage','Customer must attend and complete a successful test drive before a deal can be agreed.');
+    const b=buyers(v,state);
+    if(!b)return fail('no-buyer','Current customer is no longer available.');
+    if(mode==='part-ex'&&!b.exchange)
+      return fail('part-ex','This customer is not offering a part-exchange.');
+    const price=mode==='cash'?b.cashOffer:b.pxOffer;
+    return C.agree(state,id,mode,price,allowance,b.exchange);
+  }
+  function completeSale(state,id,mode,allowance){
+    const v=own(state.vehicles,id);
+    if(!v||v.status!=='listed')return fail('missing','Advertise a car before handover.');
+    const c=C.caseFor(state,id);
+    if(!C.ready(state,id))
+      return fail('customer','Complete the customer enquiry, appointment, test drive and agreement before handing over.');
+    if(!['cash','part-ex'].includes(mode)||mode!==c.preferredMode)
+      return fail('mode','Handover method must match the agreed customer deal.');
+    const price=c.price;
+    const px=mode==='part-ex'?c.exchange:null;
+    const agreedAllowance=c.allowance||0;
+    if(mode==='part-ex'){
+      if(!px||!integer(agreedAllowance)||agreedAllowance<px.floor||
+        agreedAllowance>px.ask||agreedAllowance>=price)
+        return fail('part-ex','Agreed part-exchange figures are no longer valid.');
+      if(allowance!==undefined&&allowance!==null&&allowance!==agreedAllowance)
+        return fail('part-ex','The allowance cannot change after the customer agreement.');
       const pendingPrep=W.reserved(state);
-      const pxProfile=I.profile({...px,id:'PX-'+state.day+'-'+vehicle.id,kind:'part-ex'});
-      if (state.cash + price - allowance < pendingPrep +
+      const pxProfile=I.profile({...px,id:'PX-'+c.agreedDay+'-'+v.id,kind:'part-ex'});
+      if(state.cash+price-agreedAllowance<pendingPrep+
         pxProfile.basePrep+(pxProfile.hiddenFault?.cost||0))
-        return fail('cash','This part-exchange would leave too little cash to prepare your existing and incoming stock.');
+        return fail('cash','Insufficient funds to complete this part-exchange and reserve vehicle preparation.');
     }
-    const realised = price - vehicle.cost - vehicle.prepSpent;
-    pay(state,price,'Retail sale: ' + vehicle.title + ' (' + mode + ')');
-    if (px) pay(state,-allowance,'Part-exchange acquisition: ' + px.title);
-    state.vehicles = state.vehicles.filter(v => v.id !== id);
+    const result=C.complete(state,id);
+    if(!result.ok)return result;
+    const realised=price-v.cost-v.prepSpent;
+    // Customer deposits are held separately from trading cash.
+    // Full purchase consideration settles into trading cash on handover.
+    pay(state,price,'Retail sale: '+v.title+' ('+mode+')');
+    if(px)pay(state,-agreedAllowance,'Part-exchange acquisition: '+px.title);
+    state.vehicles=state.vehicles.filter(x=>x.id!==id);
     state.sold.push({
-      id:vehicle.id,title:vehicle.title,source:vehicle.source,
-      day:state.day,mode,price,acquisition:vehicle.cost,
-      prep:vehicle.prepSpent,profit:realised,
-      profile:vehicle.profile?{...vehicle.profile}:null,
-      exchange: px ? px.title : null,allowance:px ? allowance : 0
+      id:v.id,title:v.title,source:v.source,day:state.day,mode,price,
+      acquisition:v.cost,prep:v.prepSpent,profit:realised,
+      profile:v.profile?{...v.profile}:null,
+      exchange:px?px.title:null,allowance:px?agreedAllowance:0
     });
-    if (px) addCar(state,px,'part-ex',allowance,'PX-' + state.day + '-' + vehicle.id);
-    state.stock = state.vehicles.length;
-    state.sales = state.sold.length;
-    const review=P.sale(state,vehicle,price,realised);
+    if(px)addCar(state,px,'part-ex',agreedAllowance,'PX-'+c.agreedDay+'-'+v.id);
+    state.stock=state.vehicles.length;state.sales=state.sold.length;
+    const review=P.sale(state,v,price,realised);
     state.reputation=P.tier(state.reputationScore);
-    const completed=state.sold[state.sold.length-1];
+    const completed=state.sold.at(-1);
     completed.reputationDelta=review.reputationDelta;
     completed.salesCommission=review.commission;
-    completed.salespersonId=review.salespersonId ?? null;
-    completed.salespersonName=review.salespersonName ?? 'Owner-managed';
-    return success(
-      vehicle.title + ' sold for ' + price +
-      (px ? '; accepted ' + px.title + ' in part-ex for ' + allowance + '.' : '.') +
-      ' Gross trade margin: ' + realised + ' before overheads and tax.'+
-      ' Reputation '+(review.reputationDelta>=0?'+':'')+review.reputationDelta+
-      ' ('+state.reputation+').'
-    );
+    completed.salespersonId=review.salespersonId??null;
+    completed.salespersonName=review.salespersonName??'Owner-managed';
+    return success(v.title+' handed over to '+c.name+' for £'+price+
+      (px?'; part-exchange allowance £'+agreedAllowance+'.':'.')+
+      ' Gross trading margin: £'+realised+' before overheads, tax and aftersales.');
   }
   function wholesaleOffer(vehicle){
     // Simplified emergency trade bid. A trade outlet is not a retail sale
@@ -514,6 +543,8 @@
   }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,events:D,
+    customers:C,openCustomer,bookCustomer,testDrive,depositCustomer,
+    cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
     wholesaleOffer,disposeStock,hireStaff,
     market,create,normalize,acquireAuction,acquireSeller,walkSeller,

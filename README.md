@@ -4,6 +4,22 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## v0.9 — Four-Space Forecourt & Customer Sales Journey
+
+**Every dealership now starts with four forecourt spaces** (formerly two), without increasing the existing £12,500 initial working capital. Having four spaces does not guarantee enough funds to fill them or prepare all four vehicles. Existing v1–v7 careers migrate to save schema **v8** with four spaces and retain their vehicles, sales, money, workshop jobs, employees, historical reports and progress. Original branding and home screen are unchanged.
+
+The **Sales Office** now runs a customer process instead of allowing a single instant sale click:
+
+- **Actual enquiry required.** Customer interest depends on market-day conditions, asking price, quality and reputation. A car may attract no enquiry, and reloading cannot reroll the same vehicle/day/session. Each advertised car has at most one active customer case.
+- **Appointments and no-shows.** Ordinary enquiries require booking a viewing 1–3 game days ahead. Customer attendance is uncertain. No-shows and missed follow-ups are tracked.
+- **Test drives and customer objections.** The customer must attend and complete a test drive. Some customers decline to proceed; higher condition risk makes that more likely. Cash and part-exchange preferences differ between customers.
+- **Negotiation and agreement.** Once a test drive succeeds, an offer can be negotiated; a counteroffer may be rejected or cause the customer to walk away. Retail values remain based on the vehicle-specific intelligence and existing employee/reputation effects.
+- **Handover or deposit.** A mutually accepted agreement can be handed over on the same day, or a fully refundable **£250 reservation deposit** can be recorded for a later collection. Deposits are held in a separate *virtual* customer-holding balance and **never enter spendable dealership cash**; a later cancellation returns the held balance without creating income or an expense. On collection, the full agreed vehicle price is recorded in the actual business cash ledger. Collection can still be cancelled.
+- **Deal Day walk-ins.** The final day retains five slow trading sessions and variable quiet/busy market conditions. Interested walk-ins may proceed to a same-session test drive, but not a guaranteed sale. Unresolved walk-in cases expire between sessions; reserved vehicles persist to collection.
+- **Monthly performance.** Management reports and the first-day meeting now include real recorded enquiry-to-sale conversion, appointments, no-shows, test drives, agreements and deposits/refunds. Sales count only at handover, never when someone books, agrees or deposits.
+
+**Design limits:** Customer identities and behaviour are invented, not real people or live third-party leads. Appointment dates are game operating days, not staff-hour calendars. The fully refundable deposit and segregated-holding approach are a gameplay simplification, not a claim to model UK deposit contracts or consumer law, and legal documentation, identity checks, vehicle warranties, finance, insurance and actual card/bank processing require dedicated future releases.
+
 ## v0.8 Workshop Operations & Vehicle Lifecycle
 
 **Vehicle preparation is no longer instantaneous.** Every newly acquired auction, private-seller or part-exchange car enters Vehicle Stock as unassessed and occupies a forecourt space. Open **Workshop** to authorise a paid assessment, review the individual repair budget, and book either:
@@ -157,6 +173,8 @@ Customers are currently deterministic examples rather than a fully simulated mar
 - `vehicle-intel.js` — stable fictional vehicle profile generation, repair forecasts and appraisal arithmetic.
 - `workshop.js` — timed vehicle assessment, repair sourcing, capacity, financial commitment and final QC.
 - `workshop-view.js` — responsive repair board with quote comparisons, queue progress and status.
+- `customers.js` — persistent customer cases, deterministic leads, appointments, no-shows, test drives, offers and refundable holds.
+- `customers-view.js` — customer journey UI in the Sales Office.
 - `vehicle-view.js` — inline report UI for buying and stock.
 - `trading.js` — deterministic financial and vehicle transaction engine; save migration/validation.
 - `simulator.js` — game navigation, inbox, calendar, market rendering and save integration.
@@ -178,6 +196,8 @@ node --check events.js
 node --check events-view.js
 node --check workshop.js
 node --check workshop-view.js
+node --check customers.js
+node --check customers-view.js
 node --check trading.js
 node --check simulator.js
 node --test tests/site.test.mjs
