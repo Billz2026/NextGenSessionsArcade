@@ -4,6 +4,21 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## v0.9.4 — Vehicle specification and photo-source audit (10 November 2026)
+
+**Accuracy must be evidenced, not implied.** Model/year/trim/powertrain claims are sourced independently from the invented individual-car data. A separate `vehicle-accuracy.js` source registry records source links against *exact title, fuel, transmission and powertrain* combinations. Changing any of those fields automatically reverts the car to **review pending**. The full vehicle report makes that status visible and links to source evidence when available.
+
+- Corrected the 2021 Hyundai Ioniq 5 Premium long-range RWD battery from the later 77.4kWh pack to the launch **73kWh** pack (Hyundai UK 2021 pricing sheet).
+- Corrected the facelift 2017 Toyota Yaris Icon petrol from discontinued **1.33** to **1.5 VVT-iE**, matching Toyota UK's 2017 specification announcement.
+- Clarified the 2022 MG4 EV SE **Standard Range** as the **51kWh** version rather than ambiguously implying that all SE models have that battery.
+- Added proper variant descriptions for 2022 Ford Puma and Nissan Qashqai 48V mild-hybrids and the 2021 Kia Rio MHEV. Mild-hybrids are visibly labelled **PETROL/DIESEL MILD HYBRID**, not misrepresented as full hybrids.
+- Fixed photo-driven paint bias: colour is now a deterministic neutral-heavy paint choice **independent of the available photograph**. If no suitable model/year/generation/colour/fuel photo exists, the game intentionally shows a placeholder.
+- Reviewed all **16** existing Wikimedia photograph file pages for file existence, model/generation, paint, authorship and open licence. This is a source-page check, not a guarantee the external image CDN never fails; the image error fallback is still required.
+- The 50-entry specification registry currently includes 18 individually sourced derivatives (**13 manufacturer-backed**, **5 corroborated**) and **32 awaiting individual verification**. Don't present outstanding entries as certified. See `docs/vehicle-accuracy-audit.md` for the full itemised register and sources. Exact annual/model-market valuations are **not verified**; all game prices, mileage, MOT and condition remain simulated.
+- Gameplay, financial ledger, workshop operations, cash thresholds and stored career schema **version 9** have not changed.
+
+**Evidence types:** *manufacturer* = UK manufacturer model-spec documentation, including official brand-used listings; *corroborated* = secondary owner/photo/reference documentation that supports the entry, but requires manufacturer-level confirmation; *pending* = no sufficient individually checked evidence. No external data source is called from the game at runtime.
+
 ## v0.9.3 — Modern UK Used-Car Market & Luxury Progression
 
 **Dealer career:** A new dealership still starts with £12,500 and four spaces. Its first catalogue mixes affordable 2016–2020 higher-mileage stock with a few accessible newer vehicles (including a high-mileage Nissan Leaf). As cash and reputation rise, the buying desk unlocks progressively newer **Modern**, **Premium** and **Luxury** stock. Older cars never disappear entirely; established traders can still look for low-cost opportunities. The buying desk shows the next unlock thresholds.

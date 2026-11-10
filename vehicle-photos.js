@@ -145,6 +145,11 @@
     {model:'Land Rover Defender',name:'L663',from:2020,to:2026}
   ]);
   const COLOURS=Object.freeze(['Black','Silver','Grey','White','Blue','Red']);
+  // Stable, neutral-heavy UK-style paint distribution for fictional lots.
+  // A game's paint colour must never be chosen to fit an available image:
+  // the car exists first; a representative photograph may or may not exist.
+  const PAINT_POOL=Object.freeze(['Black','Grey','White','Silver','Black',
+    'Grey','White','Silver','Blue','Red']);
   function hash(s){let x=2166136261;for(const c of String(s))x=Math.imul(x^c.charCodeAt(0),16777619)>>>0;return x>>>0;}
   function identity(vehicle){
     const title=String(vehicle?.title||'');
@@ -155,15 +160,8 @@
   }
   function describe(car){
     const id=identity(car);
-    const preferred=PHOTO_LIBRARY.filter(x=>x.model===id.model&&x.generation===id.generation&&
-      id.year>=x.start&&id.year<=x.end&&(!x.fuel||!car.fuel||x.fuel===car.fuel));
     const key=car.origin||car.id||car.title;
-    // All vehicles have one immutable colour. The first image's real colour
-    // is prioritised for existing catalogue coverage; some vehicles still
-    // have other colours with a deliberately explicit photo placeholder.
-    const color=preferred.length&&hash(String(key)+'|colour')%5!==0?
-      preferred[hash(String(key)+'|photo')%preferred.length].color:
-      COLOURS[hash(String(key)+'|palette')%COLOURS.length];
+    const color=PAINT_POOL[hash(String(key)+'|paint')%PAINT_POOL.length];
     return {...id,color};
   }
   function select(car){
