@@ -8,6 +8,8 @@ const html = readFileSync(new URL('index.html', root), 'utf8');
 const css = readFileSync(new URL('styles.css', root), 'utf8');
 const js = readFileSync(new URL('simulator.js', root), 'utf8');
 const engine = readFileSync(new URL('trading.js', root), 'utf8');
+const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
+const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -40,7 +42,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="stock-list"/);
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
-  assert.match(html, /trading\.js\?v=2/);
+  assert.match(html, /vehicle-intel\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=3/);
+  assert.match(html, /vehicle-view\.js\?v=1/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -97,7 +101,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   const listeners = {};
   const document = {
     getElementById: id => {
-      if (!nodes.has(id) && /^(auction-bid-|seller-offer-|stock-price-|px-allowance-)/.test(id)) {
+      if (!nodes.has(id) && /^(auction-bid-|seller-offer-|stock-price-|px-allowance-|projection-)/.test(id)) {
         const dynamicInput = new Node();
         nodes.set(id,dynamicInput);
       }
@@ -125,7 +129,9 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     }
   };
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
+  vm.runInNewContext(intelligence, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
+  vm.runInNewContext(vehicleView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const button = { dataset: { action, ...extras }, setAttribute() {} };
@@ -140,7 +146,11 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     if (!nodes.has(id)) nodes.set(id, new Node());
     nodes.get(id).value = String(value);
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, engine:context.window.MotorTradeEngine };
+  function typeInput(id, value) {
+    setInput(id,value);
+    if (listeners.input) listeners.input({target:{id,value:String(value)}});
+  }
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine };
 }
 
 test('first visit and saved career show the minimal main menu', () => {
@@ -238,7 +248,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=11/);
+  assert.match(html, /styles\.css\?v=12/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -256,7 +266,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 2);
+  assert.equal(opening.version, 3);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -277,16 +287,18 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('list-stock', { id: '1' });
   state = JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.vehicles[0].status,'listed');
+  const openingBuyer=app.engine.buyers(state.vehicles[0]);
   app.click('counter-sale', { id: '1' });
   state = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(state.vehicles[0].cashOffer,5950);
+  const achievedPrice=app.engine.buyers(state.vehicles[0]).cashOffer;
+  assert.ok(achievedPrice <= openingBuyer.cashLimit,'Counteroffers cannot exceed customer valuation');
   app.click('sell-cash', { id: '1' });
   state = JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.vehicles.length, 0);
   assert.equal(state.sales, 1);
   assert.equal(state.sold[0].mode,'cash');
-  assert.equal(state.sold[0].price,5950);
-  assert.equal(state.sold[0].profit,5950 - bid - lot.fee - lot.prep);
+  assert.equal(state.sold[0].price,achievedPrice);
+  assert.equal(state.sold[0].profit,achievedPrice - bid - lot.fee - lot.prep);
   assert.equal(state.cash,12500 + state.sold[0].profit);
   assert.equal(state.ledger.reduce((a,x)=>a+x.delta,0),state.cash-12500);
   const resumed = browser(saved);
@@ -313,7 +325,8 @@ test('direct sellers negotiate and part exchanges become properly valued stock',
   app.click('prepare-stock',{id:'1'});
   app.setInput('stock-price-1',5000);
   app.click('list-stock',{id:'1'});
-  const px = app.engine.buyers(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0]).exchange;
+  const firstBuyer=app.engine.buyers(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0]);
+  const px = firstBuyer.exchange;
   app.setInput('px-allowance-1',px.floor - 50);
   app.click('sell-part-ex',{id:'1'});
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).sales,0,'Rejected allowance cannot complete sale');
@@ -326,9 +339,9 @@ test('direct sellers negotiate and part exchanges become properly valued stock',
   assert.equal(state.vehicles.length,1,'Trade-in replaces sold unit');
   assert.equal(state.vehicles[0].source,'part-ex');
   assert.equal(state.vehicles[0].cost,px.floor+25);
-  const expected=12500-accepted-seller.prep+(5000-220)-(px.floor+25);
+  const expected=12500-accepted-seller.prep+firstBuyer.pxOffer-(px.floor+25);
   assert.equal(state.cash,expected,'Sale proceeds minus allowance is the cash difference');
-  assert.equal(state.sold[0].profit,(5000-220)-accepted-seller.prep);
+  assert.equal(state.sold[0].profit,firstBuyer.pxOffer-accepted-seller.prep);
   assert.equal(state.ledger.reduce((a,l)=>a+l.delta,0),state.cash-12500);
   app.click('prepare-stock',{id:'2'});
   app.setInput('stock-price-2',3500);
@@ -377,7 +390,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,2);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,3);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -392,12 +405,13 @@ test('cash reserves protect mandatory preparation across multiple purchases', ()
   const market = app.engine.market(1);
   const lot = market.auctions[0];
   // Intentionally place a very high bid, leaving exactly enough cash for one vehicle's preparation.
-  const maxSafeBid = 12500 - lot.fee - lot.prep;
+  const totalPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
+  const maxSafeBid = 12500 - lot.fee - totalPrep;
   app.setInput('auction-bid-' + lot.id, maxSafeBid);
   app.click('bid-auction',{id:lot.id});
   let state = JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.vehicles.length,1);
-  assert.equal(state.cash,lot.prep);
+  assert.equal(state.cash,totalPrep);
   const seller = market.sellers[0];
   app.setInput('seller-offer-' + seller.id,seller.ask);
   app.click('buy-seller',{id:seller.id});
@@ -503,4 +517,139 @@ test('every market buying action remains clickable and shows a capacity warning'
   app.click('bid-auction',{id:market.auctions[0].id});
   assert.match(app.nodes.get('trade-feedback-toast').textContent,/forecourt is full/i);
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).stock,2);
+});
+
+test('v0.4 deterministic profiles have unique IDs, grades, MOT records and repair breakdowns', () => {
+  const E=browser(new Map()).engine;
+  const refs=new Set();
+  let hidden=0;
+  for(let day=1;day<=30;day++){
+    const m=E.market(day);
+    for(const car of [...m.auctions,...m.sellers]){
+      const p=car.profile;
+      assert.ok(p.ref.startsWith('SIM-'),'Never publish a real registration as a synthetic record');
+      assert.ok(!refs.has(p.ref),'Every lead has a unique stable dossier ID');
+      refs.add(p.ref);
+      assert.ok(p.grade>=1&&p.grade<=5);
+      assert.ok(p.mot.monthsRemaining>=0&&p.mot.monthsRemaining<=24);
+      assert.equal(p.knownRepairs.reduce((n,x)=>n+x.cost,0),p.basePrep);
+      if(p.hiddenFault)hidden++;
+    }
+    assert.equal(JSON.stringify(E.market(day)),JSON.stringify(m),'Same lead and report after reload');
+  }
+  assert.ok(hidden>0,'The risk engine must generate some hidden defects');
+});
+test('a paid inspection reveals new risk before purchase and is included in realised margin', () => {
+  const storage=new Map();
+  const app=browser(storage);
+  app.click('new-career');app.submitCareer('Inspection Motors');
+  const lot=app.engine.market(1).auctions.find(x=>x.profile.hiddenFault);
+  assert.ok(lot,'At least one day-one lot reveals a fault if inspected');
+  const before=app.engine.quote(lot,'auction',lot.rival+50,false);
+  app.click('toggle-report',{id:lot.id,kind:'auction'});
+  assert.match(app.nodes.get('market-auctions').innerHTML,/KNOWN PREPARATION ITEMS/);
+  assert.match(app.nodes.get('market-auctions').innerHTML,/BUY INSPECTION/);
+  app.click('inspect-lead',{id:lot.id,kind:'auction'});
+  let state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.cash,12500-lot.profile.inspectionFee);
+  assert.equal(state.vehicles.length,0);
+  assert.equal(state.reports[lot.id].fee,lot.profile.inspectionFee);
+  assert.match(app.nodes.get('market-auctions').innerHTML,/ADDITIONAL CONDITION RISK/);
+  assert.match(app.nodes.get('market-auctions').innerHTML,new RegExp(lot.profile.hiddenFault.item));
+  const after=app.engine.quote(lot,'auction',lot.rival+50,true);
+  assert.equal(after.prep,lot.profile.basePrep+lot.profile.hiddenFault.cost);
+  assert.equal(after.inspection,lot.profile.inspectionFee);
+  assert.notEqual(before.maxBid,after.maxBid);
+  const resume=browser(storage);resume.click('resume');
+  assert.match(resume.nodes.get('market-auctions').innerHTML,/INSPECTION PAID|VEHICLE FILE/);
+  resume.click('toggle-report',{id:lot.id,kind:'auction'});
+  assert.match(resume.nodes.get('market-auctions').innerHTML,/INSPECTION PAID/);
+  const hammer=lot.rival+50;
+  resume.setInput('auction-bid-'+lot.id,hammer);
+  resume.click('bid-auction',{id:lot.id});
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.vehicles.length,1);
+  assert.equal(state.vehicles[0].cost,hammer+lot.fee+lot.profile.inspectionFee);
+  assert.equal(state.vehicles[0].prepBudget,lot.profile.basePrep+lot.profile.hiddenFault.cost);
+  assert.equal(state.vehicles[0].profile.inspected,true);
+  resume.click('prepare-stock',{id:'1'});
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].prepSpent,state.vehicles[0].prepBudget);
+  resume.setInput('stock-price-1',6800);
+  resume.click('list-stock',{id:'1'});
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  const achieved=resume.engine.buyers(state.vehicles[0]).cashOffer;
+  resume.click('sell-cash',{id:'1'});
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.sold[0].profit,achieved-(hammer+lot.fee+lot.profile.inspectionFee)-
+    (lot.profile.basePrep+lot.profile.hiddenFault.cost));
+  assert.ok(state.sold[0].profile,'Vehicle report must remain in sales history');
+  assert.equal(state.cash,12500+state.sold[0].profit);
+  assert.ok(state.ledger.some(x=>x.note.startsWith('Pre-purchase inspection')));
+});
+test('inspections are charged only once, even if the car is never bought', () => {
+  const storage=new Map(), app=browser(storage);
+  app.click('new-career');app.submitCareer();
+  const seller=app.engine.market(1).sellers[0];
+  app.click('inspect-lead',{kind:'seller',id:seller.id});
+  const first=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(first.cash,12500-seller.profile.inspectionFee);
+  assert.equal(first.ledger.length,1);
+  app.click('inspect-lead',{kind:'seller',id:seller.id});
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).ledger.length,1);
+  app.click('continue');
+  const next=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(next.cash,first.cash,'The inspection fee is non-refundable');
+  assert.equal(Object.keys(next.reports).length,0,'Expired leads are discarded daily');
+  assert.ok(next.ledger.some(x=>x.note.startsWith('Pre-purchase inspection')));
+});
+test('older v2 stock migrates to v3 without changing costs, prep or recorded sale history', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Legacy Stock');
+  const car=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+car.id,car.ask);
+  app.click('buy-seller',{id:car.id});
+  const before=JSON.parse(storage.get(STORAGE_KEY));
+  before.version=2;
+  before.vehicles.forEach(v=>delete v.profile);
+  delete before.reports;
+  storage.set(STORAGE_KEY,JSON.stringify(before));
+  const oldCost=before.vehicles[0].cost,oldPrep=before.vehicles[0].prepBudget;
+  const resumed=browser(storage);
+  assert.equal(resumed.nodes.get('menu-continue').hidden,false);
+  resumed.click('resume');
+  resumed.click('save');
+  const migrated=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(migrated.version,3);
+  assert.equal(migrated.vehicles[0].cost,oldCost);
+  assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
+  assert.equal(migrated.vehicles[0].profile.legacy,true);
+  assert.equal(migrated.vehicles[0].profile.hiddenFault,null);
+  assert.equal(migrated.cash,before.cash);
+  assert.equal(migrated.ledger.length,before.ledger.length);
+  assert.match(resumed.nodes.get('stock-list').innerHTML,/VIEW FULL REPORT/);
+});
+test('a changing maximum bid updates the visible projected contribution', () => {
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Valuation Autos');
+  const lot=app.engine.market(1).auctions[0];
+  app.typeInput('auction-bid-'+lot.id,lot.guide+500);
+  const expected=app.engine.quote(lot,'auction',lot.guide+500,false).expectedMargin;
+  const formatted=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(expected);
+  assert.equal(app.nodes.get('projection-'+lot.id).textContent,formatted);
+  assert.match(app.nodes.get('market-sellers').innerHTML,/TRADE VALUE/);
+  assert.match(app.nodes.get('stock-list').innerHTML,/FORECOURT IS EMPTY/);
+  assert.match(app.nodes.get('market-auctions').innerHTML,/RECOMMENDED MAX/);
+});
+test('invalid persisted v3 vehicle profiles are rejected rather than silently accepted', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Corrupt Test');
+  const lot=app.engine.market(1).auctions[0];
+  app.setInput('auction-bid-'+lot.id,lot.rival+100);
+  app.click('bid-auction',{id:lot.id});
+  const saved=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(saved.vehicles.length,1);
+  saved.vehicles[0].profile.knownRepairs[0].cost=999999;
+  storage.set(STORAGE_KEY,JSON.stringify(saved));
+  assert.equal(browser(storage).nodes.get('menu-continue').hidden,true);
 });
