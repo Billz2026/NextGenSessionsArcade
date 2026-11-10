@@ -64,6 +64,15 @@
         '. Assessment: '+cash(job.assessmentFee)+' (included in purchase cost).</p>'+
         '<button type="button" class="trade-button" data-page="stock">VIEW VEHICLE STOCK →</button></div>';
     }
+    const canDispose=vehicle.status==='acquired'&&
+      ['unassessed','quoted'].includes(job.stage);
+    const disposal=canDispose?
+      '<div class="workshop-disposal"><strong>STOCK EXIT / STOP THE LOSS</strong>'+
+      '<p>Cannot afford or justify repairs? A fictional trade buyer currently offers '+
+      cash(window.MotorTradeEngine.wholesaleOffer(vehicle))+'. '+
+      'Selling now frees your space but may crystallise a loss. It does not count towards retail targets.</p>'+
+      '<button type="button" class="trade-button trade-button-outline" data-action="dispose-workshop" data-id="'+
+      vehicle.id+'">SELL TO TRADE</button></div>':'';
     return '<article class="workshop-job"><div class="workshop-job-heading"><div>'+
       '<small>'+esc(vehicle.source.toUpperCase())+' · STOCK '+vehicle.id+
       ' · GRADE '+grade+'</small><h3>'+esc(vehicle.title)+'</h3>'+
@@ -74,7 +83,7 @@
       '<div class="workshop-item workshop-total"><span>DIAGNOSED REPAIR BUDGET</span><strong>'+
       cash(vehicle.prepBudget)+'</strong></div>'+
       '<p>Workshop assessment and provider charges are separate. The final bill may be higher than the original budget.</p>'+
-      '</div><div class="workshop-job-controls">'+actions+'</div></div></article>';
+      '</div><div class="workshop-job-controls">'+actions+disposal+'</div></div></article>';
   }
   function render(state,W){
     const pending=state.vehicles.filter(x=>x.status==='acquired');
