@@ -438,6 +438,7 @@
     const short = dateShort.format(date).toUpperCase();
     bindText('company', career.name);
     bindText('cash', money.format(career.cash));
+    bindText('customer-deposits',money.format(C.heldDeposits(career)));
     bindText('stock', career.stock + ' / ' + career.capacity);
     bindText('stock-count', String(career.stock));
     bindText('trade-profit', money.format(E.totalMargin(career)));
