@@ -46,35 +46,117 @@
       color:'Grey',file:'2014 Honda Jazz ES Plus i-VTEC - 1339cc 1.3 (100PS) Petrol - Grey - 02-2024, Front.jpg',
       author:'Harvey Bold',license:'CC BY 4.0',
       licenseUrl:'https://creativecommons.org/licenses/by/4.0/',
-      note:'Same GE generation and grey colour; photographed ES Plus trim'}
+      note:'Same GE generation and grey colour; photographed ES Plus trim'},
+    {id:'yaris-xp210-hybrid-red',model:'Toyota Yaris',generation:'XP210',start:2020,end:2022,
+      color:'Red',fuel:'Hybrid',file:'2020 Toyota Yaris Design HEV CVT 1.5 Front.jpg',
+      author:'Vauxford',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'Same XP210 generation and red colour; pictured UK Design hybrid'},
+    {id:'jazz-mk4-hybrid-white',model:'Honda Jazz',generation:'Mk4',start:2020,end:2022,
+      color:'White',fuel:'Hybrid',file:'2020 Honda Jazz SE i-MMD CVT 1.5 Front.jpg',
+      author:'Vauxford',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'Same fourth-generation Jazz hybrid, white colour and UK SE trim'},
+    {id:'qashqai-j12-white',model:'Nissan Qashqai',generation:'J12',start:2021,end:2023,
+      color:'White',fuel:'Petrol',file:'2021 Nissan Qashqai Premiere Edition DIG-T - 1332cc 1.3 (140PS) Petrol - Arctic White - 04-2024, Front.jpg',
+      author:'Harvey Bold',license:'CC BY 4.0',licenseUrl:'https://creativecommons.org/licenses/by/4.0/',
+      note:'Same J12 body and white paint; pictured Premiere Edition, not Acenta'},
+    {id:'corsa-f-electric-silver',model:'Vauxhall Corsa',generation:'F',start:2020,end:2022,
+      color:'Silver',fuel:'Electric',file:'2021 Vauxhall Corsa-e Elite NAV.jpg',
+      author:'Vauxford',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'Same F generation and silver colour; pictured Corsa-e Elite Nav'},
+    {id:'peugeot-208-p21-blue',model:'Peugeot 208',generation:'P21',start:2020,end:2022,
+      color:'Blue',fuel:'Petrol',file:'2020 Peugeot 208 GT Line PureTech 1.2 Front.jpg',
+      author:'Vauxford',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'Same second-generation 208 and blue colour; photographed GT Line trim'},
+    {id:'peugeot-e208-p21-grey',model:'Peugeot 208',generation:'P21',start:2020,end:2022,
+      color:'Grey',fuel:'Electric',file:'2020 Peugeot e-208 Allure Front.jpg',
+      author:'Vauxford',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'Same second-generation e-208, grey colour and Allure trim'},
+    {id:'mg4-first-white',model:'MG4 EV',generation:'1st generation',start:2022,end:2025,
+      color:'White',fuel:'Electric',file:'MG4 EV Automesse Ludwigsburg 2022 1X7A5874.jpg',
+      author:'Alexander Migl',license:'CC BY-SA 4.0',licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'First-generation white MG4 EV; pictured trim may differ'},
+    {id:'model3-white-pre-refresh',model:'Tesla Model 3',generation:'Pre-refresh',start:2019,end:2023,
+      color:'White',fuel:'Electric',file:'2022-01-28 Tesla Model 3.jpg',
+      author:'Photo author credited on Commons source',license:'CC BY-SA 4.0',
+      licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'Pre-2024 body style and white paint; photographed market-spec trim may differ'}
   ]);
   const PHOTO_LIBRARY=Object.freeze(IMG.map(x=>Object.freeze(x)));
+  // The generation catalogue covers the entire fictional 2026 stock pool.
+  // Existing historic names retain their original generation when reloaded.
   const RANGES=Object.freeze([
-    {model:'Ford Focus',name:'Mk3',from:2011,to:2018},
+    {model:'Ford Focus',name:'Mk3',from:2011,to:2017},
+    {model:'Ford Focus',name:'Mk4',from:2018,to:2021},
+    {model:'Ford Focus',name:'Mk4 facelift',from:2022,to:2025},
     {model:'Ford Fiesta',name:'Mk7 facelift',from:2013,to:2017},
+    {model:'Ford Fiesta',name:'Mk8',from:2018,to:2023},
+    {model:'Ford Puma',name:'Mk2',from:2019,to:2026},
     {model:'Volkswagen Polo',name:'6R facelift',from:2014,to:2017},
-    {model:'Nissan Qashqai',name:'J11',from:2014,to:2017},
-    {model:'Peugeot 208',name:'Mk1 facelift',from:2015,to:2019},
+    {model:'Volkswagen Polo',name:'AW',from:2018,to:2021},
+    {model:'Volkswagen Polo',name:'AW facelift',from:2022,to:2026},
+    {model:'Volkswagen Golf',name:'Mk7',from:2012,to:2019},
+    {model:'Volkswagen Golf',name:'Mk8',from:2020,to:2023},
+    {model:'Volkswagen Golf',name:'Mk8 facelift',from:2024,to:2026},
     {model:'Vauxhall Corsa',name:'D',from:2006,to:2014},
-    {model:'Vauxhall Corsa',name:'E',from:2015,to:2019},
+    {model:'Vauxhall Corsa',name:'E',from:2015,to:2018},
+    {model:'Vauxhall Corsa',name:'F',from:2019,to:2023},
+    {model:'Vauxhall Corsa',name:'F facelift',from:2024,to:2026},
+    {model:'Vauxhall Mokka',name:'Mk2',from:2021,to:2024},
+    {model:'Vauxhall Mokka',name:'Mk2 facelift',from:2025,to:2026},
+    {model:'Peugeot 208',name:'Mk1 facelift',from:2015,to:2019},
+    {model:'Peugeot 208',name:'P21',from:2020,to:2023},
+    {model:'Peugeot 208',name:'P21 facelift',from:2024,to:2026},
     {model:'Hyundai i20',name:'GB',from:2014,to:2020},
+    {model:'Hyundai i20',name:'BC3',from:2021,to:2026},
+    {model:'Hyundai Tucson',name:'NX4',from:2021,to:2026},
+    {model:'Hyundai Ioniq 5',name:'NE',from:2021,to:2026},
     {model:'Toyota Yaris',name:'XP130',from:2011,to:2014},
-    {model:'Toyota Yaris',name:'XP130 facelift',from:2015,to:2017},
+    {model:'Toyota Yaris',name:'XP130 facelift',from:2015,to:2019},
+    {model:'Toyota Yaris',name:'XP210',from:2020,to:2026},
+    {model:'Toyota Corolla',name:'E210',from:2019,to:2026},
     {model:'Honda Jazz',name:'GE',from:2008,to:2015},
-    {model:'Kia Rio',name:'UB',from:2011,to:2017},
-    {model:'Volkswagen Golf',name:'Mk7',from:2012,to:2019}
+    {model:'Honda Jazz',name:'GK',from:2016,to:2019},
+    {model:'Honda Jazz',name:'Mk4',from:2020,to:2026},
+    {model:'Kia Rio',name:'UB',from:2011,to:2016},
+    {model:'Kia Rio',name:'YB',from:2017,to:2026},
+    {model:'Kia Sportage',name:'NQ5',from:2021,to:2026},
+    {model:'Nissan Qashqai',name:'J11',from:2014,to:2020},
+    {model:'Nissan Qashqai',name:'J12',from:2021,to:2023},
+    {model:'Nissan Qashqai',name:'J12 facelift',from:2024,to:2026},
+    {model:'Nissan Leaf',name:'ZE1',from:2018,to:2024},
+    {model:'MG4 EV',name:'1st generation',from:2022,to:2025},
+    {model:'Tesla Model 3',name:'Pre-refresh',from:2019,to:2023},
+    {model:'Tesla Model 3',name:'Highland',from:2024,to:2026},
+    {model:'Tesla Model Y',name:'Pre-refresh',from:2021,to:2024},
+    {model:'Tesla Model Y',name:'Juniper',from:2025,to:2026},
+    {model:'BMW 3 Series',aliases:['BMW 320d','BMW 330e'],name:'G20',from:2019,to:2026},
+    {model:'BMW X5',name:'G05',from:2018,to:2026},
+    {model:'Audi A3',name:'8Y',from:2020,to:2026},
+    {model:'Audi Q5',name:'FY',from:2017,to:2024},
+    {model:'Audi e-tron',name:'GE',from:2018,to:2022},
+    {model:'Mercedes-Benz A-Class',aliases:['Mercedes-Benz A200'],name:'W177',from:2018,to:2026},
+    {model:'Mercedes-Benz E-Class',aliases:['Mercedes-Benz E300e'],name:'W213 facelift',from:2020,to:2023},
+    {model:'Mercedes-Benz S-Class',aliases:['Mercedes-Benz S350d'],name:'W223',from:2021,to:2026},
+    {model:'Volvo XC40',name:'Mk1',from:2018,to:2026},
+    {model:'Porsche Macan',name:'95B',from:2014,to:2024},
+    {model:'Porsche Taycan',name:'J1',from:2019,to:2023},
+    {model:'Range Rover Velar',name:'L560',from:2017,to:2026},
+    {model:'Range Rover Sport',name:'L461',from:2022,to:2026},
+    {model:'Land Rover Defender',name:'L663',from:2020,to:2026}
   ]);
   const COLOURS=Object.freeze(['Black','Silver','Grey','White','Blue','Red']);
   function hash(s){let x=2166136261;for(const c of String(s))x=Math.imul(x^c.charCodeAt(0),16777619)>>>0;return x>>>0;}
   function identity(vehicle){
     const title=String(vehicle?.title||'');
     const year=Number(title.slice(0,4));
-    const spec=RANGES.find(x=>title.includes(x.model)&&year>=x.from&&year<=x.to);
+    const spec=RANGES.find(x=>(x.aliases||[x.model]).some(name=>title.includes(name))&&
+      year>=x.from&&year<=x.to);
     return {model:spec?.model??'Unknown',generation:spec?.name??'Unknown',year:Number.isInteger(year)?year:0};
   }
   function describe(car){
     const id=identity(car);
-    const preferred=PHOTO_LIBRARY.filter(x=>x.model===id.model&&x.generation===id.generation&&id.year>=x.start&&id.year<=x.end);
+    const preferred=PHOTO_LIBRARY.filter(x=>x.model===id.model&&x.generation===id.generation&&
+      id.year>=x.start&&id.year<=x.end&&(!x.fuel||!car.fuel||x.fuel===car.fuel));
     const key=car.origin||car.id||car.title;
     // All vehicles have one immutable colour. The first image's real colour
     // is prioritised for existing catalogue coverage; some vehicles still
@@ -94,6 +176,7 @@
     if(typeof colour!=='string'||!COLOURS.includes(colour))return null;
     return PHOTO_LIBRARY.find(x=>x.model===id.model&&
       x.generation===id.generation&&x.color===colour&&
+      (!x.fuel||!car.fuel||x.fuel===car.fuel)&&
       id.year>=x.start&&id.year<=x.end)||null;
   }
   function url(photo){
