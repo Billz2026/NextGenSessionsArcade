@@ -600,3 +600,8 @@
 @media(max-width:660px){.workshop-options{grid-template-columns:1fr}.workshop-stock-action{flex-direction:column;align-items:stretch}
  .workshop-job-heading{padding:14px;flex-direction:column}.workshop-finance{text-align:left}
  .workshop-job-body{padding:12px}.workshop-job-controls{padding:12px}}
+
+.workshop-disposal{border-top:1px solid #46616a;margin-top:17px;padding-top:15px}
+.workshop-disposal strong{font:850 16px var(--title);color:#e5ae97}
+.workshop-disposal p{font:500 11px/1.6 var(--body);color:#b9cbd0;margin:7px 0 12px}
+.workshop-disposal .trade-button{border-color:#937868;background:#293039;color:#efc2ad}
