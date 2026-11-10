@@ -19,7 +19,7 @@
       note:'Same Mk3 generation and black colour; trim may differ'},
     {id:'fiesta-mk7-red',model:'Ford Fiesta',generation:'Mk7 facelift',start:2013,end:2017,
       color:'Red',file:'2016 Ford Fiesta SE Hatchback in Ruby Red Metallic Tinted Clearcoat, Front Right, 2023-07-13.jpg',
-      author:'SsmIntrigue',license:'CC BY-SA 4.0',
+      author:'Elise240SX',license:'CC BY-SA 4.0',
       licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
       note:'Same facelift generation and red colour; market-specific trim may differ'},
     {id:'yaris-xp130-silver',model:'Toyota Yaris',generation:'XP130',start:2011,end:2014,
