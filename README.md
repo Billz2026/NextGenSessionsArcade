@@ -58,3 +58,5 @@ The pre-pivot Arcade project is preserved on the Git branch archive/nextgen-arca
 The main menu includes two local display settings: showroom background on/off and menu animation on/off. They are saved independently from career data.
 
 The main-menu showroom background is stored at the original 1920×1080 resolution in `assets/showroom-home-bg.webp` with higher-quality compression and mild sharpening, rather than the previous 1024×576 low-bitrate image. The dark overlay is lighter so vehicles and architecture remain visible. The words THE and MOTOR share the same metallic silver typography without a badge or enclosing ring. The original NextGen Sessions logo is unchanged.
+
+The main menu now uses a compact dark luxury plaque behind the complete Motor Trade title (not a separate badge around THE). Metallic silver and champagne-gold text are brightened, the title is raised closer to the unchanged NextGen Sessions logo, and the letter boxes retain extra vertical space to avoid clipping. This is a styling-only change; career state and gameplay remain unchanged.
