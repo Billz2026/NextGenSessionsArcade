@@ -94,7 +94,7 @@
     const state={
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
       stock:0,sales:0,reputation:P.tier(5),messages,
-      vehicles:[],sold:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
+      vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       ...P.initial()
     };
     M.initialize(state);
@@ -128,7 +128,8 @@
       !integer(saved.nextId) || saved.nextId < 1 ||
       !cashValue(saved.cash) || saved.vehicles.length > CAPACITY ||
       saved.vehicles.length > 250 || saved.sold.length > 20000 ||
-      saved.ledger.length > 60000) return null;
+      saved.ledger.length > 60000 ||
+      (saved.version===VERSION&&(!Array.isArray(saved.wholesale)||saved.wholesale.length>20000)))return null;
     const goodVehicle = v => v && integer(v.id) && v.id > 0 && typeof v.title === 'string' &&
       v.title.length > 2 && v.title.length < 100 &&
       ['auction','seller','part-ex'].includes(v.source) &&
@@ -152,7 +153,14 @@
     const goodLedger = l => l && integer(l.day) && l.day >= 1 && l.day <= saved.day &&
       integer(l.delta) && Math.abs(l.delta) <= 10000000 &&
       typeof l.note === 'string' && l.note.length < 200;
-    if (!saved.vehicles.every(goodVehicle) || !saved.sold.every(goodSold) ||
+    const wholesale=saved.wholesale??[];
+    const goodWholesale=d=>d&&integer(d.id)&&d.id>0&&
+      typeof d.title==='string'&&d.title.length<100&&
+      integer(d.day)&&d.day>=1&&d.day<=saved.day&&
+      cashValue(d.proceeds)&&cashValue(d.basis)&&
+      integer(d.profit)&&d.profit===d.proceeds-d.basis;
+    if (!Array.isArray(wholesale)||!wholesale.every(goodWholesale)||
+      !saved.vehicles.every(goodVehicle) || !saved.sold.every(goodSold) ||
         !saved.ledger.every(goodLedger)) return null;
     // Older v2 careers do not yet have negotiation history.
     const negotiations = saved.negotiations ?? {};
@@ -177,7 +185,7 @@
     const workforce=saved.version>=4 ? saved :
       {...P.initial(),reputationScore:P.legacyScore(saved.sold.length)};
     if (!P.valid(workforce,saved.day)) return null;
-    const ids = [...saved.vehicles,...saved.sold].map(v => v.id);
+    const ids = [...saved.vehicles,...saved.sold,...wholesale].map(v => v.id);
     if (new Set(ids).size !== ids.length || ids.some(id => id >= saved.nextId)) return null;
     const balance = STARTING_CASH + sum(saved.ledger,'delta');
     if (balance !== saved.cash || balance < 0 || balance > 100000000) return null;
@@ -192,6 +200,7 @@
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
             hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}
       })),
+      wholesale:wholesale.map(d=>({...d})),
       sold:saved.sold.map(v => ({...v,profile:v.profile?{...v.profile,
         knownRepairs:v.profile.knownRepairs.map(r=>({...r})),
         mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
@@ -466,7 +475,30 @@
       ' ('+state.reputation+').'
     );
   }
-  function totalMargin(state) { return sum(state.sold,'profit'); }
+  function wholesaleOffer(vehicle){
+    // Simplified emergency trade bid. A trade outlet is not a retail sale
+    // or guaranteed profit; dispose of unprepared stock at a loss.
+    return Math.max(150,Math.round(Math.min(
+      vehicle.profile?.trade||vehicle.retail*.55,vehicle.cost*.88)/25)*25);
+  }
+  function disposeStock(state,id){
+    const vehicle=own(state.vehicles,id);
+    if(!vehicle)return fail('missing','Vehicle not found.');
+    if(vehicle.status!=='acquired'||!['unassessed','quoted'].includes(vehicle.workshop?.stage))
+      return fail('stage','Trade disposal is available only before repair work has been booked.');
+    const proceeds=wholesaleOffer(vehicle);
+    const basis=vehicle.cost;
+    pay(state,proceeds,'Wholesale stock disposal: '+vehicle.title);
+    state.wholesale.push({id:vehicle.id,title:vehicle.title,day:state.day,
+      proceeds,basis,profit:proceeds-basis});
+    state.vehicles=state.vehicles.filter(v=>v.id!==id);
+    state.stock=state.vehicles.length;
+    return success(vehicle.title+' disposed of to a fictional trade buyer for £'+
+      proceeds+'. Trading loss £'+Math.max(0,basis-proceeds)+
+      '. No retail sale, target credit or reputation benefit.');
+  }
+  function totalMargin(state) { return sum(state.sold,'profit')+
+    sum(state.wholesale,'profit'); }
   function staffDay(state) {
     const out=P.advance(state);
     state.reputation=P.tier(state.reputationScore);
@@ -482,7 +514,8 @@
   }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,events:D,
-    workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,hireStaff,
+    workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
+    wholesaleOffer,disposeStock,hireStaff,
     market,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     advertise,buyers,counter,completeSale,totalMargin
