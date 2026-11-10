@@ -18,6 +18,8 @@ const events = readFileSync(new URL('events.js', root), 'utf8');
 const eventsView = readFileSync(new URL('events-view.js', root), 'utf8');
 const workshop = readFileSync(new URL('workshop.js', root), 'utf8');
 const workshopView = readFileSync(new URL('workshop-view.js', root), 'utf8');
+const customers = readFileSync(new URL('customers.js', root), 'utf8');
+const customersView = readFileSync(new URL('customers-view.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -55,7 +57,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /monthly\.js\?v=3/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=1/);
-  assert.match(html, /trading\.js\?v=8/);
+  assert.match(html, /customers\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=9/);
+  assert.match(html, /customers-view\.js\?v=1/);
   assert.match(html, /workshop-view\.js\?v=1/);
   assert.match(html, /events-view\.js\?v=2/);
   assert.match(html, /monthly-view\.js\?v=3/);
@@ -150,6 +154,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(monthly, context, { timeout: 1500 });
   vm.runInNewContext(events, context, { timeout: 1500 });
   vm.runInNewContext(workshop, context, { timeout: 1500 });
+  vm.runInNewContext(customers, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
   // Test-fixture shortcut for PRE-v0.8 financial/reputation assertions only.
   // It is not included in production scripts. Dedicated workshop tests below
@@ -177,11 +182,53 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
       return fixtureQC(state,id);
     }
   };
+
+  // The legacy v0.3–0.8 financial and staff regression tests set up
+  // completed sales instantly. The following adapter exists ONLY in the
+  // Node test fixture. It never ships to users or bypasses production gates.
+  function stageCustomer(state,id,mode){
+    const car=state.vehicles.find(v=>v.id===id);
+    if(!car||car.status!=='listed')return;
+    if(!state.customerCases[String(id)]){
+      state.customerCases[String(id)]={
+        id:'C-'+state.day+'-'+(state.deadlineSession||0)+'-'+id,
+        vehicleId:id,createdDay:state.day,createdSession:state.deadlineSession||0,
+        name:'Legacy Fixture Buyer',channel:'FIXTURE ONLY',status:'discussing',
+        preferredMode:mode,appointmentDay:null,agreedDay:null,
+        price:null,allowance:null,collectionDay:null,held:0,counters:0,
+        reason:'',exchange:null
+      };
+    }
+  }
+  context.window.MotorTradeEngine={
+    ...context.window.MotorTradeEngine,
+    counter:(state,id)=>{
+      stageCustomer(state,id,'cash');
+      const car=state.vehicles.find(v=>v.id===id),buyer=car&&liveEngine.buyers(car,state);
+      if(!buyer||buyer.cashOffer+150>buyer.cashLimit)
+        return {ok:false,code:'rejected',message:'Customer cannot increase further.'};
+      car.cashOffer=buyer.cashOffer+150;
+      return {ok:true,changed:true,message:'Legacy test counter increased by £150.'};
+    },
+    completeSale:(state,id,mode,allowance)=>{
+      const car=state.vehicles.find(v=>v.id===id);
+      if(!car||car.status!=='listed')return liveEngine.completeSale(state,id,mode,allowance);
+      stageCustomer(state,id,mode);
+      const current=state.customerCases[String(id)];
+      if(current?.status==='discussing'){
+        current.preferredMode=mode;
+        const offer=liveEngine.agreeCustomer(state,id,mode,allowance);
+        if(!offer.ok)return offer;
+      }
+      return liveEngine.completeSale(state,id,mode,allowance);
+    }
+  };
   vm.runInNewContext(vehicleView, context, { timeout: 1500 });
   vm.runInNewContext(peopleView, context, { timeout: 1500 });
   vm.runInNewContext(monthlyView, context, { timeout: 1500 });
   vm.runInNewContext(eventsView, context, { timeout: 1500 });
   vm.runInNewContext(workshopView, context, { timeout: 1500 });
+  vm.runInNewContext(customersView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const send=(a,extra)=> {
@@ -214,7 +261,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine };
 }
 
 test('first visit and saved career show the minimal main menu', () => {
@@ -312,7 +359,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=17/);
+  assert.match(html, /styles\.css\?v=18/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -330,7 +377,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 7);
+  assert.equal(opening.version, 8);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -458,7 +505,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,7);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,8);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -694,7 +741,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,7);
+  assert.equal(migrated.version,8);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -773,7 +820,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,7);
+  assert.equal(saved.version,8);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
@@ -783,7 +830,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,7);
+  assert.equal(app.engine.VERSION,8);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
@@ -972,7 +1019,7 @@ test('v0.4 career migrates with stock, sold vehicles and financial balances unto
   assert.equal(newApp.nodes.get('menu-continue').hidden,false);
   newApp.click('resume');newApp.click('save');
   const restored=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(restored.version,7);
+  assert.equal(restored.version,8);
   assert.equal(restored.cash,v3.cash);
   assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
   assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
@@ -1057,7 +1104,7 @@ test('new dealerships receive achievable company targets and a live monthly dash
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Monthly Review Motors');
   const E=app.engine,state=E.create('Standalone',[]);
-  assert.equal(E.VERSION,7);
+  assert.equal(E.VERSION,8);
   assert.equal(state.monthPlan.month,1);
   assert.equal(state.monthPlan.startDay,1);
   assert.equal(state.monthPlan.endDay,30);
@@ -1184,7 +1231,7 @@ test('day 30 close generates an inbox message and immutable archived review', ()
   assert.equal(JSON.stringify(state.monthlyReports[0]),archived);
   const resumed=browser(storage);
   resumed.click('resume');
-  assert.equal(resumed.engine.VERSION,7);
+  assert.equal(resumed.engine.VERSION,8);
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).monthlyReports.length,1);
 });
 test('monthly targets credit salesperson performance only during active duty', () => {
@@ -1221,7 +1268,7 @@ test('migration from v0.5 preserves staff, outstanding balances and day without 
   assert.equal(resumed.nodes.get('menu-continue').hidden,false);
   resumed.click('resume');resumed.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,7);
+  assert.equal(after.version,8);
   assert.equal(after.day,before.day);
   assert.equal(after.cash,before.cash);
   assert.equal(after.ledger.length,before.ledger.length);
@@ -1452,7 +1499,7 @@ test('old v0.6 saved careers migrate without losing sales, staff, stock or cash'
   next.click('resume');
   next.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,7);
+  assert.equal(after.version,8);
   assert.equal(after.cash,old.cash);
   assert.equal(after.staff.length,1);
   assert.equal(after.vehicles.length,1);
@@ -1808,7 +1855,7 @@ test('v0.7.1 saved stock migrates without adding hidden charges or altering comp
   for(const v of old.vehicles)delete v.workshop;
   const restored=E.normalize(old);
   assert.ok(restored,'Historic save should migrate instead of being discarded');
-  assert.equal(restored.version,7);
+  assert.equal(restored.version,8);
   assert.equal(restored.cash,old.cash);
   assert.equal(restored.ledger.length,old.ledger.length);
   assert.equal(restored.vehicles[0].prepSpent,old.vehicles[0].prepSpent);
