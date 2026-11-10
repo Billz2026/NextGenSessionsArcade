@@ -238,7 +238,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=9/);
+  assert.match(html, /styles\.css\?v=10/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
