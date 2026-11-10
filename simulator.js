@@ -6,6 +6,7 @@
  */
 (() => {
   const STORAGE_KEY = 'the-motor-trade-career-v1';
+  const DISPLAY_KEY = 'the-motor-trade-display-v1';
   const SAVE_VERSION = 1;
   const STARTING_CASH = 12500;
   const CAPACITY = 2;
@@ -77,6 +78,19 @@
       'business')
   });
 
+  const display = { showroom: true, motion: true };
+  try {
+    const savedDisplay = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null');
+    if (savedDisplay && typeof savedDisplay.showroom === 'boolean' &&
+        typeof savedDisplay.motion === 'boolean') {
+      display.showroom = savedDisplay.showroom;
+      display.motion = savedDisplay.motion;
+    }
+  } catch (_) { /* Display preferences are optional. */ }
+  function saveDisplay() {
+    try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(display)); }
+    catch (_) { /* Keep settings active for this visit. */ }
+  }
   let storageAvailable = true;
   function loadCareer() {
     let raw;
@@ -122,7 +136,7 @@
   }
 
   let career = loadCareer();
-  let screen = career ? 'career' : 'menu';
+  let screen = 'menu'; // The cinematic main menu is the entry point for all careers.
   let currentPage = 'dashboard';
   let selectedMessageId = null;
   let eventNotice = '';
@@ -187,10 +201,19 @@
     }
   }
   function render() {
-    byId('screen-menu').hidden = screen !== 'menu';
+    const menu = byId('screen-menu');
+    menu.hidden = screen !== 'menu';
+    menu.className = 'menu-screen' + (display.showroom ? '' : ' menu-no-showroom') +
+      (display.motion ? '' : ' menu-no-motion');
+    byId('menu-setting-bg').textContent = display.showroom ? 'ON' : 'OFF';
+    byId('menu-setting-bg').setAttribute('aria-pressed', String(display.showroom));
+    byId('menu-setting-motion').textContent = display.motion ? 'ON' : 'OFF';
+    byId('menu-setting-motion').setAttribute('aria-pressed', String(display.motion));
     byId('screen-setup').hidden = screen !== 'setup';
     byId('screen-career').hidden = screen !== 'career';
     byId('menu-continue').hidden = !career;
+    byId('menu-continue').className = 'action-btn action-btn-primary';
+    byId('menu-new-career').className = career ? 'action-btn action-btn-secondary' : 'action-btn action-btn-primary';
     if (career) {
       byId('menu-resume-description').textContent =
         career.name + ' / Day ' + String(career.day).padStart(2, '0');
@@ -311,7 +334,17 @@
       case 'continue':
         advanceDay();
         break;
-      case 'toggle-guide': {
+      case 'toggle-showroom':
+        display.showroom = !display.showroom;
+        saveDisplay();
+        render();
+        break;
+      case 'toggle-motion':
+        display.motion = !display.motion;
+        saveDisplay();
+        render();
+        break;
+      case 'toggle-settings': {
         const guide = byId('menu-guide');
         guide.hidden = !guide.hidden;
         button.setAttribute('aria-expanded', String(!guide.hidden));

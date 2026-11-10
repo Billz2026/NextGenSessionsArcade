@@ -14,3 +14,203 @@
 @media(max-width:570px){.menu-top{padding:0 14px}.top-kicker{font-size:7px}.top-version{font-size:7px}.menu-layout{width:calc(100% - 28px);padding:24px 0}.brand-lockup-large .parent-wordmark{width:260px}.brand-lockup-large .trade-wordmark{font-size:62px;margin-top:-18px}.brand-lockup-large .logo-caption{font-size:7px;letter-spacing:.045em}.menu-message h1{font-size:48px}.menu-message>p:last-child{font-size:12px}.menu-actions{margin-top:21px}.action-btn{padding:12px;min-height:69px}.action-btn strong{font-size:20px}.action-btn small{font-size:10px}.menu-aside-head{padding:12px}.feature-visual{height:175px}.visual-footer{font-size:8px}.feature-title{font-size:31px}.aside-status{padding:13px}.menu-footer{font-size:8px}.setup-header{padding:12px 16px}.setup-layout{width:calc(100% - 28px);padding-bottom:30px}.setup-card form{padding:19px}.setup-facts{gap:8px}.setup-facts>div{padding:11px}.setup-facts strong{font-size:19px}.career-sidebar{padding:8px 12px;gap:5px}.sidebar-logo{width:105px;flex-basis:105px}.sidebar-logo .parent-wordmark{max-width:102px}.sidebar-logo .trade-wordmark{font-size:19px;margin-top:-5px}.sidebar-logo .logo-caption{font-size:5px;letter-spacing:0}.career-nav button{padding:10px 7px;font-size:0}.career-nav button .nav-icon{font-size:19px;width:20px;flex-basis:20px}.career-nav .nav-unread{font-size:8px;padding:2px 5px}.career-topbar{padding:12px 14px;min-height:65px;gap:5px}.topbar-location small{font-size:8px}.topbar-location strong{font-size:19px}.topbar-actions{gap:9px}.game-clock{gap:5px}.clock-icon{font-size:18px}.game-clock small{font-size:7px}.game-clock strong{font-size:9px}.continue-button{padding:0 10px;min-height:40px;gap:9px;font-size:9px}.career-content{padding:18px 13px 26px}.page-heading{align-items:flex-start;flex-direction:column;gap:11px;margin-bottom:17px}.page-heading h1{font-size:42px}.career-chip,.coming-tag{padding:7px;font-size:8px}.stat-grid{gap:9px}.stat-tile{min-height:105px;padding:12px}.stat-tile>span{font-size:8px}.stat-tile>strong,.stat-tile-gold>strong{font-size:33px;margin:9px 0}.stat-tile small{font-size:9px}.dashboard-right{grid-template-columns:1fr}.panel-card-header{padding:15px}.panel-card-header h2{font-size:24px}.message-preview{padding:13px}.dashboard-bottom{flex-direction:column;align-items:flex-start;padding:15px}.dashboard-bottom h2{font-size:26px}.inbox-row{padding:12px}.inbox-detail{padding:17px}.vehicle-fact-grid{grid-template-columns:repeat(2,1fr)}.auction-art{height:190px}.career-footer{padding:13px;justify-content:center;flex-wrap:wrap;text-align:center;font-size:8px}.game-notice{margin-inline:13px}.empty-state{min-height:315px}}
 @media(max-width:370px){.brand-lockup-large .trade-wordmark{font-size:52px}.trade-wordmark{letter-spacing:.02em}.menu-top .top-kicker{max-width:130px;line-height:1.4}.career-topbar .clock-icon{display:none}.game-clock strong{font-size:8px}.career-nav button{padding-inline:5px}.setup-facts strong{font-size:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* Minimal photographic home screen. Other gameplay screens retain their own styling. */
+#screen-menu.menu-screen {
+  min-height:calc(100dvh - 3px);
+  min-height:calc(100svh - 3px);
+  position:relative;
+  isolation:isolate;
+  justify-content:flex-start;
+  overflow:hidden;
+  background-color:#090a0b;
+  background-image:
+    linear-gradient(180deg,rgba(3,4,6,.73) 0%,rgba(4,6,9,.56) 34%,rgba(5,7,9,.51) 62%,rgba(5,6,7,.68) 100%),
+    url("./assets/showroom-home-bg.webp");
+  background-position:center center;
+  background-size:cover;
+  background-repeat:no-repeat;
+}
+#screen-menu .menu-top {
+  height:54px;
+  min-height:54px;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  border:none;
+  padding:10px clamp(20px,3vw,48px);
+  background:none;
+}
+#screen-menu .menu-status {
+  color:#e4d5b5;
+  font:700 10px/1 var(--mono);
+  letter-spacing:.08em;
+  padding:8px 11px;
+  border:1px solid #af916858;
+  border-radius:99px;
+  background:#080b0f91;
+}
+#screen-menu .menu-layout {
+  flex:1;
+  min-height:0;
+  display:flex;
+  width:min(100%,1100px);
+  margin:0 auto;
+  justify-content:center;
+  align-items:center;
+  padding:0 20px 55px;
+  gap:0;
+}
+#screen-menu .menu-lead {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  width:100%;
+  min-width:0;
+  transform:translateY(-2%);
+}
+#screen-menu .brand-lockup-large {
+  margin:0 0 clamp(43px,6vh,75px);
+  align-items:center;
+  text-align:center;
+}
+#screen-menu .brand-lockup-large .parent-wordmark {
+  width:clamp(170px,19vw,258px);
+  max-width:100%;
+  height:auto;
+  /* Exact existing image asset, no extra effects on the wordmark. */
+}
+#screen-menu .trade-wordmark-hero {
+  font-family:var(--title);
+  font-weight:900;
+  font-style:italic;
+  font-size:clamp(51px,7.4vw,104px);
+  line-height:.91;
+  letter-spacing:-.028em;
+  white-space:nowrap;
+  margin:clamp(12px,2vh,21px) 0 0;
+  text-align:center;
+  text-shadow:0 2px 3px #000c;
+  filter:none;
+}
+#screen-menu .trade-wordmark-hero span {
+  display:inline;
+  font-weight:900;
+}
+#screen-menu .trade-wordmark-hero .trade-the {
+  font-size:.55em;
+  letter-spacing:-.04em;
+  color:#f0eee9;
+}
+#screen-menu .trade-wordmark-hero .trade-motor {
+  background:linear-gradient(180deg,#ffffff 3%,#d2d3d5 43%,#7c8287 82%,#e9ecec 100%);
+  color:#e4e5e6;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+#screen-menu .trade-wordmark-hero .trade-trade {
+  background:linear-gradient(180deg,#fff0c3 4%,#e4bc73 36%,#ba8543 79%,#efc987 100%);
+  color:#e5b96f;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+#screen-menu .menu-actions {
+  display:flex;
+  width:min(425px,100%);
+  margin:0;
+  flex-direction:column;
+  gap:12px;
+}
+#screen-menu .action-btn {
+  min-height:68px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:17px;
+  padding:10px 20px;
+  border-radius:9px;
+  text-align:left;
+  background:linear-gradient(120deg,#030509df,#0b1015db);
+  border:1px solid #b88d4d;
+  color:#f4f1eb;
+  box-shadow:0 5px 18px #0007;
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+  transition:transform .15s,border-color .15s,background .15s;
+}
+#screen-menu .action-btn:hover {
+  transform:translateY(-2px);
+  border-color:#f7d99e;
+  background:#1a1b1fe8;
+}
+#screen-menu .action-btn-primary {
+  background:linear-gradient(165deg,#f7dba1 0%,#ddb067 48%,#b98438 100%);
+  border:1px solid #eec37c;
+  color:#111317;
+}
+#screen-menu .action-btn-primary:hover {
+  background:linear-gradient(165deg,#ffebba,#eac381 55%,#cb9850);
+  border-color:#fbe9c5;
+}
+#screen-menu .action-btn-secondary {
+  background:#080b10e8;
+  border-color:#b88d4d;
+  color:#f4f1eb;
+}
+#screen-menu .button-mark {font:800 27px/1 var(--title);width:29px;flex:0 0 29px}
+#screen-menu .action-btn strong {font:800 25px/1 var(--title);letter-spacing:.045em}
+#screen-menu .action-btn small {font:500 10px/1.3 var(--body);margin-top:3px;color:inherit;opacity:.8}
+#screen-menu .action-btn .arrow {font:500 33px/1 var(--title);margin-left:auto}
+#screen-menu .menu-guide {
+  width:min(425px,100%);
+  max-width:none;
+  margin:12px 0 0;
+  padding:15px 17px;
+  text-align:left;
+  color:#e4e5e1;
+  border:1px solid #927d5e;
+  background:#080b0fe8;
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.6;
+}
+@media(max-width:780px) {
+  #screen-menu .menu-layout {padding:0 16px 38px}
+  #screen-menu .menu-lead {transform:none}
+  #screen-menu .trade-wordmark-hero {font-size:clamp(49px,9.9vw,76px)}
+  #screen-menu .brand-lockup-large {margin-bottom:42px}
+}
+@media(max-width:570px) {
+  #screen-menu.menu-screen {min-height:calc(100svh - 3px);background-position:49% center}
+  #screen-menu .menu-top {height:44px;min-height:44px;padding:8px 12px}
+  #screen-menu .menu-status {font-size:8px}
+  #screen-menu .menu-layout {padding:10px 15px 30px}
+  #screen-menu .brand-lockup-large .parent-wordmark {width:clamp(160px,45vw,218px)}
+  #screen-menu .trade-wordmark-hero {font-size:clamp(38px,10.1vw,57px);letter-spacing:-.035em}
+  #screen-menu .brand-lockup-large {margin-bottom:35px}
+  #screen-menu .menu-actions {gap:10px}
+  #screen-menu .action-btn {min-height:63px;padding:10px 14px}
+  #screen-menu .action-btn strong {font-size:22px}
+  #screen-menu .button-mark {font-size:23px}
+}
+@media(max-width:370px) {
+  #screen-menu .trade-wordmark-hero {font-size:clamp(32px,9.7vw,38px)}
+}
+@media(max-height:690px) and (min-width:781px) {
+  #screen-menu .brand-lockup-large {margin-bottom:28px}
+  #screen-menu .trade-wordmark-hero {font-size:clamp(50px,5.5vw,76px)}
+  #screen-menu .action-btn {min-height:57px}
+}
+
+/* Optional, functional menu display settings. */
+#screen-menu.menu-no-showroom {background-image:linear-gradient(145deg,#1e2226,#08090b 65%,#292213)}
+#screen-menu.menu-no-motion *,
+#screen-menu.menu-no-motion *::before,
+#screen-menu.menu-no-motion *::after {animation:none!important;transition:none!important}
+#screen-menu .menu-visually-hidden {position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#screen-menu .menu-setting-row {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;font:700 11px/1.2 var(--mono);color:#ebe0cb}
+#screen-menu .menu-setting-row + .menu-setting-row {border-top:1px solid #5d5544}
+#screen-menu .menu-setting-row button {min-width:60px;padding:6px 10px;border-radius:4px;background:#d4b076;color:#11161a;border:1px solid #e9c88f;font:800 11px/1 var(--mono)}
