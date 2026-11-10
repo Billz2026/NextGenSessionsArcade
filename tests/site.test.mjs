@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, statSync } from 'node:fs';
 import vm from 'node:vm';
 
 const root = new URL('../', import.meta.url);
@@ -209,4 +209,14 @@ test('settings display controls operate and persist separately from career', () 
   const revisited = browser(saved);
   assert.equal(revisited.nodes.get('menu-setting-bg').textContent, 'OFF');
   assert.equal(revisited.nodes.get('menu-setting-motion').textContent, 'OFF');
+});
+
+test('homepage uses a sharp full-resolution showroom background and matched silver title treatment', () => {
+  const background = new URL('assets/showroom-home-bg.webp', root);
+  assert.ok(existsSync(background));
+  assert.ok(statSync(background).size > 250_000, 'Avoid the prior highly compressed 36 KB background');
+  assert.match(css, /\.trade-wordmark-hero \.trade-the,\s*#screen-menu \.trade-wordmark-hero \.trade-motor/);
+  assert.match(css, /linear-gradient\(180deg,#fff 1%,#eff1f2/);
+  assert.match(html, /nextgen-header-wordmark-2026\.webp/);
+  assert.doesNotMatch(html, /class="[^"]*trade-the[^"]*badge/);
 });
