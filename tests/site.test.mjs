@@ -220,3 +220,15 @@ test('homepage uses a sharp full-resolution showroom background and matched silv
   assert.match(html, /nextgen-header-wordmark-2026\.webp/);
   assert.doesNotMatch(html, /class="[^"]*trade-the[^"]*badge/);
 });
+
+test('metallic title has unclipped glyph boxes in Chromium', () => {
+  const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
+  const spanStyles = css.match(/#screen-menu \.trade-wordmark-hero span \{([\s\S]*?)\}/)?.[1] ?? '';
+  assert.match(titleStyles, /line-height:1\.15/);
+  assert.match(titleStyles, /padding:\.06em \.05em \.11em/);
+  assert.match(titleStyles, /overflow:visible/);
+  assert.match(spanStyles, /display:inline-block/);
+  assert.match(spanStyles, /padding:\.05em 0 \.09em/);
+  assert.match(html, /styles\.css\?v=7/);
+  assert.match(html, /assets\/nextgen-header-wordmark-2026\.webp/);
+});
