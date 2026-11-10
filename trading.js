@@ -130,16 +130,19 @@
     state.stock = state.vehicles.length;
     return v;
   }
-  function canBuy(state, cost) {
+  function canBuy(state, cost, preparation) {
     if (state.vehicles.length >= state.capacity) return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
-    if (cost > state.cash) return fail('cash','Not enough available cash, including buying fees. Preserve working capital.');
+    // The first career has no lending or trade disposal. Reserve essential prep
+    // at acquisition so an overbid cannot leave a vehicle permanently unsellable.
+    if (cost + preparation > state.cash)
+      return fail('cash','Not enough cash to buy this car and reserve its required preparation cost.');
     return null;
   }
   function acquireAuction(state, id, bid) {
     const lot = market(state.day).auctions.find(v => v.id === id);
     if (!lot) return fail('expired','This auction lot is no longer available today.');
     if (!integer(bid) || bid < lot.guide || bid > 100000) return fail('bid','Bid at least the displayed guide with a valid whole-pound amount.');
-    const blocked = canBuy(state,bid + lot.fee);
+    const blocked = canBuy(state,bid + lot.fee,lot.prep);
     if (blocked) return blocked;
     if (state.vehicles.some(v => v.origin === lot.id)) return fail('owned','This lot is already on your forecourt.');
     if (bid < Math.max(lot.rival,lot.reserve))
@@ -153,7 +156,7 @@
     if (!car) return fail('expired','That private seller is no longer available today.');
     if (!integer(offer) || offer < 100 || offer > car.ask)
       return fail('offer','Offer a valid whole-pound amount no higher than the asking price.');
-    const blocked = canBuy(state,offer);
+    const blocked = canBuy(state,offer,car.prep);
     if (blocked) return blocked;
     if (state.vehicles.some(v => v.origin === car.id)) return fail('owned','This seller’s car is already yours.');
     if (offer < car.floor) return fail('rejected','The owner rejected your offer. They may accept a stronger price.');
