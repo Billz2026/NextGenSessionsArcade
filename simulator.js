@@ -209,7 +209,8 @@
     const {auctions,sellers} = E.market(career.day);
     const full = career.vehicles.length >= career.capacity;
     const auctionsHtml = auctions.map(lot => {
-      const blocked = full || career.cash < lot.guide + lot.fee ||
+      const pendingPrep = career.vehicles.filter(v => v.status === 'acquired').reduce((n,v) => n + v.prepBudget, 0);
+      const blocked = full || career.cash < lot.guide + lot.fee + lot.prep + pendingPrep ||
         career.vehicles.some(v => v.origin === lot.id);
       return '<article class="trade-card">' + cardHeader(lot, 'AUCTION / ' + lot.id) +
         '<div class="trade-pricing"><div><small>GUIDE BID</small><strong>' + cashText(lot.guide) +
