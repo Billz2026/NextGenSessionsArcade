@@ -4,6 +4,21 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## v0.8 Workshop Operations & Vehicle Lifecycle
+
+**Vehicle preparation is no longer instantaneous.** Every newly acquired auction, private-seller or part-exchange car enters Vehicle Stock as unassessed and occupies a forecourt space. Open **Workshop** to authorise a paid assessment, review the individual repair budget, and book either:
+
+- **In-house work** — requires an available employed Prep Technician. Their skills reduce some labour costs; one car can occupy the technician at a time. Work pauses if the assigned technician is unavailable or payroll is unpaid. The dealership can transfer a stuck job to an external garage for a further £125.
+- **Outsourced garage** — no employee needed, accepts up to two jobs concurrently, incurs an illustrative uplift for the supplier's labour, parts handling and profit. Actual completion time depends on work complexity and deterministic parts-delay allowances.
+
+Repair bookings charge cash **when authorised**, then progress once per *game day*, not per Deal Day session. Repair duration is a fictional estimate based on car condition, diagnosed repairs, technician efficiency and parts availability. Once work is complete, a **final quality check** must be performed. A proportion of cars need paid rectification and one extra repair day; it is possible for the final repair cost to exceed the original estimate. The car cannot be advertised or sold before passing quality control.
+
+**Financial integrity:** Assessment cash is added to the vehicle's acquisition basis; repair booking, outsourcing and rework are counted in the actual preparation cost, recognised as vehicle cost on completion. Money reserved for other unprepared vehicles is protected. Workshop charges are tracked in the ledger and monthly management reports; cash tied up in unfinished jobs is included in stock working capital. Hiring a mechanic is not automatically the best option for a two-space dealership.
+
+**Save compatibility:** Existing v1–v6 careers migrate to schema v7 without altering historic cash, acquired stock, recorded sales, margins, archived monthly reports or employee records. Previously prepared and advertised stock remains immediately usable; previously acquired but unprepared cars start at the new assessment stage. The original homepage, NextGen Sessions logo, Motor Trade SVG and showroom background remain untouched.
+
+**Limitations:** The system models elapsed game days rather than actual technician hours, parts purchase orders, trade disposal, live repair quotes, VAT and legal roadworthiness certification. A passed fictional quality check is not a legal MOT or a guarantee of safety. Repair market figures are illustrative, not verified UK garage prices.
+
 ## Deal Day Realism Update (v0.7.1)
 
 Deal Day is no longer a guaranteed bargain event. Each 30-day operating month receives a distinct, persistent fictional trading climate. Low-footfall months can produce empty private-seller sessions and no interested retail customers, while busy months generally create more opportunities. Realistic deal acceptance and part-exchanges vary by individual customer; the business can still make poor deals or miss targets. The Deal Day and monthly report screens distinguish *potential leads* from *completed sales*. No auction trade is permitted on month-end days. The save schema remains v6, so existing v0.7 careers continue unchanged.
@@ -140,6 +155,8 @@ Customers are currently deterministic examples rather than a fully simulated mar
 - `monthly-view.js` — responsive monthly report cards, staff scorecards and financial breakdown.
 - `people-view.js` — responsive personnel and reputation management UI.
 - `vehicle-intel.js` — stable fictional vehicle profile generation, repair forecasts and appraisal arithmetic.
+- `workshop.js` — timed vehicle assessment, repair sourcing, capacity, financial commitment and final QC.
+- `workshop-view.js` — responsive repair board with quote comparisons, queue progress and status.
 - `vehicle-view.js` — inline report UI for buying and stock.
 - `trading.js` — deterministic financial and vehicle transaction engine; save migration/validation.
 - `simulator.js` — game navigation, inbox, calendar, market rendering and save integration.
@@ -159,6 +176,8 @@ node --check monthly.js
 node --check monthly-view.js
 node --check events.js
 node --check events-view.js
+node --check workshop.js
+node --check workshop-view.js
 node --check trading.js
 node --check simulator.js
 node --test tests/site.test.mjs
