@@ -3,8 +3,11 @@
  * The Motor Trade v0.9 — customer journey.
  * Fictional enquiries are reproducible for a vehicle, dealer and game date.
  * Enquiries, appointments, test drives and signed offers are distinct steps.
- * Deposits are held in a separate virtual customer-holding balance; they
- * never enter trading cash and are fully returned on cancellation.
+ * Deposits are held in a separate virtual customer-holding account.
+ * At delivery only the remaining customer balance is paid; any deposit is
+ * transferred into business cash without double counting. A buyer's change
+ * of mind can result in fair retention for actual extra costs recorded by
+ * the simulation; dealer fault and legacy refundable terms return all.
  */
 (() => {
   const D=window.MotorTradeEvents;
@@ -32,6 +35,20 @@
   ].join('|');
   const heldDeposits=state=>Object.values(state.customerCases??{})
     .reduce((n,c)=>n+(c.held||0),0);
+  function funds(state,c,type,delta){
+    (state.customerFunds??=[]).push({day:state.day,vehicleId:c.vehicleId,
+      leadId:c.id,type,delta});
+    if(state.customerFunds.length>4000)state.customerFunds.shift();
+  }
+  function customerPrep(state,c){
+    // Simulated customer-specific valet, collection inspection, holding
+    // paperwork and re-advertising administration: costs actually charged
+    // to the business, not a fictitious automatic right to keep a deposit.
+    return Math.min(250,75+25*(hash('delivery-work|'+c.id)%8));
+  }
+  function balanceDue(c){
+    return c?Math.max(0,(c.price||0)-(c.allowance||0)-(c.held||0)):0;
+  }
   function append(state,caseObj,type,detail=''){
     state.customerHistory.push({day:state.day,vehicleId:caseObj.vehicleId,
       leadId:caseObj.id,type,detail:detail.slice(0,120)});
@@ -73,7 +90,7 @@
       status:walkIn?'arrived':'enquiry',preferredMode:preferPX?'part-ex':'cash',
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
       collectionDay:null,held:0,counters:0,reason:'',
-      exchange:null
+      terms:'in-person',prepCost:0,exchange:null
     };
     state.customerCases[String(id)]=c;
     vehicle.cashOffer=null;
@@ -154,32 +171,66 @@
     append(state,c,'agreement',mode);
     return ok('Agreement reached with '+c.name+' for £'+price+
       (mode==='part-ex'?' including a £'+allowance+' part-exchange allowance.':'.')+
-      ' Complete handover today or take a fully refundable £250 reservation deposit for later collection.');
+      ' Complete handover today or take a £250 reservation deposit under clear cancellation terms for later collection.');
   }
   function deposit(state,id){
     const c=caseFor(state,id);
     if(!c||c.status!=='agreed')return fail('stage','Agree the sale before taking a reservation deposit.');
+    const expense=customerPrep(state,c);
+    const reserved=window.MotorTradeWorkshop?.reserved(state)??0;
+    if(state.cash-expense<reserved)
+      return fail('cash','Insufficient unreserved dealership cash for the '+expense+
+        ' customer-specific collection preparation cost. Do not accept a reservation you cannot service.');
+    // The customer pays £250 into a virtual segregated account; that money
+    // is not spendable business cash and is not a vehicle sale.
     c.held=250;
+    c.terms='in-person';
+    c.prepCost=expense;
     c.collectionDay=state.day+1+(hash('collection|'+c.id)%2);
     c.status='reserved';
-    append(state,c,'deposit','£250 held separately until collection or refund');
-    return ok('£250 reservation deposit held separately for '+c.name+
-      '. Collection booked for day '+c.collectionDay+
-      '. This is not trading income and is fully refundable if the deal is cancelled.');
+    funds(state,c,'received',250);
+    state.cash-=expense;
+    state.ledger.push({day:state.day,delta:-expense,
+      note:'Customer-specific collection preparation: '+c.name+' / stock '+id});
+    append(state,c,'deposit','£250 received into separate holding; customer-specific work £'+expense);
+    return ok('£250 deposit taken and held separately for '+c.name+
+      '. Collection day '+c.collectionDay+'. Customer owes '+balanceDue(c)+
+      ' at handover. You paid £'+expense+' in customer-specific preparation. '+
+      'If the customer withdraws, retention is limited to demonstrable direct costs; dealer-fault cancellations receive a full refund.');
   }
-  function cancel(state,id){
+  function settle(state,c,reason='buyer'){
+    const held=c.held||0;
+    if(!held)return {retained:0,refunded:0};
+    // Old v0.9 customers agreed to unconditional refunds; honour them.
+    const retained=reason==='buyer'&&c.terms==='in-person'?
+      Math.min(held,c.prepCost||0):0;
+    const refunded=held-retained;
+    if(refunded)funds(state,c,'refunded',-refunded);
+    if(retained){
+      funds(state,c,'retained',-retained);
+      state.cash+=retained;
+      state.ledger.push({day:state.day,delta:retained,
+        note:'Fair cancellation cost recovery: '+c.name+' / stock '+c.vehicleId});
+    }
+    c.held=0;
+    return {retained,refunded};
+  }
+  function cancel(state,id,reason='buyer'){
     const c=caseFor(state,id);
     if(!c||!['enquiry','booked','arrived','discussing','agreed','reserved','collectable'].includes(c.status))
       return fail('stage','No open customer arrangement can be cancelled.');
-    const refunded=c.held;
+    if(!['buyer','dealer'].includes(reason))return fail('reason','Invalid cancellation reason.');
+    const amounts=settle(state,c,reason);
     c.status='lost';
-    c.held=0;
-    c.reason='Customer or dealership cancelled the arrangement.';
-    append(state,c,refunded?'deposit-refunded':'cancelled',
-      refunded?'£250 returned from segregated holding funds':'No deposit held');
-    return ok('Customer arrangement cancelled.'+
-      (refunded?' £250 deposit fully refunded from customer holding funds.':
-       ' No money was collected.'));
+    c.reason=reason==='buyer'?'Customer withdrew from the purchase.':
+      'Dealership cancelled and refunded all remaining customer funds.';
+    append(state,c,amounts.refunded?'deposit-refunded':'cancelled',
+      'Customer deposit: £'+amounts.retained+' retained against recorded costs; £'+
+      amounts.refunded+' refunded.');
+    if(amounts.retained)append(state,c,'deposit-retained',
+      'Direct costs recovered: £'+amounts.retained);
+    return ok(c.reason+(amounts.refunded?' £'+amounts.refunded+' refunded.':'')+
+      (amounts.retained?' £'+amounts.retained+' retained against recorded customer-specific costs.':''));
   }
   function ready(state,id){
     const c=caseFor(state,id);
@@ -189,18 +240,26 @@
   function complete(state,id){
     const c=caseFor(state,id);
     if(!ready(state,id))return fail('stage','A test drive, agreed terms and an eligible handover are required.');
+    const appliedDeposit=c.held||0;
+    if(appliedDeposit){
+      funds(state,c,'applied',-appliedDeposit);
+      c.held=0;
+    }
     append(state,c,'sale',c.preferredMode);
     delete state.customerCases[String(id)];
-    return ok(c.held?'Deposit applied on handover and sale completed.':
-      'Customer collected the vehicle and the sale completed.');
+    return {ok:true,changed:true,appliedDeposit,message:appliedDeposit?
+      'Deposit transferred from holding account; balance paid at handover.':
+      'Customer collected the vehicle and the sale completed.'};
   }
   function failCase(state,c,type,reason){
-    const refunded=c.held;
-    c.held=0;
+    const money=settle(state,c,'buyer');
     c.status='lost';
     c.reason=reason;
-    append(state,c,type,reason+(refunded?' £250 fully refunded from held customer funds.':''));
-    return reason+(refunded?' The £250 reservation deposit was refunded.':'');
+    append(state,c,type,reason);
+    if(money.refunded)append(state,c,'deposit-refunded','£'+money.refunded+' returned');
+    if(money.retained)append(state,c,'deposit-retained','£'+money.retained+' direct costs recovered');
+    return reason+(money.retained?' £'+money.retained+' of the deposit retained against costs.':'')+
+      (money.refunded?' £'+money.refunded+' refunded.':'');
   }
   function advanceDay(state){
     const notices=[];
@@ -255,12 +314,15 @@
       testDrives:n('test-drive-pass')+n('test-drive-reject'),
       declinedTestDrives:n('test-drive-reject'),
       agreements:n('agreement'),deposits:n('deposit'),
-      refunds:n('deposit-refunded'),completedSales:n('sale'),
+      refunds:n('deposit-refunded'),retainedDeposits:n('deposit-retained'),
+      retainedAmount:state.customerFunds?.filter(x=>x.type==='retained'&&
+        x.day>=startDay&&x.day<=endDay).reduce((n,x)=>n-x.delta,0)||0,
+      completedSales:n('sale'),
       counterRejections:n('counter-rejected')};
   }
   function valid(state,saved){
     if(saved.version<8){
-      state.customerCases={};state.customerHistory=[];
+      state.customerCases={};state.customerHistory=[];state.customerFunds=[];
       return true;
     }
     const cases=saved.customerCases,history=saved.customerHistory;
@@ -301,13 +363,34 @@
       typeof h.leadId==='string'&&h.leadId.length<=50&&
       types.includes(h.type)&&typeof h.detail==='string'&&h.detail.length<=120))
       return false;
+    const existingFunds=saved.version>=9?saved.customerFunds:
+      Object.values(cases).filter(c=>c.held>0).map(c=>({
+        day:c.agreedDay??c.createdDay,vehicleId:c.vehicleId,
+        leadId:c.id,type:'received',delta:c.held
+      }));
+    if(!Array.isArray(existingFunds)||existingFunds.length>4000)return false;
+    const typesOfFunds=['received','refunded','retained','applied'];
+    if(!existingFunds.every(v=>v&&no(v.day,36500)&&v.day>=1&&v.day<=state.day&&
+      no(v.vehicleId,100000)&&v.vehicleId>0&&
+      typeof v.leadId==='string'&&v.leadId.length<70&&
+      typesOfFunds.includes(v.type)&&ints(v.delta)&&
+      (v.type==='received'?v.delta===250:v.delta<0&&v.delta>=-250)))return false;
+    if(existingFunds.reduce((n,x)=>n+x.delta,0)!==Object.values(cases)
+      .reduce((n,c)=>n+(c.held||0),0))return false;
+    if(saved.version>=9&&!Object.values(cases).every(c=>
+      ['in-person','legacy-refundable'].includes(c.terms)&&
+      no(c.prepCost,250)&&
+      (c.held===0||c.terms==='legacy-refundable'||c.prepCost>=75)))return false;
     state.customerCases=Object.fromEntries(Object.entries(cases).map(([key,c])=>
-      [key,{...c,exchange:c.exchange?{...c.exchange}:null}]));
+      [key,{...c,terms:saved.version>=9?c.terms:'legacy-refundable',
+        prepCost:saved.version>=9?c.prepCost:0,
+        exchange:c.exchange?{...c.exchange}:null}]));
     state.customerHistory=history.map(h=>({...h}));
+    state.customerFunds=existingFunds.map(v=>({...v}));
     return true;
   }
   window.MotorTradeCustomers=Object.freeze({
     caseFor,demand,open,book,testDrive,negotiate,agree,deposit,cancel,
-    ready,complete,advanceDay,nextSession,stats,valid,heldDeposits
+    ready,complete,advanceDay,nextSession,stats,valid,heldDeposits,balanceDue,customerPrep
   });
 })();
