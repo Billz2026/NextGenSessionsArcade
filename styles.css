@@ -251,3 +251,26 @@
 .trade-sales-grid{padding:0}.trade-sales-grid .trade-card{grid-column:1/-1}
 @media(max-width:900px){.trade-card-grid{grid-template-columns:1fr}.trade-finance-grid{grid-template-columns:1fr 1fr}.trade-buyer-modes{grid-template-columns:1fr 1fr}}
 @media(max-width:540px){.trade-card-grid{padding:10px;gap:9px}.trade-stock-grid,.trade-sales-grid{padding:0}.trade-finance-grid{grid-template-columns:1fr}.trade-pricing strong{font-size:20px}.trade-buyer-modes{grid-template-columns:1fr}.trade-card-top{padding:12px}.trade-buyer-modes>div{padding:11px}.trade-ledger-row{grid-template-columns:51px minmax(0,1fr) auto;gap:6px;font-size:10px}}
+
+/* Visible trading results, including when the user is scrolled down the catalogue. */
+.trade-feedback-toast{position:fixed;right:clamp(12px,2.6vw,36px);bottom:clamp(12px,2vw,28px);z-index:60;
+  display:block;max-width:min(510px,calc(100vw - 24px));padding:15px 44px 15px 17px;
+  border:1px solid #b79a6c;border-left:4px solid #ecbc73;border-radius:8px;
+  box-shadow:0 16px 46px #000b;background:#162b34;color:#fcf4e7;text-align:left;
+  font:600 13px/1.5 var(--body);cursor:pointer}
+.trade-feedback-toast::after{content:"×";position:absolute;top:9px;right:13px;font-size:22px;color:#e7d2a7}
+.trade-feedback-toast-warning{border-left-color:#e1b36e}
+.trade-feedback-toast-success{border-left-color:#89d7b3}
+.trade-feedback-toast[hidden]{display:none!important}
+.trade-inline-feedback{padding:9px 11px;border-left:3px solid #a9b4bd;border-radius:3px;
+ background:#233c47;color:#e7e8df;font:600 11px/1.5 var(--body)}
+.trade-feedback-counter{border-left-color:#e9bf77;background:#2c3939}
+.trade-feedback-warning{border-left-color:#dda679;background:#3e302b}
+.trade-feedback-success{border-left-color:#81d5ad;background:#1d3b35}
+.trade-purchase-warning{padding:8px 11px;border:1px solid #8b6950;border-radius:4px;
+ color:#ffd3ac;background:#493326;font:700 10px/1.5 var(--body)}
+.trade-offer-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.trade-offer-buttons .trade-button{flex:1;min-width:140px}
+.trade-button-outline{background:#15242e;color:#e7dac2;border:1px solid #6a7880}
+.trade-button-outline:hover{background:#2a3942}
+@media(max-width:570px){.trade-feedback-toast{max-width:calc(100vw - 24px);font-size:12px}.trade-offer-buttons .trade-button{min-width:100px}}
