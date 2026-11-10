@@ -1,13 +1,15 @@
 'use strict';
 /*
- * The Motor Trade — career foundation.
- * Local-only, single-slot career save. No actual auctions, transactions,
- * repair estimates, customer negotiation or profit/tax calculations yet.
+ * The Motor Trade — first playable multi-source trading career.
+ * All market prices, buyer behaviour and stock are fictional; game only.
+ * Single-slot career save with backward-compatible foundation migration.
  */
 (() => {
+  const E = window.MotorTradeEngine;
+  if (!E) throw new Error('Trading engine must load before simulator.js');
   const STORAGE_KEY = 'the-motor-trade-career-v1';
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
-  const SAVE_VERSION = 1;
+  const SAVE_VERSION = E.VERSION;
   const STARTING_CASH = 12500;
   const CAPACITY = 2;
   const START_DATE_UTC = Date.UTC(2026, 10, 9);
@@ -16,7 +18,7 @@
   const PAGES = Object.freeze({
     dashboard: 'DASHBOARD',
     inbox: 'INBOX',
-    auctions: 'AUCTION DESK',
+    auctions: 'BUYING DESK',
     stock: 'VEHICLE STOCK',
     sales: 'SALES OFFICE',
     finance: 'FINANCES',
@@ -45,36 +47,36 @@
   }
   function welcomeMessages() {
     return [
-      makeMessage(1, 1, 'BUSINESS SUPPORT', 'Welcome to the motor trade',
-        'Your independent dealership career starts today.',
-        'Welcome to your new dealership.\n\nYou are starting as an independent trader with £12,500 in available cash and space for two vehicles. Protect your capital: every purchase will eventually have fees, preparation costs and the risk of holding stock.\n\nFor now, get familiar with your dashboard, inbox and management screens. The full trading engine is still being developed.',
-        'business'),
-      makeMessage(2, 1, 'AUCTION DESK', 'Your first vehicle report is ready',
-        'Review a sample auction lot before you buy.',
-        'A fictional 2016 Ford Focus Zetec has been prepared as your first training report.\n\nCheck the condition notes carefully. An auction grade is only a guide; unexpected repairs can turn a promising purchase into a loss.\n\nThis release does not accept bids or deduct money. Open the Auction Desk to see the sample vehicle.',
+      makeMessage(1,1,'BUSINESS SUPPORT','Welcome to the motor trade',
+        'Run your first dealership, with £12,500 in capital.',
+        'Your dealership starts with £12,500 in cash and two spaces on your forecourt. Visit the Buying Desk to view auction lots and customers who want to sell their cars directly.\n\nA car needs paid preparation before it can be advertised. Once listed, customers will bring cash offers or propose a part-exchange. A part-exchange becomes your next vehicle in stock.',
         'auctions'),
-      makeMessage(3, 1, 'ACCOUNTS OFFICE', 'Your opening balance: £12,500',
-        'Cash flow matters more than the headline margin.',
-        'Your opening balance is £12,500.\n\nThere are currently no purchases, sales, repairs or overhead charges. When trading gameplay arrives, the accounts will distinguish available cash from stock value, gross spread, expenses and realised profit.\n\nDo not mistake a profitable asking price for cash in the bank.',
+      makeMessage(2,1,'BUYING DESK','Three ways to find your next car',
+        'Auctions, direct sellers and part-exchanges all supply vehicles.',
+        'Auctions have competing traders and buyer fees. Direct sellers can reject low offers. Part-exchanges happen when you sell one of your advertised cars and agree an allowance for the customer\'s existing vehicle.\n\nEvery route affects your cash and stock differently. Your first market opportunities are waiting.',
+        'auctions'),
+      makeMessage(3,1,'ACCOUNTS OFFICE','Protect your opening £12,500',
+        'Gross margin is different from cash flow.',
+        'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. Gross trade margin currently excludes VAT, tax, business overheads, finance and after-sale consumer claims.',
         'finance')
     ];
   }
   const scheduledMessages = Object.freeze({
-    2: () => makeMessage(4, 2, 'AUCTION DESK', 'Research before raising your hand',
-      'Inspect the demo report and identify the risks.',
-      'You have reached the second day of your career.\n\nThe Auction Desk contains a sample vehicle, including grade, mileage and condition issues. Real bidding, rival traders and auction invoices are next on the development roadmap.\n\nNo live or simulated auction has taken place, and your cash has not changed.',
+    2: () => makeMessage(4,2,'BUYING DESK','Today\'s stock opportunities have refreshed',
+      'New auction lots and private sellers are on the market.',
+      'Each new day brings a refreshed set of fictional auction and direct-sale opportunities. Look at total acquisition cost and your preparation budget before agreeing a deal.',
       'auctions'),
-    3: () => makeMessage(5, 3, 'DEALERSHIP ADVISER', 'A good trader knows when to walk away',
-      'Your first decisions should protect working capital.',
-      'A dealer can go out of business while owning valuable stock if the cash runs out.\n\nIn the complete simulation you will need to balance auction fees, transport, VAT treatment, repair surprises, advertising and stock age. The best bid is sometimes no bid at all.\n\nReview the Finance screen to see your current opening balance.',
+    3: () => makeMessage(5,3,'SALES ADVISER','Cash sale or part-exchange?',
+      'Both deals can move your stock, but they affect your cash differently.',
+      'A cash customer pays the agreed sale price. A part-exchange customer brings a car and pays only the balance after their agreed allowance. You own that incoming car and must prepare it before advertising it.',
+      'sales'),
+    5: () => makeMessage(6,5,'ACCOUNTS OFFICE','Review your trading margins',
+      'Check the ledger for purchases, costs and completed sales.',
+      'Your ledger separates auction fees, purchases, preparation bills, cash receipts and part-exchange allowances. Gross trade margin is only an initial game measure and is not net accounting profit.',
       'finance'),
-    5: () => makeMessage(6, 5, 'ACCOUNTS OFFICE', 'First-week cash check',
-      'The opening capital remains available.',
-      'Your dealership has not completed a purchase or sale.\n\nFor this foundation version, advancing the calendar does not create fictional profits, daily costs or customers. The business ledger will become transactional when auction and sales systems are released.',
-      'finance'),
-    7: () => makeMessage(7, 7, 'BUSINESS SUPPORT', 'Your first week in the trade',
-      'The management office is ready for the next stage.',
-      'You have reached the end of your first in-game week.\n\nYour dashboard, mail, calendar and local career save are operational. Vehicle acquisition and customer negotiation are the next major systems to build.\n\nKeep this career if you want to continue with the same dealership name in future compatible releases.',
+    7: () => makeMessage(7,7,'BUSINESS SUPPORT','Your first week as a trader',
+      'Review sales, stock age and cash reserves.',
+      'Buying cheap is not enough. The best dealers keep vehicles moving, avoid tying up too much cash and know when to walk away from a risky deal. More management systems will follow this playable trading foundation.',
       'business')
   });
 
@@ -97,31 +99,8 @@
     try { raw = localStorage.getItem(STORAGE_KEY); }
     catch (_) { storageAvailable = false; return null; }
     if (!raw) return null;
-    try {
-      const saved = JSON.parse(raw);
-      if (!saved || saved.version !== SAVE_VERSION ||
-          typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
-          saved.name.trim().length > 36 ||
-          !Number.isInteger(saved.day) || saved.day < 1 || saved.day > MAX_DAY ||
-          saved.cash !== STARTING_CASH || saved.capacity !== CAPACITY ||
-          !Array.isArray(saved.messages)) return null;
-      const validMessages = saved.messages.every(m =>
-        m && Number.isInteger(m.id) && Number.isInteger(m.day) &&
-        typeof m.from === 'string' && typeof m.subject === 'string' &&
-        typeof m.preview === 'string' && typeof m.body === 'string' &&
-        typeof m.read === 'boolean' &&
-        (m.linkPage === null || Object.prototype.hasOwnProperty.call(PAGES, m.linkPage)));
-      if (!validMessages) return null;
-      return {
-        version: SAVE_VERSION, name: saved.name.trim(), day: saved.day,
-        cash: STARTING_CASH, capacity: CAPACITY,
-        stock: 0, sales: 0, reputation: 'NEWCOMER',
-        messages: saved.messages.map(m => ({
-          id: m.id, day: m.day, from: m.from, subject: m.subject,
-          preview: m.preview, body: m.body, linkPage: m.linkPage, read: m.read
-        }))
-      };
-    } catch (_) { return null; }
+    try { return E.normalize(JSON.parse(raw)); }
+    catch (_) { return null; }
   }
   function persistCareer() {
     if (!career) return false;
@@ -200,6 +179,149 @@
       detail.appendChild(action);
     }
   }
+  const cashText = n => money.format(n);
+  const milesText = n => new Intl.NumberFormat('en-GB').format(n) + ' mi';
+  function inputNumber(id, fallback) {
+    const field = byId(id);
+    if (!field || field.value.trim() === '') return NaN;
+    const value = Number(field.value);
+    return Number.isSafeInteger(value) ? value : NaN;
+  }
+  function saveResult(result) {
+    eventNotice = result.message;
+    if (result.ok) persistCareer();
+    render();
+  }
+  function details(vehicle) {
+    return '<div class="trade-card-details">' +
+      '<span>' + milesText(vehicle.miles) + '</span>' +
+      '<span>' + escapeText(vehicle.fuel) + '</span>' +
+      '<span>' + escapeText(vehicle.gearbox) + '</span>' +
+      '<span>History: ' + escapeText(vehicle.history) + '</span></div>';
+  }
+  function cardHeader(car, source) {
+    return '<div class="trade-card-top"><div><span class="trade-card-kicker">' + escapeText(source) +
+      '</span><h3>' + escapeText(car.title) + '</h3></div>' +
+      '<span class="trade-source">' + (car.grade ? 'GRADE ' + escapeText(car.grade) : 'USED CAR') + '</span></div>' +
+      details(car) + '<p class="trade-card-note">' + escapeText(car.note) + '</p>';
+  }
+  function renderMarket() {
+    const {auctions,sellers} = E.market(career.day);
+    const full = career.vehicles.length >= career.capacity;
+    const auctionsHtml = auctions.map(lot => {
+      const pendingPrep = career.vehicles.filter(v => v.status === 'acquired').reduce((n,v) => n + v.prepBudget, 0);
+      const blocked = full || career.cash < lot.guide + lot.fee + lot.prep + pendingPrep ||
+        career.vehicles.some(v => v.origin === lot.id);
+      return '<article class="trade-card">' + cardHeader(lot, 'AUCTION / ' + lot.id) +
+        '<div class="trade-pricing"><div><small>GUIDE BID</small><strong>' + cashText(lot.guide) +
+        '</strong></div><div><small>BUYER FEE</small><strong>' + cashText(lot.fee) +
+        '</strong></div><div><small>EST. RETAIL</small><strong>' + cashText(lot.retail) +
+        '</strong></div><div><small>EST. PREP</small><strong>' + cashText(lot.prep) +
+        '</strong></div></div><div class="trade-actions"><span class="trade-extra">Rival traders bid against you. Winning cost is your bid plus the displayed fee.</span>' +
+        '<div class="trade-action-row"><label>YOUR MAXIMUM BID (£)<input class="trade-input" type="number" inputmode="numeric" min="' + lot.guide +
+        '" max="100000" step="25" id="auction-bid-' + lot.id + '" value="' + (lot.guide + 250) + '"></label>' +
+        '<button type="button" class="trade-button" data-action="bid-auction" data-id="' + lot.id +
+        '"' + (blocked ? ' disabled' : '') + '>PLACE BID</button></div></div></article>';
+    }).join('');
+    const sellersHtml = sellers.map(car => {
+      const blocked = full || career.cash < 100 ||
+        career.vehicles.some(v => v.origin === car.id);
+      return '<article class="trade-card">' + cardHeader(car,'DIRECT SELLER / ' + car.id) +
+        '<div class="trade-pricing"><div><small>OWNER ASKS</small><strong>' + cashText(car.ask) +
+        '</strong></div><div><small>EST. RETAIL</small><strong>' + cashText(car.retail) +
+        '</strong></div><div><small>EST. PREP</small><strong>' + cashText(car.prep) +
+        '</strong></div><div><small>BUYER FEE</small><strong>£0</strong></div></div>' +
+        '<div class="trade-actions"><span class="trade-extra">Private seller may reject low offers. Check preparation and market value.</span>' +
+        '<div class="trade-action-row"><label>YOUR OFFER (£)<input class="trade-input" type="number" inputmode="numeric" min="100" max="' + car.ask +
+        '" step="25" id="seller-offer-' + car.id + '" value="' + car.ask + '"></label>' +
+        '<button type="button" class="trade-button" data-action="buy-seller" data-id="' + car.id +
+        '"' + (blocked ? ' disabled' : '') + '>MAKE OFFER</button></div></div></article>';
+    }).join('');
+    byId('market-auctions').innerHTML = auctionsHtml;
+    byId('market-sellers').innerHTML = sellersHtml;
+  }
+  function renderStock() {
+    const container = byId('stock-list');
+    if (!career.vehicles.length) {
+      container.innerHTML = '<div class="trade-empty"><h2>YOUR FORECOURT IS EMPTY.</h2><p>Visit the Buying Desk to bid at an auction or negotiate with a private seller.</p></div>';
+      return;
+    }
+    container.innerHTML = career.vehicles.map(car => {
+      const status = car.status === 'acquired' ? 'NEEDS PREPARATION' :
+        car.status === 'prepared' ? 'READY TO ADVERTISE' : 'ADVERTISED';
+      const age = career.day - car.acquiredDay;
+      const totals = car.cost + car.prepSpent;
+      const action = car.status === 'acquired'
+        ? '<button class="trade-button" type="button" data-action="prepare-stock" data-id="' + car.id +
+          '"' + (career.cash < car.prepBudget ? ' disabled' : '') + '>COMPLETE PREPARATION · ' + cashText(car.prepBudget) + '</button>'
+        : '<div class="trade-action-row"><label>RETAIL ASKING PRICE (£)<input class="trade-input" id="stock-price-' + car.id +
+          '" type="number" inputmode="numeric" min="500" max="75000" step="50" value="' + (car.asking ?? car.retail) +
+          '"></label><button class="trade-button" type="button" data-action="list-stock" data-id="' + car.id +
+          '">' + (car.status === 'listed' ? 'UPDATE PRICE' : 'ADVERTISE') + '</button></div>';
+      return '<article class="trade-card">' + cardHeader(car,car.source.toUpperCase() + ' / STOCK ' + car.id) +
+        '<div class="trade-pricing"><div><small>ACQUISITION</small><strong>' + cashText(car.cost) +
+        '</strong></div><div><small>PREP SPENT</small><strong>' + cashText(car.prepSpent) +
+        '</strong></div><div><small>COST TO DATE</small><strong>' + cashText(totals) +
+        '</strong></div><div><small>EST. RETAIL</small><strong>' + cashText(car.retail) +
+        '</strong></div></div><div class="trade-actions"><span class="trade-status">' + status +
+        ' · DAY ' + car.acquiredDay + ' · ' + age + ' DAYS HELD</span>' +
+        (car.status === 'acquired' ? '<span class="trade-extra">The simulated inspection and roadworthiness preparation must be paid before retail listing.</span>' : '') +
+        action + '</div></article>';
+    }).join('');
+  }
+  function renderSales() {
+    const listed = career.vehicles.filter(car => car.status === 'listed');
+    const holder = byId('sales-list');
+    if (!listed.length) {
+      holder.innerHTML = '<div class="trade-empty"><h2>NO RETAIL ENQUIRIES YET.</h2><p>Prepare a vehicle and advertise it from Vehicle Stock to attract a buyer.</p></div>';
+      return;
+    }
+    holder.innerHTML = listed.map(car => {
+      const buyer = E.buyers(car);
+      const px = buyer.exchange;
+      return '<article class="trade-card">' + cardHeader(car, 'CUSTOMER ENQUIRY / STOCK ' + car.id) +
+        '<div class="trade-pricing"><div><small>YOUR ASKING PRICE</small><strong>' + cashText(car.asking) +
+        '</strong></div><div><small>YOUR COST + PREP</small><strong>' + cashText(car.cost + car.prepSpent) +
+        '</strong></div></div>' +
+        '<div class="trade-buyer-modes"><div><h4>CASH BUYER</h4><p>Customer offers</p><strong>' + cashText(buyer.cashOffer) +
+        '</strong><p>Negotiate another £150, or accept this price.</p>' +
+        '<div class="trade-action-row"><button class="trade-button trade-button-secondary" type="button" data-action="counter-sale" data-id="' + car.id +
+        '">COUNTER +£150</button><button class="trade-button" type="button" data-action="sell-cash" data-id="' + car.id +
+        '">ACCEPT CASH</button></div></div>' +
+        '<div><h4>PART-EXCHANGE BUYER</h4><p>Customer wants ' + cashText(buyer.pxOffer) +
+        ' for your car and offers <strong>' + escapeText(px.title) + '</strong> (' + milesText(px.miles) +
+        ') as part-exchange.</p><span class="trade-extra">Customer requests ' + cashText(px.ask) +
+        ' allowance; negotiate the valuation.</span>' +
+        '<label class="trade-extra" for="px-allowance-' + car.id + '">YOUR PART-EX ALLOWANCE (£)</label>' +
+        '<input class="trade-input" id="px-allowance-' + car.id + '" type="number" inputmode="numeric" min="0" max="' + px.ask +
+        '" step="25" value="' + px.ask + '">' +
+        '<span class="trade-extra">Estimated trade-in retail ' + cashText(px.retail) + ', prep ' + cashText(px.prep) +
+        '. The incoming car occupies the space of the sold car.</span>' +
+        '<button class="trade-button" type="button" data-action="sell-part-ex" data-id="' + car.id +
+        '">ACCEPT PART-EX DEAL</button></div></div></article>';
+    }).join('');
+  }
+  function renderLedger() {
+    const history = byId('ledger-list');
+    if (!career.ledger.length) {
+      history.innerHTML = '<div class="trade-empty">Opening capital: ' + cashText(E.STARTING_CASH) +
+        '. No trading transactions recorded yet.</div>';
+      return;
+    }
+    history.innerHTML = [...career.ledger].reverse().map(entry =>
+      '<div class="trade-ledger-row"><time>DAY ' + String(entry.day).padStart(2,'0') +
+      '</time><span>' + escapeText(entry.note) + '</span><b class="' +
+      (entry.delta < 0 ? 'trade-negative' : 'trade-positive') + '">' +
+      (entry.delta < 0 ? '−' : '+') + cashText(Math.abs(entry.delta)) + '</b></div>'
+    ).join('');
+  }
+  function renderTrading() {
+    renderMarket();
+    renderStock();
+    renderSales();
+    renderLedger();
+  }
+
   function render() {
     const menu = byId('screen-menu');
     menu.hidden = screen !== 'menu';
@@ -225,6 +347,7 @@
     bindText('cash', money.format(career.cash));
     bindText('stock', career.stock + ' / ' + career.capacity);
     bindText('stock-count', String(career.stock));
+    bindText('trade-profit', money.format(E.totalMargin(career)));
     bindText('sales', String(career.sales));
     bindText('reputation', career.reputation);
     bindText('day-label', 'DAY ' + String(career.day).padStart(2, '0'));
@@ -249,11 +372,12 @@
       ? 'Your first day in business. Review your briefing before advancing.'
       : career.day <= 7
         ? 'Day ' + career.day + ' of your career. Check the inbox for business updates.'
-        : 'Career calendar active. Future trading events will arrive with the auction and sales systems.';
+        : 'Auction lots, direct sellers and customer opportunities refresh daily. Check your stock age and cash.';
     byId('save-warning').hidden = storageAvailable;
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;
     renderInbox();
+    renderTrading();
   }
   function show(pageOrScreen) {
     if (pageOrScreen === 'menu' || pageOrScreen === 'setup') {
@@ -274,7 +398,7 @@
       career.messages.push(eventFactory());
       eventNotice = 'New inbox message received. Your game calendar has advanced by one day.';
     } else {
-      eventNotice = 'One game day completed. No buying, sales or financial transactions were simulated.';
+      eventNotice = 'One game day completed. New auction lots and private seller leads are available.';
     }
     persistCareer();
     render();
@@ -289,12 +413,7 @@
     }
     input.setCustomValidity('');
     if (career && !window.confirm('Replace your existing career? This will overwrite your saved dealership and inbox history.')) return;
-    career = {
-      version: SAVE_VERSION, name, day: 1,
-      cash: STARTING_CASH, capacity: CAPACITY,
-      stock: 0, sales: 0, reputation: 'NEWCOMER',
-      messages: welcomeMessages()
-    };
+    career = E.create(name, welcomeMessages());
     selectedMessageId = null;
     screen = 'career';
     currentPage = 'dashboard';
@@ -333,6 +452,31 @@
         break;
       case 'continue':
         advanceDay();
+        break;
+      case 'bid-auction':
+        if (career) saveResult(E.acquireAuction(career,button.dataset.id,
+          inputNumber('auction-bid-' + button.dataset.id)));
+        break;
+      case 'buy-seller':
+        if (career) saveResult(E.acquireSeller(career,button.dataset.id,
+          inputNumber('seller-offer-' + button.dataset.id)));
+        break;
+      case 'prepare-stock':
+        if (career) saveResult(E.prepare(career,Number(button.dataset.id)));
+        break;
+      case 'list-stock':
+        if (career) saveResult(E.advertise(career,Number(button.dataset.id),
+          inputNumber('stock-price-' + button.dataset.id)));
+        break;
+      case 'counter-sale':
+        if (career) saveResult(E.counter(career,Number(button.dataset.id)));
+        break;
+      case 'sell-cash':
+        if (career) saveResult(E.completeSale(career,Number(button.dataset.id),'cash',null));
+        break;
+      case 'sell-part-ex':
+        if (career) saveResult(E.completeSale(career,Number(button.dataset.id),'part-ex',
+          inputNumber('px-allowance-' + button.dataset.id)));
         break;
       case 'toggle-showroom':
         display.showroom = !display.showroom;
