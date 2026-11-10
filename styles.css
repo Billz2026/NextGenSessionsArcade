@@ -204,3 +204,13 @@
   #screen-menu .trade-wordmark-hero {font-size:clamp(50px,5.5vw,76px)}
   #screen-menu .action-btn {min-height:57px}
 }
+
+/* Optional, functional menu display settings. */
+#screen-menu.menu-no-showroom {background-image:linear-gradient(145deg,#1e2226,#08090b 65%,#292213)}
+#screen-menu.menu-no-motion *,
+#screen-menu.menu-no-motion *::before,
+#screen-menu.menu-no-motion *::after {animation:none!important;transition:none!important}
+#screen-menu .menu-visually-hidden {position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#screen-menu .menu-setting-row {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;font:700 11px/1.2 var(--mono);color:#ebe0cb}
+#screen-menu .menu-setting-row + .menu-setting-row {border-top:1px solid #5d5544}
+#screen-menu .menu-setting-row button {min-width:60px;padding:6px 10px;border-radius:4px;background:#d4b076;color:#11161a;border:1px solid #e9c88f;font:800 11px/1 var(--mono)}
