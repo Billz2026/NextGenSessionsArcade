@@ -71,6 +71,10 @@
       'Preserve enough cash to repair and advertise your first vehicles.',
       'Avoid hiring more employees than your current sales can support.'];
     const result=[];
+    if(report.dealDay?.type==='quiet'||report.dealDay?.type==='subdued')
+      result.push('Month-end customer traffic was '+report.dealDay.label.toLowerCase()+
+        ' with '+report.dealDay.sellerEnquiries+
+        ' private-seller enquiries offered. Do not assume the deadline will always rescue a missed sales target.');
     if(report.soldUnits<report.targetUnits)
       result.push('Sales volume was '+report.soldUnits+'/'+report.targetUnits+
         '. Review advertised pricing, customer conversions and whether enough cars were prepared.');
