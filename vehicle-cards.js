@@ -46,13 +46,15 @@
     const id=P.identity(car);
     const fuel=String(car.fuel||'Unverified');
     const fuelType=['Petrol','Diesel','Hybrid','Electric','Plug-in Hybrid'].includes(fuel)?fuel:'Unverified';
-    const className=fuelType.toLowerCase().replace(/[^a-z]+/g,'-');
+    const mildHybrid=/\b(?:MHEV|48V)\b/i.test(String(car.engineSpec||car.profile?.engine||''));
+    const badgeFuel=mildHybrid?(fuelType==='Diesel'?'DIESEL MILD HYBRID':'PETROL MILD HYBRID'):fuelType.toUpperCase();
+    const className=mildHybrid?'mild-hybrid':fuelType.toLowerCase().replace(/[^a-z]+/g,'-');
     return photo(car,source)+
       '<div class="vehicle-card-heading"><div><small>'+
       esc(identifier||kindText[source]||source)+'</small><h3>'+esc(car.title)+'</h3>'+
       '<p>'+esc(car.color||'Colour unverified')+' · '+esc(id.generation)+'</p>'+
       '<div class="vehicle-powertrain-row"><span class="vehicle-powertrain vehicle-powertrain-'+className+'">'+
-      esc(fuelType.toUpperCase())+'</span><span>'+esc(car.gearbox||'Gearbox unverified')+'</span></div>'+
+      esc(badgeFuel)+'</span><span>'+esc(car.gearbox||'Gearbox unverified')+'</span></div>'+
       '</div></div>'+
       '<div class="vehicle-card-statline">'+
       '<div><small>MILEAGE</small><strong>'+mileage(car.miles)+'</strong></div>'+
