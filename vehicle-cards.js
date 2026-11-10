@@ -29,9 +29,10 @@
       ' image for this generation</small></div>';
     const credit=shot?
       '<div class="vehicle-photo-credit"><a href="'+esc(P.source(shot))+
-      '" target="_blank" rel="noopener noreferrer">REAL PHOTO: '+esc(shot.author)+
-      ' · '+esc(shot.license)+'</a>'+
-      '<span>'+esc(shot.note)+'</span></div>':
+      '" target="_blank" rel="noopener noreferrer">REAL PHOTO: '+esc(shot.author)+'</a>'+
+      ' · <a href="'+esc(shot.licenseUrl)+
+      '" target="_blank" rel="noopener noreferrer">'+esc(shot.license)+'</a>'+
+      '<span>Display-cropped only · '+esc(shot.note)+'</span></div>':
       '<div class="vehicle-photo-credit"><span>No incorrect or synthetic substitute used</span></div>';
     return '<div class="vehicle-photo-block">'+
       '<div class="vehicle-photo-frame">'+shown+
