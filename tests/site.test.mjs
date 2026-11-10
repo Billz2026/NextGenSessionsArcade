@@ -10,6 +10,7 @@ const js = readFileSync(new URL('simulator.js', root), 'utf8');
 const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
 const photos = readFileSync(new URL('vehicle-photos.js', root), 'utf8');
+const marketData = readFileSync(new URL('vehicle-market.js', root), 'utf8');
 const cards = readFileSync(new URL('vehicle-cards.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
 const people = readFileSync(new URL('people.js', root), 'utf8');
@@ -54,15 +55,17 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="stock-list"/);
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
-  assert.match(html, /vehicle-intel\.js\?v=1/);
+  assert.match(html, /vehicle-intel\.js\?v=2/);
   assert.match(html, /people\.js\?v=3/);
   assert.match(html, /monthly\.js\?v=5/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=1/);
   assert.match(html, /customers\.js\?v=2/);
-  assert.match(html, /vehicle-photos\.js\?v=2/);
-  assert.match(html, /vehicle-cards\.js\?v=2/);
-  assert.match(html, /trading\.js\?v=10/);
+  assert.match(html, /vehicle-photos\.js\?v=3/);
+  assert.match(html, /vehicle-market\.js\?v=1/);
+  assert.match(html, /id="market-progression"/);
+  assert.match(html, /vehicle-cards\.js\?v=3/);
+  assert.match(html, /trading\.js\?v=11/);
   assert.match(html, /customers-view\.js\?v=2/);
   assert.match(html, /workshop-view\.js\?v=2/);
   assert.match(html, /events-view\.js\?v=3/);
@@ -83,7 +86,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.2/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.3/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -191,6 +194,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
   vm.runInNewContext(photos, context, { timeout: 1500 });
+  vm.runInNewContext(marketData, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
   vm.runInNewContext(events, context, { timeout: 1500 });
@@ -303,8 +307,91 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards };
 }
+
+test('v0.9.3 curated catalogue contains 49 correctly modelled UK vehicles',()=>{
+  const app=browser(),M=app.market,P=app.photos;
+  const all=Object.values(M.CATALOGUE).flat();
+  assert.equal(all.length,49);
+  assert.equal(new Set(all.map(x=>x.title)).size,all.length);
+  const fuels=new Set(all.map(x=>x.fuel));
+  for(const x of ['Petrol','Diesel','Hybrid','Plug-in Hybrid','Electric'])assert.ok(fuels.has(x));
+  for(const v of all){
+    const id=P.identity(v);
+    assert.notEqual(id.generation,'Unknown',v.title);
+    assert.ok(v.guide>0&&v.retail>v.guide+v.prep+v.fee,v.title);
+    assert.ok(v.engineSpec.length>2&&v.engineSpec.length<75,v.title);
+    assert.ok(id.year>=2016&&id.year<=2026,v.title);
+  }
+});
+test('v0.9.3 market tier needs both cash and reputation',()=>{
+  const {market:M,productionEngine:E}=browser();
+  assert.equal(M.tierFor(110000,5).key,'starter');
+  assert.equal(M.tierFor(12500,80).key,'starter');
+  assert.equal(M.tierFor(18500,15).key,'modern');
+  assert.equal(M.tierFor(42000,40).key,'premium');
+  assert.equal(M.tierFor(110000,65).key,'luxury');
+  assert.equal(M.tierFor(109999,100).key,'premium');
+  assert.equal(M.tierFor(1000000,64).key,'premium');
+  const get=(rep,cash)=>Array.from({length:28},(_,i)=>
+    E.market(i+1,rep,0,'Dealer',rep,cash)).flatMap(x=>[...x.auctions,...x.sellers]);
+  const starter=get(5,12500);
+  assert.ok(starter.some(x=>Number(x.title.slice(0,4))<=2018&&x.miles>90000));
+  assert.ok(starter.some(x=>Number(x.title.slice(0,4))>=2020));
+  assert.ok(starter.every(x=>x.marketTier==='starter'));
+  const modern=get(20,22000);
+  assert.ok(modern.some(x=>x.marketTier==='modern'));
+  assert.ok(modern.every(x=>['starter','modern'].includes(x.marketTier)));
+  const premium=get(45,50000);
+  assert.ok(premium.some(x=>x.marketTier==='premium'));
+  assert.ok(premium.every(x=>x.marketTier!=='luxury'));
+  const luxury=get(75,125000);
+  assert.ok(luxury.some(x=>x.marketTier==='luxury'));
+  assert.ok(luxury.some(x=>x.marketTier==='modern'));
+});
+test('v0.9.3 a purchased car cannot reroll the remaining daily catalogue',()=>{
+  const {productionEngine:E}=browser();
+  const s=E.create('Test Modern Motors',[]);
+  s.day=2;s.cash=50000;s.reputationScore=45;
+  s.monthPlan.startingReputation=45;
+  s.ledger=[{day:1,delta:37500,note:'Test prior-day cash'}];
+  const before=JSON.stringify(E.marketFor(s));
+  s.cash-=9000;s.ledger.push({day:2,delta:-9000,note:'Same-day vehicle purchase'});
+  assert.equal(JSON.stringify(E.marketFor(s)),before);
+  s.cash+=24000;s.ledger.push({day:2,delta:24000,note:'Same-day completed sale'});
+  assert.equal(JSON.stringify(E.marketFor(s)),before);
+  s.day=3;
+  assert.equal(E.marketStatus(s).current.key,'premium');
+});
+test('v0.9.3 modern photographs never cross fuel, body generation or colour',()=>{
+  const {photos:P}=browser();
+  const examples=[
+    ['2021 Honda Jazz SE e:HEV','Hybrid','White','jazz-mk4-hybrid-white'],
+    ['2021 Toyota Yaris Design Hybrid','Hybrid','Red','yaris-xp210-hybrid-red'],
+    ['2021 Vauxhall Corsa-e Elite Nav','Electric','Silver','corsa-f-electric-silver'],
+    ['2021 Peugeot e-208 Allure','Electric','Grey','peugeot-e208-p21-grey'],
+    ['2022 MG4 EV SE','Electric','White','mg4-first-white'],
+    ['2022 Tesla Model 3 RWD','Electric','White','model3-white-pre-refresh']
+  ];
+  for(const [title,fuel,color,id] of examples){
+    const generation=P.identity({title}).generation;
+    const v={title,fuel,color,generation};
+    assert.equal(P.select(v)?.id,id,title);
+    assert.equal(P.select({...v,color:'Purple'}),null);
+    assert.equal(P.select({...v,generation:'Incorrect'}),null);
+    if(fuel==='Electric')assert.equal(P.select({...v,fuel:'Diesel'}),null);
+  }
+});
+test('v0.9.3 electric and hybrid cars do not inherit diesel DPF faults',()=>{
+  const {productionEngine:E}=browser();
+  const candidates=Array.from({length:40},(_,i)=>E.market(i+1,55,0,'Powertrain Motors',55,65000))
+    .flatMap(m=>[...m.auctions,...m.sellers])
+    .filter(v=>['Electric','Hybrid','Plug-in Hybrid'].includes(v.fuel));
+  assert.ok(candidates.length>=15);
+  for(const v of candidates)
+    assert.doesNotMatch(v.profile.hiddenFault?.item||'',/DPF|clutch|flywheel|timing belt/i);
+});
 
 test('first visit and saved career show the minimal main menu', () => {
   const saved = new Map();
@@ -2359,7 +2446,7 @@ test('the player can occupy all four forecourt spaces but a fifth purchase is bl
 
 test('real-photo cards never use an incorrect model, generation or paint colour', () => {
   const app=browser(new Map()),P=app.photos,V=app.cards;
-  assert.equal(P.LIBRARY.length,8);
+  assert.equal(P.LIBRARY.length,16);
   for(const item of P.LIBRARY){
     assert.ok(item.file.endsWith('.jpg'));
     assert.ok(item.author&&item.license&&item.licenseUrl);
