@@ -14,6 +14,8 @@ const people = readFileSync(new URL('people.js', root), 'utf8');
 const peopleView = readFileSync(new URL('people-view.js', root), 'utf8');
 const monthly = readFileSync(new URL('monthly.js', root), 'utf8');
 const monthlyView = readFileSync(new URL('monthly-view.js', root), 'utf8');
+const events = readFileSync(new URL('events.js', root), 'utf8');
+const eventsView = readFileSync(new URL('events-view.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -34,7 +36,7 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
 });
 
 test('dashboard has inbox, calendar and navigable management areas', () => {
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'reports', 'staff', 'reputation', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'reports', 'events', 'staff', 'reputation', 'business']) {
     assert.match(html, new RegExp('data-panel="' + page + '"'));
     assert.match(html, new RegExp('data-page="' + page + '"'));
   }
@@ -47,9 +49,11 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
-  assert.match(html, /people\.js\?v=1/);
+  assert.match(html, /people\.js\?v=2/);
   assert.match(html, /monthly\.js\?v=1/);
-  assert.match(html, /trading\.js\?v=5/);
+  assert.match(html, /events\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=6/);
+  assert.match(html, /events-view\.js\?v=1/);
   assert.match(html, /monthly-view\.js\?v=1/);
   assert.match(html, /people-view\.js\?v=1/);
   assert.match(html, /vehicle-view\.js\?v=1/);
@@ -98,7 +102,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   }
   const panels = [];
   const nav = [];
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'reports', 'staff', 'reputation', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'reports', 'events', 'staff', 'reputation', 'business']) {
     const panel = new Node();
     panel.dataset.panel = page;
     panels.push(panel);
@@ -140,10 +144,12 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
+  vm.runInNewContext(events, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
   vm.runInNewContext(vehicleView, context, { timeout: 1500 });
   vm.runInNewContext(peopleView, context, { timeout: 1500 });
   vm.runInNewContext(monthlyView, context, { timeout: 1500 });
+  vm.runInNewContext(eventsView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const button = { dataset: { action, ...extras }, setAttribute() {} };
@@ -260,7 +266,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=14/);
+  assert.match(html, /styles\.css\?v=15/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -278,7 +284,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 5);
+  assert.equal(opening.version, 6);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -403,7 +409,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,5);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,6);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -633,7 +639,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,5);
+  assert.equal(migrated.version,6);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -712,7 +718,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,5);
+  assert.equal(saved.version,6);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
@@ -722,7 +728,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,5);
+  assert.equal(app.engine.VERSION,6);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
@@ -908,7 +914,7 @@ test('v0.4 career migrates with stock, sold vehicles and financial balances unto
   assert.equal(newApp.nodes.get('menu-continue').hidden,false);
   newApp.click('resume');newApp.click('save');
   const restored=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(restored.version,5);
+  assert.equal(restored.version,6);
   assert.equal(restored.cash,v3.cash);
   assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
   assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
@@ -993,7 +999,7 @@ test('new dealerships receive achievable company targets and a live monthly dash
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Monthly Review Motors');
   const E=app.engine,state=E.create('Standalone',[]);
-  assert.equal(E.VERSION,5);
+  assert.equal(E.VERSION,6);
   assert.equal(state.monthPlan.month,1);
   assert.equal(state.monthPlan.startDay,1);
   assert.equal(state.monthPlan.endDay,30);
@@ -1099,7 +1105,7 @@ test('monthly report distinguishes cash flow, gross margin, staff costs and tied
 test('day 30 close generates an inbox message and immutable archived review', () => {
   const storage=new Map(),app=browser(storage);
   app.click('new-career');app.submitCareer('Month End Cars');
-  for(let i=0;i<30;i++)app.click('continue');
+  for(let i=0;i<34;i++)app.click('continue');
   let state=JSON.parse(storage.get(STORAGE_KEY));
   assert.equal(state.day,31);
   assert.equal(state.monthPlan.month,2);
@@ -1120,7 +1126,7 @@ test('day 30 close generates an inbox message and immutable archived review', ()
   assert.equal(JSON.stringify(state.monthlyReports[0]),archived);
   const resumed=browser(storage);
   resumed.click('resume');
-  assert.equal(resumed.engine.VERSION,5);
+  assert.equal(resumed.engine.VERSION,6);
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).monthlyReports.length,1);
 });
 test('monthly targets credit salesperson performance only during active duty', () => {
@@ -1157,7 +1163,7 @@ test('migration from v0.5 preserves staff, outstanding balances and day without 
   assert.equal(resumed.nodes.get('menu-continue').hidden,false);
   resumed.click('resume');resumed.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,5);
+  assert.equal(after.version,6);
   assert.equal(after.day,before.day);
   assert.equal(after.cash,before.cash);
   assert.equal(after.ledger.length,before.ledger.length);
@@ -1173,7 +1179,7 @@ test('migration from v0.5 preserves staff, outstanding balances and day without 
 test('monthly report saved snapshots must reconcile cash and reject tampering', () => {
   const storage=new Map(),app=browser(storage);
   app.click('new-career');app.submitCareer('Audit Motors');
-  for(let i=0;i<30;i++)app.click('continue');
+  for(let i=0;i<34;i++)app.click('continue');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
   const corrupted=JSON.parse(JSON.stringify(saved));
   corrupted.monthlyReports[0].closingCash+=250;
