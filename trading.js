@@ -398,7 +398,11 @@
     vehicle.cashOffer = null;
     return success(vehicle.title + ' is advertised at ' + asking + '. Check the Sales Office.');
   }
-  function pxTemplate(vehicle) { return EXCHANGES[(vehicle.id - 1) % EXCHANGES.length]; }
+  function pxTemplate(vehicle) {
+    const base=EXCHANGES[(vehicle.id-1)%EXCHANGES.length];
+    const origin='PX-'+vehicle.acquiredDay+'-'+vehicle.id;
+    return {...base,origin,...PH.describe({...base,origin})};
+  }
   function buyers(vehicle,state=null) {
     if (vehicle.status !== 'listed') return null;
     if(state && D.isDealDay(state.day) && !C.caseFor(state,vehicle.id) && !D.retailActive(state,vehicle))return null;
