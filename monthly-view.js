@@ -129,6 +129,14 @@
       amount('Acquisition / prep cash tied in stock',r.stockCapital)+
       countLine('Cars aged 14+ days',r.agedStock)+
       countLine('Cars awaiting preparation',r.stockAwaitingPrep)+
+      (Number.isSafeInteger(r.workshopInProgress)?
+        countLine('Active workshop repairs',r.workshopInProgress)+
+        countLine('Final quality checks outstanding',r.workshopQualityChecks)+
+        countLine('Unassessed or unbooked stock',r.workshopWaiting):
+        '<p class="report-muted">Historical report: detailed workshop breakdown not recorded.</p>')+
+      (Number.isSafeInteger(r.wholesaleUnits)?
+        countLine('Wholesale stock disposals',r.wholesaleUnits)+
+        amount('Trading contribution from wholesale exits',r.wholesaleProfit):'')+
       stockTable+'</section>';
     const peopleRows=r.sellers.length?r.sellers.map(s=>
       '<div class="report-staff-row"><div><strong>'+esc(s.name)+'</strong>'+
