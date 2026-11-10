@@ -7,9 +7,13 @@ on:
       - 'styles.css'
       - 'simulator.js'
       - 'trading.js'
+      - 'people.js'
+      - 'people-view.js'
       - 'vehicle-intel.js'
       - 'vehicle-view.js'
       - 'trading.js'
+      - 'people.js'
+      - 'people-view.js'
       - 'vehicle-intel.js'
       - 'vehicle-view.js'
       - 'favicon.svg'
@@ -38,6 +42,6 @@ jobs:
         with:
           node-version: '22'
       - name: Check trading engine and simulator JavaScript syntax
-        run: node --check vehicle-intel.js && node --check vehicle-view.js && node --check trading.js && node --check simulator.js
+        run: node --check vehicle-intel.js && node --check vehicle-view.js && node --check people.js && node --check people-view.js && node --check trading.js && node --check simulator.js
       - name: Validate career and trading interactions
         run: node --test tests/site.test.mjs
