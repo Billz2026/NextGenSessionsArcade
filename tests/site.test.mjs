@@ -267,7 +267,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards };
 }
 
 test('first visit and saved career show the minimal main menu', () => {
@@ -2318,5 +2318,70 @@ test('the player can occupy all four forecourt spaces but a fifth purchase is bl
   assert.equal(rejected.code,'capacity');
   assert.equal(state.stock,4);
   assert.equal(state.vehicles.length,4);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('real-photo cards never use an incorrect model, generation or paint colour', () => {
+  const app=browser(new Map()),P=app.photos,V=app.cards;
+  assert.equal(P.LIBRARY.length,5);
+  for(const item of P.LIBRARY){
+    assert.ok(item.file.endsWith('.jpg'));
+    assert.ok(item.author&&item.license&&item.licenseUrl);
+    const car={title:item.start+' '+item.model+' Test',color:item.color,
+      generation:item.generation,miles:78000,profile:{grade:3,owners:2,mot:{monthsRemaining:6}}};
+    assert.equal(P.select(car)?.id,item.id);
+    assert.equal(P.select({...car,color:item.color==='Black'?'White':'Black'}),null);
+    assert.equal(P.select({...car,generation:'wrong'}),null);
+    assert.match(V.photo(car,'auction'),/REAL PHOTO:/);
+    assert.match(V.photo({...car,color:'Purple'},'auction'),/PHOTO UNAVAILABLE/);
+  }
+  assert.equal(P.select({title:'2024 Nissan Qashqai Tekna',
+    generation:'J11',color:'Black'}),null);
+  assert.equal(P.select({title:'2015 Nissan Qashqai Acenta',
+    generation:'J11',color:'Black'})?.id,'qashqai-j11-black');
+});
+test('live photo identity survives buying, saving, and v8 migration', () => {
+  const app=browser(new Map()),E=app.productionEngine,P=app.photos;
+  const state=E.create('Photo Trader',[]),seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
+  assert.equal(state.vehicles[0].color,seller.color);
+  assert.equal(state.vehicles[0].generation,seller.generation);
+  const old=JSON.parse(JSON.stringify(state));
+  old.version=8;delete old.customerFunds;
+  delete old.vehicles[0].color;delete old.vehicles[0].generation;
+  const migrated=E.normalize(old);
+  assert.ok(migrated);
+  assert.equal(migrated.version,9);
+  assert.equal(migrated.cash,state.cash);
+  assert.ok(P.COLOURS.includes(migrated.vehicles[0].color));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(migrated))));
+});
+test('buyer cancellation cannot retain more than actual customer-specific costs', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  const before=state.cash;
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  assert.equal(C.balanceDue(c),c.price-250);
+  const spent=c.prepCost;
+  assert.ok(spent>=75&&spent<=250);
+  assert.equal(state.cash,before-spent);
+  assert.ok(E.cancelCustomer(state,v.id,'buyer').ok);
+  assert.equal(state.cash,before);
+  assert.equal(C.stats(state,1,state.day).retainedAmount,spent);
+  assert.equal(C.heldDeposits(state),0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('dealership cancellation returns all held deposit and leaves its preparation loss', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  const before=state.cash;
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  assert.ok(E.cancelCustomer(state,v.id,'dealer').ok);
+  assert.equal(state.cash,before-c.prepCost);
+  assert.equal(C.heldDeposits(state),0);
+  assert.equal(C.stats(state,1,state.day).retainedAmount,0);
+  assert.equal(C.stats(state,1,state.day).refunds,1);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
