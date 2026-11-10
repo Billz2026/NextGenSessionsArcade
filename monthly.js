@@ -117,7 +117,7 @@
     });
     const stock=state.vehicles.map(v=>({
       id:v.id,title:v.title,status:v.status,source:v.source,
-      age:Math.max(0,p.endDay-v.acquiredDay),
+      age:Math.max(0,state.day-v.acquiredDay),
       cashInvested:v.cost+v.prepSpent,
       asking:v.asking,repairToPay:v.status==='acquired'?v.prepBudget:0
     }));
@@ -173,7 +173,9 @@
     if(repDelta!==0){
       const reason=repDelta>0?'Monthly sales goal achieved with positive margin':
         'Monthly sales volume significantly below plan';
-      state.reputationHistory.push({day:state.day,delta:repDelta,reason});
+      const event={day:state.day,delta:repDelta,reason};
+      state.reputationHistory.push(event);
+      r.customerTrustEvents.push({...event});
       if(state.reputationHistory.length>90)state.reputationHistory.shift();
     }
     state.reputation=window.MotorTradePeople.tier(state.reputationScore);
