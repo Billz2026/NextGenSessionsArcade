@@ -191,7 +191,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     if(!car||car.status!=='listed')return;
     if(!state.customerCases[String(id)]){
       state.customerCases[String(id)]={
-        id:'C-'+state.day+'-'+(state.deadlineSession||0)+'-'+id,
+        id:'C-'+state.day+'-'+(state.deadlineSession||0)+'-'+id+'-0',
         vehicleId:id,createdDay:state.day,createdSession:state.deadlineSession||0,
         name:'Legacy Fixture Buyer',channel:'FIXTURE ONLY',status:'discussing',
         preferredMode:mode,appointmentDay:null,agreedDay:null,
@@ -1905,4 +1905,283 @@ test('unknown hidden repair detail stays confidential until workshop assessment'
   assert.equal(state.vehicles[0].workshop.stage,'quoted');
   assert.match(app.nodes.get('workshop-board').innerHTML,new RegExp(extra));
   assert.ok(state.ledger.some(l=>l.note.startsWith('Workshop assessment:')));
+});
+
+function readyForRetail(E,name,asking=5200){
+  const state=E.create(name,[]);
+  const seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
+  const v=state.vehicles[0];
+  assert.ok(E.assessStock(state,v.id).ok);
+  assert.ok(E.startPrep(state,v.id,'external').ok);
+  while(v.workshop.stage==='in-progress'&&state.day<14){
+    state.day++;
+    E.advanceWorkshop(state);
+  }
+  assert.equal(v.workshop.stage,'quality-check');
+  assert.ok(E.finishPrep(state,v.id).ok);
+  if(v.workshop.stage==='in-progress'){
+    state.day++;E.advanceWorkshop(state);
+    assert.ok(E.finishPrep(state,v.id).ok);
+  }
+  assert.equal(v.status,'prepared');
+  assert.ok(E.advertise(state,v.id,asking).ok);
+  return {state,v};
+}
+function findCompletedDrive(E,qualifier=()=>true){
+  for(let i=0;i<350;i++){
+    const {state,v}=readyForRetail(E,'Appointment Trail '+i);
+    const C=E.customers;
+    if(!C.demand(state,v))continue;
+    assert.ok(E.openCustomer(state,v.id).ok);
+    const c=C.caseFor(state,v.id);
+    if(!qualifier(c,state,v))continue;
+    assert.ok(E.bookCustomer(state,v.id).ok);
+    state.day=c.appointmentDay;
+    E.advanceCustomers(state);
+    if(c.status!=='arrived')continue;
+    if(!E.testDrive(state,v.id).ok)continue;
+    return {state,v,c};
+  }
+  assert.fail('No eligible completed customer viewing found in 350 deterministic candidates');
+}
+test('v0.9 gives four spaces to fresh and existing two-space dealerships without changing cash', () => {
+  const E=browser(new Map()).productionEngine;
+  assert.equal(E.CAPACITY,4);
+  const s=E.create('Four Space Motors',[]);
+  assert.equal(s.capacity,4);
+  const seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const old=JSON.parse(JSON.stringify(s));
+  old.version=7;
+  old.capacity=2;
+  delete old.customerCases;delete old.customerHistory;
+  const upgraded=E.normalize(old);
+  assert.ok(upgraded);
+  assert.equal(upgraded.version,8);
+  assert.equal(upgraded.capacity,4);
+  assert.equal(upgraded.cash,old.cash);
+  assert.equal(upgraded.vehicles.length,old.vehicles.length);
+  assert.equal(upgraded.vehicles[0].cost,old.vehicles[0].cost);
+  assert.equal(upgraded.ledger.length,old.ledger.length);
+  assert.equal(upgraded.customerHistory.length,0);
+  assert.equal(Object.keys(upgraded.customerCases).length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(upgraded))));
+});
+test('v0.9 enforces actual appointments and includes real no-show outcomes', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const tally={enquiries:0,arrivals:0,noShows:0};
+  for(let i=0;i<100;i++){
+    const {state,v}=readyForRetail(E,'Appointments '+i);
+    if(!C.demand(state,v))continue;
+    tally.enquiries++;
+    assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
+    assert.ok(E.openCustomer(state,v.id).ok);
+    assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
+    assert.ok(E.bookCustomer(state,v.id).ok);
+    const c=C.caseFor(state,v.id);
+    assert.ok(c.appointmentDay>state.day);
+    assert.equal(E.testDrive(state,v.id).code,'stage');
+    state.day=c.appointmentDay;
+    E.advanceCustomers(state);
+    if(c.status==='arrived')tally.arrivals++;
+    if(c.status==='lost'){
+      tally.noShows++;
+      assert.match(c.reason,/failed to attend/);
+      assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
+    }
+    assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+  }
+  assert.ok(tally.enquiries>15);
+  assert.ok(tally.arrivals>5);
+  assert.ok(tally.noShows>2,'Not every appointment should result in an arrival');
+});
+test('successful test drive and signed cash terms are mandatory before handover', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.equal(c.status,'discussing');
+  assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
+  assert.equal(state.sold.length,0);
+  const buyer=E.buyers(v,state);
+  assert.ok(buyer);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  assert.equal(c.status,'agreed');
+  assert.equal(c.price,buyer.cashOffer);
+  const before=state.cash;
+  const result=E.completeSale(state,v.id,'cash',null);
+  assert.ok(result.ok);
+  assert.equal(state.cash,before+buyer.cashOffer);
+  assert.equal(state.sold.length,1);
+  assert.equal(state.stock,0);
+  assert.equal(C.heldDeposits(state),0);
+  assert.ok(state.customerHistory.some(x=>x.type==='sale'));
+  assert.equal(C.stats(state,1,state.day).completedSales,1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('part-exchange customers must agree a valid allowance before handover', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E,c=>c.preferredMode==='part-ex');
+  const b=E.buyers(v,state);
+  assert.ok(b.exchange);
+  assert.equal(E.agreeCustomer(state,v.id,'part-ex',b.exchange.floor-25).ok,false);
+  assert.equal(c.status,'discussing');
+  assert.equal(E.completeSale(state,v.id,'part-ex',b.exchange.ask).code,'customer');
+  assert.ok(E.agreeCustomer(state,v.id,'part-ex',b.exchange.ask).ok);
+  assert.equal(c.allowance,b.exchange.ask);
+  assert.equal(E.completeSale(state,v.id,'cash',null).code,'mode');
+  const before=state.cash;
+  assert.ok(E.completeSale(state,v.id,'part-ex',null).ok);
+  assert.equal(state.cash,before+c.price-c.allowance);
+  assert.equal(state.sold[0].mode,'part-ex');
+  assert.equal(state.vehicles.length,1);
+  assert.equal(state.vehicles[0].source,'part-ex');
+  assert.equal(state.vehicles[0].status,'acquired');
+  assert.equal(state.vehicles[0].workshop.stage,'unassessed');
+  assert.equal(state.vehicles[0].origin,'PX-'+c.agreedDay+'-'+v.id);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('£250 deposit is segregated, blocks premature collection and settles at handover', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let selected=null;
+  for(let i=0;i<150;i++){
+    const {state,v}=readyForRetail(E,'Deposit Success '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);
+    E.bookCustomer(state,v.id);
+    const c=C.caseFor(state,v.id);
+    state.day=c.appointmentDay;
+    E.advanceCustomers(state);
+    if(c.status!=='arrived'||!E.testDrive(state,v.id).ok)continue;
+    assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+    assert.ok(E.depositCustomer(state,v.id).ok);
+    const cashBefore=state.cash,ledgerBefore=state.ledger.length;
+    assert.equal(C.heldDeposits(state),250);
+    assert.equal(state.cash,cashBefore);
+    assert.equal(state.ledger.length,ledgerBefore);
+    assert.equal(E.advertise(state,v.id,5400).code,'reserved');
+    assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
+    state.day=c.collectionDay;
+    E.advanceCustomers(state);
+    if(c.status!=='collectable')continue;
+    selected={state,v,c,cashBefore,ledgerBefore};
+    break;
+  }
+  assert.ok(selected,'Some customers should collect after depositing');
+  const {state,v,c,cashBefore,ledgerBefore}=selected;
+  const price=c.price;
+  assert.ok(E.completeSale(state,v.id,'cash',null).ok);
+  assert.equal(state.cash,cashBefore+price);
+  assert.equal(state.ledger.length,ledgerBefore+1);
+  assert.equal(C.heldDeposits(state),0);
+  assert.equal(state.sold.length,1);
+  assert.ok(!state.ledger.some(x=>/deposit/i.test(x.note)),
+    'Customer holding funds never enter the business ledger separately');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('customer cancellation always returns held deposits without adding or losing business cash', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  const before=state.cash,ledger=state.ledger.length;
+  assert.equal(C.heldDeposits(state),250);
+  assert.ok(E.cancelCustomer(state,v.id).ok);
+  assert.equal(c.status,'lost');
+  assert.equal(c.held,0);
+  assert.equal(C.heldDeposits(state),0);
+  assert.equal(state.cash,before);
+  assert.equal(state.ledger.length,ledger);
+  assert.equal(state.sold.length,0);
+  assert.equal(C.stats(state,1,state.day).refunds,1);
+  assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('some customers cancel before collecting despite a paid reservation', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let cancelled=null;
+  for(let i=0;i<180;i++){
+    const {state,v}=readyForRetail(E,'Deposit Cancel '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);
+    E.bookCustomer(state,v.id);
+    const c=C.caseFor(state,v.id);
+    state.day=c.appointmentDay;E.advanceCustomers(state);
+    if(c.status!=='arrived'||!E.testDrive(state,v.id).ok)continue;
+    E.agreeCustomer(state,v.id,'cash',null);
+    E.depositCustomer(state,v.id);
+    state.day=c.collectionDay;
+    E.advanceCustomers(state);
+    if(c.status==='lost') {cancelled={state,v,c};break;}
+  }
+  assert.ok(cancelled,'Some deposit-holding customers should cancel rather than collect');
+  const {state,v,c}=cancelled;
+  assert.equal(c.held,0);
+  assert.equal(C.heldDeposits(state),0);
+  assert.equal(state.sold.length,0);
+  assert.equal(C.stats(state,1,state.day).refunds,1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('counteroffer rejection and walkaways mean negotiations do not guarantee extra money', () => {
+  const E=browser(new Map()).productionEngine;
+  let accepted=0,rejected=0,walked=0;
+  for(let i=0;i<130;i++){
+    const {state,v,c}=findCompletedDrive(E,()=>true);
+    // findCompletedDrive returns the first qualifying dealership. Change the
+    // lead for repeated simulated customers by adding a distinct enquiry ID.
+    c.id+='-'+i;
+    const b=E.buyers(v,state);
+    if(b.cashOffer+150>b.cashLimit)continue;
+    const r=E.counter(state,v.id);
+    if(r.ok)accepted++;
+    else rejected++;
+    if(r.code==='walked')walked++;
+    if(!r.ok)assert.ok(r.changed);
+  }
+  assert.ok(accepted>0);
+  assert.ok(rejected>0);
+});
+test('Deal Day customers can arrive as walk-ins, but still need a test drive and agreement', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let found=null;
+  for(let i=0;i<160;i++){
+    const {state,v}=readyForRetail(E,'Deadline Customer '+i);
+    state.day=30;state.deadlineSession=0;
+    if(!C.demand(state,v))continue;
+    const opened=E.openCustomer(state,v.id);
+    if(!opened.ok)continue;
+    found={state,v,c:C.caseFor(state,v.id)};
+    break;
+  }
+  assert.ok(found);
+  const {state,v,c}=found;
+  assert.equal(E.market(30,state.reputationScore,0,state.name).auctions.length,0);
+  assert.equal(c.status,'arrived','Month-end walk-in should not require an extra day');
+  assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
+  const beforeCases=Object.keys(state.customerCases).length;
+  assert.equal(beforeCases,1);
+  assert.ok(E.events.advanceSession(state).ok);
+  E.nextCustomerSession(state);
+  assert.equal(Object.keys(state.customerCases).length,0);
+  assert.equal(state.sold.length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('daily customer conversion statistics enter management accounts and reject corrupt saves', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  assert.ok(E.completeSale(state,v.id,'cash',null).ok);
+  const report=E.monthly.statement(state);
+  assert.equal(report.customerJourney.enquiries,1);
+  assert.equal(report.customerJourney.appointments,1);
+  assert.equal(report.customerJourney.attended,1);
+  assert.equal(report.customerJourney.testDrives,1);
+  assert.equal(report.customerJourney.completedSales,1);
+  assert.equal(report.customerHoldingAtClose,0);
+  assert.ok(E.monthly.validReport(report));
+  const old=JSON.parse(JSON.stringify(state));
+  old.customerHistory[0].type='fabricated-profit';
+  assert.equal(E.normalize(old),null);
+  const wrong=JSON.parse(JSON.stringify(state));
+  wrong.customerCases['1']={id:'INVALID',vehicleId:1,held:999,status:'reserved'};
+  assert.equal(E.normalize(wrong),null);
 });
