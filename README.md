@@ -6,9 +6,11 @@ A **NextGen Sessions** UK used-car dealership management game, built around an o
 
 ## Current playable foundation (v0.2)
 
-The site opens to a branded **main menu** if this browser has no valid save. Choosing **New Career** takes the player through a dealership setup screen (name, £12,500 starting capital, two-vehicle forecourt), then into a Football Manager-inspired career dashboard.
+The site **always opens to the branded main menu**, whether or not a valid save exists. Choosing **New Career** takes the player through a dealership setup screen (name, £12,500 starting capital, two-vehicle forecourt), then into a Football Manager-inspired career dashboard.
 
-If a valid save is present, **the site automatically opens the career dashboard on the next visit**. Players can return to the main menu and resume from there. The single career slot is stored in the browser's localStorage under the key the-motor-trade-career-v1, not on a server; the save is not synchronised across devices or browsers. Starting another career replaces the saved career after confirmation. If browser storage is blocked or unavailable, the game shows an explicit warning.
+If a valid save is present, **Continue Career** is promoted to the primary menu action, and the saved dealership name/day are shown. Players resume explicitly; they are not automatically taken past the homepage. The single career slot is stored in the browser's localStorage under the key the-motor-trade-career-v1, not on a server; the save is not synchronised across devices or browsers. Starting another career replaces the saved career after confirmation. If browser storage is blocked or unavailable, the game shows an explicit warning.
+
+The homepage includes an explicitly illustrative manager's desk preview. Figures in this preview represent opening scenario values and a fictional example, not a live portfolio or completed trades.
 
 ### Working interactions
 
