@@ -40,7 +40,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="stock-list"/);
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
-  assert.match(html, /trading\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=2/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -238,7 +238,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=10/);
+  assert.match(html, /styles\.css\?v=11/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -436,16 +436,17 @@ test('seller negotiations counter, then accept or walk away without spending cas
   state=JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.vehicles[0].cost,counter);
   assert.equal(state.cash,12500-counter);
-  const second=app.engine.market(1).sellers[1];
-  app.setInput('seller-offer-' + second.id,second.floor-300);
-  app.click('buy-seller',{id:second.id});
+  const second=revisited.engine.market(1).sellers[1];
+  revisited.setInput('seller-offer-' + second.id,second.floor-300);
+  revisited.click('buy-seller',{id:second.id});
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).negotiations[second.id].status,'walked');
-  assert.equal(app.nodes.get('trade-feedback-toast').hidden,false);
+  assert.equal(revisited.nodes.get('trade-feedback-toast').hidden,false);
   const leftCash=JSON.parse(saved.get(STORAGE_KEY)).cash;
-  app.setInput('seller-offer-' + second.id,second.ask);
-  app.click('buy-seller',{id:second.id});
+  revisited.setInput('seller-offer-' + second.id,second.ask);
+  revisited.click('buy-seller',{id:second.id});
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).cash,leftCash);
-  assert.match(app.nodes.get('market-sellers').innerHTML,/OWNER WALKED AWAY/);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles.length,1,'Walkaway must not erase previous purchases');
+  assert.match(revisited.nodes.get('market-sellers').innerHTML,/OWNER WALKED AWAY/);
 });
 test('auction losses are visible and charge no fee; winning fee is recorded', () => {
   const saved = new Map();
