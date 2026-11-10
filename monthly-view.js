@@ -15,6 +15,10 @@
       (value<0?' class="report-negative"':positive?' class="report-positive"':'')+'>'+
       money(value)+'</strong></div>';
   }
+  function countLine(label,value){
+    return '<div class="report-line"><span>'+esc(label)+
+      '</span><strong>'+value+'</strong></div>';
+  }
   function progress(actual,target,label){
     const pct=target>0?Math.min(100,Math.round(actual*100/target)):100;
     return '<div class="report-progress"><div class="report-progress-head"><span>'+esc(label)+
@@ -107,8 +111,8 @@
       'Some inspection costs may remain outside realised vehicle margin until stock is sold. '+
       'These are game management figures, not statutory accounts, taxable profit or a VAT calculation.</p></section>';
     const saleLine='<section class="panel-card report-section"><h3>SALES & PURCHASING</h3>'+
-      amount('Cash purchases by retail customers',r.salesModes.cash)+
-      amount('Retail sales with part-exchanges',r.salesModes.partExchange)+
+      countLine('Cash retail sales',r.salesModes.cash)+
+      countLine('Retail sales with part-exchanges',r.salesModes.partExchange)+
       amount('Acquisition expenditure',r.totalAcquisitions)+
       amount('Preparation spending',r.prepCost)+
       amount('Average gross margin per sold vehicle',r.averageMargin)+
@@ -121,10 +125,10 @@
       '</small></span><strong>'+money(v.cashInvested)+'</strong></div>').join(''):
       '<p class="report-muted">No unsold stock held at this period close.</p>';
     const inventory='<section class="panel-card report-section"><h3>STOCK & WORKING CAPITAL</h3>'+
-      amount('Vehicles on forecourt',r.stockCount)+
+      countLine('Vehicles on forecourt',r.stockCount)+
       amount('Acquisition / prep cash tied in stock',r.stockCapital)+
-      amount('Cars aged 14+ days',r.agedStock)+
-      amount('Cars awaiting preparation',r.stockAwaitingPrep)+
+      countLine('Cars aged 14+ days',r.agedStock)+
+      countLine('Cars awaiting preparation',r.stockAwaitingPrep)+
       stockTable+'</section>';
     const peopleRows=r.sellers.length?r.sellers.map(s=>
       '<div class="report-staff-row"><div><strong>'+esc(s.name)+'</strong>'+
@@ -147,8 +151,8 @@
       '</b><p>'+esc(e.reason)+'</p></div>').join(''):
       '<p class="report-muted">No recorded reputation changes in this operating period.</p>';
     const trust='<section class="panel-card report-section"><h3>CUSTOMER TRUST & RISKS</h3>'+
-      amount('Reputation opening',r.startingReputation)+
-      amount('Reputation closing',r.closingReputation)+
+      countLine('Reputation opening',r.startingReputation)+
+      countLine('Reputation closing',r.closingReputation)+
       amount('Outstanding staff wages / notice',r.payrollArrears)+
       '<h4>RECORDED REPUTATION EVENTS</h4>'+recent+
       '<p class="report-muted">Customer surveys, warranty claims and formal complaints are not simulated yet. '+
