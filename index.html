@@ -16,9 +16,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=11">
-  <script src="./trading.js?v=2" defer></script>
-  <script src="./simulator.js?v=7" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=12">
+  <script src="./vehicle-intel.js?v=1" defer></script>
+  <script src="./trading.js?v=3" defer></script>
+  <script src="./vehicle-view.js?v=1" defer></script>
+  <script src="./simulator.js?v=8" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -26,7 +28,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.3.1</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.4</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -160,7 +162,7 @@
 
             <section class="career-panel" data-panel="auctions" hidden aria-labelledby="auctions-title">
               <div class="page-heading"><div><p class="section-overline">VEHICLE SOURCING / UK MARKET</p><h1 id="auctions-title">BUYING <em>DESK.</em></h1><p>Buy through auction or negotiate directly with customers looking to sell. Stock changes every game day.</p></div><span class="career-chip">FICTIONAL MARKET</span></div>
-              <div class="trade-alert">Buyer fees, condition estimates and asking prices are fictional. A winning bid or seller agreement is final for this simulation; keep enough cash for preparation.</div>
+              <div class="trade-alert">Inspect individual vehicle reports before bidding. Grade, MOT history, trade/retail valuations and maximum offers are fictional estimates—not real DVSA records or guaranteed returns. A paid inspection can reveal hidden repair costs; the charge is not refundable.</div>
               <section class="panel-card trade-section" aria-labelledby="auction-list-title">
                 <div class="panel-card-header"><div><p class="section-overline">COMPETE WITH OTHER DEALERS</p><h2 id="auction-list-title">AUCTION LOTS</h2></div><span class="tiny-index">TODAY'S CATALOGUE</span></div>
                 <div id="market-auctions" class="trade-card-grid"></div>
@@ -172,13 +174,13 @@
             </section>
 
             <section class="career-panel" data-panel="stock" hidden aria-labelledby="stock-title">
-              <div class="page-heading"><div><p class="section-overline">THE FORECOURT / VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Every acquired vehicle, including a customer part-exchange, must be prepared before retail advertising.</p></div><span class="career-chip">SPACE <span data-bind="stock">0 / 2</span></span></div>
+              <div class="page-heading"><div><p class="section-overline">THE FORECOURT / VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Review each vehicle's own repair quotation, condition report and expected sale value before paying preparation and advertising.</p></div><span class="career-chip">SPACE <span data-bind="stock">0 / 2</span></span></div>
               <div id="stock-list" class="trade-card-grid trade-stock-grid"></div>
             </section>
 
             <section class="career-panel" data-panel="sales" hidden aria-labelledby="sales-title">
               <div class="page-heading"><div><p class="section-overline">RETAIL ENQUIRIES / NEGOTIATION</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Customers can pay cash or offer their existing car in part-exchange. Negotiate each deal carefully.</p></div></div>
-              <div class="trade-alert">A part-exchange is a second acquisition. The customer pays the difference between the agreed sale price and the accepted allowance; the traded-in vehicle becomes stock.</div>
+              <div class="trade-alert">Buyer offers now take the vehicle's likely achieved market value into account. A part-exchange is a separate acquisition: the customer pays the difference and the incoming car joins stock with its own inspection and repair profile.</div>
               <div id="sales-list" class="trade-card-grid trade-sales-grid"></div>
             </section>
 
@@ -198,7 +200,7 @@
               <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong>2 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Next: staffing, premises and deeper economics</li></ol></div></div>
             </section>
           </div>
-          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA TRADING / LOCAL BROWSER SAVE</span></footer>
+          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA VEHICLE INTELLIGENCE / LOCAL SAVE</span></footer>
         </div>
       </div>
     </section>

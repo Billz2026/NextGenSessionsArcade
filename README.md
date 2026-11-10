@@ -4,7 +4,17 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
-## Playable trading foundation (v0.3)
+## Vehicle Intelligence System (v0.4)
+
+Every auction lot and direct-seller offer now has a **persistent fictional dossier**: unique simulation ID, derivative/engine, mileage, previous keepers, MOT-style test result/mileage/advisories, condition grade, demand outlook, trade value, retail guide, likely achieved sale price and line-item preparation costs. Full reports open from the Buying Desk and your Vehicle Stock. The data is deterministic for a given lead ID, not live DVLA/DVSA data.
+
+**Pre-purchase inspections:** Open a report and buy the optional £75–£95 simulated inspection. The fee is charged immediately, appears in the finance ledger and is not refunded if the car is not acquired. It reveals the car-specific additional fault when present. If acquired, the inspection cost is included in that vehicle’s acquisition basis without charging cash twice. Vehicle preparation uses the actual repair quotation (known work plus additional faults). Existing saved v0.3 vehicles do not gain retroactive hidden faults or changed acquisition costs.
+
+**Buying intelligence:** Trade value, retail asking guide, likely sale, recommended maximum bid and expected margin appear for each lot. Expected margin = likely sale − bid/offer − auction fees − forecast repairs − paid inspection. Before inspection, a condition-based contingency is used; this is a forecast, not a guarantee. Editing your offer updates the displayed margin. Customer cash offers are now capped by the car’s likely achieved market value rather than automatically following an inflated asking price. No real live valuations are fetched.
+
+**Save compatibility:** Existing v1 and v2 browser saves are migrated to save schema v3 (same storage key). Existing stock, cash, completed sales, ledger, day and inbox are preserved. Individual reports persist through stock and into completed-sale history. Unused pre-purchase inspection reports expire when the game day advances, but the inspection expense remains in the ledger.
+
+## Playable trading foundation (v0.3 → v0.4)
 
 The main menu uses the original unchanged NextGen Sessions wordmark, standalone silver-and-gold Motor Trade vector title and sharp showroom background. Create a career with **£12,500 starting cash** and a **two-vehicle forecourt**. Continue Career resumes the same locally saved business.
 
@@ -49,6 +59,8 @@ Customers are currently deterministic examples rather than a fully simulated mar
 
 - `index.html` — game menu and interactive management screens.
 - `styles.css` — responsive premium game interface.
+- `vehicle-intel.js` — stable fictional vehicle profile generation, repair forecasts and appraisal arithmetic.
+- `vehicle-view.js` — inline report UI for buying and stock.
 - `trading.js` — deterministic financial and vehicle transaction engine; save migration/validation.
 - `simulator.js` — game navigation, inbox, calendar, market rendering and save integration.
 - `tests/site.test.mjs` — Node built-in tests for UI, the complete trading loop, cash conservation and migration.
@@ -59,6 +71,8 @@ Customers are currently deterministic examples rather than a fully simulated mar
 Run:
 
 ```sh
+node --check vehicle-intel.js
+node --check vehicle-view.js
 node --check trading.js
 node --check simulator.js
 node --test tests/site.test.mjs

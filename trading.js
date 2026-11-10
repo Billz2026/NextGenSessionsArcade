@@ -7,7 +7,9 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 2;
-  const VERSION = 2;
+  const VERSION = 3;
+  const I = window.MotorTradeIntel;
+  if (!I) throw new Error('Load vehicle-intel.js before trading.js');
   const MAX_DAY = 36500;
   const AUCTIONS = Object.freeze([
     {title:'2016 Ford Focus Zetec',miles:81240,fuel:'Diesel',gearbox:'Manual',grade:'3',history:'Partial',guide:2950,reserve:3200,rival:3525,fee:285,prep:430,retail:6350,note:'Door paint marks, front tyres and incomplete service paperwork'},
@@ -66,17 +68,20 @@
       return {...base,ask,floor:base.floor+delta,retail:base.retail+delta,
         miles,id:'S-' + day + '-' + i,kind:'seller',day};
     });
-    return {auctions,sellers};
+    return {
+      auctions:auctions.map(car=>({...car,profile:I.profile(car)})),
+      sellers:sellers.map(car=>({...car,profile:I.profile(car)}))
+    };
   }
   function create(name, messages) {
     return {
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
       stock:0,sales:0,reputation:'NEWCOMER',messages,
-      vehicles:[],sold:[],ledger:[],nextId:1,negotiations:{},auctionBids:{}
+      vehicles:[],sold:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{}
     };
   }
   function normalize(saved) {
-    if (!saved || ![1,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -111,10 +116,14 @@
       v.acquiredDay >= 1 && v.acquiredDay <= saved.day &&
       (v.status !== 'listed' || (cashValue(v.asking) && v.asking > 0)) &&
       (v.status === 'acquired' || v.prepSpent === v.prepBudget) &&
-      (v.cashOffer === null || v.cashOffer === undefined || cashValue(v.cashOffer));
+      (v.cashOffer === null || v.cashOffer === undefined || cashValue(v.cashOffer)) &&
+      (saved.version === 2 || I.validProfile(v.profile)) &&
+      (saved.version === 2 || v.prepBudget === v.profile.basePrep +
+        (v.profile.hiddenFault?.cost || 0));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
-      cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode);
+      cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
+      (s.profile==null || I.validProfile(s.profile));
     const goodLedger = l => l && integer(l.day) && l.day >= 1 && l.day <= saved.day &&
       integer(l.delta) && Math.abs(l.delta) <= 10000000 &&
       typeof l.note === 'string' && l.note.length < 200;
@@ -123,9 +132,11 @@
     // Older v2 careers do not yet have negotiation history.
     const negotiations = saved.negotiations ?? {};
     const auctionBids = saved.auctionBids ?? {};
+    const reports = saved.reports ?? {};
     const isPlain = x => x && typeof x === 'object' && !Array.isArray(x);
-    if (!isPlain(negotiations) || !isPlain(auctionBids) ||
-      Object.keys(negotiations).length > 200 || Object.keys(auctionBids).length > 200) return null;
+    if (!isPlain(negotiations) || !isPlain(auctionBids) || !isPlain(reports) ||
+      Object.keys(negotiations).length > 200 || Object.keys(auctionBids).length > 200 ||
+      Object.keys(reports).length > 50) return null;
     const validNegotiations = Object.entries(negotiations).every(([id,v]) =>
       /^S-[0-9]+-[0-9]+$/.test(id) && v && ['counter','walked'].includes(v.status) &&
       integer(v.rounds) && v.rounds >= 1 && v.rounds <= 3 &&
@@ -134,7 +145,10 @@
       /^A-[0-9]+-[0-9]+$/.test(id) && v && ['outbid','lost'].includes(v.status) &&
       integer(v.attempts) && v.attempts >= 1 && v.attempts <= 2 &&
       cashValue(v.lastBid));
-    if (!validNegotiations || !validBids) return null;
+    const validReports = Object.entries(reports).every(([key,record]) =>
+      /^(A|S)-[0-9]+-[0-9]+$/.test(key) && record &&
+      cashValue(record.fee) && record.fee<=250 && record.day===saved.day);
+    if (!validNegotiations || !validBids || !validReports) return null;
     const ids = [...saved.vehicles,...saved.sold].map(v => v.id);
     if (new Set(ids).size !== ids.length || ids.some(id => id >= saved.nextId)) return null;
     const balance = STARTING_CASH + sum(saved.ledger,'delta');
@@ -143,11 +157,20 @@
       version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:CAPACITY,
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:reputation(saved.sold.length),messages,
-      vehicles:saved.vehicles.map(v => ({...v})),
-      sold:saved.sold.map(v => ({...v})),
+      vehicles:saved.vehicles.map(v => ({
+        ...v,profile:saved.version===2?I.legacyProfile(v):
+          {...v.profile,knownRepairs:v.profile.knownRepairs.map(x=>({...x})),
+            mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
+            hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}
+      })),
+      sold:saved.sold.map(v => ({...v,profile:v.profile?{...v.profile,
+        knownRepairs:v.profile.knownRepairs.map(r=>({...r})),
+        mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
+        hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}:null})),
       ledger:saved.ledger.map(v => ({...v})),nextId:saved.nextId,
       negotiations:Object.fromEntries(Object.entries(negotiations).map(([k,v])=>[k,{...v}])),
-      auctionBids:Object.fromEntries(Object.entries(auctionBids).map(([k,v])=>[k,{...v}]))
+      auctionBids:Object.fromEntries(Object.entries(auctionBids).map(([k,v])=>[k,{...v}])),
+      reports:Object.fromEntries(Object.entries(reports).map(([k,v])=>[k,{...v}]))
     };
   }
   function reputation(sales) {
@@ -161,11 +184,18 @@
     state.ledger.push({day:state.day,delta,note});
   }
   function addCar(state, template, source, cost, ref) {
+    const p = template.profile || I.profile({...template,id:ref,kind:source});
+    const inspected = !!state.reports?.[ref];
+    const inspectionFee = inspected ? state.reports[ref].fee : 0;
+    const profile = {...p,inspected};
+    // Inspection is paid before purchase, so include it in the unit's
+    // acquisition basis for contribution margin without charging twice.
     const v = {
       id:state.nextId++,title:template.title,miles:template.miles,
       fuel:template.fuel,gearbox:template.gearbox,history:template.history,
-      note:template.note,retail:template.retail,
-      source,origin:ref,cost,prepBudget:template.prep,
+      note:template.note,retail:p.retail,
+      source,origin:ref,cost:cost+inspectionFee,
+      profile,prepBudget:p.basePrep+(p.hiddenFault?.cost||0),
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
       listedDay:null
     };
@@ -193,7 +223,8 @@
     if (!integer(bid) || bid < lot.guide || bid > 100000)
       return fail('bid','Enter a valid maximum bid of at least the guide price.');
     if (state.vehicles.some(v => v.origin === lot.id)) return fail('owned','You have already bought this lot. Check Vehicle Stock.');
-    const blocked = canBuy(state,bid + lot.fee,lot.prep);
+    const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
+    const blocked = canBuy(state,bid + lot.fee,requiredPrep);
     if (blocked) return blocked;
     if (bid < Math.max(lot.rival,lot.reserve)) {
       const attempts = (activity?.attempts ?? 0) + 1;
@@ -217,7 +248,8 @@
     if (previous?.status === 'walked') return fail('walked','The owner has left. This opportunity has closed.');
     if (!integer(offer) || offer < 100 || offer > car.ask)
       return fail('offer','Enter an offer between £100 and the seller’s asking price.');
-    const blocked = canBuy(state,offer,car.prep);
+    const requiredPrep=car.profile.basePrep+(car.profile.hiddenFault?.cost||0);
+    const blocked = canBuy(state,offer,requiredPrep);
     if (blocked) return blocked;
     if (previous?.status === 'counter' && offer >= previous.counter) {
       pay(state,-offer,'Direct purchase: '+car.title);
@@ -254,6 +286,39 @@
       rounds:Math.max(1,Math.min(3,previous?.rounds ?? 1)),lastOffer:previous?.lastOffer ?? 0};
     return {...success('You walked away from '+car.title+'. No cash was spent.'),changed:true};
   }
+
+  function inspectLead(state,kind,id) {
+    if (!['auction','seller'].includes(kind)) return fail('source','Unknown vehicle source.');
+    const leads = kind==='auction'?market(state.day).auctions:market(state.day).sellers;
+    const car=leads.find(v=>v.id===id);
+    if (!car) return fail('expired','That vehicle is no longer offered for sale.');
+    if (state.vehicles.some(v=>v.origin===id)) return fail('owned','This car is already in your stock.');
+    if (state.negotiations?.[id]?.status==='walked' ||
+        state.auctionBids?.[id]?.status==='lost') return fail('closed','This opportunity is closed.');
+    if (state.reports?.[id]) return fail('inspected','This inspection has already been purchased.');
+    const pending=state.vehicles.filter(v=>v.status==='acquired')
+      .reduce((n,v)=>n+v.prepBudget,0);
+    const charge=car.profile.inspectionFee;
+    if (state.cash < charge + pending)
+      return fail('cash','Not enough unreserved cash to pay for this inspection.');
+    pay(state,-charge,'Pre-purchase inspection: '+car.title);
+    (state.reports??={})[id]={fee:charge,day:state.day};
+    const hidden=car.profile.hiddenFault;
+    return success('Inspection charged £'+charge+'. '+
+      (hidden?'Additional issue: '+hidden.item+' (£'+hidden.cost+').':
+        'No additional faults discovered in the simulated inspection.')+
+      ' Updated valuation available in the report.');
+  }
+  function reportFor(state,kind,id) {
+    if(kind==='stock'){
+      const car=own(state.vehicles,Number(id));
+      return car?{...car,profile:car.profile,inspected:!!car.profile?.inspected}:null;
+    }
+    const leads=kind==='auction'?market(state.day).auctions:
+      kind==='seller'?market(state.day).sellers:[];
+    const car=leads.find(x=>x.id===id);
+    return car?{...car,inspected:!!state.reports?.[id]}:null;
+  }
   function prepare(state, id) {
     const vehicle = own(state.vehicles,id);
     if (!vehicle) return fail('missing','Vehicle not found in your stock.');
@@ -262,7 +327,10 @@
     pay(state,-vehicle.prepBudget,'Preparation and inspection: ' + vehicle.title);
     vehicle.prepSpent = vehicle.prepBudget;
     vehicle.status = 'prepared';
-    return success(vehicle.title + ' is prepared for retail. Set an asking price.');
+    const extra=vehicle.profile?.hiddenFault;
+    return success(vehicle.title + ' prepared for £'+vehicle.prepBudget.toLocaleString('en-GB')+
+      (extra?' including '+extra.item+' (£'+extra.cost+'). ':'. ')+
+      'Set an asking price and advertise it.');
   }
   function advertise(state, id, asking) {
     const vehicle = own(state.vehicles,id);
@@ -279,13 +347,16 @@
   function pxTemplate(vehicle) { return EXCHANGES[(vehicle.id - 1) % EXCHANGES.length]; }
   function buyers(vehicle) {
     if (vehicle.status !== 'listed') return null;
-    const start = Math.max(500,vehicle.asking - 400);
-    const limit = Math.max(start,vehicle.asking - 90);
+    // Buyers benchmark against a market-derived achievable retail value.
+    // An inflated asking price does not force an unrealistically high offer.
+    const fair = vehicle.profile?.likelySale ?? (vehicle.asking - 250);
+    const limit = Math.max(500,Math.min(vehicle.asking - 90,fair));
+    const start = Math.max(500,Math.min(limit,vehicle.asking - 400,fair - 125));
     const px = pxTemplate(vehicle);
     return {
       cashOffer:vehicle.cashOffer === null ? start : vehicle.cashOffer,
       cashLimit:limit,
-      pxOffer:Math.max(500,vehicle.asking - 220),
+      pxOffer:Math.max(500,Math.min(vehicle.asking - 220,fair + 50)),
       exchange:px
     };
   }
@@ -312,7 +383,9 @@
       if (allowance >= price) return fail('part-ex','Part-exchange allowance must be below the agreed sale price.');
       const pendingPrep = state.vehicles.filter(v => v.status === 'acquired')
         .reduce((total, v) => total + v.prepBudget, 0);
-      if (state.cash + price - allowance < pendingPrep + px.prep)
+      const pxProfile=I.profile({...px,id:'PX-'+state.day+'-'+vehicle.id,kind:'part-ex'});
+      if (state.cash + price - allowance < pendingPrep +
+        pxProfile.basePrep+(pxProfile.hiddenFault?.cost||0))
         return fail('cash','This part-exchange would leave too little cash to prepare your existing and incoming stock.');
     }
     const realised = price - vehicle.cost - vehicle.prepSpent;
@@ -323,6 +396,7 @@
       id:vehicle.id,title:vehicle.title,source:vehicle.source,
       day:state.day,mode,price,acquisition:vehicle.cost,
       prep:vehicle.prepSpent,profit:realised,
+      profile:vehicle.profile?{...vehicle.profile}:null,
       exchange: px ? px.title : null,allowance:px ? allowance : 0
     });
     if (px) addCar(state,px,'part-ex',allowance,'PX-' + state.day + '-' + vehicle.id);
@@ -339,6 +413,7 @@
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, CAPACITY,
     market,create,normalize,acquireAuction,acquireSeller,walkSeller,
+    inspectLead,reportFor,quote:I.quote,
     prepare,advertise,buyers,counter,completeSale,totalMargin
   });
 })();
