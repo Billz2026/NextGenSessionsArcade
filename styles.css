@@ -25,7 +25,7 @@
   overflow:hidden;
   background-color:#090a0b;
   background-image:
-    linear-gradient(180deg,rgba(3,4,6,.73) 0%,rgba(4,6,9,.56) 34%,rgba(5,7,9,.51) 62%,rgba(5,6,7,.68) 100%),
+    linear-gradient(180deg,rgba(3,4,6,.57) 0%,rgba(4,6,9,.33) 34%,rgba(5,7,9,.27) 62%,rgba(5,6,7,.40) 100%),
     url("./assets/showroom-home-bg.webp");
   background-position:center center;
   background-size:cover;
@@ -91,24 +91,27 @@
   white-space:nowrap;
   margin:clamp(12px,2vh,21px) 0 0;
   text-align:center;
-  text-shadow:0 2px 3px #000c;
-  filter:none;
+  text-shadow:0 3px 6px #000a;
+  filter:drop-shadow(0 4px 3px #0009);
 }
 #screen-menu .trade-wordmark-hero span {
   display:inline;
   font-weight:900;
 }
+/* THE and MOTOR share the exact silver/chrome finish; no badge or outline around THE. */
 #screen-menu .trade-wordmark-hero .trade-the {
-  font-size:.55em;
-  letter-spacing:-.04em;
-  color:#f0eee9;
+  font-size:.62em;
+  letter-spacing:-.035em;
 }
+#screen-menu .trade-wordmark-hero .trade-the,
 #screen-menu .trade-wordmark-hero .trade-motor {
-  background:linear-gradient(180deg,#ffffff 3%,#d2d3d5 43%,#7c8287 82%,#e9ecec 100%);
-  color:#e4e5e6;
+  background:linear-gradient(180deg,#fff 1%,#eff1f2 18%,#a9afb4 48%,#f6f8f9 58%,#7b858d 86%,#dce0e3 100%);
+  color:#e4e8ea;
   -webkit-background-clip:text;
   background-clip:text;
   -webkit-text-fill-color:transparent;
+  border:0;
+  outline:0;
 }
 #screen-menu .trade-wordmark-hero .trade-trade {
   background:linear-gradient(180deg,#fff0c3 4%,#e4bc73 36%,#ba8543 79%,#efc987 100%);
