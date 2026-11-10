@@ -9,6 +9,12 @@
     const p=car.profile,E=window.MotorTradeEngine;
     const quote=kind==='stock'?null:E.quote(car,kind,price,inspected);
     const totalPrep=p.basePrep+(p.hiddenFault?.cost||0);
+    const booked=car.workshop?.repairCost||0;
+    const outstanding=car.workshop?.stage==='ready'?car.prepSpent:
+      (['in-progress','quality-check'].includes(car.workshop?.stage)?
+        booked:totalPrep);
+    const prepLabel=car.workshop?.stage==='ready'?'ACTUAL REPAIR SPEND':
+      booked?'BOOKED REPAIR COST':'INITIAL REPAIR BUDGET';
     const showExtra=inspected||kind==='stock';
     const hidden=showExtra?
       (p.hiddenFault?esc(p.hiddenFault.item)+' — '+money(p.hiddenFault.cost):
@@ -18,8 +24,8 @@
       ['TRADE VALUE',p.trade],['LIKELY SALE',p.likelySale],
       ['RECOMMENDED MAX',quote.maxBid],['EST. CONTRIBUTION',quote.expectedMargin]
     ]:[
-      ['LIKELY SALE',p.likelySale],['ACTUAL PREP QUOTE',totalPrep],
-      ['BUY COST',car.cost],['PROJECTED CONTRIBUTION',p.likelySale-car.cost-totalPrep]
+      ['LIKELY SALE',p.likelySale],[prepLabel,outstanding],
+      ['BUY COST',car.cost],['PROJECTED CONTRIBUTION',p.likelySale-car.cost-outstanding]
     ];
     const stats='<div class="intel-numbers">'+numbers.map(([label,value],i)=>
       '<div><span>'+label+'</span><strong'+(quote&&i===3?' id="projection-'+esc(car.id)+'"':'')+
@@ -54,8 +60,12 @@
       '<h4>KNOWN PREPARATION ITEMS</h4>'+known+
       '<div class="intel-repair intel-repair-total"><span>Known repair estimate</span><strong>'+money(p.basePrep)+'</strong></div>'+
       '<h4>ADDITIONAL CONDITION RISK</h4><p class="intel-small">'+hidden+'</p>'+breakdown+
-      (kind==='stock'?'<p class="intel-small">Workshop quotation, including any additional fault: '+
-         money(totalPrep)+'. This amount is payable on preparation.</p>':'')+
+      (kind==='stock'?'<p class="intel-small">Original diagnosed repair budget: '+
+         money(totalPrep)+'. '+(car.workshop?.stage==='ready'?
+           'Actual completed repairs: '+money(car.prepSpent)+'.':
+           booked?'Workshop charges already booked: '+money(booked)+'.':
+           'The workshop will issue a separate paid quotation. Sales are blocked until final quality control passes.')+
+         '</p>':'')+
       '<div class="intel-foot">'+(kind==='stock'?'':inspected?
         '<span class="intel-inspected">INSPECTION PAID · '+money(p.inspectionFee)+'</span>':
         '<button type="button" class="trade-button trade-button-secondary" data-action="inspect-lead" data-id="'+esc(car.id)+
