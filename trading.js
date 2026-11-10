@@ -122,7 +122,8 @@
         (v.profile.hiddenFault?.cost || 0));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
-      cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode);
+      cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
+      (s.profile==null || I.validProfile(s.profile));
     const goodLedger = l => l && integer(l.day) && l.day >= 1 && l.day <= saved.day &&
       integer(l.delta) && Math.abs(l.delta) <= 10000000 &&
       typeof l.note === 'string' && l.note.length < 200;
@@ -162,7 +163,10 @@
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
             hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}
       })),
-      sold:saved.sold.map(v => ({...v})),
+      sold:saved.sold.map(v => ({...v,profile:v.profile?{...v.profile,
+        knownRepairs:v.profile.knownRepairs.map(r=>({...r})),
+        mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
+        hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}:null})),
       ledger:saved.ledger.map(v => ({...v})),nextId:saved.nextId,
       negotiations:Object.fromEntries(Object.entries(negotiations).map(([k,v])=>[k,{...v}])),
       auctionBids:Object.fromEntries(Object.entries(auctionBids).map(([k,v])=>[k,{...v}])),
@@ -392,6 +396,7 @@
       id:vehicle.id,title:vehicle.title,source:vehicle.source,
       day:state.day,mode,price,acquisition:vehicle.cost,
       prep:vehicle.prepSpent,profit:realised,
+      profile:vehicle.profile?{...vehicle.profile}:null,
       exchange: px ? px.title : null,allowance:px ? allowance : 0
     });
     if (px) addCar(state,px,'part-ex',allowance,'PX-' + state.day + '-' + vehicle.id);
