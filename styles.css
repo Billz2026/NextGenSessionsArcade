@@ -538,3 +538,10 @@
  .event-metrics>div,.meeting-metrics>div{padding:12px}
  .event-section{padding:15px}.event-action-grid>div{padding:15px}
  .event-banner h3{font-size:23px}}
+
+/* Keep every department and the bottom career controls reachable at laptop height. */
+@media(min-width:1021px){
+  .career-sidebar{height:100dvh;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin;scrollbar-color:#526570 #10202a}
+  .sidebar-logo,.sidebar-bottom{flex-shrink:0}
+}
