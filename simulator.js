@@ -119,6 +119,7 @@
   let currentPage = 'dashboard';
   let selectedMessageId = null;
   let eventNotice = '';
+  let lastTradeResult = null;
 
   function gameDate(day) {
     return new Date(START_DATE_UTC + (day - 1) * MS_PER_DAY);
@@ -187,10 +188,25 @@
     const value = Number(field.value);
     return Number.isSafeInteger(value) ? value : NaN;
   }
-  function saveResult(result) {
+  function saveResult(result, leadId = null) {
     eventNotice = result.message;
-    if (result.ok) persistCareer();
+    lastTradeResult = { id:leadId, ok:result.ok, code:result.code || '', message:result.message };
+    if (result.ok || result.changed) persistCareer();
     render();
+  }
+  function leadFeedback(id) {
+    if (!lastTradeResult || lastTradeResult.id !== id) return '';
+    return '<div class="trade-inline-feedback ' + (lastTradeResult.ok ? 'trade-feedback-success' : 'trade-feedback-warning') +
+      '" role="status">' + escapeText(lastTradeResult.message) + '</div>';
+  }
+  const prepReserved = () => career.vehicles.filter(v => v.status === 'acquired')
+    .reduce((n,v) => n + v.prepBudget,0);
+  function purchaseWarning(cost) {
+    if (career.vehicles.length >= career.capacity)
+      return 'FORECOURT FULL — finish a sale in Vehicle Stock / Sales Office.';
+    if (career.cash < cost + prepReserved())
+      return 'NOT ENOUGH CASH — preserve funds for all vehicle preparation.';
+    return '';
   }
   function details(vehicle) {
     return '<div class="trade-card-details">' +
@@ -207,36 +223,55 @@
   }
   function renderMarket() {
     const {auctions,sellers} = E.market(career.day);
-    const full = career.vehicles.length >= career.capacity;
-    const auctionsHtml = auctions.map(lot => {
-      const pendingPrep = career.vehicles.filter(v => v.status === 'acquired').reduce((n,v) => n + v.prepBudget, 0);
-      const blocked = full || career.cash < lot.guide + lot.fee + lot.prep + pendingPrep ||
-        career.vehicles.some(v => v.origin === lot.id);
-      return '<article class="trade-card">' + cardHeader(lot, 'AUCTION / ' + lot.id) +
-        '<div class="trade-pricing"><div><small>GUIDE BID</small><strong>' + cashText(lot.guide) +
-        '</strong></div><div><small>BUYER FEE</small><strong>' + cashText(lot.fee) +
-        '</strong></div><div><small>EST. RETAIL</small><strong>' + cashText(lot.retail) +
-        '</strong></div><div><small>EST. PREP</small><strong>' + cashText(lot.prep) +
-        '</strong></div></div><div class="trade-actions"><span class="trade-extra">Rival traders bid against you. Winning cost is your bid plus the displayed fee.</span>' +
-        '<div class="trade-action-row"><label>YOUR MAXIMUM BID (£)<input class="trade-input" type="number" inputmode="numeric" min="' + lot.guide +
-        '" max="100000" step="25" id="auction-bid-' + lot.id + '" value="' + (lot.guide + 250) + '"></label>' +
-        '<button type="button" class="trade-button" data-action="bid-auction" data-id="' + lot.id +
-        '"' + (blocked ? ' disabled' : '') + '>PLACE BID</button></div></div></article>';
-    }).join('');
-    const sellersHtml = sellers.map(car => {
-      const blocked = full || career.cash < 100 ||
-        career.vehicles.some(v => v.origin === car.id);
-      return '<article class="trade-card">' + cardHeader(car,'DIRECT SELLER / ' + car.id) +
-        '<div class="trade-pricing"><div><small>OWNER ASKS</small><strong>' + cashText(car.ask) +
-        '</strong></div><div><small>EST. RETAIL</small><strong>' + cashText(car.retail) +
-        '</strong></div><div><small>EST. PREP</small><strong>' + cashText(car.prep) +
-        '</strong></div><div><small>BUYER FEE</small><strong>£0</strong></div></div>' +
-        '<div class="trade-actions"><span class="trade-extra">Private seller may reject low offers. Check preparation and market value.</span>' +
-        '<div class="trade-action-row"><label>YOUR OFFER (£)<input class="trade-input" type="number" inputmode="numeric" min="100" max="' + car.ask +
-        '" step="25" id="seller-offer-' + car.id + '" value="' + car.ask + '"></label>' +
-        '<button type="button" class="trade-button" data-action="buy-seller" data-id="' + car.id +
-        '"' + (blocked ? ' disabled' : '') + '>MAKE OFFER</button></div></div></article>';
-    }).join('');
+    const auctionsHtml = auctions.length ? auctions.map(lot => {
+      const state = (career.auctionBids || {})[lot.id];
+      const owned = career.vehicles.some(v => v.origin === lot.id);
+      const closed = owned || state?.status === 'lost';
+      const warning = purchaseWarning(lot.guide + lot.fee + lot.prep);
+      const guide = state?.lastBid ? Math.max(lot.guide,state.lastBid + 150) : lot.guide + 250;
+      const outcome = owned ? '<div class="trade-inline-feedback trade-feedback-success">PURCHASED — see Vehicle Stock.</div>' :
+        state?.status === 'lost' ? '<div class="trade-inline-feedback trade-feedback-warning">OUTBID — lot closed. No fee charged.</div>' :
+        state?.status === 'outbid' ? '<div class="trade-inline-feedback trade-feedback-warning">OUTBID — one more bid available. No fee charged.</div>' : '';
+      return '<article class="trade-card">' + cardHeader(lot,'AUCTION / '+lot.id) +
+        '<div class="trade-pricing"><div><small>GUIDE BID</small><strong>'+cashText(lot.guide) +
+        '</strong></div><div><small>BUYER FEE</small><strong>'+cashText(lot.fee) +
+        '</strong></div><div><small>EST. RETAIL</small><strong>'+cashText(lot.retail) +
+        '</strong></div><div><small>EST. PREP</small><strong>'+cashText(lot.prep) +
+        '</strong></div></div><div class="trade-actions">'+
+        '<span class="trade-extra">Maximum bid simulation · buyer fee only if you win. Include the fee and preparation when calculating your limit.</span>' +
+        (warning && !closed ? '<div class="trade-purchase-warning">'+escapeText(warning)+'</div>' : '')+
+        outcome+leadFeedback(lot.id)+
+        '<div class="trade-action-row"><label>YOUR MAXIMUM BID (£)<input class="trade-input" type="number" inputmode="numeric" min="'+lot.guide+
+        '" max="100000" step="25" id="auction-bid-'+lot.id+'" value="'+guide+'"></label>'+
+        '<button type="button" class="trade-button" data-action="bid-auction" data-id="'+lot.id+
+        '"'+(closed?' disabled':'')+'>'+(closed?'CLOSED':'PLACE BID')+'</button></div></div></article>';
+    }).join('') : '<div class="trade-empty">No auction session today. Check direct sellers or advance to the next game day.</div>';
+    const sellersHtml = sellers.length ? sellers.map(car => {
+      const negotiation = (career.negotiations || {})[car.id];
+      const owned = career.vehicles.some(v => v.origin === car.id);
+      const closed = owned || negotiation?.status === 'walked';
+      const warning = purchaseWarning(car.ask + car.prep);
+      const asking = negotiation?.status === 'counter' ? negotiation.counter : car.ask;
+      const offerStatus = owned ? '<div class="trade-inline-feedback trade-feedback-success">PURCHASED — car added to Vehicle Stock.</div>' :
+        negotiation?.status === 'walked' ? '<div class="trade-inline-feedback trade-feedback-warning">OWNER WALKED AWAY — enquiry closed for today.</div>' :
+        negotiation?.status === 'counter' ?
+          '<div class="trade-inline-feedback trade-feedback-counter"><strong>SELLER COUNTEROFFER: '+cashText(negotiation.counter)+'</strong> — accept, revise or walk away.</div>' : '';
+      const controls = closed ? '<button type="button" class="trade-button" disabled>ENQUIRY CLOSED</button>' :
+        '<div class="trade-action-row"><label>YOUR OFFER (£)<input class="trade-input" type="number" inputmode="numeric" min="100" max="'+car.ask+
+        '" step="25" id="seller-offer-'+car.id+'" value="'+asking+'"></label>'+
+        '<button type="button" class="trade-button" data-action="buy-seller" data-id="'+car.id+
+        '">'+(negotiation?.status==='counter'?'SUBMIT OFFER':'MAKE OFFER')+'</button></div>'+
+        (negotiation?.status==='counter'?'<div class="trade-offer-buttons"><button type="button" class="trade-button trade-button-secondary" data-action="accept-seller-counter" data-id="'+car.id+
+          '">ACCEPT '+cashText(negotiation.counter)+'</button><button type="button" class="trade-button trade-button-outline" data-action="walk-seller" data-id="'+car.id+'">WALK AWAY</button></div>':'');
+      return '<article class="trade-card">' + cardHeader(car,'DIRECT SELLER / '+car.id) +
+        '<div class="trade-pricing"><div><small>OWNER ASKS</small><strong>'+cashText(car.ask)+
+        '</strong></div><div><small>EST. RETAIL</small><strong>'+cashText(car.retail)+
+        '</strong></div><div><small>EST. PREP</small><strong>'+cashText(car.prep)+
+        '</strong></div><div><small>BUYER FEE</small><strong>£0</strong></div></div>'+
+        '<div class="trade-actions"><span class="trade-extra">The owner can accept your offer, negotiate, or leave. Each enquiry is limited to two rounds.</span>'+
+        (warning && !closed ? '<div class="trade-purchase-warning">'+escapeText(warning)+'</div>' : '')+
+        offerStatus+leadFeedback(car.id)+controls+'</div></article>';
+    }).join('') : '<div class="trade-empty">No private or walk-in seller leads today. Check auction lots or the next game day.</div>';
     byId('market-auctions').innerHTML = auctionsHtml;
     byId('market-sellers').innerHTML = sellersHtml;
   }
@@ -376,6 +411,10 @@
     byId('save-warning').hidden = storageAvailable;
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;
+    const toast = byId('trade-feedback-toast');
+    toast.hidden = !lastTradeResult;
+    toast.className = 'trade-feedback-toast' + (lastTradeResult?.ok ? ' trade-feedback-toast-success' : ' trade-feedback-toast-warning');
+    toast.textContent = lastTradeResult?.message || '';
     renderInbox();
     renderTrading();
   }
@@ -387,12 +426,17 @@
       currentPage = pageOrScreen;
     }
     eventNotice = '';
+    lastTradeResult = null;
     render();
     if (typeof window.scrollTo === 'function') window.scrollTo(0, 0);
   }
   function advanceDay() {
     if (!career || career.day >= MAX_DAY) return;
     career.day += 1;
+    lastTradeResult = null;
+    // Prior negotiations are tied to that day's leads. Keep the save bounded.
+    career.negotiations = {};
+    career.auctionBids = {};
     const eventFactory = scheduledMessages[career.day];
     if (eventFactory && !career.messages.some(m => m.day === career.day)) {
       career.messages.push(eventFactory());
@@ -415,6 +459,7 @@
     if (career && !window.confirm('Replace your existing career? This will overwrite your saved dealership and inbox history.')) return;
     career = E.create(name, welcomeMessages());
     selectedMessageId = null;
+    lastTradeResult = null;
     screen = 'career';
     currentPage = 'dashboard';
     const saved = persistCareer();
@@ -455,11 +500,24 @@
         break;
       case 'bid-auction':
         if (career) saveResult(E.acquireAuction(career,button.dataset.id,
-          inputNumber('auction-bid-' + button.dataset.id)));
+          inputNumber('auction-bid-' + button.dataset.id)),button.dataset.id);
         break;
       case 'buy-seller':
         if (career) saveResult(E.acquireSeller(career,button.dataset.id,
-          inputNumber('seller-offer-' + button.dataset.id)));
+          inputNumber('seller-offer-' + button.dataset.id)),button.dataset.id);
+        break;
+      case 'accept-seller-counter':
+        if (career) {
+          const offer=career.negotiations?.[button.dataset.id]?.counter;
+          saveResult(E.acquireSeller(career,button.dataset.id,offer),button.dataset.id);
+        }
+        break;
+      case 'walk-seller':
+        if (career) saveResult(E.walkSeller(career,button.dataset.id),button.dataset.id);
+        break;
+      case 'dismiss-feedback':
+        lastTradeResult = null;
+        byId('trade-feedback-toast').hidden = true;
         break;
       case 'prepare-stock':
         if (career) saveResult(E.prepare(career,Number(button.dataset.id)));
