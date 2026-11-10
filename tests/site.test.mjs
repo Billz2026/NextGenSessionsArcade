@@ -50,11 +50,11 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
   assert.match(html, /people\.js\?v=2/);
-  assert.match(html, /monthly\.js\?v=1/);
-  assert.match(html, /events\.js\?v=1/);
-  assert.match(html, /trading\.js\?v=6/);
-  assert.match(html, /events-view\.js\?v=1/);
-  assert.match(html, /monthly-view\.js\?v=1/);
+  assert.match(html, /monthly\.js\?v=2/);
+  assert.match(html, /events\.js\?v=2/);
+  assert.match(html, /trading\.js\?v=7/);
+  assert.match(html, /events-view\.js\?v=2/);
+  assert.match(html, /monthly-view\.js\?v=2/);
   assert.match(html, /people-view\.js\?v=1/);
   assert.match(html, /vehicle-view\.js\?v=1/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
@@ -266,7 +266,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=15/);
+  assert.match(html, /styles\.css\?v=16/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -1529,6 +1529,7 @@ test('a quiet Deal Day can leave a listed car with no buyer, so selling is disal
   app.setInput('seller-offer-'+seller.id,seller.ask);
   app.click('buy-seller',{id:seller.id});
   app.click('prepare-stock',{id:'1'});
+  app.setInput('stock-price-1',5200);
   app.click('list-stock',{id:'1'});
   for(let i=0;i<29;i++)app.click('continue');
   const before=JSON.parse(store.get(STORAGE_KEY));
