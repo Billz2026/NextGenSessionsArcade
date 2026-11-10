@@ -16,17 +16,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=16">
+  <link rel="stylesheet" href="./styles.css?v=17">
   <script src="./vehicle-intel.js?v=1" defer></script>
   <script src="./people.js?v=2" defer></script>
   <script src="./monthly.js?v=2" defer></script>
   <script src="./events.js?v=2" defer></script>
-  <script src="./trading.js?v=7" defer></script>
+  <script src="./workshop.js?v=1" defer></script>
+  <script src="./trading.js?v=8" defer></script>
   <script src="./vehicle-view.js?v=1" defer></script>
   <script src="./people-view.js?v=1" defer></script>
   <script src="./monthly-view.js?v=2" defer></script>
   <script src="./events-view.js?v=2" defer></script>
-  <script src="./simulator.js?v=12" defer></script>
+  <script src="./workshop-view.js?v=1" defer></script>
+  <script src="./simulator.js?v=13" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -34,7 +36,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.7.1</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.8</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -100,6 +102,7 @@
             <button type="button" data-page="inbox"><span class="nav-icon">✉</span> Inbox <span class="nav-unread" data-bind="unread" hidden>3</span></button>
             <button type="button" data-page="auctions"><span class="nav-icon">◆</span> Buying Desk</button>
             <button type="button" data-page="stock"><span class="nav-icon">▤</span> Vehicle Stock</button>
+            <button type="button" data-page="workshop"><span class="nav-icon">⚒</span> Workshop</button>
             <button type="button" data-page="sales"><span class="nav-icon">♧</span> Sales Office</button>
             <button type="button" data-page="finance"><span class="nav-icon">£</span> Finances</button>
             <button type="button" data-page="reports"><span class="nav-icon">▦</span> Management Reports</button>
@@ -152,14 +155,14 @@
                   <section class="panel-card priorities" aria-labelledby="priorities-title">
                     <div class="panel-card-header"><div><p class="section-overline">MANAGER'S DIARY</p><h2 id="priorities-title">TODAY'S PRIORITIES</h2></div><span class="tiny-index" data-bind="day-label">DAY 01</span></div>
                     <div class="priority-row"><span class="priority-index">01</span><div><strong>Review your inbox</strong><p>Read your welcome brief and starting position.</p></div></div>
-                    <div class="priority-row"><span class="priority-index">02</span><div><strong>Find your next vehicle</strong><p>Auctions and private sellers bring new stock opportunities each day.</p></div></div>
+                    <div class="priority-row"><span class="priority-index">02</span><div><strong>Prepare your stock</strong><p>Assess purchased cars, manage garage jobs and pass quality control before selling.</p></div></div>
                     <button type="button" class="subtle-action" data-page="auctions">OPEN BUYING DESK <span>→</span></button>
                   </section>
                   <section class="panel-card calendar-widget">
                     <p class="section-overline">GAME CALENDAR</p>
                     <div class="calendar-date"><span data-bind="weekday">MONDAY</span><strong data-bind="date-long">09 NOVEMBER 2026</strong></div>
                     <div class="calendar-copy" id="calendar-message">Your first day in business. Review your briefing before advancing.</div>
-                    <p class="simulation-note">CONTINUE advances one game day and refreshes auction lots, direct sellers and enquiries. No automatic profit is invented.</p>
+                    <p class="simulation-note">CONTINUE advances time: repair jobs progress once per game day. Deal Day runs multiple sessions without extra wages or repair progress.</p>
                   </section>
                 </div>
               </div>
@@ -186,8 +189,13 @@
             </section>
 
             <section class="career-panel" data-panel="stock" hidden aria-labelledby="stock-title">
-              <div class="page-heading"><div><p class="section-overline">THE FORECOURT / VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Review each vehicle's own repair quotation, condition report and expected sale value before paying preparation and advertising.</p></div><span class="career-chip">SPACE <span data-bind="stock">0 / 2</span></span></div>
+              <div class="page-heading"><div><p class="section-overline">THE FORECOURT / VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Track each vehicle's acquisition, repair progress, true cost and readiness to advertise. Preparation now takes game days.</p></div><span class="career-chip">SPACE <span data-bind="stock">0 / 2</span></span></div>
               <div id="stock-list" class="trade-card-grid trade-stock-grid"></div>
+            </section>
+
+            <section class="career-panel" data-panel="workshop" hidden aria-labelledby="workshop-title">
+              <div class="page-heading"><div><p class="section-overline">OPERATIONS / VEHICLE PREPARATION</p><h1 id="workshop-title">WORKSHOP <em>OPERATIONS.</em></h1><p>Diagnose faults, approve in-house or external repair jobs, wait for work to finish and pass quality control before advertising.</p></div><span class="career-chip">REAL GAME-DAY TURNAROUND</span></div>
+              <div id="workshop-board" aria-live="polite"></div>
             </section>
 
             <section class="career-panel" data-panel="sales" hidden aria-labelledby="sales-title">
@@ -238,7 +246,7 @@
               <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong>2 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div><div class="profile-row"><span>Employees</span><strong data-bind="staff-count">0</strong></div><div class="profile-row"><span>Reputation</span><strong data-bind="reputation-score">5 / 100</strong></div><div class="profile-row"><span>Monthly sales target</span><strong data-bind="monthly-target">0 / 2</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Live: recruitment, staff effects and evolving reputation</li><li>Next: workshop queues, complaints and aftersales</li></ol></div></div>
             </section>
           </div>
-          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA DEAL DAY & MEETINGS / LOCAL SAVE</span></footer>
+          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA WORKSHOP & VEHICLE LIFECYCLE / LOCAL SAVE</span></footer>
         </div>
       </div>
     </section>
