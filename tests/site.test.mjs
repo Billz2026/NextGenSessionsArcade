@@ -1836,3 +1836,23 @@ test('Deal Day sessions do not advance workshop repairs or trigger additional in
   assert.equal(s.ledger.length,ledger);
   assert.equal(E.market(30,s.reputationScore,s.deadlineSession,s.name).auctions.length,0);
 });
+
+test('unknown hidden repair detail stays confidential until workshop assessment', () => {
+  const store=new Map(),app=browser(store);
+  app.click('new-career');app.submitCareer('Inspection Dealer');
+  const car=app.engine.market(1).auctions.find(x=>x.profile.hiddenFault);
+  assert.ok(car);
+  const hammer=car.rival+50;
+  app.setInput('auction-bid-'+car.id,hammer);
+  app.click('bid-auction',{id:car.id});
+  let state=JSON.parse(store.get(STORAGE_KEY));
+  assert.equal(state.vehicles.length,1);
+  const extra=state.vehicles[0].profile.hiddenFault.item;
+  const initial=app.nodes.get('workshop-board').innerHTML;
+  assert.doesNotMatch(initial,new RegExp(extra),'Undiagnosed hidden fault must not appear in the workshop list');
+  app.click('assess-workshop',{id:'1'});
+  state=JSON.parse(store.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].workshop.stage,'quoted');
+  assert.match(app.nodes.get('workshop-board').innerHTML,new RegExp(extra));
+  assert.ok(state.ledger.some(l=>l.note.startsWith('Workshop assessment:')));
+});
