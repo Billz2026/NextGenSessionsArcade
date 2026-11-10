@@ -106,7 +106,7 @@
       return failure('role','You already employ somebody in that role at this dealership.');
     if(state.staff.length>=MAX_STAFF)
       return failure('capacity','This small dealership supports up to three employees.');
-    const weeklyCover=dailyCost(candidate)*7;
+    const weeklyCover=(state.staff.reduce((n,e)=>n+dailyCost(e),0)+dailyCost(candidate))*7;
     const required=HIRING_FEE+reserve(state)+weeklyCover+state.payrollArrears;
     if(state.cash<required)return failure('cash','Recruitment requires £'+required.toLocaleString('en-GB')+
       ' in available cash: joining fee, one week of wages and stock preparation.');
@@ -205,7 +205,10 @@
       worker.deals++;
       worker.morale=clamp(worker.morale+2,0,100);
       commission=Math.max(0,Math.round(grossProfit*.03));
-      const paid=Math.min(state.cash,commission);
+      // Preserve the workshop reserve for existing and incoming part-ex stock.
+      // Any unpaid sales commission remains a liability; gross margin is
+      // deliberately reported before staff costs.
+      const paid=Math.min(Math.max(0,state.cash-reserve(state)),commission);
       expense(state,paid,'Sales commission: '+worker.name);
       state.payrollArrears+=commission-paid;
     }
