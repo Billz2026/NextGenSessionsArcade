@@ -20,6 +20,8 @@
   const C = E.customers;
   const VC = window.MotorTradeCards;
   if(!VC)throw new Error('Load vehicle-cards.js before simulator.js');
+  const MARKET = window.MotorTradeMarket;
+  if(!MARKET)throw new Error('Load vehicle-market.js before simulator.js');
   const STORAGE_KEY = 'the-motor-trade-career-v1';
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
   const SAVE_VERSION = E.VERSION;
@@ -258,8 +260,16 @@
     return cashText(E.quote(car,kind,price,!!career.reports?.[car.id]).expectedMargin);
   }
   function renderMarket() {
+    const progression=MARKET.progress(career.cash,career.reputationScore);
+    const next=progression.next;
+    byId('market-progression').innerHTML=
+      '<div><small>YOUR DEALERSHIP LEVEL</small><strong>'+VC.esc(progression.current.label)+'</strong></div>'+
+      '<p>'+(next?'NEXT: '+VC.esc(next.label)+' · NEED '+cashText(next.minCash)+
+      ' CASH AND '+next.minRep+' REPUTATION.':
+      'TOP TIER UNLOCKED · LUXURY STOCK IS NOW AVAILABLE.')+
+      ' Opportunities still depend on the day and your available funds.</p>';
     const {auctions,sellers} = E.market(career.day,career.reputationScore,career.deadlineSession,
-      career.name,career.monthPlan.startingReputation);
+      career.name,career.monthPlan.startingReputation,career.cash);
     const auctionsHtml = auctions.length ? auctions.map(lot => {
       const state = (career.auctionBids || {})[lot.id];
       const owned = career.vehicles.some(v => v.origin === lot.id);
