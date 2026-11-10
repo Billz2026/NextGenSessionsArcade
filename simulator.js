@@ -6,7 +6,9 @@
  */
 (() => {
   const E = window.MotorTradeEngine;
-  if (!E) throw new Error('Trading engine must load before simulator.js');
+  const PV = window.MotorTradePeopleView;
+  if (!E || !PV) throw new Error('Trading and people modules must load before simulator.js');
+  const P = E.people;
   const STORAGE_KEY = 'the-motor-trade-career-v1';
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
   const SAVE_VERSION = E.VERSION;
@@ -22,6 +24,8 @@
     stock: 'VEHICLE STOCK',
     sales: 'SALES OFFICE',
     finance: 'FINANCES',
+    staff: 'STAFF & RECRUITMENT',
+    reputation: 'REPUTATION',
     business: 'MY DEALERSHIP'
   });
   const money = new Intl.NumberFormat('en-GB', {
@@ -239,12 +243,13 @@
     return cashText(E.quote(car,kind,price,!!career.reports?.[car.id]).expectedMargin);
   }
   function renderMarket() {
-    const {auctions,sellers} = E.market(career.day);
+    const {auctions,sellers} = E.market(career.day,career.reputationScore);
     const auctionsHtml = auctions.length ? auctions.map(lot => {
       const state = (career.auctionBids || {})[lot.id];
       const owned = career.vehicles.some(v => v.origin === lot.id);
       const closed = owned || state?.status === 'lost';
       const warning = purchaseWarning(lot.guide + lot.fee + repairReserve(lot));
+      const auctionIntel=P.buyerEstimate(career,Math.max(lot.rival,lot.reserve));
       const guide = Number.isSafeInteger(offerDrafts[lot.id]) ?
         offerDrafts[lot.id] : state?.lastBid ?
           Math.max(lot.guide,state.lastBid + 150) : lot.guide + 250;
@@ -259,6 +264,9 @@
         '</strong></div><div><small>EST. PREP</small><strong>'+cashText(lot.prep) +
         '</strong></div></div><div class="trade-actions">'+
         '<span class="trade-extra">Maximum bid simulation · buyer fee only if you win. Include the fee and preparation when calculating your limit.</span>' +
+        (auctionIntel?'<span class="people-bid-intel">BUYER INTELLIGENCE: EXPECTED RIVAL BID '+
+          cashText(auctionIntel.lower)+'–'+cashText(auctionIntel.upper)+
+          '. Range estimate, not a guaranteed result.</span>':'')+
         (warning && !closed ? '<div class="trade-purchase-warning">'+escapeText(warning)+'</div>' : '')+
         outcome+leadFeedback(lot.id)+
         '<div class="trade-action-row"><label>YOUR MAXIMUM BID (£)<input class="trade-input" type="number" inputmode="numeric" min="'+lot.guide+
@@ -335,7 +343,7 @@
       return;
     }
     holder.innerHTML = listed.map(car => {
-      const buyer = E.buyers(car);
+      const buyer = E.buyers(car,career);
       const px = buyer.exchange;
       return '<article class="trade-card">' + cardHeader(car, 'CUSTOMER ENQUIRY / STOCK ' + car.id) +
         '<div class="trade-pricing"><div><small>YOUR ASKING PRICE</small><strong>' + cashText(car.asking) +
@@ -373,11 +381,18 @@
       (entry.delta < 0 ? '−' : '+') + cashText(Math.abs(entry.delta)) + '</b></div>'
     ).join('');
   }
+  function renderPeople() {
+    byId('people-totals').innerHTML=PV.totals(career,P);
+    byId('people-roster').innerHTML=PV.roster(career,P);
+    byId('people-applicants').innerHTML=PV.applicants(career,P);
+    byId('reputation-view').innerHTML=PV.reputation(career);
+  }
   function renderTrading() {
     renderMarket();
     renderStock();
     renderSales();
     renderLedger();
+    renderPeople();
   }
 
   function render() {
@@ -408,6 +423,11 @@
     bindText('trade-profit', money.format(E.totalMargin(career)));
     bindText('sales', String(career.sales));
     bindText('reputation', career.reputation);
+    bindText('reputation-score', career.reputationScore+' / 100');
+    bindText('staff-count', String(career.staff.length));
+    bindText('staff-arrears', money.format(career.payrollArrears));
+    bindText('staff-daily-pay', money.format(career.staff.reduce(
+      (n,e)=>n+P.dailyCost(e),0))+'/day');
     bindText('day-label', 'DAY ' + String(career.day).padStart(2, '0'));
     bindText('date', short);
     bindText('weekday', weekdayLong.format(date).toUpperCase());
@@ -456,6 +476,7 @@
   function advanceDay() {
     if (!career || career.day >= MAX_DAY) return;
     career.day += 1;
+    const workforceEvent=E.staffDay(career);
     lastTradeResult = null;
     expandedReportId = null;
     career.reports = {};
@@ -469,6 +490,13 @@
       eventNotice = 'New inbox message received. Your game calendar has advanced by one day.';
     } else {
       eventNotice = 'One game day completed. New auction lots and private seller leads are available.';
+    }
+    if(workforceEvent.payroll || workforceEvent.arrears){
+      eventNotice += ' Staff wage settlement: '+money.format(workforceEvent.paid)+
+        ' paid of '+money.format(workforceEvent.payroll)+
+        '; unpaid balance '+money.format(workforceEvent.arrears)+'.';
+      if(workforceEvent.departures.length)
+        eventNotice+=' Departures: '+workforceEvent.departures.join(', ')+'.';
     }
     persistCareer();
     render();
@@ -507,7 +535,7 @@
     const match=/^(auction-bid-|seller-offer-)([AS]-[0-9]+-[0-9]+)$/.exec(event.target.id);
     if (!match) return;
     const kind=match[1]==='auction-bid-'?'auction':'seller';
-    const catalogue=E.market(career.day);
+    const catalogue=E.market(career.day,career.reputationScore);
     const car=(kind==='auction'?catalogue.auctions:catalogue.sellers).find(v=>v.id===match[2]);
     const output=byId('projection-'+match[2]);
     if (!car || !output) return;
@@ -554,6 +582,16 @@
           saveResult(E.inspectLead(career,button.dataset.kind,button.dataset.id),
             button.dataset.id);
         }
+        break;
+      case 'hire-staff':
+        if (career) saveResult(P.hire(career,button.dataset.id));
+        break;
+      case 'train-staff':
+        if (career) saveResult(P.train(career,Number(button.dataset.id)));
+        break;
+      case 'release-staff':
+        if (career&&window.confirm('Release this employee? The game charges seven days of provisional notice pay, even if cash is unavailable.'))
+          saveResult(P.release(career,Number(button.dataset.id)));
         break;
       case 'bid-auction':
         if (career) saveResult(E.acquireAuction(career,button.dataset.id,

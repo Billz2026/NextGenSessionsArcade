@@ -16,11 +16,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=12">
+  <link rel="stylesheet" href="./styles.css?v=13">
   <script src="./vehicle-intel.js?v=1" defer></script>
-  <script src="./trading.js?v=3" defer></script>
+  <script src="./people.js?v=1" defer></script>
+  <script src="./trading.js?v=4" defer></script>
   <script src="./vehicle-view.js?v=1" defer></script>
-  <script src="./simulator.js?v=8" defer></script>
+  <script src="./people-view.js?v=1" defer></script>
+  <script src="./simulator.js?v=9" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -28,7 +30,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.4</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.5</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -96,6 +98,8 @@
             <button type="button" data-page="stock"><span class="nav-icon">▤</span> Vehicle Stock</button>
             <button type="button" data-page="sales"><span class="nav-icon">♧</span> Sales Office</button>
             <button type="button" data-page="finance"><span class="nav-icon">£</span> Finances</button>
+            <button type="button" data-page="staff"><span class="nav-icon">♟</span> Staff & Recruitment</button>
+            <button type="button" data-page="reputation"><span class="nav-icon">★</span> Reputation</button>
             <button type="button" data-page="business"><span class="nav-icon">▣</span> My Dealership</button>
           </nav>
           <div class="sidebar-bottom">
@@ -130,7 +134,7 @@
                 <div class="stat-tile"><span>AVAILABLE CASH</span><strong data-bind="cash">£12,500</strong><small>Funds available</small></div>
                 <div class="stat-tile"><span>VEHICLES IN STOCK</span><strong data-bind="stock">0 / 2</strong><small>Your forecourt</small></div>
                 <div class="stat-tile"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Career total</small></div>
-                <div class="stat-tile stat-tile-gold"><span>TRADE REPUTATION</span><strong data-bind="reputation">NEWCOMER</strong><small>Build trust through deals</small></div>
+                <div class="stat-tile stat-tile-gold"><span>TRADE REPUTATION</span><strong data-bind="reputation">NEW TRADER</strong><small data-bind="reputation-score">5 / 100</small></div>
               </div>
               <div class="dashboard-grid">
                 <section class="panel-card inbox-widget" aria-labelledby="widget-inbox-title">
@@ -191,16 +195,30 @@
                 <div class="panel-card trade-money"><span>REALISED GROSS TRADE MARGIN</span><strong data-bind="trade-profit">£0</strong><small>Sale proceeds less vehicle acquisition and preparation</small></div>
                 <div class="panel-card trade-money"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Completed customer transactions</small></div>
               </div>
+              <div class="people-finance-note">Staff wage settlement: <strong data-bind="staff-daily-pay">£0/day</strong> · Unpaid wage/notice obligations: <strong data-bind="staff-arrears">£0</strong>. Staff expenses appear in the ledger but are excluded from gross vehicle margin.</div>
               <section class="panel-card trade-section"><div class="panel-card-header"><div><p class="section-overline">TRANSACTION HISTORY</p><h2>TRADING LEDGER</h2></div></div><div id="ledger-list" class="trade-ledger"></div></section>
               <p class="trade-alert">These are game economics only. Figures are not tax-adjusted net profit: VAT, applicable margin-scheme rules, operating overheads, finance, warranties and consumer rights liabilities are not calculated.</p>
             </section>
 
+            <section class="career-panel" data-panel="staff" hidden aria-labelledby="staff-title">
+              <div class="page-heading"><div><p class="section-overline">DEALERSHIP MANAGEMENT / PEOPLE</p><h1 id="staff-title">YOUR <em>TEAM.</em></h1><p>Recruit carefully. Experience improves trading decisions, but salaries are payable even when no vehicles sell.</p></div><span class="career-chip">STAFF & RECRUITMENT</span></div>
+              <div class="trade-alert">This release models three roles. Staff join the following game day; training takes two days. Base wages are settled in daily 1/30-month instalments for gameplay, not real UK payroll. Employer taxes, pensions, employment contracts and formal notice rules are not yet simulated.</div>
+              <div id="people-totals"></div>
+              <section class="panel-card trade-section"><div class="panel-card-header"><div><p class="section-overline">CONTRACTED TEAM</p><h2>YOUR EMPLOYEES</h2></div><span class="tiny-index">THREE ROLES AVAILABLE</span></div><div id="people-roster" class="people-grid"></div></section>
+              <section class="panel-card trade-section"><div class="panel-card-header"><div><p class="section-overline">CURRENT APPLICANTS</p><h2>RECRUITMENT MARKET</h2></div><span class="tiny-index">NEW SHORTLIST EVERY 7 DAYS</span></div><div id="people-applicants" class="people-grid"></div></section>
+            </section>
+
+            <section class="career-panel" data-panel="reputation" hidden aria-labelledby="reputation-title">
+              <div class="page-heading"><div><p class="section-overline">CUSTOMER TRUST / CAREER PROGRESSION</p><h1 id="reputation-title">YOUR <em>REPUTATION.</em></h1><p>Grow from a new trader into a trusted dealer through good vehicles, customer service and consistent trading.</p></div></div>
+              <div id="reputation-view"></div>
+            </section>
+
             <section class="career-panel" data-panel="business" hidden aria-labelledby="business-title">
               <div class="page-heading"><div><p class="section-overline">YOUR CLUBHOUSE / YOUR BUSINESS</p><h1 id="business-title">MY <em>DEALERSHIP.</em></h1><p>Your career identity and development plan.</p></div><button type="button" class="secondary-button" data-action="save">SAVE CAREER</button></div>
-              <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong>2 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Next: staffing, premises and deeper economics</li></ol></div></div>
+              <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong>2 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div><div class="profile-row"><span>Employees</span><strong data-bind="staff-count">0</strong></div><div class="profile-row"><span>Reputation</span><strong data-bind="reputation-score">5 / 100</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Live: recruitment, staff effects and evolving reputation</li><li>Next: workshop queues, complaints and aftersales</li></ol></div></div>
             </section>
           </div>
-          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA VEHICLE INTELLIGENCE / LOCAL SAVE</span></footer>
+          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA STAFF & REPUTATION / LOCAL SAVE</span></footer>
         </div>
       </div>
     </section>

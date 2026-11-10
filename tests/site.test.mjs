@@ -10,6 +10,8 @@ const js = readFileSync(new URL('simulator.js', root), 'utf8');
 const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
+const people = readFileSync(new URL('people.js', root), 'utf8');
+const peopleView = readFileSync(new URL('people-view.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -30,7 +32,7 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
 });
 
 test('dashboard has inbox, calendar and navigable management areas', () => {
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'staff', 'reputation', 'business']) {
     assert.match(html, new RegExp('data-panel="' + page + '"'));
     assert.match(html, new RegExp('data-page="' + page + '"'));
   }
@@ -43,7 +45,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
-  assert.match(html, /trading\.js\?v=3/);
+  assert.match(html, /people\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=4/);
+  assert.match(html, /people-view\.js\?v=1/);
   assert.match(html, /vehicle-view\.js\?v=1/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
@@ -90,7 +94,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   }
   const panels = [];
   const nav = [];
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'staff', 'reputation', 'business']) {
     const panel = new Node();
     panel.dataset.panel = page;
     panels.push(panel);
@@ -130,8 +134,10 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   };
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
+  vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
   vm.runInNewContext(vehicleView, context, { timeout: 1500 });
+  vm.runInNewContext(peopleView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const button = { dataset: { action, ...extras }, setAttribute() {} };
@@ -248,7 +254,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=12/);
+  assert.match(html, /styles\.css\?v=13/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -266,7 +272,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 3);
+  assert.equal(opening.version, 4);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -350,7 +356,8 @@ test('direct sellers negotiate and part exchanges become properly valued stock',
   state=JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.sales,2);
   assert.equal(state.stock,0);
-  assert.equal(state.reputation,'UP-AND-COMING');
+  assert.equal(state.reputation,'NEW TRADER');
+  assert.ok(state.reputationScore>5,'Satisfactory completed deals should improve the reputation score');
 });
 test('forecourt and funds prevent impossible purchases, days refresh leads without invented profit', () => {
   const saved = new Map();
@@ -390,7 +397,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,3);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,4);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -620,7 +627,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,3);
+  assert.equal(migrated.version,4);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -699,9 +706,279 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,3);
+  assert.equal(saved.version,4);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
   assert.equal(saved.sold[0].profile,null);
+});
+
+test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Starter Motors');
+  assert.equal(app.engine.VERSION,4);
+  assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
+  assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
+  assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
+  assert.match(app.nodes.get('people-roster').innerHTML,/OWNER OPERATED/);
+  assert.match(app.nodes.get('people-applicants').innerHTML,/SALES EXECUTIVE/);
+  assert.match(app.nodes.get('people-applicants').innerHTML,/VEHICLE BUYER/);
+  assert.match(app.nodes.get('people-applicants').innerHTML,/PREP TECHNICIAN/);
+  assert.match(app.nodes.get('reputation-view').innerHTML,/LONG-TERM PRESTIGE TARGET/);
+  assert.match(app.nodes.get('reputation-view').innerHTML,/NEW TRADER/);
+  assert.match(html,/data-page="staff"/);
+  assert.match(html,/data-page="reputation"/);
+});
+test('recruitment charges cash, starts next day, settles daily wages, survives reload', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('People First');
+  const P=app.engine.people;
+  const candidate=P.applicants(1).find(x=>x.role==='sales');
+  app.click('hire-staff',{id:candidate.id});
+  let state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.staff.length,1);
+  assert.equal(state.staff[0].name,candidate.name);
+  assert.equal(state.staff[0].startDay,2);
+  assert.equal(state.cash,12500-P.HIRING_FEE);
+  assert.equal(state.ledger.filter(x=>x.note.startsWith('Recruitment')).length,1);
+  assert.equal(P.active(state,'sales'),null,'Employee cannot boost sales the day they are hired');
+  assert.match(app.nodes.get('people-roster').innerHTML,/STARTS DAY 2/);
+  const daily=P.dailyCost(state.staff[0]);
+  app.click('continue');
+  state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.day,2);
+  assert.equal(state.cash,12500-P.HIRING_FEE-daily);
+  assert.equal(state.payrollArrears,0);
+  assert.equal(state.ledger.filter(x=>x.note.startsWith('Staff payroll')).length,1);
+  assert.match(app.nodes.get('event-notice').textContent,/wage settlement/);
+  const later=browser(storage);
+  later.click('resume');
+  assert.equal(later.bindings.get('staff-count')[0].textContent,'1');
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).staff[0].name,candidate.name);
+  assert.match(later.nodes.get('people-roster').innerHTML,/AVAILABLE/);
+});
+test('vehicle buyer changes direct negotiation and adds useful auction intelligence', () => {
+  const P=browser(new Map()).engine.people;
+  const staff=browser(new Map()).engine.create('Buyer Dealer',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='buyer' && x.skills.negotiation>=17);
+  assert.ok(candidate);
+  assert.ok(P.hire(staff,candidate.id).ok);
+  staff.day=2;
+  browser(new Map()).engine.staffDay(staff);
+  const E=browser(new Map()).engine;
+  const seller=E.market(2).sellers[0];
+  assert.ok(seller,'Second day must include a seller lead for this scenario');
+  const offer=seller.floor-80;
+  const assisted=E.acquireSeller(staff,seller.id,offer);
+  assert.equal(assisted.ok,true,'Qualified buyer should secure an improved purchase price');
+  assert.equal(staff.vehicles[0].cost,offer);
+  const owner=E.create('Owner Only',[]);
+  owner.day=2;
+  const unassisted=E.acquireSeller(owner,seller.id,offer);
+  assert.equal(unassisted.ok,false,'Owner acting alone receives a counteroffer');
+  assert.equal(unassisted.code,'counter');
+  const auction=E.market(2).auctions[0];
+  assert.ok(P.buyerEstimate(staff,auction.rival));
+});
+test('technician reduces basic prep costs without changing recorded repair estimates', () => {
+  const E=browser(new Map()).engine,P=E.people;
+  const state=E.create('Technical Trader',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='technician'&&x.skills.efficiency>=15);
+  assert.ok(candidate);
+  assert.ok(P.hire(state,candidate.id).ok);
+  state.day=2;E.staffDay(state);
+  const seller=E.market(2).sellers[0];
+  assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
+  const v=state.vehicles[0],quote=v.prepBudget;
+  assert.ok(P.labourSaving(state,v)>0);
+  assert.ok(E.prepare(state,v.id).ok);
+  assert.equal(v.status,'prepared');
+  assert.ok(v.prepSpent<quote,'Technician saves a portion of preparation labour');
+  assert.equal(v.prepBudget,quote,'Original quoted repair budget remains visible');
+  assert.equal(state.staff[0].workDone,1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),'Discounted preparation must survive save validation');
+});
+test('sales staff improves buyer offers, earns commission and influences reputation', () => {
+  const E=browser(new Map()).engine,P=E.people;
+  const state=E.create('Sales Professionals',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='sales'&&x.skills.sales>=16);
+  assert.ok(P.hire(state,candidate.id).ok);
+  state.day=2;E.staffDay(state);
+  const car=E.market(2).sellers[0];
+  assert.ok(E.acquireSeller(state,car.id,car.ask).ok);
+  const stock=state.vehicles[0];
+  assert.ok(E.prepare(state,stock.id).ok);
+  assert.ok(E.advertise(state,stock.id,Math.round(stock.retail/50)*50).ok);
+  const withSales=E.buyers(stock,state);
+  const ownerOnly=E.buyers(stock);
+  assert.ok(withSales.cashOffer>ownerOnly.cashOffer,'Strong salesperson should improve opening customer offer');
+  const before=state.reputationScore;
+  const sale=E.completeSale(state,stock.id,'cash',null);
+  assert.ok(sale.ok);
+  assert.ok(state.reputationScore>before);
+  assert.equal(state.staff[0].deals,1);
+  assert.equal(state.sold[0].salesCommission,Math.round(Math.max(0,state.sold[0].profit)*.03));
+  assert.ok(state.ledger.some(x=>x.note.startsWith('Sales commission:')));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('poor condition can reduce customer trust; reputation tiers are earned gradually', () => {
+  const E=browser(new Map()).engine,P=E.people;
+  const state=E.create('Quality Matters',[]);
+  const lot=Array.from({length:30},(_,day)=>E.market(day+1))
+    .flatMap(x=>x.auctions).find(x=>x.profile.grade>=4);
+  assert.ok(lot);
+  state.day=lot.day;
+  assert.ok(E.acquireAuction(state,lot.id,lot.rival+50).ok);
+  const v=state.vehicles[0];
+  assert.ok(E.prepare(state,v.id).ok);
+  assert.ok(E.advertise(state,v.id,Math.round(v.retail/50)*50).ok);
+  const before=state.reputationScore;
+  assert.ok(E.completeSale(state,v.id,'cash',null).ok);
+  assert.ok(state.reputationScore<before,'Poor-grade stock should damage trust');
+  assert.ok(state.reputationHistory.some(x=>x.delta<0));
+  assert.equal(state.reputation,P.tier(state.reputationScore));
+  assert.equal(P.tier(0),'NEW TRADER');
+  assert.equal(P.tier(20),'LOCAL DEALER');
+  assert.equal(P.tier(40),'TRUSTED DEALER');
+  assert.equal(P.tier(60),'REGIONAL SPECIALIST');
+  assert.equal(P.tier(80),'PRESTIGE DEALER');
+});
+test('payroll cash shortages are recorded without spending repair reserves or losing a career', () => {
+  const E=browser(new Map()).engine,P=E.people,state=E.create('Thin Cash Motors',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='sales');
+  assert.ok(P.hire(state,candidate.id).ok);
+  const lot=E.market(1).auctions[0];
+  const maxSafeBid=state.cash-lot.fee-lot.profile.basePrep-
+    (lot.profile.hiddenFault?.cost||0);
+  assert.ok(E.acquireAuction(state,lot.id,maxSafeBid).ok);
+  const remaining=state.vehicles[0].prepBudget;
+  assert.equal(state.cash,remaining);
+  state.day=2;
+  const tick=E.staffDay(state);
+  assert.equal(tick.paid,0,'Vehicle preparation funds are protected');
+  assert.ok(tick.arrears>0);
+  assert.equal(state.cash,remaining);
+  assert.ok(state.reputationScore<5,'Unpaid staff wages hurt reputation');
+  assert.ok(E.prepare(state,1).ok);
+  assert.equal(state.cash,0);
+  assert.ok(E.advertise(state,1,6200).ok);
+  assert.ok(E.completeSale(state,1,'cash',null).ok);
+  state.day=3;
+  const recovered=E.staffDay(state);
+  assert.equal(recovered.arrears,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),'Ledger and arrears must remain coherent');
+});
+test('staff training consumes cash, improves skill, and temporarily blocks employee effects', () => {
+  const E=browser(new Map()).engine,P=E.people,state=E.create('Skills Workshop',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='buyer');
+  assert.ok(P.hire(state,candidate.id).ok);
+  state.day=2;E.staffDay(state);
+  const e=state.staff[0],previous=e.skills.negotiation;
+  assert.ok(P.active(state,'buyer'));
+  const result=P.train(state,e.id);
+  assert.ok(result.ok);
+  assert.ok(e.skills.negotiation>=previous);
+  assert.equal(P.active(state,'buyer'),null);
+  assert.equal(state.ledger.filter(x=>x.note.startsWith('Staff development')).length,1);
+  assert.equal(P.train(state,e.id).ok,false);
+  state.day=3;E.staffDay(state);
+  assert.equal(P.active(state,'buyer'),null);
+  state.day=4;E.staffDay(state);
+  assert.ok(P.active(state,'buyer'),'Training finishes on day four');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('v0.4 career migrates with stock, sold vehicles and financial balances untouched', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Legacy Reputation Dealer');
+  const seller=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+seller.id,seller.ask);
+  app.click('buy-seller',{id:seller.id});
+  const v3=JSON.parse(storage.get(STORAGE_KEY));
+  v3.version=3;
+  delete v3.staff;delete v3.nextStaffId;delete v3.reputationScore;
+  delete v3.payrollArrears;delete v3.reputationHistory;
+  storage.set(STORAGE_KEY,JSON.stringify(v3));
+  const newApp=browser(storage);
+  assert.equal(newApp.nodes.get('menu-continue').hidden,false);
+  newApp.click('resume');newApp.click('save');
+  const restored=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(restored.version,4);
+  assert.equal(restored.cash,v3.cash);
+  assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
+  assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
+  assert.equal(restored.ledger.length,v3.ledger.length);
+  assert.deepEqual(restored.staff,[]);
+  assert.equal(restored.reputationScore,5);
+  assert.match(newApp.nodes.get('stock-list').innerHTML,/VIEW FULL REPORT/);
+});
+test('tampered staff ratings or payroll liabilities invalidate a career save', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Integrity Dealer');
+  const candidate=app.engine.people.applicants(1)[0];
+  app.click('hire-staff',{id:candidate.id});
+  const valid=JSON.parse(storage.get(STORAGE_KEY));
+  valid.staff[0].skills.sales=999;
+  storage.set(STORAGE_KEY,JSON.stringify(valid));
+  assert.equal(browser(storage).nodes.get('menu-continue').hidden,true);
+  const bad=JSON.parse(storage.get(STORAGE_KEY));
+  bad.staff[0].skills.sales=17;
+  bad.payrollArrears=-20;
+  storage.set(STORAGE_KEY,JSON.stringify(bad));
+  assert.equal(browser(storage).nodes.get('menu-continue').hidden,true);
+});
+
+test('sales commission never consumes the reserved preparation cash of incoming stock', () => {
+  const E=browser(new Map()).engine,P=E.people;
+  const state=E.create('Commission Reserve Motors',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='sales');
+  assert.ok(P.hire(state,candidate.id).ok);
+  state.day=2;E.staffDay(state);
+  const lot=E.market(2).auctions[0];
+  assert.ok(E.acquireAuction(state,lot.id,lot.rival+50).ok);
+  const prepDue=state.vehicles[0].prepBudget;
+  // Simulate a tight cash position with reserved workshop money. Use a
+  // valid trade to move cash into stock, then assess commission in isolation.
+  state.cash=prepDue;
+  state.ledger.push({day:2,delta:-(state.ledger.reduce((n,l)=>n+l.delta,12500)-prepDue),
+    note:'Test fixture: settled separate business expense'});
+  const before=state.cash;
+  const out=P.sale(state,{profile:{grade:2,likelySale:5000}},4800,10000);
+  assert.ok(out.commission>0);
+  assert.equal(state.cash,before,'Reserved workshop funds must remain available');
+  assert.equal(state.payrollArrears,out.commission);
+  assert.equal(state.ledger.filter(x=>x.note.startsWith('Sales commission')).length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('reputation attracts additional direct sellers only after trust threshold', () => {
+  const E=browser(new Map()).engine;
+  const day=Array.from({length:30},(_,i)=>i+2).find(d=>{
+    const baseline=E.market(d,5).sellers.length;
+    return baseline>0&&baseline<4;
+  });
+  assert.ok(day);
+  const owner=E.market(day,5),trusted=E.market(day,42);
+  assert.equal(trusted.sellers.length,owner.sellers.length+1);
+  assert.equal(trusted.auctions.length,owner.auctions.length);
+  assert.equal(new Set(trusted.sellers.map(s=>s.id)).size,trusted.sellers.length);
+});
+test('releasing staff records notice costs and any unpaid amount as a liability', () => {
+  const E=browser(new Map()).engine,P=E.people,state=E.create('Employer Test',[]);
+  const candidate=P.applicants(1).find(x=>x.role==='technician');
+  assert.ok(P.hire(state,candidate.id).ok);
+  const staff=state.staff[0], notice=P.dailyCost(staff)*7;
+  const result=P.release(state,staff.id);
+  assert.ok(result.ok);
+  assert.equal(state.staff.length,0);
+  assert.equal(state.cash,12500-P.HIRING_FEE-notice);
+  assert.equal(state.payrollArrears,0);
+  assert.ok(state.ledger.some(x=>x.note.startsWith('Staff exit')));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('legacy career reputation tiers are respected when converting past sale milestones', () => {
+  const P=browser(new Map()).engine.people;
+  assert.equal(P.legacyScore(0),5);
+  assert.ok(P.legacyScore(5)>=20,'Old LOCAL TRADER should migrate to Local Dealer or higher');
+  assert.ok(P.legacyScore(12)>=40,'Old ESTABLISHED trader should not lose earned standing');
+  assert.ok(P.legacyScore(200)<=75,'Historical sales alone do not unlock prestige');
 });

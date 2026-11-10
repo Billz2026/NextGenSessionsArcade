@@ -309,3 +309,74 @@
 @media(max-width:1050px){.intel-numbers{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:570px){.intel-panel{margin:0 9px 10px}.intel-top{align-items:flex-start;flex-direction:column}
   .intel-numbers strong{font-size:21px}.intel-grid{grid-template-columns:1fr}}
+
+
+/* v0.5: staff recruitment and reputation, scoped to career management panels. */
+.people-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:16px}
+.people-card{min-width:0;background:linear-gradient(155deg,#1d3440,#12252f);border:1px solid #405864;
+ border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:13px}
+.people-card:hover{border-color:#8f9d91}
+.people-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.people-role{font:700 10px/1.3 var(--mono);letter-spacing:.04em;color:#e3bc81}
+.people-head h3{font:850 27px/1.05 var(--title);letter-spacing:.025em;margin:5px 0;color:#f5f2e9}
+.people-head small{font:600 9px var(--mono);color:#99b4bf}
+.people-salary{font:800 24px/1 var(--title);white-space:nowrap;color:#e6c587;text-align:right}
+.people-salary small{display:block;color:#9ab1bc;font:600 8px/1.5 var(--mono);padding-top:4px}
+.people-traits{display:flex;flex-direction:column;gap:9px}
+.people-trait{display:grid;grid-template-columns:104px minmax(0,1fr) 38px;align-items:center;gap:9px;font:600 10px var(--body);color:#d4e0df}
+.people-trait>span{overflow-wrap:anywhere}
+.people-trait>b{font:800 11px var(--mono);color:#f0d4a0;text-align:right}
+.people-track{height:7px;border-radius:10px;background:#354a52;overflow:hidden}
+.people-track>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#b48854,#f1d39a)}
+.people-caption{color:#b2c6c9;font:500 11px/1.55 var(--body);flex:1}
+.people-card-footer{border-top:1px solid #37505a;padding-top:13px;display:flex;
+ flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.people-card-footer>span{color:#a9bdc4;font:600 9px/1.4 var(--mono)}
+.people-actions{display:flex;flex-wrap:wrap;gap:8px}
+.people-actions .trade-button{font-size:12px}
+.people-release{background:#25343c;color:#edc2af;border-color:#967a6c}
+.people-release:hover{background:#3a373a}
+.people-meta{display:flex;flex-wrap:wrap;gap:7px}
+.people-meta span{font:700 9px/1.5 var(--mono);border:1px solid #46616b;border-radius:4px;padding:4px 7px;color:#d1dbd7}
+.people-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.people-metrics>div{min-width:0;padding:15px 13px;border:1px solid #354e5a;border-radius:7px;
+ background:linear-gradient(155deg,#1f3640,#11242d)}
+.people-metrics span{display:block;color:#9cb4bd;font:700 9px/1.4 var(--mono);margin-bottom:8px}
+.people-metrics strong{display:block;color:#f0d29d;font:850 clamp(18px,2.1vw,26px)/1 var(--title);overflow-wrap:anywhere}
+.people-finance-note{padding:12px 15px;margin:0 0 17px;border:1px solid #56675c;border-left:3px solid #caa46b;
+ background:#1b2f35;color:#bcd0d1;font:500 11px/1.6 var(--body)}
+.people-finance-note strong{color:#f1d39c}
+.reputation-highlight{padding:25px 28px;margin-bottom:16px;border:1px solid #8d7454;border-radius:9px;
+ background:linear-gradient(130deg,#243941,#0c232c 75%)}
+.reputation-highlight small{font:700 10px var(--mono);color:#c9aa77}
+.reputation-highlight h2{font:850 clamp(28px,4vw,45px)/1.1 var(--title);letter-spacing:.03em;margin:5px 0 10px}
+.reputation-highlight>div:first-child>strong{font:900 55px/1 var(--title);color:#e9bd72}
+.reputation-highlight>div:first-child>strong span{font-size:24px;color:#b0c0be}
+.reputation-highlight p{color:#b9c8ca;font:700 9px var(--mono);margin:9px 0 14px}
+.reputation-track{height:12px;border-radius:18px;overflow:hidden;background:#30454f}
+.reputation-track span{display:block;height:100%;border-radius:18px;background:linear-gradient(90deg,#a77d4a,#f0c77c)}
+.reputation-layout{display:grid;grid-template-columns:1fr 1.2fr;gap:13px;margin-bottom:14px}
+.people-section{padding:19px 21px}
+.people-section h3{font:800 25px var(--title);margin:0 0 14px;color:#f1d1a0}
+.people-section p{color:#b7c9ca;font:500 12px/1.6 var(--body)}
+.reputation-tier,.reputation-event{display:flex;justify-content:space-between;align-items:center;gap:11px;
+ border-bottom:1px solid #35515d;padding:12px 1px;color:#c8d2d2}
+.reputation-tier strong{display:block;font:800 15px var(--title);color:#e4e9df}
+.reputation-tier small{display:block;color:#98b4bc;font:700 9px var(--mono)}
+.reputation-tier>span{font:700 9px var(--mono);color:#82949d}
+.rep-tier-earned>span{color:#9addb3}
+.rep-tier-earned strong{color:#ebc991}
+.reputation-event{display:grid;grid-template-columns:58px 28px minmax(0,1fr);gap:10px;align-items:start;font-size:10px}
+.reputation-event>span{font:700 9px/1.5 var(--mono);color:#9db7c0}
+.reputation-event strong{font:850 14px/1.3 var(--title);color:#a8e2be}
+.reputation-event strong.rep-negative{color:#edae9b}
+.reputation-event p{margin:0;font-size:10px}
+.people-bid-intel{display:block;background:#27423f;padding:9px 11px;border-left:3px solid #b6d2b0;
+ font:700 10px/1.5 var(--body);color:#dbe8db}
+@media(max-width:1120px){.people-grid{grid-template-columns:1fr}.reputation-layout{grid-template-columns:1fr}}
+@media(max-width:780px){.people-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:570px){.people-grid{padding:10px;gap:9px}.people-card{padding:13px}.people-head h3{font-size:24px}
+ .people-salary{font-size:20px}.people-trait{grid-template-columns:92px minmax(0,1fr) 36px;gap:6px;font-size:9px}
+ .people-metrics{gap:7px}.people-metrics>div{padding:12px 9px}.people-metrics strong{font-size:19px}
+ .reputation-highlight{padding:19px}.people-section{padding:15px}
+ .people-card-footer{align-items:stretch;flex-direction:column}.people-actions .trade-button{flex:1}}

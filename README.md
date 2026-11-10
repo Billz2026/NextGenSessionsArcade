@@ -4,6 +4,26 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## Staff & Reputation (v0.5)
+
+Careers start as **NEW TRADER, 5/100 reputation**, with no employees. Open **Staff & Recruitment** to review six fictional candidates (two per role) in a weekly rotating shortlist, inspect 1–20 skills, salaries and experience, and hire up to three employees (one per role at the first dealership).
+
+### Staff roles and actual effects
+
+- **Sales Executive:** improves cash and part-exchange buyer offers within market-derived valuation limits. Customer-care ability influences reputation outcomes; the employee receives 3% commission on positive gross trading margin.
+- **Vehicle Buyer:** negotiates lower acceptable direct-seller prices and supplies an *estimated range* for rival auction bids. Auction fees and reserve rules still apply.
+- **Prep Technician:** improves basic workshop coordination/labour efficiency, saving a modest amount on vehicle preparation. Parts and unexpected hidden-fault costs are not discounted.
+
+Staff start the day **after hiring**. Recruitment costs £150. Two-day training costs £275, improves relevant attributes and makes the person temporarily unavailable; a 14-day training cooldown applies. Releasing staff incurs an illustrative seven-day notice cost. All staff, skills, morale, training, transactions and employment history are kept in the same local career save.
+
+### Payroll and reputation
+
+Salaries are fictional **monthly base pay** estimates. To keep the game playable, a 1/30-month wage amount is paid **on each game day** when CONTINUE is used. This is simplified game cash settlement, *not* compliant UK payroll or employment-law modelling; employer National Insurance, pension contributions, tax, formal notice and leave are not yet calculated. The game keeps preparation reserves protected before paying staff; unpaid wage balances remain a liability, reduce morale and can damage reputation. Staff can depart after prolonged low morale.
+
+Reputation changes after completed retail sales based on vehicle grade, fair pricing and sales staff care. Risky vehicles and poor customer outcomes can decrease it. Staff payroll failures can also harm trust. Reputation tiers are **0–19 New Trader, 20–39 Local Dealer, 40–59 Trusted Dealer, 60–79 Regional Specialist, 80–100 Prestige Dealer**. Trusted dealers get additional direct-seller opportunities on some days. The Reputation screen records changes, sales count, lifetime turnover and long-term prestige milestones. Prestige and luxury vehicles are a **future development stage**, not currently unlocked merely by reaching a tier.
+
+Existing v1, v2 and v3 saves migrate to schema v4 without recalculating existing purchases, profits, ledger transactions or vehicle repair estimates. Existing sales determine a conservative starting reputation score for old careers. Gross vehicle margin excludes wages/commission and should not be mistaken for net business profit.
+
 ## Vehicle Intelligence System (v0.4)
 
 Every auction lot and direct-seller offer now has a **persistent fictional dossier**: unique simulation ID, derivative/engine, mileage, previous keepers, MOT-style test result/mileage/advisories, condition grade, demand outlook, trade value, retail guide, likely achieved sale price and line-item preparation costs. Full reports open from the Buying Desk and your Vehicle Stock. The data is deterministic for a given lead ID, not live DVLA/DVSA data.
@@ -59,6 +79,8 @@ Customers are currently deterministic examples rather than a fully simulated mar
 
 - `index.html` — game menu and interactive management screens.
 - `styles.css` — responsive premium game interface.
+- `people.js` — candidate selection, staff salaries, training, performance and reputation engine.
+- `people-view.js` — responsive personnel and reputation management UI.
 - `vehicle-intel.js` — stable fictional vehicle profile generation, repair forecasts and appraisal arithmetic.
 - `vehicle-view.js` — inline report UI for buying and stock.
 - `trading.js` — deterministic financial and vehicle transaction engine; save migration/validation.
@@ -73,6 +95,8 @@ Run:
 ```sh
 node --check vehicle-intel.js
 node --check vehicle-view.js
+node --check people.js
+node --check people-view.js
 node --check trading.js
 node --check simulator.js
 node --test tests/site.test.mjs
