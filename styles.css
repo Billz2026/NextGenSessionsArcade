@@ -71,7 +71,7 @@
   transform:translateY(-2%);
 }
 #screen-menu .brand-lockup-large {
-  margin:0 0 clamp(26px,3.8vh,42px);
+  margin:0 0 clamp(22px,3vh,34px);
   align-items:center;
   text-align:center;
 }
@@ -81,68 +81,29 @@
   height:auto;
   /* Exact existing image asset, no extra effects on the wordmark. */
 }
+/* True vector artwork: no background-clip:text, no inline glyph clipping, no plaque. */
 #screen-menu .trade-wordmark-hero {
-  position:relative;
-  isolation:isolate;
-  display:inline-flex;
-  align-items:baseline;
-  justify-content:center;
-  gap:.055em;
-  font-family:var(--title);
-  font-weight:900;
-  font-style:italic;
-  font-size:clamp(49px,6.5vw,93px);
-  line-height:1.22;
-  padding:.07em .23em .13em;
+  display:block;
+  width:min(700px,100%);
+  max-width:100%;
+  height:auto;
+  margin:-19px 0 0;
+  padding:0;
   overflow:visible;
-  letter-spacing:-.025em;
-  white-space:nowrap;
-  margin:-10px 0 0;
-  text-align:center;
-  text-shadow:none;
-  filter:none;
-}
-#screen-menu .trade-wordmark-hero::before {
-  content:"";
-  position:absolute;
-  inset:.065em .04em .055em;
-  z-index:0;
-  border-radius:9px;
-  background:linear-gradient(160deg,rgba(7,10,14,.88),rgba(10,12,17,.67));
-  border:1px solid rgba(220,182,112,.24);
-  box-shadow:0 12px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07);
-  pointer-events:none;
-}
-#screen-menu .trade-wordmark-hero span {
-  position:relative;
-  z-index:1;
-  display:inline-block;
-  font-weight:900;
-  line-height:1.18;
-  padding:.07em 0 .12em;
-  vertical-align:baseline;
-}
-/* THE and MOTOR share the exact silver/chrome finish; no badge or outline around THE. */
-#screen-menu .trade-wordmark-hero .trade-the {
-  font-size:.57em;
-  letter-spacing:-.026em;
-}
-#screen-menu .trade-wordmark-hero .trade-the,
-#screen-menu .trade-wordmark-hero .trade-motor {
-  background:linear-gradient(180deg,#ffffff 0%,#f6f8fa 22%,#bac2c8 48%,#f1f4f6 70%,#9aa4ac 100%);
-  color:#e4e8ea;
-  -webkit-background-clip:text;
-  background-clip:text;
-  -webkit-text-fill-color:transparent;
   border:0;
-  outline:0;
+  background:transparent;
+  border-radius:0;
+  box-shadow:none;
+  filter:none;
+  line-height:0;
 }
-#screen-menu .trade-wordmark-hero .trade-trade {
-  background:linear-gradient(180deg,#fff0cc 0%,#f4d38c 27%,#d0a052 55%,#e6bb76 77%,#b88341 100%);
-  color:#e5b96f;
-  -webkit-background-clip:text;
-  background-clip:text;
-  -webkit-text-fill-color:transparent;
+#screen-menu .trade-wordmark-hero img {
+  display:block;
+  width:100%;
+  height:auto;
+  max-width:100%;
+  object-fit:contain;
+  overflow:visible;
 }
 #screen-menu .menu-actions {
   display:flex;
@@ -207,7 +168,6 @@
 @media(max-width:780px) {
   #screen-menu .menu-layout {padding:0 16px 38px}
   #screen-menu .menu-lead {transform:none}
-  #screen-menu .trade-wordmark-hero {font-size:clamp(44px,8.4vw,66px)}
   #screen-menu .brand-lockup-large {margin-bottom:30px}
 }
 @media(max-width:570px) {
@@ -216,19 +176,15 @@
   #screen-menu .menu-status {font-size:8px}
   #screen-menu .menu-layout {padding:10px 15px 30px}
   #screen-menu .brand-lockup-large .parent-wordmark {width:clamp(160px,45vw,218px)}
-  #screen-menu .trade-wordmark-hero {font-size:clamp(33px,9.2vw,49px);letter-spacing:-.035em;margin-top:-7px;padding-inline:.19em}
+  #screen-menu .trade-wordmark-hero {width:min(700px,100%);margin-top:-12px}
   #screen-menu .brand-lockup-large {margin-bottom:25px}
   #screen-menu .menu-actions {gap:10px}
   #screen-menu .action-btn {min-height:63px;padding:10px 14px}
   #screen-menu .action-btn strong {font-size:22px}
   #screen-menu .button-mark {font-size:23px}
 }
-@media(max-width:370px) {
-  #screen-menu .trade-wordmark-hero {font-size:clamp(29px,8.8vw,33px)}
-}
 @media(max-height:690px) and (min-width:781px) {
   #screen-menu .brand-lockup-large {margin-bottom:22px}
-  #screen-menu .trade-wordmark-hero {font-size:clamp(49px,5.5vw,72px)}
   #screen-menu .action-btn {min-height:57px}
 }
 
