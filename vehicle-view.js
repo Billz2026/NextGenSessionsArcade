@@ -47,7 +47,7 @@
     const known=p.knownRepairs.map(r=>
       '<div class="intel-repair"><span>'+esc(r.item)+'</span><strong>'+money(r.cost)+'</strong></div>').join('');
     const openReport=open?'<div class="intel-expanded"><div class="intel-grid">'+
-      '<div><small>ENGINE</small><strong>'+esc(p.engine)+'</strong></div>'+
+      '<div><small>ENGINE / POWERTRAIN</small><strong>'+esc(p.engine)+'</strong></div>'+
       '<div><small>PREVIOUS KEEPERS (SIMULATED)</small><strong>'+p.owners+'</strong></div>'+
       '<div><small>CONDITION GRADE</small><strong>'+p.grade+' / 5</strong></div>'+
       '<div><small>SERVICE HISTORY</small><strong>'+esc(car.history)+'</strong></div>'+

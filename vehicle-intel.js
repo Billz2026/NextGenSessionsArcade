@@ -32,6 +32,18 @@
     ['Suspension arms and alignment',540],['Timing-system repair',680],
     ['Air-conditioning compressor',560]
   ];
+  const electricFaults = [
+    ['12V battery and electrical diagnosis',260],
+    ['Charging port or onboard charger diagnosis',540],
+    ['Thermal management / coolant service',490],
+    ['High-voltage system diagnostic assessment',625]
+  ];
+  const hybridFaults = [
+    ['Hybrid cooling system service',430],
+    ['Hybrid control electronics diagnosis',525],
+    ['Auxiliary battery replacement',280],
+    ['Hybrid drive system inspection',480]
+  ];
   const labels = {
     light:['Routine service and inspection','Front tyre replacement','Minor paint correction'],
     medium:['Service and fluids','Brakes / tyres allowance','Bodywork and trim correction'],
@@ -49,10 +61,16 @@
     const grade=gradeFor(car,hash);
     const year=Number(String(car.title).slice(0,4)) || 2015;
     const name=String(car.title).replace(/^\d{4}\s+/,'');
-    const vehicleEngine=Object.entries(power).find(([k]) => name.includes(k))?.[1] || 'Engine specification unverified';
+    const vehicleEngine=(typeof car.engineSpec==='string'&&car.engineSpec.length<75
+      ? car.engineSpec : Object.entries(power).find(([k]) => name.includes(k))?.[1]) ||
+      (car.fuel==='Electric'?'Electric motor specification unverified':'Engine specification unverified');
     const basePrep=Math.max(150,Math.round((Number(car.prep)||350)));
     const mode=grade>=4?'heavy':grade===3?'medium':'light';
-    const labelsFor=labels[mode];
+    const labelsFor=car.fuel==='Electric'?
+      ['EV safety / charging assessment','Tyres and brakes allowance','Cooling and software checks']:
+      (car.fuel==='Hybrid'||car.fuel==='Plug-in Hybrid')?
+      ['Hybrid system service','Brakes and tyres allowance','Electrical and cooling checks']:
+      labels[mode];
     const splitA=moneyRound(basePrep*.42);
     const splitB=moneyRound(basePrep*.32);
     const knownRepairs=[
@@ -61,7 +79,10 @@
       {item:labelsFor[2],cost:basePrep-splitA-splitB}
     ];
     const hasFault=hash%100 < (grade===2?17:grade===3?37:grade===4?59:70);
-    const chosen=(grade>=4?majorFaults:lowFaults)[hash%(grade>=4?majorFaults:lowFaults).length];
+    const faultPool=car.fuel==='Electric'?electricFaults:
+      (car.fuel==='Hybrid'||car.fuel==='Plug-in Hybrid')?hybridFaults:
+      (grade>=4?majorFaults:lowFaults);
+    const chosen=faultPool[hash%faultPool.length];
     const hiddenFault=hasFault?{item:chosen[0],cost:chosen[1]}:null;
     const owners=1+(hash>>>3)%5;
     const motMonths=1+(hash>>>9)%12;

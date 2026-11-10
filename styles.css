@@ -731,3 +731,21 @@
  .vehicle-photo-credit span{display:block}
  .vehicle-card-statline strong{font-size:11px}
 }
+
+/* v0.9.3 — modern market progression and powertrain identification */
+.market-progression{display:flex;align-items:center;justify-content:space-between;gap:18px;
+ padding:16px 18px;margin:0 0 16px;border:1px solid #547080;border-radius:7px;
+ background:linear-gradient(115deg,#193846,#0d2430)}
+.market-progression>div{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.market-progression small{color:#a5bbc4;font:800 9px var(--mono);letter-spacing:.12em}
+.market-progression strong{color:#f1cc8d;font:900 21px var(--title)}
+.market-progression p{margin:0;max-width:550px;color:#c5d5db;font:600 11px/1.55 var(--body)}
+.vehicle-powertrain-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:8px;
+ color:#b2c5cb;font:700 11px var(--body)}
+.vehicle-powertrain{border:1px solid #56737b;border-radius:3px;padding:5px 8px;
+ background:#24434d;color:#e0e9eb;font:900 10px/1 var(--mono);letter-spacing:.08em}
+.vehicle-powertrain-electric{background:#163b43;border-color:#6db1b2;color:#b1f7e3}
+.vehicle-powertrain-hybrid,.vehicle-powertrain-plug-in-hybrid{
+ background:#263f32;border-color:#8bad83;color:#daf5b6}
+.vehicle-powertrain-diesel{background:#3e3832;border-color:#86735e;color:#e6d0a8}
+@media(max-width:650px){.market-progression{flex-direction:column;align-items:flex-start;gap:9px}}
