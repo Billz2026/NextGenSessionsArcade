@@ -653,3 +653,55 @@ test('invalid persisted v3 vehicle profiles are rejected rather than silently ac
   storage.set(STORAGE_KEY,JSON.stringify(saved));
   assert.equal(browser(storage).nodes.get('menu-continue').hidden,true);
 });
+
+test('opening a report preserves the entered bid and exposes itemised max-bid arithmetic', () => {
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Dossier Tester');
+  const auction=app.engine.market(1).auctions[0], offer=auction.guide+450;
+  app.typeInput('auction-bid-'+auction.id,offer);
+  app.click('toggle-report',{id:auction.id,kind:'auction'});
+  const markup=app.nodes.get('market-auctions').innerHTML;
+  assert.match(markup,/MAXIMUM BID \/ OFFER WORKING/);
+  assert.ok(markup.includes('id="auction-bid-'+auction.id+'" value="'+offer+'"'));
+  assert.match(markup,/Expected repair allowance/);
+  assert.match(markup,/Buyer fees/);
+  assert.match(markup,/Target trading contribution/);
+  const seller=app.engine.market(1).sellers[0], sellerOffer=seller.ask-100;
+  app.typeInput('seller-offer-'+seller.id,sellerOffer);
+  app.click('toggle-report',{id:seller.id,kind:'seller'});
+  assert.ok(app.nodes.get('market-sellers').innerHTML.includes('id="seller-offer-'+seller.id+
+    '" value="'+sellerOffer+'"'));
+});
+test('old v2 completed sales retain cash and historic gross margin after v0.4 migration', () => {
+  const storage=new Map(), app=browser(storage);
+  app.click('new-career');app.submitCareer('Historic Dealer');
+  const seller=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+seller.id,seller.ask);
+  app.click('buy-seller',{id:seller.id});
+  app.click('prepare-stock',{id:'1'});
+  app.setInput('stock-price-1',5000);
+  app.click('list-stock',{id:'1'});
+  app.click('sell-cash',{id:'1'});
+  const old=JSON.parse(storage.get(STORAGE_KEY));
+  old.version=2;
+  delete old.reports;
+  old.sold.forEach(v=>delete v.profile);
+  storage.set(STORAGE_KEY,JSON.stringify(old));
+  const resumed=browser(storage);
+  assert.equal(resumed.nodes.get('menu-continue').hidden,false);
+  resumed.click('resume');
+  const current=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(resumed.bindings.get('trade-profit')[0].textContent,
+    new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0})
+      .format(old.sold[0].profit));
+  assert.equal(resumed.bindings.get('cash')[0].textContent,
+    new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0})
+      .format(old.cash));
+  resumed.click('save');
+  const saved=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(saved.version,3);
+  assert.equal(saved.sold[0].profit,old.sold[0].profit);
+  assert.equal(saved.ledger.length,old.ledger.length);
+  assert.equal(saved.cash,old.cash);
+  assert.equal(saved.sold[0].profile,null);
+});
