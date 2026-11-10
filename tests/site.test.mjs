@@ -151,6 +151,32 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(events, context, { timeout: 1500 });
   vm.runInNewContext(workshop, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
+  // Test-fixture shortcut for PRE-v0.8 financial/reputation assertions only.
+  // It is not included in production scripts. Dedicated workshop tests below
+  // verify real day progression, blocked retail listings, quality and cash.
+  const liveEngine=context.window.MotorTradeEngine;
+  let fixtureMode=false;
+  function fixtureQC(state,id) {
+    const v=state.vehicles.find(x=>x.id===id);
+    if(!v)return {ok:false,code:'missing'};
+    const j=v.workshop;
+    j.stage='quality-check';
+    j.remainingDays=0;
+    j.reworks=1; // Fixture: avoid random rectification outside QC tests.
+    return liveEngine.finishPrep(state,id);
+  }
+  context.window.MotorTradeEngine={
+    ...liveEngine,
+    finishPrep:(state,id)=>fixtureMode?fixtureQC(state,id):liveEngine.finishPrep(state,id),
+    prepare:(state,id)=>{
+      const a=liveEngine.assessStock(state,id);
+      if(!a.ok)return a;
+      const method=liveEngine.prepQuote(state,id,'internal')?'internal':'external';
+      const b=liveEngine.startPrep(state,id,method);
+      if(!b.ok)return b;
+      return fixtureQC(state,id);
+    }
+  };
   vm.runInNewContext(vehicleView, context, { timeout: 1500 });
   vm.runInNewContext(peopleView, context, { timeout: 1500 });
   vm.runInNewContext(monthlyView, context, { timeout: 1500 });
@@ -158,8 +184,22 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(workshopView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
-    const button = { dataset: { action, ...extras }, setAttribute() {} };
-    listeners.click({ target: { closest: () => button } });
+    const send=(a,extra)=> {
+      const button={dataset:{action:a,...extra},setAttribute(){}};
+      listeners.click({target:{closest:()=>button}});
+    };
+    if(action==='prepare-stock'){
+      // Legacy test setup: walk through real assessment/booking/QC actions.
+      // A user cannot invoke this shortcut in the shipped interface.
+      fixtureMode=true;
+      try {
+        send('assess-workshop',extras);
+        send('start-workshop',{...extras,method:'external'});
+        send('finish-workshop',extras);
+      } finally {fixtureMode=false;}
+      return;
+    }
+    send(action,extras);
   }
   function go(page) { click(undefined, { page }); }
   function submitCareer(name = 'First Lot Motors') {
@@ -290,7 +330,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 6);
+  assert.equal(opening.version, 7);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
