@@ -381,3 +381,32 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
   assert.equal(browser(saved).nodes.get('menu-continue').hidden,true);
 });
+
+test('cash reserves protect mandatory preparation across multiple purchases', () => {
+  const saved = new Map();
+  const app = browser(saved);
+  app.click('new-career');
+  app.submitCareer('Cash Discipline Motors');
+  const market = app.engine.market(1);
+  const lot = market.auctions[0];
+  // Intentionally place a very high bid, leaving exactly enough cash for one vehicle's preparation.
+  const maxSafeBid = 12500 - lot.fee - lot.prep;
+  app.setInput('auction-bid-' + lot.id, maxSafeBid);
+  app.click('bid-auction',{id:lot.id});
+  let state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles.length,1);
+  assert.equal(state.cash,lot.prep);
+  const seller = market.sellers[0];
+  app.setInput('seller-offer-' + seller.id,seller.ask);
+  app.click('buy-seller',{id:seller.id});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles.length,1);
+  app.click('prepare-stock',{id:'1'});
+  state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.cash,0);
+  app.setInput('stock-price-1',6200);
+  app.click('list-stock',{id:'1'});
+  app.click('sell-cash',{id:'1'});
+  state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.stock,0);
+  assert.ok(state.cash>0,'Player can sell out of a cash shortage');
+});
