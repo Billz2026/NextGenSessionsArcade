@@ -6,11 +6,9 @@ A **NextGen Sessions** UK used-car dealership management game, built around an o
 
 ## Current playable foundation (v0.2)
 
-The site **always opens to the branded main menu**, whether or not a valid save exists. Choosing **New Career** takes the player through a dealership setup screen (name, £12,500 starting capital, two-vehicle forecourt), then into a Football Manager-inspired career dashboard.
+The site always opens to a minimal, photographic **main menu** with the original NextGen Sessions wordmark and a metallic Motor Trade title. Choosing **New Career** takes the player through a dealership setup screen (name, £12,500 starting capital, two-vehicle forecourt), then into a Football Manager-inspired career dashboard.
 
-If a valid save is present, **Continue Career** is promoted to the primary menu action, and the saved dealership name/day are shown. Players resume explicitly; they are not automatically taken past the homepage. The single career slot is stored in the browser's localStorage under the key the-motor-trade-career-v1, not on a server; the save is not synchronised across devices or browsers. Starting another career replaces the saved career after confirmation. If browser storage is blocked or unavailable, the game shows an explicit warning.
-
-The homepage includes an explicitly illustrative manager's desk preview. Figures in this preview represent opening scenario values and a fictional example, not a live portfolio or completed trades.
+If a valid save is present, **Continue Career** appears as the primary action and the player chooses when to resume. The single career slot is stored in the browser's localStorage under the key the-motor-trade-career-v1, not on a server; the save is not synchronised across devices or browsers. Starting another career replaces the saved career after confirmation. If browser storage is blocked or unavailable, the game shows an explicit warning.
 
 ### Working interactions
 
@@ -47,6 +45,7 @@ This is a lightweight static GitHub Pages app (HTML, CSS and vanilla JavaScript)
 - tests/site.test.mjs — Node built-in tests covering markup, functionality, persistence, and invalid save handling.
 - assets/nextgen-header-wordmark-2026.webp — the unchanged official NextGen Sessions logo.
 - assets/hatchback-study.svg — generic vehicle illustration.
+- assets/showroom-home-bg.webp — recoloured showroom photograph used on the minimal main menu.
 
 Run checks with: node --check simulator.js && node --test tests/site.test.mjs.
 
