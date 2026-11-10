@@ -79,6 +79,8 @@
       {item:labelsFor[2],cost:basePrep-splitA-splitB}
     ];
     const hasFault=hash%100 < (grade===2?17:grade===3?37:grade===4?59:70);
+    // Only full hybrids/PHEVs use hybrid-specific faults. Petrol/diesel
+    // mild-hybrids retain an internal combustion engine and its repair risks.
     const faultPool=car.fuel==='Electric'?electricFaults:
       (car.fuel==='Hybrid'||car.fuel==='Plug-in Hybrid')?hybridFaults:
       (grade>=4?majorFaults:lowFaults);
