@@ -2128,7 +2128,8 @@ test('some customers cancel before collecting despite a paid reservation', () =>
   assert.equal(C.heldDeposits(state),0);
   assert.equal(state.sold.length,0);
   assert.equal(C.stats(state,1,state.day).retainedAmount,c.prepCost);
-  assert.equal(C.stats(state,1,state.day).refunds+(C.stats(state,1,state.day).retainedDeposits),1);
+  assert.equal(C.stats(state,1,state.day).retainedDeposits,1);
+  assert.equal(C.stats(state,1,state.day).refunds,c.prepCost<250?1:0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
 test('counteroffer rejection and walkaways mean negotiations do not guarantee extra money', () => {
