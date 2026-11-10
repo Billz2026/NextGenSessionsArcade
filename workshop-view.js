@@ -1,6 +1,8 @@
 'use strict';
 /* v0.8 Workshop Operations UI. Safe static markup from saved game records. */
 (() => {
+  const VC=window.MotorTradeCards;
+  if(!VC)throw new Error('Load vehicle-cards.js before workshop-view.js');
   const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const cash=n=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n);
   const stageLabels={
@@ -75,7 +77,8 @@
       'Selling now frees your space but may crystallise a loss. It does not count towards retail targets.</p>'+
       '<button type="button" class="trade-button trade-button-outline" data-action="dispose-workshop" data-id="'+
       vehicle.id+'">SELL TO TRADE</button></div>':'';
-    return '<article class="workshop-job"><div class="workshop-job-heading"><div>'+
+    return '<article class="workshop-job">'+VC.photo(vehicle,'workshop')+
+      '<div class="workshop-job-heading"><div>'+
       '<small>'+esc(vehicle.source.toUpperCase())+' · STOCK '+vehicle.id+
       ' · GRADE '+grade+'</small><h3>'+esc(vehicle.title)+'</h3>'+
       '<span>'+esc(status)+'</span></div><div class="workshop-finance"><small>VEHICLE HELD</small>'+
