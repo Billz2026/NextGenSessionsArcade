@@ -1404,3 +1404,51 @@ test('tampered event state or impossible meeting records invalidate a saved care
   storage.set(STORAGE_KEY,JSON.stringify(bad));
   assert.equal(browser(storage).nodes.get('menu-continue').hidden,true);
 });
+
+test('Deal Day and mandatory board meetings recur for a second operating month', () => {
+  const saved=new Map(),app=browser(saved);
+  app.click('new-career');app.submitCareer('Recurring Calendar Motors');
+  for(let i=0;i<34;i++)app.click('continue');
+  let state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.day,31);
+  assert.equal(state.monthlyReports.length,1);
+  app.click('hold-meeting',{focus:'buying'});
+  for(let i=0;i<29;i++)app.click('continue');
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.day,60);
+  assert.equal(state.deadlineSession,0);
+  assert.equal(app.engine.market(60,state.reputationScore,0).auctions.length,0);
+  for(let i=0;i<5;i++)app.click('continue');
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.day,61);
+  assert.equal(state.monthlyReports.length,2);
+  assert.equal(state.monthlyReports[1].month,2);
+  assert.equal(state.meetings.length,1);
+  app.click('continue');
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).day,61);
+  app.click('hold-meeting',{focus:'care'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.meetings.length,2);
+  assert.equal(state.meetings[1].previousMonth,2);
+  assert.equal(state.meetingFocus,'care');
+  assert.equal(state.meetingHeldMonth,3);
+  assert.equal(app.engine.normalize(JSON.parse(JSON.stringify(state)))?.day,61);
+});
+test('customer-care meeting priority improves genuine good-condition retail service', () => {
+  const E=browser(new Map()).engine,D=E.events;
+  const plain=E.create('Standard Care',[]),focused=E.create('Customer Care',[]);
+  const seller=E.market(1).sellers.find(v=>v.profile.grade<=3);
+  assert.ok(seller);
+  assert.ok(D.holdMeeting(focused,'care').ok);
+  for(const state of [plain,focused]){
+    assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
+    const v=state.vehicles[0];
+    assert.ok(E.prepare(state,v.id).ok);
+    assert.ok(E.advertise(state,v.id,Math.round(v.retail/50)*50).ok);
+    assert.ok(E.completeSale(state,v.id,'cash',null).ok);
+  }
+  assert.equal(focused.cash,plain.cash,'Customer service does not create free cash');
+  assert.equal(focused.sold[0].price,plain.sold[0].price);
+  assert.equal(focused.reputationScore,plain.reputationScore+1);
+  assert.ok(focused.reputationHistory[0].reason.includes('management focus on customer care'));
+});
