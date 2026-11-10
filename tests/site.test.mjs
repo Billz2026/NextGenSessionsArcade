@@ -974,3 +974,11 @@ test('releasing staff records notice costs and any unpaid amount as a liability'
   assert.ok(state.ledger.some(x=>x.note.startsWith('Staff exit')));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
+
+test('legacy career reputation tiers are respected when converting past sale milestones', () => {
+  const P=browser(new Map()).engine.people;
+  assert.equal(P.legacyScore(0),5);
+  assert.ok(P.legacyScore(5)>=20,'Old LOCAL TRADER should migrate to Local Dealer or higher');
+  assert.ok(P.legacyScore(12)>=40,'Old ESTABLISHED trader should not lose earned standing');
+  assert.ok(P.legacyScore(200)<=75,'Historical sales alone do not unlock prestige');
+});
