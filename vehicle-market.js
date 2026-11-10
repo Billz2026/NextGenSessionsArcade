@@ -25,7 +25,9 @@
       ['2018 Peugeot 208 Active',113800,'Petrol','Manual','1.2 PureTech',1850,4150,475,4,'Partial'],
       ['2020 Nissan Leaf Acenta',89600,'Electric','Automatic','40 kWh EV',4300,7350,560,3,'Partial'],
       ['2018 Volkswagen Golf SE',131100,'Diesel','Manual','1.6 TDI',4400,7600,535,4,'Partial'],
-      ['2017 Toyota Yaris Icon',96000,'Petrol','Manual','1.33 Dual VVT-i',3600,6000,310,3,'Full']
+      ['2017 Toyota Yaris Icon',96000,'Petrol','Manual','1.33 Dual VVT-i',3600,6000,310,3,'Full'],
+      // Older part-ex and low-budget auction stock can still be serviceable.
+      ['2016 Honda Jazz SE',157800,'Petrol','Manual','1.3 i-VTEC',1450,3500,250,3,'Partial']
     ],
     modern: [
       ['2021 Vauxhall Corsa SE Premium',57100,'Petrol','Manual','1.2 Turbo 100',6350,10350,385,2,'Full'],
