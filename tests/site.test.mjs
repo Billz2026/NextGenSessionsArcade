@@ -58,7 +58,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /trading\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=1/);
   assert.match(html, /events-view\.js\?v=2/);
-  assert.match(html, /monthly-view\.js\?v=2/);
+  assert.match(html, /monthly-view\.js\?v=3/);
   assert.match(html, /people-view\.js\?v=1/);
   assert.match(html, /vehicle-view\.js\?v=2/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
