@@ -17,7 +17,7 @@ The main menu uses the original unchanged NextGen Sessions wordmark, standalone 
 ### First complete trading loop
 
 - Acquire a vehicle through an auction or a direct seller.
-- Pay for a simplified, mandatory inspection and preparation budget.
+- Reserve sufficient cash for required preparation of all acquired vehicles, then pay a simplified inspection/preparation budget. The first version prevents purchasing into an unrecoverable cash deadlock.
 - Set a retail asking price and advertise it.
 - In the Sales Office, accept a cash customer's offer or make limited counteroffers.
 - Alternatively, accept a customer's part-exchange after valuing the incoming car.
