@@ -496,16 +496,19 @@
     // the remaining cash balance; the existing deposit transfers from its
     // segregated holding account. Both credits total the agreed sale price.
     const depositApplied=result.appliedDeposit||0;
-    pay(state,price-depositApplied,'Retail balance received on collection: '+v.title+
+    const cashBalance=price-depositApplied-agreedAllowance;
+    pay(state,cashBalance,'Retail balance received on collection: '+v.title+
       ' ('+mode+')');
     if(depositApplied)pay(state,depositApplied,
       'Customer deposit applied to retail sale: '+v.title);
-    if(px)pay(state,-agreedAllowance,'Part-exchange acquisition: '+px.title);
+    if(px)state.ledger.push({day:state.day,delta:0,
+      note:'Part-exchange acquisition: '+px.title+
+        ' (non-cash allowance £'+agreedAllowance+')'});
     state.vehicles=state.vehicles.filter(x=>x.id!==id);
     state.sold.push({
       id:v.id,title:v.title,source:v.source,day:state.day,mode,price,
       color:v.color,generation:v.generation,origin:v.origin,
-      depositApplied,customerBalancePaid:price-depositApplied,
+      depositApplied,customerBalancePaid:cashBalance,
       acquisition:v.cost,prep:v.prepSpent,profit:realised,
       profile:v.profile?{...v.profile}:null,
       exchange:px?px.title:null,allowance:px?agreedAllowance:0
@@ -522,6 +525,7 @@
     return success(v.title+' handed over to '+c.name+' for £'+price+
       (depositApplied?' (deposit £'+depositApplied+
         ' already paid; balance £'+(price-depositApplied)+
+        (px?' minus the £'+agreedAllowance+' part-exchange allowance':'')+
         ' received at collection)':'')+
       (px?'; part-exchange allowance £'+agreedAllowance+'.':'.')+
       ' Gross trading margin: £'+realised+' before overheads, tax and aftersales.');
