@@ -49,8 +49,7 @@
       '<div class="vehicle-card-statline">'+
       '<div><small>MILEAGE</small><strong>'+mileage(car.miles)+'</strong></div>'+
       '<div><small>OWNERS</small><strong>'+esc(car.profile?.owners??'—')+'</strong></div>'+
-      '<div><small>MOT</small><strong>'+(car.profile?.mot?.monthsRemaining??
-      car.profile?.mot?.monthsRemaining===0?
+      '<div><small>MOT</small><strong>'+(Number.isSafeInteger(car.profile?.mot?.monthsRemaining)?
       esc(car.profile.mot.monthsRemaining)+' months':'Unknown')+'</strong></div></div>';
   }
   function mini(car,source='part-ex'){
