@@ -40,12 +40,14 @@
   };
   const nearest25 = n => Math.round(n / 25) * 25;
   function market(day) {
-    const auctionCount = day === 1 ? 3 : (sample(day,0,17) % 5);
-    const sellerCount = day === 1 ? 2 : (sample(day,0,31) % 4);
+    const auctionCount = day === 1 ? 3 :
+      (sample(day,0,17) % 7 === 0 ? 0 : 1 + (sample(day,1,29) % 3));
+    const sellerCount = day === 1 ? 2 :
+      (sample(day,0,31) % 5 === 0 ? 0 : 1 + (sample(day,1,37) % 3));
     // Some days have no auctions or no private sellers, but never an empty market.
     const aCount = auctionCount || sellerCount ? auctionCount : 1;
     const auctions = Array.from({length:aCount}, (_,i) => {
-      const base = AUCTIONS[(day - 1 + i * 2 + sample(day,i,8) % AUCTIONS.length) % AUCTIONS.length];
+      const base = AUCTIONS[day === 1 ? i : (sample(day,0,8) % AUCTIONS.length + i * 2) % AUCTIONS.length];
       const offset = day === 1 ? 0 : nearest25((sample(day,i,91) % 851) - 425);
       const guide = Math.max(850,base.guide + offset);
       const delta = guide - base.guide;
@@ -56,7 +58,7 @@
         id:'A-' + day + '-' + i,kind:'auction',day};
     });
     const sellers = Array.from({length:sellerCount}, (_,i) => {
-      const base = SELLERS[(day - 1 + i + (day === 1 ? 0 : sample(day,i,21) % SELLERS.length)) % SELLERS.length];
+      const base = SELLERS[day === 1 ? i : (sample(day,0,21) % SELLERS.length + i) % SELLERS.length];
       const offset = day === 1 ? 0 : nearest25((sample(day,i,51) % 601) - 300);
       const ask = Math.max(950,base.ask + offset);
       const delta = ask - base.ask;
