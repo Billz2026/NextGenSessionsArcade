@@ -1794,24 +1794,25 @@ test('v0.7.1 saved stock migrates without adding hidden charges or altering comp
   const E=browser(new Map()).engine,s=E.create('Old Stock Migration',[]);
   const sellers=E.market(1).sellers;
   for(const car of sellers)assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
-  assert.ok(E.assessStock(s,1).ok);
-  assert.ok(E.startPrep(s,1,'external').ok);
-  while(s.vehicles[0].workshop.stage==='in-progress'){s.day++;E.advanceWorkshop(s);}
-  assert.ok(E.finishPrep(s,1).ok);
-  if(s.vehicles[0].workshop.stage==='in-progress'){
-    s.day++;E.advanceWorkshop(s);E.finishPrep(s,1);
-  }
-  assert.equal(s.vehicles[0].status,'prepared');
+  // Simulate the exact old v0.7.1 save shape: prep was instantly charged
+  // at the original budget, with no assessment fee, job or garage uplift.
+  const original=s.vehicles[0];
+  original.prepSpent=original.prepBudget;
+  original.status='prepared';
+  s.cash-=original.prepBudget;
+  s.ledger.push({day:1,delta:-original.prepBudget,
+    note:'Preparation and inspection: '+original.title});
   const old=JSON.parse(JSON.stringify(s));
   old.version=6;
   delete old.wholesale;
   for(const v of old.vehicles)delete v.workshop;
   const restored=E.normalize(old);
-  assert.ok(restored);
+  assert.ok(restored,'Historic save should migrate instead of being discarded');
   assert.equal(restored.version,7);
   assert.equal(restored.cash,old.cash);
   assert.equal(restored.ledger.length,old.ledger.length);
   assert.equal(restored.vehicles[0].prepSpent,old.vehicles[0].prepSpent);
+  assert.equal(restored.vehicles[0].cost,old.vehicles[0].cost);
   assert.equal(restored.vehicles[0].status,'prepared');
   assert.equal(restored.vehicles[0].workshop.stage,'ready');
   assert.equal(restored.vehicles[1].status,'acquired');
