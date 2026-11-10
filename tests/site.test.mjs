@@ -482,7 +482,10 @@ test('forecourt and funds prevent impossible purchases, days refresh leads witho
   const lot=dayOne.auctions[0];
   app.setInput('auction-bid-' + lot.id,lot.rival+50);
   app.click('bid-auction',{id:lot.id});
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).stock,2);
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.stock,3,'A third car now fits on the expanded forecourt');
+  assert.equal(state.cash,12500-
+    dayOne.sellers.reduce((n,v)=>n+v.ask,0)-(lot.rival+50)-lot.fee);
   const oldCash=state.cash;
   app.click('continue');
   state=JSON.parse(saved.get(STORAGE_KEY));
@@ -621,22 +624,22 @@ test('daily listings vary in source quantity and vehicle selection without dupli
   }
   assert.deepEqual(JSON.stringify(engine.market(8)),JSON.stringify(engine.market(8)),'Same day market reproducible after reload');
 });
-test('every market buying action remains clickable and shows a capacity warning', () => {
-  const saved=new Map();
-  const app=browser(saved);
+test('two cars no longer fill the four-space forecourt and buying actions stay enabled', () => {
+  const saved=new Map(),app=browser(saved);
   app.click('new-career');app.submitCareer();
   const market=app.engine.market(1);
-  for(const seller of market.sellers) {
+  for(const seller of market.sellers){
     app.setInput('seller-offer-'+seller.id,seller.ask);
     app.click('buy-seller',{id:seller.id});
   }
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).stock,2);
-  assert.match(app.nodes.get('market-auctions').innerHTML,/FORECOURT FULL/);
+  assert.equal(app.engine.CAPACITY,4);
+  assert.doesNotMatch(app.nodes.get('market-auctions').innerHTML,/FORECOURT FULL/);
   assert.doesNotMatch(app.nodes.get('market-auctions').innerHTML,/data-action="bid-auction"[^>]* disabled/);
   app.setInput('auction-bid-'+market.auctions[0].id,market.auctions[0].rival+100);
   app.click('bid-auction',{id:market.auctions[0].id});
-  assert.match(app.nodes.get('trade-feedback-toast').textContent,/forecourt is full/i);
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).stock,2);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).stock,3);
+  assert.match(app.bindings.get('stock')[0].textContent,/3 \/ 4/);
 });
 
 test('v0.4 deterministic profiles have unique IDs, grades, MOT records and repair breakdowns', () => {
@@ -1640,11 +1643,11 @@ test('a quiet Deal Day can leave a listed car with no buyer, so selling is disal
   const before=JSON.parse(store.get(STORAGE_KEY));
   assert.equal(before.day,30);
   assert.match(app.nodes.get('events-view').innerHTML,/QUIET MONTH/);
-  assert.match(app.nodes.get('sales-list').innerHTML,/NO INTERESTED CUSTOMER THIS SESSION/);
+  assert.match(app.nodes.get('sales-list').innerHTML,/NO ACTIVE RETAIL ENQUIRIES/);
   assert.doesNotMatch(app.nodes.get('sales-list').innerHTML,/ACCEPT CASH/);
-  const fail=app.engine.completeSale(before,1,'cash',null);
+  const fail=app.productionEngine.completeSale(before,1,'cash',null);
   assert.equal(fail.ok,false);
-  assert.equal(fail.code,'no-buyer');
+  assert.equal(fail.code,'customer');
   assert.equal(before.sold.length,0);
   const n=app.engine.normalize(JSON.parse(JSON.stringify(before)));
   assert.ok(n);
