@@ -16,6 +16,8 @@ const monthly = readFileSync(new URL('monthly.js', root), 'utf8');
 const monthlyView = readFileSync(new URL('monthly-view.js', root), 'utf8');
 const events = readFileSync(new URL('events.js', root), 'utf8');
 const eventsView = readFileSync(new URL('events-view.js', root), 'utf8');
+const workshop = readFileSync(new URL('workshop.js', root), 'utf8');
+const workshopView = readFileSync(new URL('workshop-view.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -36,7 +38,7 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
 });
 
 test('dashboard has inbox, calendar and navigable management areas', () => {
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'reports', 'events', 'staff', 'reputation', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'workshop', 'sales', 'finance', 'reports', 'events', 'staff', 'reputation', 'business']) {
     assert.match(html, new RegExp('data-panel="' + page + '"'));
     assert.match(html, new RegExp('data-page="' + page + '"'));
   }
@@ -49,14 +51,16 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
-  assert.match(html, /people\.js\?v=2/);
-  assert.match(html, /monthly\.js\?v=2/);
+  assert.match(html, /people\.js\?v=3/);
+  assert.match(html, /monthly\.js\?v=3/);
   assert.match(html, /events\.js\?v=2/);
-  assert.match(html, /trading\.js\?v=7/);
+  assert.match(html, /workshop\.js\?v=1/);
+  assert.match(html, /trading\.js\?v=8/);
+  assert.match(html, /workshop-view\.js\?v=1/);
   assert.match(html, /events-view\.js\?v=2/);
-  assert.match(html, /monthly-view\.js\?v=2/);
+  assert.match(html, /monthly-view\.js\?v=3/);
   assert.match(html, /people-view\.js\?v=1/);
-  assert.match(html, /vehicle-view\.js\?v=1/);
+  assert.match(html, /vehicle-view\.js\?v=2/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -102,7 +106,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   }
   const panels = [];
   const nav = [];
-  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'sales', 'finance', 'reports', 'events', 'staff', 'reputation', 'business']) {
+  for (const page of ['dashboard', 'inbox', 'auctions', 'stock', 'workshop', 'sales', 'finance', 'reports', 'events', 'staff', 'reputation', 'business']) {
     const panel = new Node();
     panel.dataset.panel = page;
     panels.push(panel);
@@ -145,15 +149,57 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
   vm.runInNewContext(events, context, { timeout: 1500 });
+  vm.runInNewContext(workshop, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
+  // Test-fixture shortcut for PRE-v0.8 financial/reputation assertions only.
+  // It is not included in production scripts. Dedicated workshop tests below
+  // verify real day progression, blocked retail listings, quality and cash.
+  const liveEngine=context.window.MotorTradeEngine;
+  let fixtureMode=false;
+  function fixtureQC(state,id) {
+    const v=state.vehicles.find(x=>x.id===id);
+    if(!v)return {ok:false,code:'missing'};
+    const j=v.workshop;
+    j.stage='quality-check';
+    j.remainingDays=0;
+    j.reworks=1; // Fixture: avoid random rectification outside QC tests.
+    return liveEngine.finishPrep(state,id);
+  }
+  context.window.MotorTradeEngine={
+    ...liveEngine,
+    finishPrep:(state,id)=>fixtureMode?fixtureQC(state,id):liveEngine.finishPrep(state,id),
+    prepare:(state,id)=>{
+      const a=liveEngine.assessStock(state,id);
+      if(!a.ok)return a;
+      const method=liveEngine.prepQuote(state,id,'internal')?'internal':'external';
+      const b=liveEngine.startPrep(state,id,method);
+      if(!b.ok)return b;
+      return fixtureQC(state,id);
+    }
+  };
   vm.runInNewContext(vehicleView, context, { timeout: 1500 });
   vm.runInNewContext(peopleView, context, { timeout: 1500 });
   vm.runInNewContext(monthlyView, context, { timeout: 1500 });
   vm.runInNewContext(eventsView, context, { timeout: 1500 });
+  vm.runInNewContext(workshopView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
-    const button = { dataset: { action, ...extras }, setAttribute() {} };
-    listeners.click({ target: { closest: () => button } });
+    const send=(a,extra)=> {
+      const button={dataset:{action:a,...extra},setAttribute(){}};
+      listeners.click({target:{closest:()=>button}});
+    };
+    if(action==='prepare-stock'){
+      // Legacy test setup: walk through real assessment/booking/QC actions.
+      // A user cannot invoke this shortcut in the shipped interface.
+      fixtureMode=true;
+      try {
+        send('assess-workshop',extras);
+        send('start-workshop',{...extras,method:'external'});
+        send('finish-workshop',extras);
+      } finally {fixtureMode=false;}
+      return;
+    }
+    send(action,extras);
   }
   function go(page) { click(undefined, { page }); }
   function submitCareer(name = 'First Lot Motors') {
@@ -266,7 +312,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=16/);
+  assert.match(html, /styles\.css\?v=17/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -284,7 +330,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 6);
+  assert.equal(opening.version, 7);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -300,7 +346,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('prepare-stock', { id: '1' });
   state = JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.vehicles[0].status, 'prepared');
-  assert.equal(state.cash, 12500 - bid - lot.fee - lot.prep);
+  assert.equal(state.cash, 12500 - state.vehicles[0].cost - state.vehicles[0].prepSpent);
   app.setInput('stock-price-1', 6200);
   app.click('list-stock', { id: '1' });
   state = JSON.parse(saved.get(STORAGE_KEY));
@@ -316,7 +362,8 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   assert.equal(state.sales, 1);
   assert.equal(state.sold[0].mode,'cash');
   assert.equal(state.sold[0].price,achievedPrice);
-  assert.equal(state.sold[0].profit,achievedPrice - bid - lot.fee - lot.prep);
+  assert.equal(state.sold[0].profit,achievedPrice -
+    state.sold[0].acquisition - state.sold[0].prep);
   assert.equal(state.cash,12500 + state.sold[0].profit);
   assert.equal(state.ledger.reduce((a,x)=>a+x.delta,0),state.cash-12500);
   const resumed = browser(saved);
@@ -357,9 +404,11 @@ test('direct sellers negotiate and part exchanges become properly valued stock',
   assert.equal(state.vehicles.length,1,'Trade-in replaces sold unit');
   assert.equal(state.vehicles[0].source,'part-ex');
   assert.equal(state.vehicles[0].cost,px.floor+25);
-  const expected=12500-accepted-seller.prep+firstBuyer.pxOffer-(px.floor+25);
+  const expected=12500-state.sold[0].acquisition-state.sold[0].prep+
+    firstBuyer.pxOffer-(px.floor+25);
   assert.equal(state.cash,expected,'Sale proceeds minus allowance is the cash difference');
-  assert.equal(state.sold[0].profit,firstBuyer.pxOffer-accepted-seller.prep);
+  assert.equal(state.sold[0].profit,firstBuyer.pxOffer-
+    state.sold[0].acquisition-state.sold[0].prep);
   assert.equal(state.ledger.reduce((a,l)=>a+l.delta,0),state.cash-12500);
   app.click('prepare-stock',{id:'2'});
   app.setInput('stock-price-2',3500);
@@ -409,7 +458,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,6);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,7);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -435,15 +484,20 @@ test('cash reserves protect mandatory preparation across multiple purchases', ()
   app.setInput('seller-offer-' + seller.id,seller.ask);
   app.click('buy-seller',{id:seller.id});
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles.length,1);
-  app.click('prepare-stock',{id:'1'});
-  state = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(state.cash,0);
-  app.setInput('stock-price-1',6200);
-  app.click('list-stock',{id:'1'});
-  app.click('sell-cash',{id:'1'});
-  state = JSON.parse(saved.get(STORAGE_KEY));
+  // There is no longer free, instantaneous preparation. With exactly the
+  // original repair reserve, the assessment and garage uplift are unaffordable.
+  // The dealer can cut losses using the separate wholesale outlet.
+  const failedAssessment=app.engine.assessStock(state,1);
+  assert.equal(failedAssessment.ok,false);
+  assert.equal(failedAssessment.code,'cash');
+  assert.ok(app.nodes.get('workshop-board').innerHTML.includes('SELL TO TRADE'));
+  app.click('dispose-workshop',{id:'1'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.stock,0);
-  assert.ok(state.cash>0,'Player can sell out of a cash shortage');
+  assert.equal(state.sales,0,'Wholesale exit must not count as a retail sale');
+  assert.equal(state.wholesale.length,1);
+  assert.ok(state.wholesale[0].profit<0,'The cash recovery crystallises a loss');
+  assert.ok(state.cash>0);
 });
 
 test('seller negotiations counter, then accept or walk away without spending cash', () => {
@@ -593,15 +647,16 @@ test('a paid inspection reveals new risk before purchase and is included in real
   assert.equal(state.vehicles[0].profile.inspected,true);
   resume.click('prepare-stock',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(state.vehicles[0].prepSpent,state.vehicles[0].prepBudget);
+  assert.ok(state.vehicles[0].prepSpent>=state.vehicles[0].prepBudget,
+    'External garage pricing can exceed the original repair allowance');
   resume.setInput('stock-price-1',6800);
   resume.click('list-stock',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
   const achieved=resume.engine.buyers(state.vehicles[0]).cashOffer;
   resume.click('sell-cash',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(state.sold[0].profit,achieved-(hammer+lot.fee+lot.profile.inspectionFee)-
-    (lot.profile.basePrep+lot.profile.hiddenFault.cost));
+  assert.equal(state.sold[0].profit,achieved-
+    state.sold[0].acquisition-state.sold[0].prep);
   assert.ok(state.sold[0].profile,'Vehicle report must remain in sales history');
   assert.equal(state.cash,12500+state.sold[0].profit);
   assert.ok(state.ledger.some(x=>x.note.startsWith('Pre-purchase inspection')));
@@ -639,7 +694,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,6);
+  assert.equal(migrated.version,7);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -718,7 +773,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,6);
+  assert.equal(saved.version,7);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
@@ -728,7 +783,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,6);
+  assert.equal(app.engine.VERSION,7);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
@@ -871,10 +926,13 @@ test('payroll cash shortages are recorded without spending repair reserves or lo
   assert.ok(tick.arrears>0);
   assert.equal(state.cash,remaining);
   assert.ok(state.reputationScore<5,'Unpaid staff wages hurt reputation');
-  assert.ok(E.prepare(state,1).ok);
-  assert.equal(state.cash,0);
-  assert.ok(E.advertise(state,1,6200).ok);
-  assert.ok(E.completeSale(state,1,'cash',null).ok);
+  // Original prep money cannot fund a new diagnosis and external uplift.
+  // Exit to the trade, settle arrears next day and keep the ledger coherent.
+  assert.equal(E.assessStock(state,1).ok,false);
+  assert.ok(E.disposeStock(state,1).ok);
+  assert.equal(state.vehicles.length,0);
+  assert.equal(state.sold.length,0);
+  assert.ok(state.wholesale[0].profit<0);
   state.day=3;
   const recovered=E.staffDay(state);
   assert.equal(recovered.arrears,0);
@@ -914,7 +972,7 @@ test('v0.4 career migrates with stock, sold vehicles and financial balances unto
   assert.equal(newApp.nodes.get('menu-continue').hidden,false);
   newApp.click('resume');newApp.click('save');
   const restored=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(restored.version,6);
+  assert.equal(restored.version,7);
   assert.equal(restored.cash,v3.cash);
   assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
   assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
@@ -999,7 +1057,7 @@ test('new dealerships receive achievable company targets and a live monthly dash
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Monthly Review Motors');
   const E=app.engine,state=E.create('Standalone',[]);
-  assert.equal(E.VERSION,6);
+  assert.equal(E.VERSION,7);
   assert.equal(state.monthPlan.month,1);
   assert.equal(state.monthPlan.startDay,1);
   assert.equal(state.monthPlan.endDay,30);
@@ -1126,7 +1184,7 @@ test('day 30 close generates an inbox message and immutable archived review', ()
   assert.equal(JSON.stringify(state.monthlyReports[0]),archived);
   const resumed=browser(storage);
   resumed.click('resume');
-  assert.equal(resumed.engine.VERSION,6);
+  assert.equal(resumed.engine.VERSION,7);
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).monthlyReports.length,1);
 });
 test('monthly targets credit salesperson performance only during active duty', () => {
@@ -1163,7 +1221,7 @@ test('migration from v0.5 preserves staff, outstanding balances and day without 
   assert.equal(resumed.nodes.get('menu-continue').hidden,false);
   resumed.click('resume');resumed.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,6);
+  assert.equal(after.version,7);
   assert.equal(after.day,before.day);
   assert.equal(after.cash,before.cash);
   assert.equal(after.ledger.length,before.ledger.length);
@@ -1394,7 +1452,7 @@ test('old v0.6 saved careers migrate without losing sales, staff, stock or cash'
   next.click('resume');
   next.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,6);
+  assert.equal(after.version,7);
   assert.equal(after.cash,old.cash);
   assert.equal(after.staff.length,1);
   assert.equal(after.vehicles.length,1);
@@ -1561,4 +1619,240 @@ test('month-end management report records actual Deal Day results without spoili
   assert.equal(closed.dealDay.turnover,0);
   assert.ok(app.engine.monthly.validReport(closed));
   assert.match(app.nodes.get('monthly-report-view').innerHTML,/MONTH-END DEAL DAY REVIEW/);
+});
+
+test('v0.8 blocks immediate retail listing until repairs take real days and pass QC', () => {
+  const saved=new Map(),app=browser(saved);
+  app.click('new-career');app.submitCareer('Real Prep Motors');
+  const seller=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+seller.id,seller.ask);
+  app.click('buy-seller',{id:seller.id});
+  let state=JSON.parse(saved.get(STORAGE_KEY));
+  const v=state.vehicles[0];
+  assert.equal(v.status,'acquired');
+  assert.equal(v.workshop.stage,'unassessed');
+  assert.match(app.nodes.get('workshop-board').innerHTML,/AUTHORISE ASSESSMENT/);
+  app.setInput('stock-price-1',5200);
+  app.click('list-stock',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0].status,'acquired');
+  app.click('assess-workshop',{id:'1'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].workshop.stage,'quoted');
+  assert.equal(state.vehicles[0].workshop.assessmentFee,55);
+  assert.ok(state.ledger.some(l=>l.note.startsWith('Workshop assessment:')));
+  assert.match(app.nodes.get('workshop-board').innerHTML,/IN-HOUSE TECHNICIAN/);
+  assert.match(app.nodes.get('workshop-board').innerHTML,/EXTERNAL GARAGE/);
+  app.click('start-workshop',{id:'1',method:'external'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].workshop.stage,'in-progress');
+  const planned=state.vehicles[0].workshop.plannedDays;
+  assert.ok(planned>=2,'The car must require real time');
+  app.click('list-stock',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0].status,'acquired');
+  app.click('finish-workshop',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0].workshop.stage,'in-progress');
+  for(let i=0;i<planned;i++)app.click('continue');
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].workshop.stage,'quality-check');
+  assert.equal(state.vehicles[0].workshop.remainingDays,0);
+  app.click('finish-workshop',{id:'1'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  if(state.vehicles[0].workshop.stage==='in-progress'){
+    app.click('continue');
+    app.click('finish-workshop',{id:'1'});
+    state=JSON.parse(saved.get(STORAGE_KEY));
+  }
+  assert.equal(state.vehicles[0].workshop.stage,'ready');
+  assert.equal(state.vehicles[0].status,'prepared');
+  assert.ok(state.vehicles[0].prepSpent>state.vehicles[0].prepBudget,
+    'Outsourcing can cost more than initial repairs');
+  assert.ok(app.engine.normalize(JSON.parse(JSON.stringify(state))));
+  app.setInput('stock-price-1',5200);
+  app.click('list-stock',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0].status,'listed');
+});
+test('recruiting a technician changes workshop prices and internal bay capacity', () => {
+  const E=browser(new Map()).engine,P=E.people;
+  const s=E.create('Tech Centre',[]);
+  const tech=P.applicants(1).find(x=>x.role==='technician'&&x.skills.efficiency>=15);
+  assert.ok(tech);
+  assert.ok(E.hireStaff(s,tech.id).ok);
+  s.day=2;E.staffDay(s);
+  const offered=E.market(2).sellers;
+  assert.ok(offered.length>=2);
+  for(const car of offered.slice(0,2))assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+  const v=s.vehicles[0],v2=s.vehicles[1];
+  assert.ok(E.assessStock(s,v.id).ok);
+  assert.ok(E.assessStock(s,v2.id).ok);
+  const internal=E.prepQuote(s,v.id,'internal');
+  const external=E.prepQuote(s,v.id,'external');
+  assert.ok(internal.cost<external.cost);
+  assert.ok(E.startPrep(s,v.id,'internal').ok);
+  const blocked=E.startPrep(s,v2.id,'internal');
+  assert.equal(blocked.ok,false);
+  assert.equal(blocked.code,'busy');
+  assert.ok(E.startPrep(s,v2.id,'external').ok);
+  assert.equal(s.vehicles.filter(x=>x.workshop.stage==='in-progress').length,2);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+test('staff training pauses internal jobs, but transfer can rescue a stalled workshop', () => {
+  const E=browser(new Map()).engine,P=E.people,s=E.create('Repair Team',[]);
+  const tech=P.applicants(1).find(x=>x.role==='technician');
+  assert.ok(E.hireStaff(s,tech.id).ok);
+  s.day=2;E.staffDay(s);
+  const seller=E.market(2).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  assert.ok(E.assessStock(s,1).ok);
+  assert.ok(E.startPrep(s,1,'internal').ok);
+  const initial=s.vehicles[0].workshop.remainingDays;
+  assert.ok(P.train(s,s.staff[0].id).ok);
+  s.day=3;E.staffDay(s);
+  const events=E.advanceWorkshop(s);
+  assert.equal(s.vehicles[0].workshop.paused,true);
+  assert.equal(s.vehicles[0].workshop.remainingDays,initial);
+  assert.ok(events.some(x=>/paused/.test(x)));
+  const before=s.cash;
+  assert.ok(E.transferPrep(s,1).ok);
+  assert.equal(s.cash,before-125);
+  assert.equal(s.vehicles[0].workshop.method,'external');
+  s.day=4;E.staffDay(s);E.advanceWorkshop(s);
+  assert.equal(s.vehicles[0].workshop.paused,false);
+  assert.ok(s.vehicles[0].workshop.remainingDays<initial);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+test('paid quality rectification can require an additional day and larger repair bill', () => {
+  const E=browser(new Map()).engine;
+  let failure=null;
+  for(let day=1;day<=24&&!failure;day++){
+    const lot=E.market(day).auctions.find(x=>x.profile.grade>=4);
+    if(!lot)continue;
+    const state=E.create('QC Check',[]);
+    state.day=day;
+    if(!E.acquireAuction(state,lot.id,lot.rival+50).ok)continue;
+    if(!E.assessStock(state,1).ok)continue;
+    if(!E.startPrep(state,1,'external').ok)continue;
+    const v=state.vehicles[0],base=v.workshop.repairCost;
+    while(v.workshop.stage==='in-progress'&&state.day<30){
+      state.day++;E.advanceWorkshop(state);
+    }
+    if(v.workshop.stage!=='quality-check')continue;
+    const check=E.finishPrep(state,1);
+    if(check.ok&&v.workshop.stage==='in-progress')
+      failure={state,v,base,check};
+  }
+  assert.ok(failure,'Deterministic simulation should contain a failed quality check');
+  const {state,v,base}=failure;
+  assert.equal(v.workshop.reworks,1);
+  assert.ok(v.workshop.repairCost>base);
+  assert.equal(v.status,'acquired');
+  assert.ok(state.ledger.some(x=>x.note.startsWith('Workshop quality rectification:')));
+  state.day++;E.advanceWorkshop(state);
+  assert.equal(v.workshop.stage,'quality-check');
+  assert.ok(E.finishPrep(state,v.id).ok);
+  assert.equal(v.workshop.stage,'ready');
+  assert.equal(v.prepSpent,v.workshop.repairCost);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('workshop cash flow and unfinished repairs are reflected in monthly working capital', () => {
+  const E=browser(new Map()).engine,s=E.create('Capital Motors',[]);
+  const seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  assert.ok(E.assessStock(s,1).ok);
+  assert.ok(E.startPrep(s,1,'external').ok);
+  const v=s.vehicles[0],paid=v.workshop.repairCost;
+  const r=E.monthly.statement(s);
+  assert.equal(r.workshopInProgress,1);
+  assert.equal(r.stockCapital,v.cost+paid);
+  assert.equal(r.ledgerBreakdown.preparation,-paid);
+  assert.equal(r.ledgerBreakdown.inspections,-v.workshop.assessmentFee);
+  assert.equal(r.soldUnits,0);
+  assert.equal(r.grossMargin,0,'Unfinished inventory is not a realised sale');
+  assert.equal(r.openingCash+r.netCashChange,r.closingCash);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+test('wholesale disposal releases cash at a loss without fabricating retail sales', () => {
+  const E=browser(new Map()).engine,s=E.create('Cut Losses Autos',[]);
+  const seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const basis=s.vehicles[0].cost;
+  const q=E.wholesaleOffer(s.vehicles[0]);
+  assert.ok(q<basis);
+  assert.ok(E.disposeStock(s,1).ok);
+  assert.equal(s.vehicles.length,0);
+  assert.equal(s.wholesale.length,1);
+  assert.equal(s.sold.length,0);
+  assert.equal(s.sales,0);
+  assert.equal(s.wholesale[0].profit,q-basis);
+  assert.equal(E.totalMargin(s),q-basis);
+  assert.equal(E.monthly.statement(s).wholesaleUnits,1);
+  assert.equal(E.monthly.statement(s).soldUnits,0);
+  assert.equal(E.monthly.statement(s).grossMargin,q-basis);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+  assert.equal(E.disposeStock(s,1).ok,false);
+});
+test('v0.7.1 saved stock migrates without adding hidden charges or altering completed cars', () => {
+  const E=browser(new Map()).engine,s=E.create('Old Stock Migration',[]);
+  const sellers=E.market(1).sellers;
+  for(const car of sellers)assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+  // Simulate the exact old v0.7.1 save shape: prep was instantly charged
+  // at the original budget, with no assessment fee, job or garage uplift.
+  const original=s.vehicles[0];
+  original.prepSpent=original.prepBudget;
+  original.status='prepared';
+  s.cash-=original.prepBudget;
+  s.ledger.push({day:1,delta:-original.prepBudget,
+    note:'Preparation and inspection: '+original.title});
+  const old=JSON.parse(JSON.stringify(s));
+  old.version=6;
+  delete old.wholesale;
+  for(const v of old.vehicles)delete v.workshop;
+  const restored=E.normalize(old);
+  assert.ok(restored,'Historic save should migrate instead of being discarded');
+  assert.equal(restored.version,7);
+  assert.equal(restored.cash,old.cash);
+  assert.equal(restored.ledger.length,old.ledger.length);
+  assert.equal(restored.vehicles[0].prepSpent,old.vehicles[0].prepSpent);
+  assert.equal(restored.vehicles[0].cost,old.vehicles[0].cost);
+  assert.equal(restored.vehicles[0].status,'prepared');
+  assert.equal(restored.vehicles[0].workshop.stage,'ready');
+  assert.equal(restored.vehicles[1].status,'acquired');
+  assert.equal(restored.vehicles[1].workshop.stage,'unassessed');
+  assert.equal(restored.wholesale.length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(restored))));
+});
+test('Deal Day sessions do not advance workshop repairs or trigger additional invoices', () => {
+  const E=browser(new Map()).engine,D=E.events,s=E.create('Deadline Workshop',[]);
+  const lot=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(s,lot.id,lot.ask).ok);
+  assert.ok(E.assessStock(s,1).ok);
+  assert.ok(E.startPrep(s,1,'external').ok);
+  s.day=30;
+  const before=s.vehicles[0].workshop.remainingDays;
+  const cash=s.cash,ledger=s.ledger.length;
+  for(let i=0;i<4;i++)assert.ok(D.advanceSession(s).ok);
+  assert.equal(s.day,30);
+  assert.equal(s.vehicles[0].workshop.remainingDays,before);
+  assert.equal(s.cash,cash);
+  assert.equal(s.ledger.length,ledger);
+  assert.equal(E.market(30,s.reputationScore,s.deadlineSession,s.name).auctions.length,0);
+});
+
+test('unknown hidden repair detail stays confidential until workshop assessment', () => {
+  const store=new Map(),app=browser(store);
+  app.click('new-career');app.submitCareer('Inspection Dealer');
+  const car=app.engine.market(1).auctions.find(x=>x.profile.hiddenFault);
+  assert.ok(car);
+  const hammer=car.rival+50;
+  app.setInput('auction-bid-'+car.id,hammer);
+  app.click('bid-auction',{id:car.id});
+  let state=JSON.parse(store.get(STORAGE_KEY));
+  assert.equal(state.vehicles.length,1);
+  const extra=state.vehicles[0].profile.hiddenFault.item;
+  const initial=app.nodes.get('workshop-board').innerHTML;
+  assert.doesNotMatch(initial,new RegExp(extra),'Undiagnosed hidden fault must not appear in the workshop list');
+  app.click('assess-workshop',{id:'1'});
+  state=JSON.parse(store.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].workshop.stage,'quoted');
+  assert.match(app.nodes.get('workshop-board').innerHTML,new RegExp(extra));
+  assert.ok(state.ledger.some(l=>l.note.startsWith('Workshop assessment:')));
 });

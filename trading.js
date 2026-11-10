@@ -7,7 +7,9 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 2;
-  const VERSION = 6;
+  const VERSION = 7;
+  const W = window.MotorTradeWorkshop;
+  if (!W) throw new Error('Load workshop.js before trading.js');
   const D = window.MotorTradeEvents;
   if (!D) throw new Error('Load events.js before trading.js');
   const M = window.MotorTradeMonthly;
@@ -92,7 +94,7 @@
     const state={
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
       stock:0,sales:0,reputation:P.tier(5),messages,
-      vehicles:[],sold:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
+      vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       ...P.initial()
     };
     M.initialize(state);
@@ -100,7 +102,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -126,13 +128,15 @@
       !integer(saved.nextId) || saved.nextId < 1 ||
       !cashValue(saved.cash) || saved.vehicles.length > CAPACITY ||
       saved.vehicles.length > 250 || saved.sold.length > 20000 ||
-      saved.ledger.length > 60000) return null;
+      saved.ledger.length > 60000 ||
+      (saved.version===VERSION&&(!Array.isArray(saved.wholesale)||saved.wholesale.length>20000)))return null;
     const goodVehicle = v => v && integer(v.id) && v.id > 0 && typeof v.title === 'string' &&
       v.title.length > 2 && v.title.length < 100 &&
       ['auction','seller','part-ex'].includes(v.source) &&
       ['acquired','prepared','listed'].includes(v.status) &&
       cashValue(v.cost) && cashValue(v.prepBudget) && cashValue(v.prepSpent) &&
-      (v.prepSpent === 0 || (v.prepSpent>0 && v.prepSpent<=v.prepBudget)) &&
+      (v.prepSpent === 0 || (v.prepSpent>0 &&
+        (saved.version===VERSION? v.prepSpent<=100000 : v.prepSpent<=v.prepBudget))) &&
       cashValue(v.retail) && integer(v.acquiredDay) &&
       v.acquiredDay >= 1 && v.acquiredDay <= saved.day &&
       (v.status !== 'listed' || (cashValue(v.asking) && v.asking > 0)) &&
@@ -140,7 +144,8 @@
       (v.cashOffer === null || v.cashOffer === undefined || cashValue(v.cashOffer)) &&
       (saved.version === 2 || I.validProfile(v.profile)) &&
       (saved.version === 2 || v.prepBudget === v.profile.basePrep +
-        (v.profile.hiddenFault?.cost || 0));
+        (v.profile.hiddenFault?.cost || 0)) &&
+      (saved.version!==VERSION || W.valid(v,saved.day));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
       cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
@@ -148,7 +153,14 @@
     const goodLedger = l => l && integer(l.day) && l.day >= 1 && l.day <= saved.day &&
       integer(l.delta) && Math.abs(l.delta) <= 10000000 &&
       typeof l.note === 'string' && l.note.length < 200;
-    if (!saved.vehicles.every(goodVehicle) || !saved.sold.every(goodSold) ||
+    const wholesale=saved.wholesale??[];
+    const goodWholesale=d=>d&&integer(d.id)&&d.id>0&&
+      typeof d.title==='string'&&d.title.length<100&&
+      integer(d.day)&&d.day>=1&&d.day<=saved.day&&
+      cashValue(d.proceeds)&&cashValue(d.basis)&&
+      integer(d.profit)&&d.profit===d.proceeds-d.basis;
+    if (!Array.isArray(wholesale)||!wholesale.every(goodWholesale)||
+      !saved.vehicles.every(goodVehicle) || !saved.sold.every(goodSold) ||
         !saved.ledger.every(goodLedger)) return null;
     // Older v2 careers do not yet have negotiation history.
     const negotiations = saved.negotiations ?? {};
@@ -173,7 +185,7 @@
     const workforce=saved.version>=4 ? saved :
       {...P.initial(),reputationScore:P.legacyScore(saved.sold.length)};
     if (!P.valid(workforce,saved.day)) return null;
-    const ids = [...saved.vehicles,...saved.sold].map(v => v.id);
+    const ids = [...saved.vehicles,...saved.sold,...wholesale].map(v => v.id);
     if (new Set(ids).size !== ids.length || ids.some(id => id >= saved.nextId)) return null;
     const balance = STARTING_CASH + sum(saved.ledger,'delta');
     if (balance !== saved.cash || balance < 0 || balance > 100000000) return null;
@@ -182,11 +194,13 @@
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
-        ...v,profile:saved.version===2?I.legacyProfile(v):
+        ...v,workshop:saved.version===VERSION?{...v.workshop}:W.initial(v),
+        profile:saved.version===2?I.legacyProfile(v):
           {...v.profile,knownRepairs:v.profile.knownRepairs.map(x=>({...x})),
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
             hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}
       })),
+      wholesale:wholesale.map(d=>({...d})),
       sold:saved.sold.map(v => ({...v,profile:v.profile?{...v.profile,
         knownRepairs:v.profile.knownRepairs.map(r=>({...r})),
         mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
@@ -223,6 +237,7 @@
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
       listedDay:null
     };
+    v.workshop=W.initial(v);
     state.vehicles.push(v);
     state.stock = state.vehicles.length;
     return v;
@@ -231,8 +246,7 @@
     if (state.vehicles.length >= state.capacity) return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
     // No lending or wholesale exit yet: reserve preparation for *all* acquired cars.
     // Otherwise a second purchase could consume the cash needed to retail the first.
-    const pendingPrep = state.vehicles.filter(v => v.status === 'acquired')
-      .reduce((total, v) => total + v.prepBudget, 0);
+    const pendingPrep=W.reserved(state);
     if (cost + preparation + pendingPrep > state.cash)
       return fail('cash','Not enough cash to buy this car while reserving all required stock preparation.');
     return null;
@@ -323,8 +337,7 @@
     if (state.negotiations?.[id]?.status==='walked' ||
         state.auctionBids?.[id]?.status==='lost') return fail('closed','This opportunity is closed.');
     if (state.reports?.[id]) return fail('inspected','This inspection has already been purchased.');
-    const pending=state.vehicles.filter(v=>v.status==='acquired')
-      .reduce((n,v)=>n+v.prepBudget,0);
+    const pending=W.reserved(state);
     const charge=car.profile.inspectionFee;
     if (state.cash < charge + pending)
       return fail('cash','Not enough unreserved cash to pay for this inspection.');
@@ -347,27 +360,21 @@
     const car=leads.find(x=>x.id===id);
     return car?{...car,inspected:!!state.reports?.[id]}:null;
   }
-  function prepare(state, id) {
-    const vehicle = own(state.vehicles,id);
-    if (!vehicle) return fail('missing','Vehicle not found in your stock.');
-    if (vehicle.status !== 'acquired') return fail('ready','This vehicle has already been prepared.');
-    if (state.cash < vehicle.prepBudget) return fail('cash','Insufficient cash to complete the required preparation.');
-    const discount=P.labourSaving(state,vehicle);
-    const actual=vehicle.prepBudget-discount;
-    pay(state,-actual,'Preparation and inspection: '+vehicle.title+
-      (discount?' (technician saving £'+discount+')':''));
-    vehicle.prepSpent=actual;
-    P.worked(state);
-    vehicle.status = 'prepared';
-    const extra=vehicle.profile?.hiddenFault;
-    return success(vehicle.title + ' prepared for £'+vehicle.prepSpent.toLocaleString('en-GB')+
-      (extra?' including '+extra.item+' (£'+extra.cost+'). ':'. ')+
-      'Set an asking price and advertise it.');
+  function assessStock(state,id){return W.assess(state,id);}
+  function startPrep(state,id,method){return W.start(state,id,method);}
+  function finishPrep(state,id){return W.quality(state,id);}
+  function transferPrep(state,id){return W.transfer(state,id);}
+  function advanceWorkshop(state){return W.advance(state);}
+  function prepQuote(state,id,method){
+    const v=own(state.vehicles,id);
+    return v?W.quote(state,v,method):null;
   }
+  // Previous prepare() was instant. Intentionally do not expose it as a
+  // shortcut: game progress must now pass through workshop time and QC.
   function advertise(state, id, asking) {
     const vehicle = own(state.vehicles,id);
     if (!vehicle) return fail('missing','Vehicle not found in your stock.');
-    if (vehicle.status === 'acquired') return fail('prep','Prepare the vehicle before advertising it.');
+    if (vehicle.status === 'acquired') return fail('prep','Workshop repairs and a passed final quality check are required before retail advertising.');
     if (!integer(asking) || asking < 500 || asking > 75000)
       return fail('price','Enter a retail price between £500 and £75,000.');
     if (asking < Math.floor(vehicle.retail * .5) || asking > Math.ceil(vehicle.retail * 1.8))
@@ -433,8 +440,7 @@
       if (!integer(allowance) || allowance < px.floor || allowance > px.ask)
         return fail('part-ex','Part-exchange allowance rejected by the customer. Revalue within their acceptable range.');
       if (allowance >= price) return fail('part-ex','Part-exchange allowance must be below the agreed sale price.');
-      const pendingPrep = state.vehicles.filter(v => v.status === 'acquired')
-        .reduce((total, v) => total + v.prepBudget, 0);
+      const pendingPrep=W.reserved(state);
       const pxProfile=I.profile({...px,id:'PX-'+state.day+'-'+vehicle.id,kind:'part-ex'});
       if (state.cash + price - allowance < pendingPrep +
         pxProfile.basePrep+(pxProfile.hiddenFault?.cost||0))
@@ -469,7 +475,30 @@
       ' ('+state.reputation+').'
     );
   }
-  function totalMargin(state) { return sum(state.sold,'profit'); }
+  function wholesaleOffer(vehicle){
+    // Simplified emergency trade bid. A trade outlet is not a retail sale
+    // or guaranteed profit; dispose of unprepared stock at a loss.
+    return Math.max(150,Math.round(Math.min(
+      vehicle.profile?.trade||vehicle.retail*.55,vehicle.cost*.88)/25)*25);
+  }
+  function disposeStock(state,id){
+    const vehicle=own(state.vehicles,id);
+    if(!vehicle)return fail('missing','Vehicle not found.');
+    if(vehicle.status!=='acquired'||!['unassessed','quoted'].includes(vehicle.workshop?.stage))
+      return fail('stage','Trade disposal is available only before repair work has been booked.');
+    const proceeds=wholesaleOffer(vehicle);
+    const basis=vehicle.cost;
+    pay(state,proceeds,'Wholesale stock disposal: '+vehicle.title);
+    state.wholesale.push({id:vehicle.id,title:vehicle.title,day:state.day,
+      proceeds,basis,profit:proceeds-basis});
+    state.vehicles=state.vehicles.filter(v=>v.id!==id);
+    state.stock=state.vehicles.length;
+    return success(vehicle.title+' disposed of to a fictional trade buyer for £'+
+      proceeds+'. Trading loss £'+Math.max(0,basis-proceeds)+
+      '. No retail sale, target credit or reputation benefit.');
+  }
+  function totalMargin(state) { return sum(state.sold,'profit')+
+    sum(state.wholesale,'profit'); }
   function staffDay(state) {
     const out=P.advance(state);
     state.reputation=P.tier(state.reputationScore);
@@ -484,9 +513,11 @@
     return result;
   }
   window.MotorTradeEngine = Object.freeze({
-    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,events:D,hireStaff,
+    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,events:D,
+    workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
+    wholesaleOffer,disposeStock,hireStaff,
     market,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
-    prepare,advertise,buyers,counter,completeSale,totalMargin
+    advertise,buyers,counter,completeSale,totalMargin
   });
 })();

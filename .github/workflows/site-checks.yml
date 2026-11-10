@@ -7,6 +7,8 @@ on:
       - 'styles.css'
       - 'simulator.js'
       - 'trading.js'
+      - 'workshop.js'
+      - 'workshop-view.js'
       - 'events.js'
       - 'events-view.js'
       - 'monthly.js'
@@ -26,6 +28,8 @@ on:
       - 'styles.css'
       - 'simulator.js'
       - 'trading.js'
+      - 'workshop.js'
+      - 'workshop-view.js'
       - 'events.js'
       - 'events-view.js'
       - 'monthly.js'
@@ -50,6 +54,6 @@ jobs:
         with:
           node-version: '22'
       - name: Check game JavaScript syntax
-        run: node --check vehicle-intel.js && node --check vehicle-view.js && node --check people.js && node --check people-view.js && node --check monthly.js && node --check monthly-view.js && node --check events.js && node --check events-view.js && node --check trading.js && node --check simulator.js
+        run: node --check vehicle-intel.js && node --check vehicle-view.js && node --check people.js && node --check people-view.js && node --check monthly.js && node --check monthly-view.js && node --check events.js && node --check events-view.js && node --check workshop.js && node --check workshop-view.js && node --check trading.js && node --check simulator.js
       - name: Validate full career and trading interactions
         run: node --test tests/site.test.mjs
