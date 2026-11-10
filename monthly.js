@@ -93,12 +93,13 @@
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
+    const disposals=completed(state.wholesale||[],p.startDay,p.endDay);
     const ledger=transactions(state.ledger,p.startDay,p.endDay);
     const bucket=Object.fromEntries(categories.map(k=>[k,0]));
     for(const row of ledger)bucket[categorize(row.note)]+=row.delta;
     const saleCount=sales.length;
     const turnover=sum(sales,'price');
-    const grossMargin=sum(sales,'profit');
+    const grossMargin=sum(sales,'profit')+sum(disposals,'profit');
     const inflow=ledger.filter(x=>x.delta>0).reduce((n,x)=>n+x.delta,0);
     const outflow=-ledger.filter(x=>x.delta<0).reduce((n,x)=>n+x.delta,0);
     const payrollCost=-(bucket.payroll+bucket.commission+bucket.recruitment+
@@ -140,6 +141,7 @@
       targetUnits:p.unitTarget,targetTurnover:p.turnoverTarget,
       targetMargin:p.marginTarget,
       soldUnits:saleCount,turnover,grossMargin,
+      wholesaleUnits:disposals.length,wholesaleProfit:sum(disposals,'profit'),
       averageMargin:saleCount?Math.round(grossMargin/saleCount):0,
       targetMet:met,turnoverMet:turnover>=p.turnoverTarget,
       marginMet:grossMargin>=p.marginTarget,
