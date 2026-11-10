@@ -73,6 +73,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   const nodes = new Map();
   for (const [, id] of html.matchAll(/id="([^"]+)"/g)) nodes.set(id, new Node());
   nodes.get('dealership-name').value = 'First Lot Motors';
+  nodes.get('menu-guide').hidden = true; // Mirror the HTML hidden attribute.
   const bindings = new Map();
   for (const [, key] of html.matchAll(/data-bind="([^"]+)"/g)) {
     if (!bindings.has(key)) bindings.set(key, []);
