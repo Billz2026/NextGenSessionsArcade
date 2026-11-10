@@ -54,3 +54,5 @@ Run checks with: node --check simulator.js && node --test tests/site.test.mjs.
 The pre-pivot Arcade project is preserved on the Git branch archive/nextgen-arcade-before-motor-trade-2026-11-09.
 
 © 2026 NextGen Sessions.
+
+The main menu includes two local display settings: showroom background on/off and menu animation on/off. They are saved independently from career data.
