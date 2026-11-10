@@ -51,8 +51,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=1/);
-  assert.match(html, /people\.js\?v=2/);
-  assert.match(html, /monthly\.js\?v=2/);
+  assert.match(html, /people\.js\?v=3/);
+  assert.match(html, /monthly\.js\?v=3/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=1/);
   assert.match(html, /trading\.js\?v=8/);
@@ -60,7 +60,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /events-view\.js\?v=2/);
   assert.match(html, /monthly-view\.js\?v=2/);
   assert.match(html, /people-view\.js\?v=1/);
-  assert.match(html, /vehicle-view\.js\?v=1/);
+  assert.match(html, /vehicle-view\.js\?v=2/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -1817,7 +1817,7 @@ test('v0.7.1 saved stock migrates without adding hidden charges or altering comp
   assert.equal(restored.vehicles[0].workshop.stage,'ready');
   assert.equal(restored.vehicles[1].status,'acquired');
   assert.equal(restored.vehicles[1].workshop.stage,'unassessed');
-  assert.deepEqual(restored.wholesale,[]);
+  assert.equal(restored.wholesale.length,0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(restored))));
 });
 test('Deal Day sessions do not advance workshop repairs or trigger additional invoices', () => {
