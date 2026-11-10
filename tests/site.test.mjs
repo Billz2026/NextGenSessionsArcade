@@ -11,6 +11,7 @@ const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
 const photos = readFileSync(new URL('vehicle-photos.js', root), 'utf8');
 const marketData = readFileSync(new URL('vehicle-market.js', root), 'utf8');
+const accuracyData = readFileSync(new URL('vehicle-accuracy.js', root), 'utf8');
 const cards = readFileSync(new URL('vehicle-cards.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
 const people = readFileSync(new URL('people.js', root), 'utf8');
@@ -61,17 +62,18 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=1/);
   assert.match(html, /customers\.js\?v=2/);
-  assert.match(html, /vehicle-photos\.js\?v=3/);
-  assert.match(html, /vehicle-market\.js\?v=1/);
+  assert.match(html, /vehicle-photos\.js\?v=4/);
+  assert.match(html, /vehicle-market\.js\?v=2/);
+  assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
-  assert.match(html, /vehicle-cards\.js\?v=3/);
+  assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=11/);
   assert.match(html, /customers-view\.js\?v=2/);
   assert.match(html, /workshop-view\.js\?v=2/);
   assert.match(html, /events-view\.js\?v=3/);
   assert.match(html, /monthly-view\.js\?v=5/);
   assert.match(html, /people-view\.js\?v=1/);
-  assert.match(html, /vehicle-view\.js\?v=2/);
+  assert.match(html, /vehicle-view\.js\?v=3/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -86,7 +88,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.3/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.4/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -194,6 +196,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
   vm.runInNewContext(photos, context, { timeout: 1500 });
+  vm.runInNewContext(accuracyData, context, { timeout: 1500 });
   vm.runInNewContext(marketData, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
@@ -307,7 +310,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -391,6 +394,79 @@ test('v0.9.3 electric and hybrid cars do not inherit diesel DPF faults',()=>{
   assert.ok(candidates.length>=15);
   for(const v of candidates)
     assert.doesNotMatch(v.profile.hiddenFault?.item||'',/DPF|clutch|flywheel|timing belt/i);
+});
+
+test('v0.9.4 manufacturer evidence is source-linked and exact derivative matched',()=>{
+  const {market:M,accuracy:A}=browser(new Map());
+  const summary=A.summary(M.CATALOGUE);
+  assert.equal(summary.total,50);
+  assert.equal(summary.manufacturer,13);
+  assert.equal(summary.corroborated,5);
+  assert.equal(summary.pending,32);
+  assert.equal(Object.keys(A.CHECKED).length,18);
+  const all=Object.values(M.CATALOGUE).flat();
+  const titles=new Set(all.map(x=>x.title));
+  for(const [title,record] of Object.entries(A.CHECKED)){
+    assert.ok(titles.has(title),'Evidence references a non-existent vehicle: '+title);
+    const car=all.find(x=>x.title===title);
+    assert.equal(A.lookup(car).status,record.status,title);
+    assert.match(record.url,/^https:\/\//);
+    assert.ok(record.note.length>=15);
+    assert.equal(record.checkedAt,'2026-11-10');
+    assert.equal(A.lookup({...car,engineSpec:'wrong motor'}).status,'pending',
+      'Any powertrain edit must invalidate the source status');
+    assert.equal(A.lookup({...car,gearbox:'wrong'}).status,'pending');
+    assert.equal(A.lookup({...car,fuel:'wrong'}).status,'pending');
+  }
+});
+
+test('v0.9.4 corrected model-year UK specifications reject historical errors',()=>{
+  const {market:M,accuracy:A}=browser(new Map());
+  const all=Object.values(M.CATALOGUE).flat();
+  const row=title=>all.find(x=>x.title===title);
+  assert.equal(row('2017 Toyota Yaris Icon').engineSpec,'1.5 VVT-iE');
+  assert.equal(row('2021 Hyundai Ioniq 5 Premium').engineSpec,'73 kWh RWD EV');
+  assert.equal(row('2022 MG4 EV SE Standard Range').engineSpec,'51 kWh EV');
+  assert.equal(row('2022 Nissan Qashqai Acenta Premium').engineSpec,'1.3 DIG-T 140 MHEV');
+  assert.equal(row('2021 Kia Rio 3 MHEV').engineSpec,'1.0 T-GDi 48V MHEV iMT');
+  assert.equal(row('2022 Ford Puma Titanium').engineSpec,'1.0 EcoBoost 125 MHEV');
+  assert.equal(A.lookup(row('2021 Hyundai Ioniq 5 Premium')).status,'manufacturer');
+  assert.equal(A.lookup({...row('2021 Hyundai Ioniq 5 Premium'),profile:{
+    engine:'77 kWh EV'
+  },engineSpec:undefined}).status,'pending','Historical wrong battery never gets certified');
+});
+
+test('v0.9.4 mild hybrids are not advertised as full hybrids',()=>{
+  const app=browser(new Map()),P=app.photos,V=app.cards,M=app.market;
+  const all=Object.values(M.CATALOGUE).flat();
+  for(const title of ['2021 Kia Rio 3 MHEV','2022 Nissan Qashqai Acenta Premium',
+    '2022 Ford Puma Titanium']){
+    const car=all.find(x=>x.title===title);
+    const markup=V.heading({...car,...P.describe(car)},'auction');
+    assert.match(markup,/PETROL MILD HYBRID/);
+    assert.doesNotMatch(markup,/>HYBRID<\/span>/);
+    assert.equal(car.fuel,'Petrol');
+  }
+});
+
+test('v0.9.4 photo source registry is stable and paint never chosen to fit photograph',()=>{
+  const {market:M,photos:P}=browser(new Map());
+  assert.equal(P.LIBRARY.length,16);
+  for(const shot of P.LIBRARY){
+    assert.match(shot.file,/\.jpg$/);
+    assert.match(P.source(shot),/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
+    assert.match(shot.licenseUrl,/^https:\/\/creativecommons\.org\//);
+    assert.ok(shot.author.length>=2);
+    const v={title:shot.start+' '+shot.model+' Photo',generation:shot.generation,
+      fuel:shot.fuel||'Petrol',color:shot.color};
+    assert.equal(P.select(v)?.id,shot.id);
+  }
+  const v={title:'2021 Honda Jazz SE e:HEV',fuel:'Hybrid',origin:'S-3-2'};
+  const a=P.describe(v),b=P.describe(v);
+  assert.equal(a.color,b.color);
+  assert.ok(P.COLOURS.includes(a.color));
+  assert.equal(P.select({...v,...a,color:'Purple'}),null);
+  assert.ok(Object.values(M.CATALOGUE).flat().every(x=>P.identity(x).generation!=='Unknown'));
 });
 
 test('first visit and saved career show the minimal main menu', () => {
