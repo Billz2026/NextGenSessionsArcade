@@ -111,7 +111,7 @@
     if(state.cash<required)return failure('cash','Recruitment requires £'+required.toLocaleString('en-GB')+
       ' in available cash: joining fee, one week of wages and stock preparation.');
     expense(state,HIRING_FEE,'Recruitment and onboarding: '+candidate.name);
-    state.staff.push({...candidate,id:state.nextStaffId++,hiredDay:state.day,
+    state.staff.push({...candidate,candidateId:candidate.id,id:state.nextStaffId++,hiredDay:state.day,
       startDay:state.day+1,trainingUntil:null,lastTrainingDay:0,morale:72,
       deals:0,workDone:0});
     return ok(candidate.name+' hired as '+candidate.role+
@@ -148,7 +148,7 @@
     if(index<0)return failure('missing','Employee not found.');
     const employee=state.staff[index];
     const notice=dailyCost(employee)*7;
-    const covered=Math.min(state.cash,notice);
+    const covered=Math.min(Math.max(0,state.cash-reserve(state)),notice);
     expense(state,covered,'Staff exit and provisional notice payment: '+employee.name);
     state.payrollArrears+=notice-covered;
     state.staff.splice(index,1);
@@ -158,12 +158,12 @@
   function advance(state){
     const payroll=state.staff.reduce((total,employee)=>total+dailyCost(employee),0);
     const due=state.payrollArrears+payroll;
-    const paid=Math.min(state.cash,due);
+    const paid=Math.min(Math.max(0,state.cash-reserve(state)),due);
     expense(state,paid,'Staff payroll daily settlement');
     state.payrollArrears=due-paid;
     for(const employee of state.staff){
       if(state.payrollArrears>0)employee.morale=clamp(employee.morale-9,0,100);
-      else employee.morale=clamp(employee.morale-1,0,100);
+      else if(state.day%7===0)employee.morale=clamp(employee.morale-1,0,100);
     }
     if(state.payrollArrears>0){
       const old=state.reputationScore;
