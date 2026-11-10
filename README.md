@@ -8,6 +8,16 @@
 
 The main menu uses the original unchanged NextGen Sessions wordmark, standalone silver-and-gold Motor Trade vector title and sharp showroom background. Create a career with **£12,500 starting cash** and a **two-vehicle forecourt**. Continue Career resumes the same locally saved business.
 
+### Interactive bidding and seller negotiation
+
+Auction bids now report the result **inside the lot card and in an always-visible dismissible notification**. A lost maximum-bid attempt does not charge a buyer's fee; the fictional rival may outbid you, and the lot closes after a second unsuccessful bid. A winning bid deducts the hammer price and displayed buyer fee, with preparation money reserved.
+
+Direct sellers have a short negotiation: a sensible offer may be accepted; a lower but credible offer receives a counteroffer; a very low offer or failed follow-up can cause the seller to walk away. **Accept Counter**, **Submit Offer** and **Walk Away** actions are shown inside the seller card. Open negotiations and outbid status persist in the browser save for that game day.
+
+A full forecourt or insufficient cash is now explained **in the buying card**, rather than presenting a silent disabled button. Click to see the specific reason. Advancing the career day replaces the catalogue with a deterministic mix of roughly 0–3 auction lots and 0–3 private-seller leads; some days have no leads from one channel, but there is always at least one opportunity in the current prototype. Each day's offers are stable across reloads, and no duplicate vehicle model appears twice in one channel on the same day.
+
+This remains a fictional **instant-result maximum-bid simulation**, not a live or timed vehicle auction. Auction-house fee schedules differ by buyer and hammer price; the game's shown buyer fees are illustrative and due only on successful purchases.
+
 ### Three ways of acquiring vehicles
 
 1. **Auction Desk:** inspect fictional catalogue lots, buyer fees, grade, mileage, preparation estimate and retail guide. Enter your maximum bid. Rival traders have simulated competing bids; losing costs nothing, winning deducts the full bid plus buyer fee.
