@@ -357,7 +357,7 @@
     if(!Object.entries(cases).every(validCase))return false;
     const types=['enquiry','appointment','test-drive-pass','test-drive-reject',
       'counter-accepted','counter-rejected','agreement','deposit','deposit-refunded',
-      'cancelled','arrived','no-show','expired','collection-due','sale'];
+      'deposit-retained','cancelled','arrived','no-show','expired','collection-due','sale'];
     if(!history.every(h=>h&&no(h.day,36500)&&h.day>=1&&h.day<=state.day&&
       no(h.vehicleId,100000)&&h.vehicleId>0&&
       typeof h.leadId==='string'&&h.leadId.length<=50&&
