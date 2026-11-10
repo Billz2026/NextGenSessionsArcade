@@ -16,8 +16,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=3">
-  <script src="./simulator.js?v=3" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=4">
+  <script src="./simulator.js?v=4" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -26,49 +26,73 @@
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
       <header class="menu-top">
-        <span class="top-kicker">NEXTGEN SESSIONS // MANAGEMENT SIMULATIONS</span>
-        <span class="top-version"><span class="live-light"></span> CAREER FOUNDATION · PRE-ALPHA</span>
+        <span class="top-kicker">NEXTGEN SESSIONS <span class="top-separator">//</span> THE MOTOR TRADE</span>
+        <span class="top-version"><span class="live-light"></span> CAREER FOUNDATION <b>V0.2</b></span>
       </header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
             <img class="parent-wordmark" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
             <span class="trade-wordmark" aria-hidden="true">MOTOR <b>TRADE<span>.</span></b></span>
-            <span class="logo-caption">THE UK CAR DEALERSHIP MANAGEMENT SIMULATOR</span>
+            <span class="logo-caption">THE UK CAR DEALERSHIP MANAGEMENT GAME</span>
           </div>
           <div class="menu-message">
-            <p class="section-overline">WELCOME TO THE TRADE</p>
-            <h1 id="menu-title">EVERY CAR IS <em>A DECISION.</em></h1>
-            <p>From your first auction purchase to a forecourt of your own. Manage the money, the stock, the customers and the consequences.</p>
+            <p class="section-overline">WELCOME TO THE TRADE <span class="overline-line"></span> CAREER MODE</p>
+            <h1 id="menu-title">BUY RIGHT.<br><em>SELL SMARTER.</em></h1>
+            <p>Start with a small forecourt and £12,500. Study the auction reports, protect your cash and build a dealership on the strength of your decisions.</p>
           </div>
-          <div class="menu-actions">
-            <button type="button" class="action-btn action-btn-primary" data-action="new-career"><span class="button-mark">＋</span><span><strong>NEW CAREER</strong><small>Build your dealership from the ground up</small></span><span class="arrow">↗</span></button>
-            <button type="button" class="action-btn" id="menu-continue" data-action="resume" hidden><span class="button-mark">▶</span><span><strong>CONTINUE CAREER</strong><small id="menu-resume-description">Return to your saved dealership</small></span><span class="arrow">↗</span></button>
-            <button type="button" class="action-btn action-btn-muted" data-action="toggle-guide" aria-controls="menu-guide" aria-expanded="false"><span class="button-mark">?</span><span><strong>HOW IT WORKS</strong><small>See the direction of the simulation</small></span><span class="arrow">⌄</span></button>
+          <div class="menu-actions" aria-label="Main menu">
+            <button type="button" class="action-btn action-btn-primary" id="menu-continue" data-action="resume" hidden><span class="button-mark" aria-hidden="true">▶</span><span><strong>CONTINUE CAREER</strong><small id="menu-resume-description">Return to your saved dealership</small></span><span class="arrow" aria-hidden="true">→</span></button>
+            <button type="button" class="action-btn action-btn-primary" id="menu-new-career" data-action="new-career"><span class="button-mark" aria-hidden="true">＋</span><span><strong>NEW CAREER</strong><small>Take charge of your first dealership</small></span><span class="arrow" aria-hidden="true">→</span></button>
+            <button type="button" class="action-btn action-btn-muted" data-action="toggle-guide" aria-controls="menu-guide" aria-expanded="false"><span class="button-mark" aria-hidden="true">?</span><span><strong>HOW TO PLAY</strong><small>Understand the management game</small></span><span class="arrow" aria-hidden="true">⌄</span></button>
           </div>
           <div class="menu-guide" id="menu-guide" hidden>
-            <p><strong>Manage the business, not the steering wheel.</strong> The career dashboard, inbox, calendar and local saving work now. Auction bidding, preparation, customer negotiation and business economics are the next playable systems.</p>
+            <p><strong>Run the business, not the steering wheel.</strong> Your career dashboard, inbox, game calendar and local save work today. Auction bidding, stock preparation, customer negotiation and completed deals are still in development.</p>
+          </div>
+          <div class="menu-facts" aria-label="Starting career conditions">
+            <div><span>OPENING CASH</span><strong>£12,500</strong></div>
+            <div><span>FORECOURT</span><strong>2 SPACES</strong></div>
+            <div><span>YOUR MISSION</span><strong>TRADE TO GROW</strong></div>
           </div>
         </div>
-        <aside class="menu-aside" aria-label="Game information">
-          <div class="menu-aside-head"><span>THE MOTOR TRADE</span><span>UK EDITION</span></div>
-          <div class="feature-visual">
-            <span class="visual-index">001 / THE FIRST LOT</span>
-            <img src="./assets/hatchback-study.svg" alt="Illustration of a generic hatchback representing future auction stock" width="940" height="390">
-            <div class="visual-footer"><span>THE AUCTION BLOCK</span><strong>YOUR NEXT MOVE?</strong></div>
+        <aside class="menu-aside" aria-label="Illustrative management interface preview">
+          <div class="menu-aside-head"><span><span class="desk-dot" aria-hidden="true"></span> THE MANAGER'S DESK</span><span>INTERFACE PREVIEW</span></div>
+          <div class="desk-preview">
+            <div class="desk-window-top">
+              <div><span class="desk-window-kicker">DEALERSHIP OVERVIEW</span><strong>FIRST LOT MOTORS</strong></div>
+              <span class="desk-date">DAY 01 <span>•</span> CAREER START</span>
+            </div>
+            <div class="desk-kpis">
+              <div><span>AVAILABLE CASH</span><strong>£12,500</strong><small>Opening balance</small></div>
+              <div><span>VEHICLES IN STOCK</span><strong>0 <i>/ 2</i></strong><small>Forecourt capacity</small></div>
+              <div><span>REPUTATION</span><strong class="desk-reputation">NEWCOMER</strong><small>Build trust</small></div>
+            </div>
+            <div class="desk-workspace">
+              <div class="desk-panel">
+                <div class="desk-panel-head"><span>MANAGER'S INBOX</span><b>03</b></div>
+                <div class="desk-mail"><span class="desk-mail-icon" aria-hidden="true">✉</span><div><strong>Welcome to the trade</strong><small>Business support</small></div><span class="desk-mail-dot" aria-hidden="true"></span></div>
+                <div class="desk-mail"><span class="desk-mail-icon" aria-hidden="true">✉</span><div><strong>Your first report is ready</strong><small>Auction desk</small></div><span class="desk-mail-dot" aria-hidden="true"></span></div>
+                <div class="desk-mail"><span class="desk-mail-icon" aria-hidden="true">✉</span><div><strong>Opening balance confirmed</strong><small>Accounts office</small></div><span class="desk-mail-dot" aria-hidden="true"></span></div>
+              </div>
+              <div class="desk-panel desk-watch">
+                <div class="desk-panel-head"><span>AUCTION WATCH</span><b>LOT 084</b></div>
+                <img src="./assets/hatchback-study.svg" alt="Illustration of a generic hatchback for the sample auction report" width="940" height="390">
+                <strong>2016 FORD FOCUS ZETEC</strong>
+                <div class="desk-watch-facts"><span>GRADE 3</span><span>81,240 MI</span></div>
+                <small>SAMPLE REPORT · BIDDING NOT YET ACTIVE</small>
+              </div>
+            </div>
+            <div class="desk-bottom"><span>THE NEXT DECISION STARTS AT THE AUCTION</span><strong>BUY <b>→</b> PREPARE <b>→</b> SELL</strong></div>
           </div>
           <div class="menu-aside-body">
-            <p class="section-overline">CAREER PATH</p>
-            <p class="feature-title">START SMALL. TRADE SMART. GROW BIG.</p>
-            <div class="feature-line"><span>01</span><strong>Source your stock</strong><small>Auction buying</small></div>
-            <div class="feature-line"><span>02</span><strong>Prepare for retail</strong><small>Repairs & risk</small></div>
-            <div class="feature-line"><span>03</span><strong>Win the customer</strong><small>Negotiation</small></div>
-            <div class="feature-line"><span>04</span><strong>Build the business</strong><small>Cash flow & growth</small></div>
+            <p class="section-overline">BUILD YOUR MOTOR TRADE CAREER</p>
+            <p class="feature-title">SMALL START. <em>BIG AMBITION.</em></p>
+            <p>Every pound has a purpose. Learn the market, manage your stock and grow one calculated deal at a time.</p>
           </div>
-          <div class="aside-status"><span class="live-light"></span><span>MANAGEMENT CAREER SHELL AVAILABLE <small>CORE TRADING GAMEPLAY IN DEVELOPMENT</small></span></div>
+          <div class="aside-status"><span class="live-light"></span><span>CAREER MENU & MANAGEMENT SCREENS AVAILABLE <small>AUCTION BIDDING, REPAIRS & SALES ARE IN DEVELOPMENT</small></span></div>
         </aside>
       </div>
-      <footer class="menu-footer"><span>© 2026 NEXTGEN SESSIONS</span><span>THE MOTOR TRADE · EARLY ACCESS FOUNDATION</span><a href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">NEXTGEN SESSIONS ↗</a></footer>
+      <footer class="menu-footer"><span>© 2026 NEXTGEN SESSIONS</span><span>THE MOTOR TRADE <b>•</b> UK EDITION <b>•</b> PRE-ALPHA</span><a href="https://nextgensessions.com/" target="_blank" rel="noopener noreferrer">NEXTGEN SESSIONS ↗</a></footer>
     </section>
 
     <section class="setup-screen" id="screen-setup" hidden aria-labelledby="setup-title">
