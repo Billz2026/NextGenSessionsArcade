@@ -1964,7 +1964,7 @@ test('v0.9 gives four spaces to fresh and existing two-space dealerships without
   delete old.customerCases;delete old.customerHistory;
   const upgraded=E.normalize(old);
   assert.ok(upgraded);
-  assert.equal(upgraded.version,8);
+  assert.equal(upgraded.version,9);
   assert.equal(upgraded.capacity,4);
   assert.equal(upgraded.cash,old.cash);
   assert.equal(upgraded.vehicles.length,old.vehicles.length);
@@ -2077,11 +2077,13 @@ test('£250 deposit is segregated, blocks premature collection and settles at ha
   const price=c.price;
   assert.ok(E.completeSale(state,v.id,'cash',null).ok);
   assert.equal(state.cash,cashBefore+price);
-  assert.equal(state.ledger.length,ledgerBefore+1);
+  assert.equal(state.ledger.length,ledgerBefore+2);
+  assert.equal(state.sold[0].customerBalancePaid,price-250);
+  assert.equal(state.sold[0].depositApplied,250);
   assert.equal(C.heldDeposits(state),0);
   assert.equal(state.sold.length,1);
-  assert.ok(!state.ledger.some(x=>/deposit/i.test(x.note)),
-    'Customer holding funds never enter the business ledger separately');
+  assert.equal(state.ledger.slice(-2).reduce((n,x)=>n+x.delta,0),price,
+    'Balance plus applied deposit must equal the full agreed sale once');
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
 test('customer cancellation always returns held deposits without adding or losing business cash', () => {
@@ -2095,10 +2097,11 @@ test('customer cancellation always returns held deposits without adding or losin
   assert.equal(c.status,'lost');
   assert.equal(c.held,0);
   assert.equal(C.heldDeposits(state),0);
-  assert.equal(state.cash,before);
-  assert.equal(state.ledger.length,ledger);
+  assert.equal(state.cash,before+c.prepCost,
+    'Only documented customer-specific expense is recovered, not an unearned £250 penalty');
+  assert.equal(state.ledger.length,ledger+1);
   assert.equal(state.sold.length,0);
-  assert.equal(C.stats(state,1,state.day).refunds,1);
+  assert.equal(C.stats(state,1,state.day).retainedAmount,c.prepCost);
   assert.equal(E.completeSale(state,v.id,'cash',null).code,'customer');
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
@@ -2124,7 +2127,8 @@ test('some customers cancel before collecting despite a paid reservation', () =>
   assert.equal(c.held,0);
   assert.equal(C.heldDeposits(state),0);
   assert.equal(state.sold.length,0);
-  assert.equal(C.stats(state,1,state.day).refunds,1);
+  assert.equal(C.stats(state,1,state.day).retainedAmount,c.prepCost);
+  assert.equal(C.stats(state,1,state.day).refunds+(C.stats(state,1,state.day).retainedDeposits),1);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
 test('counteroffer rejection and walkaways mean negotiations do not guarantee extra money', () => {
@@ -2241,7 +2245,7 @@ test('the sales office UI supports a saved multi-day appointment and collection'
   app.click('test-drive',{id:'1'});
   assert.match(app.nodes.get('sales-list').innerHTML,/AGREE CASH PRICE/);
   app.click('agree-cash',{id:'1'});
-  assert.match(app.nodes.get('sales-list').innerHTML,/HOLD £250 DEPOSIT/);
+  assert.match(app.nodes.get('sales-list').innerHTML,/TAKE £250 DEPOSIT/);
   app.click('deposit-customer',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
   assert.equal(state.customerCases['1'].held,250);
@@ -2273,9 +2277,9 @@ test('overdue collection cancels a reserved agreement and returns customer holdi
     state.day=c.collectionDay+3;
     const notices=E.advanceCustomers(state);
     assert.equal(c.status,'lost');
-    assert.ok(notices.some(x=>x.includes('refunded')));
+    assert.ok(notices.some(x=>x.includes('retained')||x.includes('refunded')));
     assert.equal(E.customers.heldDeposits(state),0);
-    assert.equal(state.cash,before);
+    assert.equal(state.cash,before+c.prepCost);
     assert.equal(state.sold.length,0);
     assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
   }
