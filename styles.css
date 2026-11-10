@@ -653,3 +653,7 @@
 @media(max-width:570px){.sales-case-grid{grid-template-columns:1fr}
  .sales-pipeline-summary>div{padding:11px}.sales-pipeline-activity{font-size:9px}
  .sales-customer-meta{padding:11px}.sales-case-content{padding:11px 0}}
+
+/* Sales Office now contains a complete pipeline dashboard above its card grid. */
+#sales-list.trade-sales-grid{display:block;min-width:0}
+#sales-list .sales-case-grid{width:100%}
