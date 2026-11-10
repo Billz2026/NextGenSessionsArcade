@@ -7,7 +7,9 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 2;
-  const VERSION = 6;
+  const VERSION = 7;
+  const W = window.MotorTradeWorkshop;
+  if (!W) throw new Error('Load workshop.js before trading.js');
   const D = window.MotorTradeEvents;
   if (!D) throw new Error('Load events.js before trading.js');
   const M = window.MotorTradeMonthly;
@@ -100,7 +102,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -132,7 +134,8 @@
       ['auction','seller','part-ex'].includes(v.source) &&
       ['acquired','prepared','listed'].includes(v.status) &&
       cashValue(v.cost) && cashValue(v.prepBudget) && cashValue(v.prepSpent) &&
-      (v.prepSpent === 0 || (v.prepSpent>0 && v.prepSpent<=v.prepBudget)) &&
+      (v.prepSpent === 0 || (v.prepSpent>0 &&
+        (saved.version===VERSION? v.prepSpent<=100000 : v.prepSpent<=v.prepBudget))) &&
       cashValue(v.retail) && integer(v.acquiredDay) &&
       v.acquiredDay >= 1 && v.acquiredDay <= saved.day &&
       (v.status !== 'listed' || (cashValue(v.asking) && v.asking > 0)) &&
@@ -140,7 +143,8 @@
       (v.cashOffer === null || v.cashOffer === undefined || cashValue(v.cashOffer)) &&
       (saved.version === 2 || I.validProfile(v.profile)) &&
       (saved.version === 2 || v.prepBudget === v.profile.basePrep +
-        (v.profile.hiddenFault?.cost || 0));
+        (v.profile.hiddenFault?.cost || 0)) &&
+      (saved.version!==VERSION || W.valid(v,saved.day));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
       cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
@@ -182,7 +186,8 @@
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
-        ...v,profile:saved.version===2?I.legacyProfile(v):
+        ...v,workshop:saved.version===VERSION?{...v.workshop}:W.initial(v),
+        profile:saved.version===2?I.legacyProfile(v):
           {...v.profile,knownRepairs:v.profile.knownRepairs.map(x=>({...x})),
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
             hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}
@@ -223,6 +228,7 @@
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
       listedDay:null
     };
+    v.workshop=W.initial(v);
     state.vehicles.push(v);
     state.stock = state.vehicles.length;
     return v;
@@ -231,8 +237,7 @@
     if (state.vehicles.length >= state.capacity) return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
     // No lending or wholesale exit yet: reserve preparation for *all* acquired cars.
     // Otherwise a second purchase could consume the cash needed to retail the first.
-    const pendingPrep = state.vehicles.filter(v => v.status === 'acquired')
-      .reduce((total, v) => total + v.prepBudget, 0);
+    const pendingPrep=W.reserved(state);
     if (cost + preparation + pendingPrep > state.cash)
       return fail('cash','Not enough cash to buy this car while reserving all required stock preparation.');
     return null;
@@ -323,8 +328,7 @@
     if (state.negotiations?.[id]?.status==='walked' ||
         state.auctionBids?.[id]?.status==='lost') return fail('closed','This opportunity is closed.');
     if (state.reports?.[id]) return fail('inspected','This inspection has already been purchased.');
-    const pending=state.vehicles.filter(v=>v.status==='acquired')
-      .reduce((n,v)=>n+v.prepBudget,0);
+    const pending=W.reserved(state);
     const charge=car.profile.inspectionFee;
     if (state.cash < charge + pending)
       return fail('cash','Not enough unreserved cash to pay for this inspection.');
@@ -347,27 +351,21 @@
     const car=leads.find(x=>x.id===id);
     return car?{...car,inspected:!!state.reports?.[id]}:null;
   }
-  function prepare(state, id) {
-    const vehicle = own(state.vehicles,id);
-    if (!vehicle) return fail('missing','Vehicle not found in your stock.');
-    if (vehicle.status !== 'acquired') return fail('ready','This vehicle has already been prepared.');
-    if (state.cash < vehicle.prepBudget) return fail('cash','Insufficient cash to complete the required preparation.');
-    const discount=P.labourSaving(state,vehicle);
-    const actual=vehicle.prepBudget-discount;
-    pay(state,-actual,'Preparation and inspection: '+vehicle.title+
-      (discount?' (technician saving £'+discount+')':''));
-    vehicle.prepSpent=actual;
-    P.worked(state);
-    vehicle.status = 'prepared';
-    const extra=vehicle.profile?.hiddenFault;
-    return success(vehicle.title + ' prepared for £'+vehicle.prepSpent.toLocaleString('en-GB')+
-      (extra?' including '+extra.item+' (£'+extra.cost+'). ':'. ')+
-      'Set an asking price and advertise it.');
+  function assessStock(state,id){return W.assess(state,id);}
+  function startPrep(state,id,method){return W.start(state,id,method);}
+  function finishPrep(state,id){return W.quality(state,id);}
+  function transferPrep(state,id){return W.transfer(state,id);}
+  function advanceWorkshop(state){return W.advance(state);}
+  function prepQuote(state,id,method){
+    const v=own(state.vehicles,id);
+    return v?W.quote(state,v,method):null;
   }
+  // Previous prepare() was instant. Intentionally do not expose it as a
+  // shortcut: game progress must now pass through workshop time and QC.
   function advertise(state, id, asking) {
     const vehicle = own(state.vehicles,id);
     if (!vehicle) return fail('missing','Vehicle not found in your stock.');
-    if (vehicle.status === 'acquired') return fail('prep','Prepare the vehicle before advertising it.');
+    if (vehicle.status === 'acquired') return fail('prep','Workshop repairs and a passed final quality check are required before retail advertising.');
     if (!integer(asking) || asking < 500 || asking > 75000)
       return fail('price','Enter a retail price between £500 and £75,000.');
     if (asking < Math.floor(vehicle.retail * .5) || asking > Math.ceil(vehicle.retail * 1.8))
@@ -433,8 +431,7 @@
       if (!integer(allowance) || allowance < px.floor || allowance > px.ask)
         return fail('part-ex','Part-exchange allowance rejected by the customer. Revalue within their acceptable range.');
       if (allowance >= price) return fail('part-ex','Part-exchange allowance must be below the agreed sale price.');
-      const pendingPrep = state.vehicles.filter(v => v.status === 'acquired')
-        .reduce((total, v) => total + v.prepBudget, 0);
+      const pendingPrep=W.reserved(state);
       const pxProfile=I.profile({...px,id:'PX-'+state.day+'-'+vehicle.id,kind:'part-ex'});
       if (state.cash + price - allowance < pendingPrep +
         pxProfile.basePrep+(pxProfile.hiddenFault?.cost||0))
@@ -484,9 +481,10 @@
     return result;
   }
   window.MotorTradeEngine = Object.freeze({
-    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,events:D,hireStaff,
+    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,events:D,
+    workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,hireStaff,
     market,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
-    prepare,advertise,buyers,counter,completeSale,totalMargin
+    advertise,buyers,counter,completeSale,totalMargin
   });
 })();
