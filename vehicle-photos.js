@@ -85,8 +85,8 @@
   // The generation catalogue covers the entire fictional 2026 stock pool.
   // Existing historic names retain their original generation when reloaded.
   const RANGES=Object.freeze([
-    {model:'Ford Focus',name:'Mk3',from:2011,to:2017},
-    {model:'Ford Focus',name:'Mk4',from:2018,to:2021},
+    {model:'Ford Focus',name:'Mk3',from:2011,to:2018},
+    {model:'Ford Focus',name:'Mk4',from:2019,to:2021},
     {model:'Ford Focus',name:'Mk4 facelift',from:2022,to:2025},
     {model:'Ford Fiesta',name:'Mk7 facelift',from:2013,to:2017},
     {model:'Ford Fiesta',name:'Mk8',from:2018,to:2023},
@@ -98,8 +98,8 @@
     {model:'Volkswagen Golf',name:'Mk8',from:2020,to:2023},
     {model:'Volkswagen Golf',name:'Mk8 facelift',from:2024,to:2026},
     {model:'Vauxhall Corsa',name:'D',from:2006,to:2014},
-    {model:'Vauxhall Corsa',name:'E',from:2015,to:2018},
-    {model:'Vauxhall Corsa',name:'F',from:2019,to:2023},
+    {model:'Vauxhall Corsa',name:'E',from:2015,to:2019},
+    {model:'Vauxhall Corsa',name:'F',from:2020,to:2023},
     {model:'Vauxhall Corsa',name:'F facelift',from:2024,to:2026},
     {model:'Vauxhall Mokka',name:'Mk2',from:2021,to:2024},
     {model:'Vauxhall Mokka',name:'Mk2 facelift',from:2025,to:2026},
