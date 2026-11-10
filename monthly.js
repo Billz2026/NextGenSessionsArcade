@@ -74,7 +74,11 @@
     if(note.startsWith('Auction purchase:'))return 'auctionPurchases';
     if(note.startsWith('Direct purchase:'))return 'sellerPurchases';
     if(note.startsWith('Part-exchange acquisition:'))return 'partExchangePurchases';
-    if(note.startsWith('Preparation and inspection:'))return 'preparation';
+    if(note.startsWith('Preparation and inspection:')||
+       note.startsWith('Workshop repair booking:')||
+       note.startsWith('Workshop transfer to outside garage:')||
+       note.startsWith('Workshop quality rectification:'))return 'preparation';
+    if(note.startsWith('Workshop assessment:'))return 'inspections';
     if(note.startsWith('Pre-purchase inspection:'))return 'inspections';
     if(note.startsWith('Staff payroll'))return 'payroll';
     if(note.startsWith('Sales commission:'))return 'commission';
@@ -118,8 +122,14 @@
     const stock=state.vehicles.map(v=>({
       id:v.id,title:v.title,status:v.status,source:v.source,
       age:Math.max(0,state.day-v.acquiredDay),
-      cashInvested:v.cost+v.prepSpent,
-      asking:v.asking,repairToPay:v.status==='acquired'?v.prepBudget:0
+      cashInvested:v.cost+v.prepSpent+(v.status==='acquired' &&
+        ['in-progress','quality-check'].includes(v.workshop?.stage)?
+        v.workshop.repairCost:0),
+      asking:v.asking,repairToPay:v.status==='acquired' &&
+        !['in-progress','quality-check'].includes(v.workshop?.stage)?
+        v.prepBudget:0,
+      workshopStage:v.workshop?.stage??'unknown',
+      workshopDaysLeft:v.workshop?.remainingDays??0
     }));
     const met=saleCount>=p.unitTarget && grossMargin>0;
     const report={
@@ -143,6 +153,9 @@
       stockCapital:stock.reduce((n,x)=>n+x.cashInvested,0),
       agedStock:stock.filter(x=>x.age>=14).length,
       stockAwaitingPrep:stock.filter(x=>x.status==='acquired').length,
+      workshopInProgress:stock.filter(x=>x.workshopStage==='in-progress').length,
+      workshopQualityChecks:stock.filter(x=>x.workshopStage==='quality-check').length,
+      workshopWaiting:stock.filter(x=>['unassessed','quoted'].includes(x.workshopStage)).length,
       payrollArrears:state.payrollArrears,staffHeadcount:state.staff.length,
       customerTrustEvents:state.reputationHistory.filter(x=>x.day>=p.startDay&&x.day<=p.endDay).map(x=>({...x})),
       bestDeal:sales.length?[...sales].sort((a,b)=>b.profit-a.profit)[0].title:null,
