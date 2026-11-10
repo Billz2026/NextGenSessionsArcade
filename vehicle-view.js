@@ -26,6 +26,17 @@
       (value<0?' class="intel-loss"':'')+'>'+money(value)+'</strong></div>').join('')+'</div>';
     const forecast=quote?'<p class="intel-formula">Forecast: likely sale − offer − fees − expected repairs − inspection if paid. '+
       (inspected?'Inspected cost estimate.':'Uninspected risk allowance included.')+'</p>':'';
+    const breakdown=quote?'<h4>MAXIMUM BID / OFFER WORKING</h4>'+
+      '<div class="intel-repair"><span>Likely achieved sale</span><strong>'+money(quote.likelySale)+'</strong></div>'+
+      '<div class="intel-repair"><span>Expected repair allowance</span><strong>− '+money(quote.prep)+'</strong></div>'+
+      '<div class="intel-repair"><span>Buyer fees</span><strong>− '+money(quote.fee)+'</strong></div>'+
+      '<div class="intel-repair"><span>Pre-purchase inspection if paid</span><strong>− '+money(quote.inspection)+'</strong></div>'+
+      '<div class="intel-repair"><span>Target trading contribution</span><strong>− '+money(quote.targetMargin)+'</strong></div>'+
+      '<div class="intel-repair intel-repair-total"><span>Indicative maximum offer (rounded)</span><strong>'+
+        money(quote.maxBid)+'</strong></div>'+
+      '<p class="intel-small">At your entered offer of '+money(quote.price)+
+        ', estimated contribution is '+money(quote.expectedMargin)+
+        '. A negative value indicates an expected loss before overheads.</p>':'';
     const known=p.knownRepairs.map(r=>
       '<div class="intel-repair"><span>'+esc(r.item)+'</span><strong>'+money(r.cost)+'</strong></div>').join('');
     const openReport=open?'<div class="intel-expanded"><div class="intel-grid">'+
@@ -42,7 +53,7 @@
         (p.mot.advisories.length?esc(p.mot.advisories.join(' · ')):'No advisories recorded in this fictional report')+'</p>'+
       '<h4>KNOWN PREPARATION ITEMS</h4>'+known+
       '<div class="intel-repair intel-repair-total"><span>Known repair estimate</span><strong>'+money(p.basePrep)+'</strong></div>'+
-      '<h4>ADDITIONAL CONDITION RISK</h4><p class="intel-small">'+hidden+'</p>'+
+      '<h4>ADDITIONAL CONDITION RISK</h4><p class="intel-small">'+hidden+'</p>'+breakdown+
       (kind==='stock'?'<p class="intel-small">Workshop quotation, including any additional fault: '+
          money(totalPrep)+'. This amount is payable on preparation.</p>':'')+
       '<div class="intel-foot">'+(kind==='stock'?'':inspected?
