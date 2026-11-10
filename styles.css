@@ -749,3 +749,14 @@
  background:#263f32;border-color:#8bad83;color:#daf5b6}
 .vehicle-powertrain-diesel{background:#3e3832;border-color:#86735e;color:#e6d0a8}
 @media(max-width:650px){.market-progression{flex-direction:column;align-items:flex-start;gap:9px}}
+
+/* v0.9.4 — provenance visible in the vehicle inspection dossier */
+.vehicle-powertrain-mild-hybrid{background:#273f45;border-color:#639ba2;color:#d0edf0}
+.vehicle-spec-proof{margin:14px 0;padding:13px 15px;border:1px solid #679c86;
+ border-radius:5px;background:rgba(54,99,80,.13)}
+.vehicle-spec-proof strong{display:block;color:#b2e5cc;font:800 11px/1.5 var(--mono);letter-spacing:.04em}
+.vehicle-spec-proof p{margin:5px 0;color:var(--muted);font:500 12px/1.5 var(--body)}
+.vehicle-spec-proof a{display:inline-block;margin-top:5px;color:#eac58a;
+ font:800 10px/1.5 var(--mono);text-decoration:underline;text-underline-offset:3px}
+.vehicle-spec-proof.vehicle-spec-pending{border-color:#675e4d;background:rgba(101,91,66,.10)}
+.vehicle-spec-proof.vehicle-spec-pending strong{color:#e6c991}
