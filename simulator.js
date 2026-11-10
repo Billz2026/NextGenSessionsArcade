@@ -122,7 +122,7 @@
   }
 
   let career = loadCareer();
-  let screen = career ? 'career' : 'menu';
+  let screen = 'menu'; // Always start at the main menu, including when a save exists.
   let currentPage = 'dashboard';
   let selectedMessageId = null;
   let eventNotice = '';
@@ -191,6 +191,9 @@
     byId('screen-setup').hidden = screen !== 'setup';
     byId('screen-career').hidden = screen !== 'career';
     byId('menu-continue').hidden = !career;
+    // Prioritise the saved career, without risking an accidental overwrite.
+    byId('menu-continue').className = career ? 'action-btn action-btn-primary' : 'action-btn';
+    byId('menu-new-career').className = career ? 'action-btn action-btn-secondary' : 'action-btn action-btn-primary';
     if (career) {
       byId('menu-resume-description').textContent =
         career.name + ' / Day ' + String(career.day).padStart(2, '0');
