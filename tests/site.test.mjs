@@ -7,6 +7,7 @@ const root = new URL('../', import.meta.url);
 const html = readFileSync(new URL('index.html', root), 'utf8');
 const css = readFileSync(new URL('styles.css', root), 'utf8');
 const js = readFileSync(new URL('simulator.js', root), 'utf8');
+const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -34,8 +35,12 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   for (const id of ['continue-day', 'dashboard-inbox', 'inbox-list', 'inbox-detail', 'event-notice', 'save-warning']) {
     assert.match(html, new RegExp('id="' + id + '"'));
   }
-  assert.match(html, /Auction bidding, rival traders, buyer fees/);
-  assert.match(html, /No income is simulated/);
+  assert.match(html, /id="market-auctions"/);
+  assert.match(html, /id="market-sellers"/);
+  assert.match(html, /id="stock-list"/);
+  assert.match(html, /id="sales-list"/);
+  assert.match(html, /id="ledger-list"/);
+  assert.match(html, /trading\.js\?v=1/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -92,6 +97,10 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   const listeners = {};
   const document = {
     getElementById: id => {
+      if (!nodes.has(id) && /^(auction-bid-|seller-offer-|stock-price-|px-allowance-)/.test(id)) {
+        const dynamicInput = new Node();
+        nodes.set(id,dynamicInput);
+      }
       assert.ok(nodes.has(id), 'Expected DOM id ' + id);
       return nodes.get(id);
     },
@@ -116,6 +125,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     }
   };
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
+  vm.runInNewContext(engine, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const button = { dataset: { action, ...extras }, setAttribute() {} };
@@ -126,7 +136,11 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     nodes.get('dealership-name').value = name;
     nodes.get('career-form').handlers.submit({ preventDefault() {} });
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer };
+  function setInput(id, value) {
+    if (!nodes.has(id)) nodes.set(id, new Node());
+    nodes.get(id).value = String(value);
+  }
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, engine:context.window.MotorTradeEngine };
 }
 
 test('first visit and saved career show the minimal main menu', () => {
@@ -167,7 +181,7 @@ test('inbox is interactive, read status persists, navigation changes panels', ()
   assert.equal(app.panels.find(p => p.dataset.panel === 'inbox').hidden, false);
   assert.equal(app.bindings.get('unread')[0].textContent, '2');
   assert.equal(JSON.parse(saved.get(STORAGE_KEY)).messages.find(m => m.id === 2).read, true);
-  assert.match(app.nodes.get('inbox-detail').innerHTML, /Your first vehicle report is ready/);
+  assert.match(app.nodes.get('inbox-detail').innerHTML, /Three ways to find your next car/);
   app.click('mark-all-read');
   assert.equal(app.bindings.get('unread')[0].hidden, true);
   app.go('finance');
@@ -234,4 +248,136 @@ test('the title has no black plaque or clipping-prone CSS text gradient', () => 
   assert.doesNotMatch(css, /#screen-menu \.trade-wordmark-hero::before\s*\{/);
   assert.doesNotMatch(css, /#screen-menu \.trade-wordmark-hero \.trade-motor\s*\{/);
   assert.doesNotMatch(html, /class="trade-wordmark trade-wordmark-hero"/);
+});
+
+test('auction bidding, vehicle preparation, retail sale, cash and margin all persist', () => {
+  const saved = new Map();
+  const app = browser(saved);
+  app.click('new-career');
+  app.submitCareer('Mason Autos');
+  const opening = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(opening.version, 2);
+  const lot = app.engine.market(1).auctions[0];
+  app.setInput('auction-bid-' + lot.id, lot.guide);
+  app.click('bid-auction', { id: lot.id });
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).cash, 12500, 'Outbid must not spend cash');
+  assert.match(app.nodes.get('event-notice').textContent, /Outbid/);
+  const bid = lot.rival + 75;
+  app.setInput('auction-bid-' + lot.id, bid);
+  app.click('bid-auction', { id: lot.id });
+  let state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles.length, 1);
+  assert.equal(state.vehicles[0].source, 'auction');
+  assert.equal(state.cash, 12500 - bid - lot.fee);
+  app.click('prepare-stock', { id: '1' });
+  state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].status, 'prepared');
+  assert.equal(state.cash, 12500 - bid - lot.fee - lot.prep);
+  app.setInput('stock-price-1', 6200);
+  app.click('list-stock', { id: '1' });
+  state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].status,'listed');
+  app.click('counter-sale', { id: '1' });
+  state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].cashOffer,5950);
+  app.click('sell-cash', { id: '1' });
+  state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles.length, 0);
+  assert.equal(state.sales, 1);
+  assert.equal(state.sold[0].mode,'cash');
+  assert.equal(state.sold[0].price,5950);
+  assert.equal(state.sold[0].profit,5950 - bid - lot.fee - lot.prep);
+  assert.equal(state.cash,12500 + state.sold[0].profit);
+  assert.equal(state.ledger.reduce((a,x)=>a+x.delta,0),state.cash-12500);
+  const resumed = browser(saved);
+  resumed.click('resume');
+  assert.equal(resumed.bindings.get('sales')[0].textContent,'1');
+  assert.equal(resumed.bindings.get('cash')[0].textContent,'£' + state.cash.toLocaleString('en-GB'));
+});
+test('direct sellers negotiate and part exchanges become properly valued stock', () => {
+  const saved = new Map();
+  const app = browser(saved);
+  app.click('new-career');
+  app.submitCareer('Three Routes Motors');
+  const seller = app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-' + seller.id,seller.floor - 100);
+  app.click('buy-seller',{id:seller.id});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles.length,0,'Rejected offer cannot acquire stock');
+  app.setInput('seller-offer-' + seller.id,seller.floor + 25);
+  app.click('buy-seller',{id:seller.id});
+  let state = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].source,'seller');
+  assert.equal(state.vehicles[0].cost,seller.floor + 25);
+  app.click('prepare-stock',{id:'1'});
+  app.setInput('stock-price-1',5000);
+  app.click('list-stock',{id:'1'});
+  const px = app.engine.buyers(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0]).exchange;
+  app.setInput('px-allowance-1',px.floor - 50);
+  app.click('sell-part-ex',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).sales,0,'Rejected allowance cannot complete sale');
+  app.setInput('px-allowance-1',px.floor + 25);
+  app.click('sell-part-ex',{id:'1'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.sales,1);
+  assert.equal(state.sold[0].mode,'part-ex');
+  assert.equal(state.sold[0].allowance,px.floor+25);
+  assert.equal(state.vehicles.length,1,'Trade-in replaces sold unit');
+  assert.equal(state.vehicles[0].source,'part-ex');
+  assert.equal(state.vehicles[0].cost,px.floor+25);
+  const expected=12500-(seller.floor+25)-seller.prep+(5000-220)-(px.floor+25);
+  assert.equal(state.cash,expected,'Sale proceeds minus allowance is the cash difference');
+  assert.equal(state.sold[0].profit,(5000-220)-(seller.floor+25)-seller.prep);
+  assert.equal(state.ledger.reduce((a,l)=>a+l.delta,0),state.cash-12500);
+  app.click('prepare-stock',{id:'2'});
+  app.setInput('stock-price-2',3500);
+  app.click('list-stock',{id:'2'});
+  app.click('sell-cash',{id:'2'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.sales,2);
+  assert.equal(state.stock,0);
+  assert.equal(state.reputation,'UP-AND-COMING');
+});
+test('forecourt and funds prevent impossible purchases, days refresh leads without invented profit', () => {
+  const saved = new Map();
+  const app = browser(saved);
+  app.click('new-career');
+  app.submitCareer();
+  const dayOne=app.engine.market(1);
+  for(const seller of dayOne.sellers){
+    app.setInput('seller-offer-' + seller.id,seller.ask);
+    app.click('buy-seller',{id:seller.id});
+  }
+  let state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.stock,2);
+  const lot=dayOne.auctions[0];
+  app.setInput('auction-bid-' + lot.id,lot.rival+50);
+  app.click('bid-auction',{id:lot.id});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).stock,2);
+  const oldCash=state.cash;
+  app.click('continue');
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.day,2);
+  assert.equal(state.cash,oldCash);
+  assert.equal(state.sold.length,0);
+  assert.equal(state.ledger.reduce((a,l)=>a+l.delta,0),state.cash-12500);
+  assert.notEqual(app.engine.market(1).auctions[0].id,app.engine.market(2).auctions[0].id);
+});
+test('previous version 1 careers migrate safely and malformed version 2 balances are rejected', () => {
+  const saved=new Map();
+  const first=browser(saved);
+  first.click('new-career');
+  first.submitCareer('Legacy Dealer');
+  const old=JSON.parse(saved.get(STORAGE_KEY));
+  old.version=1; old.stock=0;old.sales=0;old.cash=12500;
+  delete old.vehicles;delete old.sold;delete old.ledger;delete old.nextId;
+  saved.set(STORAGE_KEY,JSON.stringify(old));
+  const resumed=browser(saved);
+  resumed.click('resume');
+  assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
+  resumed.click('save');
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,2);
+  const corrupted=JSON.parse(saved.get(STORAGE_KEY));
+  corrupted.cash=999999;
+  saved.set(STORAGE_KEY,JSON.stringify(corrupted));
+  assert.equal(browser(saved).nodes.get('menu-continue').hidden,true);
 });
