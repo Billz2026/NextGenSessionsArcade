@@ -15,7 +15,8 @@
         booked:totalPrep);
     const prepLabel=car.workshop?.stage==='ready'?'ACTUAL REPAIR SPEND':
       booked?'BOOKED REPAIR COST':'INITIAL REPAIR BUDGET';
-    const showExtra=inspected||kind==='stock';
+    const showExtra=inspected||
+      (kind==='stock'&&(car.workshop?.stage!=='unassessed'||!!p.inspected));
     const hidden=showExtra?
       (p.hiddenFault?esc(p.hiddenFault.item)+' — '+money(p.hiddenFault.cost):
         'No additional issue revealed in this simulated assessment'):
