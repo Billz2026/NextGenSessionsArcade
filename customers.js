@@ -64,7 +64,8 @@
       (!D.isDealDay(state.day)||D.partExchangeAvailable(state,vehicle));
     const walkIn=D.isDealDay(state.day);
     const c={
-      id:'C-'+state.day+'-'+slot(state)+'-'+vehicle.id,
+      id:'C-'+state.day+'-'+slot(state)+'-'+vehicle.id+'-'+
+        (hash('lead-identity|'+key)%1000000),
       vehicleId:id,createdDay:state.day,createdSession:slot(state),
       name:FIRST[hash('first|'+key)%FIRST.length]+' '+
         LAST[hash('last|'+key)%LAST.length],
@@ -262,7 +263,7 @@
     const no=(x,max=100000000)=>ints(x)&&x>=0&&x<=max;
     const validCase=([id,c])=>/^\d+$/.test(id)&&c&&
       c.vehicleId===Number(id)&&state.vehicles.some(v=>v.id===c.vehicleId&&v.status==='listed')&&
-      typeof c.id==='string'&&/^C-\d+-\d+-\d+$/.test(c.id)&&
+      typeof c.id==='string'&&/^C-\d+-\d+-\d+-\d+$/.test(c.id)&&
       typeof c.name==='string'&&c.name.length>=2&&c.name.length<70&&
       typeof c.channel==='string'&&c.channel.length<=30&&
       STATUS.includes(c.status)&&['cash','part-ex'].includes(c.preferredMode)&&
