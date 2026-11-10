@@ -722,7 +722,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,4);
+  assert.equal(app.engine.VERSION,5);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
