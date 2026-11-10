@@ -1620,3 +1620,218 @@ test('month-end management report records actual Deal Day results without spoili
   assert.ok(app.engine.monthly.validReport(closed));
   assert.match(app.nodes.get('monthly-report-view').innerHTML,/MONTH-END DEAL DAY REVIEW/);
 });
+
+test('v0.8 blocks immediate retail listing until repairs take real days and pass QC', () => {
+  const saved=new Map(),app=browser(saved);
+  app.click('new-career');app.submitCareer('Real Prep Motors');
+  const seller=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+seller.id,seller.ask);
+  app.click('buy-seller',{id:seller.id});
+  let state=JSON.parse(saved.get(STORAGE_KEY));
+  const v=state.vehicles[0];
+  assert.equal(v.status,'acquired');
+  assert.equal(v.workshop.stage,'unassessed');
+  assert.match(app.nodes.get('workshop-board').innerHTML,/AUTHORISE ASSESSMENT/);
+  app.setInput('stock-price-1',5200);
+  app.click('list-stock',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0].status,'acquired');
+  app.click('assess-workshop',{id:'1'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].workshop.stage,'quoted');
+  assert.equal(state.vehicles[0].workshop.assessmentFee,55);
+  assert.ok(state.ledger.some(l=>l.note.startsWith('Workshop assessment:')));
+  assert.match(app.nodes.get('workshop-board').innerHTML,/IN-HOUSE TECHNICIAN/);
+  assert.match(app.nodes.get('workshop-board').innerHTML,/EXTERNAL GARAGE/);
+  app.click('start-workshop',{id:'1',method:'external'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].workshop.stage,'in-progress');
+  const planned=state.vehicles[0].workshop.plannedDays;
+  assert.ok(planned>=2,'The car must require real time');
+  app.click('list-stock',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0].status,'acquired');
+  app.click('finish-workshop',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0].workshop.stage,'in-progress');
+  for(let i=0;i<planned;i++)app.click('continue');
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(state.vehicles[0].workshop.stage,'quality-check');
+  assert.equal(state.vehicles[0].workshop.remainingDays,0);
+  app.click('finish-workshop',{id:'1'});
+  state=JSON.parse(saved.get(STORAGE_KEY));
+  if(state.vehicles[0].workshop.stage==='in-progress'){
+    app.click('continue');
+    app.click('finish-workshop',{id:'1'});
+    state=JSON.parse(saved.get(STORAGE_KEY));
+  }
+  assert.equal(state.vehicles[0].workshop.stage,'ready');
+  assert.equal(state.vehicles[0].status,'prepared');
+  assert.ok(state.vehicles[0].prepSpent>state.vehicles[0].prepBudget,
+    'Outsourcing can cost more than initial repairs');
+  assert.ok(app.engine.normalize(JSON.parse(JSON.stringify(state))));
+  app.setInput('stock-price-1',5200);
+  app.click('list-stock',{id:'1'});
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).vehicles[0].status,'listed');
+});
+test('recruiting a technician changes workshop prices and internal bay capacity', () => {
+  const E=browser(new Map()).engine,P=E.people;
+  const s=E.create('Tech Centre',[]);
+  const tech=P.applicants(1).find(x=>x.role==='technician'&&x.skills.efficiency>=15);
+  assert.ok(tech);
+  assert.ok(E.hireStaff(s,tech.id).ok);
+  s.day=2;E.staffDay(s);
+  const offered=E.market(2).sellers;
+  assert.ok(offered.length>=2);
+  for(const car of offered.slice(0,2))assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+  const v=s.vehicles[0],v2=s.vehicles[1];
+  assert.ok(E.assessStock(s,v.id).ok);
+  assert.ok(E.assessStock(s,v2.id).ok);
+  const internal=E.prepQuote(s,v.id,'internal');
+  const external=E.prepQuote(s,v.id,'external');
+  assert.ok(internal.cost<external.cost);
+  assert.ok(E.startPrep(s,v.id,'internal').ok);
+  const blocked=E.startPrep(s,v2.id,'internal');
+  assert.equal(blocked.ok,false);
+  assert.equal(blocked.code,'busy');
+  assert.ok(E.startPrep(s,v2.id,'external').ok);
+  assert.equal(s.vehicles.filter(x=>x.workshop.stage==='in-progress').length,2);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+test('staff training pauses internal jobs, but transfer can rescue a stalled workshop', () => {
+  const E=browser(new Map()).engine,P=E.people,s=E.create('Repair Team',[]);
+  const tech=P.applicants(1).find(x=>x.role==='technician');
+  assert.ok(E.hireStaff(s,tech.id).ok);
+  s.day=2;E.staffDay(s);
+  const seller=E.market(2).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  assert.ok(E.assessStock(s,1).ok);
+  assert.ok(E.startPrep(s,1,'internal').ok);
+  const initial=s.vehicles[0].workshop.remainingDays;
+  assert.ok(P.train(s,s.staff[0].id).ok);
+  s.day=3;E.staffDay(s);
+  const events=E.advanceWorkshop(s);
+  assert.equal(s.vehicles[0].workshop.paused,true);
+  assert.equal(s.vehicles[0].workshop.remainingDays,initial);
+  assert.ok(events.some(x=>/paused/.test(x)));
+  const before=s.cash;
+  assert.ok(E.transferPrep(s,1).ok);
+  assert.equal(s.cash,before-125);
+  assert.equal(s.vehicles[0].workshop.method,'external');
+  s.day=4;E.staffDay(s);E.advanceWorkshop(s);
+  assert.equal(s.vehicles[0].workshop.paused,false);
+  assert.ok(s.vehicles[0].workshop.remainingDays<initial);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+test('paid quality rectification can require an additional day and larger repair bill', () => {
+  const E=browser(new Map()).engine;
+  let failure=null;
+  for(let day=1;day<=24&&!failure;day++){
+    const lot=E.market(day).auctions.find(x=>x.profile.grade>=4);
+    if(!lot)continue;
+    const state=E.create('QC Check',[]);
+    state.day=day;
+    if(!E.acquireAuction(state,lot.id,lot.rival+50).ok)continue;
+    if(!E.assessStock(state,1).ok)continue;
+    if(!E.startPrep(state,1,'external').ok)continue;
+    const v=state.vehicles[0],base=v.workshop.repairCost;
+    while(v.workshop.stage==='in-progress'&&state.day<30){
+      state.day++;E.advanceWorkshop(state);
+    }
+    if(v.workshop.stage!=='quality-check')continue;
+    const check=E.finishPrep(state,1);
+    if(check.ok&&v.workshop.stage==='in-progress')
+      failure={state,v,base,check};
+  }
+  assert.ok(failure,'Deterministic simulation should contain a failed quality check');
+  const {state,v,base}=failure;
+  assert.equal(v.workshop.reworks,1);
+  assert.ok(v.workshop.repairCost>base);
+  assert.equal(v.status,'acquired');
+  assert.ok(state.ledger.some(x=>x.note.startsWith('Workshop quality rectification:')));
+  state.day++;E.advanceWorkshop(state);
+  assert.equal(v.workshop.stage,'quality-check');
+  assert.ok(E.finishPrep(state,v.id).ok);
+  assert.equal(v.workshop.stage,'ready');
+  assert.equal(v.prepSpent,v.workshop.repairCost);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+test('workshop cash flow and unfinished repairs are reflected in monthly working capital', () => {
+  const E=browser(new Map()).engine,s=E.create('Capital Motors',[]);
+  const seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  assert.ok(E.assessStock(s,1).ok);
+  assert.ok(E.startPrep(s,1,'external').ok);
+  const v=s.vehicles[0],paid=v.workshop.repairCost;
+  const r=E.monthly.statement(s);
+  assert.equal(r.workshopInProgress,1);
+  assert.equal(r.stockCapital,v.cost+paid);
+  assert.equal(r.ledgerBreakdown.preparation,-paid);
+  assert.equal(r.ledgerBreakdown.inspections,-v.workshop.assessmentFee);
+  assert.equal(r.soldUnits,0);
+  assert.equal(r.grossMargin,0,'Unfinished inventory is not a realised sale');
+  assert.equal(r.openingCash+r.netCashChange,r.closingCash);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+test('wholesale disposal releases cash at a loss without fabricating retail sales', () => {
+  const E=browser(new Map()).engine,s=E.create('Cut Losses Autos',[]);
+  const seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const basis=s.vehicles[0].cost;
+  const q=E.wholesaleOffer(s.vehicles[0]);
+  assert.ok(q<basis);
+  assert.ok(E.disposeStock(s,1).ok);
+  assert.equal(s.vehicles.length,0);
+  assert.equal(s.wholesale.length,1);
+  assert.equal(s.sold.length,0);
+  assert.equal(s.sales,0);
+  assert.equal(s.wholesale[0].profit,q-basis);
+  assert.equal(E.totalMargin(s),q-basis);
+  assert.equal(E.monthly.statement(s).wholesaleUnits,1);
+  assert.equal(E.monthly.statement(s).soldUnits,0);
+  assert.equal(E.monthly.statement(s).grossMargin,q-basis);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+  assert.equal(E.disposeStock(s,1).ok,false);
+});
+test('v0.7.1 saved stock migrates without adding hidden charges or altering completed cars', () => {
+  const E=browser(new Map()).engine,s=E.create('Old Stock Migration',[]);
+  const sellers=E.market(1).sellers;
+  for(const car of sellers)assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+  assert.ok(E.assessStock(s,1).ok);
+  assert.ok(E.startPrep(s,1,'external').ok);
+  while(s.vehicles[0].workshop.stage==='in-progress'){s.day++;E.advanceWorkshop(s);}
+  assert.ok(E.finishPrep(s,1).ok);
+  if(s.vehicles[0].workshop.stage==='in-progress'){
+    s.day++;E.advanceWorkshop(s);E.finishPrep(s,1);
+  }
+  assert.equal(s.vehicles[0].status,'prepared');
+  const old=JSON.parse(JSON.stringify(s));
+  old.version=6;
+  delete old.wholesale;
+  for(const v of old.vehicles)delete v.workshop;
+  const restored=E.normalize(old);
+  assert.ok(restored);
+  assert.equal(restored.version,7);
+  assert.equal(restored.cash,old.cash);
+  assert.equal(restored.ledger.length,old.ledger.length);
+  assert.equal(restored.vehicles[0].prepSpent,old.vehicles[0].prepSpent);
+  assert.equal(restored.vehicles[0].status,'prepared');
+  assert.equal(restored.vehicles[0].workshop.stage,'ready');
+  assert.equal(restored.vehicles[1].status,'acquired');
+  assert.equal(restored.vehicles[1].workshop.stage,'unassessed');
+  assert.deepEqual(restored.wholesale,[]);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(restored))));
+});
+test('Deal Day sessions do not advance workshop repairs or trigger additional invoices', () => {
+  const E=browser(new Map()).engine,D=E.events,s=E.create('Deadline Workshop',[]);
+  const lot=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(s,lot.id,lot.ask).ok);
+  assert.ok(E.assessStock(s,1).ok);
+  assert.ok(E.startPrep(s,1,'external').ok);
+  s.day=30;
+  const before=s.vehicles[0].workshop.remainingDays;
+  const cash=s.cash,ledger=s.ledger.length;
+  for(let i=0;i<4;i++)assert.ok(D.advanceSession(s).ok);
+  assert.equal(s.day,30);
+  assert.equal(s.vehicles[0].workshop.remainingDays,before);
+  assert.equal(s.cash,cash);
+  assert.equal(s.ledger.length,ledger);
+  assert.equal(E.market(30,s.reputationScore,s.deadlineSession,s.name).auctions.length,0);
+});
