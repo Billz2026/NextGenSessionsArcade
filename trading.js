@@ -524,9 +524,8 @@
     completed.salespersonName=review.salespersonName??'Owner-managed';
     return success(v.title+' handed over to '+c.name+' for £'+price+
       (depositApplied?' (deposit £'+depositApplied+
-        ' already paid; balance £'+(price-depositApplied)+
-        (px?' minus the £'+agreedAllowance+' part-exchange allowance':'')+
-        ' received at collection)':'')+
+        ' already paid; cash balance £'+cashBalance+' received at collection)':
+        px?' (cash balance £'+cashBalance+' received after part-exchange allowance)':'')+
       (px?'; part-exchange allowance £'+agreedAllowance+'.':'.')+
       ' Gross trading margin: £'+realised+' before overheads, tax and aftersales.');
   }
