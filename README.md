@@ -1,64 +1,59 @@
 # The Motor Trade
 
-A **NextGen Sessions** UK used-car dealership management game, built around an ongoing career, inbox and calendar rather than a static promotional page.
+**The Motor Trade** is a browser-based UK used-car dealership management game by NextGen Sessions. The interface takes inspiration from classic football management games: make commercial decisions, manage money and track an ongoing career.
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
-## Current playable foundation (v0.2)
+## Playable trading foundation (v0.3)
 
-The site always opens to a minimal, photographic **main menu** with the original NextGen Sessions wordmark and a metallic Motor Trade title. Choosing **New Career** takes the player through a dealership setup screen (name, £12,500 starting capital, two-vehicle forecourt), then into a Football Manager-inspired career dashboard.
+The main menu uses the original unchanged NextGen Sessions wordmark, standalone silver-and-gold Motor Trade vector title and sharp showroom background. Create a career with **£12,500 starting cash** and a **two-vehicle forecourt**. Continue Career resumes the same locally saved business.
 
-If a valid save is present, **Continue Career** appears as the primary action and the player chooses when to resume. The single career slot is stored in the browser's localStorage under the key the-motor-trade-career-v1, not on a server; the save is not synchronised across devices or browsers. Starting another career replaces the saved career after confirmation. If browser storage is blocked or unavailable, the game shows an explicit warning.
+### Three ways of acquiring vehicles
 
-### Working interactions
+1. **Auction Desk:** inspect fictional catalogue lots, buyer fees, grade, mileage, preparation estimate and retail guide. Enter your maximum bid. Rival traders have simulated competing bids; losing costs nothing, winning deducts the full bid plus buyer fee.
+2. **Direct sellers:** private owners and walk-in customers ask the dealership to purchase their cars. Offer an amount; the owner may reject a low offer. A successful purchase reduces cash and adds stock without auction fees.
+3. **Part-exchanges:** when a customer buys one of your advertised vehicles, you can negotiate an allowance for their existing car. The cash collected is the selling price **minus the part-exchange allowance**. That incoming car becomes owned stock and must be prepared before resale. This is a retail transaction with a separate incoming acquisition, not a free car.
 
-- **Career dashboard:** dealership name, balance, empty-stock count, career day and reputation, with truthful starter values.
-- **Inbox:** initial adviser, auction and finance messages, detail view, unread badges, mark-as-read, mark-all-read, related navigation links.
-- **Continue:** advances the simulated date by one day and triggers introductory inbox messages on days 2, 3, 5 and 7. It updates the browser save.
-- **Navigation:** Dashboard, Inbox, Auction Desk, Vehicle Stock, Sales Office, Finances and My Dealership. Every navigation control opens the relevant section.
-- **Auction preview:** one clearly identified **fictional** Ford Focus lot and sample condition report. Bidding is not yet implemented.
-- **Responsive interface:** desktop management sidebar, compact mobile navigation, foldable-friendly layouts, reduced-motion support.
-- **Save:** automatic on career creation, day advance and inbox changes, plus a manual Save Career action.
+### First complete trading loop
 
-### Not yet simulated
+- Acquire a vehicle through an auction or a direct seller.
+- Pay for a simplified, mandatory inspection and preparation budget.
+- Set a retail asking price and advertise it.
+- In the Sales Office, accept a cash customer's offer or make limited counteroffers.
+- Alternatively, accept a customer's part-exchange after valuing the incoming car.
+- The ledger records purchases, buyer fees, preparation, sale proceeds and part-exchange allowances.
+- Sales update cash, stock, reputation, completed-sales count and **realised gross trading margin**.
+- **Continue** advances one in-game day and refreshes the available auction lots and direct sellers. There are no arbitrary daily cash injections.
 
-There are **no** live or fictional auction bids, bought cars, stock preparation jobs, dealer expenses, customer enquiries, completed sales or profit figures. Advancing the calendar does **not** invent money, stock or business results. The current balance remains £12,500. The Grade 3 condition report and hatchback illustration are fictional and are not verified auction data.
+The current dealership inbox, dashboard, calendar, menu settings, browser save and responsive navigation remain in place. Stock and trading history survive reloads. Earlier **v0.2** browser saves are migrated into the updated format while retaining dealership names, game day and inbox history. A new career still overwrites the single saved career only after confirmation.
 
-The next development milestone is a **complete playable single-car loop**:
+## Accounting and gameplay boundaries
 
-1. Research multiple fictional auction lots, fees and risk.
-2. Bid competitively, purchase one car and record the actual invoice.
-3. Receive inspection findings, choose preparation work and pay costs.
-4. Advertise the car, negotiate with customers and choose an offer.
-5. Record the sale, update cash and gross-versus-net returns.
-6. Trigger consequences for stock ageing, vehicle issues and buyer rights.
+This is **fictional gameplay**, not live auction, DVLA, valuation or customer data. Buyer thresholds and vehicle values are authored examples. Grade and condition notes are not an inspection guarantee. Preparations are simplified as one required cost, not a real safety certificate.
 
-**Accuracy principles:** distinguish cash flow, vehicle stock value, gross spread, VAT liability and realised profit; auction fees differ by auctioneer and buyer type; the condition grade is not a repair guarantee; and customer/consumer rights cannot be treated as optional. All financial values are sample game data until a rule has been independently verified.
+**Realised gross trade margin** is the sale price less the sold vehicle's acquisition cost and preparation. It is not accounting net profit. The game currently **does not calculate** VAT (including margin-scheme treatment), tax, premises costs, advertising spend, finance, warranties, consumer-rights claims, or other overheads. Part-exchange allowance is capital tied up in the newly acquired vehicle, not a reduction in the sold car's headline sale price. Cash and ledger sums are reconciled before saved v0.3 careers are loaded.
 
-## Files and development
+Customers are currently deterministic examples rather than a fully simulated market. This first milestone does not yet model bank funding, external feeds, multi-site premises, vehicle inspections beyond a fixed budget, disposal, or complex negotiation personalities. These are future development stages.
 
-This is a lightweight static GitHub Pages app (HTML, CSS and vanilla JavaScript):
+## Structure and tests
 
-- index.html — menu, setup, dashboard and management screens.
-- styles.css — responsive game design.
-- simulator.js — in-browser career state, mail, time progression and local save.
-- tests/site.test.mjs — Node built-in tests covering markup, functionality, persistence, and invalid save handling.
-- assets/nextgen-header-wordmark-2026.webp — the unchanged official NextGen Sessions logo.
-- assets/hatchback-study.svg — generic vehicle illustration.
-- assets/showroom-home-bg.webp — recoloured showroom photograph used on the minimal main menu.
+- `index.html` — game menu and interactive management screens.
+- `styles.css` — responsive premium game interface.
+- `trading.js` — deterministic financial and vehicle transaction engine; save migration/validation.
+- `simulator.js` — game navigation, inbox, calendar, market rendering and save integration.
+- `tests/site.test.mjs` — Node built-in tests for UI, the complete trading loop, cash conservation and migration.
+- `assets/nextgen-header-wordmark-2026.webp` — original NextGen Sessions logo (unchanged).
+- `assets/the-motor-trade-premium.svg` — premium vector game title.
+- `assets/showroom-home-bg.webp` — high-resolution showroom background.
 
-Run checks with: node --check simulator.js && node --test tests/site.test.mjs.
+Run:
 
-## Archived project
+```sh
+node --check trading.js
+node --check simulator.js
+node --test tests/site.test.mjs
+```
 
-The pre-pivot Arcade project is preserved on the Git branch archive/nextgen-arcade-before-motor-trade-2026-11-09.
+The pre-pivot Arcade version is archived at `archive/nextgen-arcade-before-motor-trade-2026-11-09`.
 
 © 2026 NextGen Sessions.
-
-The main menu includes two local display settings: showroom background on/off and menu animation on/off. They are saved independently from career data.
-
-The main-menu showroom background is stored at the original 1920×1080 resolution in `assets/showroom-home-bg.webp` with higher-quality compression and mild sharpening, rather than the previous 1024×576 low-bitrate image. The dark overlay is lighter so vehicles and architecture remain visible. The words THE and MOTOR share the same metallic silver typography without a badge or enclosing ring. The original NextGen Sessions logo is unchanged.
-
-The main menu now uses a standalone outlined-vector SVG for THE MOTOR TRADE. Its silver and champagne-gold fills are built into the artwork, with generous bounds that avoid CSS text-gradient clipping. No dark plaque appears behind the logo. The original NextGen Sessions logo, showroom photograph and all career functionality are unchanged.
-
-The Motor Trade vector title is stored at `assets/the-motor-trade-premium.svg` and scales cleanly across screen sizes. Its type shapes are SVG paths, so the title does not depend on browser fonts or glyph line-height painting.
