@@ -22,7 +22,10 @@
     const shown=shot?
       '<img src="'+esc(P.url(shot))+'" loading="lazy" decoding="async" referrerpolicy="no-referrer" '+
       'alt="Real representative photograph of a '+esc(car.color)+' '+esc(shot.model)+
-      ' '+esc(shot.generation)+'; not the fictional game vehicle">':
+      ' '+esc(shot.generation)+'; not the fictional game vehicle" data-vehicle-photo="true">'+
+      '<div class="vehicle-photo-missing vehicle-photo-failed" hidden>'+
+      '<span aria-hidden="true">▱</span><strong>PHOTO UNAVAILABLE</strong>'+
+      '<small>Image could not be loaded. Vehicle details remain available.</small></div>':
       '<div class="vehicle-photo-missing"><span aria-hidden="true">▱</span>'+
       '<strong>PHOTO UNAVAILABLE</strong>'+
       '<small>No verified '+esc(car?.color||'colour')+' '+esc(P.identity(car).model)+
@@ -61,5 +64,14 @@
       '<span>'+esc(car.color||'Unknown')+' · '+esc(id.generation)+
       ' · '+mileage(car.miles)+'</span></div></div>';
   }
+  // Image errors do not bubble: capture them for cards inserted on later game days.
+  document.addEventListener('error',event=>{
+    const img=event.target;
+    if(img?.tagName!=='IMG'||!img.hasAttribute('data-vehicle-photo'))return;
+    const fallback=img.nextElementSibling;
+    if(!fallback?.classList.contains('vehicle-photo-failed'))return;
+    img.hidden=true;
+    fallback.hidden=false;
+  },true);
   window.MotorTradeCards=Object.freeze({photo,heading,mini,moneyLine,esc,money});
 })();
