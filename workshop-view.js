@@ -11,7 +11,9 @@
     const job=vehicle.workshop;
     const grade=vehicle.profile?.grade??3;
     const repairs=vehicle.profile?.knownRepairs??[];
-    const hidden=vehicle.profile?.hiddenFault;
+    const hidden=vehicle.profile?.hiddenFault &&
+      (job.stage!=='unassessed'||!!vehicle.profile.inspected)?
+      vehicle.profile.hiddenFault:null;
     const costHtml=repairs.map(x=>
       '<div class="workshop-item"><span>'+esc(x.item)+'</span><strong>'+cash(x.cost)+'</strong></div>').join('')+
       (hidden?'<div class="workshop-item workshop-fault"><span>'+esc(hidden.item)+
