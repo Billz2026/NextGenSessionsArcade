@@ -18,8 +18,8 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
   assert.match(html, /data-action="new-career"/);
   assert.match(html, /id="menu-continue" data-action="resume" hidden/);
   assert.match(html, /id="menu-new-career" data-action="new-career"/);
-  assert.match(html, /THE MANAGER'S DESK/);
-  assert.match(html, /INTERFACE PREVIEW/);
+  assert.match(html, /trade-wordmark-hero/);
+  assert.doesNotMatch(html, /menu-aside|menu-footer|feature-line/);
   assert.match(html, /id="career-form"/);
   assert.match(html, /id="dealership-name"/);
   assert.ok(existsSync(new URL('assets/nextgen-header-wordmark-2026.webp', root)));
@@ -128,7 +128,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   return { nodes, bindings, panels, nav, storageData, click, go, submitCareer };
 }
 
-test('first visit and saved career show menu, with explicit continue', () => {
+test('first visit and saved career show the minimal main menu', () => {
   const saved = new Map();
   const first = browser(saved);
   assert.equal(first.nodes.get('screen-menu').hidden, false);
@@ -148,7 +148,6 @@ test('first visit and saved career show menu, with explicit continue', () => {
   assert.equal(resumed.nodes.get('screen-menu').hidden, false);
   assert.equal(resumed.nodes.get('screen-career').hidden, true);
   assert.equal(resumed.nodes.get('menu-continue').hidden, false);
-  assert.equal(resumed.nodes.get('menu-continue').className, 'action-btn action-btn-primary');
   assert.equal(resumed.nodes.get('menu-new-career').className, 'action-btn action-btn-secondary');
   resumed.click('resume');
   assert.equal(resumed.nodes.get('screen-career').hidden, false);
