@@ -4,13 +4,17 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## Deal Day Realism Update (v0.7.1)
+
+Deal Day is no longer a guaranteed bargain event. Each 30-day operating month receives a distinct, persistent fictional trading climate. Low-footfall months can produce empty private-seller sessions and no interested retail customers, while busy months generally create more opportunities. Realistic deal acceptance and part-exchanges vary by individual customer; the business can still make poor deals or miss targets. The Deal Day and monthly report screens distinguish *potential leads* from *completed sales*. No auction trade is permitted on month-end days. The save schema remains v6, so existing v0.7 careers continue unchanged.
+
 ## Customer Deal Day & Monthly Management Meetings (v0.7)
 
 The **last day of each 30-day game operating month** is now **Deal Day**, inspired by transfer deadline day. Instead of one ordinary Continue, it runs through five sessions **09:00, 11:00, 13:00, 15:00 and 17:00**. Each early Continue moves the *session clock*, not the calendar, so payroll is **not charged again**. The final Continue closes the month, generates the existing full management report and begins the next month's first-day board meeting.
 
-**Deal Day is strictly for ordinary retail customers and private sellers, never auction houses.** The auction catalogue is empty and auction purchase attempts are rejected on days 30, 60, 90 and so on. Every session brings a different group of direct sellers with time-sensitive offers. Seller negotiation floors soften modestly; existing listed cars attract more motivated cash and part-exchange customers. These offers remain subject to market value and the asking price, not guaranteed profits. **Part-exchanges still bring incoming stock and preparation liabilities.** The deadline is a sales opportunity, not a free cash or reputation reward.
+**Deal Day is strictly for ordinary retail customers and private sellers, never auction houses.** The auction catalogue is empty and auction purchase attempts are rejected on days 30, 60, 90 and so on. **Every operating month has different market conditions** (quiet, subdued, steady, busy or exceptionally busy). The simulation varies private-seller footfall, retail buyer interest, willingness to negotiate and the availability of part-exchanges. Some sessions have zero enquiries and a quiet month can finish with no customer deals at all. Busy months offer more potential customers on average, but **better offers and bargains are never guaranteed**. The conditions remain deterministic for the same dealership and month across save/reload; changing screens or reloading cannot generate a better deal. **Part-exchanges still bring incoming stock and preparation liabilities.** The deadline is an opportunity, not a free cash or reputation reward. On a Deal Day, a listed vehicle may attract no buyer in a given session, and a retail enquiry does not automatically include a part-exchange. Auctions remain unavailable in all market conditions.
 
-A new **Deal Day & Meetings** page and dashboard banner show the active event and phase. Private enquiries expire when a new phase starts; a paid inspection is non-refundable. Cars already purchased and recorded sales persist normally. Prepare and advertise your stock in advance to take advantage of the event.
+A new **Deal Day & Meetings** page and dashboard banner show the active event and phase. Private enquiries and cash offers expire when a new phase starts; a paid inspection is non-refundable. The generated market climate and actual Deal Day results are recorded in completed monthly management reports, not forecast in advance. Cars already purchased and recorded sales persist normally. Prepare and advertise your stock in advance to take advantage of the event.
 
 ### First-day management meeting
 
