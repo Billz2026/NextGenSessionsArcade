@@ -211,29 +211,27 @@ test('settings display controls operate and persist separately from career', () 
   assert.equal(revisited.nodes.get('menu-setting-motion').textContent, 'OFF');
 });
 
-test('homepage uses a sharp full-resolution showroom background and matched silver title treatment', () => {
-  const background = new URL('assets/showroom-home-bg.webp', root);
-  assert.ok(existsSync(background));
-  assert.ok(statSync(background).size > 250_000, 'Avoid the prior highly compressed 36 KB background');
-  assert.match(css, /\.trade-wordmark-hero \.trade-the,\s*#screen-menu \.trade-wordmark-hero \.trade-motor/);
-  assert.match(css, /linear-gradient\(180deg,#ffffff 0%,#f6f8fa/);
-  assert.match(html, /nextgen-header-wordmark-2026\.webp/);
-  assert.doesNotMatch(html, /class="[^"]*trade-the[^"]*badge/);
+test('homepage uses the original NextGen wordmark and standalone vector Motor Trade title', () => {
+  const photo = new URL('assets/showroom-home-bg.webp', root);
+  const logo = new URL('assets/the-motor-trade-premium.svg', root);
+  assert.ok(existsSync(photo));
+  assert.ok(statSync(photo).size > 250_000);
+  assert.ok(existsSync(logo), 'Standalone title artwork must be present');
+  const svg = readFileSync(logo, 'utf8');
+  assert.match(svg, /<title>THE MOTOR TRADE<\/title>/);
+  assert.match(svg, /<linearGradient id="silver"/);
+  assert.match(svg, /<linearGradient id="gold"/);
+  assert.match(svg, /<path d="/);
+  assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
+  assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
+  assert.match(html, /styles\.css\?v=9/);
 });
-
-test('metallic title has unclipped glyph boxes and premium full-title plaque', () => {
+test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
-  const spanStyles = css.match(/#screen-menu \.trade-wordmark-hero span \{([\s\S]*?)\}/)?.[1] ?? '';
-  const plaqueStyles = css.match(/#screen-menu \.trade-wordmark-hero::before \{([\s\S]*?)\}/)?.[1] ?? '';
-  assert.match(titleStyles, /display:inline-flex/);
-  assert.match(titleStyles, /line-height:1\.22/);
-  assert.match(titleStyles, /margin:-10px 0 0/);
+  assert.match(titleStyles, /background:transparent/);
   assert.match(titleStyles, /overflow:visible/);
-  assert.match(spanStyles, /line-height:1\.18/);
-  assert.match(spanStyles, /display:inline-block/);
-  assert.match(spanStyles, /padding:\.07em 0 \.12em/);
-  assert.match(plaqueStyles, /rgba\(7,10,14,\.88\)/);
-  assert.match(plaqueStyles, /z-index:0/);
-  assert.match(html, /styles\.css\?v=8/);
-  assert.match(html, /assets\/nextgen-header-wordmark-2026\.webp/);
+  assert.match(titleStyles, /width:min\(700px,100%\)/);
+  assert.doesNotMatch(css, /#screen-menu \.trade-wordmark-hero::before\s*\{/);
+  assert.doesNotMatch(css, /#screen-menu \.trade-wordmark-hero \.trade-motor\s*\{/);
+  assert.doesNotMatch(html, /class="trade-wordmark trade-wordmark-hero"/);
 });
