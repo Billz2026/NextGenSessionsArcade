@@ -34,7 +34,16 @@
     return score>=80?'PRESTIGE DEALER':score>=60?'REGIONAL SPECIALIST':
       score>=40?'TRUSTED DEALER':score>=20?'LOCAL DEALER':'NEW TRADER';
   }
-  function legacyScore(sold){return clamp(5+(sold||0)*2,0,100);}
+  function legacyScore(sold){
+    // Preserve the old career standing where possible: the earlier game
+    // labelled 5+ sales LOCAL TRADER and 12+ ESTABLISHED. A converted
+    // career should not fall back to a newcomer tier after migration.
+    const count=Math.max(0,sold||0);
+    if(count>=12)return clamp(40+(count-12),40,75);
+    if(count>=5)return clamp(20+(count-5)*2,20,39);
+    if(count>=2)return 10+(count-2)*2;
+    return 5+count*2;
+  }
   function initial(){return {reputationScore:5,staff:[],nextStaffId:1,
     payrollArrears:0,reputationHistory:[]};}
   function applicants(day){
