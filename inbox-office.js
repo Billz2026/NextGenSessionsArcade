@@ -46,8 +46,9 @@
     return true;
   }
   const noteFor=(row)=>{
-    const note=row.note,amount=-row.delta;
+    const note=row.note,amount=Math.abs(row.delta);
     if(!Number.isSafeInteger(amount)||amount<=0)return null;
+    if(row.delta>0&&!note.startsWith('Retail balance received on collection:'))return null;
     let subject,preview,body,from='ACCOUNTS OFFICE',linkPage='finance',category='accounts';
     if(note.startsWith('Auction purchase:')){
       subject='PAID COPY · Auction purchase settlement';
@@ -93,7 +94,7 @@
     }else if(note.startsWith('Retail balance received on collection:')){
       from='SALES OFFICE';category='sales';linkPage='sales';
       subject='Customer vehicle handover · Funds received';
-      preview=money(-row.delta)+' net cash balance banked on collection.';
+      preview=money(amount)+' net cash balance banked on collection.';
       body='VEHICLE HANDOVER RECEIPT\n\n'+note+
         '\nThe customer balance was received and posted to the ledger. Any previously held deposit was applied separately. Review the sale and staff commission in Management Reports.';
     }else return null;
