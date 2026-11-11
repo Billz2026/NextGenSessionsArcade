@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=24">
+  <link rel="stylesheet" href="./styles.css?v=25">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -37,7 +37,8 @@
   <script src="./customers-view.js?v=5" defer></script>
   <script src="./premises-view.js?v=1" defer></script>
   <script src="./auction-hall-view.js?v=2" defer></script>
-  <script src="./simulator.js?v=20" defer></script>
+  <script src="./dashboard-view.js?v=1" defer></script>
+  <script src="./simulator.js?v=21" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -45,7 +46,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.10</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.11</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -145,39 +146,57 @@
 
           <div class="career-content">
             <div id="events-banner" class="events-banner" aria-live="polite"></div>
-            <section class="career-panel" data-panel="dashboard" aria-labelledby="dashboard-title">
-              <div class="page-heading">
-                <div><p class="section-overline">YOUR DEALERSHIP / OVERVIEW</p><h1 id="dashboard-title">GOOD MORNING, <em>BOSS.</em></h1><p>Welcome to <strong data-bind="company">First Lot Motors</strong>. Here's what needs your attention.</p></div>
-                <span class="career-chip"><span class="live-light"></span> CAREER ACTIVE</span>
+            <section class="career-panel dashboard-control" data-panel="dashboard" aria-labelledby="dashboard-title">
+              <div class="dashboard-heading">
+                <div><p class="section-overline">YOUR DEALERSHIP / LIVE MANAGEMENT OVERVIEW</p><h1 id="dashboard-title">DEALERSHIP <em>OVERVIEW.</em></h1></div>
+                <span class="dashboard-day-tag" data-bind="day-label">DAY 01</span>
               </div>
-              <div class="stat-grid">
-                <div class="stat-tile"><span>AVAILABLE CASH</span><strong data-bind="cash">£12,500</strong><small>Funds available</small></div>
-                <div class="stat-tile"><span>VEHICLES IN STOCK</span><strong data-bind="stock">0 / 4</strong><small>Your forecourt</small></div>
-                <div class="stat-tile"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Career total</small></div>
-                <div class="stat-tile stat-tile-gold"><span>TRADE REPUTATION</span><strong data-bind="reputation">NEW TRADER</strong><small data-bind="reputation-score">5 / 100</small></div>
+
+              <div class="stat-grid dashboard-kpis" role="group" aria-label="Live dealership key figures">
+                <button type="button" class="stat-tile dashboard-kpi" data-page="finance" aria-label="Open finances">
+                  <span>CASH BALANCE</span><strong data-bind="cash">£12,500</strong>
+                  <small data-bind="dashboard-cash-note">Before future bills</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi" data-page="stock" aria-label="Open vehicle stock">
+                  <span>FORECOURT STOCK</span><strong data-bind="stock">0 / 4</strong>
+                  <small data-bind="dashboard-stock-note">0 listed for sale</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi" data-page="reports" aria-label="Open monthly sales target">
+                  <span>SALES THIS MONTH</span><strong data-bind="dashboard-monthly-sales">0 / 2</strong>
+                  <small data-bind="dashboard-sales-note">2 units to target</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi" data-page="finance" aria-label="Open operating performance">
+                  <span>OPERATING CONTRIBUTION</span><strong data-bind="dashboard-operating">£0</strong>
+                  <small>Current month · before tax and finance</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi stat-tile-gold" data-page="reputation" aria-label="Open trade reputation">
+                  <span>TRADE REPUTATION</span><strong data-bind="reputation-score">5 / 100</strong>
+                  <small data-bind="reputation">NEW TRADER</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi" data-page="auctionHall" aria-label="Open weekly auction calendar">
+                  <span>WEEKLY AUCTION</span><strong data-bind="dashboard-auction">DAY 01</strong>
+                  <small data-bind="dashboard-auction-note">Monday · auction available</small>
+                </button>
               </div>
-              <div class="dashboard-grid">
-                <section class="panel-card inbox-widget" aria-labelledby="widget-inbox-title">
-                  <div class="panel-card-header"><div><p class="section-overline">COMMUNICATIONS</p><h2 id="widget-inbox-title">INBOX <small id="widget-unread-label">3 UNREAD</small></h2></div><button type="button" class="text-link" data-page="inbox">VIEW ALL ↗</button></div>
+
+              <div id="dashboard-operating-strip" class="dashboard-operating-strip" aria-label="Stock, customers and operating commitments"></div>
+
+              <div class="dashboard-grid dashboard-command-grid">
+                <section class="panel-card priorities dashboard-task-panel" aria-labelledby="priorities-title">
+                  <div class="panel-card-header"><div><p class="section-overline">MANAGER'S DESK</p><h2 id="priorities-title">WHAT NEEDS ATTENTION</h2></div><span class="tiny-index">TOP 3 ACTIONS</span></div>
+                  <div id="dashboard-priorities" class="dashboard-priority-list" aria-live="polite"></div>
+                </section>
+                <section class="panel-card inbox-widget dashboard-updates-panel" aria-labelledby="widget-inbox-title">
+                  <div class="panel-card-header"><div><p class="section-overline">BUSINESS COMMUNICATIONS</p><h2 id="widget-inbox-title">LATEST MESSAGES <small id="widget-unread-label">0 UNREAD</small></h2></div><button type="button" class="text-link" data-page="inbox">INBOX ↗</button></div>
                   <div id="dashboard-inbox" class="inbox-preview"></div>
                 </section>
-                <div class="dashboard-right">
-                  <section class="panel-card priorities" aria-labelledby="priorities-title">
-                    <div class="panel-card-header"><div><p class="section-overline">MANAGER'S DIARY</p><h2 id="priorities-title">TODAY'S PRIORITIES</h2></div><span class="tiny-index" data-bind="day-label">DAY 01</span></div>
-                    <div class="priority-row"><span class="priority-index">01</span><div><strong>Review your inbox</strong><p>Read your welcome brief and starting position.</p></div></div>
-                    <div class="priority-row"><span class="priority-index">02</span><div><strong>Prepare your stock</strong><p>Assess purchased cars, manage garage jobs and pass quality control before selling.</p></div></div>
-                    <button type="button" class="subtle-action" data-page="auctionHall">ENTER AUCTION HALL <span>→</span></button>
-                  </section>
-                  <section class="panel-card calendar-widget">
-                    <p class="section-overline">GAME CALENDAR</p>
-                    <div class="calendar-date"><span data-bind="weekday">MONDAY</span><strong data-bind="date-long">09 NOVEMBER 2026</strong></div>
-                    <div class="calendar-copy" id="calendar-message">Your first day in business. Review your briefing before advancing.</div>
-                    <p class="simulation-note">CONTINUE advances time: repair jobs progress once per game day. Deal Day runs multiple sessions without extra wages or repair progress.</p>
-                  </section>
-                </div>
               </div>
-              <div id="monthly-dashboard-target" class="monthly-dashboard-target" aria-live="polite"></div>
-              <div class="dashboard-bottom panel-card"><div><p class="section-overline">TRADE PERFORMANCE</p><h2>EVERY DEAL COUNTS.</h2><p>Realised gross trading margin: <strong data-bind="trade-profit">£0</strong>. This excludes taxes, VAT adjustments and business overheads. Bid in the Auction Hall or buy from a private seller, prepare the car, then sell for cash or with a part-exchange.</p></div><button type="button" class="secondary-button" data-page="auctions">FIND STOCK ↗</button></div>
+
+              <details class="dashboard-detail-drawer">
+                <summary><span>MONTHLY PERFORMANCE & CAREER DETAILS</span><span class="dashboard-career-summary">CAREER SOLD <strong data-bind="sales">0</strong> · GROSS TRADE MARGIN <strong data-bind="trade-profit">£0</strong></span></summary>
+                <div id="monthly-dashboard-target" class="monthly-dashboard-target" aria-live="polite"></div>
+                <p>Operating contribution reflects recorded vehicle margin, staff costs and accrued premises expenses. It is not net profit and excludes unmodelled tax, finance and depreciation.</p>
+              </details>
             </section>
 
             <section class="career-panel" data-panel="inbox" hidden aria-labelledby="inbox-title">
