@@ -1,5 +1,5 @@
 'use strict';
-/* v0.5 management screens. Data is fictional and escaped for HTML strings. */
+/* v0.9.31 employment desk. Data is fictional and escaped for HTML strings. */
 (() => {
   const esc=x=>String(x).replace(/[&<>"']/g,ch=>({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -153,5 +153,209 @@
       'Each works on a separate vehicle. You can hire one sales executive at first, two at 40 reputation and three at 80, alongside one buyer. '+
       (next?'NEXT UNLOCK: '+next+'.':'All eight technician places are unlocked.')+'</p>';
   }
-  window.MotorTradePeopleView=Object.freeze({applicants,roster,reputation,totals});
+
+  /* v0.9.31 — Staff control centre. Read-only view over existing people rules. */
+  const DESK_MODES=Object.freeze(['team','candidates']);
+  const DESK_ROLES=Object.freeze(['all','sales','buyer','technician','supervisor']);
+  const groupName={sales:'SALES',buyer:'BUYING',technician:'WORKSHOP',supervisor:'MANAGEMENT'};
+  function employeeStatus(state,P,e){
+    const assigned=e.role==='technician'?state.vehicles.find(v=>
+      v.workshop?.technicianId===e.id&&v.workshop.method==='internal'&&
+      ['in-progress','quality-check'].includes(v.workshop.stage)):null;
+    if(state.payrollArrears>0)return {name:'PAYROLL OVERDUE',tone:'warning'};
+    if(state.day<e.startDay)return {name:'STARTS DAY '+e.startDay,tone:'waiting'};
+    if(e.trainingUntil!==null&&state.day<e.trainingUntil)
+      return {name:'TRAINING TO DAY '+e.trainingUntil,tone:'waiting'};
+    if(!P.isActive(state,e))return {name:'UNAVAILABLE',tone:'warning'};
+    if(assigned)return {name:'WORKING · STOCK '+assigned.id,tone:'busy'};
+    return {name:'AVAILABLE',tone:'available'};
+  }
+  function recruitStatus(state,P,c){
+    const hired=state.staff.some(e=>e.name===c.name);
+    const roleFull=state.staff.filter(e=>e.role===c.role).length>=P.roleLimit(state,c.role);
+    const teamFull=state.staff.length>=P.staffLimit(state);
+    const quote=P.hireQuote(state,c);
+    const reason=hired?'ALREADY EMPLOYED':roleFull?'ROLE CAPACITY FULL':
+      teamFull?'TEAM FULL':quote.shortfall?'INSUFFICIENT CASH':'CAN HIRE';
+    return {reason,quote,canHire:!hired&&!roleFull&&!teamFull&&!quote.shortfall};
+  }
+  function deskCounts(state,P){
+    const candidatePool=P.applicants(state.day);
+    const employed=state.staff;
+    return {employed:employed.length,active:employed.filter(e=>P.isActive(state,e)).length,
+      techniciansFree:P.availableTechnicians(state).length,
+      daily:employed.reduce((n,e)=>n+P.dailyCost(e),0),
+      monthly:employed.reduce((n,e)=>n+e.monthlySalary,0),
+      rolesUsed:employed.length,rolesTotal:P.staffLimit(state),
+      candidates:candidatePool.length,
+      hireable:candidatePool.filter(c=>recruitStatus(state,P,c).canHire).length};
+  }
+  function staffRow(state,P,person,mode,selected){
+    const hired=mode==='team',info=hired?employeeStatus(state,P,person):
+      recruitStatus(state,P,person);
+    const label=hired?info.name:info.reason;
+    const tone=hired?info.tone:info.canHire?'available':'warning';
+    const id=hired?'e:'+person.id:'c:'+person.id;
+    return '<button type="button" class="sd-person'+(selected?' sd-person-active':'')+
+      '" data-action="select-person" data-person="'+esc(id)+'"'+
+      ' aria-pressed="'+String(selected)+'">'+
+      '<span class="sd-person-main"><small>'+esc(roleName[person.role])+'</small>'+
+      '<strong>'+esc(person.name)+'</strong><span>'+gbp(person.monthlySalary)+
+      ' / MONTH · '+person.experience+' YEARS EXPERIENCE</span></span>'+
+      '<em class="sd-tag sd-tag-'+tone+'">'+esc(label)+'</em></button>';
+  }
+  function skillSection(person){
+    return '<section class="sd-competence"><div class="sd-section-head"><h4>SKILLS & EXPERIENCE</h4>'+
+      '<span>RATINGS OUT OF 20</span></div><div class="sd-skills">'+
+      traits[person.role].map(([name,key])=>bar(name,person.skills[key])).join('')+
+      '</div><p>'+esc(labels[person.role])+'</p></section>';
+  }
+  function employeeDetail(state,P,e){
+    const info=employeeStatus(state,P,e);
+    const dayRate=P.dailyCost(e);
+    const notice=dayRate*7;
+    const protectedFunds=P.hireQuote(state,e).protectedStock;
+    const cooldown=e.lastTrainingDay&&state.day-e.lastTrainingDay<14;
+    const training=e.trainingUntil!==null&&state.day<e.trainingUntil;
+    const affordable=state.cash>=P.TRAINING_FEE+protectedFunds+state.payrollArrears;
+    const block=training?'ALREADY TRAINING':cooldown?
+      'NEXT TRAINING DAY '+(e.lastTrainingDay+14):!affordable?'INSUFFICIENT UNRESERVED CASH':'';
+    return '<div class="sd-dossier"><header class="sd-file-head"><div><small>EMPLOYEE FILE · ID '+
+      e.id+' · '+esc(roleName[e.role])+'</small><h3>'+esc(e.name)+'</h3></div>'+
+      '<span class="sd-tag sd-tag-'+info.tone+'">'+esc(info.name)+'</span></header>'+
+      '<div class="sd-staff-summary">'+
+      '<div><small>MONTHLY BASE WAGE</small><strong>'+gbp(e.monthlySalary)+'</strong></div>'+
+      '<div><small>DAILY PAYROLL</small><strong>'+gbp(dayRate)+'</strong></div>'+
+      '<div><small>MORALE</small><strong>'+e.morale+' / 100</strong></div>'+
+      '<div><small>START DATE</small><strong>DAY '+e.startDay+'</strong></div></div>'+
+      '<div class="sd-person-detail"><div>'+skillSection(e)+
+      salesForecast(e,P)+
+      '<div class="sd-performance"><div><small>RETAIL DEALS</small><strong>'+e.deals+
+      '</strong></div><div><small>PREPARATION JOBS</small><strong>'+e.workDone+
+      '</strong></div><div><small>HIRED DAY</small><strong>'+e.hiredDay+
+      '</strong></div></div></div><div class="sd-control"><div class="sd-section-head">'+
+      '<h4>EMPLOYEE DECISIONS</h4><span>CONFIRMED ACTIONS</span></div>'+
+      '<div class="sd-action-panel"><h5>STAFF TRAINING</h5>'+
+      '<p>Costs '+gbp(P.TRAINING_FEE)+'. The employee is unavailable for two game days. '+
+      'Role-specific skills and morale improve; wages still continue.</p>'+
+      (block?'<p class="sd-issue">'+esc(block)+'</p>':'')+
+      '<button type="button" class="trade-button" data-action="train-staff" data-id="'+e.id+'"'+
+      (block?' disabled':'')+'>AUTHORISE TRAINING · '+gbp(P.TRAINING_FEE)+'</button></div>'+
+      '<details class="sd-release"><summary>RELEASE EMPLOYEE / NOTICE COST</summary>'+
+      '<p>Seven game days of provisional notice pay: <strong>'+gbp(notice)+'</strong>. '+
+      'This may create unpaid payroll obligations if funds are insufficient. '+
+      'The employee immediately leaves the team.</p>'+
+      '<button type="button" class="trade-button people-release" data-action="release-staff" '+
+      'data-id="'+e.id+'">RELEASE '+esc(e.name.toUpperCase())+'</button></details>'+
+      '</div></div></div>';
+  }
+  function candidateDetail(state,P,c){
+    const info=recruitStatus(state,P,c),q=info.quote;
+    const todayCash=state.cash;
+    const currentDaily=state.staff.reduce((n,e)=>n+P.dailyCost(e),0);
+    const staffDaily=P.dailyCost(c);
+    return '<div class="sd-dossier"><header class="sd-file-head"><div><small>RECRUITMENT FILE · '+
+      esc(roleName[c.role])+'</small><h3>'+esc(c.name)+'</h3></div>'+
+      '<span class="sd-tag sd-tag-'+(info.canHire?'available':'warning')+'">'+
+      esc(info.reason)+'</span></header>'+
+      '<div class="sd-staff-summary">'+
+      '<div><small>MONTHLY BASE WAGE</small><strong>'+gbp(c.monthlySalary)+'</strong></div>'+
+      '<div><small>DAILY PAYROLL ADDED</small><strong>'+gbp(staffDaily)+'</strong></div>'+
+      '<div><small>EXPERIENCE</small><strong>'+c.experience+' YEARS</strong></div>'+
+      '<div><small>ROLE CAPACITY</small><strong>'+
+      state.staff.filter(e=>e.role===c.role).length+' / '+P.roleLimit(state,c.role)+
+      '</strong></div></div>'+
+      '<div class="sd-person-detail"><div>'+skillSection(c)+salesForecast(c,P)+
+      '</div><div class="sd-control"><div class="sd-section-head"><h4>HIRING DECISION</h4>'+
+      '<span>STARTS NEXT GAME DAY</span></div>'+
+      '<div class="sd-hire-figures">'+
+      '<div><span>DEALERSHIP CASH TODAY</span><strong>'+gbp(todayCash)+'</strong></div>'+
+      '<div><span>ONE-OFF ONBOARDING FEE</span><strong>'+gbp(P.HIRING_FEE)+'</strong></div>'+
+      '<div><span>PROTECTED VEHICLE REPAIRS</span><strong>'+gbp(q.protectedStock)+'</strong></div>'+
+      '<div><span>TEAM WAGES PER DAY AFTER HIRE</span><strong>'+gbp(q.dailyWages)+'</strong></div>'+
+      '<div><span>3-DAY WAGE COVER</span><strong>'+
+      gbp(q.dailyWages*P.WAGE_COVER_DAYS)+'</strong></div>'+
+      (state.payrollArrears?'<div><span>EXISTING PAYROLL ARREARS</span><strong>'+
+        gbp(state.payrollArrears)+'</strong></div>':'')+
+      '<div class="sd-required"><span>TOTAL CASH NEEDED TO HIRE</span><strong>'+
+      gbp(q.required)+'</strong></div></div>'+
+      (q.shortfall?'<p class="sd-issue">SHORT BY '+gbp(q.shortfall)+
+        '. Increase cash before taking on this salary.</p>':'')+
+      (!info.canHire&&!q.shortfall?'<p class="sd-issue">'+esc(info.reason)+
+        '. This role or candidate cannot be hired right now.</p>':'')+
+      '<button type="button" class="trade-button" data-action="hire-staff" data-id="'+
+      esc(c.id)+'"'+(info.canHire?'':' disabled')+'>'+
+      (info.canHire?'HIRE '+esc(c.name.toUpperCase())+' · '+gbp(P.HIRING_FEE):
+        'CANNOT HIRE · '+esc(info.reason))+'</button>'+
+      '<p class="sd-fine">Hiring charges only the onboarding fee now. '+gbp(staffDaily)+
+      ' daily wages begin thereafter. Cash is reserved for three days of total payroll, '+
+      'existing arrears and outstanding vehicle preparation.</p>'+
+      '</div></div></div>';
+  }
+  function staffDesk(state,P,{mode=null,role='all',selectedId=null}={}){
+    const counts=deskCounts(state,P);
+    const activeMode=DESK_MODES.includes(mode)?mode:
+      state.staff.length?'team':'candidates';
+    const f=DESK_ROLES.includes(role)?role:'all';
+    const source=activeMode==='team'?state.staff:P.applicants(state.day);
+    const filtered=source.filter(person=>f==='all'||person.role===f);
+    const chosen=filtered.find(p=>(activeMode==='team'?'e:':'c:')+p.id===selectedId)||
+      filtered[0]||null;
+    const chosenId=chosen?(activeMode==='team'?'e:':'c:')+chosen.id:null;
+    const week=Math.floor((state.day-1)/7);
+    const nextRefresh=(week+1)*7+1;
+    const quick='<div class="sd-kpis">'+[
+      ['EMPLOYEES HIRED',counts.employed+' / '+counts.rolesTotal],
+      ['ACTIVE TODAY',String(counts.active)],
+      ['DAILY WAGE BILL',gbp(counts.daily)],
+      ['CANDIDATES ON MARKET',String(counts.candidates)]
+    ].map(([title,value])=>'<div><small>'+title+'</small><strong>'+value+
+      '</strong></div>').join('')+'</div>';
+    const alert=state.payrollArrears?
+      '<div class="sd-cash-alert"><strong>UNPAID WAGES '+gbp(state.payrollArrears)+'</strong>'+
+      '<span>Employees are unavailable while payroll arrears remain outstanding.</span></div>':
+      state.cash<counts.daily*3&&counts.employed?
+      '<div class="sd-cash-alert"><strong>PAYROLL RISK</strong><span>Cash '+gbp(state.cash)+
+      ' is less than three days of wages ('+gbp(counts.daily*3)+').</span></div>':'';
+    const toolbar='<div class="sd-toolbar"><div class="sd-tabs" role="group" aria-label="Employee or candidate records">'+
+      '<button type="button" data-action="staff-desk-mode" data-mode="team" aria-pressed="'+
+      String(activeMode==='team')+'">YOUR TEAM <b>'+counts.employed+'</b></button>'+
+      '<button type="button" data-action="staff-desk-mode" data-mode="candidates" aria-pressed="'+
+      String(activeMode==='candidates')+'">AVAILABLE CANDIDATES <b>'+counts.candidates+'</b></button>'+
+      '</div><div class="sd-roles" role="group" aria-label="Filter employment roles">'+
+      DESK_ROLES.map(id=>'<button type="button" data-action="staff-desk-role" data-role="'+id+
+        '" aria-pressed="'+String(f===id)+'">'+
+        (id==='all'?'ALL ROLES':groupName[id])+'</button>').join('')+
+      '</div></div>';
+    const listing=filtered.length?filtered.map(p=>staffRow(state,P,p,p===chosen)).join(''):
+      '<div class="sd-no-results">'+(activeMode==='team'?
+        'No employees in this role yet. Review candidates to fill the vacancy.':
+        'No candidates match this role this week.')+'</div>';
+    const body=chosen?(activeMode==='team'?employeeDetail(state,P,chosen):
+      candidateDetail(state,P,chosen)):
+      '<div class="sd-dossier sd-no-results">No '+(activeMode==='team'?
+        'staff records':'applicants')+' to display. Select a different role or tab.</div>';
+    const context=activeMode==='team'?
+      '<span>ACTIVE TECHNICIANS FREE '+counts.techniciansFree+
+      ' · MONTHLY BASE PAY '+gbp(counts.monthly)+'</span>':
+      '<span>'+counts.hireable+' AFFORDABLE / ELIGIBLE TO HIRE · REFRESHES DAY '+
+      nextRefresh+'</span>';
+    return {mode:activeMode,role:f,selectedId:chosenId,counts,
+      html:quick+alert+toolbar+
+      '<div class="sd-context">'+context+'</div>'+
+      '<div class="sd-layout"><aside class="sd-register" aria-label="'+
+      (activeMode==='team'?'Current employees':'Candidate shortlist')+'">'+
+      '<div class="sd-register-head">'+(activeMode==='team'?'CONTRACTED EMPLOYEES':'WEEKLY RECRUITMENT SHORTLIST')+
+      '<span>'+filtered.length+' SHOWN</span></div>'+
+      '<div class="sd-register-list">'+listing+'</div></aside>'+body+'</div>'+
+      '<details class="sd-policy"><summary>EMPLOYMENT RULES & PAYROLL EXPLANATION</summary>'+
+      '<p>Staff join on the following game day. Training takes two days, during which their work stops. '+
+      'Base wages are settled daily at approximately 1/30 of the monthly salary. Bonuses and '+
+      'provisional notice charges can increase payroll. Employer taxes, pensions, UK contracts '+
+      'and statutory notice rules are not simulated. Candidates change every seven game days. '+
+      'Hiring is limited by staffing places, role capacity and protected cash.</p></details>'};
+  }
+
+  window.MotorTradePeopleView=Object.freeze({applicants,roster,reputation,totals,
+    staffDesk,deskCounts,employeeStatus,recruitStatus,DESK_MODES,DESK_ROLES});
 })();
