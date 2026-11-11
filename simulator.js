@@ -13,7 +13,8 @@
   const CV = window.MotorTradeCustomersView;
   const AV = window.MotorTradeAuctionHallView;
   const SITE_VIEW = window.MotorTradePremisesView;
-  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV)
+  const DV = window.MotorTradeDashboardView;
+  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV)
     throw new Error('Customer, workshop and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
@@ -181,7 +182,8 @@
     const ordered = [...career.messages].sort((a, b) => b.day - a.day || b.id - a.id);
     const preview = byId('dashboard-inbox');
     const list = byId('inbox-list');
-    preview.replaceChildren(...ordered.slice(0, 3).map(m => renderMessageRow(m, true)));
+    const spotlight=[...ordered.filter(m=>!m.read),...ordered.filter(m=>m.read)].slice(0,2);
+    preview.replaceChildren(...spotlight.map(m => renderMessageRow(m, true)));
     list.replaceChildren(...ordered.map(m => renderMessageRow(m, false)));
     const unread = unreadCount();
     byId('widget-unread-label').textContent = unread + ' UNREAD';
@@ -374,8 +376,24 @@
     ).join('');
   }
   function renderEvents() {
-    byId('events-banner').innerHTML=EV.banner(career);
+    const banner=byId('events-banner');
+    banner.className='events-banner'+(currentPage==='dashboard'?' dashboard-event-compact':'');
+    banner.innerHTML=EV.banner(career);
     byId('events-view').innerHTML=EV.render(career);
+  }
+  function renderDashboard(){
+    const d=DV.snapshot(career,E);
+    byId('dashboard-priorities').innerHTML=DV.priorities(d);
+    byId('dashboard-operating-strip').innerHTML=DV.operations(d,career);
+    bindText('dashboard-cash-note',d.reserved?
+      money.format(d.reserved)+' earmarked for repairs':'Before future operating bills');
+    bindText('dashboard-stock-note',d.listed+' listed · '+d.awaitingPrep+' awaiting prep');
+    bindText('dashboard-monthly-sales',d.report.soldUnits+' / '+d.report.targetUnits);
+    bindText('dashboard-sales-note',d.unitsLeft+' to target · '+d.daysToGo+' game days left');
+    bindText('dashboard-operating',money.format(d.report.operatingContribution));
+    bindText('dashboard-auction',d.auctionOpen?'TODAY':'DAY '+d.auctionDay);
+    bindText('dashboard-auction-note',d.auctionWeekday==='TUE'?
+      'Tuesday · Deal Day reschedule':'Monday · weekly session');
   }
   function renderMonthly() {
     const r=M.statement(career);
@@ -402,6 +420,7 @@
     renderLedger();
     renderPeople();
     renderMonthly();
+    renderDashboard();
     renderBusiness();
     renderEvents();
   }
@@ -463,16 +482,6 @@
     byId('continue-day').disabled = career.day >= MAX_DAY;
     byId('continue-label').textContent=D.isDealDay(career.day)?
       (career.deadlineSession>=D.PHASES.length-1?'CLOSE MONTH':'NEXT SESSION'):'CONTINUE';
-    const calendarCopy = byId('calendar-message');
-    calendarCopy.textContent = D.isDealDay(career.day)?
-      'DEAL DAY '+D.dealSession(career).time+': customer-only retail trading. Auctions are closed and this game day advances in five sessions.' :
-      D.meetingDue(career)?
-        'FIRST-DAY MEETING: review the previous month and agree this month’s management priority.' :
-      career.day <= 7
-        ? 'Day ' + career.day + ' of your career. Auction Day is Monday; check the inbox for business updates.'
-        : E.auctionDay(career.day)?
-          'WEEKLY AUCTION DAY: this week’s numbered-lot catalogue is open.':
-          'Next weekly auction: game day '+E.nextAuctionDay(career.day)+'. Private seller leads refresh daily.';
     byId('save-warning').hidden = storageAvailable;
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;

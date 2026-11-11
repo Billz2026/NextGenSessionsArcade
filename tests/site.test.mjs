@@ -27,6 +27,7 @@ const workshopView = readFileSync(new URL('workshop-view.js', root), 'utf8');
 const customers = readFileSync(new URL('customers.js', root), 'utf8');
 const customersView = readFileSync(new URL('customers-view.js', root), 'utf8');
 const auctionHallView = readFileSync(new URL('auction-hall-view.js', root), 'utf8');
+const dashboardView = readFileSync(new URL('dashboard-view.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
 
 test('homepage uses real NextGen Sessions logo and separates three views', () => {
@@ -68,10 +69,15 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /auction-hall-view\.js\?v=2/);
-  assert.match(html, /simulator\.js\?v=20/);
+  assert.match(html, /simulator\.js\?v=21/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
+  assert.match(html, /dashboard-view\.js\?v=1/);
+  assert.match(html, /id="dashboard-priorities"/);
+  assert.match(html, /id="dashboard-operating-strip"/);
+  assert.match(html, /data-bind="dashboard-operating"/);
+  assert.match(html, /data-bind="dashboard-monthly-sales"/);
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
@@ -96,7 +102,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.10/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.11/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -289,6 +295,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(customersView, context, { timeout: 1500 });
   vm.runInNewContext(premisesView, context, { timeout: 1500 });
   vm.runInNewContext(auctionHallView, context, { timeout: 1500 });
+  vm.runInNewContext(dashboardView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const send=(a,extra)=> {
@@ -321,7 +328,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -512,7 +519,7 @@ test('inbox is interactive, read status persists, navigation changes panels', ()
   const app = browser(saved);
   app.click('new-career');
   app.submitCareer();
-  assert.equal(app.nodes.get('dashboard-inbox').children.length, 3);
+  assert.equal(app.nodes.get('dashboard-inbox').children.length, 2);
   assert.equal(app.bindings.get('unread')[0].textContent, '3');
   app.click('read-message', { id: '2' });
   assert.equal(app.panels.find(p => p.dataset.panel === 'inbox').hidden, false);
@@ -575,7 +582,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=24/);
+  assert.match(html, /styles\.css\?v=25/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -3472,4 +3479,119 @@ test('v0.9.10 migrates previous v11 careers on now-closed weekdays without losin
   assert.equal(restored.auctionHall.phase,'catalogue');
   assert.equal(restored.auctionHall.results.length,0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(restored))));
+});
+
+test('v0.9.11 dashboard is compact, focused and retains all critical live links',()=>{
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Compact Trade Control');
+  assert.match(html,/class="career-panel dashboard-control"/);
+  assert.match(html,/class="stat-grid dashboard-kpis"/);
+  assert.equal((html.match(/class="stat-tile dashboard-kpi/g)||[]).length,6,
+    'Exactly six first-view KPI controls');
+  assert.match(css,/\.dashboard-control \.dashboard-kpis/);
+  assert.match(css,/@media\(max-width:1450px\)/);
+  assert.match(css,/@media\(max-width:700px\)/);
+  assert.match(css,/\.dashboard-event-compact/);
+  assert.doesNotMatch(html,/GOOD MORNING, <em>BOSS/);
+  assert.doesNotMatch(html,/Read your welcome brief and starting position/);
+  assert.doesNotMatch(html,/EVERY DEAL COUNTS/);
+  assert.equal(app.nodes.get('dashboard-inbox').children.length,2);
+  assert.match(app.nodes.get('dashboard-priorities').innerHTML,/data-page="(auctionHall|auctions|events|staff|stock|sales|finance)"/);
+  assert.match(app.nodes.get('dashboard-operating-strip').innerHTML,/LISTED FOR SALE/);
+  assert.match(app.nodes.get('dashboard-operating-strip').innerHTML,/OUTSTANDING BILLS/);
+  assert.equal(app.bindings.get('dashboard-monthly-sales')[0].textContent,'0 / 2');
+  assert.equal(app.bindings.get('dashboard-operating')[0].textContent,'£0');
+  assert.equal(app.bindings.get('dashboard-auction')[0].textContent,'TODAY');
+  assert.equal(app.bindings.get('cash')[0].textContent,'£12,500');
+  assert.equal(app.bindings.get('stock')[0].textContent,'0 / 4');
+  assert.equal(app.nodes.get('events-banner').className,'events-banner dashboard-event-compact');
+  app.go('stock');
+  assert.equal(app.nodes.get('events-banner').className,'events-banner');
+  app.go('dashboard');
+  assert.equal(app.nodes.get('events-banner').className,'events-banner dashboard-event-compact');
+});
+
+test('v0.9.11 dashboard tasks respond to actual unassessed stock, unpaid staff and property bills',()=>{
+  const app=browser(new Map()),E=app.productionEngine,V=app.dashboard;
+  const state=E.create('Live Priority Engine',[]);
+  let model=V.snapshot(state,E);
+  assert.ok(model.tasks.some(x=>x.key==='empty-stock'));
+  assert.ok(model.tasks.some(x=>x.key==='auction-live'));
+  assert.equal(model.report.soldUnits,0);
+  assert.equal(model.report.targetUnits,2);
+  const seller=E.marketFor(state).sellers[0];
+  assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
+  model=V.snapshot(state,E);
+  assert.ok(!model.tasks.some(x=>x.key==='empty-stock'));
+  assert.ok(model.tasks.some(x=>x.key==='workshop'),'Acquired stock requires assessment');
+  assert.equal(model.awaitingPrep,1);
+  state.payrollArrears=400;
+  state.premises.arrears=175;
+  model=V.snapshot(state,E);
+  assert.equal(model.arrears,575);
+  assert.equal(model.tasks[0].key,'board-meeting','Start-of-career meeting remains a mandatory first action');
+  assert.equal(model.tasks[1].key,'payroll');
+  assert.equal(model.tasks[2].key,'rent');
+  assert.match(V.priorities(model),/data-page="staff"/);
+  assert.match(V.priorities(model),/data-page="business"/);
+  assert.match(V.operations(model,state),/£575/);
+  assert.equal(state.vehicles[0].workshop.stage,'unassessed',
+    'Dashboard must not change workshop work or spend money');
+});
+
+test('v0.9.11 dashboard prioritises binding auction invoices before other decisions',()=>{
+  const app=browser(new Map()),E=app.productionEngine,V=app.dashboard;
+  const s=E.create('Unpaid Hammer',[]);
+  assert.ok(E.startAuction(s).ok);
+  for(let i=0;i<30&&s.auctionHall.phase==='bidding';i++)
+    assert.ok(E.bidLiveAuction(s,100).ok);
+  assert.equal(s.auctionHall.phase,'payment');
+  const cash=s.cash,carCount=s.vehicles.length;
+  const snap=V.snapshot(s,E);
+  assert.equal(snap.tasks[0].key,'auction-invoice');
+  assert.equal(snap.tasks[0].page,'auctionHall');
+  assert.match(V.priorities(snap),/PAY INVOICE/);
+  assert.equal(s.cash,cash);
+  assert.equal(s.vehicles.length,carCount);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.11 dashboard reflects Deal Day, weekly auctions, monthly expenses and true contribution',()=>{
+  const app=browser(new Map()),E=app.productionEngine,V=app.dashboard;
+  const s=E.create('Month Close Dashboard',[]);
+  s.day=2;
+  E.rollAuctionHall(s);
+  E.premisesDay(s);
+  const day2=V.snapshot(s,E);
+  assert.equal(day2.report.premisesExpense,25);
+  assert.equal(day2.report.operatingContribution,-25,
+    'Accrued property costs appear even when the dealership has no sales');
+  assert.equal(day2.auctionDay,8);
+  assert.equal(day2.auctionOpen,false);
+  s.day=30;s.deadlineSession=4;
+  E.rollAuctionHall(s);
+  const close=V.snapshot(s,E);
+  assert.equal(close.tasks[0].key,'deal-day');
+  assert.match(close.tasks[0].title,/Close the trading month/);
+  assert.equal(close.auctionDay,36);
+  assert.match(V.priorities(close),/CLOSE MONTH/);
+});
+
+test('v0.9.11 inbox preview always prioritises unread items over old read messages',()=>{
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Actionable Inbox');
+  const first=app.nodes.get('dashboard-inbox').children;
+  assert.equal(first.length,2);
+  app.click('read-message',{id:first[0].dataset.id});
+  app.go('dashboard');
+  const preview=app.nodes.get('dashboard-inbox').children;
+  assert.equal(preview.length,2);
+  const state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.ok(preview.every(node=>!state.messages.find(m=>String(m.id)===node.dataset.id).read),
+    'Read messages should not displace the remaining unread messages');
+  app.click('mark-all-read');
+  app.go('dashboard');
+  assert.equal(app.bindings.get('unread')[0].hidden,true);
+  assert.equal(app.nodes.get('dashboard-inbox').children.length,2,
+    'Recent read communications remain accessible when inbox is cleared');
 });
