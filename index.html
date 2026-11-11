@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=41">
+  <link rel="stylesheet" href="./styles.css?v=42">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -31,7 +31,7 @@
   <script src="./vehicle-cards.js?v=4" defer></script>
   <script src="./vehicle-view.js?v=4" defer></script>
   <script src="./people-view.js?v=4" defer></script>
-  <script src="./monthly-view.js?v=6" defer></script>
+  <script src="./monthly-view.js?v=7" defer></script>
   <script src="./events-view.js?v=4" defer></script>
   <script src="./workshop-view.js?v=6" defer></script>
   <script src="./customers-view.js?v=8" defer></script>
@@ -50,7 +50,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.27</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.28</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -270,9 +270,9 @@
             </section>
 
             <section class="career-panel" data-panel="reports" hidden aria-labelledby="reports-title">
-              <div class="page-heading"><div><p class="section-overline">BOARD REPORTS / MONTHLY PERFORMANCE</p><h1 id="reports-title">MANAGEMENT <em>REPORTS.</em></h1><p>Review every 30-day operating period: targets, vehicle profitability, cash movements, employee sales, stock ageing and customer trust.</p></div><span class="career-chip">30-DAY OPERATING MONTHS</span></div>
-              <div class="trade-alert">Company sales targets are locked each month and scale as reputation improves. A successful month requires target sales and positive operating contribution after staff and premises charges. Every salesperson has a separate, tenure-adjusted monthly unit target. Completed reports are archived in your saved career.</div>
-              <div id="monthly-report-view"></div>
+              <div class="page-heading"><div><p class="section-overline">PERFORMANCE / MONTHLY BOARD REVIEW</p><h1 id="reports-title">MANAGEMENT <em>REPORTS.</em></h1><p>Understand the dealership's sales, operating performance, stock and priorities at a glance.</p></div><span class="career-chip">30-DAY REPORTS</span></div>
+              <div id="monthly-report-view" class="mr-control" aria-live="polite"></div>
+              <details class="mr-guide"><summary>HOW MONTHLY TARGETS AND ARCHIVED REPORTS WORK</summary><p>Sales targets are set at the start of each 30-day game month. Success requires the unit sales target and positive operating contribution after staff and premises costs. Salesperson targets adjust for tenure. Completed reports remain archived in your saved career, and are not recalculated from the live business.</p></details>
             </section>
 
             <section class="career-panel" data-panel="staff" hidden aria-labelledby="staff-title">
