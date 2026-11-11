@@ -5595,11 +5595,12 @@ test('v0.9.35 blocked and maximum upgrades still retain accurate eligibility',()
   assert.match(card,/Cash shortfall/);
   assert.match(card,/data-kind="forecourt" disabled/);
   s.reputationScore=100;s.premises.forecourtLevel=3;s.capacity=site.capacity(s);
+  const snapshot=JSON.stringify(s);
   card=app.premisesView.card(s,site,'forecourt');
   assert.match(card,/MAXIMUM/);
   assert.match(card,/FULLY EXPANDED/);
   assert.doesNotMatch(card,/data-action="upgrade-premises"/);
-  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+  assert.equal(JSON.stringify(s),snapshot,'Display must not alter the max-capacity fixture');
 });
 
 test('v0.9.35 one-page desktop polish is scoped to My Dealership and retains mobile layout',()=>{
