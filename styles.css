@@ -788,3 +788,82 @@
 .premises-note{padding:0 19px;margin:0;color:#a9bec6;font:500 11px/1.8 var(--body)}
 @media(max-width:880px){.premises-upgrades{grid-template-columns:1fr}.premises-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:570px){.premises-metrics{padding:12px;gap:8px}.premises-metrics>div{padding:11px}.premises-metrics strong{font-size:23px}.premises-upgrades{padding:0 12px 12px}.premises-option{padding:14px}.premises-option h3{font-size:21px}.premises-notice{margin:0 12px 12px}}
+
+/* v0.9.9 Auction Hall — independent, controlled dealer-bidding experience */
+.auction-hall-head{border:1px solid #55634e;border-radius:12px;padding:22px 24px;margin-bottom:14px;
+background:linear-gradient(130deg,#263b34 0%,#142b30 58%,#10252d 100%);
+display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.auction-hall-head>div:first-child{flex:1 1 370px;max-width:720px}
+.auction-hall-head>div:first-child>span{font:700 10px var(--mono);color:#d9bd83;letter-spacing:.08em}
+.auction-hall-head h2{font:900 clamp(33px,4vw,52px)/1 var(--title);color:#f4eadc;letter-spacing:.025em;margin:9px 0}
+.auction-hall-head h2 em{color:#ddb779;font-style:normal}
+.auction-hall-head p{font:500 12px/1.7 var(--body);color:#b6c8c9}
+.auction-head-metrics{display:grid;grid-template-columns:repeat(2,minmax(94px,1fr));gap:10px;flex:1 1 280px;max-width:380px}
+.auction-head-metrics>div{padding:12px 14px;background:#102128ab;border:1px solid #425e5a;border-radius:8px}
+.auction-head-metrics small{display:block;font:700 9px/1.4 var(--mono);color:#a9bbbf;letter-spacing:.02em}
+.auction-head-metrics strong{display:block;color:#f0d09c;font:900 28px/1 var(--title);margin-top:8px}
+.auction-catalogue{margin-bottom:18px}
+.auction-catalogue h3,.auction-results>h3,.auction-finished>h3{font:900 23px/1.2 var(--title);letter-spacing:.03em;color:#edcc9d;margin:0 0 12px}
+.auction-catalogue-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.auction-catalogue-item{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;padding:15px 16px;border-radius:8px;background:#152a34;border:1px solid #375361}
+.auction-catalogue-item>span{font:800 11px var(--mono);color:#debf89}
+.auction-catalogue-item>strong{font:800 18px/1.15 var(--title);color:#e8ebdf}
+.auction-catalogue-item>small{font:600 9px/1.55 var(--mono);color:#a7bac2}
+.auction-catalogue-item>b{margin-top:auto;font:800 9px var(--mono);color:#a0b7b9}
+.auction-catalogue-active{background:linear-gradient(140deg,#283e38,#18333a);border-color:#cca571;box-shadow:inset 0 0 0 1px #a17f54}
+.auction-catalogue-active>b{color:#f4d6a8}
+.auction-catalogue-done{opacity:.75}
+.auction-active-grid{display:grid;grid-template-columns:minmax(0,1.17fr) minmax(320px,.83fr);gap:15px;margin:0 0 17px;align-items:start}
+.auction-current,.auction-bid-box{min-width:0}
+.auction-rostrum{background:#293b38;border-bottom:1px solid #567166;padding:15px 19px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.auction-rostrum>span{color:#ead3ad;font:800 10px/1.5 var(--mono)}
+.auction-rostrum>strong{color:#d1e0c7;font:800 10px/1.5 var(--mono);text-align:right}
+.auction-car-content{padding:17px}
+.auction-car-content .vehicle-photo-block{margin:0 0 13px}
+.auction-car-content .vehicle-photo-frame{height:275px;min-height:200px}
+.auction-car-content .vehicle-photo-frame img{width:100%;height:100%;object-fit:cover}
+.auction-car-content .vehicle-card-heading h3{font-size:clamp(26px,3vw,39px)}
+.auction-prices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:13px 0}
+.auction-prices>div{background:#10232c;border-radius:6px;border:1px solid #2f4954;padding:12px}
+.auction-prices small,.auction-bid-maths span{display:block;font:700 9px/1.5 var(--mono);color:#a7b9c2}
+.auction-prices strong{display:block;font:900 24px/1.2 var(--title);color:#eed1a1;margin-top:5px}
+.auction-bid-box-top{padding:23px 21px 19px;background:radial-gradient(ellipse at 80% 0%,#45664d7a,transparent 75%),#20392f;border-bottom:1px solid #55705b}
+.auction-bid-box-top>small{font:800 10px var(--mono);color:#d8cab0}
+.auction-bid-box-top>strong{display:block;font:900 clamp(48px,5vw,66px)/1 var(--title);color:#f6d59b;margin:10px 0 7px}
+.auction-bid-box-top>span{font:800 10px/1.4 var(--mono);color:#b9d5bc}
+.auction-bid-maths{padding:15px 20px;display:flex;flex-direction:column;gap:9px}
+.auction-bid-maths>div{display:flex;justify-content:space-between;align-items:center;gap:14px;border-bottom:1px solid #314b50;padding-bottom:9px}
+.auction-bid-maths>div:last-child{border:0;padding-bottom:0}
+.auction-bid-maths b{font:800 12px var(--mono);color:#ebdec7;text-align:right}
+.auction-bid-maths b.auction-negative{color:#f2b19b}
+.auction-bid-box>.people-bid-intel{margin:0 20px 14px}
+.auction-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:0 20px 19px}
+.auction-controls .trade-button{min-height:45px;font:800 11px/1.2 var(--mono);white-space:normal;text-align:center;padding:11px 8px;width:100%}
+.auction-controls .auction-primary{background:#ddaf70;color:#15272d;border-color:#ecc994}
+.auction-controls .auction-primary:hover{background:#f2cd99}
+.auction-risk{margin:0 20px 12px;background:#432c2c;border-left:3px solid #d59e8e;padding:10px 12px;color:#f0cabf;font:600 11px/1.6 var(--body)}
+.auction-activity{border-top:1px solid #3d555a;padding:18px 20px}
+.auction-activity>h3{font:900 21px var(--title);color:#dcd7c8;margin:0 0 10px}
+.auction-feed{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.auction-feed>p{background:#10222a;border-left:3px solid #688782;padding:9px 12px;font:500 11px/1.6 var(--body);color:#becdd0}
+.auction-feed>p:last-child{border-left-color:#d0aa70;color:#f0debf}
+.auction-hammer-result{margin:0 20px 14px;border:1px solid #566a64;background:#233d3d;padding:13px 14px;border-radius:7px}
+.auction-hammer-result>strong{font:900 18px var(--title);color:#e7d1a3}
+.auction-hammer-result>p{font:600 11px/1.7 var(--body);color:#c5d4d0;margin-top:5px}
+.auction-hammer-won{background:#1f4437;border-color:#66886a}
+.auction-results,.auction-finished{padding:20px 22px;margin-top:16px}
+.auction-result-row{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:12px;align-items:center;border-top:1px solid #3e5760;padding:13px 0}
+.auction-result-row>span{font:800 10px var(--mono);color:#d9b985}
+.auction-result-row>div{min-width:0}
+.auction-result-row>div>strong{display:block;font:800 16px/1.2 var(--title)}
+.auction-result-row>div>small{display:block;font:700 9px/1.6 var(--mono);color:#aabdc2;margin-top:4px}
+.auction-result-row>b{font:800 11px var(--mono);color:#e6d6ba;text-align:right}
+.auction-result-won>div>small{color:#b3dabc}
+.auction-finished>p{font:500 12px/1.7 var(--body);color:#aebfc5;margin-bottom:14px}
+.auction-final-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.auction-closed{margin-bottom:16px}
+.buying-desk-auction-link{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;padding:19px 22px;background:linear-gradient(110deg,#263b39,#1c303b);border:1px solid #5b7065;border-radius:9px}
+.buying-desk-auction-link strong{font:900 22px var(--title);color:#f4d69c}
+.buying-desk-auction-link p{font:500 11px/1.6 var(--body);color:#c0cccc;margin-top:5px}
+@media(max-width:1100px){.auction-active-grid{grid-template-columns:1fr}.auction-car-content .vehicle-photo-frame{height:320px}}
+@media(max-width:700px){.auction-hall-head{padding:17px;gap:15px}.auction-head-metrics{max-width:none;flex-basis:100%}.auction-car-content .vehicle-photo-frame{height:230px}.auction-prices strong{font-size:20px}.auction-result-row{grid-template-columns:58px minmax(0,1fr)}.auction-result-row>b{grid-column:2;justify-self:start}.auction-rostrum{align-items:flex-start;flex-direction:column}.auction-bid-box-top{padding:18px}.auction-prices{gap:7px}.auction-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
