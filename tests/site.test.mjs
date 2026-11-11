@@ -77,8 +77,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=44/);
-  assert.match(html, /simulator\.js\?v=31/);
+  assert.match(html, /styles\.css\?v=45/);
+  assert.match(html, /simulator\.js\?v=32/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
@@ -96,9 +96,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /trading\.js\?v=19/);
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
-  assert.match(html, /events-view\.js\?v=5/);
+  assert.match(html, /events-view\.js\?v=6/);
   assert.match(html, /monthly-view\.js\?v=8/);
-  assert.match(html, /people-view\.js\?v=4/);
+  assert.match(html, /people-view\.js\?v=5/);
   assert.match(html, /vehicle-view\.js\?v=4/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
@@ -114,7 +114,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.30/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.31/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -344,7 +344,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -598,7 +598,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=44/);
+  assert.match(html, /styles\.css\?v=45/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -1077,10 +1077,13 @@ test('v0.5 starts with basic reputation, owner-operated staffing and visible rec
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
-  assert.match(app.nodes.get('people-roster').innerHTML,/OWNER OPERATED/);
-  assert.match(app.nodes.get('people-applicants').innerHTML,/SALES EXECUTIVE/);
-  assert.match(app.nodes.get('people-applicants').innerHTML,/VEHICLE BUYER/);
-  assert.match(app.nodes.get('people-applicants').innerHTML,/PREP TECHNICIAN/);
+  assert.match(app.nodes.get('people-board').innerHTML,/AVAILABLE CANDIDATES/);
+  assert.match(app.nodes.get('people-board').innerHTML,/SALES EXECUTIVE/);
+  assert.match(app.nodes.get('people-board').innerHTML,/VEHICLE BUYER/);
+  assert.match(app.nodes.get('people-board').innerHTML,/PREP TECHNICIAN/);
+  app.click('staff-desk-mode',{mode:'team'});
+  assert.match(app.nodes.get('people-board').innerHTML,/No employees in this role yet/);
+  app.click('staff-desk-mode',{mode:'candidates'});
   assert.match(app.nodes.get('reputation-view').innerHTML,/LONG-TERM PRESTIGE TARGET/);
   assert.match(app.nodes.get('reputation-view').innerHTML,/NEW TRADER/);
   assert.match(html,/data-page="staff"/);
@@ -1099,7 +1102,7 @@ test('recruitment charges cash, starts next day, settles daily wages, survives r
   assert.equal(state.cash,12500-P.HIRING_FEE);
   assert.equal(state.ledger.filter(x=>x.note.startsWith('Recruitment')).length,1);
   assert.equal(P.active(state,'sales'),null,'Employee cannot boost sales the day they are hired');
-  assert.match(app.nodes.get('people-roster').innerHTML,/STARTS DAY 2/);
+  assert.match(app.nodes.get('people-board').innerHTML,/STARTS DAY 2/);
   const daily=P.dailyCost(state.staff[0]);
   app.click('continue');
   state=JSON.parse(storage.get(STORAGE_KEY));
@@ -1112,7 +1115,7 @@ test('recruitment charges cash, starts next day, settles daily wages, survives r
   later.click('resume');
   assert.equal(later.bindings.get('staff-count')[0].textContent,'1');
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).staff[0].name,candidate.name);
-  assert.match(later.nodes.get('people-roster').innerHTML,/AVAILABLE/);
+  assert.match(later.nodes.get('people-board').innerHTML,/AVAILABLE/);
 });
 test('vehicle buyer changes direct negotiation and adds useful auction intelligence', () => {
   const P=browser(new Map()).engine.people;
@@ -3882,7 +3885,7 @@ test('v0.9.14 supervisor hiring offers named candidates, distinct salaries and a
   assert.equal(candidates.length,2);
   assert.notEqual(candidates[0].name,candidates[1].name);
   assert.ok(candidates.every(c=>c.monthlySalary>=2000));
-  assert.match(app.nodes.get('people-applicants').innerHTML||'',/^$|SUPERVISOR/);
+  assert.match(app.nodes.get('people-board').innerHTML,/SUPERVISOR/);
   assert.ok(E.hireStaff(s,candidates[1].id).ok);
   assert.equal(s.staff[0].name,candidates[1].name);
   assert.equal(s.staff[0].role,'supervisor');
@@ -4440,7 +4443,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.30/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.31/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4509,7 +4512,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.30/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.31/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4967,7 +4970,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=44/);
+  assert.match(html,/styles\.css\?v=45/);
 });
 
 
@@ -5157,5 +5160,121 @@ test('v0.9.30 monthly board decision appears before expanded staff review and pe
   assert.equal(s.meetings.length,1);
   assert.equal(s.meetingFocus,'buying');
   assert.equal(D.holdMeeting(s,'sales').ok,false);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+
+test('v0.9.31 Deal Day diary shows its countdown once, with sessions in the event card',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const s=E.create('Single Countdown',[]);
+  s.day=74;
+  const ui=app.eventsView.render(s);
+  assert.match(ui,/DAYS UNTIL DEAL DAY/);
+  assert.match(ui,/FIVE SESSIONS · 09:00–17:00/);
+  assert.doesNotMatch(ui,/16 GAME DAYS AWAY/);
+  assert.match(ui,/UPCOMING · GAME DAY 90/);
+  assert.match(ui,/MONTHLY BOARD MEETING/);
+  assert.equal(s.day,74);
+});
+
+test('v0.9.31 recruitment separates employed staff, weekly candidates and role filters',()=>{
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Hiring Overview');
+  const P=app.engine.people,E=app.productionEngine;
+  const view=app.peopleView.staffDesk(E.create('Another Firm',[]),P);
+  assert.equal(view.mode,'candidates');
+  assert.equal(view.counts.employed,0);
+  assert.equal(view.counts.candidates,16);
+  assert.match(view.html,/AVAILABLE CANDIDATES/);
+  assert.match(view.html,/RECRUITMENT FILE/);
+  assert.match(view.html,/TOTAL CASH NEEDED TO HIRE/);
+  assert.match(view.html,/PROTECTED VEHICLE REPAIRS/);
+  assert.match(view.html,/REFRESHES DAY 8/);
+  const previous=JSON.parse(storage.get(STORAGE_KEY));
+  app.click('staff-desk-role',{role:'sales'});
+  const salesUI=app.nodes.get('people-board').innerHTML;
+  assert.match(salesUI,/SALES EXECUTIVE/);
+  assert.match(salesUI,/4 SHOWN/);
+  assert.doesNotMatch(salesUI,/VEHICLE BUYER/);
+  app.click('staff-desk-role',{role:'technician'});
+  const techUI=app.nodes.get('people-board').innerHTML;
+  assert.match(techUI,/8 SHOWN/);
+  assert.match(techUI,/PREP TECHNICIAN/);
+  app.click('staff-desk-role',{role:'all'});
+  assert.match(app.nodes.get('people-board').innerHTML,/16 SHOWN/);
+  assert.deepEqual(JSON.parse(storage.get(STORAGE_KEY)),previous);
+});
+
+test('v0.9.31 hire automatically opens the employee file with payroll and availability',()=>{
+  const storage=new Map(),app=browser(storage),P=app.engine.people;
+  app.click('new-career');app.submitCareer('Employed & Available');
+  const candidate=P.applicants(1).find(c=>c.role==='buyer');
+  app.click('staff-desk-mode',{mode:'candidates'});
+  app.click('select-person',{person:'c:'+candidate.id});
+  const before=app.nodes.get('people-board').innerHTML;
+  assert.match(before,/TOTAL CASH NEEDED TO HIRE/);
+  assert.match(before,/3-DAY WAGE COVER/);
+  assert.match(before,/ONE-OFF ONBOARDING FEE/);
+  const expense=P.hireQuote(app.engine.create('Test Cash',[]),candidate);
+  assert.ok(expense.required>=P.HIRING_FEE+P.dailyCost(candidate)*3);
+  app.click('hire-staff',{id:candidate.id});
+  let current=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(current.staff.length,1);
+  assert.equal(current.staff[0].name,candidate.name);
+  assert.equal(current.cash,12500-P.HIRING_FEE);
+  const after=app.nodes.get('people-board').innerHTML;
+  assert.match(after,/YOUR TEAM/);
+  assert.match(after,/EMPLOYEE FILE · ID 1/);
+  assert.match(after,/STARTS DAY 2/);
+  assert.match(after,/STAFF TRAINING/);
+  assert.match(after,/RELEASE EMPLOYEE \/ NOTICE COST/);
+  app.click('continue');
+  current=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(current.day,2);
+  assert.match(app.nodes.get('people-board').innerHTML,/AVAILABLE/);
+  assert.equal(current.staff[0].startDay,2);
+});
+
+test('v0.9.31 cash-poor candidates show a precise block and do not debit hiring fee',()=>{
+  const app=browser(new Map()),E=app.productionEngine,P=E.people;
+  const state=E.create('Cash Safeguards',[]);
+  state.cash=202;
+  const c=P.applicants(1).find(x=>x.role==='sales');
+  const quotation=P.hireQuote(state,c);
+  assert.ok(quotation.shortfall>0);
+  const file=app.peopleView.staffDesk(state,P,{mode:'candidates',selectedId:'c:'+c.id}).html;
+  assert.match(file,/INSUFFICIENT CASH/);
+  assert.match(file,/SHORT BY/);
+  assert.match(file,/CANNOT HIRE/);
+  assert.match(file,/data-action="hire-staff"[^>]* disabled/);
+  const before=state.cash,ledger=state.ledger.length;
+  assert.equal(P.hire(state,c.id).code,'cash');
+  assert.equal(state.cash,before);
+  assert.equal(state.ledger.length,ledger);
+  assert.equal(state.staff.length,0);
+});
+
+test('v0.9.31 staff availability, training and role vacancies are truthful',()=>{
+  const app=browser(new Map()),E=app.productionEngine,P=E.people;
+  const s=E.create('Employment Flow',[]);
+  const tech=P.applicants(s.day).find(x=>x.role==='technician');
+  const sales=P.applicants(s.day).find(x=>x.role==='sales');
+  assert.ok(P.hire(s,tech.id).ok);
+  assert.ok(P.hire(s,sales.id).ok);
+  const team=app.peopleView.staffDesk(s,P,{mode:'team',selectedId:'e:1'});
+  assert.equal(team.counts.employed,2);
+  assert.equal(team.counts.active,0);
+  assert.match(team.html,/STARTS DAY 2/);
+  assert.match(team.html,/2 \/ 7/);
+  s.day=2;
+  assert.equal(app.peopleView.deskCounts(s,P).active,2);
+  const training=P.train(s,1);
+  assert.ok(training.ok);
+  const during=app.peopleView.staffDesk(s,P,{mode:'team',selectedId:'e:1'}).html;
+  assert.match(during,/TRAINING TO DAY 4/);
+  assert.match(during,/ALREADY TRAINING/);
+  assert.match(during,/AUTHORISE TRAINING[^<]*<\/button>/);
+  s.day=4;
+  assert.equal(app.peopleView.employeeStatus(s,P,s.staff[0]).name,'AVAILABLE');
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
