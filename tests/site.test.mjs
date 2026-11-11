@@ -5025,5 +5025,5 @@ test('v0.9.28 management priorities use recorded stock age and preparation backl
   assert.match(view,/14\+ days/);
   assert.match(view,/WORKSHOP BACKLOG/);
   assert.match(view,/CASH INVESTED IN STOCK/);
-  assert.match(view,/GAME DAYS 1/); 
+  assert.match(view,/DAYS 1–30/);
 });
