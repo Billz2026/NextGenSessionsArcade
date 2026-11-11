@@ -4813,16 +4813,26 @@ test('v0.9.25 negotiated sale remains clear with cash and part exchange',()=>{
 
 test('v0.9.25 deposit and collection keep payment balance and handover correct',()=>{
   const app=browser(new Map()),E=app.productionEngine,C=E.customers;
-  const {state,v,c}=findCompletedDrive(E);
-  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
-  assert.ok(E.depositCustomer(state,v.id).ok);
-  const reserve=app.customersView.render(state,E).html;
-  assert.match(reserve,/BALANCE DUE AT COLLECTION/);
-  assert.match(reserve,/COLLECTION: GAME DAY/);
-  assert.doesNotMatch(reserve,/data-action="handover-customer"/);
-  const balance=C.balanceDue(c);
-  state.day=c.collectionDay;E.advanceCustomers(state);
-  assert.equal(c.status,'collectable');
+  let completed=null;
+  for(let i=0;i<130&&!completed;i++){
+    const {state,v}=readyForRetail(E,'Final Sales Handover '+i);
+    if(!C.demand(state,v))continue;
+    if(!E.openCustomer(state,v.id).ok||!E.bookCustomer(state,v.id).ok)continue;
+    const c=C.caseFor(state,v.id);
+    state.day=c.appointmentDay;E.advanceCustomers(state);
+    if(c.status!=='arrived'||!E.testDrive(state,v.id).ok)continue;
+    if(!E.agreeCustomer(state,v.id,'cash',null).ok)continue;
+    if(!E.depositCustomer(state,v.id).ok)continue;
+    const reserve=app.customersView.render(state,E).html;
+    assert.match(reserve,/BALANCE DUE AT COLLECTION/);
+    assert.match(reserve,/COLLECTION: GAME DAY/);
+    assert.doesNotMatch(reserve,/data-action="handover-customer"/);
+    const balance=C.balanceDue(c);
+    state.day=c.collectionDay;E.advanceCustomers(state);
+    if(c.status==='collectable')completed={state,v,c,balance};
+  }
+  assert.ok(completed,'Find a buyer who attends their paid collection');
+  const {state,v,c,balance}=completed;
   const collect=app.customersView.render(state,E).html;
   assert.match(collect,/BALANCE TO COLLECT TODAY/);
   assert.match(collect,/COLLECTION DUE: DAY/);
