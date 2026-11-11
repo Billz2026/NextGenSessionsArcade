@@ -101,7 +101,7 @@
       '<div class="auction-car-content">'+VC.heading(lot,'auction','LOT '+E.lotNumber(h.index)+' · '+esc(lot.id))+
       '<div class="auction-prices"><div><small>GUIDE</small><strong>'+money(lot.guide)+'</strong></div>'+
       '<div><small>BUYER FEE</small><strong>'+money(lot.fee)+'</strong></div>'+
-      '<div><small>EST. PREP</small><strong>'+money(lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0))+'</strong></div>'+
+      '<div><small>KNOWN PREP ESTIMATE</small><strong>'+money(lot.profile.basePrep+(inspection?(lot.profile.hiddenFault?.cost||0):0))+'</strong></div>'+
       '<div><small>LIKELY RETAIL SALE</small><strong>'+money(lot.profile.likelySale)+'</strong></div></div>'+
       reportCard(lot,'auction',expectedNext)+
       '</div></article>'+
