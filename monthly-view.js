@@ -49,7 +49,8 @@
     partExchangePurchases:'Part-exchange allowances',preparation:'Stock preparation',
     inspections:'Pre-purchase inspections',payroll:'Wages paid',
     commission:'Sales commission paid',recruitment:'Recruitment / onboarding',
-    training:'Staff training',staffExit:'Staff exits / notice',other:'Other recorded cash movements'
+    training:'Staff training',staffExit:'Staff exits / notice',other:'Other recorded cash movements',
+    premisesPayments:'Rent and utilities paid',premisesInvestment:'Premises capital investment'
   };
   function renderReport(state,M,selected='current'){
     const historical=String(selected)!=='current';
@@ -63,8 +64,9 @@
     const outcome=r.targetMet?'report-good':'report-risk';
     const historicLabel=r.partial?'PARTIAL RECORD · UPGRADED CAREER':'FULL OPERATING PERIOD';
     const gap=r.targetUnits-r.soldUnits;
-    const companyWarning=r.soldUnits>=r.targetUnits&&r.grossMargin<=0?
-      'Sales volume reached, but the gross margin is not positive. This does not count as achieving the company goal.':'';
+    const companyWarning=r.soldUnits>=r.targetUnits&&
+      (r.operatingContribution??r.grossMargin)<=0?
+      'Sales volume reached, but costs consumed the margin. This does not count as achieving the company goal.':'';
     const reportHeader='<header class="report-heading '+(isClosed?outcome:'')+'">'+
       '<div><small>MONTH '+r.month+' · GAME DAYS '+r.startDay+'–'+r.endDay+
       ' · '+(isClosed?historicLabel:'LIVE BUSINESS POSITION')+'</small>'+
@@ -80,7 +82,10 @@
       cell('GROSS TRADE MARGIN',money(r.grossMargin),
         'Planning guide: '+money(r.targetMargin),r.grossMargin<0?'report-value-negative':'')+
       cell('AFTER STAFF COSTS',money(r.grossAfterStaff),
-        'Not net profit · excludes overheads / tax',r.grossAfterStaff<0?'report-value-negative':'')+
+        'Before premises rent, utilities and tax',r.grossAfterStaff<0?'report-value-negative':'')+
+      cell('OPERATING CONTRIBUTION',money(r.operatingContribution??r.grossAfterStaff),
+        'After recorded staff and premises costs · before tax, finance and depreciation',
+        (r.operatingContribution??r.grossAfterStaff)<0?'report-value-negative':'')+
       cell('CASH AT END OF PERIOD',money(r.closingCash),'Opening: '+money(r.openingCash))+
       cell('REPUTATION',r.closingReputation+'/100',
         'Starting '+r.startingReputation+'/100')+
@@ -90,7 +95,7 @@
       progress(r.turnover,r.targetTurnover,'Sales turnover guidance')+
       progress(Math.max(0,r.grossMargin),r.targetMargin,'Gross trading margin guidance')+
       (companyWarning?'<p class="report-alert">'+companyWarning+'</p>':'')+
-      '<p class="report-muted">Target outcome requires the unit count AND a positive gross vehicle margin. '+
+      '<p class="report-muted">Target outcome requires the unit count AND a positive operating contribution after staff and premises charges. '+
       'Turnover and margin figures are secondary benchmarks, not additional mandatory gates. '+
       (isClosed?'This target was set at the start of the period.':
       'Targets change for the next month if reputation changes.')+'</p></section>';
@@ -103,13 +108,16 @@
       amount('Closing cash',r.closingCash,true)+
       '<hr/>'+amount('Retail sales proceeds',source.retailReceipts,true)+
       Object.entries(nameByCategory).map(([key,label])=>
-        amount(label,source[key])).join('')+
+        amount(label,source[key]??0)).join('')+
       '<hr/>'+amount('Vehicle gross trading margin',r.grossMargin)+
       amount('Recorded staff expenses paid',-r.staffCosts)+
       amount('Gross margin less staff costs',r.grossAfterStaff)+
+      amount('Premises expenses accrued',-(r.premisesExpense??0))+
+      amount('Premises arrears outstanding',r.premisesArrears??0)+
+      amount('Operating contribution after premises costs',r.operatingContribution??r.grossAfterStaff)+
       '<p class="report-muted">Gross margin is recognised when a vehicle sells, whereas buying and preparation affect cash immediately. '+
       'Some inspection costs may remain outside realised vehicle margin until stock is sold. '+
-      'These are game management figures, not statutory accounts, taxable profit or a VAT calculation.</p></section>';
+      'Recurring premises costs are accrued daily even if unpaid; investment reduces cash but is capital expenditure, not immediate operating expense. These are game management figures, not statutory accounts, taxable profit or a VAT calculation.</p></section>';
     const saleLine='<section class="panel-card report-section"><h3>SALES & PURCHASING</h3>'+
       countLine('Cash retail sales',r.salesModes.cash)+
       countLine('Retail sales with part-exchanges',r.salesModes.partExchange)+
