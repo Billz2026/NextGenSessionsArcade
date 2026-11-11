@@ -1089,3 +1089,44 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
   .inbox-letter-fact{flex-direction:column;gap:3px}
   .inbox-letter-fact>strong{flex:0 0 auto}
 }
+
+/* v0.9.15 — Inbox reading experience: plain-language email, not a dense report */
+.inbox-control .inbox-detail{background:#132631;padding:18px 23px}
+.inbox-control .inbox-mail-heading{margin:0 0 11px;padding:0 0 12px}
+.inbox-control .inbox-mail-heading h2{font:850 clamp(24px,2.3vw,30px)/1.22 var(--title);letter-spacing:.008em;margin:6px 0 0}
+.inbox-control .inbox-letter{background:#192f39;border:1px solid #45606a;border-radius:9px;box-shadow:0 8px 18px #07131833}
+.inbox-control .inbox-letter-letterhead{padding:16px 19px;gap:12px;border-bottom:1px solid #46606b;background:#203943}
+.inbox-control .inbox-letter-crest{width:42px;height:42px;flex-basis:42px;border-radius:50%;background:#c7a575;color:#1b2d34;font:900 14px/1 var(--title)}
+.inbox-control .inbox-letter-identity{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}
+.inbox-control .inbox-letter-identity strong{font:800 14px/1.4 var(--body);color:#f3efe6}
+.inbox-control .inbox-letter-identity small{font:500 11px/1.4 var(--body);color:#b2c8ca}
+.inbox-control .inbox-letter-state{padding:6px 9px;color:#eed2a3;font:800 9px/1.35 var(--mono);border:1px solid #897a5e;max-width:190px}
+.inbox-control .inbox-letter-content{padding:14px 24px 8px}
+.inbox-control .inbox-letter-section{padding:9px 0;border:0}
+.inbox-control .inbox-letter-opening{padding-top:4px}
+.inbox-control .inbox-letter-section p{font:500 13px/1.75 var(--body);color:#d7e2e3;margin:0 0 10px;overflow-wrap:anywhere}
+.inbox-control .inbox-letter-section p:last-child{margin-bottom:0}
+.inbox-control .inbox-letter-subhead{font:800 12px/1.45 var(--mono);color:#efc690;margin:0 0 8px}
+.inbox-control .inbox-letter-fact{display:flex;gap:12px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #344a53}
+.inbox-control .inbox-letter-fact:last-child{border-bottom:0}
+.inbox-control .inbox-letter-fact>strong{flex:0 0 min(45%,205px);font:800 10px/1.5 var(--mono);color:#edc08a}
+.inbox-control .inbox-letter-fact>span{font:600 12px/1.5 var(--body);color:#e3e9e6}
+.inbox-control .inbox-letter-signoff{padding:18px 24px;background:transparent;border-top:1px solid #344f59;display:flex;align-items:end;gap:10px}
+.inbox-control .inbox-letter-signoff>div{display:flex;flex-direction:column;gap:4px}
+.inbox-control .inbox-letter-signoff>div span{font:500 12px var(--body);color:#b0c4c8}
+.inbox-control .inbox-letter-signoff>div strong{font:750 13px var(--body);color:#f1debf}
+.inbox-control .inbox-letter-signoff>small{margin-left:auto;text-align:right;font:700 8px/1.5 var(--mono);color:#829fa7}
+.inbox-message-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.inbox-message-tools .inbox-tool-mark{background:#233a44;border:1px solid #4d6972;border-radius:5px;padding:7px 10px;font:800 9px/1.3 var(--mono);color:#d4c4ab;cursor:pointer}
+.inbox-message-tools .inbox-tool-mark:hover{border-color:#e6bc7c;background:#2b4851}
+.inbox-message-tools>span{font:700 9px/1.4 var(--mono);color:#96afb6}
+@media(max-width:650px){
+ .inbox-control .inbox-detail{padding:13px}
+ .inbox-control .inbox-letter-letterhead{padding:12px;gap:9px}
+ .inbox-control .inbox-letter-content{padding:12px 14px 6px}
+ .inbox-control .inbox-letter-section p{font-size:12px}
+ .inbox-control .inbox-letter-fact{flex-direction:column;gap:2px}
+ .inbox-control .inbox-letter-fact>strong{flex:auto}
+ .inbox-control .inbox-letter-signoff{padding:13px 14px}
+ .inbox-control .inbox-letter-state{font-size:8px;max-width:140px}
+}
