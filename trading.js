@@ -309,6 +309,13 @@
       return M.initialize(legacy,{migrating:true});
     }
     if(saved.version>=VERSION&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
+    // An untouched old catalogue can be refreshed after a day change without
+    // losing any bid or payment. Never silently discard a live or decided lot.
+    const staleEmptyHall=saved.version>=VERSION&&saved.auctionHall?.day!==saved.day&&
+      saved.auctionHall?.phase==='catalogue'&&saved.auctionHall?.index===0&&
+      saved.auctionHall?.currentBid===0&&saved.auctionHall?.rounds===0&&
+      Array.isArray(saved.auctionHall?.feed)&&saved.auctionHall.feed.length===0&&
+      Array.isArray(saved.auctionHall?.results)&&saved.auctionHall.results.length===0;
     const site=saved.version>=10?saved.premises:SITE.initial();
     if(saved.version<10&&Array.isArray(saved.staff)){
       // Existing v9 careers could already employ six or eight technicians.
@@ -392,8 +399,8 @@
     const restored={
       version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:expectedCapacity,
       premises:SITE.clone(site),
-      auctionHall:saved.version>=VERSION?JSON.parse(JSON.stringify(saved.auctionHall)):
-        initialAuctionHall(saved.day),
+      auctionHall:saved.version>=VERSION&&!staleEmptyHall?
+        JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
       auctionHistory:saved.version>=VERSION?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
