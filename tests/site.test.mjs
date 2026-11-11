@@ -3331,6 +3331,20 @@ test('v0.9.10 auction calendar opens only Mondays, never Saturdays or Sundays', 
   assert.equal(E.nextAuctionDay(30),36);
   assert.equal(E.auctionDay(6),false,'Saturday must not have an auction');
   assert.equal(E.auctionDay(7),false,'Sunday must not have an auction');
+  assert.equal(E.auctionDay(120),false,'Month-end Monday is reserved for Deal Day');
+  assert.equal(E.auctionDay(121),true,'Auction must move to Tuesday, preserving weekly frequency');
+  assert.equal(E.nextAuctionDay(119),121);
+  assert.equal(E.nextAuctionDay(120),121);
+  assert.equal(E.nextAuctionDay(121),127);
+  assert.equal(E.market(120).auctions.length,0);
+  assert.ok(E.market(121).auctions.length>=3);
+  for(let week=0;week<65;week++){
+    const monday=1+week*7;
+    const open=[0,1,2,3,4,5,6].map(offset=>monday+offset)
+      .filter(day=>E.auctionDay(day));
+    assert.equal(open.length,1,'Exactly one auction for game week '+(week+1));
+    assert.ok((open[0]-monday)<5,'Weekly auction must be Monday–Friday');
+  }
 });
 
 test('v0.9.10 rival withdrawal produces invoice first, not instant payment or workshop stock', () => {
