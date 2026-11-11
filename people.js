@@ -226,7 +226,8 @@
     employee.lastTrainingDay=state.day;
     employee.trainingUntil=state.day+2;
     const attribute=employee.role==='sales'?'sales':
-      employee.role==='buyer'?'negotiation':'diagnostics';
+      employee.role==='buyer'?'negotiation':
+      employee.role==='supervisor'?'care':'diagnostics';
     employee.skills[attribute]=clamp(employee.skills[attribute]+1,1,20);
     if(employee.role==='technician')
       employee.skills.efficiency=clamp(employee.skills.efficiency+1,1,20);
