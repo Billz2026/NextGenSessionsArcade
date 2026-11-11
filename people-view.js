@@ -95,45 +95,119 @@
     }).join('');
   }
   const levels=[
-    {min:0,max:19,name:'NEW TRADER'},
-    {min:20,max:39,name:'LOCAL DEALER'},
-    {min:40,max:59,name:'TRUSTED DEALER'},
-    {min:60,max:79,name:'REGIONAL SPECIALIST'},
-    {min:80,max:100,name:'PRESTIGE DEALER'}
+    {min:0,max:19,name:'NEW TRADER',benefit:'Starting reputation tier'},
+    {min:20,max:39,name:'LOCAL DEALER',benefit:'First forecourt expansion becomes eligible'},
+    {min:40,max:59,name:'TRUSTED DEALER',benefit:'Extra sales and technician hiring capacity'},
+    {min:60,max:79,name:'REGIONAL SPECIALIST',benefit:'Regional standing; luxury market needs 65+ and cash'},
+    {min:80,max:100,name:'PRESTIGE DEALER',benefit:'Highest staff capacity and premises eligibility'}
   ];
   function reputation(state){
-    const score=state.reputationScore;
-    const turnover=state.sold.reduce((n,s)=>n+s.price,0);
-    const next=levels.find(l=>score<l.max+1)||levels[levels.length-1];
-    const upcoming=levels.find(l=>l.min>score);
-    const history=[...state.reputationHistory].reverse().slice(0,20);
-    const milestones=levels.map(l=>'<div class="reputation-tier '+(score>=l.min?'rep-tier-earned':'')+
-      '"><div><strong>'+esc(l.name)+'</strong><small>'+l.min+'–'+l.max+' / 100</small></div>'+
-      '<span>'+(score>=l.min?'REACHED':'LOCKED')+'</span></div>').join('');
-    const entries=history.length?history.map(entry=>
-      '<div class="reputation-event"><span>DAY '+entry.day+'</span><strong class="'+
-      (entry.delta>=0?'rep-positive':'rep-negative')+'">'+(entry.delta>0?'+':'')+
-      entry.delta+'</strong><p>'+esc(entry.reason)+'</p></div>').join(''):
-      '<p class="people-caption">Your reputation history begins after your first completed sale or payroll issue.</p>';
-    return '<div class="reputation-highlight"><div><small>DEALERSHIP STANDING</small>'+
-      '<h2>'+esc(state.reputation)+'</h2><strong>'+score+'<span> / 100</span></strong>'+
-      '<p>'+(upcoming?'NEXT LEVEL AT '+upcoming.min+' REPUTATION':
-        'HIGHEST REPUTATION TIER REACHED')+'</p></div>'+
-      '<div class="reputation-track"><span style="width:'+score+'%"></span></div></div>'+
-      '<div class="people-metrics"><div><span>VEHICLES SOLD</span><strong>'+state.sold.length+
-      '</strong></div><div><span>LIFETIME SALES TURNOVER</span><strong>'+gbp(turnover)+
-      '</strong></div><div><span>ACTIVE STAFF</span><strong>'+state.staff.length+
-      '</strong></div><div><span>PAYROLL OWED</span><strong>'+gbp(state.payrollArrears)+'</strong></div></div>'+
-      '<p class="trade-alert">Reputation rises through completed deals, vehicle condition and good customer care. '+
-      'High-risk vehicles, inflated prices and unpaid wages can reduce it. Higher tiers will support premium seller opportunities in a later update; '+
-      'this release does not yet generate luxury stock.</p>'+
-      '<div class="reputation-layout"><section class="panel-card people-section"><h3>REPUTATION LEVELS</h3>'+
-      milestones+'</section><section class="panel-card people-section"><h3>RECENT CUSTOMER & STAFF OUTCOMES</h3>'+
-      entries+'</section></div>'+
-      '<div class="panel-card people-section"><h3>LONG-TERM PRESTIGE TARGET</h3>'+
-      '<p>Future prestige seller market: target 80+ reputation and '+gbp(500000)+
-      ' lifetime sales turnover. Your current turnover is '+gbp(turnover)+
-      '. This is a development target, not an unlocked car market yet.</p></div>';
+    const score=Math.max(0,Math.min(100,state.reputationScore));
+    const current=levels.find(l=>score>=l.min&&score<=l.max)||levels[0];
+    const next=levels.find(l=>l.min>score)||null;
+    const points=next?next.min-score:0;
+    const pct=Math.max(0,Math.min(100,score));
+    const sales=state.sold||[];
+    const totalTurnover=sales.reduce((n,row)=>n+row.price,0);
+    const events=Array.isArray(state.reputationHistory)?state.reputationHistory:[];
+    const latest=[...events].reverse();
+    const recent=events.filter(e=>e.day>=Math.max(1,state.day-29));
+    const delta=recent.reduce((n,e)=>n+e.delta,0);
+    const deltaLabel=(delta>0?'+':'')+delta;
+    const deltaTone=delta>0?' rep-good':delta<0?' rep-bad':'';
+    const payroll=state.payrollArrears||0;
+    const premises=state.premises?.arrears||0;
+    const firstTarget=next?next.min:100;
+    const earnedTier=levels.findIndex(x=>x===current);
+    const tierRows=levels.map((l,i)=>{
+      const standing=i===earnedTier?'CURRENT':i<earnedTier?'BELOW CURRENT':'NOT YET REACHED';
+      const cls=i===earnedTier?' rep-current':i<earnedTier?' rep-passed':' rep-locked';
+      return '<div class="rep-stage'+cls+'"><span class="rep-stage-no">'+
+        String(i+1).padStart(2,'0')+'</span><div class="rep-stage-name">'+
+        '<strong>'+esc(l.name)+'</strong><small>'+esc(l.benefit)+'</small></div>'+
+        '<span class="rep-stage-range">'+l.min+'–'+l.max+'</span>'+
+        '<em>'+standing+'</em></div>';
+    }).join('');
+    const entry=row=>{
+      const positive=row.delta>0,negative=row.delta<0;
+      return '<div class="rep-change"><span>DAY '+row.day+'</span>'+
+        '<strong class="'+(positive?'rep-good':negative?'rep-bad':'')+'">'+
+        (row.delta>0?'+':'')+row.delta+'</strong>'+
+        '<p>'+esc(row.reason)+'</p></div>';
+    };
+    const last=latest.slice(0,4);
+    const newest=last.length?last.map(entry).join(''):
+      '<div class="rep-empty">No reputation changes recorded yet. Completed deals and '+
+      'operating issues will appear here.</div>';
+    const more=latest.slice(4);
+    const cashNumber=gbp(totalTurnover);
+    const risk=payroll?
+      '<div class="rep-risk"><strong>PAYROLL NEEDS ATTENTION</strong><span>'+
+        gbp(payroll)+' in unpaid staff obligations can affect trust.</span>'+
+        '<button type="button" data-page="staff">OPEN STAFF DESK</button></div>':
+      premises?
+      '<div class="rep-risk"><strong>PREMISES BILLS OUTSTANDING</strong><span>'+
+        gbp(premises)+' due. Extended arrears can lower reputation.</span>'+
+        '<button type="button" data-page="finance">VIEW FINANCES</button></div>':
+      '<div class="rep-priority"><strong>KEEP THE MOMENTUM</strong>'+
+        '<span>Prepare vehicles properly, price realistically and complete quality handovers.</span>'+
+        '<button type="button" data-page="workshop">VIEW WORKSHOP</button></div>';
+    const scoreHero='<section class="rep-hero" aria-label="Current dealership reputation">'+
+      '<div class="rep-hero-id"><div><small>YOUR DEALERSHIP STANDING</small>'+
+        '<h2>'+esc(current.name)+'</h2>'+
+        '<p>'+esc(state.name)+' · Day '+state.day+'</p></div>'+
+        '<div class="rep-score"><strong>'+score+'</strong><span>/ 100</span></div></div>'+
+      '<div class="rep-progress" role="progressbar" aria-label="Reputation score" '+
+        'aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+score+'">'+
+        '<div style="width:'+pct+'%"></div></div>'+
+      '<div class="rep-next"><span>'+(next?
+        '<strong>'+points+' POINT'+(points===1?'':'S')+' TO '+esc(next.name)+'</strong>'+
+        ' · NEXT TIER AT '+firstTarget:
+        '<strong>HIGHEST REPUTATION TIER</strong> · KEEP CUSTOMER TRUST HIGH')+
+        '</span><span>CURRENT SCORE '+score+' / 100</span></div></section>';
+    const metrics='<div class="rep-kpis">'+
+      [['VEHICLES HANDED OVER',String(sales.length),'Completed retail sales'],
+       ['LIFETIME SALES TURNOVER',cashNumber,'Completed sales only'],
+       ['LAST 30 GAME DAYS',deltaLabel+' POINTS','Recorded reputation change'],
+       ['PAYROLL OBLIGATIONS',gbp(payroll),'Outstanding staff wages / notice']].map(
+        ([label,value,note],i)=>'<div class="rep-kpi'+(i===2?deltaTone:i===3&&payroll?' rep-alert':'')+'">'+
+          '<small>'+label+'</small><strong>'+esc(value)+'</strong><span>'+note+
+        '</span></div>').join('')+'</div>';
+    const main='<div class="rep-main-grid">'+
+      '<section class="rep-panel"><div class="rep-panel-head"><div><small>CAREER PROGRESSION</small>'+
+        '<h3>REPUTATION LEVELS</h3></div><span>5 TIERS</span></div>'+
+        '<div class="rep-stage-list">'+tierRows+'</div>'+
+        '<p class="rep-panel-note">Tier limits are recalculated from your current score. '+
+        'Staffing and premises changes also require available capacity and cash.</p></section>'+
+      '<section class="rep-panel"><div class="rep-panel-head"><div><small>WHAT SHAPES THE SCORE</small>'+
+        '<h3>BUILDING TRUST</h3></div><span>REAL GAME EVENTS</span></div>'+
+        '<div class="rep-drivers"><div><strong>BUILDS REPUTATION</strong>'+
+        '<p>Completed handovers of good-condition cars; strong customer care and fair prices.</p></div>'+
+        '<div><strong>CAN DAMAGE REPUTATION</strong>'+
+        '<p>Poor-condition stock, inflated retail prices and unresolved payroll or long-overdue premises bills.</p></div></div>'+
+        risk+
+        '<div class="rep-quick-links"><button type="button" data-page="sales">SALES OFFICE</button>'+
+        '<button type="button" data-page="stock">VEHICLE STOCK</button>'+
+        '<button type="button" data-page="reports">MANAGEMENT REPORTS</button></div>'+
+      '</section></div>';
+    const history='<section class="rep-panel rep-history"><div class="rep-panel-head">'+
+        '<div><small>RECORDED CUSTOMER & STAFF OUTCOMES</small>'+
+        '<h3>REPUTATION HISTORY</h3></div><span>'+events.length+' EVENTS RECORDED</span></div>'+
+      '<div class="rep-history-preview">'+newest+'</div>'+
+      (more.length?'<details class="rep-more"><summary>VIEW '+more.length+
+        ' MORE RECORDED CHANGES</summary><div class="rep-history-all">'+
+        more.map(entry).join('')+'</div></details>':'')+'</section>';
+    const future='<details class="rep-future"><summary>LONG-TERM PRESTIGE TARGET & MARKET ELIGIBILITY</summary>'+
+      '<div class="rep-future-body"><p><strong>Live market rules:</strong> Modern stock needs £18,500 opening cash and 15 reputation; '+
+      'premium stock needs £42,000 and 40 reputation; luxury stock needs £110,000 and 65 reputation. '+
+      'The market checks cash and the monthly starting reputation, not just the tier name.</p>'+
+      '<p><strong>Future development concept:</strong> a separate prestige-seller milestone of 80+ reputation '+
+      'and £500,000 lifetime sales turnover. You currently have '+score+
+      ' reputation and '+cashNumber+' in completed turnover. '+
+      'That separate milestone is not an additional unlock in this version.</p></div></details>';
+    return '<div class="rep-control">'+scoreHero+metrics+main+history+future+
+      '<p class="rep-disclosure">Reputation and trading results are fictional simulation values. '+
+      'A higher score alone does not guarantee customers, profitable stock or cash.</p></div>';
   }
   function totals(state,P){
     const wages=state.staff.reduce((sum,employee)=>sum+P.dailyCost(employee),0);
