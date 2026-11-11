@@ -77,10 +77,10 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=48/);
+  assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=32/);
   assert.match(html, /premises\.js\?v=1/);
-  assert.match(html, /premises-view\.js\?v=2/);
+  assert.match(html, /premises-view\.js\?v=3/);
   assert.match(html, /id="premises-view"/);
   assert.match(html, /dashboard-view\.js\?v=2/);
   assert.match(html, /inbox-office\.js\?v=3/);
@@ -114,7 +114,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.34/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.35/);
   assert.match(html, /<small>FORECOURT<\/small><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
   assert.match(css, /\.vehicle-photo-missing\[hidden\]/);
@@ -597,7 +597,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=48/);
+  assert.match(html, /styles\.css\?v=49/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4442,7 +4442,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.34/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.35/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4511,7 +4511,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.34/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.35/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4969,7 +4969,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=48/);
+  assert.match(html,/styles\.css\?v=49/);
 });
 
 
@@ -5304,8 +5304,8 @@ test('v0.9.32 staff and recruitment preserve readable skills while collapsing se
 });
 
 test('v0.9.32 compact Staff & Recruitment desktop styles retain labels and responsive grid',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.34/);
-  assert.match(html,/styles\.css\?v=48/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.35/);
+  assert.match(html,/styles\.css\?v=49/);
   assert.match(html,/people-view\.js\?v=7/);
   assert.match(css,/\.career-main:has\(\[data-panel="staff"\]:not\(\[hidden\]\)\) \.career-topbar/);
   assert.match(css,/\.sd-kpis>div\{min-height:56px/);
@@ -5420,7 +5420,7 @@ test('v0.9.33 Reputation uses compact responsive layout without removing complet
   assert.match(css,/\.rep-main-grid\{display:grid/);
   assert.match(css,/\.rep-history-preview\{display:grid/);
   assert.match(css,/@media\(max-width:760px\)/);
-  assert.match(html,/styles\.css\?v=48/);
+  assert.match(html,/styles\.css\?v=49/);
   assert.match(html,/people-view\.js\?v=7/);
 });
 
@@ -5558,4 +5558,58 @@ test('v0.9.34 debt, payroll and workshop reserves appear as distinct owner oblig
   assert.equal(s.premises.arrears,140);
   assert.equal(s.payrollArrears,85);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+
+test('v0.9.35 My Dealership upgrades keep purchase actions above optional detail',()=>{
+  const app=browser(new Map()),E=app.productionEngine,site=E.premises;
+  const state=E.create('Compact HQ',[]);
+  state.reputationScore=20;
+  const before=JSON.stringify(state);
+  const card=app.premisesView.card(state,site,'forecourt');
+  const action=card.indexOf('data-action="upgrade-premises"');
+  const details=card.indexOf('<details class="hq-upgrade-details">');
+  assert.ok(action>0 && details>action,'Upgrade action must appear before optional explanation');
+  assert.match(card,/ONE-OFF INVESTMENT/);
+  assert.match(card,/EXTRA COST PER GAME DAY/);
+  assert.match(card,/APPROVE £1,800 INVESTMENT/);
+  assert.match(card,/VIEW INVESTMENT REQUIREMENTS/);
+  assert.match(card,/CASH NEEDED INCL. BUFFERS/);
+  assert.match(card,/REPUTATION REQUIRED/);
+  assert.equal((card.match(/class="hq-upgrade-headline-costs"/g)||[]).length,0);
+  assert.match(card,/class="hq-upgrade-costs hq-upgrade-headline-costs"/);
+  assert.equal(JSON.stringify(state),before,'Presentation must not mutate game state');
+});
+
+test('v0.9.35 blocked and maximum upgrades still retain accurate eligibility',()=>{
+  const app=browser(new Map()),E=app.productionEngine,site=E.premises;
+  const s=E.create('Compact Restrictions',[]);
+  let card=app.premisesView.card(s,site,'forecourt');
+  assert.match(card,/REPUTATION LOCKED/);
+  assert.match(card,/REQUIRES 20 REPUTATION/);
+  assert.match(card,/data-kind="forecourt" disabled/);
+  assert.match(card,/VIEW INVESTMENT REQUIREMENTS/);
+  s.reputationScore=20;s.cash=202;
+  card=app.premisesView.card(s,site,'forecourt');
+  assert.match(card,/CASH REQUIRED/);
+  assert.match(card,/Cash shortfall/);
+  assert.match(card,/data-kind="forecourt" disabled/);
+  s.reputationScore=100;s.premises.forecourtLevel=3;s.capacity=site.capacity(s);
+  card=app.premisesView.card(s,site,'forecourt');
+  assert.match(card,/MAXIMUM/);
+  assert.match(card,/FULLY EXPANDED/);
+  assert.doesNotMatch(card,/data-action="upgrade-premises"/);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.35 one-page desktop polish is scoped to My Dealership and retains mobile layout',()=>{
+  assert.match(html,/PRE-ALPHA · v0\.9\.35/);
+  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/premises-view\.js\?v=3/);
+  assert.match(css,/v0\.9\.35 — Final My Dealership single-screen desktop polish/);
+  assert.match(css,/\.career-layout:has\(\[data-panel="business"\]:not\(\[hidden\]\)\) \.career-topbar/);
+  assert.match(css,/\.hq-upgrade-headline-costs\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css,/\[data-panel="business"\] \.hq-identity-facts\{/);
+  assert.match(css,/\.hq-upgrade-details summary:focus-visible/);
+  assert.match(css,/@media\(max-width:560px\)/);
 });
