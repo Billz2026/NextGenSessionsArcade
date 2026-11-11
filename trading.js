@@ -7,7 +7,7 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 4;
-  const VERSION = 10;
+  const VERSION = 11;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
@@ -102,12 +102,183 @@
       state.monthPlan?.startingReputation??state.reputationScore,
       state.cash-todaysMovement);
   };
+  // The in-person hall is a stateful sequence, not the historical instant
+  // maximum-bid form. Every bid represents a legally binding game commitment
+  // while the player's bid is highest. The hammer occurs as soon as the
+  // rival dealer folds and the vendor reserve is met.
+  const auctionPhases=['catalogue','bidding','result','finished'];
+  const auctionKinds=['won','lost','passed','unsold','owned'];
+  const auctionIncrements=[100,250,500];
+  const initialAuctionHall=day=>({
+    day,index:0,phase:'catalogue',currentBid:0,leader:'none',
+    playerBid:0,rivalFolded:false,rounds:0,feed:[],results:[]
+  });
+  const lotNumber=index=>String(index+1).padStart(3,'0');
+  function auctionLot(state){
+    return marketFor(state).auctions[state.auctionHall.index]||null;
+  }
+  function auctionValid(state){
+    const h=state.auctionHall,history=state.auctionHistory;
+    if(!h||typeof h!=='object'||Array.isArray(h)||
+       !Array.isArray(history)||history.length>160||
+       !integer(h.day)||h.day!==state.day||
+       !integer(h.index)||h.index<0||
+       !auctionPhases.includes(h.phase)||
+       !integer(h.currentBid)||h.currentBid<0||h.currentBid>100000||
+       !['none','rival','player'].includes(h.leader)||
+       !integer(h.playerBid)||h.playerBid<0||h.playerBid>100000||
+       typeof h.rivalFolded!=='boolean'||
+       !integer(h.rounds)||h.rounds<0||h.rounds>250||
+       !Array.isArray(h.feed)||h.feed.length>65||
+       !h.feed.every(entry=>typeof entry==='string'&&entry.length<=160)||
+       !Array.isArray(h.results)||h.results.length>20)return false;
+    const lots=marketFor(state).auctions;
+    if(h.index>lots.length||
+       (h.phase==='finished'&&h.index!==lots.length)||
+       (h.phase!=='finished'&&h.index>=lots.length&&lots.length>0)||
+       (h.phase==='result'&&h.results.length!==h.index+1)||
+       (h.phase!=='result'&&h.results.length!==h.index)||
+       (h.phase==='catalogue'&&
+         (h.currentBid!==0||h.playerBid!==0||h.rounds!==0||h.feed.length>0))||
+       (h.phase==='bidding'&&
+         (h.currentBid<lots[h.index].guide||h.leader==='none'||h.rounds>250))||
+       (h.phase==='finished'&&h.feed.length>0))return false;
+    const validResult=r=>r&&typeof r==='object'&&!Array.isArray(r)&&
+      integer(r.day)&&r.day>=1&&r.day<=state.day&&
+      /^A-[0-9]+-[0-9]+$/.test(r.lotId)&&
+      typeof r.title==='string'&&r.title.length>=2&&r.title.length<100&&
+      typeof r.lotNumber==='string'&&/^\d{3}$/.test(r.lotNumber)&&
+      auctionKinds.includes(r.kind)&&
+      integer(r.hammer)&&r.hammer>=0&&r.hammer<=100000&&
+      integer(r.fee)&&r.fee>=0&&r.fee<=5000&&
+      (r.kind==='won'?r.hammer>0&&r.fee>0:r.fee===0)&&
+      integer(r.total)&&r.total===r.hammer+r.fee&&
+      typeof r.detail==='string'&&r.detail.length<=160;
+    if(!history.every(validResult)||!h.results.every(validResult))return false;
+    if(h.results.some((r,i)=>r.day!==state.day||r.lotId!==lots[i]?.id||
+      r.lotNumber!==lotNumber(i)))return false;
+    if(h.phase==='bidding'&&h.leader==='player'&&
+      h.currentBid>=lots[h.index].reserve)return false;
+    const winners=[...history,...h.results].filter(r=>r.kind==='won');
+    return winners.every(r=>state.ledger.some(l=>l.day===r.day&&
+      l.delta===-r.total&&
+      l.note.startsWith('Auction purchase: '+r.title+' (bid '+r.hammer+
+        ', buyer fee '+r.fee+')')));
+  }
+  function resolveAuction(state,kind,hammer,detail){
+    const h=state.auctionHall,lot=auctionLot(state);
+    const fee=kind==='won'?lot.fee:0;
+    const result={day:state.day,lotId:lot.id,
+      lotNumber:lotNumber(h.index),title:lot.title,
+      kind,hammer,fee,total:hammer+fee,detail};
+    h.results.push(result);
+    state.auctionHistory.push({...result});
+    if(state.auctionHistory.length>160)state.auctionHistory.shift();
+    h.phase='result';
+    h.feed.push(detail);
+    if(h.feed.length>65)h.feed=h.feed.slice(-65);
+    return {ok:true,changed:true,message:detail};
+  }
+  function startAuction(state){
+    const h=state.auctionHall;
+    if(h.phase!=='catalogue')return fail('stage','Finish the current lot before opening bidding.');
+    const lot=auctionLot(state);
+    if(!lot)return fail('closed','No auction lots are available in this session.');
+    if(state.vehicles.some(v=>v.origin===lot.id)||
+       state.sold.some(v=>v.origin===lot.id))
+      return resolveAuction(state,'owned',0,
+        'LOT '+lotNumber(h.index)+' was already purchased before the Auction Hall update. No additional charge.');
+    h.phase='bidding';h.currentBid=lot.guide;h.leader='rival';
+    h.playerBid=0;h.rivalFolded=false;h.rounds=0;
+    h.feed=['LOT '+lotNumber(h.index)+' · '+lot.title+' enters the ring.',
+      'Regional dealer opens bidding at £'+lot.guide.toLocaleString('en-GB')+'.'];
+    return {ok:true,changed:true,message:'Bidding is open for LOT '+lotNumber(h.index)+
+      '. The opening rival bid is £'+lot.guide.toLocaleString('en-GB')+
+      '. Bid in increments or walk away.'};
+  }
+  function bidLiveAuction(state,increment){
+    const h=state.auctionHall;
+    if(h.phase!=='bidding')return fail('stage','Open this lot for bidding first.');
+    if(!auctionIncrements.includes(increment))return fail('bid','Choose a £100, £250 or £500 increment.');
+    const lot=auctionLot(state);
+    if(!lot)return fail('closed','This auction lot is no longer available.');
+    const bid=h.currentBid+increment;
+    if(bid>100000)return fail('bid','The live bid exceeds the supported auction price.');
+    if(state.vehicles.some(v=>v.origin===lot.id))
+      return fail('owned','This car has already been bought.');
+    const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
+    const blocked=canBuy(state,bid+lot.fee,requiredPrep);
+    if(blocked)return blocked;
+    const money=n=>'£'+n.toLocaleString('en-GB');
+    h.currentBid=bid;h.playerBid=bid;h.leader='player';h.rounds++;
+    h.feed.push('YOU bid '+money(bid)+' (+'+money(increment)+').');
+    // The competitor never rerolls on repeated actions: its maximum was fixed
+    // when the daily market catalogue was generated.
+    if(!h.rivalFolded&&bid+100<=lot.rival){
+      h.currentBid=bid+100;h.leader='rival';
+      h.feed.push('Regional dealer counters at '+money(h.currentBid)+'.');
+      if(h.feed.length>65)h.feed=h.feed.slice(-65);
+      return {ok:true,changed:true,message:'Rival dealer has outbid you at '+
+        money(h.currentBid)+'. Raise your bid or pass. No money has been taken.'};
+    }
+    h.rivalFolded=true;
+    h.feed.push('Rival dealer drops out at '+money(bid)+'.');
+    if(bid<lot.reserve){
+      h.feed.push('Auctioneer: vendor reserve not yet met. Increase your bid or pass.');
+      if(h.feed.length>65)h.feed=h.feed.slice(-65);
+      return {ok:true,changed:true,message:'You lead at '+money(bid)+
+        ', but the vendor reserve has not been met. Raise your bid or pass with no fee.'};
+    }
+    // Hammer is immediate after a highest bid meets the reserve. It is not
+    // possible to retract a successful bid or make free bids against yourself.
+    pay(state,-(bid+lot.fee),'Auction purchase: '+lot.title+
+      ' (bid '+bid+', buyer fee '+lot.fee+')');
+    addCar(state,lot,'auction',bid+lot.fee,lot.id);
+    h.feed.push('HAMMER DOWN. Sold to your dealership at '+money(bid)+'.');
+    return resolveAuction(state,'won',bid,'LOT '+lotNumber(h.index)+
+      ' WON at '+money(bid)+' hammer. Buyer fee '+money(lot.fee)+
+      '; '+money(bid+lot.fee)+' paid, plus any separate inspection already purchased. Vehicle enters your stock.');
+  }
+  function passAuction(state){
+    const h=state.auctionHall;
+    if(!['catalogue','bidding'].includes(h.phase))
+      return fail('stage','This lot is already decided. Move to the next lot.');
+    const lot=auctionLot(state);
+    if(!lot)return fail('closed','There are no remaining auction lots.');
+    if(h.phase==='catalogue')return resolveAuction(state,'passed',0,
+      'LOT '+lotNumber(h.index)+' skipped before bidding. No fee charged.');
+    if(h.leader==='player'&&h.currentBid<lot.reserve)
+      return resolveAuction(state,'unsold',0,'LOT '+lotNumber(h.index)+
+        ' did not meet the vendor reserve. No sale and no fee.');
+    const finalBid=Math.max(h.currentBid,lot.reserve);
+    return resolveAuction(state,lot.rival>=finalBid?'lost':'unsold',
+      lot.rival>=finalBid?finalBid:0,
+      lot.rival>=finalBid?'LOT '+lotNumber(h.index)+
+        ' sold to a rival dealer at £'+finalBid.toLocaleString('en-GB')+
+        '. You walked away with no fees.':'LOT '+lotNumber(h.index)+
+        ' remained unsold below the vendor reserve. No fees charged.');
+  }
+  function nextAuctionLot(state){
+    const h=state.auctionHall;
+    if(h.phase!=='result')return fail('stage','Finish or pass this lot before continuing.');
+    const length=marketFor(state).auctions.length;
+    h.index++;h.currentBid=0;h.playerBid=0;h.rounds=0;h.rivalFolded=false;
+    h.feed=[];h.leader='none';h.phase=h.index>=length?'finished':'catalogue';
+    return {ok:true,changed:true,message:h.phase==='finished'?
+      'Today’s Auction Hall has finished. Review the results or return tomorrow.':
+      'LOT '+lotNumber(h.index)+' is on the rostrum. Inspect it before opening the bidding.'};
+  }
+  function rollAuctionHall(state){
+    state.auctionHall=initialAuctionHall(state.day);
+  }
+
   function create(name, messages) {
     const state={
       version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       customerCases:{},customerHistory:[],customerFunds:[],
+      auctionHall:initialAuctionHall(1),auctionHistory:[],
       premises:SITE.initial(),...P.initial()
     };
     M.initialize(state);
@@ -115,7 +286,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,8,9,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,9,10,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -123,7 +294,7 @@
       m && integer(m.id) && integer(m.day) && typeof m.from === 'string' &&
       typeof m.subject === 'string' && typeof m.preview === 'string' &&
       typeof m.body === 'string' && typeof m.read === 'boolean' &&
-      (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','staff','reputation','reports','business','workshop','events'].includes(m.linkPage)));
+      (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','staff','reputation','reports','business','workshop','events','auctionHall'].includes(m.linkPage)));
     if (!validMessages) return null;
     const messages = saved.messages.map(m => ({
       id:m.id,day:m.day,from:m.from,subject:m.subject,preview:m.preview,
@@ -134,10 +305,19 @@
       if (saved.cash !== STARTING_CASH || ![2,CAPACITY].includes(saved.capacity)) return null;
       const legacy=create(saved.name.trim(),messages);
       legacy.day=saved.day;
+      legacy.auctionHall=initialAuctionHall(saved.day);
       return M.initialize(legacy,{migrating:true});
     }
-    const site=saved.version>=VERSION?saved.premises:SITE.initial();
-    if(saved.version<VERSION&&Array.isArray(saved.staff)){
+    if(saved.version>=VERSION&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
+    // An untouched old catalogue can be refreshed after a day change without
+    // losing any bid or payment. Never silently discard a live or decided lot.
+    const staleEmptyHall=saved.version>=VERSION&&saved.auctionHall?.day!==saved.day&&
+      saved.auctionHall?.phase==='catalogue'&&saved.auctionHall?.index===0&&
+      saved.auctionHall?.currentBid===0&&saved.auctionHall?.rounds===0&&
+      Array.isArray(saved.auctionHall?.feed)&&saved.auctionHall.feed.length===0&&
+      Array.isArray(saved.auctionHall?.results)&&saved.auctionHall.results.length===0;
+    const site=saved.version>=10?saved.premises:SITE.initial();
+    if(saved.version<10&&Array.isArray(saved.staff)){
       // Existing v9 careers could already employ six or eight technicians.
       // Honour their paid-for team and fitted capacity rather than suddenly
       // forcing them into four bays on upgrade to the premises simulation.
@@ -146,7 +326,7 @@
     }
     if(!SITE.valid(site))return null;
     const expectedCapacity=SITE.capacity({premises:site});
-    if ((saved.version===VERSION?saved.capacity!==expectedCapacity:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
+    if ((saved.version>=10?saved.capacity!==expectedCapacity:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
       !Array.isArray(saved.sold) || !Array.isArray(saved.ledger) ||
       !integer(saved.nextId) || saved.nextId < 1 ||
       !cashValue(saved.cash) || saved.vehicles.length > expectedCapacity ||
@@ -219,10 +399,13 @@
     const restored={
       version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:expectedCapacity,
       premises:SITE.clone(site),
+      auctionHall:saved.version>=VERSION&&!staleEmptyHall?
+        JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
+      auctionHistory:saved.version>=VERSION?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
-        ...v,...(saved.version<VERSION?PH.describe(v):{}),workshop:saved.version>=7?{...v.workshop}:W.initial(v),
+        ...v,...(saved.version<10?PH.describe(v):{}),workshop:saved.version>=7?{...v.workshop}:W.initial(v),
         profile:saved.version===2?I.legacyProfile(v):
           {...v.profile,knownRepairs:v.profile.knownRepairs.map(x=>({...x})),
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
@@ -242,6 +425,7 @@
     if(!M.restore(restored,saved))return null;
     if(!D.restore(restored,saved))return null;
     if(!C.valid(restored,saved))return null;
+    if(!auctionValid(restored))return null;
     return restored;
   }
   const fail = (code, message) => ({ok:false,code,message});
@@ -596,6 +780,8 @@
   }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
+    startAuction,bidLiveAuction,passAuction,nextAuctionLot,rollAuctionHall,
+    auctionLot,lotNumber,auctionValid,
     upgradePremises,monthly:M,events:D,
     customers:C,openCustomer,bookCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,

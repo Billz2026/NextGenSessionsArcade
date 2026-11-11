@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=22">
+  <link rel="stylesheet" href="./styles.css?v=23">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -27,7 +27,7 @@
   <script src="./events.js?v=2" defer></script>
   <script src="./workshop.js?v=3" defer></script>
   <script src="./customers.js?v=5" defer></script>
-  <script src="./trading.js?v=14" defer></script>
+  <script src="./trading.js?v=15" defer></script>
   <script src="./vehicle-cards.js?v=4" defer></script>
   <script src="./vehicle-view.js?v=3" defer></script>
   <script src="./people-view.js?v=3" defer></script>
@@ -36,7 +36,8 @@
   <script src="./workshop-view.js?v=3" defer></script>
   <script src="./customers-view.js?v=5" defer></script>
   <script src="./premises-view.js?v=1" defer></script>
-  <script src="./simulator.js?v=18" defer></script>
+  <script src="./auction-hall-view.js?v=1" defer></script>
+  <script src="./simulator.js?v=19" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -44,7 +45,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.8</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.9</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -108,6 +109,7 @@
           <nav class="career-nav" aria-label="Career navigation">
             <button type="button" data-page="dashboard" aria-current="page"><span class="nav-icon">▦</span> Dashboard</button>
             <button type="button" data-page="inbox"><span class="nav-icon">✉</span> Inbox <span class="nav-unread" data-bind="unread" hidden>3</span></button>
+            <button type="button" data-page="auctionHall"><span class="nav-icon">◈</span> Auction Hall</button>
             <button type="button" data-page="auctions"><span class="nav-icon">◆</span> Buying Desk</button>
             <button type="button" data-page="stock"><span class="nav-icon">▤</span> Vehicle Stock</button>
             <button type="button" data-page="workshop"><span class="nav-icon">⚒</span> Workshop</button>
@@ -164,7 +166,7 @@
                     <div class="panel-card-header"><div><p class="section-overline">MANAGER'S DIARY</p><h2 id="priorities-title">TODAY'S PRIORITIES</h2></div><span class="tiny-index" data-bind="day-label">DAY 01</span></div>
                     <div class="priority-row"><span class="priority-index">01</span><div><strong>Review your inbox</strong><p>Read your welcome brief and starting position.</p></div></div>
                     <div class="priority-row"><span class="priority-index">02</span><div><strong>Prepare your stock</strong><p>Assess purchased cars, manage garage jobs and pass quality control before selling.</p></div></div>
-                    <button type="button" class="subtle-action" data-page="auctions">OPEN BUYING DESK <span>→</span></button>
+                    <button type="button" class="subtle-action" data-page="auctionHall">ENTER AUCTION HALL <span>→</span></button>
                   </section>
                   <section class="panel-card calendar-widget">
                     <p class="section-overline">GAME CALENDAR</p>
@@ -175,7 +177,7 @@
                 </div>
               </div>
               <div id="monthly-dashboard-target" class="monthly-dashboard-target" aria-live="polite"></div>
-              <div class="dashboard-bottom panel-card"><div><p class="section-overline">TRADE PERFORMANCE</p><h2>EVERY DEAL COUNTS.</h2><p>Realised gross trading margin: <strong data-bind="trade-profit">£0</strong>. This excludes taxes, VAT adjustments and business overheads. Buy at auction or from a customer, prepare the car, then sell for cash or with a part-exchange.</p></div><button type="button" class="secondary-button" data-page="auctions">FIND STOCK ↗</button></div>
+              <div class="dashboard-bottom panel-card"><div><p class="section-overline">TRADE PERFORMANCE</p><h2>EVERY DEAL COUNTS.</h2><p>Realised gross trading margin: <strong data-bind="trade-profit">£0</strong>. This excludes taxes, VAT adjustments and business overheads. Bid in the Auction Hall or buy from a private seller, prepare the car, then sell for cash or with a part-exchange.</p></div><button type="button" class="secondary-button" data-page="auctions">FIND STOCK ↗</button></div>
             </section>
 
             <section class="career-panel" data-panel="inbox" hidden aria-labelledby="inbox-title">
@@ -183,14 +185,17 @@
               <div class="inbox-layout panel-card"><div class="inbox-column"><div class="inbox-column-head">MESSAGES <span id="inbox-unread-count">0 UNREAD</span></div><div class="inbox-list" id="inbox-list"></div></div><div class="inbox-detail" id="inbox-detail"><p>Select a message to read it.</p></div></div>
             </section>
 
+            <section class="career-panel" data-panel="auctionHall" hidden aria-labelledby="auction-hall-title">
+              <div class="page-heading"><div><p class="section-overline">TRADE AUCTION / NUMERICAL LOT CATALOGUE</p><h1 id="auction-hall-title">THE AUCTION <em>HALL.</em></h1><p>A dedicated auction event: inspect lots, bid against dealers, and buy only when the hammer falls.</p></div><span class="career-chip">ONE LOT AT A TIME</span></div>
+              <div id="auction-hall-view" aria-live="polite"></div>
+            </section>
+
             <section class="career-panel" data-panel="auctions" hidden aria-labelledby="auctions-title">
-              <div class="page-heading"><div><p class="section-overline">VEHICLE SOURCING / UK MARKET</p><h1 id="auctions-title">BUYING <em>DESK.</em></h1><p>Buy through auction or negotiate directly with customers looking to sell. Stock changes every game day.</p></div><span class="career-chip">FICTIONAL MARKET</span></div>
+              <div class="page-heading"><div><p class="section-overline">VEHICLE SOURCING / UK MARKET</p><h1 id="auctions-title">BUYING <em>DESK.</em></h1><p>Negotiate with private and walk-in sellers. For numbered live bidding and auction results, visit the separate Auction Hall.</p></div><span class="career-chip">FICTIONAL MARKET</span></div>
               <div id="market-progression" class="market-progression" aria-live="polite"></div>
               <div class="trade-alert">Inspect individual vehicle reports before bidding. Grade, MOT history, trade/retail valuations and maximum offers are fictional estimates—not real DVSA records or guaranteed returns. A paid inspection can reveal hidden repair costs; the charge is not refundable.</div>
-              <section class="panel-card trade-section" aria-labelledby="auction-list-title">
-                <div class="panel-card-header"><div><p class="section-overline">COMPETE WITH OTHER DEALERS</p><h2 id="auction-list-title">AUCTION LOTS</h2></div><span class="tiny-index">TODAY'S CATALOGUE</span></div>
-                <div id="market-auctions" class="trade-card-grid"></div>
-              </section>
+              <div class="trade-alert">AUCTION BUYING HAS MOVED: Live numbered lots and rival-dealer bids are exclusively in the Auction Hall.</div>
+              <div class="buying-desk-auction-link"><div><strong>VISIT TODAY’S AUCTION</strong><p>Bid lot by lot, track the hammer and move purchased cars into stock.</p></div><button type="button" class="trade-button" data-page="auctionHall">ENTER AUCTION HALL →</button></div>
               <section class="panel-card trade-section" aria-labelledby="seller-list-title">
                 <div class="panel-card-header"><div><p class="section-overline">CUSTOMERS SELLING TO YOU</p><h2 id="seller-list-title">PRIVATE & WALK-IN SELLERS</h2></div><span class="tiny-index">DIRECT PURCHASES</span></div>
                 <div id="market-sellers" class="trade-card-grid"></div>
@@ -254,7 +259,7 @@
 
             <section class="career-panel" data-panel="business" hidden aria-labelledby="business-title">
               <div class="page-heading"><div><p class="section-overline">YOUR CLUBHOUSE / YOUR BUSINESS</p><h1 id="business-title">MY <em>DEALERSHIP.</em></h1><p>Your career identity and development plan.</p></div><button type="button" class="secondary-button" data-action="save">SAVE CAREER</button></div>
-              <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong data-bind="forecourt-capacity">4 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div><div class="profile-row"><span>Workshop bays</span><strong data-bind="workshop-bays">4</strong></div><div class="profile-row"><span>Employees</span><strong data-bind="staff-count">0</strong></div><div class="profile-row"><span>Reputation</span><strong data-bind="reputation-score">5 / 100</strong></div><div class="profile-row"><span>Monthly sales target</span><strong data-bind="monthly-target">0 / 4</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Live: recruitment, staff effects and evolving reputation</li><li>Live: premises expansion, rent and utilities</li><li>Next: auction hall, complaints and aftersales</li></ol></div></div>
+              <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong data-bind="forecourt-capacity">4 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div><div class="profile-row"><span>Workshop bays</span><strong data-bind="workshop-bays">4</strong></div><div class="profile-row"><span>Employees</span><strong data-bind="staff-count">0</strong></div><div class="profile-row"><span>Reputation</span><strong data-bind="reputation-score">5 / 100</strong></div><div class="profile-row"><span>Monthly sales target</span><strong data-bind="monthly-target">0 / 4</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Live: recruitment, staff effects and evolving reputation</li><li>Live: premises expansion, rent and utilities</li><li>Live: separate auction hall with numbered lots and rival bids</li><li>Next: complaints and aftersales</li></ol></div></div>
               <div id="premises-view" aria-live="polite"></div>
             </section>
           </div>

@@ -4,6 +4,15 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.9 — Dedicated Auction Hall: sequential numbered lots and real bidding decisions (11 November 2026)
+
+- **Separate trade departments:** The new Auction Hall in main navigation handles numbered live auction lots, bidding and results; the Buying Desk now focuses on private/walk-in sellers. All stock, cash, workshop and monthly accounting remain part of the same career.
+- **User-paced event, not a separate browser tab:** The day's catalogue lists LOT 001, LOT 002 and so on. Inspect a lot and its fictional condition report, open bidding, bid in £100/£250/£500 increments or pass. The next lot is only available when the current one is resolved. There are no artificial timers or multi-day appointment delays.
+- **Rival traders, reserve and hammer:** A rival dealer opens at the guide; its willingness to bid is fixed per day/lot. Each player bid either attracts a rival increment or causes the rival to withdraw. If your highest bid meets the vendor reserve, the hammer falls immediately and charges the purchase hammer and buyer fee; below reserve there is no sale. Passing or losing carries no buyer fee.
+- **Fair finances:** Every offer is checked against actual forecourt capacity, fees and protected workshop budgets. No spending for failed bids, no re-rolls on retry, and winning costs pass to the existing stock/workshop/retail calculation. Inspections remain separately charged and non-refundable if purchased.
+- **Persistent results:** The in-progress lot, bid history, winner/loser, per-lot results and the latest 160 auction results survive reloading. A day advance refreshes the catalogue; Deal Day remains auction-free. New saves use schema v11; v10 careers and their forecourt expansions, payroll, cash, deposits and records migrate without change. Previously purchased lots are recognised and cannot be double-charged.
+- **Legacy compatibility:** The previous maximum-offer auction engine is retained for historical save and regression compatibility but is not offered in the player-facing Buying Desk. The new Auction Hall is the sole visible auction-purchasing interface.
+
 ### v0.9.8 — Dealership expansion, rent and utility overhead (11 November 2026)
 
 - **Buy additional forecourt capacity:** Four spaces initially, then six at 20 reputation (£1,800), eight at 40 (£3,600) and ten at 80 (£6,500). Buying the expansion costs actual dealership cash and increases rent and utilities; additional stock is not provided automatically.

@@ -11,8 +11,9 @@
   const EV = window.MotorTradeEventsView;
   const WV = window.MotorTradeWorkshopView;
   const CV = window.MotorTradeCustomersView;
+  const AV = window.MotorTradeAuctionHallView;
   const SITE_VIEW = window.MotorTradePremisesView;
-  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW)
+  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV)
     throw new Error('Customer, workshop and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
@@ -36,6 +37,7 @@
     dashboard: 'DASHBOARD',
     inbox: 'INBOX',
     auctions: 'BUYING DESK',
+    auctionHall: 'AUCTION HALL',
     stock: 'VEHICLE STOCK',
     workshop: 'WORKSHOP OPERATIONS',
     sales: 'SALES OFFICE',
@@ -71,12 +73,12 @@
     return [
       makeMessage(1,1,'BUSINESS SUPPORT','Welcome to the motor trade',
         'Run your first dealership, with £12,500 in capital.',
-        'Your dealership starts with £12,500 in cash and four forecourt spaces. Visit the Buying Desk to view auction lots and customers who want to sell their cars directly.\n\nA car needs workshop assessment, timed repairs and a passed final quality check before advertising. Once listed, customer enquiries are not guaranteed: book appointments, arrange test drives, negotiate and complete handover. A part-exchange becomes your next stock vehicle.',
-        'auctions'),
+        'Your dealership starts with £12,500 in cash and four forecourt spaces. Visit the Auction Hall for live numbered-lot bidding, and the Buying Desk for customers selling cars directly.\n\nA car needs workshop assessment, timed repairs and a passed final quality check before advertising. Once listed, customer enquiries are not guaranteed: book appointments, arrange test drives, negotiate and complete handover. A part-exchange becomes your next stock vehicle.',
+        'auctionHall'),
       makeMessage(2,1,'BUYING DESK','Three ways to find your next car',
         'Auctions, direct sellers and part-exchanges all supply vehicles.',
         'Auctions have competing traders and buyer fees. Direct sellers can reject low offers. Part-exchanges happen when you sell one of your advertised cars and agree an allowance for the customer\'s existing vehicle.\n\nEvery route affects your cash and stock differently. Your first market opportunities are waiting.',
-        'auctions'),
+        'auctionHall'),
       makeMessage(3,1,'ACCOUNTS OFFICE','Protect your opening £12,500',
         'Gross margin is different from cash flow.',
         'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. Gross trade margin excludes staff and premises overheads; the management report shows an operating contribution after those charges. VAT, tax, finance and after-sale claims remain unmodelled.',
@@ -87,7 +89,7 @@
     2: () => makeMessage(4,2,'BUYING DESK','Today\'s stock opportunities have refreshed',
       'New auction lots and private sellers are on the market.',
       'Each new day brings a refreshed set of fictional auction and direct-sale opportunities. Look at total acquisition cost and your preparation budget before agreeing a deal.',
-      'auctions'),
+      'auctionHall'),
     3: () => makeMessage(5,3,'SALES ADVISER','Cash sale or part-exchange?',
       'Both deals can move your stock, but they affect your cash differently.',
       'A cash customer pays the agreed sale price at handover. A part-exchange customer brings a car and pays only the balance after the agreed allowance. You own that incoming car and must prepare it before advertising it.',
@@ -143,6 +145,7 @@
   let eventNotice = '';
   let lastTradeResult = null;
   let expandedReportId = null;
+  let auctionPreviewId = null;
   let offerDrafts = {};
   let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
@@ -261,6 +264,9 @@
   function expectedMarginText(car,kind,price) {
     return cashText(E.quote(car,kind,price,!!career.reports?.[car.id]).expectedMargin);
   }
+  function renderAuctionHall(){
+    byId('auction-hall-view').innerHTML=AV.render(career,E,reportCard,auctionPreviewId);
+  }
   function renderMarket() {
     const progression=E.marketStatus(career);
     const next=progression.next;
@@ -270,40 +276,7 @@
       ' CASH AND '+next.minRep+' REPUTATION.':
       'TOP TIER UNLOCKED · LUXURY STOCK IS NOW AVAILABLE.')+
       ' Catalogue eligibility uses opening-day cash and monthly reputation.</p>';
-    const {auctions,sellers} = E.marketFor(career);
-    const auctionsHtml = auctions.length ? auctions.map(lot => {
-      const state = (career.auctionBids || {})[lot.id];
-      const owned = career.vehicles.some(v => v.origin === lot.id);
-      const closed = owned || state?.status === 'lost';
-      const warning = purchaseWarning(lot.guide + lot.fee + repairReserve(lot));
-      const auctionIntel=P.buyerEstimate(career,Math.max(lot.rival,lot.reserve));
-      const guide = Number.isSafeInteger(offerDrafts[lot.id]) ?
-        offerDrafts[lot.id] : state?.lastBid ?
-          Math.max(lot.guide,state.lastBid + 150) : lot.guide + 250;
-      const outcome = owned ? '<div class="trade-inline-feedback trade-feedback-success">PURCHASED — see Vehicle Stock.</div>' :
-        state?.status === 'lost' ? '<div class="trade-inline-feedback trade-feedback-warning">OUTBID — lot closed. No fee charged.</div>' :
-        state?.status === 'outbid' ? '<div class="trade-inline-feedback trade-feedback-warning">OUTBID — one more bid available. No fee charged.</div>' : '';
-      return '<article class="trade-card">' + cardHeader(lot,'AUCTION / '+lot.id) +
-        reportCard(lot,'auction',guide) +
-        '<div class="trade-pricing"><div><small>GUIDE BID</small><strong>'+cashText(lot.guide) +
-        '</strong></div><div><small>BUYER FEE</small><strong>'+cashText(lot.fee) +
-        '</strong></div><div><small>EST. RETAIL</small><strong>'+cashText(lot.retail) +
-        '</strong></div><div><small>EST. PREP</small><strong>'+cashText(lot.prep) +
-        '</strong></div></div><div class="trade-actions">'+
-        '<span class="trade-extra">Maximum bid simulation · buyer fee only if you win. Include the fee and preparation when calculating your limit.</span>' +
-        (auctionIntel?'<span class="people-bid-intel">BUYER INTELLIGENCE: EXPECTED RIVAL BID '+
-          cashText(auctionIntel.lower)+'–'+cashText(auctionIntel.upper)+
-          '. Range estimate, not a guaranteed result.</span>':'')+
-        (warning && !closed ? '<div class="trade-purchase-warning">'+escapeText(warning)+'</div>' : '')+
-        outcome+leadFeedback(lot.id)+
-        '<div class="trade-action-row"><label>YOUR MAXIMUM BID (£)<input class="trade-input" type="number" inputmode="numeric" min="'+lot.guide+
-        '" max="100000" step="25" id="auction-bid-'+lot.id+'" value="'+guide+'"></label>'+
-        '<button type="button" class="trade-button" data-action="bid-auction" data-id="'+lot.id+
-        '"'+(closed?' disabled':'')+'>'+(closed?'CLOSED':'PLACE BID')+'</button></div></div></article>';
-    }).join('') : D.isDealDay(career.day) ?
-      '<div class="trade-empty deadline-auction-closed"><h2>AUCTIONS CLOSED — DEAL DAY.</h2>'+
-      '<p>Today is reserved for private sellers, retail customers and part-exchanges. Auction houses resume tomorrow.</p></div>' :
-      '<div class="trade-empty">No auction session today. Check direct sellers or advance to the next game day.</div>';
+    const {sellers} = E.marketFor(career);
     const sellersHtml = sellers.length ? sellers.map(car => {
       const negotiation = (career.negotiations || {})[car.id];
       const owned = career.vehicles.some(v => v.origin === car.id);
@@ -335,13 +308,12 @@
       '<div class="trade-empty"><h2>NO PRIVATE SELLER ENQUIRIES THIS SESSION.</h2>'+
       '<p>This month may be quiet. The next session could bring new sellers, but nothing is guaranteed. Auctions are closed.</p></div>' :
       '<div class="trade-empty">No private or walk-in seller leads today. Check auction lots or the next game day.</div>';
-    byId('market-auctions').innerHTML = auctionsHtml;
     byId('market-sellers').innerHTML = sellersHtml;
   }
   function renderStock() {
     const container = byId('stock-list');
     if (!career.vehicles.length) {
-      container.innerHTML = '<div class="trade-empty"><h2>YOUR FORECOURT IS EMPTY.</h2><p>Visit the Buying Desk to bid at an auction or negotiate with a private seller.</p></div>';
+      container.innerHTML = '<div class="trade-empty"><h2>YOUR FORECOURT IS EMPTY.</h2><p>Visit the Auction Hall for bidding or the Buying Desk for private seller negotiations.</p></div>';
       return;
     }
     container.innerHTML = career.vehicles.map(car => {
@@ -423,6 +395,7 @@
   }
   function renderTrading() {
     renderMarket();
+    renderAuctionHall();
     renderStock();
     renderWorkshop();
     renderSales();
@@ -545,6 +518,8 @@
     // This keeps reports internally reconcilable with recorded ledger dates.
     const closed=career.day===career.monthPlan.endDay?M.close(career):null;
     career.day += 1;
+    E.rollAuctionHall(career);
+    auctionPreviewId=null;
     career.deadlineSession=0;
     if(closed) {
       M.next(career);
@@ -712,6 +687,9 @@
       case 'toggle-report':
         if (career) {
           const key=button.dataset.kind+':'+button.dataset.id;
+          if(button.dataset.kind==='auction'&&
+             E.auctionLot(career)?.id!==button.dataset.id)
+            auctionPreviewId=button.dataset.id;
           expandedReportId=expandedReportId===key?null:key;
           render();
         }
@@ -719,6 +697,9 @@
       case 'inspect-lead':
         if (career) {
           expandedReportId=button.dataset.kind+':'+button.dataset.id;
+          if(button.dataset.kind==='auction'&&
+             E.auctionLot(career)?.id!==button.dataset.id)
+            auctionPreviewId=button.dataset.id;
           saveResult(E.inspectLead(career,button.dataset.kind,button.dataset.id),
             button.dataset.id);
         }
@@ -750,6 +731,35 @@
       case 'release-staff':
         if (career&&window.confirm('Release this employee? The game charges seven days of provisional notice pay, even if cash is unavailable.'))
           saveResult(P.release(career,Number(button.dataset.id)));
+        break;
+      case 'preview-auction':
+        if(career&&E.marketFor(career).auctions.some(lot=>lot.id===button.dataset.id)){
+          auctionPreviewId=button.dataset.id;
+          expandedReportId='auction:'+button.dataset.id;
+          render();
+        }
+        break;
+      case 'close-auction-preview':
+        auctionPreviewId=null;
+        render();
+        break;
+      case 'start-auction':
+        if(career){
+          auctionPreviewId=null;
+          saveResult(E.startAuction(career));
+        }
+        break;
+      case 'bid-live-auction':
+        if(career)saveResult(E.bidLiveAuction(career,Number(button.dataset.increment)));
+        break;
+      case 'pass-auction':
+        if(career)saveResult(E.passAuction(career));
+        break;
+      case 'next-auction-lot':
+        if(career){
+          auctionPreviewId=null;
+          saveResult(E.nextAuctionLot(career));
+        }
         break;
       case 'bid-auction':
         if (career) saveResult(E.acquireAuction(career,button.dataset.id,
