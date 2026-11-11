@@ -77,7 +77,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=43/);
+  assert.match(html, /styles\.css\?v=44/);
   assert.match(html, /simulator\.js\?v=31/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -96,7 +96,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /trading\.js\?v=19/);
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
-  assert.match(html, /events-view\.js\?v=4/);
+  assert.match(html, /events-view\.js\?v=5/);
   assert.match(html, /monthly-view\.js\?v=8/);
   assert.match(html, /people-view\.js\?v=4/);
   assert.match(html, /vehicle-view\.js\?v=4/);
@@ -114,7 +114,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.29/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.30/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -598,7 +598,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=43/);
+  assert.match(html, /styles\.css\?v=44/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4440,7 +4440,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.29/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.30/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4509,7 +4509,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.29/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.30/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4967,7 +4967,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=43/);
+  assert.match(html,/styles\.css\?v=44/);
 });
 
 
@@ -5068,4 +5068,94 @@ test('v0.9.29 archived reports stay accessible and labels reflect historical sho
   const current=app.monthlyView.renderReport(s,E.monthly,'current');
   assert.match(current,/SALES REQUIRED/);
   assert.match(current,/CURRENT CASH/);
+});
+
+
+test('v0.9.30 normal calendar shows real milestone days without forecasting buyer volumes',()=>{
+  const app=browser(new Map()),E=app.productionEngine,view=app.eventsView;
+  const s=E.create('Event Diary',[]);
+  s.day=11;
+  const cashBefore=s.cash;
+  const page=view.render(s);
+  assert.match(page,/UPCOMING EVENTS/);
+  assert.match(page,/DAY 30/);
+  assert.match(page,/DAY 31/);
+  assert.match(page,/19 GAME DAYS AWAY/);
+  assert.match(page,/MONTH-END DEAL DAY/);
+  assert.match(page,/MONTHLY BOARD MEETING/);
+  assert.match(page,/CASH BALANCE/);
+  assert.match(page,/data-page="stock"/);
+  assert.match(page,/data-page="reports"/);
+  assert.doesNotMatch(page,/PRIVATE SELLERS THIS SESSION/);
+  assert.equal(s.cash,cashBefore);
+  assert.equal(s.meetings.length,0);
+  assert.match(css,/\.eo-calendar-grid\{display:grid/);
+  assert.match(css,/\.career-content:has\(\[data-panel="events"\]:not\(\[hidden\]\)\)>#events-banner\{display:none\}/);
+});
+
+test('v0.9.30 five Deal Day sessions show live opportunities and unchanged session rules',()=>{
+  const app=browser(new Map()),E=app.productionEngine,D=E.events,V=app.eventsView;
+  const s=E.create('Event Session View',[]);
+  s.day=30;
+  const cash=s.cash,ledger=s.ledger.length;
+  const first=V.render(s);
+  assert.match(first,/DEAL DAY/);
+  assert.match(first,/FINAL TRADING DAY/);
+  assert.match(first,/SESSION 1 \/ 5/);
+  assert.match(first,/09:00/);
+  assert.match(first,/PRIVATE SELLERS THIS SESSION/);
+  assert.match(first,/VEHICLES ADVERTISED/);
+  assert.match(first,/RETAIL HANDOVERS TODAY/);
+  assert.match(first,/NEXT: NEXT SESSION/);
+  assert.match(first,/data-page="sales"/);
+  assert.match(first,/data-page="auctions"/);
+  assert.match(first,/DEAL DAY RULES & SESSION EXPIRY/);
+  assert.equal((first.match(/class="eo-phase /g)||[]).length,5);
+  assert.ok(D.advanceSession(s).ok);
+  assert.match(V.render(s),/SESSION 2 \/ 5/);
+  assert.equal(s.day,30);
+  assert.equal(s.cash,cash);
+  assert.equal(s.ledger.length,ledger);
+  s.deadlineSession=4;
+  const last=V.render(s);
+  assert.match(last,/17:00/);
+  assert.match(last,/NEXT: CLOSE MONTH/);
+  assert.match(last,/final chance to trade/i);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.30 monthly board decision appears before expanded staff review and persists',()=>{
+  const app=browser(new Map()),E=app.productionEngine,D=E.events,V=app.eventsView;
+  const s=E.create('Focused Board',[]);
+  s.day=30;
+  const prior=E.monthly.close(s);
+  assert.ok(prior);
+  s.day=31;E.monthly.next(s);
+  const before=JSON.stringify(s);
+  const page=V.render(s);
+  assert.match(page,/BOARD MEETING/);
+  assert.match(page,/DECISION REQUIRED/);
+  assert.match(page,/AGREE ONE MANAGEMENT PRIORITY/);
+  assert.match(page,/PREVIOUS SALES/);
+  assert.match(page,/OPERATING CONTRIBUTION/);
+  assert.match(page,/MANAGEMENT DISCUSSION/);
+  assert.match(page,/SALES TEAM REVIEW/);
+  assert.match(page,/RECENT MEETING MINUTES|NEW MONTH.S TARGETS/);
+  assert.equal((page.match(/data-action="hold-meeting"/g)||[]).length,3);
+  assert.ok(page.indexOf('AGREE ONE MANAGEMENT PRIORITY')<page.indexOf('MANAGEMENT DISCUSSION'));
+  assert.match(page,/data-focus="sales"/);
+  assert.match(page,/data-focus="buying"/);
+  assert.match(page,/data-focus="care"/);
+  assert.equal(JSON.stringify(s),before,'Rendering must not change the career');
+  const result=D.holdMeeting(s,'buying');
+  assert.ok(result.ok);
+  const complete=V.render(s);
+  assert.match(complete,/MEETING COMPLETED/);
+  assert.match(complete,/SELECTED PRIORITY/);
+  assert.match(complete,/DECISION LOCKED/);
+  assert.equal((complete.match(/data-action="hold-meeting"[^>]* disabled/g)||[]).length,3);
+  assert.equal(s.meetings.length,1);
+  assert.equal(s.meetingFocus,'buying');
+  assert.equal(D.holdMeeting(s,'sales').ok,false);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
