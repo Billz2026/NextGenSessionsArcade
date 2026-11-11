@@ -162,6 +162,9 @@
   let salesFilter = 'all';
   let ledgerFilter = 'all';
   let ledgerExpanded = false;
+  let staffDeskMode = null;
+  let staffDeskRole = 'all';
+  let staffDeskSelectedId = null;
   let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
   function gameDate(day) {
@@ -393,9 +396,12 @@
     byId('premises-view').innerHTML=SITE_VIEW.render(career,SITE);
   }
   function renderPeople() {
-    byId('people-totals').innerHTML=PV.totals(career,P);
-    byId('people-roster').innerHTML=PV.roster(career,P);
-    byId('people-applicants').innerHTML=PV.applicants(career,P);
+    const view=PV.staffDesk(career,P,{mode:staffDeskMode,role:staffDeskRole,
+      selectedId:staffDeskSelectedId});
+    staffDeskMode=view.mode;
+    staffDeskRole=view.role;
+    staffDeskSelectedId=view.selectedId;
+    byId('people-board').innerHTML=view.html;
     byId('reputation-view').innerHTML=PV.reputation(career);
   }
   function renderTrading() {
@@ -639,6 +645,9 @@
     salesFilter='all';
     ledgerFilter='all';
     ledgerExpanded=false;
+    staffDeskMode=null;
+    staffDeskRole='all';
+    staffDeskSelectedId=null;
     screen = 'career';
     currentPage = 'dashboard';
     const saved = persistCareer();
@@ -810,8 +819,39 @@
             button.dataset.id);
         }
         break;
+      case 'staff-desk-mode':
+        if(career&&PV.DESK_MODES.includes(button.dataset.mode)){
+          staffDeskMode=button.dataset.mode;
+          staffDeskRole='all';staffDeskSelectedId=null;
+          currentPage='staff';render();
+        }
+        break;
+      case 'staff-desk-role':
+        if(career&&PV.DESK_ROLES.includes(button.dataset.role)){
+          staffDeskRole=button.dataset.role;
+          staffDeskSelectedId=null;currentPage='staff';render();
+        }
+        break;
+      case 'select-person':
+        if(career&&typeof button.dataset.person==='string'&&
+          ((staffDeskMode==='team'&&career.staff.some(e=>'e:'+e.id===button.dataset.person))||
+           (staffDeskMode==='candidates'&&P.applicants(career.day)
+             .some(e=>'c:'+e.id===button.dataset.person)))){
+          staffDeskSelectedId=button.dataset.person;
+          currentPage='staff';render();
+        }
+        break;
       case 'hire-staff':
-        if (career) saveResult(E.hireStaff(career,button.dataset.id));
+        if(career){
+          const target=P.applicants(career.day).find(c=>c.id===button.dataset.id);
+          const result=E.hireStaff(career,button.dataset.id);
+          if(result.ok&&target){
+            const hired=career.staff.find(e=>e.name===target.name);
+            staffDeskMode='team';staffDeskRole='all';
+            staffDeskSelectedId=hired?'e:'+hired.id:null;
+          }
+          saveResult(result);
+        }
         break;
       case 'upgrade-premises':
         if(career&&['forecourt','workshop'].includes(button.dataset.kind)){
@@ -835,8 +875,12 @@
         if (career) saveResult(P.train(career,Number(button.dataset.id)));
         break;
       case 'release-staff':
-        if (career&&window.confirm('Release this employee? The game charges seven days of provisional notice pay, even if cash is unavailable.'))
-          saveResult(P.release(career,Number(button.dataset.id)));
+        if (career&&window.confirm('Release this employee? The game charges seven days of provisional notice pay, even if cash is unavailable.')){
+          const result=P.release(career,Number(button.dataset.id));
+          if(result.ok){staffDeskSelectedId=null;
+            if(!career.staff.length){staffDeskMode='candidates';staffDeskRole='all';}}
+          saveResult(result);
+        }
         break;
       case 'preview-auction':
         if(career&&E.marketFor(career).auctions.some(lot=>lot.id===button.dataset.id)){
