@@ -1,5 +1,5 @@
 'use strict';
-/* Month-end retail Deal Day / first-day board meeting screens. */
+/* v0.9.30 — compact Deal Day, board meeting and management diary screens. */
 (() => {
   const esc=x=>String(x).replace(/[&<>"']/g,c=>({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -35,38 +35,63 @@
   }
   function deadline(state){
     const d=D(),p=d.dealSession(state),phase=state.deadlineSession;
-    const climate=d.outlook(state),sellerCount=d.leadCount(state.day,
+    const climate=d.outlook(state);
+    const sellerCount=d.leadCount(state.day,
       state.monthPlan.startingReputation,phase,state.name);
-    const phases=d.PHASES.map((x,i)=>'<div class="deadline-phase '+(i===phase?'deadline-now':i<phase?'deadline-done':'')+'">'+
-      '<span>'+esc(x.time)+'</span><strong>'+esc(x.name)+'</strong></div>').join('');
     const listed=state.vehicles.filter(x=>x.status==='listed').length;
     const prep=state.vehicles.filter(x=>x.status==='acquired').length;
     const today=state.sold.filter(x=>x.day===state.day);
-    const total=today.reduce((n,x)=>n+x.price,0);
+    const total=today.reduce((sum,x)=>sum+x.price,0);
     const month=state.monthPlan;
     const monthSold=state.sold.filter(x=>x.day>=month.startDay&&x.day<=state.day).length;
-    const noListed='<p class="event-attention">You currently have no advertised vehicles. Prepare and list stock if you want to attract buyers, although some sessions may produce no interest.</p>';
-    return '<div class="deadline-hero"><div><small>MONTH '+d.monthOf(state.day)+
-      ' · FINAL TRADING DAY · NO AUCTIONS</small><h2>DEAL DAY.</h2>'+
-      '<p>'+esc(climate.description)+'</p><strong class="deadline-time">'+esc(p.time)+'</strong>'+
-      '<p class="deadline-climate"><strong>'+esc(climate.label)+'</strong> · '+sellerCount+
-        ' private seller '+(sellerCount===1?'enquiry':'enquiries')+' this session</p>'+
-      '</div><div class="deadline-alert"><span>SESSION '+(phase+1)+' / '+d.PHASES.length+
-      '</span><strong>'+esc(p.name)+'</strong></div></div>'+
-      '<div class="deadline-timeline">'+phases+'</div>'+
-      '<div class="event-metrics">'+
-      '<div><span>TODAY’S RETAIL DEALS</span><strong>'+today.length+'</strong></div>'+
-      '<div><span>TODAY’S SALES TURNOVER</span><strong>'+money(total)+'</strong></div>'+
-      '<div><span>MONTHLY UNIT TARGET</span><strong>'+monthSold+' / '+month.unitTarget+'</strong></div>'+
-      '<div><span>LISTED / NEED PREP</span><strong>'+listed+' / '+prep+'</strong></div></div>'+
-      (listed?'<p class="event-note">Your advertised cars can attract enquiries, but buyer interest and part-exchanges vary between sessions. A busy month never guarantees a sale or profit.</p>':noListed)+
-      (sellerCount===0?'<p class="event-attention">No direct sellers have arrived for this session. A later session may be different.</p>':'')+
-      '<div class="event-action-grid">'+
-      '<div><h3>SELL TO WALK-IN CUSTOMERS</h3><p>Customer demand changes each month and each session. Some will negotiate cash deals, others want to part-exchange, and occasionally nobody is interested in your cars.</p>'+
-      '<button type="button" class="trade-button" data-page="sales">GO TO SALES OFFICE →</button></div>'+
-      '<div><h3>BUY FROM PRIVATE SELLERS</h3><p>Not every session produces private-seller leads. Some owners will be flexible, others will refuse low offers or walk away. Cash, preparation cost and forecourt space remain important.</p>'+
-      '<button type="button" class="trade-button" data-page="auctions">VIEW PRIVATE SELLERS →</button></div></div>'+
-      '<p class="event-note">This is a fictional month-specific market model, not a prediction of real UK demand. Auctions remain closed. NEXT SESSION changes only the event clock, not the career day or wages. CLOSE MONTH at 17:00 generates the full management report. Earlier seller enquiries and buyer offers expire between sessions; paid inspections are not refunded.</p>';
+    const phases=d.PHASES.map((x,i)=>
+      '<div class="eo-phase '+(i===phase?'eo-phase-current':i<phase?'eo-phase-done':'')+'"'+
+      (i===phase?' aria-current="step"':'')+'><strong>'+esc(x.time)+
+      '</strong><span>'+esc(x.name)+'</span></div>').join('');
+    const last=phase===d.PHASES.length-1;
+    const next=last?'CLOSE MONTH':'NEXT SESSION';
+    return '<div class="eo-desk eo-deal-day">'+
+      '<header class="eo-heading"><div><small>MONTH '+d.monthOf(state.day)+
+      ' · FINAL TRADING DAY · NO AUCTIONS</small>'+
+      '<h2>DEAL DAY</h2><p>'+esc(climate.label)+' · '+esc(climate.description)+'</p></div>'+
+      '<div class="eo-heading-status"><span>SESSION '+(phase+1)+' / '+d.PHASES.length+
+      '</span><strong>'+esc(p.time)+'</strong><small>'+esc(p.name)+'</small></div></header>'+
+      '<div class="eo-timeline" aria-label="Five Deal Day sessions">'+phases+'</div>'+
+      '<div class="eo-kpis">'+
+      '<div><small>PRIVATE SELLERS THIS SESSION</small><strong>'+sellerCount+'</strong></div>'+
+      '<div><small>VEHICLES ADVERTISED</small><strong>'+listed+'</strong></div>'+
+      '<div><small>RETAIL HANDOVERS TODAY</small><strong>'+today.length+'</strong></div>'+
+      '<div><small>MONTHLY SALES TARGET</small><strong>'+monthSold+' / '+month.unitTarget+'</strong></div>'+
+      '</div>'+
+      '<div class="eo-session-summary"><strong>TODAY’S RETAIL TURNOVER '+money(total)+'</strong>'+
+      '<span>'+prep+' vehicle'+(prep===1?'':'s')+' need preparation · '+
+      (sellerCount?'Private-seller enquiries available now':'No private sellers in this session')+
+      '</span></div>'+
+      '<div class="eo-activities">'+
+      '<section class="eo-activity"><div><small>RETAIL OPPORTUNITY</small>'+
+      '<h3>SELL TO CUSTOMERS</h3>'+
+      '<p>'+(listed?
+        'Check buyer interest, negotiate offers and progress any collection-ready deals.':
+        'No advertised cars are available for retail enquiries. Prepare and advertise stock first.')+
+      '</p></div><button type="button" class="trade-button" data-page="sales">OPEN SALES OFFICE</button></section>'+
+      '<section class="eo-activity"><div><small>DIRECT BUYING</small>'+
+      '<h3>BUY FROM PRIVATE SELLERS</h3>'+
+      '<p>'+(sellerCount?
+        sellerCount+' owner enquiry'+(sellerCount===1?' is':'ies are')+
+        ' available in this session. Check margins, prep costs and capacity.':
+        'No seller leads have arrived. Another session may be different.')+
+      '</p></div><button type="button" class="trade-button" data-page="auctions">'+
+      'OPEN BUYING DESK</button></section></div>'+
+      '<div class="eo-next-action"><strong>NEXT: '+next+'</strong>'+
+      '<span>Use the top-right '+next+' control. '+
+      (last?'The 17:00 session is the final chance to trade before the month closes.':
+        'The next session changes the clock, not the game day or daily expenses.')+
+      '</span></div>'+
+      '<details class="eo-details"><summary>DEAL DAY RULES & SESSION EXPIRY</summary>'+
+      '<p>Auctions are closed today. Retail demand and direct-seller enquiries vary: no sales are guaranteed. '+
+      'Unresolved offers and seller leads expire when you move to the next session; paid inspection fees are not refunded. '+
+      'Cash, repairs and forecourt capacity still matter. The final 17:00 session leads into month-end reporting.</p>'+
+      '</details></div>';
   }
   function suggestions(report){
     if(!report)return ['Set a realistic retail price before accepting offers.',
@@ -111,64 +136,111 @@
     const d=D(),month=d.monthOf(state.day),done=state.meetingHeldMonth===month;
     const previous=state.monthlyReports.at(-1)||null;
     const notes=suggestions(previous);
-    const prior=previous?'<div class="meeting-metrics">'+
-      '<div><small>PREVIOUS SALES</small><strong>'+previous.soldUnits+' / '+previous.targetUnits+'</strong></div>'+
-      '<div><small>TURNOVER</small><strong>'+money(previous.turnover)+'</strong></div>'+
-      '<div><small>GROSS MARGIN</small><strong>'+money(previous.grossMargin)+'</strong></div>'+
-      '<div><small>AFTER STAFF COSTS</small><strong>'+money(previous.grossAfterStaff)+'</strong></div>'+
-      '<div><small>CLOSING CASH</small><strong>'+money(previous.closingCash)+'</strong></div>'+
-      '<div><small>STOCK AGED 14+ DAYS</small><strong>'+previous.agedStock+'</strong></div></div>':
-      '<p class="event-note">This is your first dealership briefing. No previous sales have been recorded. Your starting capital, staff and company target are reviewed below.</p>';
-    const staff=previous?.sellers.length?previous.sellers.map(s=>
-      '<div class="meeting-staff-row"><span>'+esc(s.name)+'</span><strong>'+
-      s.sold+' / '+s.unitTarget+' sold</strong><span>'+esc(s.exempt?'EXEMPT':s.hit?'TARGET HIT':'TARGET MISSED')+
-      '</span></div>').join(''):
+    const selectedFocus=d.FOCI[state.meetingFocus];
+    const metrics=previous?[
+      ['PREVIOUS SALES',previous.soldUnits+' / '+previous.targetUnits],
+      ['TURNOVER',money(previous.turnover)],
+      ['OPERATING CONTRIBUTION',money(previous.operatingContribution??previous.grossAfterStaff)],
+      ['CLOSING CASH',money(previous.closingCash)]
+    ]:[
+      ['NEW MONTH SALES TARGET',String(state.monthPlan.unitTarget)],
+      ['CURRENT CASH',money(state.cash)],
+      ['REPUTATION',state.reputationScore+' / 100'],
+      ['ACTIVE STAFF',String(state.staff.filter(x=>x.active).length)]
+    ];
+    const cards=metrics.map(([label,value])=>
+      '<div><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>').join('');
+    const choices=Object.entries(d.FOCI).map(([id,focus])=>{
+      const isSelected=done&&state.meetingFocus===id;
+      return '<button type="button" class="eo-focus-choice'+(isSelected?' eo-focus-selected':'')+
+        '" data-action="hold-meeting" data-focus="'+id+'"'+(done?' disabled':'')+
+        ' aria-pressed="'+String(isSelected)+'">'+
+        '<strong>'+esc(focus.label)+'</strong><span>'+esc(focus.description)+'</span>'+
+        '<small>'+(isSelected?'SELECTED PRIORITY':done?'NOT SELECTED':'CHOOSE THIS PRIORITY')+'</small></button>';
+    }).join('');
+    const staff=previous?.sellers.length?previous.sellers.map(x=>
+      '<div class="meeting-staff-row"><span>'+esc(x.name)+'</span>'+
+      '<strong>'+x.sold+' / '+x.unitTarget+' sold</strong><span>'+
+      esc(x.exempt?'EXEMPT':x.hit?'TARGET HIT':'TARGET MISSED')+'</span></div>').join(''):
       '<p class="event-note">No individual sales staff results to review yet.</p>';
-    const choices=Object.entries(d.FOCI).map(([id,focus])=>
-      '<button type="button" class="meeting-choice" data-action="hold-meeting" data-focus="'+id+'"'+
-      (done?' disabled':'')+'><strong>'+esc(focus.label)+'</strong><span>'+
-      esc(focus.description)+'</span><small>AGREE THIS MONTH’S PRIORITY</small></button>').join('');
-    const selected=done?'<div class="event-good"><strong>MEETING COMPLETED.</strong> Monthly priority: '+
-      esc(d.FOCI[state.meetingFocus]?.label||'Routine operations')+
-      '. This decision is recorded in your career.</div>':'<p class="event-attention">'+
-      (state.day===1?'Initial briefing: choose a priority to start managing the business.':
-        'ACTION REQUIRED: choose your priority before advancing beyond the first day of this operating month.')+'</p>';
     const record=state.meetings.slice(-4).reverse().map(x=>
       '<div class="meeting-minute"><span>MONTH '+x.month+'</span><strong>'+
-      esc(d.FOCI[x.focus]?.label||x.focus)+'</strong><span>Previous sales '+x.sold+
-      '/'+x.target+'</span></div>').join('');
-    return '<div class="meeting-hero"><small>MONTH '+month+' · FIRST DAY · MANAGEMENT OFFICE</small>'+
-      '<h2>BOARD MEETING.</h2><p>'+esc(state.name)+
-      ' — review performance, agree priorities and prepare for the next trading period.</p></div>'+
-      selected+prior+
-      '<div class="meeting-columns"><section class="panel-card event-section"><h3>MANAGEMENT DISCUSSION</h3>'+
-      '<div class="meeting-notes">'+notes.map((x,i)=>
-        '<div><b>0'+(i+1)+'</b><p>'+esc(x)+'</p></div>').join('')+'</div></section>'+
-      '<section class="panel-card event-section"><h3>SALES TEAM REVIEW</h3>'+staff+
-      '<h3>NEW MONTH’S TARGETS</h3><p>Dealership target: <strong>'+
-      state.monthPlan.unitTarget+' completed vehicles</strong> with a positive gross margin. '+
-      'Turnover guidance: '+money(state.monthPlan.turnoverTarget)+
-      '. Reputation at meeting: '+state.reputationScore+'/100.</p></section></div>'+
-      '<section class="panel-card event-section"><h3>AGREE ONE MANAGEMENT PRIORITY</h3>'+
-      '<p>These decisions produce modest, measurable effects on transactions. No guaranteed sales, free money or reputation are awarded.</p>'+
-      '<div class="meeting-options">'+choices+'</div></section>'+
-      (record?'<section class="panel-card event-section"><h3>RECENT MEETING MINUTES</h3>'+record+'</section>':'')+
-      (previous?'<button type="button" class="secondary-button" data-page="reports">OPEN PREVIOUS MONTH’S FULL REPORT ↗</button>':'');
+      esc(d.FOCI[x.focus]?.label||x.focus)+'</strong><span>Previous sales '+
+      x.sold+'/'+x.target+'</span></div>').join('');
+    return '<div class="eo-desk eo-meeting">'+
+      '<header class="eo-heading"><div><small>MONTH '+month+
+      ' · FIRST GAME DAY · MANAGEMENT OFFICE</small><h2>BOARD MEETING</h2>'+
+      '<p>'+esc(state.name)+' · Review results and set a focus for this month.</p></div>'+
+      '<span class="eo-heading-chip '+(done?'eo-completed':'eo-required')+'">'+
+      (done?'MEETING COMPLETED':'DECISION REQUIRED')+'</span></header>'+
+      '<div class="eo-kpis">'+cards+'</div>'+
+      (done?'<div class="eo-confirm"><strong>MEETING COMPLETED.</strong> '+
+        'Your monthly priority is '+esc(selectedFocus?.label||'Routine operations')+
+        '. This decision is recorded in your career.</div>':
+        '<div class="eo-meeting-warning"><strong>ACTION REQUIRED</strong>'+
+        '<span>Agree one management priority before advancing beyond the first game day.</span></div>')+
+      '<section class="eo-priority"><div class="eo-section-heading"><div><small>MONTH '+month+
+      ' STRATEGY</small><h3>AGREE ONE MANAGEMENT PRIORITY</h3></div>'+
+      '<span>'+(done?'DECISION LOCKED':'SELECT ONE OPTION')+'</span></div>'+
+      '<div class="eo-focus-grid">'+choices+'</div>'+
+      '<p>Each priority has a modest, defined effect. It does not create free money or guarantee a sale.</p></section>'+
+      '<div class="eo-meeting-sub"><div><small>THIS MONTH’S UNIT TARGET</small>'+
+      '<strong>'+state.monthPlan.unitTarget+' COMPLETED HANDOVERS</strong></div>'+
+      '<div><small>TURNOVER GUIDANCE</small><strong>'+
+      money(state.monthPlan.turnoverTarget)+'</strong></div>'+
+      '<div><small>REPUTATION</small><strong>'+state.reputationScore+' / 100</strong></div></div>'+
+      '<details class="eo-details"><summary>MANAGEMENT DISCUSSION & PREVIOUS RESULTS</summary>'+
+      '<div class="eo-detail-grid">'+
+      '<section><h3>MANAGEMENT DISCUSSION</h3><div class="meeting-notes">'+
+      notes.map((x,i)=>'<div><b>'+String(i+1).padStart(2,'0')+'</b><p>'+
+        esc(x)+'</p></div>').join('')+'</div></section>'+
+      '<section><h3>SALES TEAM REVIEW</h3>'+staff+
+      '<h3>NEW MONTH’S TARGETS</h3><p>Dealership target: '+state.monthPlan.unitTarget+
+      ' handovers with positive operating contribution after staff and premises costs. '+
+      'Turnover guidance: '+money(state.monthPlan.turnoverTarget)+'.</p>'+
+      '</section></div></details>'+
+      (record?'<details class="eo-details"><summary>RECENT MEETING MINUTES</summary>'+
+        '<div class="eo-minute-list">'+record+'</div></details>':'')+
+      (previous?'<button type="button" class="secondary-button eo-report-link" '+
+        'data-page="reports">OPEN PREVIOUS MONTH’S FULL REPORT</button>':'')+
+      '</div>';
   }
   function render(state){
     const d=D();
     if(d.isDealDay(state.day))return deadline(state);
     if(d.isMeetingDay(state.day))return meeting(state);
-    const next=30-state.day%30,meetingMonth=d.monthOf(state.day)+1;
-    return '<div class="meeting-hero"><small>MANAGEMENT DIARY · MONTH '+d.monthOf(state.day)+'</small>'+
-      '<h2>UPCOMING EVENTS.</h2><p>Your next customer-only Deal Day is in '+next+
-      ' game days. Auctions will be closed that day. Your next management meeting is on day '+
-      ((meetingMonth-1)*30+1)+'.</p></div>'+
-      '<div class="event-action-grid"><div><h3>PREPARE FOR DEAL DAY</h3>'+
-      '<p>Have advertised vehicles ready for retail buyers. Keep space and preparation capital available for trade-ins and private sellers.</p>'+
-      '<button type="button" class="trade-button" data-page="stock">REVIEW STOCK →</button></div>'+
-      '<div><h3>REVIEW THE MONTHLY TARGET</h3><p>Complete profitable retail deals before the period closes. Review employee performance and stock age.</p>'+
-      '<button type="button" class="trade-button" data-page="reports">MANAGEMENT REPORT →</button></div></div>';
+    const month=d.monthOf(state.day);
+    const next=month*30,until=next-state.day,meetingDay=next+1;
+    const current=state.monthPlan;
+    const sold=state.sold.filter(x=>x.day>=current.startDay&&x.day<=state.day).length;
+    const listed=state.vehicles.filter(x=>x.status==='listed').length;
+    const preparing=state.vehicles.filter(x=>x.status==='acquired').length;
+    const focus=state.meetingHeldMonth===month?d.FOCI[state.meetingFocus]:null;
+    return '<div class="eo-desk eo-calendar"><header class="eo-heading">'+
+      '<div><small>MANAGEMENT DIARY · MONTH '+month+
+      '</small><h2>UPCOMING EVENTS</h2>'+
+      '<p>Two fixed milestones every 30-game-day operating month.</p></div>'+
+      '<span class="eo-heading-chip">NORMAL TRADING</span></header>'+
+      '<div class="eo-kpis">'+
+      '<div><small>DAYS UNTIL DEAL DAY</small><strong>'+until+'</strong></div>'+
+      '<div><small>MONTHLY HANDOVERS</small><strong>'+sold+' / '+current.unitTarget+'</strong></div>'+
+      '<div><small>VEHICLES ADVERTISED</small><strong>'+listed+'</strong></div>'+
+      '<div><small>CASH BALANCE</small><strong>'+money(state.cash)+'</strong></div>'+
+      '</div><div class="eo-calendar-grid">'+
+      '<section class="eo-schedule"><div><small>UPCOMING · GAME DAY '+next+'</small>'+
+      '<h3>MONTH-END DEAL DAY</h3><strong>'+until+' GAME DAY'+(until===1?'':'S')+' AWAY</strong>'+
+      '<p>Five sessions from 09:00 to 17:00. Buyers and private sellers may appear, '+
+      'but demand is never guaranteed. Auction houses are closed on Deal Day.</p></div>'+
+      '<div class="eo-schedule-foot">PREPARE: '+listed+' LISTED · '+
+      preparing+' AWAITING PREPARATION</div>'+
+      '<button type="button" class="trade-button" data-page="stock">CHECK VEHICLE STOCK</button></section>'+
+      '<section class="eo-schedule"><div><small>NEXT MONTH · GAME DAY '+meetingDay+'</small>'+
+      '<h3>MONTHLY BOARD MEETING</h3><strong>REVIEW & SET THE NEXT PRIORITY</strong>'+
+      '<p>The first day of the next month is for reviewing results and choosing a sales, buying or customer-care focus.</p></div>'+
+      '<div class="eo-schedule-foot">CURRENT PRIORITY: '+
+      esc(focus?.label||'NOT YET SELECTED')+'</div>'+
+      '<button type="button" class="trade-button" data-page="reports">REVIEW MONTHLY REPORT</button></section>'+
+      '</div><p class="eo-footnote">The event calendar shows fixed game-day milestones, not a forecast of how many customers will arrive.</p></div>';
   }
   window.MotorTradeEventsView=Object.freeze({banner,render});
 })();
