@@ -3885,7 +3885,7 @@ test('v0.9.14 supervisor hiring offers named candidates, distinct salaries and a
   assert.equal(candidates.length,2);
   assert.notEqual(candidates[0].name,candidates[1].name);
   assert.ok(candidates.every(c=>c.monthlySalary>=2000));
-  assert.match(app.nodes.get('people-board').innerHTML,/SUPERVISOR/);
+  assert.match(app.peopleView.staffDesk(s,P,{mode:'candidates',role:'supervisor'}).html,/STAFF SUPERVISOR/);
   assert.ok(E.hireStaff(s,candidates[1].id).ok);
   assert.equal(s.staff[0].name,candidates[1].name);
   assert.equal(s.staff[0].role,'supervisor');
@@ -5083,7 +5083,8 @@ test('v0.9.30 normal calendar shows real milestone days without forecasting buye
   assert.match(page,/UPCOMING EVENTS/);
   assert.match(page,/DAY 30/);
   assert.match(page,/DAY 31/);
-  assert.match(page,/19 GAME DAYS AWAY/);
+  assert.match(page,/FIVE SESSIONS · 09:00–17:00/);
+  assert.doesNotMatch(page,/19 GAME DAYS AWAY/);
   assert.match(page,/MONTH-END DEAL DAY/);
   assert.match(page,/MONTHLY BOARD MEETING/);
   assert.match(page,/CASH BALANCE/);
