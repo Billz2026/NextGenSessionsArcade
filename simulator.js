@@ -482,16 +482,6 @@
     byId('continue-day').disabled = career.day >= MAX_DAY;
     byId('continue-label').textContent=D.isDealDay(career.day)?
       (career.deadlineSession>=D.PHASES.length-1?'CLOSE MONTH':'NEXT SESSION'):'CONTINUE';
-    const calendarCopy = byId('calendar-message');
-    calendarCopy.textContent = D.isDealDay(career.day)?
-      'DEAL DAY '+D.dealSession(career).time+': customer-only retail trading. Auctions are closed and this game day advances in five sessions.' :
-      D.meetingDue(career)?
-        'FIRST-DAY MEETING: review the previous month and agree this month’s management priority.' :
-      career.day <= 7
-        ? 'Day ' + career.day + ' of your career. Auction Day is Monday; check the inbox for business updates.'
-        : E.auctionDay(career.day)?
-          'WEEKLY AUCTION DAY: this week’s numbered-lot catalogue is open.':
-          'Next weekly auction: game day '+E.nextAuctionDay(career.day)+'. Private seller leads refresh daily.';
     byId('save-warning').hidden = storageAvailable;
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;
