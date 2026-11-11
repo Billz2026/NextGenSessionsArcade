@@ -102,11 +102,74 @@
   function book(state,id){
     const c=caseFor(state,id);
     if(!c||c.status!=='enquiry')return fail('stage','A new enquiry is required to book a viewing.');
-    c.appointmentDay=state.day+1+(hash('appointment|'+c.id)%3);
+    // A normal viewing must take place within 48 game-hours.
+    c.appointmentDay=state.day+1+(hash('appointment|'+c.id)%2);
     c.status='booked';
     append(state,c,'appointment','Day '+c.appointmentDay);
     return ok(c.name+' has booked a viewing for day '+c.appointmentDay+
-      '. Attendance is not guaranteed.');
+      ' (within 48 game-hours). No deposit was paid: the vehicle stays advertised and available to other buyers.');
+  }
+  function competingInterest(state,id){
+    const c=caseFor(state,id),vehicle=state.vehicles.find(v=>v.id===id);
+    if(!vehicle||vehicle.status!=='listed'||!c||c.status!=='booked'||
+      c.held||c.standby||state.day>=c.appointmentDay||D.isDealDay(state.day))
+      return false;
+    const fair=vehicle.profile?.likelySale||vehicle.retail;
+    const overpriced=Math.max(0,(vehicle.asking-fair)/Math.max(fair,1));
+    const percent=clamp(58-Math.round(overpriced*90)-
+      (vehicle.profile?.grade>=4?9:0)+Math.floor(state.reputationScore/10),12,82);
+    // Stable within the same game day: repeated clicks cannot reroll demand.
+    return chance('other-buyer|'+state.name+'|'+state.day+'|'+id+'|'+c.id,percent);
+  }
+  function attendBooked(state,c,notices){
+    if(state.day<c.appointmentDay)return;
+    // A short-notice viewing is a much stronger indicator of intent.
+    const turnsUp=chance('show|'+c.id,clamp(96+Math.floor(state.reputationScore/15),90,99));
+    if(turnsUp){
+      c.status='arrived';
+      append(state,c,'arrived','Attended appointment within 48 game-hours');
+      if(notices)notices.push(c.name+' arrived for the viewing of stock '+c.vehicleId+'.');
+    }else{
+      const detail=failCase(state,c,'no-show','Customer failed to attend their appointment.');
+      if(notices)notices.push(detail);
+    }
+  }
+  function restoreBooked(state,c,notices){
+    if(!c.standby)return false;
+    const booked={...c.standby,standby:null};
+    state.customerCases[String(c.vehicleId)]=booked;
+    // A rival's negotiated offer must not carry into the original buyer's price.
+    const vehicle=state.vehicles.find(v=>v.id===c.vehicleId);
+    if(vehicle)vehicle.cashOffer=null;
+    append(state,booked,'appointment-restored','Competing buyer did not purchase; viewing still booked.');
+    attendBooked(state,booked,notices);
+    return true;
+  }
+  function serveCompeting(state,id){
+    const booked=caseFor(state,id),vehicle=state.vehicles.find(v=>v.id===id);
+    if(!booked||booked.status!=='booked'||!vehicle||vehicle.status!=='listed')
+      return fail('stage','A live, unsecured appointment is required for another viewing.');
+    if(!competingInterest(state,id))
+      return fail('no-enquiry','There is no second buyer available for this car at the moment.');
+    const key='other-buyer|'+state.name+'|'+state.day+'|'+id+'|'+booked.id;
+    const mode=hash('mode|'+key)%100;
+    const c={
+      id:'C-'+state.day+'-'+slot(state)+'-'+id+'-'+(hash('identity|'+key)%1000000),
+      vehicleId:id,createdDay:state.day,createdSession:slot(state),
+      name:FIRST[hash('first|'+key)%FIRST.length]+' '+
+        LAST[hash('last|'+key)%LAST.length],
+      channel:'WALK-IN',status:'arrived',
+      preferredMode:mode<38?'part-ex':'cash',
+      appointmentDay:null,agreedDay:null,price:null,allowance:null,
+      collectionDay:null,held:0,counters:0,reason:'',
+      terms:'in-person',prepCost:0,exchange:null,
+      standby:{...booked,standby:null}
+    };
+    state.customerCases[String(id)]=c;
+    vehicle.cashOffer=null;
+    append(state,c,'enquiry','Competing walk-in while earlier viewing remained unsecured');
+    append(state,c,'arrived','Customer on site for immediate viewing');
+    return ok(c.name+' is here to view stock '+id+' now. The original appointment remains booked unless this customer pays a deposit or buys the car. Offer a test drive before agreeing a sale.');
   }
   function testDrive(state,id){
     const c=caseFor(state,id);
@@ -122,6 +185,7 @@
     if(!pass){
       c.status='lost';
       c.reason='Customer did not like the condition or driving experience.';
+      restoreBooked(state,c);
       return {ok:false,changed:true,code:'drive-rejected',
         message:c.name+' declined to proceed after the test drive. No sale was made.'};
     }
@@ -147,6 +211,7 @@
       if(walk){
         c.status='lost';
         c.reason='Customer walked away after a counteroffer.';
+        restoreBooked(state,c);
       }
       return {ok:false,changed:true,code:walk?'walked':'rejected',
         message:c.name+(walk?' walked away after the higher counteroffer.':
@@ -188,6 +253,11 @@
     c.terms='in-person';
     c.prepCost=expense;
     c.collectionDay=state.day+1+(hash('collection|'+c.id)%2);
+    if(c.standby){
+      append(state,c.standby,'appointment-displaced',
+        'Car secured by another buyer paying a deposit; no deposit on original viewing.');
+      c.standby=null;
+    }
     c.status='reserved';
     funds(state,c,'received',250);
     state.cash-=expense;
@@ -230,6 +300,7 @@
       amounts.refunded+' refunded.');
     if(amounts.retained)append(state,c,'deposit-retained',
       'Direct costs recovered: £'+amounts.retained);
+    restoreBooked(state,c);
     return ok(c.reason+(amounts.refunded?' £'+amounts.refunded+' refunded.':'')+
       (amounts.retained?' £'+amounts.retained+' retained against recorded customer-specific costs.':''));
   }
@@ -247,6 +318,8 @@
       c.held=0;
     }
     append(state,c,'sale',c.preferredMode);
+    if(c.standby)append(state,c.standby,'appointment-displaced',
+      'Car sold to competing buyer before original unsecured appointment.');
     delete state.customerCases[String(id)];
     return {ok:true,changed:true,appliedDeposit,message:appliedDeposit?
       'Deposit transferred from holding account; balance paid at handover.':
@@ -266,20 +339,14 @@
     const notices=[];
     for(const c of Object.values(state.customerCases)){
       if(c.status==='lost'){
-        if(c.createdDay<state.day)delete state.customerCases[String(c.vehicleId)];
+        if(!restoreBooked(state,c,notices)&&c.createdDay<state.day)
+          delete state.customerCases[String(c.vehicleId)];
         continue;
       }
       if(c.status==='booked'&&state.day>=c.appointmentDay){
-        if(chance('show|'+c.id,clamp(88+Math.floor(state.reputationScore/12),82,97))){
-          c.status='arrived';
-          append(state,c,'arrived','Attended appointment');
-          notices.push(c.name+' arrived for the viewing of stock '+c.vehicleId+'.');
-        }else{
-          notices.push(failCase(state,c,'no-show','Customer failed to attend their appointment.'));
-        }
+        attendBooked(state,c,notices);
       }else if(c.status==='reserved'&&state.day>=c.collectionDay){
-        // Depositors have agreed the price, passed a drive and paid £250.
-        // A genuine withdrawal is possible, but should be exceptional.
+        // A paid deposit is a genuine reservation, so no competing buyers.
         if(chance('collect|'+c.id,96)){
           c.status='collectable';
           append(state,c,'collection-due','Customer ready to collect');
@@ -293,6 +360,7 @@
       }else if(['enquiry','arrived','discussing','agreed'].includes(c.status)&&
         c.createdDay<state.day){
         notices.push(failCase(state,c,'expired','Customer enquiry expired without a completed agreement.'));
+        restoreBooked(state,c,notices);
       }
     }
     return notices;
@@ -356,9 +424,14 @@
         c.price<=state.vehicles.find(v=>v.id===c.vehicleId).asking)&&
       (c.preferredMode!=='part-ex'||!['agreed','reserved','collectable'].includes(c.status)||
         (c.exchange&&c.allowance>=c.exchange.floor&&
-          c.allowance<=c.exchange.ask&&c.allowance<c.price));
+          c.allowance<=c.exchange.ask&&c.allowance<c.price))&&
+      (!c.standby||(c.standby.standby==null&&c.standby.status==='booked'&&
+        c.standby.held===0&&c.standby.vehicleId===c.vehicleId&&
+        !['booked','reserved','collectable'].includes(c.status)&&
+        validCase([id,c.standby])));
     if(!Object.entries(cases).every(validCase))return false;
-    const types=['enquiry','appointment','test-drive-pass','test-drive-reject',
+    const types=['enquiry','appointment','appointment-restored','appointment-displaced',
+      'test-drive-pass','test-drive-reject',
       'counter-accepted','counter-rejected','agreement','deposit','deposit-refunded',
       'deposit-retained','cancelled','arrived','no-show','expired','collection-due','sale'];
     if(!history.every(h=>h&&no(h.day,36500)&&h.day>=1&&h.day<=state.day&&
@@ -387,13 +460,14 @@
     state.customerCases=Object.fromEntries(Object.entries(cases).map(([key,c])=>
       [key,{...c,terms:saved.version>=9?c.terms:'legacy-refundable',
         prepCost:saved.version>=9?c.prepCost:0,
-        exchange:c.exchange?{...c.exchange}:null}]));
+        exchange:c.exchange?{...c.exchange}:null,
+        standby:c.standby?{...c.standby,standby:null}:null}]));
     state.customerHistory=history.map(h=>({...h}));
     state.customerFunds=existingFunds.map(v=>({...v}));
     return true;
   }
   window.MotorTradeCustomers=Object.freeze({
-    caseFor,demand,open,book,testDrive,negotiate,agree,deposit,cancel,
+    caseFor,demand,open,book,competingInterest,serveCompeting,testDrive,negotiate,agree,deposit,cancel,
     ready,complete,advanceDay,nextSession,stats,valid,heldDeposits,balanceDue,customerPrep
   });
 })();

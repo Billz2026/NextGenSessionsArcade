@@ -455,6 +455,7 @@
   }
   const openCustomer=(state,id)=>C.open(state,id);
   const bookCustomer=(state,id)=>C.book(state,id);
+  const competingCustomer=(state,id)=>C.serveCompeting(state,id);
   const testDrive=(state,id)=>C.testDrive(state,id);
   const depositCustomer=(state,id)=>C.deposit(state,id);
   const cancelCustomer=(state,id,reason='buyer')=>C.cancel(state,id,reason);
@@ -575,7 +576,7 @@
   }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,events:D,
-    customers:C,openCustomer,bookCustomer,testDrive,depositCustomer,
+    customers:C,openCustomer,bookCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
     wholesaleOffer,disposeStock,hireStaff,

@@ -36,16 +36,22 @@
     switch(c.status){
       case 'enquiry':
         body='<p>'+esc(c.name)+' has enquired about this car. They have not inspected or test driven it yet.'+
-          ' Book a viewing; there is a possibility they will not attend.</p>'+
+          ' Book a viewing within 48 game-hours. No deposit means the vehicle remains for sale.</p>'+ 
           '<button type="button" class="trade-button" data-action="book-customer" data-id="'+id+
           '">BOOK VIEWING →</button> '+cancel;
         break;
       case 'booked':
-        body='<p>Customer viewing booked for <strong>GAME DAY '+c.appointmentDay+
-          '</strong>. The appointment may be attended, cancelled or missed. You cannot sell to them yet.</p>'+cancel;
+        body='<div class="sales-case-highlight"><strong>VIEWING WITHIN 48 GAME-HOURS · NO DEPOSIT</strong>'+ 
+          '<p>'+esc(c.name)+' is due on <strong>GAME DAY '+c.appointmentDay+
+          '</strong>. This is an appointment, not a reservation: the car stays for sale until someone pays a deposit or completes handover.</p>'+ 
+          (C.competingInterest(state,id)?'<button type="button" class="trade-button" data-action="competing-customer" data-id="'+id+
+          '">SERVE ANOTHER BUYER NOW →</button><p>Another interested buyer can view and test drive now. If they do not purchase, the first booking is preserved.</p>':
+          '<p>No second buyer is ready right now. The original customer can still attend their appointment.</p>')+
+          '</div>'+cancel;
         break;
       case 'arrived':
-        body='<p>Customer has arrived to inspect the vehicle. A test drive can reveal objections that prevent a sale.</p>'+
+        body='<p>Customer has arrived to inspect the vehicle. A test drive can reveal objections that prevent a sale.'+
+          (c.standby?' Another customer has an earlier unsecured booking; it is preserved unless this buyer purchases or pays a deposit.':'')+'</p>'+ 
           '<button type="button" class="trade-button" data-action="test-drive" data-id="'+id+
           '">OFFER TEST DRIVE →</button> '+cancel;
         break;
@@ -73,7 +79,8 @@
           '">AGREE PART-EX TERMS</button></section>':
           '<section class="sales-offer-mode"><h4>NO PART-EXCHANGE</h4>'+
           '<p>This customer has not offered a trade-in. Do not assume every buyer has one.</p></section>';
-        body='<p>The test drive went well. Discuss a realistic cash price or trade-in allowance; there is no completed sale until handover.</p>'+
+        body='<p>The test drive went well. Discuss a realistic cash price or trade-in allowance; there is no completed sale until handover.'+
+          (c.standby?' The earlier unsecured appointment stays open until a deposit or completed sale.':'')+'</p>'+ 
           '<div class="sales-offer-modes">'+cashUI+part+'</div>'+cancel;
         break;
       }
@@ -129,10 +136,11 @@
     const held=C.heldDeposits(state);
     const top='<div class="sales-pipeline-summary">'+
       [['CARS ADVERTISED',listed.length],['OPEN CUSTOMER CASES',active.length],
-      ['APPOINTMENTS BOOKED',active.filter(c=>c.status==='booked').length],
+      ['APPOINTMENTS BOOKED',active.filter(c=>c.status==='booked'||c.standby?.status==='booked').length],
       ['HELD CUSTOMER DEPOSITS',cash(held)]].map(([label,value])=>
         '<div><small>'+label+'</small><strong>'+value+'</strong></div>').join('')+'</div>'+
-      '<p class="sales-pipeline-note">Appointments, test drives and negotiations may fail. '+
+      '<p class="sales-pipeline-note">Viewings happen within 48 game-hours. An appointment without a deposit never reserves a car: other buyers can view and buy it. '+
+      'Appointments, test drives and negotiations may still fail. '+
       'Deposits are part-payment, held in a separate customer account until collection. '+
       'Buyer cancellations can lose a fair portion linked to actual extra costs, not automatically the full amount; dealer fault requires a refund. The remaining cash balance is collected on handover.</p>'+
       '<div class="sales-pipeline-activity">THIS MONTH · '+stats.enquiries+' ENQUIRIES · '+

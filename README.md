@@ -4,6 +4,13 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.6 — 48-hour viewings and genuinely non-exclusive appointments
+- Unpaid viewing bookings are set for the next one or two game days (within 48 game-hours), not three days later.
+- Booked cars stay listed and available for competing walk-in enquiries. On days with genuine second-buyer interest, dealers can serve another viewer immediately, who must still test drive and agree terms.
+- If the competing buyer declines, the original viewing remains booked; if a different buyer purchases or pays a deposit, only the unsecured booking is displaced, not treated as a no-show.
+- Appointment attendance is more reliable, while genuine no-shows, test-drive rejection and cancellations remain possible.
+- Paid £250 reservations remain exclusive and deposited funds remain segregated. Existing v9 careers and their customer cases continue loading; new optional standby data is validated on load.
+
 ## v0.9.5 — Four-bay workshop, more committed buyers and photographic coverage (11 November 2026)
 
 - **Four in-house mechanics from day one**, alongside up to one salesperson and one vehicle buyer. Each mechanic runs one distinct vehicle repair, with named assignments and correct training/payroll pauses. A job awaiting final quality control still occupies its assigned technician until it is closed or transferred out. Future workshop slots grow to six technicians at 40 reputation and eight at 80 reputation. Hiring requires a protected one-week wage buffer and onboarding fee; hiring everybody at once is optional and expensive.

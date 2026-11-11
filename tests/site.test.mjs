@@ -61,14 +61,14 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /monthly\.js\?v=5/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=2/);
-  assert.match(html, /customers\.js\?v=3/);
+  assert.match(html, /customers\.js\?v=4/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=11/);
-  assert.match(html, /customers-view\.js\?v=3/);
+  assert.match(html, /trading\.js\?v=12/);
+  assert.match(html, /customers-view\.js\?v=4/);
   assert.match(html, /workshop-view\.js\?v=3/);
   assert.match(html, /events-view\.js\?v=3/);
   assert.match(html, /monthly-view\.js\?v=5/);
@@ -88,7 +88,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.5/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.6/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -2237,7 +2237,7 @@ test('v0.9 enforces actual appointments and includes real no-show outcomes', () 
   }
   assert.ok(tally.enquiries>15);
   assert.ok(tally.arrivals>5);
-  assert.ok(tally.noShows>2,'Not every appointment should result in an arrival');
+  assert.ok(tally.noShows>0,'A rare no-show should remain possible');
 });
 test('successful test drive and signed cash terms are mandatory before handover', () => {
   const E=browser(new Map()).productionEngine,C=E.customers;
@@ -2712,5 +2712,138 @@ test('buyer applying deposit to part exchange pays only the net cash amount', ()
   assert.equal(state.ledger.slice(-3).reduce((n,x)=>n+x.delta,0),balance+250);
   assert.ok(state.ledger.some(x=>x.delta===0&&
     x.note.startsWith('Part-exchange acquisition:')));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.6 bookings are within 48 game-hours and never reserve unpaid stock', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let checked=0;
+  for(let i=0;i<80;i++){
+    const {state:s,v}=readyForRetail(E,'48 Hour Booking '+i);
+    if(!C.demand(s,v))continue;
+    assert.ok(E.openCustomer(s,v.id).ok);
+    assert.ok(E.bookCustomer(s,v.id).ok);
+    const c=C.caseFor(s,v.id);
+    assert.ok(c.appointmentDay===s.day+1||c.appointmentDay===s.day+2);
+    assert.equal(c.held,0);
+    assert.equal(v.status,'listed');
+    assert.equal(C.heldDeposits(s),0);
+    assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+    checked++;
+  }
+  assert.ok(checked>20);
+});
+
+test('v0.9.6 another buyer can inspect an unsecured booked car without losing the original appointment', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let found=null;
+  for(let i=0;i<250;i++){
+    const {state:s,v}=readyForRetail(E,'Competing Viewer '+i);
+    if(!C.demand(s,v))continue;
+    E.openCustomer(s,v.id);E.bookCustomer(s,v.id);
+    if(!C.competingInterest(s,v.id))continue;
+    found={s,v};
+    break;
+  }
+  assert.ok(found,'A real competing viewing should be available sometimes');
+  const {s,v}=found,booked=C.caseFor(s,v.id),originalId=booked.id;
+  assert.ok(E.competingCustomer(s,v.id).ok);
+  const other=C.caseFor(s,v.id);
+  assert.equal(other.status,'arrived');
+  assert.equal(other.channel,'WALK-IN');
+  assert.equal(other.standby.id,originalId);
+  assert.equal(other.standby.appointmentDay,booked.appointmentDay);
+  assert.equal(C.heldDeposits(s),0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),'Both buyer and original appointment survive save/load');
+  v.cashOffer=4100;
+  assert.ok(E.cancelCustomer(s,v.id,'dealer').ok);
+  assert.equal(v.cashOffer,null,'A competing buyer offer must not contaminate the original viewer');
+  assert.equal(C.caseFor(s,v.id).id,originalId);
+  assert.equal(C.caseFor(s,v.id).status,'booked');
+  assert.equal(v.status,'listed');
+  assert.equal(s.sold.length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.6 a competing buyer can buy, cancelling only the unsecured appointment', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let found=null;
+  for(let i=0;i<380;i++){
+    const {state:s,v}=readyForRetail(E,'Competing Sale '+i);
+    if(!C.demand(s,v))continue;
+    E.openCustomer(s,v.id);E.bookCustomer(s,v.id);
+    if(!C.competingInterest(s,v.id))continue;
+    E.competingCustomer(s,v.id);
+    if(!E.testDrive(s,v.id).ok)continue;
+    found={s,v};
+    break;
+  }
+  assert.ok(found,'A competing customer should occasionally pass the test drive');
+  const {s,v}=found;
+  assert.ok(E.agreeCustomer(s,v.id,'cash',null).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  assert.equal(s.sold.length,1);
+  assert.equal(C.heldDeposits(s),0);
+  assert.equal(C.caseFor(s,v.id),null);
+  assert.equal(s.customerHistory.filter(h=>h.type==='appointment-displaced').length,1);
+  assert.equal(s.customerHistory.filter(h=>h.type==='no-show').length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.6 deposited sales are exclusive, so other buyers cannot displace them', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  const {state,v}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  assert.equal(C.competingInterest(state,v.id),false);
+  assert.equal(E.competingCustomer(state,v.id).code,'stage');
+  assert.equal(C.caseFor(state,v.id).status,'reserved');
+  assert.equal(C.heldDeposits(state),250);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.6 a rival who delays beyond the viewing deadline cannot wipe out the original booking', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let found=null;
+  for(let i=0;i<250;i++){
+    const {state,v}=readyForRetail(E,'Appointment Restoration '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);E.bookCustomer(state,v.id);
+    if(!C.competingInterest(state,v.id))continue;
+    found={state,v};break;
+  }
+  assert.ok(found);
+  const {state,v}=found,original=C.caseFor(state,v.id);
+  assert.ok(E.competingCustomer(state,v.id).ok);
+  state.day=original.appointmentDay;
+  E.advanceCustomers(state);
+  assert.equal(C.caseFor(state,v.id).id,original.id);
+  assert.ok(['arrived','lost'].includes(C.caseFor(state,v.id).status));
+  assert.ok(state.customerHistory.some(h=>h.type==='appointment-restored'));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.6 paying a deposit displaces an earlier unsecured appointment but no holding funds are lost', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let chosen=null;
+  for(let i=0;i<320;i++){
+    const {state,v}=readyForRetail(E,'Appointment Deposit '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);E.bookCustomer(state,v.id);
+    if(!C.competingInterest(state,v.id))continue;
+    E.competingCustomer(state,v.id);
+    if(!E.testDrive(state,v.id).ok)continue;
+    if(!E.agreeCustomer(state,v.id,'cash',null).ok)continue;
+    if(!E.depositCustomer(state,v.id).ok)continue;
+    chosen={state,v};break;
+  }
+  assert.ok(chosen,'Find a paid reservation following a competing walk-in');
+  const {state,v}=chosen,c=C.caseFor(state,v.id);
+  assert.equal(c.status,'reserved');
+  assert.equal(c.standby,null);
+  assert.equal(c.held,250);
+  assert.equal(C.competingInterest(state,v.id),false);
+  assert.equal(C.heldDeposits(state),250);
+  assert.equal(state.customerHistory.filter(h=>h.type==='appointment-displaced').length,1);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
