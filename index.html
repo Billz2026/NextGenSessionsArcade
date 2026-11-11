@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=26">
+  <link rel="stylesheet" href="./styles.css?v=27">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -38,7 +38,8 @@
   <script src="./premises-view.js?v=1" defer></script>
   <script src="./auction-hall-view.js?v=2" defer></script>
   <script src="./dashboard-view.js?v=2" defer></script>
-  <script src="./simulator.js?v=22" defer></script>
+  <script src="./inbox-office.js?v=1" defer></script>
+  <script src="./simulator.js?v=23" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -46,7 +47,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.12</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.13</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -199,9 +200,33 @@
               </details>
             </section>
 
-            <section class="career-panel" data-panel="inbox" hidden aria-labelledby="inbox-title">
-              <div class="page-heading"><div><p class="section-overline">DEALERSHIP COMMUNICATIONS</p><h1 id="inbox-title">YOUR <em>INBOX.</em></h1><p>Updates from advisers and your business contacts.</p></div><button type="button" class="secondary-button" data-action="mark-all-read">MARK ALL READ</button></div>
-              <div class="inbox-layout panel-card"><div class="inbox-column"><div class="inbox-column-head">MESSAGES <span id="inbox-unread-count">0 UNREAD</span></div><div class="inbox-list" id="inbox-list"></div></div><div class="inbox-detail" id="inbox-detail"><p>Select a message to read it.</p></div></div>
+            <section class="career-panel inbox-control" data-panel="inbox" hidden aria-labelledby="inbox-title">
+              <header class="inbox-heading">
+                <div><p class="section-overline">YOUR BUSINESS / OWNER COMMUNICATIONS</p><h1 id="inbox-title">OWNER'S <em>INBOX.</em></h1><p>Decisions, staff reports and paid transaction copies. Routine bookkeeping is handled by Accounts.</p></div>
+                <button type="button" class="secondary-button" data-action="mark-all-read">MARK ALL READ</button>
+              </header>
+              <div class="inbox-stat-strip" aria-label="Inbox status">
+                <div><span>REQUIRES YOUR DECISION</span><strong id="inbox-action-count">0</strong></div>
+                <div><span>UNREAD MESSAGES</span><strong id="inbox-unread-summary">0</strong></div>
+                <div><span>PAID TRANSACTION COPIES</span><strong id="inbox-paid-count">0</strong></div>
+              </div>
+              <nav class="inbox-filters" aria-label="Filter dealership communications">
+                <button type="button" data-action="filter-inbox" data-filter="all" aria-pressed="true">ALL MAIL</button>
+                <button type="button" data-action="filter-inbox" data-filter="action" aria-pressed="false">NEEDS APPROVAL</button>
+                <button type="button" data-action="filter-inbox" data-filter="operations" aria-pressed="false">WORKSHOP & BUYING</button>
+                <button type="button" data-action="filter-inbox" data-filter="staff" aria-pressed="false">STAFF</button>
+                <button type="button" data-action="filter-inbox" data-filter="accounts" aria-pressed="false">ACCOUNTS</button>
+                <button type="button" data-action="filter-inbox" data-filter="sales" aria-pressed="false">CUSTOMERS</button>
+                <button type="button" data-action="filter-inbox" data-filter="reports" aria-pressed="false">REPORTS</button>
+              </nav>
+              <div class="inbox-layout panel-card">
+                <div class="inbox-column">
+                  <div class="inbox-column-head"><span>MESSAGES <small id="inbox-filter-count">ALL MAIL</small></span><span id="inbox-unread-count">0 UNREAD</span></div>
+                  <div class="inbox-list" id="inbox-list"></div>
+                </div>
+                <div class="inbox-detail" id="inbox-detail"><p>Select a message to read it.</p></div>
+              </div>
+              <p class="inbox-accounts-disclosure">Accounts pays routine charges through the normal business ledger. Invoice copies confirm money already paid; opening or marking a message as read never moves cash. Workshop repair approvals are new financial decisions and are checked against available cash before booking.</p>
             </section>
 
             <section class="career-panel" data-panel="auctionHall" hidden aria-labelledby="auction-hall-title">
