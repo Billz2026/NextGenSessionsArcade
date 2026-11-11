@@ -145,6 +145,7 @@
   let eventNotice = '';
   let lastTradeResult = null;
   let expandedReportId = null;
+  let auctionPreviewId = null;
   let offerDrafts = {};
   let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
@@ -264,7 +265,7 @@
     return cashText(E.quote(car,kind,price,!!career.reports?.[car.id]).expectedMargin);
   }
   function renderAuctionHall(){
-    byId('auction-hall-view').innerHTML=AV.render(career,E,reportCard);
+    byId('auction-hall-view').innerHTML=AV.render(career,E,reportCard,auctionPreviewId);
   }
   function renderMarket() {
     const progression=E.marketStatus(career);
@@ -518,6 +519,7 @@
     const closed=career.day===career.monthPlan.endDay?M.close(career):null;
     career.day += 1;
     E.rollAuctionHall(career);
+    auctionPreviewId=null;
     career.deadlineSession=0;
     if(closed) {
       M.next(career);
@@ -685,6 +687,9 @@
       case 'toggle-report':
         if (career) {
           const key=button.dataset.kind+':'+button.dataset.id;
+          if(button.dataset.kind==='auction'&&
+             E.auctionLot(career)?.id!==button.dataset.id)
+            auctionPreviewId=button.dataset.id;
           expandedReportId=expandedReportId===key?null:key;
           render();
         }
@@ -692,6 +697,9 @@
       case 'inspect-lead':
         if (career) {
           expandedReportId=button.dataset.kind+':'+button.dataset.id;
+          if(button.dataset.kind==='auction'&&
+             E.auctionLot(career)?.id!==button.dataset.id)
+            auctionPreviewId=button.dataset.id;
           saveResult(E.inspectLead(career,button.dataset.kind,button.dataset.id),
             button.dataset.id);
         }
@@ -724,8 +732,22 @@
         if (career&&window.confirm('Release this employee? The game charges seven days of provisional notice pay, even if cash is unavailable.'))
           saveResult(P.release(career,Number(button.dataset.id)));
         break;
+      case 'preview-auction':
+        if(career&&E.marketFor(career).auctions.some(lot=>lot.id===button.dataset.id)){
+          auctionPreviewId=button.dataset.id;
+          expandedReportId='auction:'+button.dataset.id;
+          render();
+        }
+        break;
+      case 'close-auction-preview':
+        auctionPreviewId=null;
+        render();
+        break;
       case 'start-auction':
-        if(career)saveResult(E.startAuction(career));
+        if(career){
+          auctionPreviewId=null;
+          saveResult(E.startAuction(career));
+        }
         break;
       case 'bid-live-auction':
         if(career)saveResult(E.bidLiveAuction(career,Number(button.dataset.increment)));
@@ -734,7 +756,10 @@
         if(career)saveResult(E.passAuction(career));
         break;
       case 'next-auction-lot':
-        if(career)saveResult(E.nextAuctionLot(career));
+        if(career){
+          auctionPreviewId=null;
+          saveResult(E.nextAuctionLot(career));
+        }
         break;
       case 'bid-auction':
         if (career) saveResult(E.acquireAuction(career,button.dataset.id,
