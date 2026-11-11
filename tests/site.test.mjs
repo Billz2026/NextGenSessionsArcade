@@ -77,7 +77,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=46/);
+  assert.match(html, /styles\.css\?v=47/);
   assert.match(html, /simulator\.js\?v=32/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -98,7 +98,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=6/);
   assert.match(html, /monthly-view\.js\?v=8/);
-  assert.match(html, /people-view\.js\?v=6/);
+  assert.match(html, /people-view\.js\?v=7/);
   assert.match(html, /vehicle-view\.js\?v=4/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
@@ -114,7 +114,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.32/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.33/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -598,7 +598,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=46/);
+  assert.match(html, /styles\.css\?v=47/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4443,7 +4443,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.32/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.33/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4512,7 +4512,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.32/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.33/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4970,7 +4970,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=46/);
+  assert.match(html,/styles\.css\?v=47/);
 });
 
 
@@ -5305,12 +5305,122 @@ test('v0.9.32 staff and recruitment preserve readable skills while collapsing se
 });
 
 test('v0.9.32 compact Staff & Recruitment desktop styles retain labels and responsive grid',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.32/);
-  assert.match(html,/styles\.css\?v=46/);
-  assert.match(html,/people-view\.js\?v=6/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.33/);
+  assert.match(html,/styles\.css\?v=47/);
+  assert.match(html,/people-view\.js\?v=7/);
   assert.match(css,/\.career-main:has\(\[data-panel="staff"\]:not\(\[hidden\]\)\) \.career-topbar/);
   assert.match(css,/\.sd-kpis>div\{min-height:56px/);
   assert.match(css,/\.sd-person\{padding:6px 8px/);
   assert.match(css,/\.sd-role-impact summary:focus-visible/);
   assert.match(css,/@media\(max-width:760px\)/);
+});
+
+
+test('v0.9.33 Reputation opens with current tier, next milestone and actual career metrics',()=>{
+  const app=browser(new Map()),E=app.productionEngine,P=E.people;
+  const state=E.create('New Trading Company',[]);
+  const original=JSON.stringify(state);
+  const view=app.peopleView.reputation(state);
+  assert.match(view,/class="rep-control"/);
+  assert.match(view,/YOUR DEALERSHIP STANDING/);
+  assert.match(view,/NEW TRADER/);
+  assert.match(view,/5<\/strong><span>\/ 100<\/span>/);
+  assert.match(view,/15 POINTS TO LOCAL DEALER/);
+  assert.match(view,/role="progressbar"[^>]*aria-valuenow="5"/);
+  assert.match(view,/VEHICLES HANDED OVER/);
+  assert.match(view,/LIFETIME SALES TURNOVER/);
+  assert.match(view,/LAST 30 GAME DAYS/);
+  assert.match(view,/PAYROLL OBLIGATIONS/);
+  assert.match(view,/No reputation changes recorded yet/);
+  assert.match(view,/CURRENT<\/em>/);
+  assert.equal((view.match(/class="rep-stage(?: rep-\w+)?"/g)||[]).length,5);
+  assert.equal(P.tier(state.reputationScore),'NEW TRADER');
+  assert.equal(JSON.stringify(state),original,'Reputation rendering must not modify the saved career');
+  assert.match(html,/class="rep-view"/);
+  assert.match(html,/data-panel="reputation"/);
+});
+
+test('v0.9.33 Reputation events display net last-30-day change and escape recorded reasons',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const state=E.create('Growing Reputation',[]);
+  state.day=76;state.reputationScore=45;
+  state.reputationHistory=[
+    {day:15,delta:1,reason:'Older sale outside the recent window'},
+    {day:48,delta:3,reason:'High-quality handover'},
+    {day:72,delta:-1,reason:'Customer complaint <script>'},
+    {day:76,delta:2,reason:'Excellent service & customer care'}
+  ];
+  const before=JSON.stringify(state),view=app.peopleView.reputation(state);
+  assert.match(view,/TRUSTED DEALER/);
+  assert.match(view,/15 POINTS TO REGIONAL SPECIALIST/);
+  assert.match(view,/LAST 30 GAME DAYS/);
+  assert.match(view,/class="rep-kpi rep-good"/);
+  assert.match(view,/\+4 POINTS/);
+  assert.match(view,/&lt;script&gt;/);
+  assert.match(view,/&amp; customer care/);
+  assert.doesNotMatch(view,/<script>/);
+  assert.match(view,/VIEW 2 MORE RECORDED CHANGES/);
+  const first=view.indexOf('Excellent service &amp; customer care');
+  const next=view.indexOf('Customer complaint &lt;script&gt;');
+  assert.ok(first>=0&&next>first,'Latest history must come first');
+  assert.equal(JSON.stringify(state),before);
+});
+
+test('v0.9.33 Reputation clearly distinguishes real market access from future prestige concepts',()=>{
+  const app=browser(new Map()),E=app.productionEngine,P=E.people;
+  const state=E.create('Established Trader',[]);
+  state.reputationScore=100;
+  const maximum=app.peopleView.reputation(state);
+  assert.match(maximum,/PRESTIGE DEALER/);
+  assert.match(maximum,/HIGHEST REPUTATION TIER/);
+  assert.match(maximum,/aria-valuenow="100"/);
+  assert.doesNotMatch(maximum,/POINTS TO/);
+  assert.match(maximum,/LONG-TERM PRESTIGE TARGET & MARKET ELIGIBILITY/);
+  assert.match(maximum,/luxury stock needs £110,000 and 65 reputation/);
+  assert.match(maximum,/not an additional unlock in this version/);
+  const achieved=maximum.match(/class="rep-stage rep-current"/g)||[];
+  assert.equal(achieved.length,1);
+  assert.equal(P.tier(100),'PRESTIGE DEALER');
+  const region=E.create('Regional Trader',[]);
+  region.reputationScore=61;
+  assert.match(app.peopleView.reputation(region),/4 POINTS TO PRESTIGE DEALER/);
+  assert.match(app.peopleView.reputation(region),/65\+ and cash/);
+});
+
+test('v0.9.33 Reputation displays meaningful payroll or premises risk without fake penalties',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const state=E.create('Trading Pressures',[]);
+  const noDebt=app.peopleView.reputation(state);
+  assert.match(noDebt,/KEEP THE MOMENTUM/);
+  assert.match(noDebt,/data-page="workshop"/);
+  state.premises.arrears=325;
+  const rentDue=app.peopleView.reputation(state);
+  assert.match(rentDue,/PREMISES BILLS OUTSTANDING/);
+  assert.match(rentDue,/£325/);
+  assert.match(rentDue,/data-page="finance"/);
+  state.payrollArrears=510;
+  const wagesDue=app.peopleView.reputation(state);
+  assert.match(wagesDue,/PAYROLL NEEDS ATTENTION/);
+  assert.match(wagesDue,/£510/);
+  assert.match(wagesDue,/data-page="staff"/);
+  assert.equal(state.reputationScore,5,'Viewing a warning must not debit reputation');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.33 Reputation uses compact responsive layout without removing complete history',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const state=E.create('Recorded Trust',[]);
+  for(let i=0;i<30;i++)state.reputationHistory.push({
+    day:i+1,delta:i%2?1:-1,reason:'Recorded outcome '+i});
+  state.day=30;
+  const view=app.peopleView.reputation(state);
+  assert.match(view,/VIEW 28 MORE RECORDED CHANGES/);
+  assert.equal((view.match(/class="rep-change"/g)||[]).length,30);
+  assert.match(view,/<details class="rep-more">/);
+  assert.match(view,/<details class="rep-future">/);
+  assert.match(css,/\.rep-main-grid\{display:grid/);
+  assert.match(css,/\.rep-history-preview\{display:grid/);
+  assert.match(css,/@media\(max-width:760px\)/);
+  assert.match(html,/styles\.css\?v=47/);
+  assert.match(html,/people-view\.js\?v=7/);
 });
