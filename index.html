@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=33">
+  <link rel="stylesheet" href="./styles.css?v=34">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -33,7 +33,7 @@
   <script src="./people-view.js?v=4" defer></script>
   <script src="./monthly-view.js?v=6" defer></script>
   <script src="./events-view.js?v=4" defer></script>
-  <script src="./workshop-view.js?v=3" defer></script>
+  <script src="./workshop-view.js?v=4" defer></script>
   <script src="./customers-view.js?v=5" defer></script>
   <script src="./premises-view.js?v=1" defer></script>
   <script src="./auction-hall-view.js?v=2" defer></script>
@@ -41,7 +41,7 @@
   <script src="./inbox-office.js?v=3" defer></script>
   <script src="./buying-desk-view.js?v=2" defer></script>
   <script src="./stock-view.js?v=1" defer></script>
-  <script src="./simulator.js?v=28" defer></script>
+  <script src="./simulator.js?v=29" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -49,7 +49,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.19</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.20</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -247,7 +247,7 @@
 
             <section class="career-panel" data-panel="workshop" hidden aria-labelledby="workshop-title">
               <div class="page-heading"><div><p class="section-overline">OPERATIONS / VEHICLE PREPARATION</p><h1 id="workshop-title">WORKSHOP <em>OPERATIONS.</em></h1><p>Diagnose faults, approve in-house or external repair jobs, wait for work to finish and pass quality control before advertising.</p></div><span class="career-chip">REAL GAME-DAY TURNAROUND</span></div>
-              <div id="workshop-board" aria-live="polite"></div>
+              <div id="workshop-board" class="ws-control" aria-live="polite"></div>
             </section>
 
             <section class="career-panel" data-panel="sales" hidden aria-labelledby="sales-title">

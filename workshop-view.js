@@ -1,122 +1,184 @@
 'use strict';
-/* v0.8 Workshop Operations UI. Safe static markup from saved game records. */
+/* v0.9.20 — Compact Workshop job desk. All actions use existing engine rules. */
 (() => {
-  const VC=window.MotorTradeCards;
-  if(!VC)throw new Error('Load vehicle-cards.js before workshop-view.js');
-  const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const cash=n=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n);
-  const stageLabels={
-    unassessed:'AWAITING ASSESSMENT',quoted:'REPAIRS TO APPROVE',
-    'in-progress':'IN REPAIR QUEUE','quality-check':'FINAL QUALITY CHECK',ready:'RETAIL READY'
-  };
-  function record(state,W,vehicle){
-    const job=vehicle.workshop;
-    const grade=vehicle.profile?.grade??3;
-    const repairs=vehicle.profile?.knownRepairs??[];
-    const hidden=vehicle.profile?.hiddenFault &&
-      (job.stage!=='unassessed'||!!vehicle.profile.inspected)?
-      vehicle.profile.hiddenFault:null;
-    const costHtml=repairs.map(x=>
-      '<div class="workshop-item"><span>'+esc(x.item)+'</span><strong>'+cash(x.cost)+'</strong></div>').join('')+
-      (hidden?'<div class="workshop-item workshop-fault"><span>'+esc(hidden.item)+
-      ' · additional diagnosed fault</span><strong>'+cash(hidden.cost)+'</strong></div>':'');
-    const status=stageLabels[job.stage]||'STATUS UNAVAILABLE';
-    let actions='';
-    if(job.stage==='unassessed'){
-      const staff=state.staff.find(s=>s.role==='technician');
-      actions='<div class="workshop-action-panel"><p>Assess the vehicle to confirm the workshop repair requirement. '+
-        'Diagnosis costs '+cash(state.cash>=0&&window.MotorTradePeople.active(state,'technician')?30:55)+
-        ' and is included in the vehicle’s cost basis.</p>'+
-        '<button type="button" class="trade-button" data-action="assess-workshop" data-id="'+vehicle.id+
-        '">AUTHORISE ASSESSMENT</button></div>';
-    } else if(job.stage==='quoted'){
-      const internal=W.quote(state,vehicle,'internal');
-      const external=W.quote(state,vehicle,'external');
-      const createOption=(method,quote)=>{
-        if(!quote)return '<div class="workshop-option workshop-disabled"><h4>IN-HOUSE TECHNICIAN</h4>'+
-          '<p>All technicians are busy, training or unavailable. Hire another, finish an assigned job or use an external garage.</p></div>';
-        return '<div class="workshop-option"><h4>'+(method==='internal'?'IN-HOUSE TECHNICIAN':'EXTERNAL GARAGE')+
-          '</h4><strong>'+cash(quote.cost)+'</strong>'+
-          '<p>Estimated '+quote.duration+' game days · '+quote.partsDelay+
-          ' part(s) wait days · '+esc(quote.provider)+'</p>'+
-          '<button type="button" class="trade-button" data-action="start-workshop" data-method="'+
-          method+'" data-id="'+vehicle.id+'">BOOK '+(method==='internal'?'IN-HOUSE':'EXTERNAL')+
-          ' REPAIR</button></div>';
-      };
-      actions='<div class="workshop-options">'+createOption('internal',internal)+
-        createOption('external',external)+'</div>';
-    } else if(job.stage==='in-progress'){
-      actions='<div class="workshop-progress"><div><strong>'+
-        (job.paused?'PAUSED · TECHNICIAN UNAVAILABLE':'REPAIRS BOOKED')+'</strong>'+
-        '<p>'+esc(job.method==='internal'?
-          'In-house: '+(state.staff.find(s=>s.id===job.technicianId)?.name||'technician unavailable'):
-          'Independent external garage')+
-        ' · '+job.remainingDays+' game day(s) remaining'+
-        (job.partsDelay?' · '+job.partsDelay+' day(s) built in for parts':'')+'</p></div>'+
-        '<div><small>REPAIR CHARGED</small><strong>'+cash(job.repairCost)+'</strong></div></div>'+
-        (job.method==='internal'?
-          '<button type="button" class="trade-button trade-button-secondary" data-action="outsource-workshop" data-id="'+
-          vehicle.id+'">TRANSFER TO EXTERNAL GARAGE · £125</button>':'');
-    } else if(job.stage==='quality-check'){
-      actions='<div class="workshop-action-panel"><p>All scheduled repairs are finished. '+
-        'Complete final quality control before this vehicle can be advertised. '+
-        'A failed check may uncover work that costs more and delays readiness.</p>'+
-        '<button type="button" class="trade-button" data-action="finish-workshop" data-id="'+vehicle.id+
-        '">PERFORM FINAL QUALITY CHECK</button></div>';
-    } else {
-      actions='<div class="workshop-finished"><strong>RETAIL READY</strong>'+
-        '<p>Vehicle passed workshop quality control on day '+job.completedDay+
-        '. Actual repairs: '+cash(vehicle.prepSpent)+
-        '. Assessment: '+cash(job.assessmentFee)+' (included in purchase cost).</p>'+
-        '<button type="button" class="trade-button" data-page="stock">VIEW VEHICLE STOCK →</button></div>';
+  const VC=window.MotorTradeCards, P=window.MotorTradePeople;
+  if(!VC||!P)throw Error('Load cards and people before workshop view');
+  const esc=VC.esc, cash=VC.money;
+  const FILTERS=Object.freeze(['all','action','repair','ready']);
+  const stages=['unassessed','quoted','in-progress','quality-check','ready'];
+  const labels={unassessed:'ASSESSMENT DUE',quoted:'REPAIR APPROVAL DUE',
+    'in-progress':'REPAIRS IN PROGRESS','quality-check':'QUALITY CHECK DUE',ready:'RETAIL READY'};
+  const needs=v=>v.status==='acquired'&&
+    ['unassessed','quoted','quality-check'].includes(v.workshop?.stage);
+  const age=(s,v)=>Math.max(0,s.day-v.acquiredDay);
+  function paid(v){return ['in-progress','quality-check'].includes(v.workshop?.stage)?
+    Number(v.workshop.repairCost||0):Number(v.prepSpent||0);}
+  function summary(s,W){
+    const cars=s.vehicles;
+    return {count:cars.length,action:cars.filter(needs).length,
+      repair:cars.filter(v=>v.workshop?.stage==='in-progress').length,
+      qc:cars.filter(v=>v.workshop?.stage==='quality-check').length,
+      ready:cars.filter(v=>v.workshop?.stage==='ready').length,
+      reserve:W.reserved(s),
+      tech:P.activeTeam(s,'technician').length,
+      free:P.availableTechnicians(s).length,
+      bays:P.technicianLimit(s),
+      inHouse:cars.filter(v=>v.workshop?.stage==='in-progress'&&v.workshop.method==='internal').length,
+      external:cars.filter(v=>v.workshop?.stage==='in-progress'&&v.workshop.method==='external').length};
+  }
+  function status(v){
+    const stage=v.workshop?.stage||'unassessed';
+    return {label:stage==='in-progress'&&v.workshop.paused?'REPAIRS PAUSED':labels[stage]||'CHECK STATUS',
+      tone:stage==='ready'?'ready':stage==='in-progress'?'running':needs(v)?'due':'pending'};
+  }
+  function unit(s,v,selected){
+    const k=status(v);
+    return '<article class="ws-unit'+(selected?' ws-selected':'')+'">'+
+      '<div class="ws-thumb">'+VC.photo(v,'workshop')+'</div>'+
+      '<button type="button" class="ws-pick" data-action="select-workshop" data-id="'+v.id+
+      '" aria-pressed="'+selected+'"><small>STOCK '+v.id+' · '+esc(v.source.toUpperCase())+
+      '</small><strong>'+esc(v.title)+'</strong>'+
+      '<span>'+new Intl.NumberFormat('en-GB').format(v.miles)+' MI · '+age(s,v)+' DAYS HELD</span>'+
+      '<em class="ws-status ws-status-'+k.tone+'">'+k.label+'</em></button></article>';
+  }
+  function steps(v){
+    const current=Math.max(0,stages.indexOf(v.workshop?.stage));
+    return '<div class="ws-steps">'+['ASSESS','APPROVE','REPAIR','QC','READY'].map((x,i)=>
+      '<span class="'+(i<current?'done':i===current?'current':'')+'">'+x+'</span>').join('')+'</div>';
+  }
+  function items(v){
+    const p=v.profile||{};
+    const seen=v.workshop.stage!=='unassessed'||!!p.inspected;
+    const rows=(p.knownRepairs||[]).map(x=>'<div class="ws-repair"><span>'+
+      esc(x.item)+'</span><strong>'+cash(x.cost)+'</strong></div>').join('');
+    const extra=seen&&p.hiddenFault?
+      '<div class="ws-repair ws-fault"><span>'+esc(p.hiddenFault.item)+
+      ' · diagnosed defect</span><strong>'+cash(p.hiddenFault.cost)+'</strong></div>':'';
+    return '<section><h4>REPAIR REQUIREMENTS</h4>'+rows+extra+
+      (!rows?'<p>No itemised information available.</p>':'')+
+      (!seen?'<p class="ws-caveat">Further defects may be identified at assessment.</p>':'')+'</section>';
+  }
+  function costs(v){
+    const diagnosed=v.workshop.stage!=='unassessed'||!!v.profile?.inspected;
+    return '<div class="ws-costs">'+
+      '<div><span>ACQUISITION / ASSESSMENT PAID</span><strong>'+cash(v.cost)+'</strong></div>'+
+      '<div><span>REPAIRS PAID / BOOKED</span><strong>'+cash(paid(v))+'</strong></div>'+
+      '<div class="ws-cost-total"><span>CAPITAL INVESTED</span><strong>'+cash(v.cost+paid(v))+'</strong></div>'+
+      '<div><span>DIAGNOSED REPAIR REQUIREMENT</span><strong>'+
+      (diagnosed?cash(v.prepBudget):'NOT YET ASSESSED')+'</strong></div></div>';
+  }
+  function quote(s,W,v,mode){
+    const q=W.quote(s,v,mode);
+    const occupied=mode==='external'&&s.vehicles.filter(x=>x.id!==v.id&&
+      x.workshop?.stage==='in-progress'&&x.workshop.method==='external').length>=2;
+    const cannot=!q||occupied||q.cost>s.cash-W.reserved(s,v.id);
+    const reason=!q?'No free technician or bay':occupied?'Both external slots occupied':
+      q.cost>s.cash-W.reserved(s,v.id)?'Insufficient unreserved cash':'';
+    return '<div class="ws-quote"><div class="ws-quote-head"><strong>'+
+      (mode==='internal'?'IN-HOUSE TECHNICIAN':'EXTERNAL GARAGE')+'</strong><b>'+
+      (q?cash(q.cost):'UNAVAILABLE')+'</b></div>'+
+      (q?'<span>'+q.duration+' DAYS · '+q.partsDelay+' PARTS-WAIT DAYS</span><small>'+
+        esc(q.provider)+'</small>':'')+
+      (cannot?'<p class="ws-issue">'+esc(reason)+'</p>':'')+
+      '<button type="button" class="trade-button" data-action="start-workshop" data-id="'+v.id+
+      '" data-method="'+mode+'"'+(cannot?' disabled':'')+'>BOOK '+
+      (mode==='internal'?'IN-HOUSE':'EXTERNAL')+' REPAIR</button></div>';
+  }
+  function actions(s,W,v){
+    const j=v.workshop,phase=j.stage;
+    if(phase==='unassessed'){
+      const fee=P.active(s,'technician')?30:55;
+      const can=s.cash>=W.reserved(s)+fee;
+      return '<div class="ws-action"><h4>NEXT / ASSESS VEHICLE</h4>'+
+        '<p>Confirm the repair requirement. The assessment costs '+cash(fee)+
+        ' and is added to the acquisition cost.</p>'+
+        (!can?'<p class="ws-issue">Insufficient unreserved cash for assessment.</p>':'')+
+        '<button type="button" class="trade-button" data-action="assess-workshop" data-id="'+v.id+
+        '"'+(!can?' disabled':'')+'>AUTHORISE ASSESSMENT · '+cash(fee)+'</button></div>';
     }
-    const canDispose=vehicle.status==='acquired'&&
-      ['unassessed','quoted'].includes(job.stage);
-    const disposal=canDispose?
-      '<div class="workshop-disposal"><strong>STOCK EXIT / STOP THE LOSS</strong>'+
-      '<p>Cannot afford or justify repairs? A fictional trade buyer currently offers '+
-      cash(window.MotorTradeEngine.wholesaleOffer(vehicle))+'. '+
-      'Selling now frees your space but may crystallise a loss. It does not count towards retail targets.</p>'+
-      '<button type="button" class="trade-button trade-button-outline" data-action="dispose-workshop" data-id="'+
-      vehicle.id+'">SELL TO TRADE</button></div>':'';
-    return '<article class="workshop-job">'+VC.photo(vehicle,'workshop')+
-      '<div class="workshop-job-heading"><div>'+
-      '<small>'+esc(vehicle.source.toUpperCase())+' · STOCK '+vehicle.id+
-      ' · GRADE '+grade+'</small><h3>'+esc(vehicle.title)+'</h3>'+
-      '<span>'+esc(status)+'</span></div><div class="workshop-finance"><small>VEHICLE HELD</small>'+
-      '<strong>'+Math.max(0,state.day-vehicle.acquiredDay)+' DAYS</strong></div></div>'+
-      '<div class="workshop-job-body"><div class="workshop-work"><h4>VEHICLE PREPARATION PLAN</h4>'+
-      (costHtml||'<p>No itemised record for this legacy stock vehicle.</p>')+
-      '<div class="workshop-item workshop-total"><span>DIAGNOSED REPAIR BUDGET</span><strong>'+
-      cash(vehicle.prepBudget)+'</strong></div>'+
-      '<p>Workshop assessment and provider charges are separate. The final bill may be higher than the original budget.</p>'+
-      '</div><div class="workshop-job-controls">'+actions+disposal+'</div></div></article>';
+    if(phase==='quoted')return '<div class="ws-action"><h4>NEXT / APPROVE REPAIRS</h4>'+
+      '<p>Choose a provider. Booking charges cash now and repairs take game days.</p>'+
+      '<div class="ws-quotes">'+quote(s,W,v,'internal')+quote(s,W,v,'external')+'</div></div>';
+    if(phase==='in-progress'){
+      const provider=j.method==='internal'?
+        (s.staff.find(x=>x.id===j.technicianId)?.name||'Technician unavailable'):
+        'Independent external garage';
+      return '<div class="ws-action"><h4>'+ (j.paused?'REPAIRS PAUSED':'REPAIRS BOOKED') +'</h4>'+
+        '<div class="ws-progress"><div><small>PROVIDER</small><strong>'+esc(provider)+'</strong></div>'+
+        '<div><small>REMAINING</small><strong>'+j.remainingDays+' GAME DAYS</strong></div>'+
+        '<div><small>CHARGED</small><strong>'+cash(j.repairCost)+'</strong></div></div>'+
+        '<p>'+(j.paused?'Assigned technician unavailable. Return them to duty or transfer this job.':
+          'Advance game days for repairs to finish. Quality control is mandatory afterward.')+'</p>'+
+        (j.method==='internal'?'<button type="button" class="trade-button trade-button-secondary" '+
+          'data-action="outsource-workshop" data-id="'+v.id+
+          '">TRANSFER TO EXTERNAL GARAGE · £125</button>':'')+'</div>';
+    }
+    if(phase==='quality-check')return '<div class="ws-action"><h4>NEXT / FINAL QUALITY CHECK</h4>'+
+      '<p>Repairs are complete. QC must pass before advertising; failure may require another paid repair day.</p>'+
+      '<button type="button" class="trade-button" data-action="finish-workshop" data-id="'+v.id+
+      '">PERFORM FINAL QUALITY CHECK</button></div>';
+    return '<div class="ws-action ws-ready"><h4>QC PASSED / RETAIL READY</h4>'+
+      '<p>Completed on day '+(j.completedDay??'—')+'. Repairs charged '+cash(v.prepSpent)+
+      '. Manage advertising in Vehicle Stock.</p>'+
+      '<button type="button" class="trade-button" data-page="stock" data-id="'+v.id+
+      '">VIEW VEHICLE STOCK</button></div>';
   }
-  function render(state,W){
-    const pending=state.vehicles.filter(x=>x.status==='acquired');
-    const active=pending.filter(x=>x.workshop?.stage==='in-progress');
-    const qc=pending.filter(x=>x.workshop?.stage==='quality-check');
-    const completed=state.vehicles.filter(x=>x.workshop?.stage==='ready');
-    const internal=active.filter(x=>x.workshop.method==='internal').length;
-    const outside=active.filter(x=>x.workshop.method==='external').length;
-    const P=window.MotorTradePeople;
-    const staffed=P.activeTeam(state,'technician').length;
-    const free=P.availableTechnicians(state).length;
-    const info='<div class="workshop-summary">'+
-      [['AWAITING RETAIL PREP',pending.length],['ACTIVE REPAIR JOBS',active.length],
-        ['QUALITY CHECK DUE',qc.length],['RETAIL READY / LISTED',completed.length]]
-      .map(([label,value])=>'<div><small>'+label+'</small><strong>'+value+'</strong></div>').join('')+
-      '</div><div class="workshop-capacity"><span>IN-HOUSE TECHNICIANS: '+
-      internal+' REPAIRS ACTIVE / '+P.technicianLimit(state)+' UNLOCKED BAYS · '+
-      free+' FREE · '+staffed+' ACTIVE'+
-      '</span><span>EXTERNAL GARAGE SLOTS: '+outside+'/2</span></div>'+
-      '<p class="trade-alert">Repair times run in actual game days. Work paid for and completed later does not create instant retail stock. '+
-      'Each active technician can repair one in-house vehicle concurrently; quality checks still reserve their assigned bay. External garages cost more but do not use your employees. '+
-      'This is fictional workshop management, not a legal roadworthiness certificate or real MOT.</p>';
-    if(!state.vehicles.length)return info+'<div class="trade-empty"><h2>NO VEHICLES TO PREPARE.</h2>'+
-      '<p>Buy a car from the Buying Desk, then authorise its workshop assessment.</p></div>';
-    const sorted=[...state.vehicles].sort((a,b)=>(a.workshop.stage==='ready')-(b.workshop.stage==='ready'));
-    return info+'<div class="workshop-list">'+sorted.map(v=>record(state,W,v)).join('')+'</div>';
+  function disposal(v){
+    if(v.status!=='acquired'||!['unassessed','quoted'].includes(v.workshop.stage))return '';
+    const bid=window.MotorTradeEngine.wholesaleOffer(v);
+    return '<details class="ws-disposal"><summary>TRADE DISPOSAL / CUT LOSSES</summary>'+
+      '<p>Fictional trade offer '+cash(bid)+'. Selling now frees a space but can realise a loss.</p>'+
+      '<button class="trade-button trade-button-outline" type="button" data-action="dispose-workshop" data-id="'+
+      v.id+'">SELL TO TRADE · '+cash(bid)+'</button></details>';
   }
-  window.MotorTradeWorkshopView=Object.freeze({render});
+  function dossier(s,W,v){
+    const k=status(v);
+    return '<article class="ws-file"><div class="ws-file-head"><div><small>WORK ORDER · STOCK '+v.id+
+      '</small><h3>'+esc(v.title)+'</h3></div><span class="ws-status ws-status-'+k.tone+'">'+k.label+
+      '</span></div>'+steps(v)+
+      '<div class="ws-detail"><div class="ws-detail-car">'+
+      '<div class="ws-vehicle"><div class="ws-photo">'+VC.photo(v,'workshop')+'</div>'+
+      '<div><small>GRADE '+esc(v.profile?.grade??'—')+' · '+esc(v.fuel)+' · '+esc(v.gearbox)+
+      '</small><strong>'+new Intl.NumberFormat('en-GB').format(v.miles)+' MI</strong>'+
+      '<span>'+age(s,v)+' DAYS HELD · '+esc(v.color||'UNKNOWN COLOUR')+'</span></div></div>'+
+      items(v)+'<p class="ws-caveat">Simulated assessment and QC are not a real MOT or roadworthiness certificate.</p>'+
+      '</div><div class="ws-detail-control"><h4>COST CONTROL</h4>'+costs(v)+
+      actions(s,W,v)+disposal(v)+'</div></div></article>';
+  }
+  function render(s,W,{filter='all',selectedId=null}={}){
+    const q=summary(s,W),f=FILTERS.includes(filter)?filter:'all';
+    const kpi='<div class="ws-kpis">'+[
+      ['ACTION REQUIRED',q.action],['REPAIRS RUNNING',q.repair],
+      ['QUALITY CHECK DUE',q.qc],['RETAIL READY',q.ready]
+    ].map(([name,num])=>'<div><small>'+name+'</small><strong>'+num+'</strong></div>').join('')+
+      '</div><div class="ws-capacity"><span>TECHNICIANS '+q.tech+' ACTIVE / '+q.free+' FREE · IN-HOUSE '+
+      q.inHouse+'/'+q.bays+' BAYS</span><span>EXTERNAL GARAGES '+q.external+'/2</span>'+
+      '<span>REPAIR FUNDS RESERVED '+cash(q.reserve)+'</span></div>';
+    if(!s.vehicles.length)return {selectedId:null,html:kpi+
+      '<div class="trade-empty ws-empty"><h2>NO VEHICLES TO PREPARE.</h2>'+
+      '<p>Buy a vehicle at the Buying Desk or Auction Hall to create a workshop job.</p>'+
+      '<button type="button" class="trade-button" data-page="auctions">OPEN BUYING DESK</button></div>'};
+    const filters=[['all','ALL JOBS',q.count],['action','ACTION DUE',q.action],
+      ['repair','IN REPAIR',q.repair],['ready','RETAIL READY',q.ready]];
+    const toolbar='<div class="ws-toolbar"><strong>WORKSHOP JOB REGISTER</strong>'+
+      '<div class="ws-filters" role="group" aria-label="Filter workshop jobs">'+filters.map(([key,label,n])=>
+      '<button type="button" data-action="filter-workshop" data-filter="'+key+
+      '" aria-pressed="'+(f===key)+'">'+label+' <b>'+n+'</b></button>').join('')+'</div></div>';
+    const cars=s.vehicles.filter(v=>f==='all'||(f==='action'?needs(v):
+      f==='repair'?v.workshop?.stage==='in-progress':v.workshop?.stage==='ready'))
+      .slice().sort((a,b)=>{
+        const pa=needs(a)?0:a.workshop.stage==='in-progress'?1:2;
+        const pb=needs(b)?0:b.workshop.stage==='in-progress'?1:2;
+        return pa-pb||a.acquiredDay-b.acquiredDay||a.id-b.id;
+      });
+    const chosen=cars.find(v=>v.id===selectedId)||cars[0]||null;
+    const list=cars.length?cars.map(v=>unit(s,v,v.id===chosen?.id)).join(''):
+      '<p class="ws-no-results">No jobs in this category. Select another filter.</p>';
+    return {selectedId:chosen?.id??null,html:kpi+toolbar+
+      '<div class="ws-layout"><aside class="ws-register"><header>JOBS <span>'+cars.length+
+      ' SHOWN</span></header>'+list+'</aside>'+
+      (chosen?dossier(s,W,chosen):'<div class="ws-file ws-no-results">No job selected.</div>')+
+      '</div><p class="ws-footnote">Jobs take game days. Repair charges, reserves and staffing come from your saved career.</p>'};
+  }
+  window.MotorTradeWorkshopView=Object.freeze({render,summary,paid,FILTERS});
 })();

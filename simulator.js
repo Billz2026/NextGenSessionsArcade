@@ -155,6 +155,8 @@
   let selectedSellerId = null;
   let selectedStockId = null;
   let stockFilter = 'all';
+  let selectedWorkshopId = null;
+  let workshopFilter = 'all';
   let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
   function gameDate(day) {
@@ -338,7 +340,9 @@
     byId('stock-list').innerHTML=view.html;
   }
   function renderWorkshop() {
-    byId('workshop-board').innerHTML=WV.render(career,W);
+    const view=WV.render(career,W,{selectedId:selectedWorkshopId,filter:workshopFilter});
+    selectedWorkshopId=view.selectedId;
+    byId('workshop-board').innerHTML=view.html;
   }
   function renderSales() {
     byId('sales-list').innerHTML=CV.render(career,E);
@@ -631,6 +635,8 @@
     selectedSellerId=null;
     selectedStockId=null;
     stockFilter='all';
+    selectedWorkshopId=null;
+    workshopFilter='all';
     screen = 'career';
     currentPage = 'dashboard';
     const saved = persistCareer();
@@ -694,6 +700,11 @@
     if (!button) return;
     const destination = button.dataset.page;
     if (destination && Object.prototype.hasOwnProperty.call(PAGES, destination)) {
+      const id=Number(button.dataset.id);
+      if(career&&Number.isSafeInteger(id)&&career.vehicles.some(v=>v.id===id)){
+        if(destination==='workshop'){selectedWorkshopId=id;workshopFilter='all';}
+        if(destination==='stock'){selectedStockId=id;stockFilter='all';}
+      }
       show(destination);
       return;
     }
@@ -731,6 +742,17 @@
           if(r.ok)persistCareer();
           currentPage='events';
           render();
+        }
+        break;
+      case 'select-workshop':
+        if(career&&career.vehicles.some(v=>v.id===Number(button.dataset.id))){
+          selectedWorkshopId=Number(button.dataset.id);currentPage='workshop';render();
+        }
+        break;
+      case 'filter-workshop':
+        if(career&&WV.FILTERS.includes(button.dataset.filter)){
+          workshopFilter=button.dataset.filter;selectedWorkshopId=null;
+          currentPage='workshop';render();
         }
         break;
       case 'assess-workshop':

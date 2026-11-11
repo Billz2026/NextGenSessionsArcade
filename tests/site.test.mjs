@@ -75,8 +75,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=33/);
-  assert.match(html, /simulator\.js\?v=28/);
+  assert.match(html, /styles\.css\?v=34/);
+  assert.match(html, /simulator\.js\?v=29/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
@@ -93,7 +93,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=19/);
   assert.match(html, /customers-view\.js\?v=5/);
-  assert.match(html, /workshop-view\.js\?v=3/);
+  assert.match(html, /workshop-view\.js\?v=4/);
   assert.match(html, /events-view\.js\?v=4/);
   assert.match(html, /monthly-view\.js\?v=6/);
   assert.match(html, /people-view\.js\?v=4/);
@@ -112,7 +112,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.19/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.20/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -341,7 +341,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -595,7 +595,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=33/);
+  assert.match(html, /styles\.css\?v=34/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4437,7 +4437,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.19/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.20/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4457,4 +4457,49 @@ test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report
   assert.match(htmlStock,/HIDE REPORT/);
   assert.match(htmlStock,/MOT ADVISORIES/);
   assert.match(htmlStock,/KNOWN PREPARATION ITEMS/);
+});
+
+test('v0.9.20 workshop is a compact selected job register with safe filters',()=>{
+  const storage=new Map(),app=browser(storage),E=app.productionEngine;
+  app.click('new-career');app.submitCareer('Workshop Desk');
+  for(const car of E.market(1).sellers){
+    app.setInput('seller-offer-'+car.id,car.ask);
+    app.click('buy-seller',{id:car.id});
+  }
+  const previous=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(previous.vehicles.length,2);
+  const page=app.nodes.get('workshop-board').innerHTML;
+  assert.match(page,/WORKSHOP JOB REGISTER/);
+  assert.match(page,/COST CONTROL/);
+  assert.match(page,/AUTHORISE ASSESSMENT/);
+  assert.match(page,/REPAIR REQUIREMENTS/);
+  assert.match(page,/TRADE DISPOSAL \/ CUT LOSSES/);
+  app.click('select-workshop',{id:'2'});
+  assert.match(app.nodes.get('workshop-board').innerHTML,/WORK ORDER · STOCK 2/);
+  app.click('filter-workshop',{filter:'ready'});
+  assert.match(app.nodes.get('workshop-board').innerHTML,/No jobs in this category/);
+  app.click('filter-workshop',{filter:'all'});
+  assert.deepEqual(JSON.parse(storage.get(STORAGE_KEY)),previous);
+  assert.match(css,/\.ws-layout\{display:grid/);
+});
+
+test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',()=>{
+  const app=browser(new Map()),E=app.productionEngine,s=E.create('Workshop Test',[]);
+  const lead=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+  const v=s.vehicles[0],fault=v.profile.hiddenFault?.item;
+  const pre=app.workshopView.render(s,E.workshop);
+  assert.equal(pre.selectedId,v.id);
+  if(fault&&!v.profile.inspected)assert.ok(!pre.html.includes(fault));
+  assert.ok(E.assessStock(s,v.id).ok);
+  const quote=app.workshopView.render(s,E.workshop);
+  if(fault)assert.ok(quote.html.includes(fault));
+  assert.match(quote.html,/IN-HOUSE TECHNICIAN/);
+  assert.match(quote.html,/EXTERNAL GARAGE/);
+  assert.match(quote.html,/BOOK EXTERNAL REPAIR/);
+  assert.ok(E.startPrep(s,v.id,'external').ok);
+  const active=app.workshopView.render(s,E.workshop);
+  assert.match(active.html,/REPAIRS BOOKED/);
+  assert.equal(app.workshopView.paid(v),v.workshop.repairCost);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });

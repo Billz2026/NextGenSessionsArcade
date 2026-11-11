@@ -1502,3 +1502,111 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
   .stock-dossier-vehicle .vehicle-photo-frame{height:145px}
   .stock-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* v0.9.20 Workshop Operations — condensed register and one focused work order. */
+.ws-control{min-width:0}
+.ws-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:7px}
+.ws-kpis>div{background:linear-gradient(150deg,#1e3945,#122a35);border:1px solid #405964;border-radius:6px;padding:9px 11px;min-height:67px;display:flex;flex-direction:column;justify-content:space-between;gap:5px}
+.ws-kpis small{font:750 8px/1.25 var(--mono);color:#bbcccd}
+.ws-kpis strong{font:900 28px/1 var(--title);color:#f1d6a7}
+.ws-capacity{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
+.ws-capacity span{background:#1b343d;border:1px solid #47616a;border-radius:4px;padding:6px 9px;color:#c1d1d0;font:700 8px/1.35 var(--mono)}
+.ws-toolbar{background:#203a44;border:1px solid #405762;border-radius:6px 6px 0 0;padding:9px 11px;display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}
+.ws-toolbar>strong{font:900 18px var(--title);color:#f0cca0}
+.ws-filters{display:flex;flex-wrap:wrap;gap:6px}
+.ws-filters button{background:#1a323d;border:1px solid #49626c;border-radius:4px;color:#c3cfd0;font:800 8px var(--mono);padding:7px 8px}
+.ws-filters button:hover{border-color:#dfb47e}
+.ws-filters button[aria-pressed="true"]{border-color:#cfab78;color:#f2d9ab;background:#404037}
+.ws-filters b{margin-left:3px;color:#f1c98d}
+.ws-layout{display:grid;grid-template-columns:minmax(240px,.67fr) minmax(0,1.6fr);align-items:start;gap:9px;margin-top:9px}
+.ws-register,.ws-file{min-width:0;background:#142a34;border:1px solid #39535f;border-radius:7px;overflow:hidden}
+.ws-register{max-height:min(62dvh,530px);overflow-y:auto;scrollbar-width:thin}
+.ws-register>header{display:flex;justify-content:space-between;gap:8px;padding:9px 11px;background:#1e3a45;color:#efd0a1;font:900 10px var(--mono)}
+.ws-register>header span{font-size:8px;color:#b7cbcc}
+.ws-unit{display:grid;grid-template-columns:68px minmax(0,1fr);gap:8px;padding:8px;border-bottom:1px solid #38515b}
+.ws-unit:hover,.ws-selected{background:#23414b}
+.ws-selected{box-shadow:inset 3px 0 #e4b87c}
+.ws-thumb .vehicle-photo-frame{height:53px;min-height:0;max-height:none}
+.ws-thumb .vehicle-photo-credit,.ws-thumb .vehicle-origin-tag,.ws-thumb .vehicle-grade-tag{display:none}
+.ws-thumb .vehicle-photo-missing strong{font-size:10px}
+.ws-thumb .vehicle-photo-missing small{display:none}
+.ws-thumb .vehicle-photo-missing>span{font-size:18px}
+.ws-pick{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;text-align:left;background:transparent;border:0;padding:0;width:100%}
+.ws-pick small{font:800 7px var(--mono);color:#e4c392}
+.ws-pick strong{font:900 17px/1.02 var(--title);color:#f7e9d7}
+.ws-pick>span{font:650 9px/1.35 var(--body);color:#a8bcc3}
+.ws-status{font:850 8px/1.3 var(--mono);border:1px solid #806b4a;border-radius:4px;color:#e9cc99;background:#3e382e;padding:4px 6px;font-style:normal;display:inline-flex;width:fit-content}
+.ws-status-ready{color:#afe1c0;background:#264136;border-color:#628a76}
+.ws-status-running{color:#b6e1e7;background:#263e47;border-color:#618595}
+.ws-file-head{padding:10px 12px;background:#213b45;border-bottom:1px solid #405861;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ws-file-head small{display:block;color:#e3bd89;font:800 8px var(--mono)}
+.ws-file-head h3{font:900 clamp(20px,2.2vw,25px)/1 var(--title);color:#f6e9d4;margin-top:3px}
+.ws-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;padding:7px 9px;background:#182e37;border-bottom:1px solid #3c555f}
+.ws-steps span{padding:5px 2px;text-align:center;background:#19313a;border:1px solid #354e57;border-radius:3px;color:#83a2ad;font:800 8px var(--mono)}
+.ws-steps .done{color:#b1dec3;border-color:#557a64;background:#254238}
+.ws-steps .current{color:#f4d59b;border-color:#d0a46b;background:#554530}
+.ws-detail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.ws-detail-car,.ws-detail-control{padding:11px;min-width:0}
+.ws-detail-car{border-right:1px solid #3b545d}
+.ws-vehicle{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:center;margin-bottom:10px}
+.ws-photo .vehicle-photo-frame{height:76px;min-height:0;max-height:none}
+.ws-photo .vehicle-photo-credit{font-size:7px;padding:3px 0}
+.ws-photo .vehicle-photo-credit span{display:none}
+.ws-photo .vehicle-origin-tag,.ws-photo .vehicle-grade-tag{font-size:6px;padding:2px 3px}
+.ws-photo .vehicle-photo-missing>span{font-size:21px}
+.ws-photo .vehicle-photo-missing strong{font-size:12px}
+.ws-photo .vehicle-photo-missing small{display:none}
+.ws-vehicle>div:last-child{min-width:0;display:flex;align-items:flex-start;flex-direction:column;gap:4px}
+.ws-vehicle small{font:750 8px/1.4 var(--mono);color:#dac69e}
+.ws-vehicle strong{font:900 20px var(--title);color:#f5dfbf}
+.ws-vehicle span{font:650 9px var(--body);color:#a9bdc3}
+.ws-detail h4{font:900 16px var(--title);color:#efcfa0;margin:0 0 9px}
+.ws-repair{padding:7px 0;display:flex;justify-content:space-between;gap:9px;border-bottom:1px solid #3a535d}
+.ws-repair span{font:600 10px/1.45 var(--body);color:#c4d6d8}
+.ws-repair strong{font:850 11px var(--mono);color:#f3d9b0;white-space:nowrap}
+.ws-fault span,.ws-fault strong{color:#efb5a0}
+.ws-caveat,.ws-footnote{font:500 9px/1.55 var(--body);color:#a2b7bb;margin:8px 0 0}
+.ws-costs{border:1px solid #3d5760;border-radius:5px;overflow:hidden}
+.ws-costs>div{display:flex;justify-content:space-between;gap:7px;padding:8px 9px;border-bottom:1px solid #37525a}
+.ws-costs>div:last-child{border:0}
+.ws-costs span{font:650 9px/1.4 var(--body);color:#bdd0d0}
+.ws-costs strong{font:850 11px var(--mono);color:#f4e1c4;white-space:nowrap;text-align:right}
+.ws-costs .ws-cost-total{background:#2b453e}
+.ws-cost-total strong{color:#d6f0c8;font-size:14px}
+.ws-action{padding:10px;margin-top:10px;background:#203c33;border:1px solid #56785e;border-radius:5px}
+.ws-action h4{margin-bottom:6px}
+.ws-action p{font:550 10px/1.5 var(--body);color:#c2d4ca;margin:0 0 9px}
+.ws-action .trade-button{min-height:35px;padding:8px 9px;font-size:11px}
+.ws-action .ws-issue,.ws-quote .ws-issue{color:#edb3a0;font-weight:850}
+.ws-quotes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.ws-quote{padding:9px;background:#19332e;border:1px solid #56736b;border-radius:4px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.ws-quote-head{display:flex;align-items:baseline;justify-content:space-between;gap:5px;flex-wrap:wrap}
+.ws-quote-head strong{font:900 13px var(--title);color:#edd7b6}
+.ws-quote-head b{font:900 15px var(--title);color:#f0e5d0}
+.ws-quote span{font:800 8px var(--mono);color:#b8d2ca}
+.ws-quote small{font:600 9px/1.4 var(--body);color:#b5c8c8}
+.ws-quote .trade-button{font-size:9px;min-height:32px;margin-top:auto}
+.ws-progress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:9px}
+.ws-progress>div{padding:6px;border:1px solid #4a685f;border-radius:4px;background:#19362f;min-width:0}
+.ws-progress small{display:block;font:700 7px var(--mono);color:#a4c1b8}
+.ws-progress strong{font:900 11px/1.3 var(--title);color:#e4d4ae;overflow-wrap:anywhere}
+.ws-ready{border-color:#68937a}
+.ws-disposal{margin-top:10px;padding-top:9px;border-top:1px solid #3c5560}
+.ws-disposal summary{font:800 9px var(--mono);color:#e3b899;cursor:pointer}
+.ws-disposal p{margin:9px 0;font:550 10px/1.5 var(--body);color:#c7d7d3}
+.ws-disposal .trade-button{font-size:10px;background:#2c333d;color:#efc2ad;border-color:#967464}
+.ws-empty{margin-top:10px}
+.ws-empty .trade-button{margin-top:12px}
+.ws-no-results{padding:20px 12px;color:#b6cacb;font:600 11px var(--body)}
+@media(min-width:981px){
+  .career-content:has([data-panel="workshop"]:not([hidden])){padding-top:12px;padding-bottom:15px}
+  [data-panel="workshop"]>.page-heading{margin-bottom:10px}
+  [data-panel="workshop"]>.page-heading h1{font-size:clamp(34px,3.1vw,46px);margin:3px 0}
+  [data-panel="workshop"]>.page-heading p:last-child{font-size:10px;line-height:1.45}
+  [data-panel="workshop"]>.page-heading .career-chip{padding:7px 9px;font-size:8px}
+}
+@media(max-width:1280px){.ws-detail{grid-template-columns:1fr}.ws-detail-car{border-right:0;border-bottom:1px solid #3d5661}}
+@media(max-width:1020px){.ws-layout{grid-template-columns:1fr}.ws-register{max-height:310px}.ws-detail{grid-template-columns:repeat(2,minmax(0,1fr))}.ws-detail-car{border-right:1px solid #3d5661;border-bottom:0}}
+@media(max-width:740px){.ws-detail{grid-template-columns:1fr}.ws-detail-car{border-right:0;border-bottom:1px solid #3d5661}.ws-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ws-toolbar{align-items:flex-start}}
+@media(max-width:450px){.ws-quotes{grid-template-columns:1fr}.ws-vehicle{grid-template-columns:90px minmax(0,1fr)}}
