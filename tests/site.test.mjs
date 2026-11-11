@@ -3278,3 +3278,24 @@ test('v0.9.9 Deal Day closes auction access and new game days reset the session'
   assert.equal(E.startAuction(s).code,'closed');
   assert.equal(E.bidLiveAuction(s,100).code,'stage');
 });
+
+test('v0.9.9 upcoming catalogue previews protect undisclosed faults until paid inspection', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Catalogue Inspectors');
+  const lots=app.engine.market(1).auctions;
+  const lot=lots.find(x=>x.profile.hiddenFault);
+  assert.ok(lot);
+  app.go('auctionHall');
+  app.click('preview-auction',{id:lot.id});
+  let markup=app.nodes.get('auction-hall-view').innerHTML;
+  assert.match(markup,new RegExp('LOT '+String(lots.indexOf(lot)+1).padStart(3,'0')));
+  assert.doesNotMatch(markup,new RegExp(lot.profile.hiddenFault.item.replace(/[.*+?^$()|[\]{}]/g,'\\$&')));
+  app.click('inspect-lead',{kind:'auction',id:lot.id});
+  const state=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(state.reports[lot.id].fee,lot.profile.inspectionFee);
+  markup=app.nodes.get('auction-hall-view').innerHTML;
+  assert.match(markup,/ADDITIONAL CONDITION RISK/);
+  assert.ok(markup.includes(lot.profile.hiddenFault.item));
+  assert.equal(state.auctionHall.index,0,'Inspecting an upcoming lot must not advance the current lot');
+  assert.ok(app.productionEngine.normalize(state));
+});
