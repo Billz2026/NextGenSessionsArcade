@@ -3863,3 +3863,176 @@ test('v0.9.13 weekly Accounts brief gives established careers current truthful f
   // This fixture intentionally jumps to day 60 without producing 59 days of
   // accounting and monthly reports; it tests the read-only briefing only.
 });
+
+test('v0.9.14 supervisor hiring offers named candidates, distinct salaries and a real payroll post',()=>{
+  const app=browser(new Map()),E=app.productionEngine,P=E.people,s=E.create('Supervisor Hiring',[]);
+  const candidates=P.applicants(1).filter(c=>c.role==='supervisor');
+  assert.equal(candidates.length,2);
+  assert.notEqual(candidates[0].name,candidates[1].name);
+  assert.ok(candidates.every(c=>c.monthlySalary>=2000));
+  assert.match(app.nodes.get('people-applicants').innerHTML||'',/^$|SUPERVISOR/);
+  assert.ok(E.hireStaff(s,candidates[1].id).ok);
+  assert.equal(s.staff[0].name,candidates[1].name);
+  assert.equal(s.staff[0].role,'supervisor');
+  assert.equal(P.active(s,'supervisor'),null,'Supervisor does not start immediately');
+  assert.equal(E.hireStaff(s,candidates[0].id).code,'role',
+    'Only one supervisor post is authorised');
+  const before=s.cash;
+  s.day=2;
+  const payroll=E.staffDay(s);
+  assert.ok(payroll.paid>0);
+  assert.equal(before-s.cash,P.dailyCost(s.staff[0]));
+  assert.equal(P.active(s,'supervisor')?.name,candidates[1].name);
+  assert.ok(P.valid(s,s.day));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.14 supervisor writes real costed welfare proposal, owner approval changes morale and cash once',()=>{
+  const storage=new Map(),E=browser(new Map()).productionEngine,P=E.people,I=browser(new Map()).inbox;
+  const s=E.create('Supervisor Decisions',[]);
+  const sales=P.applicants(1).find(c=>c.role==='sales');
+  const manager=P.applicants(1).find(c=>c.role==='supervisor');
+  assert.ok(E.hireStaff(s,sales.id).ok);
+  assert.ok(E.hireStaff(s,manager.id).ok);
+  s.staff.find(x=>x.role==='sales').morale=32;
+  s.day=2;E.staffDay(s);
+  const employee=s.staff.find(x=>x.role==='sales');
+  const plan=P.moraleProposal(s,employee.id);
+  assert.ok(plan);
+  assert.equal(plan.manager.name,manager.name);
+  assert.ok(I.sync(s,E));
+  const request=s.messages.find(m=>m.reference==='supervisor-morale:'+employee.id+':0');
+  assert.ok(request);
+  assert.equal(request.from,'STAFF SUPERVISOR · '+manager.name);
+  assert.ok(I.needsAction(request,s));
+  assert.match(I.quoteControls(request,s,E),/APPROVE/);
+  assert.match(I.quoteControls(request,s,E),/DECLINE/);
+  assert.match(I.formatMail(request,s),/inbox-letter-letterhead/);
+  storage.set(STORAGE_KEY,JSON.stringify(s));
+  const app=browser(storage);app.click('resume');
+  app.click('filter-inbox',{filter:'action'});
+  assert.equal(app.nodes.get('inbox-action-count').textContent,'1');
+  app.click('read-message',{id:String(request.id)});
+  assert.match(app.nodes.get('inbox-detail').innerHTML,/OWNER AUTHORISATION REQUIRED/);
+  const old=JSON.parse(storage.get(STORAGE_KEY)),cash=old.cash;
+  app.click('decide-staff-welfare',{id:String(request.id),decision:'approve'});
+  const after=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(after.cash,cash-plan.cost);
+  assert.equal(after.staff.find(x=>x.id===employee.id).morale,employee.morale+plan.gain);
+  assert.equal(after.messages.find(m=>m.id===request.id).decision,'approved');
+  assert.equal(after.ledger.filter(x=>x.note.startsWith('Staff welfare intervention:')).length,1);
+  assert.equal(after.messages.filter(m=>m.subject==='PAID COPY · Approved staff welfare budget').length,1);
+  assert.equal(app.nodes.get('inbox-action-count').textContent,'0');
+  assert.match(app.nodes.get('inbox-detail').innerHTML,/SUPERVISOR PLAN APPROVED/);
+  assert.equal(app.productionEngine.decideStaffMorale(after,request.id,true).code,'stage');
+  assert.ok(E.normalize(after));
+});
+
+test('v0.9.14 owner refusal costs nothing; supervisor proposals cannot be replayed',()=>{
+  const E=browser(new Map()).productionEngine,P=E.people,I=browser(new Map()).inbox;
+  const s=E.create('Decline Decision',[]);
+  assert.ok(E.hireStaff(s,P.applicants(1).find(c=>c.role==='sales').id).ok);
+  assert.ok(E.hireStaff(s,P.applicants(1).find(c=>c.role==='supervisor').id).ok);
+  s.day=2;E.staffDay(s);
+  s.staff.find(e=>e.role==='sales').morale=31;
+  assert.ok(I.sync(s,E));
+  const m=s.messages.find(x=>x.reference?.startsWith('supervisor-morale:'));
+  assert.ok(m);
+  const cash=s.cash,morale=s.staff.find(x=>x.role==='sales').morale;
+  assert.ok(E.decideStaffMorale(s,m.id,false).ok);
+  assert.equal(s.cash,cash);
+  assert.equal(s.staff.find(x=>x.role==='sales').morale,morale);
+  assert.equal(m.decision,'declined');
+  assert.equal(E.decideStaffMorale(s,m.id,false).code,'stage');
+  assert.equal(E.decideStaffMorale(s,m.id,true).code,'stage');
+  assert.equal(I.needsAction(m,s),false);
+  assert.equal(I.sync(s,E),false,'Decline does not spam a fresh proposal that week');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.14 absent supervisor emails encourage recruitment rather than owner micromanagement',()=>{
+  const E=browser(new Map()).productionEngine,P=E.people,I=browser(new Map()).inbox;
+  const s=E.create('Owner With No Supervisor',[]);
+  assert.ok(E.hireStaff(s,P.applicants(1).find(c=>c.role==='sales').id).ok);
+  const employee=s.staff[0];employee.morale=32;
+  assert.ok(I.sync(s,E));
+  assert.ok(s.messages.some(m=>m.subject.startsWith('SUPERVISOR VACANCY')));
+  assert.equal(s.messages.filter(m=>m.reference?.startsWith('supervisor-morale:')).length,0);
+  assert.equal(I.counters(s.messages,s).action,0);
+  const notice=s.messages.find(m=>m.subject.startsWith('SUPERVISOR VACANCY'));
+  assert.equal(notice.linkPage,'staff');
+  assert.match(notice.body,/choose and hire a Staff Supervisor/);
+  const supervisor=P.applicants(1).find(c=>c.role==='supervisor');
+  assert.ok(E.hireStaff(s,supervisor.id).ok);
+  s.day=2;E.staffDay(s);
+  assert.ok(I.sync(s,E));
+  assert.ok(s.messages.some(m=>m.subject.startsWith('APPROVAL · ')));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.14 routine supervisor check-ins lift morale without owner permission or fee',()=>{
+  const E=browser(new Map()).productionEngine,P=E.people;
+  const s=E.create('Weekly Supervisor Delegation',[]);
+  assert.ok(E.hireStaff(s,P.applicants(1).find(c=>c.role==='supervisor').id).ok);
+  assert.ok(E.hireStaff(s,P.applicants(1).find(c=>c.role==='sales').id).ok);
+  const employee=s.staff.find(x=>x.role==='sales');
+  employee.morale=52;
+  s.day=7;
+  const before=s.cash;
+  const result=E.staffDay(s);
+  const expected=52-1+(s.staff.find(x=>x.role==='supervisor').skills.care>=16?5:3);
+  assert.equal(employee.morale,expected);
+  assert.equal(result.support.length,1);
+  assert.equal(result.supervisor,s.staff.find(x=>x.role==='supervisor').name);
+  assert.equal(before-s.cash,s.staff.reduce((n,x)=>n+P.dailyCost(x),0));
+  assert.equal(s.ledger.some(x=>x.note.startsWith('Staff welfare intervention:')),false);
+});
+
+test('v0.9.14 payroll arrears correctly block paid morale proposals',()=>{
+  const E=browser(new Map()).productionEngine,P=E.people,I=browser(new Map()).inbox;
+  const s=E.create('No Paper Morale Fixes',[]);
+  assert.ok(E.hireStaff(s,P.applicants(1).find(c=>c.role==='sales').id).ok);
+  assert.ok(E.hireStaff(s,P.applicants(1).find(c=>c.role==='supervisor').id).ok);
+  s.day=2;E.staffDay(s);
+  s.staff.find(e=>e.role==='sales').morale=30;
+  s.payrollArrears=350;
+  assert.equal(P.moraleProposal(s,s.staff.find(e=>e.role==='sales').id),null);
+  assert.ok(I.sync(s,E));
+  assert.ok(s.messages.some(m=>m.subject==='ACTION REQUIRED · Outstanding wages'));
+  assert.equal(s.messages.filter(m=>m.reference?.startsWith('supervisor-morale:')).length,0);
+});
+
+test('v0.9.14 v13 saves keep historic employee messages, ledger cursor and cash',()=>{
+  const E=browser(new Map()).productionEngine;
+  const s=E.create('Old Staff Records',[]);
+  s.messages=[{id:1,day:1,from:'PEOPLE & PAYROLL',
+    subject:'Staff concern · Daniel Harris',preview:'Old notice',
+    body:'Older staff advisory',linkPage:'staff',read:true,
+    category:'staff',reference:'morale:1:0'}];
+  const legacy=JSON.parse(JSON.stringify(s));
+  legacy.version=13;
+  const restored=E.normalize(legacy);
+  assert.ok(restored);
+  assert.equal(restored.version,14);
+  assert.equal(restored.cash,legacy.cash);
+  assert.equal(restored.messages[0].body,'Older staff advisory');
+  assert.equal(restored.messages[0].read,true);
+  assert.equal(restored.inboxLedgerCursor,legacy.inboxLedgerCursor);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(restored))));
+});
+
+test('v0.9.14 new mail letterhead formats readable sections and escapes markup',()=>{
+  const E=browser(new Map()).productionEngine,I=browser(new Map()).inbox;
+  const s=E.create('Trade <script> HQ',[]);
+  const m={id:1,day:3,from:'ACCOUNTS <script>',subject:'Brief',
+    body:'MANAGEMENT SUMMARY\n\nONE-OFF COST: £200\nSTAFF MORALE: 32/100\n\nA paragraph with <script>unsafe()</script> embedded.',
+    category:'accounts',reference:'example',linkPage:'finance',read:false};
+  const markup=I.formatMail(m,s);
+  assert.match(markup,/inbox-letter-meta/);
+  assert.match(markup,/inbox-letter-section/);
+  assert.match(markup,/inbox-letter-fact/);
+  assert.match(markup,/MANAGEMENT SUMMARY/);
+  assert.match(markup,/ONE-OFF COST/);
+  assert.doesNotMatch(markup,/<script>/);
+  assert.match(markup,/&lt;script&gt;/);
+});
