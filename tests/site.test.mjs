@@ -3962,7 +3962,7 @@ test('v0.9.14 absent supervisor emails encourage recruitment rather than owner m
   assert.equal(I.counters(s.messages,s).action,0);
   const notice=s.messages.find(m=>m.subject.startsWith('SUPERVISOR VACANCY'));
   assert.equal(notice.linkPage,'staff');
-  assert.match(notice.body,/choose and hire a Staff Supervisor/);
+  assert.match(notice.body,/appoint a supervisor from the recruitment shortlist/);
   const supervisor=P.applicants(1).find(c=>c.role==='supervisor');
   assert.ok(E.hireStaff(s,supervisor.id).ok);
   s.day=2;E.staffDay(s);
