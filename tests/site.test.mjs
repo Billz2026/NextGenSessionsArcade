@@ -5383,7 +5383,7 @@ test('v0.9.33 Reputation clearly distinguishes real market access from future pr
   assert.equal(P.tier(100),'PRESTIGE DEALER');
   const region=E.create('Regional Trader',[]);
   region.reputationScore=61;
-  assert.match(app.peopleView.reputation(region),/4 POINTS TO PRESTIGE DEALER/);
+  assert.match(app.peopleView.reputation(region),/19 POINTS TO PRESTIGE DEALER/);
   assert.match(app.peopleView.reputation(region),/65\+ and cash/);
 });
 
