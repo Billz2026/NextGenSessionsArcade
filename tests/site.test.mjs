@@ -2755,7 +2755,9 @@ test('v0.9.6 another buyer can inspect an unsecured booked car without losing th
   assert.equal(other.standby.appointmentDay,booked.appointmentDay);
   assert.equal(C.heldDeposits(s),0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),'Both buyer and original appointment survive save/load');
+  v.cashOffer=4100;
   assert.ok(E.cancelCustomer(s,v.id,'dealer').ok);
+  assert.equal(v.cashOffer,null,'A competing buyer offer must not contaminate the original viewer');
   assert.equal(C.caseFor(s,v.id).id,originalId);
   assert.equal(C.caseFor(s,v.id).status,'booked');
   assert.equal(v.status,'listed');
@@ -2797,5 +2799,51 @@ test('v0.9.6 deposited sales are exclusive, so other buyers cannot displace them
   assert.equal(E.competingCustomer(state,v.id).code,'stage');
   assert.equal(C.caseFor(state,v.id).status,'reserved');
   assert.equal(C.heldDeposits(state),250);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.6 a rival who delays beyond the viewing deadline cannot wipe out the original booking', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let found=null;
+  for(let i=0;i<250;i++){
+    const {state,v}=readyForRetail(E,'Appointment Restoration '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);E.bookCustomer(state,v.id);
+    if(!C.competingInterest(state,v.id))continue;
+    found={state,v};break;
+  }
+  assert.ok(found);
+  const {state,v}=found,original=C.caseFor(state,v.id);
+  assert.ok(E.competingCustomer(state,v.id).ok);
+  state.day=original.appointmentDay;
+  E.advanceCustomers(state);
+  assert.equal(C.caseFor(state,v.id).id,original.id);
+  assert.ok(['arrived','lost'].includes(C.caseFor(state,v.id).status));
+  assert.ok(state.customerHistory.some(h=>h.type==='appointment-restored'));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.6 paying a deposit displaces an earlier unsecured appointment but no holding funds are lost', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let chosen=null;
+  for(let i=0;i<320;i++){
+    const {state,v}=readyForRetail(E,'Appointment Deposit '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);E.bookCustomer(state,v.id);
+    if(!C.competingInterest(state,v.id))continue;
+    E.competingCustomer(state,v.id);
+    if(!E.testDrive(state,v.id).ok)continue;
+    if(!E.agreeCustomer(state,v.id,'cash',null).ok)continue;
+    if(!E.depositCustomer(state,v.id).ok)continue;
+    chosen={state,v};break;
+  }
+  assert.ok(chosen,'Find a paid reservation following a competing walk-in');
+  const {state,v}=chosen,c=C.caseFor(state,v.id);
+  assert.equal(c.status,'reserved');
+  assert.equal(c.standby,null);
+  assert.equal(c.held,250);
+  assert.equal(C.competingInterest(state,v.id),false);
+  assert.equal(C.heldDeposits(state),250);
+  assert.equal(state.customerHistory.filter(h=>h.type==='appointment-displaced').length,1);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
