@@ -128,7 +128,7 @@
        !['none','rival','player'].includes(h.leader)||
        !integer(h.playerBid)||h.playerBid<0||h.playerBid>100000||
        typeof h.rivalFolded!=='boolean'||
-       !integer(h.rounds)||h.rounds<0||h.rounds>50||
+       !integer(h.rounds)||h.rounds<0||h.rounds>250||
        !Array.isArray(h.feed)||h.feed.length>65||
        !h.feed.every(entry=>typeof entry==='string'&&entry.length<=160)||
        !Array.isArray(h.results)||h.results.length>20)return false;
@@ -141,7 +141,7 @@
        (h.phase==='catalogue'&&
          (h.currentBid!==0||h.playerBid!==0||h.rounds!==0||h.feed.length>0))||
        (h.phase==='bidding'&&
-         (h.currentBid<lots[h.index].guide||h.leader==='none'||h.rounds>35))||
+         (h.currentBid<lots[h.index].guide||h.leader==='none'||h.rounds>250))||
        (h.phase==='finished'&&h.feed.length>0))return false;
     const validResult=r=>r&&typeof r==='object'&&!Array.isArray(r)&&
       integer(r.day)&&r.day>=1&&r.day<=state.day&&
@@ -305,6 +305,7 @@
       legacy.day=saved.day;
       return M.initialize(legacy,{migrating:true});
     }
+    if(saved.version>=VERSION&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
     const site=saved.version>=10?saved.premises:SITE.initial();
     if(saved.version<10&&Array.isArray(saved.staff)){
       // Existing v9 careers could already employ six or eight technicians.
@@ -394,7 +395,7 @@
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
-        ...v,...(saved.version<VERSION?PH.describe(v):{}),workshop:saved.version>=7?{...v.workshop}:W.initial(v),
+        ...v,...(saved.version<10?PH.describe(v):{}),workshop:saved.version>=7?{...v.workshop}:W.initial(v),
         profile:saved.version===2?I.legacyProfile(v):
           {...v.profile,knownRepairs:v.profile.knownRepairs.map(x=>({...x})),
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
