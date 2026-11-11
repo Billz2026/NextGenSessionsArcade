@@ -5,14 +5,18 @@
  * are not modelled. Effects apply from the employee's second game day.
  */
 (() => {
-  const MAX_STAFF=10, HIRING_FEE=150, TRAINING_FEE=275;
+  const MAX_STAFF=12, HIRING_FEE=150, TRAINING_FEE=275, WAGE_COVER_DAYS=3;
   const ROLES=['sales','buyer','technician'];
   const CANDIDATES=Object.freeze({
     sales:[
       ['Daniel Harris',17,15,12,14,16,2350,6],
       ['Maya Collins',11,12,18,14,16,1850,2],
       ['Lewis Carter',8,10,11,12,13,1550,1],
-      ['Amira Shah',15,17,17,13,18,2675,8]
+      ['Amira Shah',15,17,17,13,18,2675,8],
+      ['Grace Thompson',18,16,18,15,18,3100,11],
+      ['Owen Brooks',12,13,14,12,16,1925,4],
+      ['Zara Mahmood',16,18,16,14,19,2925,9],
+      ['Liam Edwards',9,12,13,10,14,1675,2]
     ],
     buyer:[
       ['James Bennett',13,18,12,17,16,2450,7],
@@ -32,7 +36,13 @@
       ['Ella Davies',12,12,16,14,17,1950,3],
       ['Yusuf Ahmed',18,14,15,18,18,2875,9],
       ['Leah Morris',15,11,17,15,17,2375,6],
-      ['Marcus Allen',10,10,13,11,15,1750,2]
+      ['Marcus Allen',10,10,13,11,15,1750,2],
+      ['Holly Price',13,11,15,15,17,2150,4],
+      ['Ethan Rogers',17,10,15,17,16,2610,7],
+      ['Noor Iqbal',12,12,14,12,18,2040,3],
+      ['Toby Wilson',9,10,12,12,14,1575,1],
+      ['Isla Stewart',16,12,16,17,19,2725,8],
+      ['Kai Robinson',14,11,15,14,17,2240,5]
     ]
   });
   const integer=n=>Number.isSafeInteger(n);
@@ -58,8 +68,8 @@
     const cycle=Math.floor((day-1)/7);
     return ROLES.flatMap((role,index)=>{
       const source=CANDIDATES[role];
-      const position=(cycle+index)%source.length;
-      return Array.from({length:role==='technician'?4:2},(_,i)=>{
+      const position=(cycle*3+index)%source.length;
+      return Array.from({length:role==='technician'?8:role==='sales'?4:2},(_,i)=>{
         const v=source[(position+(role==='technician'?i:i*2))%source.length];
         const [name,ability,negotiation,care,knowledge,reliability,salary,experience]=v;
         const id='C-'+cycle+'-'+role+'-'+i;
@@ -79,8 +89,11 @@
   // reputation later drops, but new hires wait until the tier is restored.
   const technicianLimit=state=>state.reputationScore>=80?8:
     state.reputationScore>=40?6:4;
-  const staffLimit=state=>2+technicianLimit(state);
-  const roleLimit=(state,role)=>role==='technician'?technicianLimit(state):1;
+  const salesLimit=state=>state.reputationScore>=80?3:
+    state.reputationScore>=40?2:1;
+  const staffLimit=state=>1+salesLimit(state)+technicianLimit(state);
+  const roleLimit=(state,role)=>role==='technician'?technicianLimit(state):
+    role==='sales'?salesLimit(state):1;
   const isActive=(state,employee)=>!!employee&&state.payrollArrears===0&&
     state.day>=employee.startDay&&
     (employee.trainingUntil===null||state.day>=employee.trainingUntil);
@@ -105,10 +118,39 @@
     return {lower:Math.max(0,Math.round((mid-spread)/25)*25),
       upper:Math.round((mid+spread)/25)*25};
   }
-  function salesBonus(state){
-    const seller=active(state,'sales');
-    if(!seller)return 0;
-    return clamp((seller.skills.sales-9)*20,0,180);
+  // Each customer is allocated a salesperson on first contact, so extra
+  // hires add service capacity rather than silently paying for idle staff.
+  // An assigned employee who leaves or is training cannot magically help.
+  function salesRep(state,customerOrVehicle=0){
+    const team=activeTeam(state,'sales');
+    if(!team.length)return null;
+    if(customerOrVehicle&&typeof customerOrVehicle==='object'&&
+       Object.hasOwn(customerOrVehicle,'salespersonId'))
+      return team.find(e=>e.id===customerOrVehicle.salespersonId)||null;
+    const id=typeof customerOrVehicle==='number'?customerOrVehicle:
+      customerOrVehicle?.vehicleId||1;
+    return team[Math.abs(id-1)%team.length];
+  }
+  function salesImpact(state,customerOrVehicle=0){
+    const rep=salesRep(state,customerOrVehicle);
+    if(!rep)return {salesperson:null,enquiryLift:0,arrivalLift:0,driveLift:0,
+      counterLift:0,fastViewing:false,commissionRate:0};
+    const rating=clamp(Math.round((rep.skills.sales*2+
+      rep.skills.care+rep.skills.reliability)/4)+
+      (rep.morale>=80?1:rep.morale<45?-2:0),1,20);
+    return {salesperson:rep,
+      enquiryLift:clamp(Math.round((rating-9)*1.7),0,16),
+      arrivalLift:clamp(Math.floor((rating-10)/3),0,3),
+      driveLift:clamp(rating-9,0,9),
+      counterLift:clamp((rating-10)*2,0,16),
+      fastViewing:rep.skills.sales>=15&&rep.skills.reliability>=14&&rep.morale>=50,
+      commissionRate:rep.skills.sales>=17?.06:
+        rep.skills.sales>=15?.05:rep.skills.sales>=12?.04:
+        rep.skills.sales>=10?.03:.02};
+  }
+  function salesBonus(state,customerOrVehicle=0){
+    const rep=salesRep(state,customerOrVehicle);
+    return rep?clamp((rep.skills.sales-9)*20,0,180):0;
   }
   function labourSaving(state,vehicle,tech=active(state,'technician')){
     if(!tech)return 0;
@@ -129,6 +171,13 @@
   }
   const failure=(code,message)=>({ok:false,code,message});
   const ok=message=>({ok:true,message});
+  function hireQuote(state,candidate){
+    const daily=state.staff.reduce((n,e)=>n+dailyCost(e),0)+dailyCost(candidate);
+    const protectedStock=reserve(state);
+    const required=HIRING_FEE+protectedStock+daily*WAGE_COVER_DAYS+state.payrollArrears;
+    return {required,protectedStock,dailyWages:daily,coverDays:WAGE_COVER_DAYS,
+      shortfall:Math.max(0,required-state.cash)};
+  }
   function hire(state,id){
     const candidate=applicants(state.day).find(c=>c.id===id);
     if(!candidate)return failure('expired','That applicant is no longer available this week.');
@@ -141,10 +190,11 @@
         'You already employ somebody in that role at this dealership.');
     if(state.staff.length>=staffLimit(state)||state.staff.length>=MAX_STAFF)
       return failure('capacity','You have reached your current dealership staffing limit.');
-    const weeklyCover=(state.staff.reduce((n,e)=>n+dailyCost(e),0)+dailyCost(candidate))*7;
-    const required=HIRING_FEE+reserve(state)+weeklyCover+state.payrollArrears;
-    if(state.cash<required)return failure('cash','Recruitment requires £'+required.toLocaleString('en-GB')+
-      ' in available cash: joining fee, one week of wages and stock preparation.');
+    const quote=hireQuote(state,candidate);
+    if(quote.shortfall)return failure('cash','Need £'+quote.required.toLocaleString('en-GB')+
+      ' total cash (£'+quote.shortfall.toLocaleString('en-GB')+
+      ' short), including the joining fee, three days of wages and protected vehicle repairs. '+ 
+      'Sell prepared stock or use an external garage until the payroll is affordable.');
     expense(state,HIRING_FEE,'Recruitment and onboarding: '+candidate.name);
     state.staff.push({...candidate,candidateId:candidate.id,id:state.nextStaffId++,hiredDay:state.day,
       startDay:state.day+1,trainingUntil:null,lastTrainingDay:0,morale:72,
@@ -218,8 +268,9 @@
     state.reputationHistory.push({day:state.day,delta,reason});
     if(state.reputationHistory.length>90)state.reputationHistory.shift();
   }
-  function sale(state,vehicle,price,grossProfit){
-    const worker=active(state,'sales');
+  function sale(state,vehicle,price,grossProfit,customer=null){
+    const impact=salesImpact(state,customer||vehicle.id);
+    const worker=impact.salesperson;
     const service=worker?.skills.care??11;
     const grade=vehicle.profile?.grade??3;
     const fair=vehicle.profile?.likelySale??price;
@@ -241,7 +292,7 @@
     if(worker){
       worker.deals++;
       worker.morale=clamp(worker.morale+2,0,100);
-      commission=Math.max(0,Math.round(grossProfit*.03));
+      commission=Math.max(0,Math.round(grossProfit*impact.commissionRate));
       // Preserve the workshop reserve for existing and incoming part-ex stock.
       // Any unpaid sales commission remains a liability; gross margin is
       // deliberately reported before staff costs.
@@ -250,6 +301,7 @@
       state.payrollArrears+=commission-paid;
     }
     return {reputationDelta:applied,reason,commission,
+      commissionRatePct:Math.round(impact.commissionRate*100),
       salespersonId:worker?.id??null,salespersonName:worker?.name??'Owner-managed'};
   }
   function worked(state,technicianId=null){
@@ -283,7 +335,7 @@
            .every(k=>skill(s.skills[k])))return false;
       keys.add(s.id);names.add(s.name);roleCounts[s.role]++;
     }
-    if(roleCounts.sales>1||roleCounts.buyer>1||roleCounts.technician>8)return false;
+    if(roleCounts.sales>3||roleCounts.buyer>1||roleCounts.technician>8)return false;
     return state.reputationHistory.every(x=>x&&integer(x.day)&&x.day>=1&&x.day<=day&&
       integer(x.delta)&&x.delta>=-10&&x.delta<=10&&
       typeof x.reason==='string'&&x.reason.length<=160);
@@ -297,7 +349,8 @@
   window.MotorTradePeople=Object.freeze({
     MAX_STAFF,HIRING_FEE,TRAINING_FEE,ROLES,tier,legacyScore,initial,
     applicants,dailyCost,active,isActive,activeTeam,availableTechnicians,
-    technicianLimit,staffLimit,roleLimit,buyerDiscount,buyerEstimate,salesBonus,
+    technicianLimit,salesLimit,staffLimit,roleLimit,buyerDiscount,buyerEstimate,
+    salesRep,salesImpact,salesBonus,hireQuote,WAGE_COVER_DAYS,
     labourSaving,hire,train,release,advance,sale,worked,valid,clone
   });
 })();
