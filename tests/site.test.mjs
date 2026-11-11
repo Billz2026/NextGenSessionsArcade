@@ -77,10 +77,10 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=47/);
+  assert.match(html, /styles\.css\?v=48/);
   assert.match(html, /simulator\.js\?v=32/);
   assert.match(html, /premises\.js\?v=1/);
-  assert.match(html, /premises-view\.js\?v=1/);
+  assert.match(html, /premises-view\.js\?v=2/);
   assert.match(html, /id="premises-view"/);
   assert.match(html, /dashboard-view\.js\?v=2/);
   assert.match(html, /inbox-office\.js\?v=3/);
@@ -114,7 +114,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.33/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.34/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -344,7 +344,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -598,7 +598,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=47/);
+  assert.match(html, /styles\.css\?v=48/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4443,7 +4443,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.33/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.34/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4512,7 +4512,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.33/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.34/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4970,7 +4970,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=47/);
+  assert.match(html,/styles\.css\?v=48/);
 });
 
 
@@ -5305,8 +5305,8 @@ test('v0.9.32 staff and recruitment preserve readable skills while collapsing se
 });
 
 test('v0.9.32 compact Staff & Recruitment desktop styles retain labels and responsive grid',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.33/);
-  assert.match(html,/styles\.css\?v=47/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.34/);
+  assert.match(html,/styles\.css\?v=48/);
   assert.match(html,/people-view\.js\?v=7/);
   assert.match(css,/\.career-main:has\(\[data-panel="staff"\]:not\(\[hidden\]\)\) \.career-topbar/);
   assert.match(css,/\.sd-kpis>div\{min-height:56px/);
@@ -5421,6 +5421,138 @@ test('v0.9.33 Reputation uses compact responsive layout without removing complet
   assert.match(css,/\.rep-main-grid\{display:grid/);
   assert.match(css,/\.rep-history-preview\{display:grid/);
   assert.match(css,/@media\(max-width:760px\)/);
-  assert.match(html,/styles\.css\?v=47/);
+  assert.match(html,/styles\.css\?v=48/);
   assert.match(html,/people-view\.js\?v=7/);
+});
+
+
+test('v0.9.34 My Dealership shows a live business identity, occupied spaces and real running costs',()=>{
+  const app=browser(new Map()),E=app.productionEngine,site=E.premises;
+  const state=E.create('Working Dealer',[]);
+  const saved=JSON.stringify(state);
+  const f=app.premisesView.figures(state,site);
+  assert.equal(f.forecourt,4);
+  assert.equal(f.workshop,4);
+  assert.equal(f.stock,0);
+  assert.equal(f.freeSpaces,4);
+  assert.equal(f.p.total,25);
+  assert.equal(f.runningDaily,25);
+  assert.equal(f.arrears,0);
+  assert.equal(f.cashAfterRepairReserves,12500);
+  const screen=app.premisesView.render(state,site);
+  assert.match(screen,/RUNNING YOUR DEALERSHIP/);
+  assert.match(screen,/FORECOURT OCCUPANCY/);
+  assert.match(screen,/WORKSHOP CAPACITY/);
+  assert.match(screen,/DEALERSHIP CASH/);
+  assert.match(screen,/DAILY RUNNING COST/);
+  assert.match(screen,/OPERATING COMMITMENTS/);
+  assert.match(screen,/EXPANSION & RUNNING COSTS/);
+  assert.match(screen,/ONE-OFF INVESTMENT/);
+  assert.match(screen,/CASH NEEDED INCL. BUFFERS/);
+  assert.match(screen,/REQUIRES 20 REPUTATION/);
+  assert.match(screen,/data-page="stock"/);
+  assert.match(screen,/data-page="workshop"/);
+  assert.match(screen,/data-page="staff"/);
+  assert.match(screen,/data-page="reports"/);
+  assert.match(screen,/<details class="hq-guidance">/);
+  assert.equal(JSON.stringify(state),saved,'Dashboard rendering must never update career');
+  assert.match(html,/data-bind="company"/);
+  assert.match(html,/class="hq-identity-facts"/);
+  assert.match(css,/\.hq-identity\{display:grid/);
+});
+
+test('v0.9.34 facility options are gated on reputation and total protected cash',()=>{
+  const app=browser(new Map()),E=app.productionEngine,site=E.premises;
+  const state=E.create('Facilities Desk',[]);
+  let screen=app.premisesView.render(state,site);
+  assert.match(screen,/REPUTATION LOCKED/);
+  assert.match(screen,/REQUIRES 20 REPUTATION/);
+  assert.match(screen,/REQUIRES 40 REPUTATION/);
+  assert.equal((screen.match(/data-action="upgrade-premises"[^>]* disabled/g)||[]).length,2);
+  state.reputationScore=20;
+  state.cash=202;
+  screen=app.premisesView.render(state,site);
+  const quote=site.quote(state,'forecourt');
+  assert.equal(quote.eligible,true);
+  assert.ok(quote.shortfall>0);
+  assert.match(screen,/CASH SHORTFALL|Cash shortfall/);
+  assert.match(screen,/SHORT BY £/);
+  assert.match(screen,/CASH RUNWAY ALERT/);
+  assert.match(screen,/£202/);
+  assert.match(screen,/CASH NEEDED INCL. BUFFERS/);
+  assert.match(screen,/REPUTATION LOCKED/);
+  assert.match(screen,/data-kind="forecourt" disabled/);
+  state.cash=12500;
+  screen=app.premisesView.render(state,site);
+  assert.match(screen,/READY TO EXPAND/);
+  assert.match(screen,/APPROVE £1,800 INVESTMENT/);
+  assert.match(screen,/data-kind="forecourt"/);
+  assert.ok(!/data-kind="forecourt" disabled/.test(screen));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.34 upgrade transaction updates owner HQ but never double charges capital',()=>{
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Owner Office');
+  let data=JSON.parse(storage.get(STORAGE_KEY));
+  assert.match(app.nodes.get('premises-view').innerHTML,/FORECOURT OCCUPANCY/);
+  assert.equal(app.bindings.get('company')[0].textContent,'Owner Office');
+  data.reputationScore=20;
+  storage.set(STORAGE_KEY,JSON.stringify(data));
+  const resume=browser(storage);
+  resume.click('resume');
+  resume.go('business');
+  const before=JSON.parse(storage.get(STORAGE_KEY));
+  assert.match(resume.nodes.get('premises-view').innerHTML,/APPROVE £1,800 INVESTMENT/);
+  resume.click('upgrade-premises',{kind:'forecourt'});
+  const after=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(after.capacity,6);
+  assert.equal(after.cash,before.cash-1800);
+  assert.equal(after.ledger.filter(x=>x.note.startsWith('Premises investment: forecourt')).length,1);
+  assert.match(resume.nodes.get('premises-view').innerHTML,/6 → 8 forecourt spaces/);
+  assert.match(resume.nodes.get('premises-view').innerHTML,/FORECOURT OCCUPANCY/);
+  assert.equal(resume.bindings.get('forecourt-capacity')[0].textContent,'6 vehicles');
+  assert.ok(resume.productionEngine.normalize(after));
+});
+
+test('v0.9.34 maxed-out premises show completed facility without phantom investments',()=>{
+  const app=browser(new Map()),E=app.productionEngine,site=E.premises;
+  const s=E.create('Fully Expanded',[]);
+  s.reputationScore=100;
+  s.premises.forecourtLevel=3;
+  s.premises.workshopLevel=2;
+  s.capacity=site.capacity(s);
+  const before=JSON.stringify(s);
+  const markup=app.premisesView.render(s,site);
+  assert.match(markup,/10 VEHICLE SPACES/);
+  assert.match(markup,/8 REPAIR BAYS/);
+  assert.equal((markup.match(/FULLY EXPANDED/g)||[]).length,2);
+  assert.doesNotMatch(markup,/data-action="upgrade-premises"/);
+  assert.equal(JSON.stringify(s),before);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.34 debt, payroll and workshop reserves appear as distinct owner obligations',()=>{
+  const app=browser(new Map()),E=app.productionEngine,site=E.premises;
+  const s=E.create('Thinly Capitalised',[]);
+  const seller=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const reserved=E.workshop.reserved(s);
+  s.staff.push(...[]);
+  s.premises.arrears=140;
+  s.payrollArrears=85;
+  const info=app.premisesView.figures(s,site);
+  const rendered=app.premisesView.render(s,site);
+  assert.equal(info.reserve,reserved);
+  assert.equal(info.arrears,225);
+  assert.equal(info.cashAfterRepairReserves,s.cash-reserved);
+  assert.match(rendered,/PAYMENT PRESSURE/);
+  assert.match(rendered,/OUTSTANDING OBLIGATIONS/);
+  assert.match(rendered,/£225/);
+  assert.match(rendered,/WORKSHOP FUNDS RESERVED/);
+  assert.match(rendered,/FULL FINANCES/);
+  assert.match(rendered,/HOW PREMISES EXPANSION WORKS/);
+  assert.equal(s.premises.arrears,140);
+  assert.equal(s.payrollArrears,85);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
