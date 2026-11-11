@@ -41,9 +41,18 @@
     return (v ^ (v >>> 16)) >>> 0;
   };
   const nearest25 = n => Math.round(n / 25) * 25;
-  // The game calendar begins Monday 9 November 2026. One Monday auction per week.
-  const auctionDay=day=>integer(day)&&day>=1&&(day-1)%7===0&&!D.isDealDay(day);
-  const nextAuctionDay=day=>day+((7-(day-1)%7)%7||7);
+  // Game calendar starts Monday 9 November 2026. Normally Monday auction;
+  // where Monday is month-end Deal Day, use Tuesday of the SAME game week.
+  // This guarantees exactly one weekday auction per week, never weekends.
+  function scheduledAuctionDay(day){
+    const monday=1+Math.floor((day-1)/7)*7;
+    return D.isDealDay(monday)?monday+1:monday;
+  }
+  const auctionDay=day=>integer(day)&&day>=1&&day===scheduledAuctionDay(day);
+  function nextAuctionDay(day){
+    const thisWeek=scheduledAuctionDay(day);
+    return thisWeek>day?thisWeek:scheduledAuctionDay(day+7);
+  }
   function market(day,reputationScore=0,session=0,dealershipName='',
     periodReputation=reputationScore,cash=STARTING_CASH) {
     const tier=MARKET.tierFor(cash,reputationScore).key;
