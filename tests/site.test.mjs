@@ -69,11 +69,11 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /auction-hall-view\.js\?v=2/);
-  assert.match(html, /simulator\.js\?v=21/);
+  assert.match(html, /simulator\.js\?v=22/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
-  assert.match(html, /dashboard-view\.js\?v=1/);
+  assert.match(html, /dashboard-view\.js\?v=2/);
   assert.match(html, /id="dashboard-priorities"/);
   assert.match(html, /id="dashboard-operating-strip"/);
   assert.match(html, /data-bind="dashboard-operating"/);
@@ -84,7 +84,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /trading\.js\?v=16/);
   assert.match(html, /customers-view\.js\?v=5/);
   assert.match(html, /workshop-view\.js\?v=3/);
-  assert.match(html, /events-view\.js\?v=3/);
+  assert.match(html, /events-view\.js\?v=4/);
   assert.match(html, /monthly-view\.js\?v=6/);
   assert.match(html, /people-view\.js\?v=3/);
   assert.match(html, /vehicle-view\.js\?v=3/);
@@ -102,7 +102,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.11/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.12/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -328,7 +328,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -582,7 +582,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=25/);
+  assert.match(html, /styles\.css\?v=26/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -3594,4 +3594,87 @@ test('v0.9.11 inbox preview always prioritises unread items over old read messag
   assert.equal(app.bindings.get('unread')[0].hidden,true);
   assert.equal(app.nodes.get('dashboard-inbox').children.length,2,
     'Recent read communications remain accessible when inbox is cleared');
+});
+
+test('v0.9.12 dashboard reports real unit target overachievement rather than zero to go',()=>{
+  const app=browser(new Map()),V=app.dashboard;
+  const exceeded=V.salesProgress({soldUnits:7,targetUnits:2},0);
+  assert.equal(exceeded.text,'✓ Unit target exceeded by 5 vehicles');
+  assert.equal(exceeded.positive,true);
+  assert.doesNotMatch(exceeded.text,/0 to target/);
+  const exactly=V.salesProgress({soldUnits:2,targetUnits:2},4);
+  assert.equal(exactly.text,'✓ Unit target reached');
+  assert.equal(exactly.positive,true);
+  const short=V.salesProgress({soldUnits:1,targetUnits:2},3);
+  assert.equal(short.text,'1 sale to target · 3 game days left');
+  assert.equal(short.positive,false);
+  const noTarget=V.salesProgress({soldUnits:0,targetUnits:0},7);
+  assert.equal(noTarget.text,'No unit target set');
+  assert.equal(noTarget.positive,false);
+  assert.match(css,/dashboard-target-positive/);
+});
+
+test('v0.9.12 Day 60 exceeding target suggests Day 64 auction instead of generic finances',()=>{
+  const app=browser(new Map()),E=app.productionEngine,V=app.dashboard;
+  const s=E.create('Month 2 Overachievement',[]);
+  s.day=60;
+  s.deadlineSession=4;
+  E.rollAuctionHall(s);
+  s.monthPlan.startDay=31;
+  s.monthPlan.endDay=60;
+  s.monthPlan.month=2;
+  // Synthetic completed sales are used only to exercise the read-only
+  // Dashboard; this fixture never changes the production cash/stock engine.
+  s.sold=Array.from({length:7},(_,i)=>({
+    day:40+i,price:5000,profit:650,mode:'cash'
+  }));
+  s.messages.forEach(m=>{m.read=true;});
+  const view=V.snapshot(s,E);
+  assert.equal(view.report.soldUnits,7);
+  assert.equal(view.report.targetUnits,2);
+  assert.equal(view.report.operatingContribution,4550);
+  assert.equal(view.auctionDay,64);
+  assert.deepEqual(Array.from(view.tasks,x=>x.key),
+    ['deal-day','empty-stock','next-auction']);
+  assert.equal(view.tasks[2].title,'Prepare for Day 64 auction');
+  assert.match(view.tasks[2].description,/Monday session in 4 game days/);
+  assert.match(V.priorities(view),/VIEW AUCTION SCHEDULE/);
+  assert.doesNotMatch(V.priorities(view),/Check your operating position/);
+  assert.doesNotMatch(V.priorities(view),/Review this week’s stock plan/);
+  assert.equal(V.salesProgress(view.report,view.daysToGo).text,
+    '✓ Unit target exceeded by 5 vehicles');
+});
+
+test('v0.9.12 Deal Day banner and primary action agree on final closing session',()=>{
+  const app=browser(new Map()),E=app.productionEngine,EV=app.eventsView;
+  const s=E.create('Closing Session',[]);
+  s.day=60;s.deadlineSession=4;
+  E.rollAuctionHall(s);
+  const banner=EV.banner(s);
+  assert.match(banner,/FINAL DAY OF MONTH 2/);
+  assert.match(banner,/17:00 · 5 OF 5/);
+  assert.match(banner,/data-page="events">CLOSE MONTH ↗/);
+  assert.doesNotMatch(banner,/OPEN DEAL DAY ↗/);
+  const priority=app.dashboard.snapshot(s,E).tasks[0];
+  assert.equal(priority.key,'deal-day');
+  assert.equal(priority.action,'CLOSE MONTH');
+  assert.equal(priority.page,'events');
+  s.deadlineSession=3;
+  const earlier=EV.banner(s);
+  assert.match(earlier,/OPEN DEAL DAY ↗/);
+  assert.doesNotMatch(earlier,/CLOSE MONTH ↗/);
+});
+
+test('v0.9.12 dashboard shows genuine operating-loss warning instead of filler advice',()=>{
+  const app=browser(new Map()),E=app.productionEngine,V=app.dashboard;
+  const s=E.create('End-of-month Cost Risk',[]);
+  s.day=27;s.monthPlan.endDay=30;E.rollAuctionHall(s);
+  s.sold=[{day:21,price:4500,profit:-1200,mode:'cash'}];
+  s.messages.forEach(m=>{m.read=true;});
+  const view=V.snapshot(s,E);
+  assert.ok(view.report.operatingContribution<0);
+  assert.ok(view.tasks.some(t=>t.key==='negative-contribution'));
+  assert.match(V.priorities(view),/Trading costs exceed your vehicle margin/);
+  assert.doesNotMatch(V.priorities(view),/Check your operating position/);
+  assert.ok(view.tasks.every(t=>t.page&&t.action));
 });
