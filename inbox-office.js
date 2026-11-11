@@ -210,8 +210,8 @@
         changed=emit(state,{from:'PEOPLE & PAYROLL',category:'staff',
           subject:'SUPERVISOR VACANCY · '+employee.name+' at risk',
           preview:'Morale '+employee.morale+'/100. Hire a supervisor to manage employee welfare.',
-          body:'STAFFING ESCALATION\\n\\n'+employee.name+
-            ' has morale '+employee.morale+'/100. There is currently no active staff supervisor to investigate the cause, handle routine concerns or submit a costed improvement plan.\\n\\nYour action is to choose and hire a Staff Supervisor from recruitment. The supervisor starts the next game day and will handle routine support, escalating only decisions involving company funds.',
+          body:'STAFFING ESCALATION\n\n'+employee.name+
+            ' has morale '+employee.morale+'/100. There is currently no active staff supervisor to investigate the cause, handle routine concerns or submit a costed improvement plan.\n\nYour action is to choose and hire a Staff Supervisor from recruitment. The supervisor starts the next game day and will handle routine support, escalating only decisions involving company funds.',
           linkPage:'staff',reference:'supervisor-gap:'+employee.id+':'+week})||changed;
       }else if(state.payrollArrears>0){
         // Root cause must be resolved before recognition spending can help.
@@ -241,40 +241,43 @@
   }
   function formatMail(message,state){
     const category=infer(message);
-    const decision=message.decision||'';
-    const status=decision?decision.toUpperCase():
-      needsAction(message,state)?'OWNER APPROVAL REQUIRED':
-      message.subject.startsWith('PAID COPY')?'PAYMENT CONFIRMED':'FOR YOUR INFORMATION';
-    const sections=String(message.body||'').split(/\n{2,}/);
-    const content=sections.map(part=>{
-      const lines=part.split('\n').filter(x=>x.trim().length);
-      if(!lines.length)return '';
-      const mark=line=>{
-        const value=line.trim();
-        if(/^[A-Z][A-Z 0-9/&£+·—-]{5,65}$/.test(value))
-          return '<h3 class="inbox-letter-subhead">'+esc(value)+'</h3>';
-        const match=/^([A-Z][A-Z 0-9/&-]{2,45}:)(.*)$/.exec(value);
-        if(match)return '<div class="inbox-letter-fact"><strong>'+esc(match[1])+
-          '</strong><span>'+esc(match[2].trim())+'</span></div>';
-        return '<p>'+esc(value)+'</p>';
-      };
-      return '<section class="inbox-letter-section">'+lines.map(mark).join('')+'</section>';
+    const sender=String(message.from||'DEALERSHIP OFFICE');
+    const status=message.decision?message.decision.toUpperCase():
+      needsAction(message,state)?'DECISION REQUIRED':
+      message.subject.startsWith('PAID COPY')?'PAID · FILE COPY':'INFORMATION';
+    // Older saved email bodies can contain literal backslash-n escapes. Turn
+    // those into actual paragraphs at display-time without altering saves.
+    const body=String(message.body||'')
+      .replace(/\r\n?/g,'\n')
+      .replace(/\\r\\n|\\n|\\r/g,'\n');
+    const sections=body.split(/\n{2,}/).filter(part=>part.trim());
+    const content=sections.map((part,index)=>{
+      const lines=part.split('\n').map(l=>l.trim()).filter(Boolean);
+      const html=lines.map(line=>{
+        if(/^[A-Z][A-Z 0-9/&£+·—-]{5,70}$/.test(line))
+          return '<h3 class="inbox-letter-subhead">'+esc(line)+'</h3>';
+        const label=/^([A-Z][A-Z 0-9/&-]{2,45}:)\s*(.*)$/.exec(line);
+        if(label)return '<div class="inbox-letter-fact"><strong>'+
+          esc(label[1])+'</strong><span>'+esc(label[2])+'</span></div>';
+        return '<p>'+esc(line)+'</p>';
+      }).join('');
+      return '<section class="inbox-letter-section'+(index===0?' inbox-letter-opening':'')+
+        '">'+html+'</section>';
     }).join('');
-    return '<article class="inbox-letter">'+
-      '<div class="inbox-letter-letterhead">'+
-        '<div class="inbox-letter-crest" aria-hidden="true">MT</div>'+
-        '<div><strong>'+esc(state.name)+'</strong><small>INTERNAL DEALERSHIP COMMUNICATION</small></div>'+
+    const avatar=category==='staff'?'HR':category==='accounts'?'£':
+      category==='operations'?'WS':category==='sales'?'SL':'MT';
+    return '<article class="inbox-letter" aria-label="Email from '+esc(sender)+'">'+
+      '<header class="inbox-letter-letterhead">'+
+        '<div class="inbox-letter-crest" aria-hidden="true">'+avatar+'</div>'+
+        '<div class="inbox-letter-identity"><strong>'+esc(sender)+'</strong>'+
+          '<small>To: Dealership owner · Game day '+String(message.day).padStart(2,'0')+
+          '</small></div>'+
         '<span class="inbox-letter-state">'+esc(status)+'</span>'+
-      '</div>'+
-      '<div class="inbox-letter-meta">'+
-        '<div><span>FROM</span><strong>'+esc(message.from)+'</strong></div>'+
-        '<div><span>TO</span><strong>DEALERSHIP OWNER</strong></div>'+
-        '<div><span>RECEIVED</span><strong>GAME DAY '+String(message.day).padStart(2,'0')+'</strong></div>'+
-        '<div><span>DEPARTMENT</span><strong>'+esc(labels[category]||category)+'</strong></div>'+
-      '</div>'+
+      '</header>'+
       '<div class="inbox-letter-content">'+content+'</div>'+
-      '<footer class="inbox-letter-signoff"><span>INTERNAL MESSAGE · '+esc(category.toUpperCase())+
-      '</span><span>FILED IN OWNER INBOX</span></footer>'+
+      '<footer class="inbox-letter-signoff"><div><span>Regards,</span>'+
+        '<strong>'+esc(sender)+'</strong></div>'+
+        '<small>'+esc(state.name)+' · INTERNAL CORRESPONDENCE</small></footer>'+
     '</article>';
   }
   function quoteControls(message,state,engine){
