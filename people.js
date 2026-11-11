@@ -5,8 +5,8 @@
  * are not modelled. Effects apply from the employee's second game day.
  */
 (() => {
-  const MAX_STAFF=12, HIRING_FEE=150, TRAINING_FEE=275, WAGE_COVER_DAYS=3;
-  const ROLES=['sales','buyer','technician'];
+  const MAX_STAFF=13, HIRING_FEE=150, TRAINING_FEE=275, WAGE_COVER_DAYS=3;
+  const ROLES=['sales','buyer','technician','supervisor'];
   const CANDIDATES=Object.freeze({
     sales:[
       ['Daniel Harris',17,15,12,14,16,2350,6],
@@ -23,6 +23,14 @@
       ['Sophie Reed',12,11,15,14,18,1750,2],
       ['Aaron Patel',11,9,12,10,12,1500,1],
       ['Eleanor Price',15,19,16,19,17,2900,10]
+    ],
+    supervisor:[
+      ['Sarah Mitchell',15,15,18,17,18,2850,9],
+      ['David Clarke',13,16,15,16,17,2550,7],
+      ['Nadia Rahman',16,17,19,16,19,3350,12],
+      ['Tom Fletcher',11,13,13,15,15,2200,5],
+      ['Leanne Price',15,14,18,15,17,2925,8],
+      ['Imran Hussain',14,17,16,16,18,2750,10]
     ],
     technician:[
       ['Michael Turner',10,11,13,13,15,1925,3],
@@ -91,7 +99,7 @@
     state.reputationScore>=40?6:4,window.MotorTradePremises?.bays(state)??4);
   const salesLimit=state=>state.reputationScore>=80?3:
     state.reputationScore>=40?2:1;
-  const staffLimit=state=>1+salesLimit(state)+technicianLimit(state);
+  const staffLimit=state=>2+salesLimit(state)+technicianLimit(state);
   const roleLimit=(state,role)=>role==='technician'?technicianLimit(state):
     role==='sales'?salesLimit(state):1;
   const isActive=(state,employee)=>!!employee&&state.payrollArrears===0&&
@@ -99,6 +107,7 @@
     (employee.trainingUntil===null||state.day>=employee.trainingUntil);
   const activeTeam=(state,role)=>state.staff.filter(s=>s.role===role&&isActive(state,s));
   const active=(state,role)=>activeTeam(state,role)[0]||null;
+  const supervisor=state=>active(state,'supervisor');
   function availableTechnicians(state){
     const occupied=new Set((state.vehicles||[]).filter(v=>
       v.workshop?.method==='internal'&&
@@ -217,7 +226,8 @@
     employee.lastTrainingDay=state.day;
     employee.trainingUntil=state.day+2;
     const attribute=employee.role==='sales'?'sales':
-      employee.role==='buyer'?'negotiation':'diagnostics';
+      employee.role==='buyer'?'negotiation':
+      employee.role==='supervisor'?'care':'diagnostics';
     employee.skills[attribute]=clamp(employee.skills[attribute]+1,1,20);
     if(employee.role==='technician')
       employee.skills.efficiency=clamp(employee.skills.efficiency+1,1,20);
@@ -229,6 +239,41 @@
     return ok(employee.name+' entered two days of training (£'+TRAINING_FEE+
       '). Their abilities have improved, but they are unavailable until day '+
       employee.trainingUntil+'.');
+  }
+  function welfareCost(employee){
+    // One-off recognition/support budget, not an invented salary rise.
+    return 125+Math.round(employee.monthlySalary/100/5)*5;
+  }
+  function moraleProposal(state,employeeId){
+    const employee=state.staff.find(s=>s.id===employeeId);
+    const manager=supervisor(state);
+    if(!manager||!employee||employee.role==='supervisor'||
+       employee.morale<=0||employee.morale>45||state.payrollArrears>0)return null;
+    return {employee,manager,cost:welfareCost(employee),
+      gain:12+Math.max(0,Math.floor((manager.skills.care-10)/3))};
+  }
+  function decideMorale(state,messageId,approve){
+    if(typeof approve!=='boolean')return failure('decision','Choose approve or decline.');
+    const message=state.messages.find(m=>m.id===messageId);
+    const match=message&&/^supervisor-morale:(\d+):\d+$/.exec(message.reference||'');
+    if(!match||message.decision)return failure('stage','This supervisor recommendation is no longer pending.');
+    const plan=moraleProposal(state,Number(match[1]));
+    if(!plan)return failure('expired','This recommendation is no longer valid. Recheck the employee and supervisor availability.');
+    if(approve){
+      if(state.cash<plan.cost+reserve(state)+state.payrollArrears)
+        return failure('cash','Insufficient unreserved cash for the proposed £'+plan.cost+
+          ' welfare budget. Existing repair and wage commitments remain protected.');
+      expense(state,plan.cost,'Staff welfare intervention: '+plan.employee.name);
+      plan.employee.morale=clamp(plan.employee.morale+plan.gain,0,100);
+      message.decision='approved';
+      return ok(plan.manager.name+' has been authorised to carry out a '+
+        'staff welfare and rota-support plan for '+plan.employee.name+'. £'+plan.cost+
+        ' charged once; morale increased by '+plan.gain+' to '+plan.employee.morale+'/100.');
+    }
+    message.decision='declined';
+    return ok('You declined '+plan.manager.name+'’s £'+plan.cost+
+      ' staff welfare plan. No charge was made. '+plan.employee.name+
+      ' remains on their existing rota and morale remains '+plan.employee.morale+'/100.');
   }
   function release(state,id){
     const index=state.staff.findIndex(s=>s.id===id);
@@ -248,9 +293,21 @@
     const paid=Math.min(Math.max(0,state.cash-reserve(state)),due);
     expense(state,paid,'Staff payroll daily settlement');
     state.payrollArrears=due-paid;
+    const support=[];
     for(const employee of state.staff){
       if(state.payrollArrears>0)employee.morale=clamp(employee.morale-9,0,100);
       else if(state.day%7===0)employee.morale=clamp(employee.morale-1,0,100);
+    }
+    // A working supervisor routinely checks in with staff every game week.
+    // Small, free workplace fixes are delegated, not referred to the owner.
+    const manager=supervisor(state);
+    if(manager&&state.day%7===0){
+      for(const employee of state.staff){
+        if(employee.id===manager.id||employee.morale>55||employee.morale<=15)continue;
+        const gain=manager.skills.care>=16?5:3;
+        employee.morale=clamp(employee.morale+gain,0,100);
+        support.push(employee.name+' +'+gain+' morale');
+      }
     }
     if(state.payrollArrears>0){
       const old=state.reputationScore;
@@ -262,9 +319,9 @@
       // liabilities; the game never silently writes off staff pay.
       const departures=state.staff.filter(e=>e.morale<=15).map(e=>e.name);
       state.staff=state.staff.filter(e=>e.morale>15);
-      return {payroll,paid,arrears:state.payrollArrears,departures};
+      return {payroll,paid,arrears:state.payrollArrears,departures,support,supervisor:manager?.name??null};
     }
-    return {payroll,paid,arrears:state.payrollArrears,departures:[]};
+    return {payroll,paid,arrears:state.payrollArrears,departures:[],support,supervisor:manager?.name??null};
   }
   function record(state,delta,reason){
     state.reputationHistory.push({day:state.day,delta,reason});
@@ -318,7 +375,7 @@
        !integer(state.payrollArrears)||state.payrollArrears<0||
        state.payrollArrears>10000000||
        !Array.isArray(state.reputationHistory)||state.reputationHistory.length>90)return false;
-    const keys=new Set(),names=new Set(),roleCounts={sales:0,buyer:0,technician:0};
+    const keys=new Set(),names=new Set(),roleCounts={sales:0,buyer:0,technician:0,supervisor:0};
     for(const s of state.staff){
       if(!s||!integer(s.id)||s.id<1||s.id>=state.nextStaffId||keys.has(s.id)||
          !ROLES.includes(s.role)||names.has(s.name)||
@@ -337,7 +394,7 @@
            .every(k=>skill(s.skills[k])))return false;
       keys.add(s.id);names.add(s.name);roleCounts[s.role]++;
     }
-    if(roleCounts.sales>3||roleCounts.buyer>1||roleCounts.technician>8)return false;
+    if(roleCounts.sales>3||roleCounts.buyer>1||roleCounts.technician>8||roleCounts.supervisor>1)return false;
     return state.reputationHistory.every(x=>x&&integer(x.day)&&x.day>=1&&x.day<=day&&
       integer(x.delta)&&x.delta>=-10&&x.delta<=10&&
       typeof x.reason==='string'&&x.reason.length<=160);
@@ -351,7 +408,7 @@
   window.MotorTradePeople=Object.freeze({
     MAX_STAFF,HIRING_FEE,TRAINING_FEE,ROLES,tier,legacyScore,initial,
     applicants,dailyCost,active,isActive,activeTeam,availableTechnicians,
-    technicianLimit,salesLimit,staffLimit,roleLimit,buyerDiscount,buyerEstimate,
+    technicianLimit,salesLimit,staffLimit,roleLimit,supervisor,moraleProposal,decideMorale,buyerDiscount,buyerEstimate,
     salesRep,salesProfile,salesImpact,salesBonus,hireQuote,WAGE_COVER_DAYS,
     labourSaving,hire,train,release,advance,sale,worked,valid,clone
   });

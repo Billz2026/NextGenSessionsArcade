@@ -16,21 +16,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=27">
+  <link rel="stylesheet" href="./styles.css?v=28">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
   <script src="./vehicle-market.js?v=2" defer></script>
   <script src="./premises.js?v=1" defer></script>
-  <script src="./people.js?v=6" defer></script>
-  <script src="./monthly.js?v=6" defer></script>
+  <script src="./people.js?v=7" defer></script>
+  <script src="./monthly.js?v=7" defer></script>
   <script src="./events.js?v=2" defer></script>
   <script src="./workshop.js?v=3" defer></script>
   <script src="./customers.js?v=5" defer></script>
-  <script src="./trading.js?v=16" defer></script>
+  <script src="./trading.js?v=17" defer></script>
   <script src="./vehicle-cards.js?v=4" defer></script>
   <script src="./vehicle-view.js?v=3" defer></script>
-  <script src="./people-view.js?v=3" defer></script>
+  <script src="./people-view.js?v=4" defer></script>
   <script src="./monthly-view.js?v=6" defer></script>
   <script src="./events-view.js?v=4" defer></script>
   <script src="./workshop-view.js?v=3" defer></script>
@@ -38,8 +38,8 @@
   <script src="./premises-view.js?v=1" defer></script>
   <script src="./auction-hall-view.js?v=2" defer></script>
   <script src="./dashboard-view.js?v=2" defer></script>
-  <script src="./inbox-office.js?v=1" defer></script>
-  <script src="./simulator.js?v=23" defer></script>
+  <script src="./inbox-office.js?v=2" defer></script>
+  <script src="./simulator.js?v=24" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -47,7 +47,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.13</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.14</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -202,7 +202,7 @@
 
             <section class="career-panel inbox-control" data-panel="inbox" hidden aria-labelledby="inbox-title">
               <header class="inbox-heading">
-                <div><p class="section-overline">YOUR BUSINESS / OWNER COMMUNICATIONS</p><h1 id="inbox-title">OWNER'S <em>INBOX.</em></h1><p>Decisions, staff reports and paid transaction copies. Routine bookkeeping is handled by Accounts.</p></div>
+                <div><p class="section-overline">YOUR BUSINESS / OWNER COMMUNICATIONS</p><h1 id="inbox-title">OWNER'S <em>INBOX.</em></h1><p>Your supervisors handle daily staff matters and seek approval for exceptional costs. Accounts handles routine payments.</p></div>
                 <button type="button" class="secondary-button" data-action="mark-all-read">MARK ALL READ</button>
               </header>
               <div class="inbox-stat-strip" aria-label="Inbox status">

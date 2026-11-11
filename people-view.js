@@ -6,11 +6,12 @@
   })[ch]);
   const gbp=n=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',
     maximumFractionDigits:0}).format(n);
-  const roleName={sales:'SALES EXECUTIVE',buyer:'VEHICLE BUYER',technician:'PREP TECHNICIAN'};
+  const roleName={sales:'SALES EXECUTIVE',buyer:'VEHICLE BUYER',technician:'PREP TECHNICIAN',supervisor:'STAFF SUPERVISOR'};
   const traits={
     sales:[['Sales', 'sales'],['Negotiation','negotiation'],['Customer care','care'],['Reliability','reliability']],
     buyer:[['Negotiation','negotiation'],['Vehicle knowledge','knowledge'],['Reliability','reliability'],['Customer care','care']],
-    technician:[['Diagnostics','diagnostics'],['Efficiency','efficiency'],['Reliability','reliability'],['Customer care','care']]
+    technician:[['Diagnostics','diagnostics'],['Efficiency','efficiency'],['Reliability','reliability'],['Customer care','care']],
+    supervisor:[['People leadership','care'],['Staff communication','negotiation'],['Reliability','reliability'],['Trade knowledge','knowledge']]
   };
   const bar=(name,value)=>
     '<div class="people-trait"><span>'+esc(name)+'</span><div class="people-track">'+
@@ -24,7 +25,8 @@
   const labels={
     sales:'Creates more enquiries, gets buyers to view sooner and improves test-drive conversion and negotiations. Higher performers earn a larger share of positive gross margin.',
     buyer:'Can secure more competitive private-seller agreements and provide auction rival-bid intelligence.',
-    technician:'Runs one assigned in-house repair at a time. More technicians enable parallel preparation, but wages and parts still cost money.'
+    technician:'Runs one assigned in-house repair at a time. More technicians enable parallel preparation, but wages and parts still cost money.',
+    supervisor:'Manages routine rota and morale check-ins automatically each week. Escalates costed staff-support proposals to you for approval or refusal. One supervisor maximum; salary continues daily.'
   };
   function salesForecast(person,P){
     if(person.role!=='sales')return '';
@@ -57,11 +59,11 @@
             paused?'TEAM FULL':quote.shortfall?'NOT ENOUGH CASH':'HIRE EMPLOYEE')+
           '</button></div></article>';
     });
-    const names={sales:'SALES EXECUTIVES',buyer:'VEHICLE BUYERS',technician:'WORKSHOP TECHNICIANS'};
-    return '<p class="trade-alert">Applicants refresh every seven game days. Hire technicians up to your unlocked workshop capacity. '+
+    const names={sales:'SALES EXECUTIVES',buyer:'VEHICLE BUYERS',technician:'WORKSHOP TECHNICIANS',supervisor:'STAFF SUPERVISORS'};
+    return '<p class="trade-alert">Applicants refresh every seven game days. Choose one staff supervisor to manage routine morale concerns and propose owner-approved interventions. Hire technicians up to your unlocked workshop capacity. '+
       'Each hire needs a £'+P.HIRING_FEE+' onboarding charge, protected repair funds and '+P.WAGE_COVER_DAYS+
       ' days of team wages; monthly salaries continue afterward. A new employee starts the following game day.</p>'+
-      ['technician','sales','buyer'].map(role=>
+      ['supervisor','technician','sales','buyer'].map(role=>
         '<section class="people-recruit-group"><h3>'+names[role]+' · '+
         candidates.filter(c=>c.role===role).length+' CANDIDATES · '+
         state.staff.filter(e=>e.role===role).length+'/'+P.roleLimit(state,role)+' HIRED</h3>'+

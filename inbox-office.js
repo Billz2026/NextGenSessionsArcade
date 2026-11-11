@@ -20,6 +20,10 @@
     if(/REPORT|MANAGEMENT/.test(sender))return 'reports';
     return 'operations';
   };
+  const moraleId=m=>{
+    const match=/^supervisor-morale:(\d+):\d+$/.exec(m.reference||'');
+    return match?Number(match[1]):null;
+  };
   const quoteId=m=>{
     const match=/^repair:(\d+)$/.exec(m.reference||'');
     return match?Number(match[1]):null;
@@ -30,7 +34,14 @@
       state.vehicles.find(v=>v.id===id&&v.status==='acquired'&&
         v.workshop?.stage==='quoted')||null;
   }
-  function needsAction(m,state){return !!actionFor(m,state);}
+  function needsAction(m,state){
+    if(actionFor(m,state))return true;
+    const id=moraleId(m);
+    return id!==null&&!m.decision&&state.payrollArrears===0&&
+      !!state.staff.find(e=>e.id===id&&e.morale>0&&e.morale<=45)&&
+      !!state.staff.find(e=>e.role==='supervisor'&&state.day>=e.startDay&&
+        (e.trainingUntil===null||state.day>=e.trainingUntil));
+  }
   function nextId(state){return state.messages.reduce((highest,m)=>Math.max(highest,m.id),0)+1;}
   function emit(state,entry){
     if(entry.reference&&state.messages.some(m=>m.reference===entry.reference))return false;
@@ -70,6 +81,13 @@
       body='Recruitment has been processed.\n\n'+note+
         '\nOnboarding fee already paid: '+money(amount)+
         '.\nThe new employee begins work on the following game day. Their contracted wages are accounted for through payroll; this email does not create another charge.';
+    }else if(note.startsWith('Staff welfare intervention:')){
+      from='PEOPLE & PAYROLL';category='staff';linkPage='staff';
+      subject='PAID COPY · Approved staff welfare budget';
+      preview=money(amount)+' one-off employee support spend, approved by the owner.';
+      body='APPROVED STAFF WELFARE EXPENDITURE\n\n'+note+
+        '\nAmount settled: '+money(amount)+
+        '.\nStatus: PAID. The supervisor is responsible for implementing the agreed rota and welfare support. No additional invoice is payable.';
     }else if(note.startsWith('Staff development:')){
       from='PEOPLE & PAYROLL';category='staff';linkPage='staff';
       subject='Staff training booked · Cost confirmed';
@@ -168,13 +186,37 @@
         body:'Our premises charges have accrued but insufficient unreserved cash was available to pay the full balance.\n\nOutstanding: '+money(state.premises.arrears)+
           '.\nAmounts continue to be paid through the existing daily accounts process when cash is available. This email is NOT a payment button or duplicate invoice.',
         linkPage:'finance',reference:'premises-arrears:'+week})||changed;
+    const supervisor=engine.people.supervisor(state);
     for(const employee of state.staff){
-      if(employee.morale>0&&employee.morale<=45)
+      if(employee.role==='supervisor'||employee.morale<=0||employee.morale>45)continue;
+      const plan=engine.people.moraleProposal(state,employee.id);
+      if(plan){
+        const body=[
+          'I have met with '+employee.name+' following a staff welfare review.',
+          '',
+          'CURRENT MORALE: '+employee.morale+'/100',
+          'PROPOSED ACTION: '+supervisor.name+' will adjust the rota, provide a structured one-to-one support meeting and authorise a modest staff recognition budget.',
+          'ONE-OFF COST: '+money(plan.cost),
+          'ESTIMATED MORALE IMPROVEMENT: +'+plan.gain+' points (to '+Math.min(100,employee.morale+plan.gain)+'/100).',
+          '',
+          'Small daily check-ins are already handled by the supervisor. This one-off programme requires your permission because it uses company funds.',
+          'Please approve or decline. Declining does not charge the business or immediately remove the employee, but the underlying retention risk remains.'
+        ].join('\n');
+        changed=emit(state,{from:'STAFF SUPERVISOR · '+supervisor.name,category:'staff',
+          subject:'APPROVAL · '+employee.name+' welfare plan',
+          preview:'Morale '+employee.morale+'/100 · '+money(plan.cost)+' proposed · your decision required.',
+          body,linkPage:'staff',reference:'supervisor-morale:'+employee.id+':'+week})||changed;
+      }else if(state.payrollArrears===0&&!supervisor){
         changed=emit(state,{from:'PEOPLE & PAYROLL',category:'staff',
-          subject:'Staff concern · '+employee.name,
-          preview:'Morale '+employee.morale+'/100. Employee retention and work quality are at risk.',
-          body:employee.name+' is reporting low morale ('+employee.morale+'/100).\n\nPlease review workload, training opportunities and whether wages are being paid. Training can improve morale, but it costs cash and temporarily removes the employee from the rota. This is a personnel update rather than an automatic resignation or salary request.',
-          linkPage:'staff',reference:'morale:'+employee.id+':'+week})||changed;
+          subject:'SUPERVISOR VACANCY · '+employee.name+' at risk',
+          preview:'Morale '+employee.morale+'/100. Hire a supervisor to manage employee welfare.',
+          body:'STAFFING ESCALATION\\n\\n'+employee.name+
+            ' has morale '+employee.morale+'/100. There is currently no active staff supervisor to investigate the cause, handle routine concerns or submit a costed improvement plan.\\n\\nYour action is to choose and hire a Staff Supervisor from recruitment. The supervisor starts the next game day and will handle routine support, escalating only decisions involving company funds.',
+          linkPage:'staff',reference:'supervisor-gap:'+employee.id+':'+week})||changed;
+      }else if(state.payrollArrears>0){
+        // Root cause must be resolved before recognition spending can help.
+        // Payroll-arrears escalation above already informs the owner.
+      }
     }
     for(const c of Object.values(state.customerCases||{})){
       if(c?.status==='booked'&&Number.isSafeInteger(c.appointmentDay)&&c.appointmentDay>=state.day)
@@ -197,8 +239,67 @@
     return Object.fromEntries(categories.map(category=>
       [category,filtered(messages,state,category).length]));
   }
+  function formatMail(message,state){
+    const category=infer(message);
+    const decision=message.decision||'';
+    const status=decision?decision.toUpperCase():
+      needsAction(message,state)?'OWNER APPROVAL REQUIRED':
+      message.subject.startsWith('PAID COPY')?'PAYMENT CONFIRMED':'FOR YOUR INFORMATION';
+    const sections=String(message.body||'').split(/\n{2,}/);
+    const content=sections.map(part=>{
+      const lines=part.split('\n').filter(x=>x.trim().length);
+      if(!lines.length)return '';
+      const mark=line=>{
+        const value=line.trim();
+        if(/^[A-Z][A-Z 0-9/&£+·—-]{5,65}$/.test(value))
+          return '<h3 class="inbox-letter-subhead">'+esc(value)+'</h3>';
+        const match=/^([A-Z][A-Z 0-9/&-]{2,45}:)(.*)$/.exec(value);
+        if(match)return '<div class="inbox-letter-fact"><strong>'+esc(match[1])+
+          '</strong><span>'+esc(match[2].trim())+'</span></div>';
+        return '<p>'+esc(value)+'</p>';
+      };
+      return '<section class="inbox-letter-section">'+lines.map(mark).join('')+'</section>';
+    }).join('');
+    return '<article class="inbox-letter">'+
+      '<div class="inbox-letter-letterhead">'+
+        '<div class="inbox-letter-crest" aria-hidden="true">MT</div>'+
+        '<div><strong>'+esc(state.name)+'</strong><small>INTERNAL DEALERSHIP COMMUNICATION</small></div>'+
+        '<span class="inbox-letter-state">'+esc(status)+'</span>'+
+      '</div>'+
+      '<div class="inbox-letter-meta">'+
+        '<div><span>FROM</span><strong>'+esc(message.from)+'</strong></div>'+
+        '<div><span>TO</span><strong>DEALERSHIP OWNER</strong></div>'+
+        '<div><span>RECEIVED</span><strong>GAME DAY '+String(message.day).padStart(2,'0')+'</strong></div>'+
+        '<div><span>DEPARTMENT</span><strong>'+esc(labels[category]||category)+'</strong></div>'+
+      '</div>'+
+      '<div class="inbox-letter-content">'+content+'</div>'+
+      '<footer class="inbox-letter-signoff"><span>INTERNAL MESSAGE · '+esc(category.toUpperCase())+
+      '</span><span>FILED IN OWNER INBOX</span></footer>'+
+    '</article>';
+  }
   function quoteControls(message,state,engine){
     const car=actionFor(message,state);
+    const moraleEmployeeId=moraleId(message);
+    if(moraleEmployeeId!==null){
+      const employee=state.staff.find(e=>e.id===moraleEmployeeId);
+      if(message.decision)return '<div class="inbox-resolved">SUPERVISOR PLAN '+
+        esc(message.decision.toUpperCase())+'. This is a recorded decision; '+
+        'no duplicate expense is possible. Check the current employee status in Staff & Recruitment.</div>';
+      const plan=engine.people.moraleProposal(state,moraleEmployeeId);
+      if(!plan)return '<div class="inbox-resolved">This staff welfare recommendation is no longer actionable. '+
+        'Review the latest supervisor report, payroll situation and employee roster.</div>';
+      return '<div class="inbox-approval inbox-staff-approval">'+
+        '<div class="inbox-approval-intro"><strong>OWNER AUTHORISATION REQUIRED</strong>'+ 
+        '<small>'+esc(plan.manager.name)+' proposes a '+money(plan.cost)+
+        ' one-off rota-support and staff welfare intervention for '+esc(employee.name)+
+        '. Morale '+employee.morale+'/100 → '+Math.min(100,employee.morale+plan.gain)+
+        '/100. Routine check-ins remain delegated.</small></div>'+ 
+        '<div class="inbox-approval-choices">'+
+        '<button class="trade-button" data-action="decide-staff-welfare" data-decision="approve" data-id="'+
+          message.id+'">APPROVE · '+money(plan.cost)+'</button>'+ 
+        '<button class="trade-button trade-button-outline" data-action="decide-staff-welfare" data-decision="decline" data-id="'+
+          message.id+'">DECLINE · £0</button></div></div>';
+    }
     if(quoteId(message)===null)return '';
     if(!car)return '<div class="inbox-resolved">This repair request is no longer pending. '+
       'Review the vehicle’s actual status in Workshop.</div>';
@@ -214,7 +315,7 @@
       '</div></div>';
   }
   window.MotorTradeInbox=Object.freeze({
-    categories,labels,infer,quoteId,actionFor,needsAction,sync,filtered,counters,
-    quoteControls,esc
+    categories,labels,infer,quoteId,moraleId,actionFor,needsAction,sync,filtered,counters,
+    quoteControls,formatMail,emit,esc
   });
 })();
