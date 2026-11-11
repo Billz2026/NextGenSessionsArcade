@@ -2091,3 +2091,63 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
  .fin-tile-hero strong{font-size:25px}
  .fin-tile-loss strong{font-size:22px}
 }
+
+
+/* v0.9.28 — Management Reports: board summary and drill-down on demand. */
+.mr-control{min-width:0}
+.mr-control .report-picker{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:0 0 4px;margin:0 0 8px;scrollbar-width:thin}
+.mr-control .report-picker button{flex:0 0 auto;padding:7px 10px;min-height:34px;font-size:9px}
+.mr-overview{min-width:0}
+.mr-head{display:flex;justify-content:space-between;align-items:center;gap:11px;padding:10px 12px;margin-bottom:8px;border:1px solid #45606a;background:linear-gradient(135deg,#213b46,#172f39);border-radius:7px}
+.mr-head small{font:800 9px/1.4 var(--mono);color:#dfbd89}
+.mr-head h2{font:900 clamp(22px,2.2vw,28px)/1 var(--title);color:#f1e0c7;margin:3px 0}
+.mr-head b{flex:0 0 auto;padding:7px 8px;border:1px solid #a68b68;color:#f1c995;background:#3b3c37;border-radius:4px;font:800 9px/1.3 var(--mono);text-align:center;max-width:180px}
+.mr-head b.mr-good{border-color:#679374;color:#b5e3bd;background:#253e36}
+.mr-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 8px}
+.mr-kpis .report-metric{min-width:0;min-height:88px;padding:10px 11px;gap:5px}
+.mr-kpis .report-metric small{font:800 9px/1.25 var(--mono)}
+.mr-kpis .report-metric strong{font-size:clamp(21px,2.3vw,30px)}
+.mr-kpis .report-metric span{font-size:10px;line-height:1.4}
+.mr-focus{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}
+.mr-panel{min-width:0;padding:11px 12px;background:#182f39;border:1px solid #3d5963;border-radius:7px}
+.mr-panel h3{font:900 18px var(--title);color:#efcfa0;margin:0 0 9px}
+.mr-panel .report-progress{gap:4px;margin:0 0 10px}
+.mr-panel .report-progress-head{font-size:10px}
+.mr-panel .report-progress-head strong{font-size:11px}
+.mr-panel .report-track{height:6px}
+.mr-panel p{font:550 9px/1.5 var(--body);color:#afc3c6;margin:8px 0 0}
+.mr-flag{display:flex;flex-direction:column;gap:2px;margin:0 0 6px;padding:7px 9px;background:#253942;border-left:3px solid #bd9162;border-radius:3px}
+.mr-flag strong{color:#ecc48e;font:850 9px/1.3 var(--mono)}
+.mr-flag span{color:#c6d2d1;font:550 10px/1.4 var(--body)}
+.mr-records{border:1px solid #3c5760;border-radius:7px;background:#152d37;padding:11px 12px;margin-bottom:8px}
+.mr-records>h3{font:900 18px/1.1 var(--title);color:#f0d0a0;margin-bottom:9px}
+.mr-detail{display:inline-block;vertical-align:top;width:calc(50% - 5px);margin:0 6px 6px 0;border:1px solid #435c65;border-radius:4px;background:#203942;overflow:hidden}
+.mr-detail:nth-of-type(even){margin-right:0}
+.mr-detail[open]{display:block;width:100%}
+.mr-detail summary{cursor:pointer;padding:10px 11px;color:#e8d1b0;font:850 10px/1.3 var(--mono)}
+.mr-detail[open] summary{background:#2a4850;border-bottom:1px solid #4a646d}
+.mr-detail>.report-section{margin:9px;padding:11px 12px}
+.mr-detail .report-section h3{font-size:20px;margin-bottom:10px}
+.mr-detail .report-section h4{font-size:15px;margin:12px 0 8px}
+.mr-detail .report-line,.mr-detail .report-stock-row{padding:6px 0}
+.mr-detail .report-line>strong,.mr-detail .report-stock-row>strong{font-size:14px}
+.mr-detail .report-staff-row{padding:8px 0}
+.mr-note{font:500 9px/1.5 var(--body);color:#9eafb3;margin:8px 0}
+.mr-guide{margin:8px 0;background:#182f38;border:1px solid #3c5760;border-radius:5px}
+.mr-guide summary{cursor:pointer;padding:10px 11px;font:800 9px var(--mono);color:#e9c594}
+.mr-guide p{padding:0 11px 12px;font:550 10px/1.55 var(--body);color:#b6cbcd}
+.mr-detail summary:focus-visible,.mr-guide summary:focus-visible,.mr-control .report-picker button:focus-visible{outline:2px solid #f1c688;outline-offset:-2px}
+@media(min-width:1021px){
+ .career-content:has([data-panel="reports"]:not([hidden]))>#events-banner:has(.event-neutral-banner){display:none}
+ .career-content:has([data-panel="reports"]:not([hidden]))>#events-banner:has(.event-deadline-banner),
+ .career-content:has([data-panel="reports"]:not([hidden]))>#events-banner:has(.event-meeting-banner){margin:0 0 7px}
+ .career-content:has([data-panel="reports"]:not([hidden]))>#events-banner .event-banner{padding:7px 10px}
+ .career-content:has([data-panel="reports"]:not([hidden])){padding-top:8px;padding-bottom:12px}
+ [data-panel="reports"]>.page-heading{margin-bottom:8px}
+ [data-panel="reports"]>.page-heading h1{font-size:clamp(30px,2.7vw,39px);margin:3px 0}
+ [data-panel="reports"]>.page-heading p:last-child{font-size:11px;line-height:1.4}
+ [data-panel="reports"]>.page-heading .career-chip{padding:7px 9px;font-size:9px}
+}
+@media(max-width:1050px){.mr-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.mr-focus{grid-template-columns:1fr}}
+@media(max-width:720px){.mr-detail{display:block;width:100%;margin-right:0}.mr-head{align-items:flex-start;flex-direction:column}.mr-kpis .report-metric{min-height:92px}}
+@media(max-width:420px){.mr-kpis .report-metric strong{font-size:21px}.mr-head h2{font-size:24px}}
