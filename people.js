@@ -131,22 +131,24 @@
       customerOrVehicle?.vehicleId||1;
     return team[Math.abs(id-1)%team.length];
   }
-  function salesImpact(state,customerOrVehicle=0){
-    const rep=salesRep(state,customerOrVehicle);
+  function salesProfile(rep){
     if(!rep)return {salesperson:null,enquiryLift:0,arrivalLift:0,driveLift:0,
       counterLift:0,fastViewing:false,commissionRate:0};
     const rating=clamp(Math.round((rep.skills.sales*2+
       rep.skills.care+rep.skills.reliability)/4)+
-      (rep.morale>=80?1:rep.morale<45?-2:0),1,20);
+      ((rep.morale??72)>=80?1:(rep.morale??72)<45?-2:0),1,20);
     return {salesperson:rep,
       enquiryLift:clamp(Math.round((rating-9)*1.7),0,16),
       arrivalLift:clamp(Math.floor((rating-10)/3),0,3),
       driveLift:clamp(rating-9,0,9),
       counterLift:clamp((rating-10)*2,0,16),
-      fastViewing:rep.skills.sales>=15&&rep.skills.reliability>=14&&rep.morale>=50,
+      fastViewing:rep.skills.sales>=15&&rep.skills.reliability>=14&&(rep.morale??72)>=50,
       commissionRate:rep.skills.sales>=17?.06:
         rep.skills.sales>=15?.05:rep.skills.sales>=12?.04:
         rep.skills.sales>=10?.03:.02};
+  }
+  function salesImpact(state,customerOrVehicle=0){
+    return salesProfile(salesRep(state,customerOrVehicle));
   }
   function salesBonus(state,customerOrVehicle=0){
     const rep=salesRep(state,customerOrVehicle);
@@ -350,7 +352,7 @@
     MAX_STAFF,HIRING_FEE,TRAINING_FEE,ROLES,tier,legacyScore,initial,
     applicants,dailyCost,active,isActive,activeTeam,availableTechnicians,
     technicianLimit,salesLimit,staffLimit,roleLimit,buyerDiscount,buyerEstimate,
-    salesRep,salesImpact,salesBonus,hireQuote,WAGE_COVER_DAYS,
+    salesRep,salesProfile,salesImpact,salesBonus,hireQuote,WAGE_COVER_DAYS,
     labourSaving,hire,train,release,advance,sale,worked,valid,clone
   });
 })();
