@@ -4691,7 +4691,7 @@ test('v0.9.23 Sales Office keeps live enquiry and collection actions in focused 
   assert.match(rendered.html,/SALES PROGRESSION|Sales progression|so-flow/);
   assert.match(rendered.html,/RETAIL FILE/);
   const current=app.customersView.lead(state,v,E);
-  assert.ok(['AWAITING BUYER INTEREST','NEW CUSTOMER ENQUIRY'].includes(current.title));
+  assert.ok(['AWAITING BUYER INTEREST','BUYER INTEREST TO CONTACT'].includes(current.title));
   const caseObj={id:'C-1-0-1-1',vehicleId:v.id,createdDay:1,createdSession:0,
     name:'Test Customer',channel:'ONLINE',status:'collectable',
     preferredMode:'cash',appointmentDay:null,agreedDay:1,price:v.asking,
