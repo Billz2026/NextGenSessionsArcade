@@ -224,7 +224,11 @@
     }
     const actionable=IN.needsAction(selected,career);
     const category=IN.infer(selected);
+    const mailId=selected.id;
     detail.innerHTML=
+      '<div class="inbox-message-tools"><span>MESSAGE #'+String(mailId).padStart(3,'0')+
+        '</span><button type="button" class="inbox-tool-mark" data-action="mark-message-unread" data-id="'+
+        mailId+'">'+(selected.read?'MARK UNREAD':'UNREAD · KEEP FOR LATER')+'</button></div>'+
       '<div class="inbox-mail-heading">'+
         '<span class="section-overline">DAY '+String(selected.day).padStart(2,'0')+
           ' · '+escapeText(IN.labels[category]||category)+
@@ -997,6 +1001,17 @@
         message.read = true;
         persistCareer();
         show('inbox');
+        break;
+      }
+      case 'mark-message-unread': {
+        if(!career)break;
+        const id=Number(button.dataset.id);
+        const message=career.messages.find(m=>m.id===id);
+        if(!message)break;
+        message.read=false;
+        selectedMessageId=id;
+        persistCareer();
+        render();
         break;
       }
       case 'mark-all-read':
