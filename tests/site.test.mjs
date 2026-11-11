@@ -3061,3 +3061,42 @@ test('v0.9.8 dynamic forecourt capacity and premises results appear in saved car
   assert.match(resume.nodes.get('premises-view').innerHTML,/6 → 8 forecourt spaces/);
   assert.ok(resume.productionEngine.normalize(s));
 });
+
+test('v0.9.8 previously hired six mechanics retain functioning workshop bays after v9 migration', () => {
+  const E=browser(new Map()).productionEngine,P=E.people,s=E.create('Grandfathered Workshop',[]);
+  s.reputationScore=40;
+  s.premises.workshopLevel=1;
+  const candidates=P.applicants(1).filter(c=>c.role==='technician').slice(0,6);
+  for(const candidate of candidates)assert.ok(E.hireStaff(s,candidate.id).ok);
+  assert.equal(s.staff.length,6);
+  const old=JSON.parse(JSON.stringify(s)),cash=s.cash;
+  old.version=9;
+  delete old.premises;
+  const migrated=E.normalize(old);
+  assert.ok(migrated,'A legitimate older career with six employees must remain loadable');
+  assert.equal(migrated.premises.workshopLevel,1);
+  assert.equal(E.premises.bays(migrated),6);
+  assert.equal(P.technicianLimit(migrated),6);
+  assert.equal(migrated.cash,cash,'Migration must not fabricate a capital purchase');
+  assert.equal(migrated.staff.length,6);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(migrated))));
+});
+
+test('v0.9.8 property charges do not repeat during month-end Deal Day sessions', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');
+  app.submitCareer('Deal Day Rent');
+  for(let i=0;i<29;i++)app.click('continue');
+  let before=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(before.day,30);
+  const count=before.ledger.filter(l=>l.note.startsWith('Premises expense accrued:')).length;
+  assert.equal(count,29);
+  const cashBefore=before.cash;
+  for(let i=0;i<4;i++){
+    app.click('continue');
+    const after=JSON.parse(storage.get(STORAGE_KEY));
+    assert.equal(after.day,30);
+    assert.equal(after.cash,cashBefore);
+    assert.equal(after.ledger.filter(l=>l.note.startsWith('Premises expense accrued:')).length,count);
+  }
+});
