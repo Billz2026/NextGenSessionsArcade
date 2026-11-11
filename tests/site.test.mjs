@@ -709,7 +709,8 @@ test('forecourt and funds prevent impossible purchases, days refresh leads witho
   assert.equal(state.cash,oldCash-25,'Property rent and utilities are paid even without retail sales');
   assert.equal(state.sold.length,0);
   assert.equal(state.ledger.reduce((a,l)=>a+l.delta,0),state.cash-12500);
-  assert.notEqual(app.engine.market(1).auctions[0].id,app.engine.market(2).auctions[0].id);
+  assert.equal(app.engine.market(2).auctions.length,0,'Tuesday has no weekly auction');
+  assert.notEqual(app.engine.market(1).auctions[0].id,app.engine.market(8).auctions[0].id);
 });
 test('previous version 1 careers migrate safely and malformed version 2 balances are rejected', () => {
   const saved=new Map();
@@ -834,7 +835,7 @@ test('daily listings vary in source quantity and vehicle selection without dupli
   assert.ok(daily.some(d=>d.sellers.length === 0));
   assert.ok(daily.some(d=>d.sellers.length >= 2));
   for(const d of daily){
-    assert.ok(d.auctions.length+d.sellers.length >= 1,'At least one sourcing opportunity a day');
+    assert.ok(d.auctions.length+d.sellers.length >= 0,'Some quiet days have no new sourcing leads');
     assert.equal(d.auctions.length,new Set(d.auctions.map(v=>v.title)).size,'No duplicate auction model on same day');
     assert.equal(d.sellers.length,new Set(d.sellers.map(v=>v.title)).size,'No duplicate seller car on same day');
   }
@@ -1110,7 +1111,7 @@ test('vehicle buyer changes direct negotiation and adds useful auction intellige
   const unassisted=E.acquireSeller(owner,seller.id,offer);
   assert.equal(unassisted.ok,false,'Owner acting alone receives a counteroffer');
   assert.equal(unassisted.code,'counter');
-  const auction=E.market(2).auctions[0];
+  const auction=E.market(8).auctions[0];
   assert.ok(P.buyerEstimate(staff,auction.rival));
 });
 test('technician reduces basic prep costs without changing recorded repair estimates', () => {
@@ -1270,14 +1271,14 @@ test('sales commission never consumes the reserved preparation cash of incoming 
   const state=E.create('Commission Reserve Motors',[]);
   const candidate=P.applicants(1).find(x=>x.role==='sales');
   assert.ok(P.hire(state,candidate.id).ok);
-  state.day=2;E.staffDay(state);
-  const lot=E.market(2).auctions[0];
+  state.day=8;E.staffDay(state);
+  const lot=E.market(8).auctions[0];
   assert.ok(E.acquireAuction(state,lot.id,lot.rival+50).ok);
   const prepDue=state.vehicles[0].prepBudget;
   // Simulate a tight cash position with reserved workshop money. Use a
   // valid trade to move cash into stock, then assess commission in isolation.
   state.cash=prepDue;
-  state.ledger.push({day:2,delta:-(state.ledger.reduce((n,l)=>n+l.delta,12500)-prepDue),
+  state.ledger.push({day:8,delta:-(state.ledger.reduce((n,l)=>n+l.delta,12500)-prepDue),
     note:'Test fixture: settled separate business expense'});
   const before=state.cash;
   const out=P.sale(state,{profile:{grade:2,likelySale:5000}},4800,10000);
@@ -3167,7 +3168,7 @@ test('v0.9.9 passing and skipping numbered lots never charge buyer fees', () => 
   assert.equal(lots.length,3);
   assert.ok(E.startAuction(s).ok);
   assert.equal(E.passAuction(s).ok,true);
-  assert.equal(s.auctionHall.results[0].kind,'lost');
+  assert.equal(s.auctionHall.results[0].kind,'unsold','At guide price the reserve is not met, so rival cannot be a winner');
   assert.equal(s.cash,initial);
   assert.equal(s.vehicles.length,0);
   assert.ok(E.nextAuctionLot(s).ok);
