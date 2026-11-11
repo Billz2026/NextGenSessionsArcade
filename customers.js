@@ -138,6 +138,9 @@
     if(!c.standby)return false;
     const booked={...c.standby,standby:null};
     state.customerCases[String(c.vehicleId)]=booked;
+    // A rival's negotiated offer must not carry into the original buyer's price.
+    const vehicle=state.vehicles.find(v=>v.id===c.vehicleId);
+    if(vehicle)vehicle.cashOffer=null;
     append(state,booked,'appointment-restored','Competing buyer did not purchase; viewing still booked.');
     attendBooked(state,booked,notices);
     return true;
