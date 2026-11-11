@@ -14,6 +14,8 @@ const marketData = readFileSync(new URL('vehicle-market.js', root), 'utf8');
 const accuracyData = readFileSync(new URL('vehicle-accuracy.js', root), 'utf8');
 const cards = readFileSync(new URL('vehicle-cards.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
+const premises = readFileSync(new URL('premises.js', root), 'utf8');
+const premisesView = readFileSync(new URL('premises-view.js', root), 'utf8');
 const people = readFileSync(new URL('people.js', root), 'utf8');
 const peopleView = readFileSync(new URL('people-view.js', root), 'utf8');
 const monthly = readFileSync(new URL('monthly.js', root), 'utf8');
@@ -57,21 +59,24 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=2/);
-  assert.match(html, /people\.js\?v=5/);
-  assert.match(html, /monthly\.js\?v=5/);
+  assert.match(html, /people\.js\?v=6/);
+  assert.match(html, /monthly\.js\?v=6/);
   assert.match(html, /events\.js\?v=2/);
-  assert.match(html, /workshop\.js\?v=2/);
+  assert.match(html, /workshop\.js\?v=3/);
   assert.match(html, /customers\.js\?v=5/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
+  assert.match(html, /premises\.js\?v=1/);
+  assert.match(html, /premises-view\.js\?v=1/);
+  assert.match(html, /id="premises-view"/);
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=13/);
+  assert.match(html, /trading\.js\?v=14/);
   assert.match(html, /customers-view\.js\?v=5/);
   assert.match(html, /workshop-view\.js\?v=3/);
   assert.match(html, /events-view\.js\?v=3/);
-  assert.match(html, /monthly-view\.js\?v=5/);
+  assert.match(html, /monthly-view\.js\?v=6/);
   assert.match(html, /people-view\.js\?v=3/);
   assert.match(html, /vehicle-view\.js\?v=3/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
@@ -88,7 +93,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.7/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.8/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -198,6 +203,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(photos, context, { timeout: 1500 });
   vm.runInNewContext(accuracyData, context, { timeout: 1500 });
   vm.runInNewContext(marketData, context, { timeout: 1500 });
+  vm.runInNewContext(premises, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
   vm.runInNewContext(events, context, { timeout: 1500 });
@@ -278,6 +284,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(eventsView, context, { timeout: 1500 });
   vm.runInNewContext(workshopView, context, { timeout: 1500 });
   vm.runInNewContext(customersView, context, { timeout: 1500 });
+  vm.runInNewContext(premisesView, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const send=(a,extra)=> {
@@ -564,7 +571,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=21/);
+  assert.match(html, /styles\.css\?v=22/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -582,7 +589,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 9);
+  assert.equal(opening.version, 10);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -713,7 +720,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,9);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,10);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -949,7 +956,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,9);
+  assert.equal(migrated.version,10);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -1028,7 +1035,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,9);
+  assert.equal(saved.version,10);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
@@ -1038,7 +1045,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,9);
+  assert.equal(app.engine.VERSION,10);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
@@ -1069,7 +1076,7 @@ test('recruitment charges cash, starts next day, settles daily wages, survives r
   app.click('continue');
   state=JSON.parse(storage.get(STORAGE_KEY));
   assert.equal(state.day,2);
-  assert.equal(state.cash,12500-P.HIRING_FEE-daily);
+  assert.equal(state.cash,12500-P.HIRING_FEE-daily-25);
   assert.equal(state.payrollArrears,0);
   assert.equal(state.ledger.filter(x=>x.note.startsWith('Staff payroll')).length,1);
   assert.match(app.nodes.get('event-notice').textContent,/wage settlement/);
@@ -1229,7 +1236,7 @@ test('v0.4 career migrates with stock, sold vehicles and financial balances unto
   assert.equal(newApp.nodes.get('menu-continue').hidden,false);
   newApp.click('resume');newApp.click('save');
   const restored=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(restored.version,9);
+  assert.equal(restored.version,10);
   assert.equal(restored.cash,v3.cash);
   assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
   assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
@@ -1314,7 +1321,7 @@ test('new dealerships receive achievable company targets and a live monthly dash
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Monthly Review Motors');
   const E=app.engine,state=E.create('Standalone',[]);
-  assert.equal(E.VERSION,9);
+  assert.equal(E.VERSION,10);
   assert.equal(state.monthPlan.month,1);
   assert.equal(state.monthPlan.startDay,1);
   assert.equal(state.monthPlan.endDay,30);
@@ -1441,7 +1448,7 @@ test('day 30 close generates an inbox message and immutable archived review', ()
   assert.equal(JSON.stringify(state.monthlyReports[0]),archived);
   const resumed=browser(storage);
   resumed.click('resume');
-  assert.equal(resumed.engine.VERSION,9);
+  assert.equal(resumed.engine.VERSION,10);
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).monthlyReports.length,1);
 });
 test('monthly targets credit salesperson performance only during active duty', () => {
@@ -1478,7 +1485,7 @@ test('migration from v0.5 preserves staff, outstanding balances and day without 
   assert.equal(resumed.nodes.get('menu-continue').hidden,false);
   resumed.click('resume');resumed.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,9);
+  assert.equal(after.version,10);
   assert.equal(after.day,before.day);
   assert.equal(after.cash,before.cash);
   assert.equal(after.ledger.length,before.ledger.length);
@@ -1709,7 +1716,7 @@ test('old v0.6 saved careers migrate without losing sales, staff, stock or cash'
   next.click('resume');
   next.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,9);
+  assert.equal(after.version,10);
   assert.equal(after.cash,old.cash);
   assert.equal(after.staff.length,1);
   assert.equal(after.vehicles.length,1);
@@ -1979,6 +1986,8 @@ test('four mechanics start available and handle four separate in-house repair jo
   assert.equal(P.availableTechnicians(s).length,0);
   assert.ok(P.valid(s,s.day));
   s.reputationScore=40;
+  assert.equal(P.technicianLimit(s),4,'Reputation opens permission but workshop expansion adds physical bays');
+  assert.ok(E.upgradePremises(s,'workshop').ok);
   assert.equal(P.technicianLimit(s),6);
   assert.equal(P.staffLimit(s),9);
   s.day=29;
@@ -1987,6 +1996,8 @@ test('four mechanics start available and handle four separate in-house repair jo
   assert.ok(additional);
   assert.ok(P.hire(s,additional.id).ok,'Higher reputation unlocks more technicians');
   s.reputationScore=80;
+  assert.equal(P.technicianLimit(s),6);
+  assert.ok(E.upgradePremises(s,'workshop').ok);
   assert.equal(P.technicianLimit(s),8);
   assert.equal(P.staffLimit(s),12);
 });
@@ -2103,7 +2114,7 @@ test('v0.7.1 saved stock migrates without adding hidden charges or altering comp
   for(const v of old.vehicles)delete v.workshop;
   const restored=E.normalize(old);
   assert.ok(restored,'Historic save should migrate instead of being discarded');
-  assert.equal(restored.version,9);
+  assert.equal(restored.version,10);
   assert.equal(restored.cash,old.cash);
   assert.equal(restored.ledger.length,old.ledger.length);
   assert.equal(restored.vehicles[0].prepSpent,old.vehicles[0].prepSpent);
@@ -2203,7 +2214,7 @@ test('v0.9 gives four spaces to fresh and existing two-space dealerships without
   delete old.customerCases;delete old.customerHistory;
   const upgraded=E.normalize(old);
   assert.ok(upgraded);
-  assert.equal(upgraded.version,9);
+  assert.equal(upgraded.version,10);
   assert.equal(upgraded.capacity,4);
   assert.equal(upgraded.cash,old.cash);
   assert.equal(upgraded.vehicles.length,old.vehicles.length);
@@ -2618,7 +2629,7 @@ test('live photo identity survives buying, saving, and v8 migration', () => {
   delete old.vehicles[0].color;delete old.vehicles[0].generation;
   const migrated=E.normalize(old);
   assert.ok(migrated);
-  assert.equal(migrated.version,9);
+  assert.equal(migrated.version,10);
   assert.equal(migrated.cash,state.cash);
   assert.ok(P.COLOURS.includes(migrated.vehicles[0].color));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(migrated))));
@@ -2943,4 +2954,110 @@ test('v0.9.7 multiple salespeople unlock at reputation milestones and divide act
   assert.equal(P.staffLimit(s),12);
   assert.ok(P.valid(s,s.day));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.8 premises investment unlocks capacity only with earned reputation and affordable cash', () => {
+  const E=browser(new Map()).productionEngine,site=E.premises;
+  const state=E.create('Expansion Economics',[]);
+  assert.equal(E.VERSION,10);
+  assert.equal(state.capacity,4);
+  assert.equal(site.bays(state),4);
+  assert.equal(site.costs(state).total,25);
+  assert.equal(E.upgradePremises(state,'forecourt').code,'reputation');
+  state.reputationScore=20;
+  const f=site.quote(state,'forecourt');
+  assert.equal(f.next,6);
+  assert.equal(f.cost,1800);
+  assert.ok(f.requiredCash>f.cost);
+  const start=state.cash;
+  assert.ok(E.upgradePremises(state,'forecourt').ok);
+  assert.equal(state.capacity,6);
+  assert.equal(state.cash,start-f.cost);
+  assert.equal(site.costs(state).total,35);
+  assert.equal(E.upgradePremises(state,'forecourt').code,'reputation');
+  state.reputationScore=40;
+  assert.ok(E.upgradePremises(state,'workshop').ok);
+  assert.equal(site.bays(state),6);
+  assert.equal(E.people.technicianLimit(state),6);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.8 daily rent and utilities are real cash expenses and match operating results', () => {
+  const E=browser(new Map()).productionEngine,site=E.premises;
+  const s=E.create('Property Accounting',[]);
+  const starting=s.cash;
+  s.day=2;
+  const paid=E.premisesDay(s);
+  assert.equal(paid.due,25);
+  assert.equal(paid.paid,25);
+  assert.equal(paid.arrears,0);
+  assert.equal(s.cash,starting-25);
+  assert.equal(s.ledger.filter(x=>x.note.startsWith('Premises expense accrued')).length,1);
+  assert.equal(s.ledger.filter(x=>x.note.startsWith('Premises overhead payment')).length,1);
+  const report=E.monthly.statement(s);
+  assert.equal(report.premisesExpense,25);
+  assert.equal(report.premisesPaid,25);
+  assert.equal(report.operatingContribution,report.grossAfterStaff-25);
+  assert.ok(E.monthly.validReport(report));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.8 property arrears protect workshop reserve and are not invisible profit', () => {
+  const E=browser(new Map()).productionEngine,s=E.create('Overhead Arrears',[]);
+  const seller=E.market(1).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const protectedCash=E.workshop.reserved(s);
+  // Adjust available cash through a legitimate recorded business transaction.
+  const delta=protectedCash-s.cash;
+  s.cash+=delta;
+  s.ledger.push({day:s.day,delta,note:'Legacy fixture liquidity adjustment'});
+  s.day=2;
+  const result=E.premisesDay(s);
+  assert.equal(result.paid,0);
+  assert.equal(result.arrears,25);
+  assert.equal(s.cash,protectedCash);
+  assert.equal(E.monthly.statement(s).premisesExpense,25);
+  assert.equal(E.monthly.statement(s).operatingContribution,-25);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.8 old version 9 careers migrate to a four-space premises without losing money', () => {
+  const E=browser(new Map()).productionEngine;
+  const s=E.create('Previous Career',[]);
+  const old=JSON.parse(JSON.stringify(s));
+  old.version=9;
+  delete old.premises;
+  const after=E.normalize(old);
+  assert.ok(after);
+  assert.equal(after.version,10);
+  assert.equal(after.capacity,4);
+  assert.equal(after.premises.forecourtLevel,0);
+  assert.equal(after.premises.workshopLevel,0);
+  assert.equal(after.cash,s.cash);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(after))));
+  const invalid=JSON.parse(JSON.stringify(after));
+  invalid.capacity=10;
+  assert.equal(E.normalize(invalid),null);
+});
+
+test('v0.9.8 dynamic forecourt capacity and premises results appear in saved career UI', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');
+  app.submitCareer('Expansion Screen');
+  assert.match(app.nodes.get('premises-view').innerHTML,/EXPANSION & RUNNING COSTS/);
+  assert.match(app.nodes.get('premises-view').innerHTML,/REQUIRES 20 REPUTATION/);
+  let s=JSON.parse(storage.get(STORAGE_KEY));
+  s.reputationScore=20;
+  const amount=s.cash;
+  storage.set(STORAGE_KEY,JSON.stringify(s));
+  const resume=browser(storage);
+  resume.click('resume');
+  resume.click('upgrade-premises',{kind:'forecourt'});
+  s=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(s.capacity,6);
+  assert.equal(s.cash,amount-1800);
+  assert.equal(resume.bindings.get('stock')[0].textContent,'0 / 6');
+  assert.equal(resume.bindings.get('forecourt-capacity')[0].textContent,'6 vehicles');
+  assert.match(resume.nodes.get('premises-view').innerHTML,/6 → 8 forecourt spaces/);
+  assert.ok(resume.productionEngine.normalize(s));
 });
