@@ -2369,6 +2369,28 @@ test('some customers cancel before collecting despite a paid reservation', () =>
   assert.equal(C.stats(state,1,state.day).refunds,c.prepCost<250?1:0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
+test('paid reservations usually proceed to collection', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let booked=0,collected=0;
+  for(let i=0;i<240;i++){
+    const {state,v}=readyForRetail(E,'Buyer Commitment '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);
+    E.bookCustomer(state,v.id);
+    const c=C.caseFor(state,v.id);
+    state.day=c.appointmentDay;
+    E.advanceCustomers(state);
+    if(c.status!=='arrived'||!E.testDrive(state,v.id).ok)continue;
+    if(!E.agreeCustomer(state,v.id,'cash',null).ok)continue;
+    if(!E.depositCustomer(state,v.id).ok)continue;
+    booked++;
+    state.day=c.collectionDay;
+    E.advanceCustomers(state);
+    if(c.status==='collectable')collected++;
+  }
+  assert.ok(booked>=30,'Include an adequate sample of deposited deals');
+  assert.ok(collected/booked>=0.9,'Paid buyer cancellations must be rare');
+});
 test('counteroffer rejection and walkaways mean negotiations do not guarantee extra money', () => {
   const E=browser(new Map()).productionEngine,C=E.customers;
   let accepted=0,rejected=0,walked=0;
