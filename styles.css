@@ -1383,3 +1383,122 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
 @media(max-width:980px){.stock-kpi-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.stock-workspace{grid-template-columns:1fr}.stock-register-list{max-height:350px}.stock-dossier-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stock-dossier-vehicle{border-right:1px solid #354e59;border-bottom:0}}
 @media(max-width:700px){.stock-dossier-grid{grid-template-columns:1fr}.stock-dossier-vehicle{border-right:0;border-bottom:1px solid #354e59}.stock-kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.stock-filters{width:100%}.stock-filters button{flex:1 1 auto}.stock-dossier-vehicle .vehicle-photo-frame{height:235px}}
 @media(max-width:420px){.stock-kpi{padding:9px}.stock-price-action{grid-template-columns:1fr}.stock-unit{grid-template-columns:91px minmax(0,1fr)}.stock-unit-thumb .vehicle-photo-frame{height:68px}.stock-unit-select>strong{font-size:15px}.stock-kpi strong{font-size:23px}}
+
+
+/* v0.9.19 — Compact desktop Vehicle Stock.
+   Keep the full report accessible on demand without repeating the financial
+   appraisal or forcing a tall photo frame on the main management workspace. */
+@media(min-width:981px){
+  .career-content:has([data-panel="stock"]:not([hidden])){
+    padding-top:12px;
+    padding-bottom:14px;
+  }
+  [data-panel="stock"]>.page-heading{margin-bottom:10px;gap:10px}
+  [data-panel="stock"]>.page-heading h1{
+    font-size:clamp(33px,3.1vw,43px);
+    margin:3px 0;
+  }
+  [data-panel="stock"]>.page-heading .section-overline{font-size:8px}
+  [data-panel="stock"]>.page-heading p:last-child{font-size:10px;line-height:1.4}
+  [data-panel="stock"]>.page-heading .career-chip{padding:7px 9px}
+  .stock-kpi-strip{gap:7px;margin-bottom:7px}
+  .stock-kpi{min-height:63px;padding:8px 10px;gap:2px}
+  .stock-kpi small{font-size:8px}
+  .stock-kpi strong{font-size:clamp(19px,1.65vw,25px)}
+  .stock-kpi span{font-size:7px}
+  .stock-toolbar{padding:7px 10px;gap:8px}
+  .stock-toolbar strong{font-size:16px}
+  .stock-toolbar small{font-size:8px}
+  .stock-filters button{padding:6px 8px;font-size:8px}
+  .stock-workspace{margin-top:7px;gap:8px}
+  .stock-register-title{padding:9px 11px;font-size:10px}
+  .stock-register-list{max-height:min(60dvh,510px)}
+  .stock-unit{grid-template-columns:82px minmax(0,1fr);padding:7px;gap:7px}
+  .stock-unit-thumb .vehicle-photo-frame{height:57px;min-height:0}
+  .stock-unit-thumb .vehicle-photo-credit{display:none}
+  .stock-unit-thumb .vehicle-photo-missing strong{font-size:11px}
+  .stock-unit-thumb .vehicle-photo-missing small{display:none}
+  .stock-unit-thumb .vehicle-photo-missing>span{font-size:17px}
+  .stock-unit-select{gap:2px}
+  .stock-unit-kicker{font-size:7px}
+  .stock-unit-select>strong{font-size:16px}
+  .stock-unit-select>small{font-size:8px}
+  .stock-unit-bottom{gap:5px;margin-top:2px}
+  .stock-status{font-size:7px;padding:4px 6px}
+  .stock-unit-cost{font-size:8px;margin-top:2px}
+  .stock-dossier-top{padding:8px 11px;gap:7px}
+  .stock-dossier-top>div{gap:2px}
+  .stock-dossier-top>div>span{font-size:8px}
+  .stock-dossier-top>div>strong{font-size:19px}
+  .stock-dossier-vehicle,.stock-dossier-finance{padding:9px 10px}
+  .stock-dossier-vehicle .vehicle-photo-block{margin-bottom:4px}
+  .stock-dossier-vehicle .vehicle-photo-frame{
+    height:125px;
+    min-height:0;
+    max-height:none;
+  }
+  .stock-dossier-vehicle .vehicle-photo-missing>span{font-size:27px}
+  .stock-dossier-vehicle .vehicle-photo-missing strong{font-size:17px}
+  .stock-dossier-vehicle .vehicle-photo-missing small{
+    font-size:8px;
+    line-height:1.3;
+    max-width:95%;
+  }
+  .stock-dossier-vehicle .vehicle-photo-credit{padding:3px 4px;font-size:7px}
+  .stock-dossier-vehicle .vehicle-card-heading{padding:6px 2px 4px}
+  /* Already shown prominently in the dossier header above. */
+  .stock-dossier-vehicle .vehicle-card-heading h3{display:none}
+  .stock-dossier-vehicle .vehicle-card-heading p{font-size:10px}
+  .stock-dossier-vehicle .vehicle-powertrain-row{gap:7px;margin-top:3px}
+  .stock-dossier-vehicle .vehicle-card-statline{padding:6px 2px;gap:5px}
+  .stock-dossier-vehicle .vehicle-card-statline strong{font-size:11px}
+  .stock-dossier-vehicle .vehicle-card-statline small{font-size:7px}
+  .stock-dossier-note{font-size:9px;line-height:1.4;margin:5px 0 6px}
+  .stock-facts{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:4px;
+    margin:5px 0;
+  }
+  .stock-facts>div{padding:5px 4px}
+  .stock-facts small{font-size:7px}
+  .stock-facts strong{font-size:9px;margin-top:2px;line-height:1.25}
+  .stock-aged-alert{padding:5px 6px;margin:5px 0;font-size:8px}
+  .stock-dossier .intel-panel{margin:6px 0 0}
+  .stock-dossier .intel-top{padding:7px;gap:7px}
+  .stock-dossier .intel-top>span{font-size:8px}
+  .stock-dossier .intel-toggle{font-size:9px}
+  /* The dossier finance table displays these figures more accurately,
+     including booked repairs. The report toggle and details stay accessible. */
+  .stock-dossier .intel-numbers{display:none}
+  .stock-dossier-finance{display:flex;flex-direction:column}
+  .stock-finance-heading{order:0}
+  .stock-cost-table{order:1}
+  .stock-action-box{order:2}
+  .stock-finance-note{order:3}
+  .stock-finance-heading small{font-size:8px}
+  .stock-finance-heading h3{font-size:23px;margin:2px 0 7px}
+  .stock-cost-table>div{padding:7px 8px;gap:7px}
+  .stock-cost-table span{font-size:9px}
+  .stock-cost-table strong{font-size:12px}
+  .stock-cost-table .stock-cost-emphasis strong{font-size:16px}
+  .stock-cost-table .stock-margin strong{font-size:19px}
+  .stock-action-box{padding:8px 10px;margin-top:8px}
+  .stock-action-box h4{font-size:14px;margin-bottom:3px}
+  .stock-action-box p{font-size:9px;line-height:1.45;margin-bottom:6px}
+  .stock-action-box .trade-button{
+    min-height:32px;
+    font-size:11px;
+    padding:7px 9px;
+    margin-top:2px;
+  }
+  .stock-price-action{gap:7px}
+  .stock-price-action label{font-size:8px}
+  .stock-price-action input{min-height:34px;margin-top:4px;padding:6px 8px}
+  .stock-finance-note{font-size:8px;line-height:1.4;margin:7px 0 0}
+  .stock-disclosure{font-size:8px;margin:7px 0 0}
+}
+/* Keep readable cards on tablets and mobile; no desktop-only height pressure. */
+@media(min-width:981px) and (max-width:1370px){
+  .stock-dossier-vehicle .vehicle-photo-frame{height:145px}
+  .stock-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

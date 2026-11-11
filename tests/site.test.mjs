@@ -75,7 +75,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=32/);
+  assert.match(html, /styles\.css\?v=33/);
   assert.match(html, /simulator\.js\?v=28/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -112,7 +112,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.18/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.19/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -595,7 +595,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=32/);
+  assert.match(html, /styles\.css\?v=33/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4433,4 +4433,28 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
   assert.match(view.html,/data-page="auctions"/);
   assert.match(view.html,/data-page="auctionHall"/);
   assert.equal(view.selectedId,null);
+});
+
+
+test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
+  assert.match(html,/PRE-ALPHA · v0\.9\.19/);
+  assert.match(css,/@media\(min-width:981px\)/);
+  assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
+  assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
+  assert.match(css,/\.stock-dossier \.intel-numbers\{display:none\}/);
+  assert.match(css,/\.stock-action-box\{order:2\}/);
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Compact Forecourt');
+  const car=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+car.id,car.ask);
+  app.click('buy-seller',{id:car.id});
+  app.go('stock');
+  let htmlStock=app.nodes.get('stock-list').innerHTML;
+  assert.match(htmlStock,/VIEW FULL REPORT/);
+  assert.match(htmlStock,/OPEN WORKSHOP/);
+  app.click('toggle-report',{kind:'stock',id:'1'});
+  htmlStock=app.nodes.get('stock-list').innerHTML;
+  assert.match(htmlStock,/HIDE REPORT/);
+  assert.match(htmlStock,/MOT ADVISORIES/);
+  assert.match(htmlStock,/KNOWN PREPARATION ITEMS/);
 });
