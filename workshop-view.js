@@ -4,7 +4,7 @@
   const VC=window.MotorTradeCards, P=window.MotorTradePeople;
   if(!VC||!P)throw Error('Load cards and people before workshop view');
   const esc=VC.esc, cash=VC.money;
-  const FILTERS=Object.freeze(['all','action','repair','ready']);
+  const FILTERS=Object.freeze(['all','action','repair','ready','listed']);
   const stages=['unassessed','quoted','in-progress','quality-check','ready'];
   const labels={unassessed:'ASSESSMENT DUE',quoted:'REPAIR APPROVAL DUE',
     'in-progress':'REPAIRS IN PROGRESS','quality-check':'QUALITY CHECK DUE',ready:'RETAIL READY'};
@@ -18,7 +18,8 @@
     return {count:cars.length,action:cars.filter(needs).length,
       repair:cars.filter(v=>v.workshop?.stage==='in-progress').length,
       qc:cars.filter(v=>v.workshop?.stage==='quality-check').length,
-      ready:cars.filter(v=>v.workshop?.stage==='ready').length,
+      ready:cars.filter(v=>v.status==='prepared'&&v.workshop?.stage==='ready').length,
+      listed:cars.filter(v=>v.status==='listed'&&v.workshop?.stage==='ready').length,
       reserve:W.reserved(s),
       tech:P.activeTeam(s,'technician').length,
       free:P.availableTechnicians(s).length,
@@ -28,6 +29,8 @@
   }
   function status(v){
     const stage=v.workshop?.stage||'unassessed';
+    if(stage==='ready'&&v.status==='listed')return {label:'ON SALE',tone:'listed'};
+    if(stage==='ready'&&v.status==='prepared')return {label:'READY TO ADVERTISE',tone:'ready'};
     return {label:stage==='in-progress'&&v.workshop.paused?'REPAIRS PAUSED':labels[stage]||'CHECK STATUS',
       tone:stage==='ready'?'ready':stage==='in-progress'?'running':needs(v)?'due':'pending'};
   }
@@ -59,13 +62,31 @@
       (!seen?'<p class="ws-caveat">Further defects may be identified at assessment.</p>':'')+'</section>';
   }
   function costs(v){
-    const diagnosed=v.workshop.stage!=='unassessed'||!!v.profile?.inspected;
+    const job=v.workshop;
+    const diagnosed=job.stage!=='unassessed'||!!v.profile?.inspected;
+    const spent=paid(v),hasBooking=['in-progress','quality-check','ready'].includes(job.stage);
+    const difference=hasBooking?spent-v.prepBudget:0;
+    // The legacy save records the total booked repair charge, not an itemised
+    // adjustment history. Only label a difference as labour saving while the
+    // job remains in-house and has no paid QC rectification.
+    const confirmedSaving=hasBooking&&job.method==='internal'&&job.reworks===0&&difference<0;
+    const variance=hasBooking&&difference!==0?
+      '<div class="ws-cost-variance"><span>'+
+      (confirmedSaving?'IN-HOUSE LABOUR SAVING':'REPAIR COST ADJUSTMENT')+
+      '</span><strong>'+(difference<0?'−':'+')+cash(Math.abs(difference))+'</strong></div>':'';
+    const explanation=variance?
+      '<p class="ws-cost-explain">'+(confirmedSaving?
+        'The in-house booking costs less than the diagnosed repair budget due to technician labour savings.':
+        'Booked repair totals can differ from the diagnosed budget because of provider pricing, transfer fees or paid QC rectification.')+
+      '</p>':'';
     return '<div class="ws-costs">'+
       '<div><span>ACQUISITION / ASSESSMENT PAID</span><strong>'+cash(v.cost)+'</strong></div>'+
-      '<div><span>REPAIRS PAID / BOOKED</span><strong>'+cash(paid(v))+'</strong></div>'+
-      '<div class="ws-cost-total"><span>CAPITAL INVESTED</span><strong>'+cash(v.cost+paid(v))+'</strong></div>'+
       '<div><span>DIAGNOSED REPAIR REQUIREMENT</span><strong>'+
-      (diagnosed?cash(v.prepBudget):'NOT YET ASSESSED')+'</strong></div></div>';
+      (diagnosed?cash(v.prepBudget):'NOT YET ASSESSED')+'</strong></div>'+
+      variance+
+      '<div><span>REPAIRS PAID / BOOKED</span><strong>'+cash(spent)+'</strong></div>'+
+      '<div class="ws-cost-total"><span>CAPITAL INVESTED</span><strong>'+cash(v.cost+spent)+'</strong></div>'+
+      '</div>'+explanation;
   }
   function quote(s,W,v,mode){
     const q=W.quote(s,v,mode);
@@ -78,7 +99,9 @@
       (mode==='internal'?'IN-HOUSE TECHNICIAN':'EXTERNAL GARAGE')+'</strong><b>'+
       (q?cash(q.cost):'UNAVAILABLE')+'</b></div>'+
       (q?'<span>'+q.duration+' DAYS · '+q.partsDelay+' PARTS-WAIT DAYS</span><small>'+
-        esc(q.provider)+'</small>':'')+
+        esc(q.provider)+'</small>'+
+        (q.saving>0?'<small class="ws-savings">IN-HOUSE LABOUR SAVING '+cash(q.saving)+'</small>':'')+
+        (q.supplement>0?'<small>EXTERNAL GARAGE UPLIFT '+cash(q.supplement)+'</small>':''):'')+
       (cannot?'<p class="ws-issue">'+esc(reason)+'</p>':'')+
       '<button type="button" class="trade-button" data-action="start-workshop" data-id="'+v.id+
       '" data-method="'+mode+'"'+(cannot?' disabled':'')+'>BOOK '+
@@ -109,19 +132,30 @@
         '<div><small>CHARGED</small><strong>'+cash(j.repairCost)+'</strong></div></div>'+
         '<p>'+(j.paused?'Assigned technician unavailable. Return them to duty or transfer this job.':
           'Advance game days for repairs to finish. Quality control is mandatory afterward.')+'</p>'+
-        (j.method==='internal'?'<button type="button" class="trade-button trade-button-secondary" '+
-          'data-action="outsource-workshop" data-id="'+v.id+
-          '">TRANSFER TO EXTERNAL GARAGE · £125</button>':'')+'</div>';
+        (j.method==='internal'?(()=>{
+          const outside=s.vehicles.filter(x=>x.id!==v.id&&
+            x.workshop?.stage==='in-progress'&&x.workshop.method==='external').length;
+          const full=outside>=2,affordable=s.cash>=W.reserved(s)+125;
+          return (full?'<p class="ws-issue">EXTERNAL GARAGES FULL (2/2). WAIT FOR A SLOT.</p>':'')+
+            (!full&&!affordable?'<p class="ws-issue">INSUFFICIENT UNRESERVED CASH FOR £125 TRANSFER.</p>':'')+
+            '<button type="button" class="trade-button trade-button-secondary" '+
+            'data-action="outsource-workshop" data-id="'+v.id+'"'+
+            (full||!affordable?' disabled':'')+'>TRANSFER TO EXTERNAL GARAGE · £125</button>';
+        })():'')+'</div>';
     }
     if(phase==='quality-check')return '<div class="ws-action"><h4>NEXT / FINAL QUALITY CHECK</h4>'+
       '<p>Repairs are complete. QC must pass before advertising; failure may require another paid repair day.</p>'+
       '<button type="button" class="trade-button" data-action="finish-workshop" data-id="'+v.id+
       '">PERFORM FINAL QUALITY CHECK</button></div>';
-    return '<div class="ws-action ws-ready"><h4>QC PASSED / RETAIL READY</h4>'+
+    if(v.status==='listed')return '<div class="ws-action ws-ready"><h4>QC PASSED / ON SALE</h4>'+
+      '<p>Quality control passed on day '+(j.completedDay??'—')+'. This vehicle is already advertised. Handle customer interest in the Sales Office.</p>'+
+      '<button type="button" class="trade-button" data-page="sales" data-id="'+v.id+
+      '">OPEN SALES OFFICE</button></div>';
+    return '<div class="ws-action ws-ready"><h4>QC PASSED / READY TO ADVERTISE</h4>'+
       '<p>Completed on day '+(j.completedDay??'—')+'. Repairs charged '+cash(v.prepSpent)+
-      '. Manage advertising in Vehicle Stock.</p>'+
+      '. Set an asking price in Vehicle Stock.</p>'+
       '<button type="button" class="trade-button" data-page="stock" data-id="'+v.id+
-      '">VIEW VEHICLE STOCK</button></div>';
+      '">VIEW VEHICLE STOCK</button></div';
   }
   function disposal(v){
     if(v.status!=='acquired'||!['unassessed','quoted'].includes(v.workshop.stage))return '';
@@ -149,7 +183,7 @@
     const q=summary(s,W),f=FILTERS.includes(filter)?filter:'all';
     const kpi='<div class="ws-kpis">'+[
       ['ACTION REQUIRED',q.action],['REPAIRS RUNNING',q.repair],
-      ['QUALITY CHECK DUE',q.qc],['RETAIL READY',q.ready]
+      ['QUALITY CHECK DUE',q.qc],['READY TO ADVERTISE',q.ready],['ON SALE',q.listed]
     ].map(([name,num])=>'<div><small>'+name+'</small><strong>'+num+'</strong></div>').join('')+
       '</div><div class="ws-capacity"><span>TECHNICIANS '+q.tech+' ACTIVE / '+q.free+' FREE · IN-HOUSE '+
       q.inHouse+'/'+q.bays+' BAYS</span><span>EXTERNAL GARAGES '+q.external+'/2</span>'+
@@ -159,13 +193,16 @@
       '<p>Buy a vehicle at the Buying Desk or Auction Hall to create a workshop job.</p>'+
       '<button type="button" class="trade-button" data-page="auctions">OPEN BUYING DESK</button></div>'};
     const filters=[['all','ALL JOBS',q.count],['action','ACTION DUE',q.action],
-      ['repair','IN REPAIR',q.repair],['ready','RETAIL READY',q.ready]];
+      ['repair','IN REPAIR',q.repair],['ready','READY TO ADVERTISE',q.ready],
+      ['listed','ON SALE',q.listed]];
     const toolbar='<div class="ws-toolbar"><strong>WORKSHOP JOB REGISTER</strong>'+
       '<div class="ws-filters" role="group" aria-label="Filter workshop jobs">'+filters.map(([key,label,n])=>
       '<button type="button" data-action="filter-workshop" data-filter="'+key+
       '" aria-pressed="'+(f===key)+'">'+label+' <b>'+n+'</b></button>').join('')+'</div></div>';
     const cars=s.vehicles.filter(v=>f==='all'||(f==='action'?needs(v):
-      f==='repair'?v.workshop?.stage==='in-progress':v.workshop?.stage==='ready'))
+      f==='repair'?v.workshop?.stage==='in-progress':
+      f==='ready'?v.status==='prepared'&&v.workshop?.stage==='ready':
+      v.status==='listed'&&v.workshop?.stage==='ready'))
       .slice().sort((a,b)=>{
         const pa=needs(a)?0:a.workshop.stage==='in-progress'?1:2;
         const pb=needs(b)?0:b.workshop.stage==='in-progress'?1:2;

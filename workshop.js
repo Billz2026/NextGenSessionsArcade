@@ -128,6 +128,12 @@
     const j=v.workshop;
     if(j?.stage!=='in-progress'||j.method!=='internal')
       return fail('stage','Only an active in-house repair can be transferred externally.');
+    // The same two-slot limit applies to transfers as to new bookings.
+    // Check before debiting the £125 fee or changing the assignment.
+    const outside=state.vehicles.filter(x=>x.id!==id&&
+      x.workshop?.stage==='in-progress'&&x.workshop.method==='external').length;
+    if(outside>=2)
+      return fail('busy','Both external garage slots are occupied. Wait for a job to finish before transferring.');
     const chargeAmount=125;
     if(chargeAmount>state.cash-reserved(state))
       return fail('cash','Insufficient cash to transfer repair work to a garage (£125).');

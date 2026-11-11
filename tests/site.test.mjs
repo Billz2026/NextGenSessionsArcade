@@ -68,14 +68,14 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /people\.js\?v=7/);
   assert.match(html, /monthly\.js\?v=7/);
   assert.match(html, /events\.js\?v=2/);
-  assert.match(html, /workshop\.js\?v=3/);
+  assert.match(html, /workshop\.js\?v=4/);
   assert.match(html, /customers\.js\?v=5/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=35/);
+  assert.match(html, /styles\.css\?v=36/);
   assert.match(html, /simulator\.js\?v=29/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -93,7 +93,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=19/);
   assert.match(html, /customers-view\.js\?v=5/);
-  assert.match(html, /workshop-view\.js\?v=5/);
+  assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=4/);
   assert.match(html, /monthly-view\.js\?v=6/);
   assert.match(html, /people-view\.js\?v=4/);
@@ -112,7 +112,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.21/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.22/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -595,7 +595,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=35/);
+  assert.match(html, /styles\.css\?v=36/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4437,7 +4437,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.21/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.22/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4506,7 +4506,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.21/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.22/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4529,5 +4529,116 @@ test('v0.9.21 Workshop puts next decision above costs without changing repair ac
   assert.match(htmlWork,/GAME DAYS/);
   assert.match(htmlWork,/REPAIRS PAID \/ BOOKED/);
   assert.equal(app.workshopView.paid(v),v.workshop.repairCost);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+
+test('v0.9.22 two-slot garage limit blocks third external transfer before any charge',()=>{
+  const E=browser(new Map()).productionEngine,P=E.people;
+  const s=E.create('External Capacity',[]);
+  s.cash=80000; // Isolate the slot constraint rather than funding.
+  const tech=P.applicants(1).find(x=>x.role==='technician');
+  assert.ok(tech);
+  assert.ok(E.hireStaff(s,tech.id).ok);
+  s.day=2;E.staffDay(s);
+  for(let day=2;day<=12&&s.vehicles.length<3;day++){
+    s.day=day;
+    const cars=E.marketFor(s).sellers;
+    for(const car of cars){
+      if(s.vehicles.length===3)break;
+      if(s.vehicles.some(v=>v.origin===car.id))continue;
+      assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+    }
+  }
+  assert.equal(s.vehicles.length,3);
+  const [a,b,c]=s.vehicles;
+  for(const v of [a,b,c])assert.ok(E.assessStock(s,v.id).ok);
+  assert.ok(E.startPrep(s,a.id,'external').ok);
+  assert.ok(E.startPrep(s,b.id,'external').ok);
+  assert.ok(E.startPrep(s,c.id,'internal').ok);
+  const oldCash=s.cash,oldLedger=s.ledger.length,oldJob=JSON.stringify(c.workshop);
+  const denied=E.transferPrep(s,c.id);
+  assert.equal(denied.ok,false);
+  assert.equal(denied.code,'busy');
+  assert.equal(s.cash,oldCash);
+  assert.equal(s.ledger.length,oldLedger);
+  assert.equal(JSON.stringify(c.workshop),oldJob);
+  const view=browser(new Map()).workshopView.render(s,E.workshop,{selectedId:c.id});
+  assert.match(view.html,/EXTERNAL GARAGES FULL \(2\/2\)/);
+  assert.match(view.html,new RegExp('data-action="outsource-workshop" data-id="'+c.id+'" disabled'));
+  // When one external job finishes, its slot becomes free for a transfer.
+  a.workshop.stage='quality-check';a.workshop.remainingDays=0;
+  const moved=E.transferPrep(s,c.id);
+  assert.ok(moved.ok,moved.message);
+  assert.equal(c.workshop.method,'external');
+  assert.equal(s.cash,oldCash-125);
+  assert.equal(s.ledger.length,oldLedger+1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.22 retail-ready prepared cars differ from already advertised stock',()=>{
+  const app=browser(new Map()),E=app.productionEngine,s=E.create('Workshop Listings',[]);
+  s.cash=80000;
+  const cars=E.marketFor(s).sellers;
+  for(const car of cars)assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+  assert.equal(s.vehicles.length,2);
+  for(const v of s.vehicles){
+    assert.ok(E.assessStock(s,v.id).ok);
+    assert.ok(E.startPrep(s,v.id,'external').ok);
+    // Bring both through to completed repairs without bypassing the rules.
+    while(v.workshop.stage==='in-progress'&&s.day<30){
+      s.day++;E.advanceWorkshop(s);
+    }
+    assert.equal(v.workshop.stage,'quality-check');
+    const result=E.finishPrep(s,v.id);
+    assert.ok(result.ok);
+    if(v.workshop.stage==='in-progress'){
+      s.day++;E.advanceWorkshop(s);
+      assert.ok(E.finishPrep(s,v.id).ok);
+    }
+  }
+  const ready=s.vehicles[0],listed=s.vehicles[1];
+  assert.ok(E.advertise(s,listed.id,listed.retail).ok);
+  const ui=app.workshopView;
+  const counts=ui.summary(s,E.workshop);
+  assert.equal(counts.ready,1);
+  assert.equal(counts.listed,1);
+  const all=ui.render(s,E.workshop).html;
+  assert.match(all,/READY TO ADVERTISE/);
+  assert.match(all,/ON SALE/);
+  assert.match(all,/data-filter="listed"/);
+  const readyView=ui.render(s,E.workshop,{filter:'ready'});
+  assert.equal(readyView.selectedId,ready.id);
+  assert.match(readyView.html,/data-page="stock" data-id="'+ready.id+'"/);
+  assert.ok(!readyView.html.includes('WORK ORDER · STOCK '+listed.id));
+  const advertised=ui.render(s,E.workshop,{filter:'listed'});
+  assert.equal(advertised.selectedId,listed.id);
+  assert.match(advertised.html,/QC PASSED \/ ON SALE/);
+  assert.match(advertised.html,/OPEN SALES OFFICE/);
+  assert.ok(!advertised.html.includes('WORK ORDER · STOCK '+ready.id));
+});
+
+test('v0.9.22 repair booking difference is explicit and is not double-counted',()=>{
+  const app=browser(new Map()),E=app.productionEngine,s=E.create('Labour Difference',[]);
+  s.cash=60000;
+  const tech=E.people.applicants(1).find(x=>x.role==='technician');
+  assert.ok(E.hireStaff(s,tech.id).ok);
+  s.day=2;E.staffDay(s);
+  const car=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+  assert.ok(E.assessStock(s,1).ok);
+  const v=s.vehicles[0],q=E.workshop.quote(s,v,'internal');
+  assert.ok(q);
+  const quoted=app.workshopView.render(s,E.workshop).html;
+  if(q.saving>0)assert.match(quoted,/IN-HOUSE LABOUR SAVING/);
+  assert.ok(E.startPrep(s,v.id,'internal').ok);
+  const booked=app.workshopView.render(s,E.workshop).html;
+  if(q.saving>0){
+    assert.match(booked,/IN-HOUSE LABOUR SAVING/);
+    assert.ok(booked.includes('−'+app.cards.money(q.saving)));
+  }
+  assert.match(booked,/CAPITAL INVESTED/);
+  assert.equal(app.workshopView.paid(v),v.workshop.repairCost);
+  assert.equal(s.ledger.filter(x=>x.note.startsWith('Workshop repair booking:')).length,1);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
