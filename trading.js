@@ -7,7 +7,7 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 4;
-  const VERSION = 9;
+  const VERSION = 10;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
@@ -22,6 +22,8 @@
   if (!M) throw new Error('Load monthly.js before trading.js');
   const P = window.MotorTradePeople;
   if (!P) throw new Error('Load people.js before trading.js');
+  const SITE = window.MotorTradePremises;
+  if (!SITE) throw new Error('Load premises.js before trading.js');
   const I = window.MotorTradeIntel;
   if (!I) throw new Error('Load vehicle-intel.js before trading.js');
   const MAX_DAY = 36500;
@@ -106,14 +108,14 @@
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       customerCases:{},customerHistory:[],customerFunds:[],
-      ...P.initial()
+      premises:SITE.initial(),...P.initial()
     };
     M.initialize(state);
     Object.assign(state,D.initial());
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,8,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,9,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -134,10 +136,13 @@
       legacy.day=saved.day;
       return M.initialize(legacy,{migrating:true});
     }
-    if ((saved.version===VERSION?saved.capacity!==CAPACITY:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
+    const site=saved.version>=VERSION?saved.premises:SITE.initial();
+    if(!SITE.valid(site))return null;
+    const expectedCapacity=SITE.capacity({premises:site});
+    if ((saved.version===VERSION?saved.capacity!==expectedCapacity:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
       !Array.isArray(saved.sold) || !Array.isArray(saved.ledger) ||
       !integer(saved.nextId) || saved.nextId < 1 ||
-      !cashValue(saved.cash) || saved.vehicles.length > CAPACITY ||
+      !cashValue(saved.cash) || saved.vehicles.length > expectedCapacity ||
       saved.vehicles.length > 250 || saved.sold.length > 20000 ||
       saved.ledger.length > 60000 ||
       (saved.version===VERSION&&(!Array.isArray(saved.wholesale)||saved.wholesale.length>20000)))return null;
@@ -205,7 +210,8 @@
     const balance = STARTING_CASH + sum(saved.ledger,'delta');
     if (balance !== saved.cash || balance < 0 || balance > 100000000) return null;
     const restored={
-      version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:CAPACITY,
+      version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:expectedCapacity,
+      premises:SITE.clone(site),
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
@@ -562,6 +568,12 @@
   }
   function totalMargin(state) { return sum(state.sold,'profit')+
     sum(state.wholesale,'profit'); }
+  function premisesDay(state){
+    const out=SITE.advance(state);
+    state.reputation=P.tier(state.reputationScore);
+    return out;
+  }
+  const upgradePremises=(state,kind)=>SITE.upgrade(state,kind);
   function staffDay(state) {
     const out=P.advance(state);
     state.reputation=P.tier(state.reputationScore);
@@ -576,7 +588,8 @@
     return result;
   }
   window.MotorTradeEngine = Object.freeze({
-    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,monthly:M,events:D,
+    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
+    upgradePremises,monthly:M,events:D,
     customers:C,openCustomer,bookCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
