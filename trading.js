@@ -288,8 +288,11 @@
       'LOT '+lotNumber(h.index)+' skipped before bidding. No fee charged.');
     // Refusing to match the last rival bid awards the car to the rival only
     // if its actual bid meets reserve. Never invent a higher hammer amount.
+    if(h.leader==='player'&&h.currentBid<lot.reserve)
+      return resolveAuction(state,'unsold',0,'LOT '+lotNumber(h.index)+
+        ' remained unsold below reserve. No sale or buyer fee.');
     if(h.leader==='player')
-      return fail('stage','You are the highest bidder; settle a hammer or return to the lot.');
+      return fail('stage','You already hold the winning bid; settle the hammer first.');
     const rivalWins=h.currentBid>=lot.reserve;
     return resolveAuction(state,rivalWins?'lost':'unsold',
       rivalWins?h.currentBid:0,
@@ -443,7 +446,7 @@
       // Migrate older daily auction saves: keep completed results in history,
       // but remove an obsolete mid-session catalogue on a closed weekday.
       auctionHall:saved.version>=11&&!staleEmptyHall&&
-        (saved.version>=VERSION||auctionDay(saved.day))?
+        (saved.version>=VERSION||saved.day===1)?
         JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
       auctionHistory:saved.version>=11?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
       stock:saved.vehicles.length,sales:saved.sold.length,
