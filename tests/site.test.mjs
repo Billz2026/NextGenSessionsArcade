@@ -76,8 +76,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=40/);
+  assert.match(html, /finance-view\.js\?v=2/);
+  assert.match(html, /styles\.css\?v=41/);
   assert.match(html, /simulator\.js\?v=31/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -114,7 +114,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.26/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.27/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -598,7 +598,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=40/);
+  assert.match(html, /styles\.css\?v=41/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4440,7 +4440,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.26/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.27/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4509,7 +4509,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.26/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.27/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4916,4 +4916,56 @@ test('v0.9.26 finance alerts distinguish accrued bills from bank cash and held d
   assert.match(html,/id="finance-ledger-toolbar"/);
   assert.match(html,/class="fin-help"/);
   assert.match(css,/\.fin-primary\{display:grid/);
+});
+
+
+test('v0.9.27 cash hero explains equal balance when no repairs are reserved',()=>{
+  const app=browser(new Map()),E=app.productionEngine,F=app.financeView;
+  const s=E.create('Cash Clarity',[]);
+  const zero=F.summary(s,E);
+  assert.equal(zero.snapshot.reserved,0);
+  assert.match(zero.html,/class="fin-tile fin-tile-hero"/);
+  assert.match(zero.html,/WORKING CASH AVAILABLE/);
+  assert.match(zero.html,/No workshop funds reserved/);
+  assert.doesNotMatch(zero.html,/CASH AFTER REPAIR RESERVES/);
+  assert.equal(zero.snapshot.afterReserve,zero.snapshot.cash);
+  const seller=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const funded=F.summary(s,E);
+  assert.ok(funded.snapshot.reserved>0);
+  assert.match(funded.html,/CASH AFTER REPAIR RESERVES/);
+  assert.match(funded.html,/After earmarked repairs/);
+  assert.equal(funded.snapshot.afterReserve,s.cash-funded.snapshot.reserved);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.27 operating contribution gets accurate negative and positive signals',()=>{
+  const app=browser(new Map()),E=app.productionEngine,F=app.financeView;
+  const s=E.create('Margin Presentation',[]);
+  const mock=amount=>({
+    ...E,monthly:{...E.monthly,
+      statement:state=>({...E.monthly.statement(state),operatingContribution:amount})}
+  });
+  const negative=F.summary(s,mock(-4940)).html;
+  assert.match(negative,/fin-tile-loss/);
+  assert.match(negative,/NEGATIVE THIS MONTH/);
+  const positive=F.summary(s,mock(2250)).html;
+  assert.doesNotMatch(positive,/fin-tile-loss/);
+  assert.match(positive,/POSITIVE THIS MONTH/);
+  assert.match(F.summary(s,mock(0)).html,/BREAK-EVEN SO FAR/);
+  assert.match(css,/\.fin-tile-hero\{/);
+  assert.match(css,/\.fin-flow \.fin-flow-total\{/);
+});
+
+test('v0.9.27 ledger HTML escapes special punctuation',()=>{
+  const app=browser(new Map()),E=app.productionEngine,F=app.financeView;
+  const s=E.create('Safe Ledger',[]);
+  s.ledger.push({day:1,delta:0,note:"Paid <span onclick=\"alert(1)\"> & Bob's ledger"});
+  const result=F.ledger(s,{expanded:true}).html;
+  assert.match(result,/&lt;span/);
+  assert.match(result,/&quot;alert\(1\)&quot;/);
+  assert.match(result,/Bob&#39;s ledger/);
+  assert.doesNotMatch(result,/<span onclick/);
+  assert.match(html,/finance-view\.js\?v=2/);
+  assert.match(html,/styles\.css\?v=41/);
 });

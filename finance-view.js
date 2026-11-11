@@ -1,5 +1,5 @@
 'use strict';
-/* v0.9.26 — Read-only business finance desk.
+/* v0.9.27 — Read-only business finance desk.
  * Distinguishes cash, earmarked reserves, stock investment, held deposits,
  * overdue obligations, gross trading margin and operating contribution.
  * No new saved fields and no new economic transactions.
@@ -8,7 +8,8 @@
   const money=n=>new Intl.NumberFormat('en-GB',{
     style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n);
   const esc=x=>String(x).replace(/[&<>"']/g,ch=>({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&#39;'}[ch]));
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
   const FILTERS=Object.freeze(['all','in','out','noncash']);
   const signed=n=>(n>0?'+':'')+money(n);
   const tone=n=>n<0?' fin-negative':n>0?' fin-positive':'';
@@ -40,14 +41,23 @@
   function summary(state,E){
     const x=snapshot(state,E),r=x.report;
     const month='MONTH '+r.month+' · DAYS '+r.startDay+'–'+r.endDay;
+    const noRepairReserve=x.reserved===0;
+    const workingLabel=noRepairReserve?'WORKING CASH AVAILABLE':'CASH AFTER REPAIR RESERVES';
+    const workingDetail=noRepairReserve?'No workshop funds reserved · before upcoming bills':
+      'After earmarked repairs · before upcoming bills';
+    const operatingDetail=r.operatingContribution<0?
+      'NEGATIVE THIS MONTH · After staff and premises costs':
+      r.operatingContribution>0?
+        'POSITIVE THIS MONTH · After staff and premises costs':
+        'BREAK-EVEN SO FAR · After staff and premises costs';
     const top='<div class="fin-primary">'+
-      tile('CASH BALANCE',money(x.cash),'Money currently in the dealership')+
-      tile('CASH AFTER REPAIR RESERVES',money(x.afterReserve),
-        'Before rent, wages and other upcoming bills',x.afterReserve<0?' fin-tile-alert':'')+
+      tile('CASH BALANCE',money(x.cash),'Dealership cash held today · includes repair reserves',' fin-tile-hero')+
+      tile(workingLabel,money(x.afterReserve),workingDetail,
+        x.afterReserve<0?' fin-tile-alert':'')+
       tile('INVESTED IN UNSOLD VEHICLES',money(x.stock),
         state.vehicles.length+' vehicle'+(state.vehicles.length===1?'':'s')+' still owned')+
-      tile('MONTH OPERATING CONTRIBUTION',money(r.operatingContribution),
-        'Gross trade margin less staff and premises costs',r.operatingContribution<0?' fin-tile-alert':'')+
+      tile('MONTH OPERATING CONTRIBUTION',money(r.operatingContribution),operatingDetail,
+        r.operatingContribution<0?' fin-tile-loss':'')+
       '</div>';
     const cashflow='<section class="fin-panel fin-cashflow"><div class="fin-panel-head">'+
       '<div><small>'+month+'</small><h3>WHERE YOUR CASH WENT</h3></div>'+

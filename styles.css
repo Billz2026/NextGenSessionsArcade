@@ -2060,3 +2060,34 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
  .fin-entry>strong{grid-column:2;text-align:left;font-size:12px}
  .fin-ledger-filters button{font-size:8px;padding:7px}
 }
+
+/* v0.9.27 — Finance finishing pass: hierarchy, clarity and compact rhythm. */
+.fin-tile-hero{border-color:#a38a62;background:linear-gradient(140deg,#2a4650,#18343e);box-shadow:inset 3px 0 #d1ab73}
+.fin-tile-hero strong{font-size:clamp(26px,2.75vw,36px);color:#ffe0ad}
+.fin-tile-loss{border-color:#86675f;background:linear-gradient(140deg,#3c3537,#262e37)}
+.fin-tile-loss strong{color:#f3b3a2}
+.fin-flow .fin-flow-total{border-color:#8b986e;box-shadow:inset 3px 0 #9abb82}
+.fin-pair{border-bottom-color:#47616a;padding:6px 0}
+.fin-pair strong{font-size:13px;font-weight:900}
+.fin-detail{color:#9cb1b5;font-size:10px;line-height:1.42}
+.fin-disclosure{color:#9badb1;line-height:1.42}
+@media(min-width:1021px){
+ .fin-primary{gap:7px;margin-bottom:7px}
+ .fin-tile{min-height:87px;padding:9px 11px;gap:4px}
+ .fin-panel{padding:11px}
+ .fin-panel-head{margin-bottom:8px}
+ .fin-cashflow{margin-bottom:7px}
+ .fin-flow{gap:6px;grid-template-columns:minmax(0,1fr) 13px minmax(0,1fr) 13px minmax(0,1fr) 13px minmax(0,1fr)}
+ .fin-flow>div{min-height:61px;padding:8px;gap:4px}
+ .fin-flow>span{font-size:18px;opacity:.85}
+ .fin-flow strong{font-size:clamp(18px,1.85vw,24px)}
+ .fin-flow .fin-flow-total strong{font-size:clamp(20px,2.2vw,27px)}
+ .fin-flow-footer{margin-top:7px}
+ .fin-secondary{gap:8px}
+ .fin-detail{margin-top:7px}
+ .fin-disclosure{font-size:9px;margin:7px 0 8px}
+}
+@media(max-width:520px){
+ .fin-tile-hero strong{font-size:25px}
+ .fin-tile-loss strong{font-size:22px}
+}
