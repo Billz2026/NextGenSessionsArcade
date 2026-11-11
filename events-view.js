@@ -77,7 +77,7 @@
       '<section class="eo-activity"><div><small>DIRECT BUYING</small>'+
       '<h3>BUY FROM PRIVATE SELLERS</h3>'+
       '<p>'+(sellerCount?
-        sellerCount+' owner enquiry'+(sellerCount===1?' is':'ies are')+
+        sellerCount+' owner '+(sellerCount===1?'enquiry is':'enquiries are')+
         ' available in this session. Check margins, prep costs and capacity.':
         'No seller leads have arrived. Another session may be different.')+
       '</p></div><button type="button" class="trade-button" data-page="auctions">'+
@@ -146,7 +146,7 @@
       ['NEW MONTH SALES TARGET',String(state.monthPlan.unitTarget)],
       ['CURRENT CASH',money(state.cash)],
       ['REPUTATION',state.reputationScore+' / 100'],
-      ['ACTIVE STAFF',String(state.staff.filter(x=>x.active).length)]
+      ['STAFF ON PAYROLL',String(state.staff.length)]
     ];
     const cards=metrics.map(([label,value])=>
       '<div><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>').join('');
