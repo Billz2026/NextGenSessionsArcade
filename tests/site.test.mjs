@@ -75,7 +75,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=37/);
+  assert.match(html, /styles\.css\?v=38/);
   assert.match(html, /simulator\.js\?v=30/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -92,7 +92,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=19/);
-  assert.match(html, /customers-view\.js\?v=6/);
+  assert.match(html, /customers-view\.js\?v=7/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=4/);
   assert.match(html, /monthly-view\.js\?v=6/);
@@ -112,7 +112,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.23/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.24/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -595,7 +595,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=37/);
+  assert.match(html, /styles\.css\?v=38/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -2529,7 +2529,7 @@ test('the sales office UI supports a saved multi-day appointment and collection'
   app.click('prepare-stock',{id:'1'}); // Test fixture for older prep workflow.
   app.setInput('stock-price-1',5200);
   app.click('list-stock',{id:'1'});
-  assert.match(app.nodes.get('sales-list').innerHTML,/NEW CUSTOMER ENQUIRY/);
+  assert.match(app.nodes.get('sales-list').innerHTML,/BUYER INTEREST TO CONTACT/);
   assert.doesNotMatch(app.nodes.get('sales-list').innerHTML,/COMPLETE HANDOVER/);
   app.click('open-customer',{id:'1'});
   assert.match(app.nodes.get('sales-list').innerHTML,/BOOK VIEWING/);
@@ -4437,7 +4437,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.23/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.24/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4506,7 +4506,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.23/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.24/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4666,7 +4666,7 @@ test('v0.9.23 Sales Office compact register, case selection and filters preserve
   assert.match(htmlUI,/RETAIL CASE REGISTER/);
   assert.match(htmlUI,/ADVERTISED VEHICLES/);
   assert.match(htmlUI,/VEHICLE FINANCIALS/);
-  assert.match(htmlUI,/CURRENT CUSTOMER POSITION/);
+  assert.match(htmlUI,/NEXT CUSTOMER ACTION/);
   assert.match(htmlUI,/data-action="select-sales"/);
   assert.match(htmlUI,/data-action="filter-sales"/);
   app.click('select-sales',{id:'2'});
@@ -4711,4 +4711,63 @@ test('v0.9.23 Sales Office removes duplicated top notices but retains policy inf
   assert.doesNotMatch(html,/id="sales-list" class="trade-card-grid trade-sales-grid"/);
   assert.match(css,/#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/\[data-panel="sales"\]>.page-heading h1/);
+});
+
+
+test('v0.9.24 Sales Office puts vehicle identity alongside readable finances',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const s=E.create('Compact Sales Case',[]);
+  const lead=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+  const v=s.vehicles[0];
+  v.status='listed';v.listedDay=s.day;v.asking=v.retail;
+  const ui=app.customersView.render(s,E);
+  assert.match(ui.html,/class="so-vehicle-intro"/);
+  assert.match(ui.html,/VEHICLE FINANCIALS/);
+  assert.match(ui.html,/NEXT CUSTOMER ACTION/);
+  assert.equal((ui.html.match(/NEXT CUSTOMER ACTION/g)||[]).length,1);
+  assert.match(css,/\.so-vehicle-intro\{display:grid;grid-template-columns:100px/);
+  assert.match(css,/@media\(min-width:1021px\)/);
+  assert.match(css,/\.so-kpis>div\{min-height:51px/);
+});
+
+test('v0.9.24 emerging buyer interest is not misreported as a recorded enquiry',()=>{
+  const app=browser(new Map()),E=app.productionEngine,C=E.customers;
+  let found=null;
+  for(let i=0;i<100&&!found;i++){
+    const s=E.create('Sales Lead Clarity '+i,[]);
+    const lead=E.marketFor(s).sellers[0];
+    assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+    const v=s.vehicles[0];
+    v.status='listed';v.listedDay=s.day;v.asking=v.retail;
+    if(C.demand(s,v))found={s,v};
+  }
+  assert.ok(found,'Find a deterministic prospective buyer');
+  const {s,v}=found;
+  assert.equal(C.stats(s,s.monthPlan.startDay,s.day).enquiries,0);
+  const preview=app.customersView.render(s,E);
+  assert.match(preview.html,/BUYER INTEREST TO CONTACT/);
+  assert.match(preview.html,/0 RECORDED ENQUIRIES/);
+  assert.match(preview.html,/CONTACT BUYER \/ OPEN ENQUIRY/);
+  assert.ok(E.openCustomer(s,v.id).ok);
+  const contacted=app.customersView.render(s,E);
+  assert.match(contacted.html,/NEW ENQUIRY/);
+  assert.match(contacted.html,/1 RECORDED ENQUIRIES/);
+  assert.doesNotMatch(contacted.html,/BUYER INTEREST TO CONTACT/);
+});
+
+test('v0.9.24 scheduled customer dates appear in the sales register',()=>{
+  const app=browser(new Map()),E=app.productionEngine,s=E.create('Visible Appointments',[]);
+  const lead=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+  const v=s.vehicles[0];v.status='listed';v.listedDay=s.day;v.asking=v.retail;
+  const fixture={id:'C-1-0-1-2',vehicleId:v.id,name:'A Buyer',channel:'ONLINE',
+    status:'booked',appointmentDay:3,collectionDay:null,held:0};
+  s.customerCases[String(v.id)]=fixture;
+  const booked=app.customersView.render(s,E);
+  assert.match(booked.html,/VIEWING DAY 3/);
+  fixture.status='reserved';fixture.collectionDay=6;fixture.held=250;
+  const reserved=app.customersView.render(s,E);
+  assert.match(reserved.html,/COLLECTION DAY 6/);
+  assert.match(reserved.html,/DEPOSIT HELD/);
 });

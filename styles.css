@@ -1861,3 +1861,70 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
 @media(max-width:1020px){.so-layout{grid-template-columns:1fr}.so-register-list{max-height:280px}.so-file-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.so-car{border-right:1px solid #3a525b;border-bottom:0}}
 @media(max-width:760px){.so-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.so-file-grid{grid-template-columns:1fr}.so-car{border-right:0;border-bottom:1px solid #3a525b}.so-toolbar{align-items:flex-start}.so-filters{width:100%}.so-filters button{flex:1 1 auto}}
 @media(max-width:450px){.so-customer .sales-offer-modes{grid-template-columns:1fr}.so-history-row{flex-wrap:wrap}.so-flow span{font-size:7px;padding:4px 1px}.so-file-head h3{font-size:18px}}
+
+
+/* v0.9.24 — Sales Office 100%-zoom compact finishing pass.
+   Keep vehicle identity alongside specifications so financials and the
+   customer action sit above the fold on normal desktop viewports. */
+.so-vehicle-intro{display:grid;grid-template-columns:100px minmax(0,1fr);gap:9px;align-items:start;margin-bottom:9px}
+.so-vehicle-intro .so-specs{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:5px;margin:0;padding-top:4px;overflow-wrap:anywhere}
+.so-vehicle-intro .so-specs span{font-size:10px;line-height:1.3}
+.so-vehicle-intro .so-specs small{font-size:9px;line-height:1.35}
+.so-vehicle-intro .so-car-photo{min-width:0}
+.so-vehicle-intro .so-car-photo .vehicle-photo-frame{height:70px;min-height:0;max-height:none}
+.so-vehicle-intro .so-car-photo .vehicle-photo-credit{display:none}
+.so-vehicle-intro .so-car-photo .vehicle-origin-tag,.so-vehicle-intro .so-car-photo .vehicle-grade-tag{font-size:6px;padding:2px 3px;top:4px}
+.so-vehicle-intro .so-car-photo .vehicle-origin-tag{left:4px}
+.so-vehicle-intro .so-car-photo .vehicle-grade-tag{right:4px}
+.so-vehicle-intro .so-car-photo .vehicle-photo-missing{padding:4px;gap:2px}
+.so-vehicle-intro .so-car-photo .vehicle-photo-missing>span{font-size:19px}
+.so-vehicle-intro .so-car-photo .vehicle-photo-missing strong{font-size:10px}
+.so-vehicle-intro .so-car-photo .vehicle-photo-missing small{display:none}
+@media(min-width:1021px){
+  .career-main:has([data-panel="sales"]:not([hidden])) .career-topbar{min-height:60px;padding-top:8px;padding-bottom:8px}
+  .career-content:has([data-panel="sales"]:not([hidden])){padding-top:7px;padding-bottom:11px}
+  [data-panel="sales"]>.page-heading{margin-bottom:6px}
+  [data-panel="sales"]>.page-heading h1{font-size:clamp(30px,2.7vw,37px);margin:2px 0;line-height:.96}
+  [data-panel="sales"]>.page-heading p:last-child{font-size:10px;line-height:1.3}
+  .so-kpis{gap:6px;margin-bottom:5px}
+  .so-kpis>div{min-height:51px;padding:6px 9px;gap:2px}
+  .so-kpis strong{font-size:23px}
+  .so-kpis small{font-size:8px}
+  .so-activity{padding:5px 9px;margin-bottom:5px;font-size:8px}
+  .so-toolbar{padding:6px 9px;gap:7px}
+  .so-toolbar>strong{font-size:16px}
+  .so-filters{gap:4px}
+  .so-filters button{padding:6px 7px;font-size:8px}
+  .so-layout{gap:7px;margin-top:6px}
+  .so-register>header{padding:7px 10px}
+  .so-unit{padding:6px;grid-template-columns:62px minmax(0,1fr);gap:7px}
+  .so-thumb .vehicle-photo-frame{height:47px;min-height:0}
+  .so-pick{gap:2px}
+  .so-pick strong{font-size:16px}
+  .so-status{padding:3px 5px}
+  .so-file-head{padding:7px 10px;gap:6px}
+  .so-file-head h3{font-size:21px}
+  .so-flow{padding:5px 8px;gap:3px}
+  .so-flow span{padding:4px 2px;font-size:8px}
+  .so-car,.so-customer{padding:9px}
+  .so-vehicle-intro{grid-template-columns:95px minmax(0,1fr);gap:8px;margin-bottom:7px}
+  .so-vehicle-intro .so-car-photo .vehicle-photo-frame{height:67px;min-height:0}
+  .so-car h4{font-size:15px;margin-bottom:6px}
+  .so-figures>div{padding:7px 7px;gap:5px}
+  .so-figures span{font-size:9px;line-height:1.3}
+  .so-figures strong{font-size:11px}
+  .so-caveat{font-size:8px;line-height:1.4;margin-top:6px}
+  .so-customer-heading{padding-bottom:6px;margin-bottom:6px}
+  .so-customer-heading h4{font-size:16px;margin-top:2px}
+  .so-customer .sales-case-highlight{padding:9px;gap:6px}
+  .so-customer .sales-case-highlight strong,.so-customer .sales-case-highlight h4{font-size:15px}
+  .so-customer .sales-case-highlight p{font-size:10px;line-height:1.4}
+  .so-customer .trade-button{min-height:34px;padding:8px 9px}
+  .so-history,.so-policy{margin-top:7px}
+  .so-history summary,.so-policy summary{padding:8px 10px}
+}
+/* Do not squeeze the negotiation and part-exchange detail on mobile. */
+@media(max-width:760px){
+  .so-vehicle-intro{grid-template-columns:92px minmax(0,1fr)}
+  .so-vehicle-intro .so-car-photo .vehicle-photo-frame{height:67px}
+}

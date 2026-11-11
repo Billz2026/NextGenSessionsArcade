@@ -17,10 +17,10 @@
     if(!c){
       const interest=C.demand(state,vehicle);
       return interest?
-        '<div class="sales-case-highlight"><strong>NEW CUSTOMER ENQUIRY</strong>'+
-        '<p>A customer is interested in this advertised vehicle. Contact them to establish their requirements.</p>'+
+        '<div class="sales-case-highlight"><strong>BUYER INTEREST TO CONTACT</strong>'+
+        '<p>A potential buyer is interested in this vehicle. Contact them to log an enquiry and establish their requirements.</p>'+
         '<button type="button" class="trade-button" data-action="open-customer" data-id="'+id+
-        '">CONTACT ENQUIRY →</button></div>':
+        '">CONTACT BUYER / OPEN ENQUIRY →</button></div>':
         '<div class="sales-case-quiet"><strong>NO ACTIVE RETAIL ENQUIRIES</strong>'+
         '<p>No customer wants to proceed with this particular car right now. Interest may change on another game day'+
         (E.events.isDealDay(state.day)?' or Deal Day session':'')+
@@ -138,7 +138,7 @@
   function lead(state,v,E){
     const c=E.customers.caseFor(state,v.id),available=!c&&E.customers.demand(state,v);
     const title=c?statuses[c.status]||'CUSTOMER CASE':
-      available?'NEW CUSTOMER ENQUIRY':'AWAITING BUYER INTEREST';
+      available?'BUYER INTEREST TO CONTACT':'AWAITING BUYER INTEREST';
     const step=!c?(available?0:-1):{
       enquiry:0,booked:1,arrived:1,discussing:2,agreed:3,
       reserved:4,collectable:4,lost:-1
@@ -163,12 +163,16 @@
   function unit(state,entry,selected){
     const v=entry.vehicle,k=entry.caseData;
     const days=Math.max(0,state.day-v.listedDay);
+    const c=k.c;
+    const due=c?.status==='booked'&&c.appointmentDay!==null?' · VIEWING DAY '+c.appointmentDay:
+      ['reserved','collectable'].includes(c?.status)&&c.collectionDay!==null?
+        ' · COLLECTION DAY '+c.collectionDay:'';
     return '<article class="so-unit'+(selected?' so-unit-active':'')+'">'+
       '<div class="so-thumb">'+VC.photo(v,'stock')+'</div>'+
       '<button type="button" class="so-pick" data-action="select-sales" data-id="'+v.id+
       '" aria-pressed="'+String(selected)+'"><small>STOCK '+v.id+
       ' · '+days+' DAYS ADVERTISED</small><strong>'+esc(v.title)+'</strong>'+
-      '<span>ASKING '+cash(v.asking)+'</span>'+
+      '<span>ASKING '+cash(v.asking)+due+'</span>'+
       '<em class="so-status so-status-'+k.tone+'">'+esc(k.title)+'</em></button></article>';
   }
   function progress(info){
@@ -188,11 +192,11 @@
       '<span class="so-status so-status-'+leadInfo.tone+'">'+esc(leadInfo.title)+'</span></header>'+
       progress(leadInfo)+
       '<div class="so-file-grid"><section class="so-car">'+
-      '<div class="so-car-photo">'+VC.photo(v,'stock')+'</div>'+
+      '<div class="so-vehicle-intro"><div class="so-car-photo">'+VC.photo(v,'stock')+'</div>'+
       '<div class="so-specs"><span>'+new Intl.NumberFormat('en-GB').format(v.miles)+
-      ' MILES · '+esc(v.fuel)+' · '+esc(v.gearbox)+'</span>'+
+      ' MILES</span><span>'+esc(v.fuel)+' · '+esc(v.gearbox)+'</span>'+
       '<small>'+esc(v.color||'COLOUR NOT RECORDED')+' · '+days+
-      ' DAYS ADVERTISED</small></div>'+
+      ' DAYS ADVERTISED</small></div></div>'+
       '<h4>VEHICLE FINANCIALS</h4><div class="so-figures">'+
       '<div><span>ADVERTISED PRICE</span><strong>'+cash(v.asking)+'</strong></div>'+
       '<div><span>ACQUISITION + PREPARATION</span><strong>'+cash(invested)+'</strong></div>'+
@@ -201,7 +205,7 @@
         '<div class="so-figures-strong"><span>AGREED SALE PRICE</span><strong>'+cash(c.price)+'</strong></div>':'')+
       '</div><p class="so-caveat">Valuations are fictional. An agreed price is not a completed sale until handover.</p>'+
       '</section><section class="so-customer"><div class="so-customer-heading">'+
-      '<div><small>CURRENT CUSTOMER POSITION</small><h4>'+esc(leadInfo.title)+'</h4></div>'+
+      '<div><small>SALES CASE MANAGEMENT</small><h4>NEXT CUSTOMER ACTION</h4></div>'+
       (c?'<span>'+esc(c.name)+'</span>':'')+'</div>'+
       actions(state,v,E)+'</section></div></article>';
   }
@@ -223,7 +227,7 @@
       ['ACTION REQUIRED',s.attention],['HELD DEPOSITS',cash(s.held)]
     ].map(([name,value])=>
       '<div><small>'+name+'</small><strong>'+value+'</strong></div>').join('')+'</div>'+
-      '<div class="so-activity">THIS MONTH · '+stats.enquiries+' ENQUIRIES · '+
+      '<div class="so-activity">THIS MONTH · '+stats.enquiries+' RECORDED ENQUIRIES · '+
       stats.appointments+' VIEWINGS BOOKED · '+stats.testDrives+' TEST DRIVES · '+
       stats.completedSales+' COMPLETED HANDOVERS</div>';
     if(!s.rows.length)return {selectedId:null,html:top+
