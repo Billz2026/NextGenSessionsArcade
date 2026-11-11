@@ -87,11 +87,13 @@
     if(note.startsWith('Recruitment and onboarding:'))return 'recruitment';
     if(note.startsWith('Staff development:'))return 'training';
     if(note.startsWith('Staff exit and provisional notice payment:'))return 'staffExit';
+    if(note.startsWith('Premises overhead payment'))return 'premisesPayments';
+    if(note.startsWith('Premises investment:'))return 'premisesInvestment';
     return 'other';
   }
   const categories=['retailReceipts','auctionPurchases','sellerPurchases',
     'partExchangePurchases','preparation','inspections','payroll','commission',
-    'recruitment','training','staffExit','other'];
+    'recruitment','training','staffExit','other','premisesPayments','premisesInvestment'];
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
@@ -102,6 +104,8 @@
     const saleCount=sales.length;
     const turnover=sum(sales,'price');
     const grossMargin=sum(sales,'profit')+sum(disposals,'profit');
+    const premisesExpense=ledger.filter(x=>x.note.startsWith('Premises expense accrued: £'))
+      .reduce((n,x)=>n+Number(/^Premises expense accrued: £(\d+)/.exec(x.note)?.[1]||0),0);
     const inflow=ledger.filter(x=>x.delta>0).reduce((n,x)=>n+x.delta,0);
     const outflow=-ledger.filter(x=>x.delta<0).reduce((n,x)=>n+x.delta,0);
     const payrollCost=-(bucket.payroll+bucket.commission+bucket.recruitment+
@@ -134,7 +138,8 @@
       workshopStage:v.workshop?.stage??'unknown',
       workshopDaysLeft:v.workshop?.remainingDays??0
     }));
-    const met=saleCount>=p.unitTarget && grossMargin>0;
+    const operatingContribution=grossMargin-payrollCost-premisesExpense;
+    const met=saleCount>=p.unitTarget && grossMargin>0&&operatingContribution>0;
     const report={
       month:p.month,monthLabel:'MONTH '+p.month,
       startDay:p.startDay,endDay:p.endDay,partial:p.partial,
@@ -148,6 +153,10 @@
       targetMet:met,turnoverMet:turnover>=p.turnoverTarget,
       marginMet:grossMargin>=p.marginTarget,
       grossAfterStaff:grossMargin-payrollCost,
+      premisesExpense,premisesPaid:-bucket.premisesPayments,
+      premisesInvestment:-bucket.premisesInvestment,
+      premisesArrears:state.premises?.arrears??0,
+      operatingContribution,
       openingCash:p.openingCash,closingCash:state.cash,
       cashIn:inflow,cashOut:outflow,netCashChange:inflow-outflow,
       totalAcquisitions:acquisitions,prepCost,staffCosts:payrollCost,
@@ -200,13 +209,13 @@
     // Volume never rewards repeated loss-making deals. Penalty for a
     // serious shortfall is small and reversible through good customer care.
     let repDelta=0;
-    if(r.targetMet&&r.grossMargin>0)repDelta=1;
+    if(r.targetMet&&r.operatingContribution>0)repDelta=1;
     else if(r.soldUnits<Math.ceil(r.targetUnits*.5))repDelta=-1;
     const old=state.reputationScore;
     state.reputationScore=limit(old+repDelta,0,100);
     repDelta=state.reputationScore-old;
     if(repDelta!==0){
-      const reason=repDelta>0?'Monthly sales goal achieved with positive margin':
+      const reason=repDelta>0?'Monthly sales goal achieved with positive operating contribution':
         'Monthly sales volume significantly below plan';
       const event={day:state.day,delta:repDelta,reason};
       state.reputationHistory.push(event);
@@ -218,9 +227,9 @@
     r.reputationChange=r.closingReputation-r.startingReputation;
     r.staffOutcomes=staffConsequences;
     r.managementComment=r.targetMet?
-      'Company sales target achieved with a positive gross margin.':
+      'Company sales target achieved with a positive operating contribution after recurring premises costs.':
       r.soldUnits>=r.targetUnits?
-        'Volume reached, but trading margin was not positive. Review purchase discipline.':
+        'Volume reached, but costs consumed the trading margin. Review buying, staffing and premises overheads.':
         'Sales target missed. Review stock age, sales performance and operating costs.';
     state.monthlyReports.push(r);
     if(state.monthlyReports.length>HISTORY_LIMIT)state.monthlyReports.shift();
@@ -263,8 +272,14 @@
       !Array.isArray(r.sellers)||r.sellers.length>100||
       !Array.isArray(r.customerTrustEvents)||r.customerTrustEvents.length>200||
       !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
-      !categories.every(k=>whole(r.ledgerBreakdown[k]))||
+      !categories.every(k=>whole(r.ledgerBreakdown[k])||
+        (['premisesPayments','premisesInvestment'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
+    if(r.premisesExpense!==undefined&&(
+      !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
+      !nonneg(r.premisesInvestment)||!nonneg(r.premisesArrears)||
+      !whole(r.operatingContribution)||
+      r.operatingContribution!==r.grossAfterStaff-r.premisesExpense))return false;
     if(r.customerHoldingAtClose!==undefined&&
       (!nonneg(r.customerHoldingAtClose)||r.customerHoldingAtClose>1000))return false;
     if(r.customerPreparationExpense!==undefined&&

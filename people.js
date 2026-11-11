@@ -87,8 +87,8 @@
   const dailyCost=employee=>Math.ceil(employee.monthlySalary/30);
   // Reputation grants more repair bays; existing hires remain employed if
   // reputation later drops, but new hires wait until the tier is restored.
-  const technicianLimit=state=>state.reputationScore>=80?8:
-    state.reputationScore>=40?6:4;
+  const technicianLimit=state=>Math.min(state.reputationScore>=80?8:
+    state.reputationScore>=40?6:4,window.MotorTradePremises?.bays(state)??4);
   const salesLimit=state=>state.reputationScore>=80?3:
     state.reputationScore>=40?2:1;
   const staffLimit=state=>1+salesLimit(state)+technicianLimit(state);
@@ -188,7 +188,7 @@
     const inRole=state.staff.filter(s=>s.role===candidate.role).length;
     if(inRole>=roleLimit(state,candidate.role))
       return failure('role',candidate.role==='technician'?
-        'Technician places are full. Build reputation to unlock more repair bays.':
+        'Technician places are full. Reputation AND an upgraded workshop are required for more repair bays.':
         'You already employ somebody in that role at this dealership.');
     if(state.staff.length>=staffLimit(state)||state.staff.length>=MAX_STAFF)
       return failure('capacity','You have reached your current dealership staffing limit.');
