@@ -551,6 +551,22 @@
     return success('Won '+lot.title+' at £'+bid.toLocaleString('en-GB')+
       '. Buyer fee £'+lot.fee.toLocaleString('en-GB')+' charged. Vehicle added to stock.');
   }
+  // The same seller keeps the same fictional negotiating temperament for
+  // the session. It changes counteroffer movement, never resets after reload.
+  // Hidden reservation prices remain private to the seller.
+  function sellerApproach(state,car){
+    const index=Number(String(car.id).split('-').at(-1))||0;
+    const isDeadline=D.isDealDay(state.day);
+    const motivated=isDeadline&&D.sellerDiscount(state,car.id)>0;
+    const mode=state.day===1?'standard':motivated?'quick':
+      ['standard','quick','firm','standard'][sample(state.day,index,141)%4];
+    const strategies={
+      standard:{label:'PRIVATE OWNER',description:'The owner wants a straightforward sale but will weigh your offer against their expectations. An unrealistic opening price can end the discussion.',firstCounter:125,concession:50},
+      quick:{label:'TIME-SENSITIVE OWNER',description:'The owner would prefer a prompt, uncomplicated sale and may concede more during counteroffers. Their minimum price is still not guaranteed.',firstCounter:100,concession:75},
+      firm:{label:'PRICE-CONSCIOUS OWNER',description:'The owner is not under obvious pressure to sell. Expect a firmer counteroffer and be prepared to walk away if the numbers do not work.',firstCounter:175,concession:25}
+    };
+    return strategies[mode];
+  }
   function acquireSeller(state,id,offer) {
     const car = marketFor(state).sellers.find(v => v.id === id);
     if (!car) return fail('expired','This seller is no longer available. Check the next day’s leads.');
@@ -582,9 +598,10 @@
         ' and walked away. No purchase or fee recorded.'),changed:true};
     }
     const rounds=(previous?.rounds ?? 0)+1;
+    const approach=sellerApproach(state,car);
     const counter = previous
-      ? Math.max(effectiveFloor+25,previous.counter-50)
-      : Math.min(car.ask,effectiveFloor+125);
+      ? Math.max(effectiveFloor+25,previous.counter-approach.concession)
+      : Math.min(car.ask,effectiveFloor+approach.firstCounter);
     state.negotiations[id]={status:'counter',counter,rounds,lastOffer:offer};
     return {...fail('counter','Seller declined £'+offer.toLocaleString('en-GB')+
       ' and countered at £'+counter.toLocaleString('en-GB')+
@@ -849,7 +866,7 @@
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
     wholesaleOffer,disposeStock,hireStaff,decideStaffMorale,
-    market,marketFor,marketStatus,create,normalize,acquireAuction,acquireSeller,walkSeller,
+    market,marketFor,marketStatus,sellerApproach,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     advertise,buyers,counter,completeSale,totalMargin
   });
