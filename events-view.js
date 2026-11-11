@@ -228,7 +228,7 @@
       '<div><small>CASH BALANCE</small><strong>'+money(state.cash)+'</strong></div>'+
       '</div><div class="eo-calendar-grid">'+
       '<section class="eo-schedule"><div><small>UPCOMING · GAME DAY '+next+'</small>'+
-      '<h3>MONTH-END DEAL DAY</h3><strong>'+until+' GAME DAY'+(until===1?'':'S')+' AWAY</strong>'+
+      '<h3>MONTH-END DEAL DAY</h3><strong>FIVE SESSIONS · 09:00–17:00</strong>'+
       '<p>Five sessions from 09:00 to 17:00. Buyers and private sellers may appear, '+
       'but demand is never guaranteed. Auction houses are closed on Deal Day.</p></div>'+
       '<div class="eo-schedule-foot">PREPARE: '+listed+' LISTED · '+
