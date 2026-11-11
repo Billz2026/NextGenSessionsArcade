@@ -85,7 +85,8 @@
     if(note.startsWith('Staff payroll'))return 'payroll';
     if(note.startsWith('Sales commission:'))return 'commission';
     if(note.startsWith('Recruitment and onboarding:'))return 'recruitment';
-    if(note.startsWith('Staff development:'))return 'training';
+    if(note.startsWith('Staff development:')||
+       note.startsWith('Staff welfare intervention:'))return 'training';
     if(note.startsWith('Staff exit and provisional notice payment:'))return 'staffExit';
     if(note.startsWith('Premises overhead payment'))return 'premisesPayments';
     if(note.startsWith('Premises investment:'))return 'premisesInvestment';
