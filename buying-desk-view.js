@@ -110,7 +110,7 @@
     const closed=['done','closed'].includes(kind);
     const approach=E.sellerApproach(state,car);
     const f=figures(car,state,E,offer);
-    const required=car.profile.basePrep+(car.profile.hiddenFault?.cost||0);
+    const required=f.quote.prep;
     const cannot=state.vehicles.length>=state.capacity?
       'FORECOURT FULL — sell stock before buying again.':
       offer+required+E.workshop.reserved(state)>state.cash?
@@ -149,13 +149,7 @@
     const sellers=E.marketFor(state).sellers;
     const active=opts.selectedId&&sellers.some(x=>x.id===opts.selectedId)?
       opts.selectedId:sellers[0]?.id??null;
-    const status=E.marketStatus(state);
-    const next=status.next;
-    const intro=toolbar(state,E,sellers,active)+
-      '<div class="buy-market-note"><span>MARKET ACCESS · <strong>'+
-        esc(status.current.label)+'</strong></span>'+
-      '<small>'+(next?'NEXT LEVEL: '+esc(next.label)+' · '+money(next.minCash)+' starting cash and '+next.minRep+' reputation.':'TOP STOCK TIER UNLOCKED')+
-      ' · Eligibility is based on period reputation and opening-day cash.</small></div>';
+    const intro=toolbar(state,E,sellers,active);
     if(!sellers.length)return {selectedId:null,html:intro+
       '<div class="buy-no-leads"><h2>NO PRIVATE SELLERS THIS SESSION.</h2>'+
       '<p>Lead volume varies with daily footfall and Deal Day conditions. Do not invent a purchase or force a vehicle deal. Return next session or review existing stock.</p>'+
