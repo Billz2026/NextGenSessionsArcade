@@ -2329,3 +2329,21 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
   .eo-section-heading{flex-direction:column;align-items:flex-start}
   .eo-kpis strong{font-size:22px}
 }
+
+
+/* The Events department itself supplies the live event status at every width.
+   The global announcement remains visible in other departments. */
+.career-content:has([data-panel="events"]:not([hidden]))>#events-banner{display:none}
+@media(min-width:1021px) and (max-height:780px){
+  .career-content:has([data-panel="events"]:not([hidden])){padding-top:6px;padding-bottom:9px}
+  [data-panel="events"]>.page-heading{margin-bottom:6px}
+  [data-panel="events"]>.page-heading h1{font-size:34px;margin:2px 0}
+  .eo-heading{padding:7px 10px;margin-bottom:6px}
+  .eo-kpis>div{min-height:65px;padding:8px 9px}
+  .eo-kpis{margin-bottom:6px}
+  .eo-priority{padding:8px 10px}
+  .eo-meeting-sub>div{padding:6px 8px}
+  .eo-meeting-sub{margin-bottom:6px}
+  .eo-timeline{margin-bottom:6px}
+  .eo-activities{margin-bottom:6px}
+}
