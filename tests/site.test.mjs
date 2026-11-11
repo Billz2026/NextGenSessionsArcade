@@ -95,7 +95,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
   assert.match(html, /PRE-ALPHA · v0\.9\.8/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
-  assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
+  assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
   assert.match(css, /\.vehicle-photo-missing\[hidden\]/);
   const registered = {};
@@ -702,7 +702,7 @@ test('forecourt and funds prevent impossible purchases, days refresh leads witho
   app.click('continue');
   state=JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(state.day,2);
-  assert.equal(state.cash,oldCash);
+  assert.equal(state.cash,oldCash-25,'Property rent and utilities are paid even without retail sales');
   assert.equal(state.sold.length,0);
   assert.equal(state.ledger.reduce((a,l)=>a+l.delta,0),state.cash-12500);
   assert.notEqual(app.engine.market(1).auctions[0].id,app.engine.market(2).auctions[0].id);
@@ -935,7 +935,7 @@ test('inspections are charged only once, even if the car is never bought', () =>
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).ledger.length,1);
   app.click('continue');
   const next=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(next.cash,first.cash,'The inspection fee is non-refundable');
+  assert.equal(next.cash,first.cash-25,'Inspection stays charged and day two premises expenses also apply');
   assert.equal(Object.keys(next.reports).length,0,'Expired leads are discarded daily');
   assert.ok(next.ledger.some(x=>x.note.startsWith('Pre-purchase inspection')));
 });
@@ -1435,7 +1435,7 @@ test('day 30 close generates an inbox message and immutable archived review', ()
   assert.equal(state.monthlyReports[0].month,1);
   assert.equal(state.monthlyReports[0].targetMet,false);
   assert.equal(state.reputationScore,4);
-  assert.equal(state.monthlyReports[0].closingCash,12500);
+  assert.equal(state.monthlyReports[0].closingCash,12500-29*25,'29 days of premises overhead since the first game day');
   assert.ok(state.messages.some(m=>m.linkPage==='reports'&&/Month 1 report/.test(m.subject)));
   assert.match(app.nodes.get('event-notice').textContent,/management review ready/i);
   assert.match(app.nodes.get('monthly-report-view').innerHTML,/MONTH 1/);
@@ -2948,10 +2948,10 @@ test('v0.9.7 multiple salespeople unlock at reputation milestones and divide act
   assert.ok(P.hire(s,people[1].id).ok);
   s.day++;
   assert.notEqual(P.salesRep(s,1).id,P.salesRep(s,2).id);
-  assert.equal(P.staffLimit(s),9);
+  assert.equal(P.staffLimit(s),7,'Extra sales places do not create physical repair bays');
   s.reputationScore=80;
   assert.equal(P.salesLimit(s),3);
-  assert.equal(P.staffLimit(s),12);
+  assert.equal(P.staffLimit(s),8,'Further mechanic places require workshop investment');
   assert.ok(P.valid(s,s.day));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
