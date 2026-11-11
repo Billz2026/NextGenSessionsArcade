@@ -1,5 +1,5 @@
 'use strict';
-/* v0.9.34 — My Dealership headquarters and live premises investment desk.
+/* v0.9.35 — My Dealership compact owner HQ and facility investment desk.
  * Every amount is derived from the saved game state and existing economic
  * rules. Rendering never applies an upgrade or changes a saved career.
  */
@@ -57,28 +57,32 @@
     const status=!q.eligible?'hq-unavailable':q.shortfall?'hq-waiting':'hq-ready';
     const what=forecourt?'forecourt spaces':'repair bays';
     const value=q.current+' → '+q.next+' '+what;
+    const message=!q.eligible?'Reach '+q.requiredReputation+
+      ' reputation before authorising this upgrade.':
+      q.shortfall?'Cash shortfall '+cash(q.shortfall)+
+        '; protected repairs, wages and rent must be covered.':
+      'Both reputation and cash requirements are met.';
     return '<article class="hq-upgrade"><header class="hq-upgrade-head"><div>'+
       '<small>FACILITY / '+(forecourt?'STOCK CAPACITY':'VEHICLE PREPARATION')+
       '</small><h3>'+title+'</h3></div><span class="hq-status '+status+'">'+
       escape(unlocked?'ELIGIBLE':!q.eligible?'REPUTATION LOCKED':'CASH REQUIRED')+
       '</span></header>'+
-      '<div class="hq-upgrade-capacity"><strong>'+value+
-      '</strong><span>'+short+'</span></div>'+
-      '<div class="hq-upgrade-costs">'+
+      '<div class="hq-upgrade-capacity"><strong>'+value+'</strong><span>'+short+'</span></div>'+
+      '<div class="hq-upgrade-costs hq-upgrade-headline-costs">'+
       line('ONE-OFF INVESTMENT',cash(q.cost))+
-      line('EXTRA COST PER GAME DAY',cash(q.dailyIncrease))+
-      line('CASH NEEDED INCL. BUFFERS',cash(q.requiredCash))+
-      line('REPUTATION REQUIRED',q.requiredReputation+' / 100')+
-      '</div>'+
-      (!q.eligible?'<div class="hq-upgrade-warning">Reach '+q.requiredReputation+
-        ' reputation before this expansion can be authorised.</div>':
-       q.shortfall?'<div class="hq-upgrade-warning">Cash shortfall '+cash(q.shortfall)+
-        '. Protected repairs, wages and rent are included in the cash test.</div>':
-        '<div class="hq-upgrade-success">Both reputation and cash requirements are met.</div>')+
+      line('EXTRA COST PER GAME DAY',cash(q.dailyIncrease))+'</div>'+
+      '<div class="'+(unlocked?'hq-upgrade-success':'hq-upgrade-warning')+'">'+message+'</div>'+
       '<button type="button" class="trade-button hq-invest-button" '+
       'data-action="upgrade-premises" data-kind="'+kind+'"'+
       (unlocked?'':' disabled')+'>'+
-      (unlocked?'APPROVE '+cash(q.cost)+' INVESTMENT':reason)+'</button></article>';
+      (unlocked?'APPROVE '+cash(q.cost)+' INVESTMENT':reason)+'</button>'+
+      '<details class="hq-upgrade-details"><summary>VIEW INVESTMENT REQUIREMENTS</summary>'+
+      '<div class="hq-upgrade-costs">'+
+      line('CASH NEEDED INCL. BUFFERS',cash(q.requiredCash))+
+      line('REPUTATION REQUIRED',q.requiredReputation+' / 100')+
+      '</div><p>Cash protection includes outstanding workshop preparation, payroll '+
+      'obligations, the required wage cover and additional premises costs.</p>'+
+      '</details></article>';
   }
   function render(state,site){
     const r=figures(state,site),p=r.p,monthly=r.monthly;
