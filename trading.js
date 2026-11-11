@@ -137,6 +137,13 @@
       return M.initialize(legacy,{migrating:true});
     }
     const site=saved.version>=VERSION?saved.premises:SITE.initial();
+    if(saved.version<VERSION&&Array.isArray(saved.staff)){
+      // Existing v9 careers could already employ six or eight technicians.
+      // Honour their paid-for team and fitted capacity rather than suddenly
+      // forcing them into four bays on upgrade to the premises simulation.
+      const existingTechnicians=saved.staff.filter(e=>e?.role==='technician').length;
+      site.workshopLevel=existingTechnicians>6?2:existingTechnicians>4?1:0;
+    }
     if(!SITE.valid(site))return null;
     const expectedCapacity=SITE.capacity({premises:site});
     if ((saved.version===VERSION?saved.capacity!==expectedCapacity:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
