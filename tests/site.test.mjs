@@ -2550,7 +2550,7 @@ test('the sales office UI supports a saved multi-day appointment and collection'
   app.click('deposit-customer',{id:'1'});
   state=JSON.parse(storage.get(STORAGE_KEY));
   assert.equal(state.customerCases['1'].held,250);
-  assert.equal(app.bindings.get('customer-deposits')[0].textContent,'£250');
+  assert.equal(app.financeView.snapshot(state,app.productionEngine).held,250);
   assert.equal(state.sold.length,0);
   const resumed=browser(storage);
   assert.equal(resumed.nodes.get('menu-continue').hidden,false);
@@ -2563,7 +2563,7 @@ test('the sales office UI supports a saved multi-day appointment and collection'
   state=JSON.parse(storage.get(STORAGE_KEY));
   assert.equal(state.sold.length,1);
   assert.equal(state.vehicles.length,0);
-  assert.equal(resumed.bindings.get('customer-deposits')[0].textContent,'£0');
+  assert.equal(resumed.financeView.snapshot(state,resumed.productionEngine).held,0);
   assert.ok(resumed.productionEngine.normalize(JSON.parse(JSON.stringify(state))));
 });
 test('overdue collection cancels a reserved agreement and returns customer holding funds', () => {
@@ -4842,4 +4842,78 @@ test('v0.9.25 deposit and collection keep payment balance and handover correct',
   assert.match(collect,/data-action="handover-customer"/);
   assert.equal(C.balanceDue(c),balance);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+
+test('v0.9.26 new finance dashboard cleanly distinguishes cash, repair reserves and stock',()=>{
+  const app=browser(new Map()),E=app.productionEngine,F=app.financeView;
+  const state=E.create('Finance Snapshot',[]);
+  const initial=F.snapshot(state,E);
+  assert.equal(initial.cash,12500);
+  assert.equal(initial.stock,0);
+  assert.equal(initial.held,0);
+  assert.equal(initial.afterReserve,initial.cash-initial.reserved);
+  assert.equal(initial.cashReconciles,true);
+  const seller=E.marketFor(state).sellers[0];
+  assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
+  const snap=F.snapshot(state,E);
+  assert.equal(snap.stock,state.vehicles[0].cost);
+  assert.equal(snap.afterReserve,state.cash-E.workshop.reserved(state));
+  assert.equal(snap.report.openingCash+snap.report.cashIn-snap.report.cashOut,state.cash);
+  const page=F.summary(state,E).html;
+  for(const word of ['CASH BALANCE','CASH AFTER REPAIR RESERVES',
+    'INVESTED IN UNSOLD VEHICLES','MONTH OPERATING CONTRIBUTION',
+    'WHERE YOUR CASH WENT','FULL MONTHLY REPORT','Customer deposits held separately']){
+    assert.ok(page.includes(word),word);
+  }
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.26 filterable ledger exposes every entry without modifying saved career',()=>{
+  const storage=new Map(),app=browser(storage),E=app.productionEngine,F=app.financeView;
+  app.click('new-career');app.submitCareer('Finance Filtering');
+  const first=E.market(1).sellers[0];
+  app.setInput('seller-offer-'+first.id,first.ask);
+  app.click('buy-seller',{id:first.id});
+  const snapshot=JSON.parse(storage.get(STORAGE_KEY));
+  app.go('finance');
+  assert.match(app.nodes.get('finance-overview').innerHTML,/WHERE YOUR CASH WENT/);
+  assert.match(app.nodes.get('ledger-list').innerHTML,/Direct purchase:/);
+  app.click('filter-ledger',{filter:'in'});
+  assert.match(app.nodes.get('ledger-list').innerHTML,/No transactions match this filter/);
+  app.click('filter-ledger',{filter:'out'});
+  assert.match(app.nodes.get('ledger-list').innerHTML,/Direct purchase:/);
+  app.click('filter-ledger',{filter:'all'});
+  assert.deepEqual(JSON.parse(storage.get(STORAGE_KEY)),snapshot);
+  const s=E.create('Nine Ledger Rows',[]);
+  s.ledger=Array.from({length:9},(_,i)=>({
+    day:i+1,delta:i===0?0:i%2?125:-85,
+    note:i===0?'Part-exchange acquisition: ledger record':'Other cash movement '+i
+  }));
+  const small=F.ledger(s);
+  assert.match(small.html,/SHOWING 6 OF 9 ENTRIES/);
+  assert.match(small.html,/VIEW ALL 9 ENTRIES/);
+  assert.equal((small.html.match(/class="fin-entry"/g)||[]).length,6);
+  const all=F.ledger(s,{expanded:true});
+  assert.equal((all.html.match(/class="fin-entry"/g)||[]).length,9);
+  assert.match(all.html,/£0 · NON-CASH/);
+  assert.match(F.ledger(s,{filter:'noncash'}).html,/Part-exchange acquisition/);
+  assert.doesNotMatch(F.ledger(s,{filter:'in'}).html,/Part-exchange acquisition/);
+});
+
+test('v0.9.26 finance alerts distinguish accrued bills from bank cash and held deposits',()=>{
+  const app=browser(new Map()),E=app.productionEngine,F=app.financeView;
+  const s=E.create('Bills Overview',[]);
+  s.payrollArrears=600;s.premises.arrears=125;
+  const data=F.snapshot(s,E);
+  assert.equal(data.arrears,725);
+  assert.equal(data.cash,12500);
+  const ui=F.summary(s,E).html;
+  assert.match(ui,/UNPAID BILLS: £725/);
+  assert.match(ui,/Customer deposits held separately/);
+  assert.match(ui,/not statutory net profit/);
+  assert.match(html,/id="finance-overview"/);
+  assert.match(html,/id="finance-ledger-toolbar"/);
+  assert.match(html,/class="fin-help"/);
+  assert.match(css,/\.fin-primary\{display:grid/);
 });
