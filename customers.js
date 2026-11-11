@@ -114,8 +114,9 @@
     if(!c||!v||c.status!=='arrived')return fail('stage','The customer must attend a viewing before a test drive.');
     const key='test-drive|'+c.id;
     const grade=v.profile?.grade||3;
-    const pass=chance(key,clamp(81-(grade>=4?19:0)+
-      Math.floor(state.reputationScore/12),35,94));
+    // An attended test drive is a strong buying signal. Condition still matters.
+    const pass=chance(key,clamp(91-(grade>=4?15:0)+
+      Math.floor(state.reputationScore/12),65,97));
     append(state,c,pass?'test-drive-pass':'test-drive-reject',
       pass?'Customer wants to discuss terms':'Customer did not proceed');
     if(!pass){
@@ -139,9 +140,9 @@
         ' cannot increase their offer beyond their budget.'};
     }
     const receptive=chance('counter|'+c.id+'|'+c.counters,
-      clamp(75+(state.reputationScore>=40?6:0)-(c.counters-1)*15,15,90));
+      clamp(82+(state.reputationScore>=40?6:0)-(c.counters-1)*12,35,94));
     if(!receptive){
-      const walk=chance('walk|'+c.id+'|'+c.counters,58);
+      const walk=chance('walk|'+c.id+'|'+c.counters,25);
       append(state,c,'counter-rejected',walk?'Customer walked away':'Customer declined increase');
       if(walk){
         c.status='lost';
@@ -269,7 +270,7 @@
         continue;
       }
       if(c.status==='booked'&&state.day>=c.appointmentDay){
-        if(chance('show|'+c.id,clamp(77+Math.floor(state.reputationScore/9),65,93))){
+        if(chance('show|'+c.id,clamp(88+Math.floor(state.reputationScore/12),82,97))){
           c.status='arrived';
           append(state,c,'arrived','Attended appointment');
           notices.push(c.name+' arrived for the viewing of stock '+c.vehicleId+'.');
@@ -277,16 +278,18 @@
           notices.push(failCase(state,c,'no-show','Customer failed to attend their appointment.'));
         }
       }else if(c.status==='reserved'&&state.day>=c.collectionDay){
-        if(chance('collect|'+c.id,83)){
+        // Depositors have agreed the price, passed a drive and paid £250.
+        // A genuine withdrawal is possible, but should be exceptional.
+        if(chance('collect|'+c.id,96)){
           c.status='collectable';
           append(state,c,'collection-due','Customer ready to collect');
           notices.push(c.name+' is ready to collect stock '+c.vehicleId+'.');
         }else{
           notices.push(failCase(state,c,'deposit-refunded','Customer cancelled before collection.'));
         }
-      }else if(c.status==='collectable'&&state.day>c.collectionDay+2){
+      }else if(c.status==='collectable'&&state.day>c.collectionDay+5){
         notices.push(failCase(state,c,'deposit-refunded',
-          'Customer withdrew after the agreed collection date passed.'));
+          'Customer withdrew after the collection grace period passed.'));
       }else if(['enquiry','arrived','discussing','agreed'].includes(c.status)&&
         c.createdDay<state.day){
         notices.push(failCase(state,c,'expired','Customer enquiry expired without a completed agreement.'));

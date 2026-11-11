@@ -24,13 +24,15 @@
   const labels={
     sales:'Influences buyer offers and customer-service reputation. Commission: 3% of positive gross deal margin.',
     buyer:'Can secure more competitive private-seller agreements and provide auction rival-bid intelligence.',
-    technician:'Can reduce the basic labour/preparation allowance. Additional fault and parts costs remain.'
+    technician:'Runs one assigned in-house repair at a time. More technicians enable parallel preparation, but wages and parts still cost money.'
   };
   function applicants(state,P){
     const candidates=P.applicants(state.day);
     return candidates.map(candidate=>{
-      const filled=state.staff.some(e=>e.role===candidate.role);
-      const paused=state.staff.length>=P.MAX_STAFF;
+      const already=state.staff.some(e=>e.name===candidate.name);
+      const filled=state.staff.filter(e=>e.role===candidate.role).length>=
+        P.roleLimit(state,candidate.role);
+      const paused=state.staff.length>=P.staffLimit(state);
       const traitsHtml=traits[candidate.role].map(([a,k])=>bar(a,candidate.skills[k])).join('');
       return '<article class="people-card">'+header(candidate)+
         '<div class="people-traits">'+traitsHtml+'</div>'+
@@ -38,20 +40,24 @@
         '<div class="people-card-footer"><span>ONBOARDING '+gbp(P.HIRING_FEE)+
         ' · STARTS NEXT DAY</span>'+
         '<button type="button" class="trade-button" data-action="hire-staff" data-id="'+
-          esc(candidate.id)+'"'+(filled||paused?' disabled':'')+'>'+
-          (filled?'ROLE FILLED':paused?'TEAM FULL':'HIRE EMPLOYEE')+'</button></div></article>';
+          esc(candidate.id)+'"'+(already||filled||paused?' disabled':'')+'>'+
+          (already?'ALREADY HIRED':filled?(candidate.role==='technician'?'REPAIR BAYS FULL':'ROLE FILLED'):
+            paused?'TEAM FULL':'HIRE EMPLOYEE')+'</button></div></article>';
     }).join('');
   }
   function roster(state,P){
     if(!state.staff.length)return '<div class="trade-empty"><h2>OWNER OPERATED.</h2>'+
       '<p>You handle vehicle sourcing, sales and workshop coordination. Hiring adds expertise and ongoing expenses.</p></div>';
     return state.staff.map(employee=>{
-      const active=P.active(state,employee.role)?.id===employee.id;
+      const active=P.isActive(state,employee);
+      const assigned=employee.role==='technician'?state.vehicles.find(v=>
+        v.workshop?.technicianId===employee.id&&v.workshop.method==='internal'&&
+        ['in-progress','quality-check'].includes(v.workshop.stage)):null;
       const status=state.payrollArrears>0?'PAYROLL OVERDUE':
         state.day<employee.startDay?'STARTS DAY '+employee.startDay:
         employee.trainingUntil!==null&&state.day<employee.trainingUntil?
         'TRAINING UNTIL DAY '+employee.trainingUntil:
-        active?'AVAILABLE':'UNAVAILABLE';
+        active?(assigned?'ASSIGNED TO STOCK '+assigned.id:'AVAILABLE'):'UNAVAILABLE';
       return '<article class="people-card">'+header(employee)+
         '<div class="people-meta"><span>'+esc(status)+'</span>'+
         '<span>MORALE '+employee.morale+'/100</span>'+
@@ -107,11 +113,18 @@
   function totals(state,P){
     const wages=state.staff.reduce((sum,employee)=>sum+P.dailyCost(employee),0);
     const total=state.staff.reduce((sum,employee)=>sum+employee.monthlySalary,0);
+    const technicians=state.staff.filter(s=>s.role==='technician').length;
+    const next=state.reputationScore<40?'6 technician places at 40 reputation':
+      state.reputationScore<80?'8 technician places at 80 reputation':null;
     return '<div class="people-metrics"><div><span>EMPLOYEES</span><strong>'+
-      state.staff.length+' / '+P.MAX_STAFF+'</strong></div>'+
+      state.staff.length+' / '+P.staffLimit(state)+'</strong></div>'+
       '<div><span>DAILY WAGE SETTLEMENT</span><strong>'+gbp(wages)+'</strong></div>'+
       '<div><span>MONTHLY BASE PAY</span><strong>'+gbp(total)+'</strong></div>'+
-      '<div><span>UNPAID PAYROLL / NOTICE</span><strong>'+gbp(state.payrollArrears)+'</strong></div></div>';
+      '<div><span>UNPAID PAYROLL / NOTICE</span><strong>'+gbp(state.payrollArrears)+'</strong></div>'+
+      '<div><span>IN-HOUSE TECHNICIANS</span><strong>'+technicians+' / '+P.technicianLimit(state)+'</strong></div>'+
+      '</div><p class="trade-alert">You can hire four technicians immediately, subject to wage cover. '+
+      'Each works on a separate vehicle, alongside one sales executive and one buyer. '+
+      (next?'NEXT UNLOCK: '+next+'.':'All eight technician places are unlocked.')+'</p>';
   }
   window.MotorTradePeopleView=Object.freeze({applicants,roster,reputation,totals});
 })();

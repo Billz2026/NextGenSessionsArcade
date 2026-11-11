@@ -98,7 +98,7 @@
           '<span>BALANCE DUE AT COLLECTION</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
           '<p>Collection booked for <strong>DAY '+c.collectionDay+'</strong>. '+
           'Additional customer-specific preparation charged: '+cash(c.prepCost||0)+'. '+
-          'Buyer withdrawal can result in fair retention against these recorded costs; dealer fault means a full deposit refund. '+
+          'After paying the deposit, customers normally collect; cancellations are uncommon. Buyer withdrawal can result in fair retention against these recorded costs; dealer fault means a full deposit refund. '+
           'No revenue or completed vehicle sale is recorded until handover.</p></div>'+buyerWithdraw+' '+cancel;
         break;
       case 'collectable':
@@ -108,7 +108,7 @@
           '<span>Part-exchange allowance</span><strong>'+cash(c.allowance||0)+'</strong>'+
           '<span>Deposit already paid</span><strong>'+cash(c.held)+'</strong>'+
           '<span>BALANCE TO COLLECT TODAY</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
-          '<p>'+esc(c.name)+' is collecting. Receive only the remaining balance. The previously held deposit transfers to the sale ledger without being charged twice.</p>'+
+          '<p>'+esc(c.name)+' is ready to collect. Complete handover within five game days after the agreed collection date. Receive only the remaining balance; the held deposit transfers without being charged twice.</p>'+
           '<button type="button" class="trade-button" data-action="handover-customer" data-mode="'+
           c.preferredMode+'" data-id="'+id+'">COLLECT '+cash(C.balanceDue(c))+' / HANDOVER</button></div>'+
           buyerWithdraw+' '+cancel;

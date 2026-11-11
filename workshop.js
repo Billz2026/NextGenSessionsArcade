@@ -59,10 +59,10 @@
   }
   function quote(state,vehicle,method){
     if(!methods.includes(method))return null;
-    const tech=P.active(state,'technician');
+    const tech=method==='internal'?P.availableTechnicians(state)[0]:null;
     if(method==='internal'&&!tech)return null;
     const base=vehicle.prepBudget;
-    const saving=method==='internal'?P.labourSaving(state,vehicle):0;
+    const saving=method==='internal'?P.labourSaving(state,vehicle,tech):0;
     const supplement=method==='external'?Math.round((base*.12+75)/5)*5:0;
     const cost=base-saving+supplement;
     const grade=vehicle.profile?.grade??3;
@@ -80,10 +80,9 @@
     if(vehicle.status!=='acquired'||vehicle.workshop.stage!=='quoted')
       return fail('stage','Obtain a workshop assessment before booking repairs.');
     const q=quote(state,vehicle,method);
-    if(!q)return fail('staff','An available prep technician is required for internal repairs. Use an external garage instead.');
-    if(method==='internal'&&state.vehicles.some(v=>v.id!==id&&
-       v.workshop?.stage==='in-progress'&&v.workshop.method==='internal'))
-      return fail('busy','Your technician already has a vehicle in progress. Complete it or outsource this one.');
+    if(!q)return method==='internal'&&P.activeTeam(state,'technician').length?
+      fail('busy','All available technicians are assigned to repair or quality-check jobs. Finish a job or outsource this one.'):
+      fail('staff','An available prep technician is required for internal repairs. Use an external garage instead.');
     if(method==='external'&&state.vehicles.filter(v=>v.id!==id&&
        v.workshop?.stage==='in-progress'&&v.workshop.method==='external').length>=2)
       return fail('busy','External garage capacity is full. Try again when a job is completed.');
@@ -106,7 +105,8 @@
     for(const v of state.vehicles){
       const job=v.workshop;
       if(!job||job.stage!=='in-progress'||state.day<=job.startedDay)continue;
-      if(job.method==='internal'&&P.active(state,'technician')?.id!==job.technicianId){
+      if(job.method==='internal'&&!P.isActive(state,
+        state.staff.find(s=>s.id===job.technicianId&&s.role==='technician'))){
         job.paused=true;
         events.push(v.title+' repair paused: assigned technician is unavailable.');
         continue;
@@ -170,7 +170,7 @@
     j.paused=false;
     v.prepSpent=j.repairCost;
     v.status='prepared';
-    if(j.method==='internal')P.worked(state);
+    if(j.method==='internal')P.worked(state,j.technicianId);
     return ok(v.title+' passed final quality control. £'+j.repairCost+
       ' in repair costs recorded. It is now ready to advertise.');
   }

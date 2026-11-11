@@ -57,22 +57,22 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=2/);
-  assert.match(html, /people\.js\?v=3/);
+  assert.match(html, /people\.js\?v=4/);
   assert.match(html, /monthly\.js\?v=5/);
   assert.match(html, /events\.js\?v=2/);
-  assert.match(html, /workshop\.js\?v=1/);
-  assert.match(html, /customers\.js\?v=2/);
-  assert.match(html, /vehicle-photos\.js\?v=4/);
+  assert.match(html, /workshop\.js\?v=2/);
+  assert.match(html, /customers\.js\?v=3/);
+  assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=11/);
-  assert.match(html, /customers-view\.js\?v=2/);
-  assert.match(html, /workshop-view\.js\?v=2/);
+  assert.match(html, /customers-view\.js\?v=3/);
+  assert.match(html, /workshop-view\.js\?v=3/);
   assert.match(html, /events-view\.js\?v=3/);
   assert.match(html, /monthly-view\.js\?v=5/);
-  assert.match(html, /people-view\.js\?v=1/);
+  assert.match(html, /people-view\.js\?v=2/);
   assert.match(html, /vehicle-view\.js\?v=3/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
@@ -88,7 +88,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.4/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.5/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -451,7 +451,7 @@ test('v0.9.4 mild hybrids are not advertised as full hybrids',()=>{
 
 test('v0.9.4 photo source registry is stable and paint never chosen to fit photograph',()=>{
   const {market:M,photos:P}=browser(new Map());
-  assert.equal(P.LIBRARY.length,16);
+  assert.equal(P.LIBRARY.length,19);
   for(const shot of P.LIBRARY){
     assert.match(shot.file,/\.jpg$/);
     assert.match(P.source(shot),/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
@@ -1950,6 +1950,44 @@ test('recruiting a technician changes workshop prices and internal bay capacity'
   assert.equal(s.vehicles.filter(x=>x.workshop.stage==='in-progress').length,2);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
+test('four mechanics start available and handle four separate in-house repair jobs', () => {
+  const E=browser(new Map()).productionEngine,P=E.people,s=E.create('Four Bay Motors',[]);
+  const candidates=P.applicants(1).filter(x=>x.role==='technician');
+  assert.equal(candidates.length,4);
+  assert.equal(P.technicianLimit(s),4);
+  assert.equal(P.staffLimit(s),6);
+  for(const candidate of candidates)assert.ok(P.hire(s,candidate.id).ok);
+  assert.equal(s.staff.length,4);
+  assert.equal(P.hire(s,candidates[0].id).ok,false);
+  // Test fixture injects investment capital for stock only, not production gameplay.
+  s.cash=200000;
+  for(let day=2;day<=25&&s.vehicles.length<4;day++){
+    s.day=day;
+    for(const car of E.market(day).sellers){
+      if(s.vehicles.length===4)break;
+      E.acquireSeller(s,car.id,car.ask);
+    }
+  }
+  assert.equal(s.vehicles.length,4);
+  for(const v of s.vehicles){
+    assert.ok(E.assessStock(s,v.id).ok);
+    assert.ok(E.startPrep(s,v.id,'internal').ok);
+  }
+  assert.equal(new Set(s.vehicles.map(v=>v.workshop.technicianId)).size,4);
+  assert.equal(P.availableTechnicians(s).length,0);
+  assert.ok(P.valid(s,s.day));
+  s.reputationScore=40;
+  assert.equal(P.technicianLimit(s),6);
+  assert.equal(P.staffLimit(s),8);
+  s.day=29;
+  const additional=P.applicants(s.day).find(x=>x.role==='technician'&&
+    !s.staff.some(e=>e.name===x.name));
+  assert.ok(additional);
+  assert.ok(P.hire(s,additional.id).ok,'Higher reputation unlocks more technicians');
+  s.reputationScore=80;
+  assert.equal(P.technicianLimit(s),8);
+  assert.equal(P.staffLimit(s),10);
+});
 test('staff training pauses internal jobs, but transfer can rescue a stalled workshop', () => {
   const E=browser(new Map()).engine,P=E.people,s=E.create('Repair Team',[]);
   const tech=P.applicants(1).find(x=>x.role==='technician');
@@ -2307,7 +2345,7 @@ test('customer cancellation always returns held deposits without adding or losin
 test('some customers cancel before collecting despite a paid reservation', () => {
   const E=browser(new Map()).productionEngine,C=E.customers;
   let cancelled=null;
-  for(let i=0;i<180;i++){
+  for(let i=0;i<480;i++){
     const {state,v}=readyForRetail(E,'Deposit Cancel '+i);
     if(!C.demand(state,v))continue;
     E.openCustomer(state,v.id);
@@ -2331,10 +2369,32 @@ test('some customers cancel before collecting despite a paid reservation', () =>
   assert.equal(C.stats(state,1,state.day).refunds,c.prepCost<250?1:0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
+test('paid reservations usually proceed to collection', () => {
+  const E=browser(new Map()).productionEngine,C=E.customers;
+  let booked=0,collected=0;
+  for(let i=0;i<240;i++){
+    const {state,v}=readyForRetail(E,'Buyer Commitment '+i);
+    if(!C.demand(state,v))continue;
+    E.openCustomer(state,v.id);
+    E.bookCustomer(state,v.id);
+    const c=C.caseFor(state,v.id);
+    state.day=c.appointmentDay;
+    E.advanceCustomers(state);
+    if(c.status!=='arrived'||!E.testDrive(state,v.id).ok)continue;
+    if(!E.agreeCustomer(state,v.id,'cash',null).ok)continue;
+    if(!E.depositCustomer(state,v.id).ok)continue;
+    booked++;
+    state.day=c.collectionDay;
+    E.advanceCustomers(state);
+    if(c.status==='collectable')collected++;
+  }
+  assert.ok(booked>=30,'Include an adequate sample of deposited deals');
+  assert.ok(collected/booked>=0.9,'Paid buyer cancellations must be rare');
+});
 test('counteroffer rejection and walkaways mean negotiations do not guarantee extra money', () => {
   const E=browser(new Map()).productionEngine,C=E.customers;
   let accepted=0,rejected=0,walked=0;
-  for(let i=0;i<175;i++){
+  for(let i=0;i<1200&&(accepted===0||rejected===0||walked===0);i++){
     const {state,v}=readyForRetail(E,'Counter Trader '+i);
     if(!C.demand(state,v))continue;
     E.openCustomer(state,v.id);
@@ -2474,7 +2534,7 @@ test('overdue collection cancels a reserved agreement and returns customer holdi
   state.day=c.collectionDay;
   E.advanceCustomers(state);
   if(c.status==='collectable'){
-    state.day=c.collectionDay+3;
+    state.day=c.collectionDay+6;
     const notices=E.advanceCustomers(state);
     assert.equal(c.status,'lost');
     assert.ok(notices.some(x=>x.includes('retained')||x.includes('refunded')));
@@ -2528,7 +2588,7 @@ test('the player can occupy all four forecourt spaces but a fifth purchase is bl
 
 test('real-photo cards never use an incorrect model, generation or paint colour', () => {
   const app=browser(new Map()),P=app.photos,V=app.cards;
-  assert.equal(P.LIBRARY.length,16);
+  assert.equal(P.LIBRARY.length,19);
   for(const item of P.LIBRARY){
     assert.ok(item.file.endsWith('.jpg'));
     assert.ok(item.author&&item.license&&item.licenseUrl);

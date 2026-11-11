@@ -79,7 +79,25 @@
       color:'White',fuel:'Electric',file:'2022-01-28 Tesla Model 3.jpg',
       author:'Lobester00',license:'CC BY-SA 4.0',
       licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
-      note:'Pre-2024 body style and white paint; photographed market-spec trim may differ'}
+      note:'Pre-2024 body style and white paint; photographed market-spec trim may differ'},
+    {id:'corsa-e-energy-red',model:'Vauxhall Corsa',generation:'E',start:2015,end:2019,
+      color:'Red',fuel:'Petrol',
+      file:'2019 Vauxhall Corsa Energy - 1398cc 1.4 (90PS) Petrol - Red - 01-2025, Front.jpg',
+      author:'Harvey Bold',license:'CC0 1.0',
+      licenseUrl:'https://creativecommons.org/publicdomain/zero/1.0/',
+      note:'Corsa E body and red paint; photographed 2019 Energy 1.4, trim and year may differ'},
+    {id:'rio-yb-red',model:'Kia Rio',generation:'YB',start:2017,end:2022,
+      color:'Red',
+      file:'2017 Kia Rio (YB) S 5-door hatchback (2017-07-15) 01.jpg',
+      author:'EurovisionNim',license:'CC BY-SA 4.0',
+      licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'Rio YB body and red paint; photographed Australian S trim, specifications may differ'},
+    {id:'yaris-xp130-facelift-silver',model:'Toyota Yaris',generation:'XP130 facelift',
+      start:2017,end:2019,color:'Silver',fuel:'Petrol',
+      file:'2018 Toyota Yaris LE in Classic Silver Metallic, Front Right, 04-03-2022.jpg',
+      author:'Elise240SX',license:'CC BY-SA 4.0',
+      licenseUrl:'https://creativecommons.org/licenses/by-sa/4.0/',
+      note:'Same XP130 2017 facelift hatchback in silver; North American LE differs in trim'}
   ]);
   const PHOTO_LIBRARY=Object.freeze(IMG.map(x=>Object.freeze(x)));
   // The generation catalogue covers the entire fictional 2026 stock pool.

@@ -4,6 +4,14 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+## v0.9.5 — Four-bay workshop, more committed buyers and photographic coverage (11 November 2026)
+
+- **Four in-house mechanics from day one**, alongside up to one salesperson and one vehicle buyer. Each mechanic runs one distinct vehicle repair, with named assignments and correct training/payroll pauses. A job awaiting final quality control still occupies its assigned technician until it is closed or transferred out. Future workshop slots grow to six technicians at 40 reputation and eight at 80 reputation. Hiring requires a protected one-week wage buffer and onboarding fee; hiring everybody at once is optional and expensive.
+- **More reasonable customer conversion:** viewing attendance rises from about 77% to about 88% for a new trader; the successful test drive probability is now about 91% for grade 1–3 vehicles and about 76% for grade 4–5, modified by reputation. Negotiation counteroffers are less likely to trigger a full walkaway. A customer who has agreed terms and paid a £250 deposit is now 96% likely to proceed to collection, up from 83%, with a five-day collection grace period rather than two.
+- **Deposit fairness is unchanged:** £250 is held separately and cannot be spent until handover. On buyer withdrawal, only recorded, demonstrable customer-specific expense may be retained. Dealer-caused cancellations refund all customer funds, and legacy fully refundable reservations keep their existing promise. Nothing automatically turns an advance payment into business revenue.
+- **More real photos:** three additional source-checked Wikimedia images (red Corsa E, red Kia Rio YB, silver facelift Toyota Yaris XP130) bring the curated photo library to 19. Cards still require matching generation, colour, year and known fuel; unmatched cars show an explicit photo-unavailable fallback. The photograph never claims to depict the exact fictional car. Image attribution and licence links remain visible.
+- Existing career saves retain schema version 9 and are not reset. New Node regression cases cover parallel repairs, staffing unlocks and the relative reliability of paid reservations.
+
 ## v0.9.4 — Vehicle specification and photo-source audit (10 November 2026)
 
 **Accuracy must be evidenced, not implied.** Model/year/trim/powertrain claims are sourced independently from the invented individual-car data. A separate `vehicle-accuracy.js` source registry records source links against *exact title, fuel, transmission and powertrain* combinations. Changing any of those fields automatically reverts the car to **review pending**. The full vehicle report makes that status visible and links to source evidence when available.

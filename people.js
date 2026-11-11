@@ -5,7 +5,7 @@
  * are not modelled. Effects apply from the employee's second game day.
  */
 (() => {
-  const MAX_STAFF=3, HIRING_FEE=150, TRAINING_FEE=275;
+  const MAX_STAFF=10, HIRING_FEE=150, TRAINING_FEE=275;
   const ROLES=['sales','buyer','technician'];
   const CANDIDATES=Object.freeze({
     sales:[
@@ -24,7 +24,15 @@
       ['Michael Turner',10,11,13,13,15,1925,3],
       ['Ryan Foster',9,10,14,10,11,1650,1],
       ['Priya Morgan',17,12,17,18,19,2700,7],
-      ['Ben Walker',13,9,12,13,14,2250,4]
+      ['Ben Walker',13,9,12,13,14,2250,4],
+      ['Oliver Hughes',15,12,14,15,17,2380,5],
+      ['Aisha Khan',16,12,17,17,18,2520,6],
+      ['Chloe Baker',11,10,15,13,16,1820,2],
+      ['Nathan Green',14,11,13,16,15,2220,5],
+      ['Ella Davies',12,12,16,14,17,1950,3],
+      ['Yusuf Ahmed',18,14,15,18,18,2875,9],
+      ['Leah Morris',15,11,17,15,17,2375,6],
+      ['Marcus Allen',10,10,13,11,15,1750,2]
     ]
   });
   const integer=n=>Number.isSafeInteger(n);
@@ -51,8 +59,8 @@
     return ROLES.flatMap((role,index)=>{
       const source=CANDIDATES[role];
       const position=(cycle+index)%source.length;
-      return [0,1].map(i=>{
-        const v=source[(position+i*2)%source.length];
+      return Array.from({length:role==='technician'?4:2},(_,i)=>{
+        const v=source[(position+(role==='technician'?i:i*2))%source.length];
         const [name,ability,negotiation,care,knowledge,reliability,salary,experience]=v;
         const id='C-'+cycle+'-'+role+'-'+i;
         const skills={
@@ -67,10 +75,23 @@
     });
   }
   const dailyCost=employee=>Math.ceil(employee.monthlySalary/30);
-  function active(state,role){
-    if(state.payrollArrears>0)return null;
-    return state.staff.find(s=>s.role===role&&state.day>=s.startDay&&
-      (s.trainingUntil===null||state.day>=s.trainingUntil))||null;
+  // Reputation grants more repair bays; existing hires remain employed if
+  // reputation later drops, but new hires wait until the tier is restored.
+  const technicianLimit=state=>state.reputationScore>=80?8:
+    state.reputationScore>=40?6:4;
+  const staffLimit=state=>2+technicianLimit(state);
+  const roleLimit=(state,role)=>role==='technician'?technicianLimit(state):1;
+  const isActive=(state,employee)=>!!employee&&state.payrollArrears===0&&
+    state.day>=employee.startDay&&
+    (employee.trainingUntil===null||state.day>=employee.trainingUntil);
+  const activeTeam=(state,role)=>state.staff.filter(s=>s.role===role&&isActive(state,s));
+  const active=(state,role)=>activeTeam(state,role)[0]||null;
+  function availableTechnicians(state){
+    const occupied=new Set((state.vehicles||[]).filter(v=>
+      v.workshop?.method==='internal'&&
+      ['in-progress','quality-check'].includes(v.workshop.stage))
+      .map(v=>v.workshop.technicianId));
+    return activeTeam(state,'technician').filter(s=>!occupied.has(s.id));
   }
   function buyerDiscount(state){
     const buyer=active(state,'buyer');
@@ -89,8 +110,7 @@
     if(!seller)return 0;
     return clamp((seller.skills.sales-9)*20,0,180);
   }
-  function labourSaving(state,vehicle){
-    const tech=active(state,'technician');
+  function labourSaving(state,vehicle,tech=active(state,'technician')){
     if(!tech)return 0;
     // Only the basic labour/coordination share can improve, not parts or
     // undisclosed damage. Up to 12% of the known prep budget.
@@ -112,10 +132,15 @@
   function hire(state,id){
     const candidate=applicants(state.day).find(c=>c.id===id);
     if(!candidate)return failure('expired','That applicant is no longer available this week.');
-    if(state.staff.some(s=>s.role===candidate.role))
-      return failure('role','You already employ somebody in that role at this dealership.');
-    if(state.staff.length>=MAX_STAFF)
-      return failure('capacity','This small dealership supports up to three employees.');
+    if(state.staff.some(s=>s.name===candidate.name))
+      return failure('duplicate','That applicant is already on your payroll.');
+    const inRole=state.staff.filter(s=>s.role===candidate.role).length;
+    if(inRole>=roleLimit(state,candidate.role))
+      return failure('role',candidate.role==='technician'?
+        'Technician places are full. Build reputation to unlock more repair bays.':
+        'You already employ somebody in that role at this dealership.');
+    if(state.staff.length>=staffLimit(state)||state.staff.length>=MAX_STAFF)
+      return failure('capacity','You have reached your current dealership staffing limit.');
     const weeklyCover=(state.staff.reduce((n,e)=>n+dailyCost(e),0)+dailyCost(candidate))*7;
     const required=HIRING_FEE+reserve(state)+weeklyCover+state.payrollArrears;
     if(state.cash<required)return failure('cash','Recruitment requires £'+required.toLocaleString('en-GB')+
@@ -227,8 +252,9 @@
     return {reputationDelta:applied,reason,commission,
       salespersonId:worker?.id??null,salespersonName:worker?.name??'Owner-managed'};
   }
-  function worked(state){
-    const tech=active(state,'technician');
+  function worked(state,technicianId=null){
+    const tech=technicianId===null?active(state,'technician'):
+      state.staff.find(s=>s.id===technicianId);
     if(tech){tech.workDone++;tech.morale=clamp(tech.morale+1,0,100);}
   }
   function valid(state,day){
@@ -238,10 +264,10 @@
        !integer(state.payrollArrears)||state.payrollArrears<0||
        state.payrollArrears>10000000||
        !Array.isArray(state.reputationHistory)||state.reputationHistory.length>90)return false;
-    const keys=new Set(),roles=new Set();
+    const keys=new Set(),names=new Set(),roleCounts={sales:0,buyer:0,technician:0};
     for(const s of state.staff){
       if(!s||!integer(s.id)||s.id<1||s.id>=state.nextStaffId||keys.has(s.id)||
-         !ROLES.includes(s.role)||roles.has(s.role)||
+         !ROLES.includes(s.role)||names.has(s.name)||
          typeof s.name!=='string'||s.name.length<2||s.name.length>60||
          typeof s.candidateId!=='string'&&typeof s.candidateId!=='undefined'||
          !integer(s.monthlySalary)||s.monthlySalary<1000||s.monthlySalary>7000||
@@ -255,8 +281,9 @@
          !s.skills||typeof s.skills!=='object'||!Object.values(s.skills).every(skill)||
          !['sales','negotiation','care','knowledge','diagnostics','efficiency','reliability']
            .every(k=>skill(s.skills[k])))return false;
-      keys.add(s.id);roles.add(s.role);
+      keys.add(s.id);names.add(s.name);roleCounts[s.role]++;
     }
+    if(roleCounts.sales>1||roleCounts.buyer>1||roleCounts.technician>8)return false;
     return state.reputationHistory.every(x=>x&&integer(x.day)&&x.day>=1&&x.day<=day&&
       integer(x.delta)&&x.delta>=-10&&x.delta<=10&&
       typeof x.reason==='string'&&x.reason.length<=160);
@@ -269,7 +296,8 @@
   }
   window.MotorTradePeople=Object.freeze({
     MAX_STAFF,HIRING_FEE,TRAINING_FEE,ROLES,tier,legacyScore,initial,
-    applicants,dailyCost,active,buyerDiscount,buyerEstimate,salesBonus,
+    applicants,dailyCost,active,isActive,activeTeam,availableTechnicians,
+    technicianLimit,staffLimit,roleLimit,buyerDiscount,buyerEstimate,salesBonus,
     labourSaving,hire,train,release,advance,sale,worked,valid,clone
   });
 })();
