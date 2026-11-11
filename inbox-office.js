@@ -142,16 +142,16 @@
       changed=emit(state,{from:'ACCOUNTS OFFICE',category:'reports',
         subject:'Weekly management accounts · Week '+period,
         preview:summary,
-        body:'OWNER FINANCIAL BRIEF — GAME WEEK '+period+'\\n\\n'+summary+
-          '\\nGross trading margin this month: '+money(statement.grossMargin)+
-          '.\\nOperating contribution after recorded staff and premises expenses: '+
+        body:'OWNER FINANCIAL BRIEF — GAME WEEK '+period+'\n\n'+summary+
+          '\nGross trading margin this month: '+money(statement.grossMargin)+
+          '.\nOperating contribution after recorded staff and premises expenses: '+
           money(statement.operatingContribution)+
-          '.\\nStaff wage arrears: '+money(state.payrollArrears)+
-          '.\\nUnpaid rent and utilities: '+money(state.premises?.arrears||0)+
-          '.\\nUnit target progress: '+(shortfall?shortfall+' still required':
+          '.\nStaff wage arrears: '+money(state.payrollArrears)+
+          '.\nUnpaid rent and utilities: '+money(state.premises?.arrears||0)+
+          '.\nUnit target progress: '+(shortfall?shortfall+' still required':
             statement.soldUnits>statement.targetUnits?'exceeded by '+
               (statement.soldUnits-statement.targetUnits):'reached')+
-          '.\\n\\nFigures are from the current business ledger and monthly report. This is an advisory summary, not a payment request or statutory account.',
+          '.\n\nFigures are from the current business ledger and monthly report. This is an advisory summary, not a payment request or statutory account.',
         linkPage:'reports',reference:'weekly-brief:'+week})||changed;
     }
     if(state.payrollArrears>0)
