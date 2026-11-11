@@ -3309,3 +3309,152 @@ test('v0.9.9 upcoming catalogue previews protect undisclosed faults until paid i
   assert.equal(state.auctionHall.index,0,'Inspecting an upcoming lot must not advance the current lot');
   assert.ok(app.productionEngine.normalize(state));
 });
+
+test('v0.9.10 auction calendar opens only Mondays, never Saturdays or Sundays', () => {
+  const E=browser(new Map()).productionEngine;
+  const Mondays=[1,8,15,22,29,36];
+  for(let day=1;day<=42;day++){
+    const open=Mondays.includes(day);
+    assert.equal(E.auctionDay(day),open,'Calendar day '+day);
+    const lots=E.market(day).auctions;
+    assert.equal(lots.length>0,open,'Auction catalogue must match scheduled Monday on day '+day);
+    if(open){
+      assert.ok(lots.length>=3&&lots.length<=5);
+      assert.equal(lots[0].id,'A-'+day+'-0');
+    } else assert.equal(lots.length,0);
+  }
+  assert.equal(E.nextAuctionDay(1),8);
+  assert.equal(E.nextAuctionDay(2),8);
+  assert.equal(E.nextAuctionDay(7),8);
+  assert.equal(E.nextAuctionDay(8),15);
+  assert.equal(E.nextAuctionDay(30),36);
+  assert.equal(E.auctionDay(6),false,'Saturday must not have an auction');
+  assert.equal(E.auctionDay(7),false,'Sunday must not have an auction');
+});
+
+test('v0.9.10 rival withdrawal produces invoice first, not instant payment or workshop stock', () => {
+  const E=browser(new Map()).productionEngine,s=E.create('Weekly Hammer Economics',[]);
+  const lot=E.marketFor(s).auctions[0];
+  const initialCash=s.cash;
+  assert.ok(E.startAuction(s).ok);
+  assert.equal(E.auctionLot(s).id,lot.id);
+  assert.ok(E.bidLiveAuction(s,100).ok);
+  assert.equal(s.auctionHall.leader,'rival','Rival should match an affordable early bid');
+  assert.equal(s.cash,initialCash);
+  assert.equal(s.vehicles.length,0);
+  for(let i=0;i<30&&s.auctionHall.phase==='bidding';i++)
+    assert.ok(E.bidLiveAuction(s,100).ok);
+  assert.equal(s.auctionHall.phase,'payment');
+  assert.equal(s.auctionHall.leader,'player');
+  assert.equal(s.auctionHall.rivalFolded,true);
+  assert.ok(s.auctionHall.currentBid>=lot.reserve);
+  assert.equal(s.cash,initialCash);
+  assert.equal(s.ledger.length,0);
+  assert.equal(s.auctionHistory.length,0,'Hammer is not a recorded paid win');
+  assert.equal(E.passAuction(s).code,'stage');
+  assert.equal(E.nextAuctionLot(s).code,'stage');
+  assert.equal(E.bidLiveAuction(s,100).code,'stage');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),'Unpaid invoice must be a valid resumable save');
+  const hammer=s.auctionHall.currentBid;
+  assert.ok(E.settleAuction(s).ok);
+  assert.equal(s.cash,initialCash-hammer-lot.fee);
+  assert.equal(s.vehicles.length,1);
+  assert.equal(s.vehicles[0].workshop.stage,'unassessed');
+  assert.equal(s.vehicles[0].cost,hammer+lot.fee);
+  assert.equal(s.vehicles[0].origin,lot.id);
+  assert.equal(s.auctionHall.results[0].kind,'won');
+  assert.equal(E.settleAuction(s).code,'stage','Invoice cannot be paid twice');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.10 declining a rival bid correctly loses without charging a buyer fee', () => {
+  const E=browser(new Map()).productionEngine,s=E.create('Disciplined Trader',[]);
+  const lot=E.marketFor(s).auctions[0],opening=s.cash;
+  assert.ok(E.startAuction(s).ok);
+  for(let i=0;i<5&&s.auctionHall.currentBid<lot.reserve;i++){
+    if(s.auctionHall.phase!=='bidding')break;
+    assert.ok(E.bidLiveAuction(s,100).ok);
+  }
+  assert.equal(s.auctionHall.leader,'rival');
+  const rivalBid=s.auctionHall.currentBid;
+  const passed=E.passAuction(s);
+  assert.ok(passed.ok);
+  assert.equal(s.auctionHall.results[0].kind,rivalBid>=lot.reserve?'lost':'unsold');
+  assert.equal(s.auctionHall.results[0].hammer,rivalBid>=lot.reserve?rivalBid:0);
+  assert.equal(s.auctionHall.results[0].fee,0);
+  assert.equal(s.cash,opening);
+  assert.equal(s.vehicles.length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.10 unpaid auction invoice blocks other spending and game day advance in the interface', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Hammer Payment Due');
+  const lot=app.engine.market(1).auctions[0];
+  app.click('start-auction');
+  for(let i=0;i<30&&JSON.parse(storage.get(STORAGE_KEY)).auctionHall.phase==='bidding';i++)
+    app.click('bid-live-auction',{increment:'100'});
+  let saved=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(saved.auctionHall.phase,'payment');
+  const balance=saved.cash,day=saved.day;
+  assert.match(app.nodes.get('auction-hall-view').innerHTML,/FINALISE PAYMENT/);
+  assert.match(app.nodes.get('auction-hall-view').innerHTML,/HAMMER DOWN/);
+  app.click('continue');
+  saved=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(saved.day,day);
+  app.click('hire-staff',{id:app.engine.people.applicants(saved.day)[0].id});
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).cash,balance);
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).staff.length,0);
+  const reopened=browser(storage);reopened.click('resume');
+  assert.match(reopened.nodes.get('auction-hall-view').innerHTML,/PAYMENT REQUIRED/);
+  reopened.click('settle-auction');
+  saved=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(saved.auctionHall.phase,'result');
+  assert.equal(saved.vehicles.length,1);
+  assert.equal(saved.vehicles[0].origin,lot.id);
+  assert.equal(saved.cash,balance-saved.auctionHall.results[0].total);
+  reopened.click('settle-auction');
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).cash,saved.cash);
+});
+
+test('v0.9.10 unfinished auction bidding must be passed before game-day rollover', () => {
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Auction Timing Test');
+  app.click('start-auction');
+  app.click('continue');
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).day,1);
+  assert.match(app.nodes.get('event-notice').textContent,/still bidding/);
+  app.click('pass-auction');
+  app.click('continue');
+  const day2=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(day2.day,2);
+  assert.equal(day2.auctionHall.day,2);
+  assert.equal(day2.auctionHall.phase,'catalogue');
+  assert.equal(app.productionEngine.marketFor(day2).auctions.length,0);
+  assert.equal(day2.auctionHistory[0].kind,'unsold');
+  assert.match(app.nodes.get('auction-hall-view').innerHTML,/AUCTION HOUSE CLOSED TODAY/);
+  assert.match(app.nodes.get('auction-hall-view').innerHTML,/GAME DAY 8/);
+});
+
+test('v0.9.10 migrates previous v11 careers on now-closed weekdays without losing auction history', () => {
+  const E=browser(new Map()).productionEngine,s=E.create('Old Daily Auction',[]);
+  s.day=2;
+  E.rollAuctionHall(s);
+  s.auctionHistory.push({day:2,lotId:'A-2-0',lotNumber:'001',title:'2018 Example Car',
+    kind:'lost',hammer:3000,fee:0,total:3000,
+    detail:'Old weekday auction ended before weekly schedule'});
+  const old=JSON.parse(JSON.stringify(s));
+  old.version=11;
+  old.auctionHall={day:2,index:1,phase:'result',currentBid:3000,leader:'rival',
+    playerBid:0,rivalFolded:false,rounds:0,feed:['Old Wednesday lot ended'],
+    results:[{...s.auctionHistory[0]}]};
+  const restored=E.normalize(old);
+  assert.ok(restored,'Old v11 save must survive schedule change');
+  assert.equal(restored.version,12);
+  assert.equal(restored.cash,s.cash);
+  assert.equal(restored.auctionHistory.length,1);
+  assert.equal(restored.auctionHall.day,2);
+  assert.equal(restored.auctionHall.phase,'catalogue');
+  assert.equal(restored.auctionHall.results.length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(restored))));
+});
