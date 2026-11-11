@@ -2016,7 +2016,7 @@ test('four mechanics start available and handle four separate in-house repair jo
   assert.equal(P.technicianLimit(s),6);
   assert.ok(E.upgradePremises(s,'workshop').ok);
   assert.equal(P.technicianLimit(s),8);
-  assert.equal(P.staffLimit(s),12);
+  assert.equal(P.staffLimit(s),13,'Maximum staffing includes a supervisor post');
 });
 test('staff training pauses internal jobs, but transfer can rescue a stalled workshop', () => {
   const E=browser(new Map()).engine,P=E.people,s=E.create('Repair Team',[]);
