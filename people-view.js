@@ -1,5 +1,5 @@
 'use strict';
-/* v0.9.31 employment desk. Data is fictional and escaped for HTML strings. */
+/* v0.9.32 employment desk. Data is fictional and escaped for HTML strings. */
 (() => {
   const esc=x=>String(x).replace(/[&<>"']/g,ch=>({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
@@ -204,11 +204,13 @@
       ' / MONTH · '+person.experience+' YEARS EXPERIENCE</span></span>'+
       '<em class="sd-tag sd-tag-'+tone+'">'+esc(label)+'</em></button>';
   }
-  function skillSection(person){
+  function skillSection(person,P){
+    const roleInfo=person.role==='sales'?'ROLE IMPACT & COMMISSION':'HOW THIS ROLE HELPS';
     return '<section class="sd-competence"><div class="sd-section-head"><h4>SKILLS & EXPERIENCE</h4>'+
       '<span>RATINGS OUT OF 20</span></div><div class="sd-skills">'+
       traits[person.role].map(([name,key])=>bar(name,person.skills[key])).join('')+
-      '</div><p>'+esc(labels[person.role])+'</p></section>';
+      '</div><details class="sd-role-impact"><summary>'+roleInfo+'</summary>'+
+      '<p>'+esc(labels[person.role])+'</p>'+salesForecast(person,P)+'</details></section>';
   }
   function employeeDetail(state,P,e){
     const info=employeeStatus(state,P,e);
@@ -228,8 +230,7 @@
       '<div><small>DAILY PAYROLL</small><strong>'+gbp(dayRate)+'</strong></div>'+
       '<div><small>MORALE</small><strong>'+e.morale+' / 100</strong></div>'+
       '<div><small>START DATE</small><strong>DAY '+e.startDay+'</strong></div></div>'+
-      '<div class="sd-person-detail"><div>'+skillSection(e)+
-      salesForecast(e,P)+
+      '<div class="sd-person-detail"><div>'+skillSection(e,P)+
       '<div class="sd-performance"><div><small>RETAIL DEALS</small><strong>'+e.deals+
       '</strong></div><div><small>PREPARATION JOBS</small><strong>'+e.workDone+
       '</strong></div><div><small>HIRED DAY</small><strong>'+e.hiredDay+
@@ -265,7 +266,7 @@
       '<div><small>ROLE CAPACITY</small><strong>'+
       state.staff.filter(e=>e.role===c.role).length+' / '+P.roleLimit(state,c.role)+
       '</strong></div></div>'+
-      '<div class="sd-person-detail"><div>'+skillSection(c)+salesForecast(c,P)+
+      '<div class="sd-person-detail"><div>'+skillSection(c,P)+
       '</div><div class="sd-control"><div class="sd-section-head"><h4>HIRING DECISION</h4>'+
       '<span>STARTS NEXT GAME DAY</span></div>'+
       '<div class="sd-hire-figures">'+
