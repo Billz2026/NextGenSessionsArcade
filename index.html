@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=44">
+  <link rel="stylesheet" href="./styles.css?v=45">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -30,9 +30,9 @@
   <script src="./trading.js?v=19" defer></script>
   <script src="./vehicle-cards.js?v=4" defer></script>
   <script src="./vehicle-view.js?v=4" defer></script>
-  <script src="./people-view.js?v=4" defer></script>
+  <script src="./people-view.js?v=5" defer></script>
   <script src="./monthly-view.js?v=8" defer></script>
-  <script src="./events-view.js?v=5" defer></script>
+  <script src="./events-view.js?v=6" defer></script>
   <script src="./workshop-view.js?v=6" defer></script>
   <script src="./customers-view.js?v=8" defer></script>
   <script src="./premises-view.js?v=1" defer></script>
@@ -42,7 +42,7 @@
   <script src="./buying-desk-view.js?v=2" defer></script>
   <script src="./stock-view.js?v=1" defer></script>
   <script src="./finance-view.js?v=2" defer></script>
-  <script src="./simulator.js?v=31" defer></script>
+  <script src="./simulator.js?v=32" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -50,7 +50,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.30</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.31</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -276,11 +276,8 @@
             </section>
 
             <section class="career-panel" data-panel="staff" hidden aria-labelledby="staff-title">
-              <div class="page-heading"><div><p class="section-overline">DEALERSHIP MANAGEMENT / PEOPLE</p><h1 id="staff-title">YOUR <em>TEAM.</em></h1><p>Recruit carefully. Experience improves trading decisions, but salaries are payable even when no vehicles sell.</p></div><span class="career-chip">STAFF & RECRUITMENT</span></div>
-              <div class="trade-alert">This release models three roles. Staff join the following game day; training takes two days. Base wages are settled in daily 1/30-month instalments for gameplay, not real UK payroll. Employer taxes, pensions, employment contracts and formal notice rules are not yet simulated.</div>
-              <div id="people-totals"></div>
-              <section class="panel-card trade-section"><div class="panel-card-header"><div><p class="section-overline">CONTRACTED TEAM</p><h2>YOUR EMPLOYEES</h2></div><span class="tiny-index">THREE ROLES AVAILABLE</span></div><div id="people-roster" class="people-grid"></div></section>
-              <section class="panel-card trade-section"><div class="panel-card-header"><div><p class="section-overline">CURRENT APPLICANTS</p><h2>RECRUITMENT MARKET</h2></div><span class="tiny-index">NEW SHORTLIST EVERY 7 DAYS</span></div><div id="people-applicants" class="people-grid"></div></section>
+              <div class="page-heading"><div><p class="section-overline">DEALERSHIP OPERATIONS / EMPLOYMENT</p><h1 id="staff-title">STAFF & <em>RECRUITMENT.</em></h1><p>Manage your team, check who is available, review candidates and control the wage bill.</p></div><span class="career-chip">PERSONNEL DESK</span></div>
+              <div id="people-board" class="sd-control" aria-live="polite"></div>
             </section>
 
             <section class="career-panel" data-panel="reputation" hidden aria-labelledby="reputation-title">
