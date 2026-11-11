@@ -210,8 +210,11 @@
         changed=emit(state,{from:'PEOPLE & PAYROLL',category:'staff',
           subject:'SUPERVISOR VACANCY · '+employee.name+' at risk',
           preview:'Morale '+employee.morale+'/100. Hire a supervisor to manage employee welfare.',
-          body:'STAFFING ESCALATION\\n\\n'+employee.name+
-            ' has morale '+employee.morale+'/100. There is currently no active staff supervisor to investigate the cause, handle routine concerns or submit a costed improvement plan.\\n\\nYour action is to choose and hire a Staff Supervisor from recruitment. The supervisor starts the next game day and will handle routine support, escalating only decisions involving company funds.',
+          body:'I wanted to flag a people issue that needs a manager assigned.\n\n'+
+            employee.name+' currently has a morale score of '+employee.morale+
+            '/100. There is no active staff supervisor to meet with them, review the rota or identify what is causing the concern.\n\n'+
+            'My recommendation is to appoint a supervisor from the recruitment shortlist. Once they have started, they can handle the conversation and send you a costed proposal if further support requires company funds.\n\n'+
+            'There is no charge to approve from this email. Please review the supervisor candidates when you can.',
           linkPage:'staff',reference:'supervisor-gap:'+employee.id+':'+week})||changed;
       }else if(state.payrollArrears>0){
         // Root cause must be resolved before recognition spending can help.
@@ -303,13 +306,15 @@
       '</div>').join('');
     const isGreeting=/^(?:hi|hello|dear|good morning|good afternoon)\b/i.test(body);
     const greeting=isGreeting?'':'<p class="mail-greeting">Hello,</p>';
+    const isoDate=new Date(Date.UTC(2026,10,9)+(message.day-1)*86400000)
+      .toISOString().slice(0,10);
     return '<article class="inbox-email" aria-label="Business email from '+esc(sender.name)+'">'+
       '<header class="inbox-email-header">'+
         '<div class="inbox-email-avatar" aria-hidden="true">'+esc(sender.initials)+'</div>'+
         '<div class="inbox-email-address"><strong>'+esc(sender.name)+'</strong>'+
           '<small>'+esc(sender.team)+'</small>'+
           '<span>To: Dealership Owner · '+esc(state.name)+'</span></div>'+
-        '<time class="inbox-email-time" datetime="'+esc(emailDate(message.day))+'">'+
+        '<time class="inbox-email-time" datetime="'+isoDate+'">'+
           esc(emailDate(message.day))+'</time>'+
       '</header>'+
       '<div class="inbox-email-status"><span>'+esc(status)+'</span>'+
