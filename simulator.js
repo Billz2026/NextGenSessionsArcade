@@ -88,7 +88,7 @@
   const scheduledMessages = Object.freeze({
     2: () => makeMessage(4,2,'BUYING DESK','Today\'s stock opportunities have refreshed',
       'Private seller opportunities have refreshed.',
-      'Auction bidding takes place every Monday, once per game week. Other weekdays are for direct sellers and retail trading.',
+      'Auctions run once per week, normally Monday or Tuesday when Monday is Deal Day. Other days are for private sellers and retail trading.',
       'auctionHall'),
     3: () => makeMessage(5,3,'SALES ADVISER','Cash sale or part-exchange?',
       'Both deals can move your stock, but they affect your cash differently.',
@@ -471,8 +471,8 @@
       career.day <= 7
         ? 'Day ' + career.day + ' of your career. Auction Day is Monday; check the inbox for business updates.'
         : E.auctionDay(career.day)?
-          'MONDAY AUCTION DAY: this week’s numbered-lot catalogue is open.':
-          'Next weekly auction: Monday, game day '+E.nextAuctionDay(career.day)+'. Private seller leads refresh daily.';
+          'WEEKLY AUCTION DAY: this week’s numbered-lot catalogue is open.':
+          'Next weekly auction: game day '+E.nextAuctionDay(career.day)+'. Private seller leads refresh daily.';
     byId('save-warning').hidden = storageAvailable;
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;
@@ -559,8 +559,8 @@
       eventNotice = 'New inbox message received. Your game calendar has advanced by one day.';
     } else {
       eventNotice = E.auctionDay(career.day)?
-        'MONDAY AUCTION DAY: this week’s numbered lots are open.':
-        'One game day completed. Private sellers have refreshed; next auction is Monday, game day '+
+        'WEEKLY AUCTION DAY: this week’s numbered lots are open.':
+        'One game day completed. Private sellers have refreshed; next weekly auction is game day '+
           E.nextAuctionDay(career.day)+'.';
     }
     if(workforceEvent.payroll || workforceEvent.arrears){
