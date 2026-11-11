@@ -4,6 +4,14 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.15 — Genuine email reading experience, better copy and unread controls (11 November 2026)
+
+- **Actual email presentation:** The owner reading pane now resembles a familiar business email, with a single subject line, sender name/team, recipient, correct in-game date, discreet status, readable paragraphs, financial facts and a normal sender sign-off. It removes the oversized faux stationery/letterhead and repetitive all-caps memo styling, while preserving NextGen's dark-and-gold visual identity.
+- **Legacy message repair:** Existing saved email bodies that accidentally contain visible `\\n` sequences are normalised *at display time*, so players' mail history and unread states are unchanged. Older "SUPERVISOR VACANCY" notices display natural, actionable prose rather than the bare system-style escalation text.
+- **More useful basic mail controls:** An **Unread** filter and a **Mark Read / Mark Unread** command are provided alongside departmental navigation. These affect only the message's read flag; they never authorise spending, change employee morale or produce a duplicate invoice.
+- **Inbox-first, no fake actions:** Real workshop and supervisor decisions stay in their existing approval controls. No fake Reply, Send, payment or other unsupported email workflow is introduced.
+- **Career safety:** No save-schema changes, business-economics changes or historic email deletion. New regression tests verify multiline formatting, output sanitisation, date fidelity, email status controls, and preserved actionable approvals.
+
 ### v0.9.14 — Supervisor recruitment, delegated staff care & professional owner correspondence (11 November 2026)
 
 - **Choose a real staff supervisor:** Recruit from named applicants with different leadership ratings, experience, and monthly salaries in Staff & Recruitment. Exactly one supervisor post is available, in addition to existing sales/buying/workshop roles. The chosen supervisor costs the standard recruitment fee plus daily payroll and starts the next game day; absent, unpaid or training supervisors do not act.

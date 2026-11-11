@@ -226,20 +226,29 @@
     const category=IN.infer(selected);
     detail.innerHTML=
       '<div class="inbox-mail-heading">'+
-        '<span class="section-overline">DAY '+String(selected.day).padStart(2,'0')+
-          ' · '+escapeText(IN.labels[category]||category)+
+        '<span class="section-overline">'+escapeText(IN.labels[category]||category)+
           (actionable?' · APPROVAL REQUIRED':'')+'</span>'+
         '<h2>'+escapeText(selected.subject)+'</h2>'+
       '</div>'+
       IN.formatMail(selected,career)+IN.quoteControls(selected,career,E);
+    const toolbar=document.createElement('div');
+    toolbar.className='inbox-message-toolbar';
+    const mark=document.createElement('button');
+    mark.type='button';
+    mark.className='secondary-button';
+    mark.dataset.action='toggle-inbox-read';
+    mark.dataset.id=String(selected.id);
+    mark.textContent=selected.read?'MARK UNREAD':'MARK READ';
+    toolbar.appendChild(mark);
     if(selected.linkPage&&Object.prototype.hasOwnProperty.call(PAGES,selected.linkPage)){
       const action=document.createElement('button');
       action.type='button';
       action.className='secondary-button detail-action';
       action.dataset.page=selected.linkPage;
       action.textContent='OPEN '+PAGES[selected.linkPage]+' ↗';
-      detail.appendChild(action);
+      toolbar.appendChild(action);
     }
+    detail.appendChild(toolbar);
   }
   const cashText = n => money.format(n);
   const milesText = n => new Intl.NumberFormat('en-GB').format(n) + ' mi';
@@ -940,6 +949,17 @@
         const guide = byId('menu-guide');
         guide.hidden = !guide.hidden;
         button.setAttribute('aria-expanded', String(!guide.hidden));
+        break;
+      }
+      case 'toggle-inbox-read': {
+        if(!career)break;
+        const target=career.messages.find(m=>m.id===Number(button.dataset.id));
+        if(target){
+          target.read=!target.read;
+          selectedMessageId=target.id;
+          persistCareer();
+          render();
+        }
         break;
       }
       case 'filter-inbox':

@@ -70,12 +70,12 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /auction-hall-view\.js\?v=2/);
-  assert.match(html, /simulator\.js\?v=24/);
+  assert.match(html, /simulator\.js\?v=25/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
   assert.match(html, /dashboard-view\.js\?v=2/);
-  assert.match(html, /inbox-office\.js\?v=2/);
+  assert.match(html, /inbox-office\.js\?v=3/);
   assert.match(html, /id="inbox-action-count"/);
   assert.match(html, /id="inbox-filter-buttons"/);
   assert.match(html, /id="dashboard-priorities"/);
@@ -106,7 +106,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.14/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.15/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -587,7 +587,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=28/);
+  assert.match(html, /styles\.css\?v=29/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -3697,7 +3697,7 @@ test('v0.9.13 owner Inbox is compact, filterable and distinguishes paid copies f
   assert.equal(app.nodes.get('inbox-action-count').textContent,'0');
   app.click('filter-inbox',{filter:'accounts'});
   assert.match(app.nodes.get('inbox-filter-buttons').innerHTML,/data-filter="accounts" aria-pressed="true"/);
-  assert.match(app.nodes.get('inbox-detail').innerHTML,/ACCOUNTS OFFICE/);
+  assert.match(app.nodes.get('inbox-detail').innerHTML,/Accounts Office/);
   app.click('filter-inbox',{filter:'action'});
   assert.equal(app.nodes.get('inbox-list').children.length,0);
   assert.match(app.nodes.get('inbox-detail').innerHTML,/No messages in this category/);
@@ -3908,7 +3908,7 @@ test('v0.9.14 supervisor writes real costed welfare proposal, owner approval cha
   assert.ok(I.needsAction(request,s));
   assert.match(I.quoteControls(request,s,E),/APPROVE/);
   assert.match(I.quoteControls(request,s,E),/DECLINE/);
-  assert.match(I.formatMail(request,s),/inbox-letter-letterhead/);
+  assert.match(I.formatMail(request,s),/inbox-email-header/);
   storage.set(STORAGE_KEY,JSON.stringify(s));
   const app=browser(storage);app.click('resume');
   app.click('filter-inbox',{filter:'action'});
@@ -3962,7 +3962,7 @@ test('v0.9.14 absent supervisor emails encourage recruitment rather than owner m
   assert.equal(I.counters(s.messages,s).action,0);
   const notice=s.messages.find(m=>m.subject.startsWith('SUPERVISOR VACANCY'));
   assert.equal(notice.linkPage,'staff');
-  assert.match(notice.body,/choose and hire a Staff Supervisor/);
+  assert.match(notice.body,/appoint a supervisor from the recruitment shortlist/);
   const supervisor=P.applicants(1).find(c=>c.role==='supervisor');
   assert.ok(E.hireStaff(s,supervisor.id).ok);
   s.day=2;E.staffDay(s);
@@ -4029,11 +4029,103 @@ test('v0.9.14 new mail letterhead formats readable sections and escapes markup',
     body:'MANAGEMENT SUMMARY\n\nONE-OFF COST: £200\nSTAFF MORALE: 32/100\n\nA paragraph with <script>unsafe()</script> embedded.',
     category:'accounts',reference:'example',linkPage:'finance',read:false};
   const markup=I.formatMail(m,s);
-  assert.match(markup,/inbox-letter-meta/);
-  assert.match(markup,/inbox-letter-section/);
-  assert.match(markup,/inbox-letter-fact/);
+  assert.match(markup,/inbox-email-address/);
+  assert.match(markup,/mail-paragraph-group/);
+  assert.match(markup,/mail-key-value/);
   assert.match(markup,/MANAGEMENT SUMMARY/);
   assert.match(markup,/ONE-OFF COST/);
   assert.doesNotMatch(markup,/<script>/);
   assert.match(markup,/&lt;script&gt;/);
+});
+
+test('v0.9.15 legacy escaped-newline correspondence becomes readable email paragraphs',()=>{
+  const app=browser(new Map()),I=app.inbox,E=app.productionEngine;
+  const s=E.create('First Lot Motors',[]);
+  s.day=60;
+  const legacy={id:110,day:60,read:true,from:'PEOPLE & PAYROLL',
+    subject:'SUPERVISOR VACANCY · Daniel Harris at risk',
+    category:'staff',linkPage:'staff',reference:'supervisor-gap:17:8',
+    preview:'Morale 32/100. Hire a supervisor to manage employee welfare.',
+    body:String.raw`STAFFING ESCALATION\n\nDaniel Harris has morale 32/100. There is currently no active staff supervisor to investigate the cause.\n\nYour action is to choose and hire a Staff Supervisor.`};
+  assert.equal(I.readableBody(String.raw`First paragraph\n\nSecond paragraph`),
+    'First paragraph\n\nSecond paragraph');
+  const output=I.formatMail(legacy,s);
+  assert.match(output,/inbox-email-header/);
+  assert.match(output,/inbox-email-body/);
+  assert.match(output,/inbox-email-signature/);
+  assert.match(output,/Daniel Harris currently has a morale score of 32\/100/);
+  assert.match(output,/appointing a supervisor/);
+  assert.match(output,/datetime="2027-01-07"/);
+  assert.match(output,/Thu, 7 Jan 2027/);
+  assert.doesNotMatch(output,/\\n/,'No visible backslash-n artifacts may remain');
+  assert.doesNotMatch(output,/<h3 class="mail-subject-heading">STAFFING ESCALATION/);
+  assert.ok(output.indexOf('I wanted to bring')<output.indexOf('No payment or personnel'),
+    'Email should read as a human message rather than a metadata dump');
+});
+
+test('v0.9.15 mailbox offers unread filter and allows owners to mark messages unread again',()=>{
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Mail Desk');
+  const before=JSON.parse(storage.get(STORAGE_KEY));
+  const cash=before.cash,ledger=before.ledger.length;
+  assert.match(app.nodes.get('inbox-filter-buttons').innerHTML,/data-filter="unread"/);
+  const first=before.messages[0];
+  assert.ok(first);
+  app.click('read-message',{id:String(first.id)});
+  let after=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(after.messages.find(m=>m.id===first.id).read,true);
+  assert.match(app.nodes.get('inbox-detail').children.at(-1).children[0].textContent,/MARK UNREAD/);
+  app.click('toggle-inbox-read',{id:String(first.id)});
+  after=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(after.messages.find(m=>m.id===first.id).read,false);
+  assert.equal(after.cash,cash);
+  assert.equal(after.ledger.length,ledger);
+  app.click('filter-inbox',{filter:'unread'});
+  assert.match(app.nodes.get('inbox-filter-buttons').innerHTML,/data-filter="unread" aria-pressed="true"/);
+  assert.ok(app.nodes.get('inbox-list').children.length>=1);
+  const resumed=browser(storage);resumed.click('resume');
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).messages.find(m=>m.id===first.id).read,false);
+  assert.ok(resumed.productionEngine.normalize(JSON.parse(storage.get(STORAGE_KEY))));
+});
+
+test('v0.9.15 email template has proper hierarchy and sanitises arbitrary strings',()=>{
+  const I=browser(new Map()).inbox,E=browser(new Map()).productionEngine;
+  const s=E.create('Name <script>alert(1)</script>',[]);
+  const message={id:23,day:1,read:false,from:'ACCOUNTS OFFICE',
+    category:'accounts',reference:'ledger:3',
+    subject:'PAID COPY · Workshop',linkPage:'finance',
+    body:'PAYMENT CONFIRMATION\n\nAMOUNT PAID: £1,200\nSTATUS: PAID\n\nThank you.\nThis is for your records. <img src=x onerror=1>'};
+  const content=I.formatMail(message,s);
+  assert.match(content,/inbox-email-avatar/);
+  assert.match(content,/Accounts Office/);
+  assert.match(content,/To: Dealership Owner/);
+  assert.match(content,/Kind regards/);
+  assert.match(content,/PAID · FOR YOUR RECORDS/);
+  assert.match(content,/AMOUNT PAID/);
+  assert.match(content,/£1,200/);
+  assert.match(content,/&lt;script&gt;/);
+  assert.match(content,/&lt;img/);
+  assert.doesNotMatch(content,/<script>|<img /);
+});
+
+test('v0.9.15 email filter and read controls preserve actual owner approval state',()=>{
+  const E=browser(new Map()).productionEngine,I=browser(new Map()).inbox,s=E.create('Approval Does Not Expire',[]);
+  const buyer=E.people.applicants(1).find(x=>x.role==='sales');
+  const supervisor=E.people.applicants(1).find(x=>x.role==='supervisor');
+  assert.ok(E.hireStaff(s,buyer.id).ok);
+  assert.ok(E.hireStaff(s,supervisor.id).ok);
+  s.day=2;E.staffDay(s);
+  const employee=s.staff.find(x=>x.role==='sales');employee.morale=32;
+  assert.ok(I.sync(s,E));
+  const request=s.messages.find(m=>m.reference?.startsWith('supervisor-morale:'));
+  assert.ok(request);
+  request.read=true;
+  assert.equal(I.counters(s.messages,s).action,1);
+  assert.equal(I.filtered(s.messages,s,'unread').some(x=>x.id===request.id),false);
+  request.read=false;
+  assert.equal(I.filtered(s.messages,s,'unread').some(x=>x.id===request.id),true);
+  assert.equal(I.counters(s.messages,s).action,1,
+    'Unread status is independent of owner authorisation status');
+  assert.equal(request.decision,undefined);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
