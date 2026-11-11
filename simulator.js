@@ -246,6 +246,8 @@
       detail.appendChild(action);
     }
   }
+  const cashText = n => money.format(n);
+  const milesText = n => new Intl.NumberFormat('en-GB').format(n) + ' mi';
   function inputNumber(id, fallback) {
     const field = byId(id);
     if (!field || field.value.trim() === '') return NaN;
