@@ -135,11 +135,11 @@
         (row.delta>0?'+':'')+row.delta+'</strong>'+
         '<p>'+esc(row.reason)+'</p></div>';
     };
-    const last=latest.slice(0,4);
+    const last=latest.slice(0,2);
     const newest=last.length?last.map(entry).join(''):
       '<div class="rep-empty">No reputation changes recorded yet. Completed deals and '+
       'operating issues will appear here.</div>';
-    const more=latest.slice(4);
+    const more=latest.slice(2);
     const cashNumber=gbp(totalTurnover);
     const risk=payroll?
       '<div class="rep-risk"><strong>PAYROLL NEEDS ATTENTION</strong><span>'+
