@@ -879,3 +879,7 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
 .auction-preview-body .vehicle-photo-frame{height:220px}
 .auction-preview-body .vehicle-photo-frame img{height:100%;width:100%;object-fit:cover}
 .auction-preview-body>p{font:600 10px/1.7 var(--body);color:#b3c5c6;margin-top:12px}
+
+/* v0.9.10 — clear, full-width settlement of binding auction hammer invoices */
+.auction-controls [data-action="settle-auction"]{grid-column:1/-1;min-height:58px;font-size:12px;border:2px solid #f1d4a2;box-shadow:0 4px 15px #0004}
+.auction-hammer-won{border-color:#7eaf8e;background:linear-gradient(115deg,#274a35,#1d3b35)}
