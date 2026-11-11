@@ -2162,3 +2162,62 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
 .mr-details>.mr-detail{display:block;width:auto;margin:0;min-width:0}
 .mr-details>.mr-detail[open]{grid-column:1 / -1;width:auto}
 @media(max-width:720px){.mr-details{grid-template-columns:1fr}.mr-mini{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* v0.9.29 — Management Reports one-screen desktop finish.
+   Preserve readable figures; reduce duplicated headings and hide drilldowns
+   until explicitly requested. Small screens retain ordinary page scrolling. */
+.mr-records{padding:0;overflow:hidden}
+.mr-records-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;padding:10px 12px}
+.mr-records-summary::-webkit-details-marker{display:none}
+.mr-records-summary::marker{content:''}
+.mr-records-summary strong{font:900 16px/1.1 var(--title);color:#f0d2a5}
+.mr-records-summary span{font:800 9px/1.35 var(--mono);color:#f0c68e;white-space:nowrap}
+.mr-records[open] .mr-records-summary{background:#23414a;border-bottom:1px solid #48646c}
+.mr-records[open] .mr-records-summary span{font-size:0}
+.mr-records[open] .mr-records-summary span:after{content:'COLLAPSE REPORTS';font-size:9px}
+.mr-records-body{padding:10px 12px 12px}
+.mr-records-body>p{font:550 10px/1.45 var(--body);color:#b7c9cb;margin:0 0 9px}
+.mr-records-summary:focus-visible{outline:2px solid #f1c688;outline-offset:-2px}
+@media(min-width:1021px){
+ .career-main:has([data-panel="reports"]:not([hidden])) .career-topbar{min-height:59px;padding-top:7px;padding-bottom:7px}
+ .career-content:has([data-panel="reports"]:not([hidden])){padding-top:7px;padding-bottom:9px}
+ [data-panel="reports"]>.page-heading{margin-bottom:6px}
+ [data-panel="reports"]>.page-heading h1{font-size:clamp(29px,2.5vw,35px);margin:2px 0;line-height:.98}
+ [data-panel="reports"]>.page-heading .section-overline{font-size:8px}
+ [data-panel="reports"]>.page-heading p:last-child{display:none}
+ [data-panel="reports"]>.page-heading .career-chip{padding:6px 8px;font-size:8px}
+ .mr-control .report-picker{gap:5px;margin-bottom:5px;padding-bottom:2px}
+ .mr-control .report-picker button{min-height:30px;padding:6px 9px;font-size:9px}
+ .mr-head{padding:6px 10px;margin-bottom:6px;gap:8px}
+ .mr-head small{font-size:9px}
+ .mr-head h2{font-size:16px;margin:1px 0;line-height:1.05}
+ .mr-head b{padding:6px 8px;font-size:9px}
+ .mr-kpis{gap:6px;margin-bottom:6px}
+ .mr-kpis .report-metric{min-height:67px;padding:7px 9px;gap:3px}
+ .mr-kpis .report-metric strong{font-size:clamp(21px,2.1vw,27px)}
+ .mr-kpis .report-metric span{font-size:10px;line-height:1.25}
+ .mr-focus{gap:7px;margin-bottom:6px}
+ .mr-panel{padding:8px 10px}
+ .mr-panel h3{font-size:16px;margin-bottom:7px}
+ .mr-panel .report-progress{gap:3px;margin-bottom:6px}
+ .mr-panel .report-progress-head{font-size:10px;line-height:1.2}
+ .mr-panel .report-progress-head strong{font-size:11px}
+ .mr-panel .report-track{height:5px}
+ .mr-panel p{font-size:10px;line-height:1.35;margin-top:5px}
+ .mr-flag{padding:5px 7px;margin-bottom:4px;gap:2px}
+ .mr-flag strong{font-size:9px;line-height:1.2}
+ .mr-flag span{font-size:10px;line-height:1.25}
+ .mr-mini{gap:5px;margin-bottom:6px}
+ .mr-mini>div{padding:5px 8px;gap:2px}
+ .mr-mini strong{font-size:16px}
+ .mr-records-summary{padding:9px 11px}
+ .mr-records-summary strong{font-size:15px}
+ .mr-note{font-size:9px;line-height:1.25;margin:5px 0}
+ .mr-guide{margin:5px 0 0}
+ .mr-guide summary{padding:8px 10px;font-size:9px}
+}
+@media(max-width:470px){
+ .mr-records-summary{align-items:flex-start;flex-direction:column;gap:4px}
+ .mr-records-summary strong{font-size:15px}
+}
