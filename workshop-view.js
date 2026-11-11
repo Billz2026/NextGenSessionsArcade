@@ -155,7 +155,7 @@
       '<p>Completed on day '+(j.completedDay??'—')+'. Repairs charged '+cash(v.prepSpent)+
       '. Set an asking price in Vehicle Stock.</p>'+
       '<button type="button" class="trade-button" data-page="stock" data-id="'+v.id+
-      '">VIEW VEHICLE STOCK</button></div';
+      '">VIEW VEHICLE STOCK</button></div>';
   }
   function disposal(v){
     if(v.status!=='acquired'||!['unassessed','quoted'].includes(v.workshop.stage))return '';
