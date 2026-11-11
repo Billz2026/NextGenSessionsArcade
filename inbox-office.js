@@ -21,7 +21,7 @@
     return 'operations';
   };
   const moraleId=m=>{
-    const match=/^morale:(\\d+):\\d+$/.exec(m.reference||'');
+    const match=/^supervisor-morale:(\d+):\d+$/.exec(m.reference||'');
     return match?Number(match[1]):null;
   };
   const quoteId=m=>{
@@ -81,6 +81,13 @@
       body='Recruitment has been processed.\n\n'+note+
         '\nOnboarding fee already paid: '+money(amount)+
         '.\nThe new employee begins work on the following game day. Their contracted wages are accounted for through payroll; this email does not create another charge.';
+    }else if(note.startsWith('Staff welfare intervention:')){
+      from='PEOPLE & PAYROLL';category='staff';linkPage='staff';
+      subject='PAID COPY · Approved staff welfare budget';
+      preview=money(amount)+' one-off employee support spend, approved by the owner.';
+      body='APPROVED STAFF WELFARE EXPENDITURE\\n\\n'+note+
+        '\\nAmount settled: '+money(amount)+
+        '.\\nStatus: PAID. The supervisor is responsible for implementing the agreed rota and welfare support. No additional invoice is payable.';
     }else if(note.startsWith('Staff development:')){
       from='PEOPLE & PAYROLL';category='staff';linkPage='staff';
       subject='Staff training booked · Cost confirmed';
@@ -194,11 +201,11 @@
           '',
           'Small daily check-ins are already handled by the supervisor. This one-off programme requires your permission because it uses company funds.',
           'Please approve or decline. Declining does not charge the business or immediately remove the employee, but the underlying retention risk remains.'
-        ].join('\\n');
+        ].join('\n');
         changed=emit(state,{from:'STAFF SUPERVISOR · '+supervisor.name,category:'staff',
           subject:'APPROVAL · '+employee.name+' welfare plan',
           preview:'Morale '+employee.morale+'/100 · '+money(plan.cost)+' proposed · your decision required.',
-          body,linkPage:'staff',reference:'morale:'+employee.id+':'+week})||changed;
+          body,linkPage:'staff',reference:'supervisor-morale:'+employee.id+':'+week})||changed;
       }else if(state.payrollArrears===0&&!supervisor){
         changed=emit(state,{from:'PEOPLE & PAYROLL',category:'staff',
           subject:'SUPERVISOR VACANCY · '+employee.name+' at risk',
