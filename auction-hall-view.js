@@ -19,11 +19,12 @@
     const h=state.auctionHall,lots=E.marketFor(state).auctions;
     const own=state.auctionHistory.filter(x=>x.kind==='won');
     const nextDay=E.nextAuctionDay(state.day);
+    const nextWeekday=(nextDay-1)%7===0?'MONDAY':'TUESDAY';
     const history=state.auctionHistory.slice(-10).reverse();
     const won=h.results.filter(r=>r.kind==='won').length;
     const header='<div class="auction-hall-head"><div><span>INDEPENDENT MOTOR AUCTION · GAME DAY '+
       state.day+'</span><h2>AUCTION <em>HALL.</em></h2>'+
-      '<p>One weekday auction per week, every Monday. Bid until either you or the other dealer drops out. '+
+      '<p>One auction per game week, normally Monday (Tuesday when Monday is Deal Day). Bid until either dealer drops out. '+
       'Each lot stays open until resolved, with no real-time timer.</p></div>'+
       '<div class="auction-head-metrics"><div><small>LOTS TODAY</small><strong>'+lots.length+'</strong></div>'+
       '<div><small>ACTIVE LOT</small><strong>'+(h.phase==='finished'||!lots.length?'—':E.lotNumber(h.index))+'</strong></div>'+
@@ -47,7 +48,7 @@
       }).join('')+'</div></div>':'';
     if(!lots.length)
       return header+notice+'<div class="trade-empty auction-closed"><h2>AUCTION HOUSE CLOSED TODAY.</h2>'+
-        '<p>Auctions take place once a week on Mondays, not weekends. NEXT SESSION: GAME DAY '+nextDay+
+        '<p>Auctions run once each game week, normally Monday; never weekends. NEXT SESSION: '+nextWeekday+' · GAME DAY '+nextDay+
         ' (in '+(nextDay-state.day)+' game day'+(nextDay-state.day===1?'':'s')+'). '+
         (state.day%30===0?'Deal Day is also closed to auction bidding. ':'')+
         'Private sellers remain available through the Buying Desk.</p>'+
