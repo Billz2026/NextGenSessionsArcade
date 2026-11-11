@@ -22,28 +22,51 @@
       '<span class="people-salary">'+gbp(person.monthlySalary)+'<small>BASE / MONTH</small></span></div>';
   }
   const labels={
-    sales:'Influences buyer offers and customer-service reputation. Commission: 3% of positive gross deal margin.',
+    sales:'Creates more enquiries, gets buyers to view sooner and improves test-drive conversion and negotiations. Higher performers earn a larger share of positive gross margin.',
     buyer:'Can secure more competitive private-seller agreements and provide auction rival-bid intelligence.',
     technician:'Runs one assigned in-house repair at a time. More technicians enable parallel preparation, but wages and parts still cost money.'
   };
+  function salesForecast(person,P){
+    if(person.role!=='sales')return '';
+    const p=P.salesProfile(person);
+    return '<div class="people-caption"><strong>SALES IMPACT:</strong> +'+p.enquiryLift+
+      ' percentage points to enquiry chance · +'+p.driveLift+
+      ' to drive conversion · '+(p.fastViewing?'NEXT-DAY VIEWINGS':'UP TO 48-HOUR VIEWINGS')+
+      ' · '+Math.round(p.commissionRate*100)+'% commission on positive gross margin.</div>';
+  }
   function applicants(state,P){
     const candidates=P.applicants(state.day);
-    return candidates.map(candidate=>{
+    const cards=candidates.map(candidate=>{
       const already=state.staff.some(e=>e.name===candidate.name);
       const filled=state.staff.filter(e=>e.role===candidate.role).length>=
         P.roleLimit(state,candidate.role);
       const paused=state.staff.length>=P.staffLimit(state);
       const traitsHtml=traits[candidate.role].map(([a,k])=>bar(a,candidate.skills[k])).join('');
+      const quote=P.hireQuote(state,candidate);
+      const costText='REQUIRES '+gbp(quote.required)+' TOTAL CASH · '+P.WAGE_COVER_DAYS+
+        ' DAYS WAGE COVER · PROTECTED REPAIRS '+gbp(quote.protectedStock)+
+        (quote.shortfall?' · SHORT BY '+gbp(quote.shortfall):' · AFFORDABLE NOW');
       return '<article class="people-card">'+header(candidate)+
         '<div class="people-traits">'+traitsHtml+'</div>'+
         '<p class="people-caption">'+esc(labels[candidate.role])+'</p>'+
-        '<div class="people-card-footer"><span>ONBOARDING '+gbp(P.HIRING_FEE)+
-        ' · STARTS NEXT DAY</span>'+
+        salesForecast(candidate,P)+
+        '<div class="people-card-footer"><span>'+costText+'</span>'+
         '<button type="button" class="trade-button" data-action="hire-staff" data-id="'+
-          esc(candidate.id)+'"'+(already||filled||paused?' disabled':'')+'>'+
-          (already?'ALREADY HIRED':filled?(candidate.role==='technician'?'REPAIR BAYS FULL':'ROLE FILLED'):
-            paused?'TEAM FULL':'HIRE EMPLOYEE')+'</button></div></article>';
-    }).join('');
+          esc(candidate.id)+'"'+(already||filled||paused||!!quote.shortfall?' disabled':'')+'>'+
+          (already?'ALREADY HIRED':filled?(candidate.role==='technician'?'TECHNICIAN PLACES FULL':'ROLE FILLED'):
+            paused?'TEAM FULL':quote.shortfall?'NOT ENOUGH CASH':'HIRE EMPLOYEE')+
+          '</button></div></article>';
+    });
+    const names={sales:'SALES EXECUTIVES',buyer:'VEHICLE BUYERS',technician:'WORKSHOP TECHNICIANS'};
+    return '<p class="trade-alert">Applicants refresh every seven game days. Hire technicians up to your unlocked workshop capacity. '+
+      'Each hire needs a £'+P.HIRING_FEE+' onboarding charge, protected repair funds and '+P.WAGE_COVER_DAYS+
+      ' days of team wages; monthly salaries continue afterward. A new employee starts the following game day.</p>'+
+      ['technician','sales','buyer'].map(role=>
+        '<section class="people-recruit-group"><h3>'+names[role]+' · '+
+        candidates.filter(c=>c.role===role).length+' CANDIDATES · '+
+        state.staff.filter(e=>e.role===role).length+'/'+P.roleLimit(state,role)+' HIRED</h3>'+
+        '<div class="people-recruit-grid">'+candidates.filter(c=>c.role===role).map(c=>
+          cards[candidates.indexOf(c)]).join('')+'</div></section>').join('');
   }
   function roster(state,P){
     if(!state.staff.length)return '<div class="trade-empty"><h2>OWNER OPERATED.</h2>'+
@@ -63,7 +86,7 @@
         '<span>MORALE '+employee.morale+'/100</span>'+
         '<span>'+employee.deals+' DEALS · '+employee.workDone+' PREP JOBS</span></div>'+
         '<div class="people-traits">'+traits[employee.role].map(([a,k])=>bar(a,employee.skills[k])).join('')+'</div>'+
-        '<p class="people-caption">'+esc(labels[employee.role])+'</p>'+
+        '<p class="people-caption">'+esc(labels[employee.role])+'</p>'+salesForecast(employee,P)+
         '<div class="people-card-footer"><span>DAILY WAGE PROVISION '+gbp(P.dailyCost(employee))+'</span>'+
         '<div class="people-actions"><button type="button" class="trade-button trade-button-secondary" data-action="train-staff" data-id="'+employee.id+'">TRAIN · '+gbp(P.TRAINING_FEE)+'</button>'+
         '<button type="button" class="trade-button people-release" data-action="release-staff" data-id="'+employee.id+'">RELEASE</button></div></div></article>';
@@ -114,6 +137,7 @@
     const wages=state.staff.reduce((sum,employee)=>sum+P.dailyCost(employee),0);
     const total=state.staff.reduce((sum,employee)=>sum+employee.monthlySalary,0);
     const technicians=state.staff.filter(s=>s.role==='technician').length;
+    const salespeople=state.staff.filter(s=>s.role==='sales').length;
     const next=state.reputationScore<40?'6 technician places at 40 reputation':
       state.reputationScore<80?'8 technician places at 80 reputation':null;
     return '<div class="people-metrics"><div><span>EMPLOYEES</span><strong>'+
@@ -122,8 +146,9 @@
       '<div><span>MONTHLY BASE PAY</span><strong>'+gbp(total)+'</strong></div>'+
       '<div><span>UNPAID PAYROLL / NOTICE</span><strong>'+gbp(state.payrollArrears)+'</strong></div>'+
       '<div><span>IN-HOUSE TECHNICIANS</span><strong>'+technicians+' / '+P.technicianLimit(state)+'</strong></div>'+
-      '</div><p class="trade-alert">You can hire four technicians immediately, subject to wage cover. '+
-      'Each works on a separate vehicle, alongside one sales executive and one buyer. '+
+      '<div><span>SALES EXECUTIVES</span><strong>'+salespeople+' / '+P.salesLimit(state)+'</strong></div>'+ 
+      '</div><p class="trade-alert">You can hire four technicians immediately, subject to a clear three-day wage buffer. '+
+      'Each works on a separate vehicle. You can hire one sales executive at first, two at 40 reputation and three at 80, alongside one buyer. '+
       (next?'NEXT UNLOCK: '+next+'.':'All eight technician places are unlocked.')+'</p>';
   }
   window.MotorTradePeopleView=Object.freeze({applicants,roster,reputation,totals});
