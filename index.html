@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=47">
+  <link rel="stylesheet" href="./styles.css?v=48">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -35,7 +35,7 @@
   <script src="./events-view.js?v=6" defer></script>
   <script src="./workshop-view.js?v=6" defer></script>
   <script src="./customers-view.js?v=8" defer></script>
-  <script src="./premises-view.js?v=1" defer></script>
+  <script src="./premises-view.js?v=2" defer></script>
   <script src="./auction-hall-view.js?v=2" defer></script>
   <script src="./dashboard-view.js?v=2" defer></script>
   <script src="./inbox-office.js?v=3" defer></script>
@@ -50,7 +50,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.33</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.34</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -286,9 +286,16 @@
             </section>
 
             <section class="career-panel" data-panel="business" hidden aria-labelledby="business-title">
-              <div class="page-heading"><div><p class="section-overline">YOUR CLUBHOUSE / YOUR BUSINESS</p><h1 id="business-title">MY <em>DEALERSHIP.</em></h1><p>Your career identity and development plan.</p></div><button type="button" class="secondary-button" data-action="save">SAVE CAREER</button></div>
-              <div class="business-grid"><div class="panel-card business-profile"><p class="section-overline">BUSINESS PROFILE</p><h2 data-bind="company">First Lot Motors</h2><div class="profile-row"><span>Trader status</span><strong>Independent</strong></div><div class="profile-row"><span>Starting capital</span><strong>£12,500</strong></div><div class="profile-row"><span>Forecourt capacity</span><strong data-bind="forecourt-capacity">4 vehicles</strong></div><div class="profile-row"><span>Career day</span><strong data-bind="day-label">DAY 01</strong></div><div class="profile-row"><span>Workshop bays</span><strong data-bind="workshop-bays">4</strong></div><div class="profile-row"><span>Employees</span><strong data-bind="staff-count">0</strong></div><div class="profile-row"><span>Reputation</span><strong data-bind="reputation-score">5 / 100</strong></div><div class="profile-row"><span>Monthly sales target</span><strong data-bind="monthly-target">0 / 4</strong></div></div><div class="panel-card business-plan"><p class="section-overline">PLANNED EXPANSION</p><h2>THE LONG GAME</h2><p>You can now buy, prepare and retail cars through three stock routes. Keep cash available while you build a trading record.</p><ol><li>Live: auctions and direct sellers</li><li>Live: stock preparation and listings</li><li>Live: cash buyers and part-exchanges</li><li>Live: recruitment, staff effects and evolving reputation</li><li>Live: premises expansion, rent and utilities</li><li>Live: weekly Monday Auction Hall with rival bidding and itemised settlement</li><li>Next: complaints and aftersales</li></ol></div></div>
-              <div id="premises-view" aria-live="polite"></div>
+              <div class="page-heading"><div><p class="section-overline">OWNER'S OFFICE / BUSINESS OPERATIONS</p><h1 id="business-title">MY <em>DEALERSHIP.</em></h1><p>Your business identity, operating commitments and next investment decisions in one place.</p></div><button type="button" class="secondary-button hq-save" data-action="save">SAVE CAREER</button></div>
+              <div class="hq-identity"><div class="hq-identity-title"><small>INDEPENDENT MOTOR TRADER · STARTING CAPITAL £12,500</small><h2 data-bind="company">First Lot Motors</h2><p>DEALERSHIP CAREER PROFILE</p></div><div class="hq-identity-facts">
+                <div><small>CAREER</small><strong data-bind="day-label">DAY 01</strong></div>
+                <div><small>REPUTATION</small><strong data-bind="reputation-score">5 / 100</strong></div>
+                <div><small>STAFF</small><strong data-bind="staff-count">0</strong></div>
+                <div><small>FORECOURT</small><strong data-bind="forecourt-capacity">4 vehicles</strong></div>
+                <div><small>WORKSHOP</small><strong data-bind="workshop-bays">4</strong></div>
+                <div><small>MONTHLY TARGET</small><strong data-bind="monthly-target">0 / 2</strong></div>
+              </div></div>
+              <div id="premises-view" class="hq-view" aria-live="polite"></div>
             </section>
           </div>
           <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>PRE-ALPHA WORKSHOP & VEHICLE LIFECYCLE / LOCAL SAVE</span></footer>
