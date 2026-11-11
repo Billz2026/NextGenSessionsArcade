@@ -217,6 +217,7 @@
     if(!h.rivalFolded&&bid+100<=lot.rival){
       h.currentBid=bid+100;h.leader='rival';
       h.feed.push('Regional dealer counters at '+money(h.currentBid)+'.');
+      if(h.feed.length>65)h.feed=h.feed.slice(-65);
       return {ok:true,changed:true,message:'Rival dealer has outbid you at '+
         money(h.currentBid)+'. Raise your bid or pass. No money has been taken.'};
     }
@@ -224,6 +225,7 @@
     h.feed.push('Rival dealer drops out at '+money(bid)+'.');
     if(bid<lot.reserve){
       h.feed.push('Auctioneer: vendor reserve not yet met. Increase your bid or pass.');
+      if(h.feed.length>65)h.feed=h.feed.slice(-65);
       return {ok:true,changed:true,message:'You lead at '+money(bid)+
         ', but the vendor reserve has not been met. Raise your bid or pass with no fee.'};
     }
@@ -292,7 +294,7 @@
       m && integer(m.id) && integer(m.day) && typeof m.from === 'string' &&
       typeof m.subject === 'string' && typeof m.preview === 'string' &&
       typeof m.body === 'string' && typeof m.read === 'boolean' &&
-      (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','staff','reputation','reports','business','workshop','events'].includes(m.linkPage)));
+      (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','staff','reputation','reports','business','workshop','events','auctionHall'].includes(m.linkPage)));
     if (!validMessages) return null;
     const messages = saved.messages.map(m => ({
       id:m.id,day:m.day,from:m.from,subject:m.subject,preview:m.preview,
@@ -303,6 +305,7 @@
       if (saved.cash !== STARTING_CASH || ![2,CAPACITY].includes(saved.capacity)) return null;
       const legacy=create(saved.name.trim(),messages);
       legacy.day=saved.day;
+      legacy.auctionHall=initialAuctionHall(saved.day);
       return M.initialize(legacy,{migrating:true});
     }
     if(saved.version>=VERSION&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
