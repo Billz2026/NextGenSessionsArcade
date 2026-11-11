@@ -1,5 +1,5 @@
 'use strict';
-/* The Motor Trade v0.9 — customer-case retail sales board. */
+/* The Motor Trade v0.9.25 — Sales Office final polish. */
 (() => {
   const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const cash=x=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',
@@ -17,7 +17,7 @@
     if(!c){
       const interest=C.demand(state,vehicle);
       return interest?
-        '<div class="sales-case-highlight"><strong>BUYER INTEREST TO CONTACT</strong>'+
+        '<div class="sales-case-highlight"><strong>CONTACT POTENTIAL BUYER</strong>'+
         '<p>A potential buyer is interested in this vehicle. Contact them to log an enquiry and establish their requirements.</p>'+
         '<button type="button" class="trade-button" data-action="open-customer" data-id="'+id+
         '">CONTACT BUYER / OPEN ENQUIRY →</button></div>':
@@ -81,8 +81,7 @@
           '. Incoming car requires its own preparation and takes one forecourt space.</p>'+
           '<button type="button" class="trade-button" data-action="agree-part-ex" data-id="'+id+
           '">AGREE PART-EX TERMS</button></section>':
-          '<section class="sales-offer-mode"><h4>NO PART-EXCHANGE</h4>'+
-          '<p>This customer has not offered a trade-in. Do not assume every buyer has one.</p></section>';
+          '<p class="so-no-part-ex">NO PART-EXCHANGE OFFERED · Cash purchase only for this customer.</p>';
         body='<p>The test drive went well. Discuss a realistic cash price or trade-in allowance; there is no completed sale until handover.'+
           (c.standby?' The earlier unsecured appointment stays open until a deposit or completed sale.':'')+'</p>'+ 
           '<div class="sales-offer-modes">'+cashUI+part+'</div>'+cancel;
@@ -107,10 +106,8 @@
           '<span>Part-exchange allowance</span><strong>'+cash(c.allowance||0)+'</strong>'+
           '<span>Already paid</span><strong>'+cash(c.held)+'</strong>'+
           '<span>BALANCE DUE AT COLLECTION</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
-          '<p>Collection booked for <strong>DAY '+c.collectionDay+'</strong>. '+
-          'Additional customer-specific preparation charged: '+cash(c.prepCost||0)+'. '+
-          'After paying the deposit, customers normally collect; cancellations are uncommon. Buyer withdrawal can result in fair retention against these recorded costs; dealer fault means a full deposit refund. '+
-          'No revenue or completed vehicle sale is recorded until handover.</p></div>'+buyerWithdraw+' '+cancel;
+          '<p><strong>COLLECTION: GAME DAY '+c.collectionDay+'</strong> · Customer-specific preparation charged: '+cash(c.prepCost||0)+'.</p>'+
+          '<p>The £250 deposit is held separately, not recognised as a vehicle sale. Buyer withdrawal can incur fair retention for recorded costs; dealership fault requires a refund.</p></div>'+buyerWithdraw+' '+cancel;
         break;
       case 'collectable':
         body='<div class="sales-case-highlight"><h4>CUSTOMER READY TO COLLECT</h4>'+
@@ -119,7 +116,7 @@
           '<span>Part-exchange allowance</span><strong>'+cash(c.allowance||0)+'</strong>'+
           '<span>Deposit already paid</span><strong>'+cash(c.held)+'</strong>'+
           '<span>BALANCE TO COLLECT TODAY</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
-          '<p>'+esc(c.name)+' is ready to collect. Complete handover within five game days after the agreed collection date. Receive only the remaining balance; the held deposit transfers without being charged twice.</p>'+
+          '<p><strong>COLLECTION DUE: DAY '+c.collectionDay+'</strong> · Complete handover within five game days. Collect only the outstanding balance; the held deposit is applied once.</p>'+
           '<button type="button" class="trade-button" data-action="handover-customer" data-mode="'+
           c.preferredMode+'" data-id="'+id+'">COLLECT '+cash(C.balanceDue(c))+' / HANDOVER</button></div>'+
           buyerWithdraw+' '+cancel;
@@ -134,7 +131,7 @@
     return who+'<div class="sales-case-content">'+body+'</div>';
   }
   const FILTERS=Object.freeze(['all','action','appointments','deposits']);
-  const STEP=['ENQUIRY','VIEWING','TEST DRIVE','AGREEMENT','COLLECTION'];
+  const STEP=['LEAD / ENQUIRY','VIEWING','TEST DRIVE','AGREEMENT','COLLECTION'];
   function lead(state,v,E){
     const c=E.customers.caseFor(state,v.id),available=!c&&E.customers.demand(state,v);
     const title=c?statuses[c.status]||'CUSTOMER CASE':
@@ -177,8 +174,8 @@
   }
   function progress(info){
     return '<div class="so-flow" aria-label="Sales progression">'+STEP.map((name,i)=>
-      '<span class="'+(i<info.step?'so-flow-done':i===info.step?'so-flow-current':'')+
-      '">'+name+'</span>').join('')+'</div>';
+      '<span class="'+(i<info.step?'so-flow-done':i===info.step?'so-flow-current':'')+'"'+
+      (i===info.step?' aria-current="step"':'')+'>'+name+'</span>').join('')+'</div>';
   }
   function details(state,E,entry){
     const v=entry.vehicle,leadInfo=entry.caseData,c=leadInfo.c;

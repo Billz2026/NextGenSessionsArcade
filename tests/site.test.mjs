@@ -75,7 +75,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=38/);
+  assert.match(html, /styles\.css\?v=39/);
   assert.match(html, /simulator\.js\?v=30/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -92,7 +92,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=19/);
-  assert.match(html, /customers-view\.js\?v=7/);
+  assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=4/);
   assert.match(html, /monthly-view\.js\?v=6/);
@@ -112,7 +112,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.24/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.25/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -595,7 +595,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=38/);
+  assert.match(html, /styles\.css\?v=39/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4437,7 +4437,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.24/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.25/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4506,7 +4506,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.24/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.25/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4770,4 +4770,63 @@ test('v0.9.24 scheduled customer dates appear in the sales register',()=>{
   const reserved=app.customersView.render(s,E);
   assert.match(reserved.html,/COLLECTION DAY 6/);
   assert.match(reserved.html,/DEPOSIT HELD/);
+});
+
+
+test('v0.9.25 lead progression uses Lead / Enquiry and one clear contact action',()=>{
+  const app=browser(new Map()),E=app.productionEngine,C=E.customers;
+  let lead=null;
+  for(let i=0;i<100&&!lead;i++){
+    const s=E.create('Sales Final '+i,[]);
+    const seller=E.marketFor(s).sellers[0];
+    assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+    const v=s.vehicles[0];v.status='listed';v.listedDay=s.day;v.asking=v.retail;
+    if(C.demand(s,v))lead={s,v};
+  }
+  assert.ok(lead);
+  const {s,v}=lead,markup=app.customersView.render(s,E).html;
+  assert.match(markup,/LEAD \/ ENQUIRY/);
+  assert.match(markup,/aria-current="step"/);
+  assert.match(markup,/CONTACT POTENTIAL BUYER/);
+  assert.match(markup,/CONTACT BUYER \/ OPEN ENQUIRY/);
+  assert.equal((markup.match(/CONTACT POTENTIAL BUYER/g)||[]).length,1);
+  assert.equal(C.stats(s,s.monthPlan.startDay,s.day).enquiries,0);
+  assert.ok(E.openCustomer(s,v.id).ok);
+  assert.match(app.customersView.render(s,E).html,/NEW ENQUIRY/);
+});
+
+test('v0.9.25 negotiated sale remains clear with cash and part exchange',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const cashCase=findCompletedDrive(E,c=>c.preferredMode==='cash');
+  const cashMarkup=app.customersView.render(cashCase.state,E).html;
+  assert.match(cashMarkup,/AGREE CASH PRICE/);
+  assert.match(cashMarkup,/COUNTER \+£150/);
+  const pxCase=findCompletedDrive(E,c=>c.preferredMode==='part-ex');
+  const pxMarkup=app.customersView.render(pxCase.state,E).html;
+  assert.match(pxMarkup,/CASH PURCHASE/);
+  assert.match(pxMarkup,/PART-EXCHANGE PROPOSAL/);
+  assert.match(pxMarkup,/AGREED PART-EX ALLOWANCE/);
+  assert.match(pxMarkup,/data-action="agree-part-ex"/);
+  assert.match(css,/max-width:1350px/);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(pxCase.state))));
+});
+
+test('v0.9.25 deposit and collection keep payment balance and handover correct',()=>{
+  const app=browser(new Map()),E=app.productionEngine,C=E.customers;
+  const {state,v,c}=findCompletedDrive(E);
+  assert.ok(E.agreeCustomer(state,v.id,'cash',null).ok);
+  assert.ok(E.depositCustomer(state,v.id).ok);
+  const reserve=app.customersView.render(state,E).html;
+  assert.match(reserve,/BALANCE DUE AT COLLECTION/);
+  assert.match(reserve,/COLLECTION: GAME DAY/);
+  assert.doesNotMatch(reserve,/data-action="handover-customer"/);
+  const balance=C.balanceDue(c);
+  state.day=c.collectionDay;E.advanceCustomers(state);
+  assert.equal(c.status,'collectable');
+  const collect=app.customersView.render(state,E).html;
+  assert.match(collect,/BALANCE TO COLLECT TODAY/);
+  assert.match(collect,/COLLECTION DUE: DAY/);
+  assert.match(collect,/data-action="handover-customer"/);
+  assert.equal(C.balanceDue(c),balance);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });

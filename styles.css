@@ -1928,3 +1928,42 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
   .so-vehicle-intro{grid-template-columns:92px minmax(0,1fr)}
   .so-vehicle-intro .so-car-photo .vehicle-photo-frame{height:67px}
 }
+
+
+/* v0.9.25 — Final Sales Office clarity / accessibility refinements. */
+.so-no-part-ex{padding:9px 10px;margin:7px 0;border:1px solid #425d66;border-radius:4px;background:#1a343f;color:#bcd0d4;font:700 10px/1.45 var(--body)}
+.so-customer .sales-offer-modes:has(.so-no-part-ex){display:block}
+.so-customer .sales-offer-modes:has(.so-no-part-ex)>.sales-offer-mode{margin-bottom:7px}
+.so-customer .sales-case-content .trade-button:focus-visible,.so-pick:focus-visible,.so-filters button:focus-visible,.so-customer .trade-input:focus-visible{outline:2px solid #f1c582;outline-offset:2px}
+.so-customer .sales-payment-breakdown span{font-size:11px;line-height:1.35}
+.so-customer .sales-payment-breakdown strong{font-size:13px;line-height:1.35}
+.so-customer .sales-offer-mode p{font-size:11px;line-height:1.48}
+.so-customer .sales-offer-mode small,.so-customer .sales-offer-mode label{font-size:10px}
+.so-customer .sales-offer-mode .trade-button{font-size:11px}
+@media(min-width:1021px){
+ .so-pick small{font-size:9px}
+ .so-pick span{font-size:10px}
+ .so-pick strong{font-size:17px}
+ .so-register>header span{font-size:9px}
+ .so-unit{padding:7px;gap:8px}
+ .so-kpis small{font-size:9px}
+ .so-toolbar .so-filters button{font-size:9px}
+ .so-file-head small{font-size:9px}
+ .so-status{font-size:9px;line-height:1.3}
+ .so-flow span{font-size:9px;line-height:1.25}
+ .so-figures span{font-size:10px;line-height:1.35}
+ .so-figures strong{font-size:12px}
+ .so-figures>div{padding:7px 8px}
+ .so-customer-heading small{font-size:9px}
+ .so-customer .sales-customer-meta span{font-size:10px}
+ .so-customer .sales-case-content>p{font-size:11px;line-height:1.45}
+ .so-customer .sales-case-highlight p{font-size:11px;line-height:1.5}
+ .so-customer .sales-case-quiet p{font-size:11px;line-height:1.5}
+ .so-customer .trade-button{font-size:11px;min-height:37px}
+ .so-caveat{font-size:9px}
+ .so-activity{font-size:9px}
+}
+@media(min-width:1021px) and (max-width:1350px){
+ .so-customer .sales-offer-modes{grid-template-columns:1fr}
+ .so-customer .sales-offer-mode .trade-action-row{display:flex;flex-wrap:wrap}
+}
