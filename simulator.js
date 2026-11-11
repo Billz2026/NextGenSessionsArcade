@@ -17,7 +17,8 @@
   const IN = window.MotorTradeInbox;
   const BV = window.MotorTradeBuyingDeskView;
   const SV = window.MotorTradeStockView;
-  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV || !IN || !BV || !SV)
+  const FV = window.MotorTradeFinanceView;
+  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV || !IN || !BV || !SV || !FV)
     throw new Error('Customer, workshop and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
@@ -159,6 +160,8 @@
   let workshopFilter = 'all';
   let selectedSalesId = null;
   let salesFilter = 'all';
+  let ledgerFilter = 'all';
+  let ledgerExpanded = false;
   let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
   function gameDate(day) {
@@ -351,19 +354,11 @@
     selectedSalesId=view.selectedId;
     byId('sales-list').innerHTML=view.html;
   }
-  function renderLedger() {
-    const history = byId('ledger-list');
-    if (!career.ledger.length) {
-      history.innerHTML = '<div class="trade-empty">Opening capital: ' + cashText(E.STARTING_CASH) +
-        '. No trading transactions recorded yet.</div>';
-      return;
-    }
-    history.innerHTML = [...career.ledger].reverse().map(entry =>
-      '<div class="trade-ledger-row"><time>DAY ' + String(entry.day).padStart(2,'0') +
-      '</time><span>' + escapeText(entry.note) + '</span><b class="' +
-      (entry.delta < 0 ? 'trade-negative' : 'trade-positive') + '">' +
-      (entry.delta < 0 ? '−' : '+') + cashText(Math.abs(entry.delta)) + '</b></div>'
-    ).join('');
+  function renderFinances() {
+    byId('finance-overview').innerHTML=FV.summary(career,E).html;
+    const view=FV.ledger(career,{filter:ledgerFilter,expanded:ledgerExpanded});
+    byId('finance-ledger-toolbar').innerHTML=view.controls;
+    byId('ledger-list').innerHTML=view.html;
   }
   function renderEvents() {
     const banner=byId('events-banner');
@@ -391,7 +386,6 @@
   function renderMonthly() {
     const r=M.statement(career);
     byId('monthly-dashboard-target').innerHTML=MV.liveGoals(career,M);
-    byId('finance-monthly-target').innerHTML=MV.liveGoals(career,M);
     byId('monthly-report-view').innerHTML=MV.renderReport(career,M,selectedMonth);
     bindText('monthly-target',r.soldUnits+' / '+r.targetUnits);
   }
@@ -410,7 +404,7 @@
     renderStock();
     renderWorkshop();
     renderSales();
-    renderLedger();
+    renderFinances();
     renderPeople();
     renderMonthly();
     renderDashboard();
@@ -643,6 +637,8 @@
     workshopFilter='all';
     selectedSalesId=null;
     salesFilter='all';
+    ledgerFilter='all';
+    ledgerExpanded=false;
     screen = 'career';
     currentPage = 'dashboard';
     const saved = persistCareer();
@@ -977,6 +973,16 @@
       case 'sell-part-ex':
         if (career) saveResult(E.completeSale(career,Number(button.dataset.id),'part-ex',
           inputNumber('px-allowance-' + button.dataset.id)));
+        break;
+      case 'filter-ledger':
+        if(career&&FV.FILTERS.includes(button.dataset.filter)){
+          ledgerFilter=button.dataset.filter;
+          ledgerExpanded=false;
+          currentPage='finance';render();
+        }
+        break;
+      case 'toggle-ledger':
+        if(career){ledgerExpanded=!ledgerExpanded;currentPage='finance';render();}
         break;
       case 'toggle-showroom':
         display.showroom = !display.showroom;

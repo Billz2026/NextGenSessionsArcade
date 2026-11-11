@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=39">
+  <link rel="stylesheet" href="./styles.css?v=40">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -41,7 +41,8 @@
   <script src="./inbox-office.js?v=3" defer></script>
   <script src="./buying-desk-view.js?v=2" defer></script>
   <script src="./stock-view.js?v=1" defer></script>
-  <script src="./simulator.js?v=30" defer></script>
+  <script src="./finance-view.js?v=1" defer></script>
+  <script src="./simulator.js?v=31" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -49,7 +50,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.25</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.26</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -256,19 +257,11 @@
               <details class="so-policy"><summary>CUSTOMER DEPOSITS & PART-EXCHANGE RULES</summary><p>A customer enquiry or viewing is not a reservation. A £250 deposit is held separately from business cash until collection; only the remaining balance is collected at handover. Buyer cancellation may allow fair retention for actual customer-specific costs, while dealership fault requires a full refund. Part-exchanges require an agreed allowance and occupy a stock space. No retail sale or revenue is recorded until handover.</p></details>
             </section>
 
-            <section class="career-panel" data-panel="finance" hidden aria-labelledby="finance-title">
-              <div class="page-heading"><div><p class="section-overline">ACCOUNTING / CASH FLOW</p><h1 id="finance-title">BUSINESS <em>FINANCES.</em></h1><p>Track the cash, acquisition costs and realised gross trading margins for every deal.</p></div></div>
-              <div class="trade-finance-grid">
-                <div class="panel-card trade-money"><span>AVAILABLE CASH</span><strong data-bind="cash">£12,500</strong><small>Starting capital and recorded cash transactions</small></div>
-                <div class="panel-card trade-money"><span>REALISED GROSS TRADE MARGIN</span><strong data-bind="trade-profit">£0</strong><small>Sale proceeds less vehicle acquisition and preparation</small></div>
-                <div class="panel-card trade-money"><span>VEHICLES SOLD</span><strong data-bind="sales">0</strong><small>Completed customer handovers only</small></div>
-                <div class="panel-card trade-money"><span>REFUNDABLE CUSTOMER DEPOSITS HELD</span><strong data-bind="customer-deposits">£0</strong><small>Segregated virtual holding funds — not spendable dealership cash</small></div>
-              </div>
-              <div class="people-finance-note">DAILY PROPERTY OVERHEAD: <strong data-bind="premises-daily">£25/day</strong> · UNPAID RENT / UTILITIES: <strong data-bind="premises-arrears">£0</strong>. See My Dealership for expansion options.</div>
-              <div id="finance-monthly-target" class="finance-monthly-target" aria-live="polite"></div>
-              <div class="people-finance-note">Staff wage settlement: <strong data-bind="staff-daily-pay">£0/day</strong> · Unpaid wage/notice obligations: <strong data-bind="staff-arrears">£0</strong>. Staff and premises expenses are recorded separately from gross vehicle margin.</div>
-              <section class="panel-card trade-section"><div class="panel-card-header"><div><p class="section-overline">TRANSACTION HISTORY</p><h2>TRADING LEDGER</h2></div></div><div id="ledger-list" class="trade-ledger"></div></section>
-              <p class="trade-alert">These are game economics only. Figures are not tax-adjusted net profit: VAT, applicable margin-scheme rules, operating overheads, finance, warranties and consumer rights liabilities are not calculated.</p>
+            <section class="career-panel finance-control" data-panel="finance" hidden aria-labelledby="finance-title">
+              <div class="page-heading"><div><p class="section-overline">THE DEALERSHIP / MONEY & CASH FLOW</p><h1 id="finance-title">BUSINESS <em>FINANCES.</em></h1><p>Know what is in the bank, what is committed and what trading has actually earned.</p></div><span class="career-chip">LIVE CASH POSITION</span></div>
+              <div id="finance-overview" class="fin-control" aria-live="polite"></div>
+              <section class="fin-ledger-section" aria-label="Transaction history"><div id="finance-ledger-toolbar"></div><div id="ledger-list" class="fin-ledger-list"></div></section>
+              <details class="fin-help"><summary>HOW TO READ THE FINANCES</summary><p><strong>Cash balance</strong> is actual dealership cash. <strong>Cash after repair reserves</strong> removes funds earmarked for outstanding vehicle preparation, but not future rent, wages or auction invoices. <strong>Stock invested</strong> is money already spent on vehicles still held; it cannot be used until a vehicle sells. <strong>Gross trade margin</strong> reflects completed deals, while <strong>operating contribution</strong> also deducts recorded staff costs and accrued premises expenses. Customer deposits are held separately. This is a fictional management view, not statutory accounts.</p></details>
             </section>
 
             <section class="career-panel" data-panel="events" hidden aria-labelledby="events-title">
