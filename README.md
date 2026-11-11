@@ -4,6 +4,15 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.8 — Dealership expansion, rent and utility overhead (11 November 2026)
+
+- **Buy additional forecourt capacity:** Four spaces initially, then six at 20 reputation (£1,800), eight at 40 (£3,600) and ten at 80 (£6,500). Buying the expansion costs actual dealership cash and increases rent and utilities; additional stock is not provided automatically.
+- **Expand real workshop capacity:** Four existing internal bays remain usable without investment, followed by six bays at 40 reputation (£2,600) and eight at 80 (£4,800). Reputation unlocks permission; installing extra bays is a separate capital decision. Staff recruitment and in-house work cannot exceed the physical bay count.
+- **Daily property economics:** Starter property costs are fictional £18/day rent + £7/day utilities (£25/day). More forecourt and workshop space raises overheads. Charges accrue once per game day (not once per Deal Day session); payments do not consume stock preparation reserves, and unpaid amounts remain explicit liabilities. Prolonged unpaid property bills harm reputation.
+- **Management accounts:** Rent and utility accruals are separated from cash payments and capital investments, and new operating contribution shows realised gross margin after recorded staff charges and premises overheads. Monthly target success now requires a positive operating contribution, not merely the appearance of profitable individual cars. Capital spending reduces cash and is not mislabelled as immediate operating expense; depreciation and tax are not yet modelled.
+- **Career-safe migration:** Save schema version 10 upgrades existing v9 careers with four forecourt spaces and four workshop bays, preserving stock, cash, employees, deposits and historical management reports. New premise states and capacity are checked on reload.
+- All property figures are **illustrative game-balancing assumptions, not actual commercial rent quotes**. The game does not model leases, council business rates, tax or depreciation.
+
 ### v0.9.7 — Hiring accessibility and staff-driven retail conversion (11 November 2026)
 - Recruitment displays eight rotating technician applicants and four sales candidates each week, plus two buyer applicants. It identifies role limits, joining fees, protected repair funds, and the exact cash shortfall before a hire can be made.
 - The minimum recruitment liquidity test now protects three days of whole-team wages rather than a full week, while all wages remain payable every game day. This gives early dealerships a viable hiring path without creating free staff or spending committed repair money.
