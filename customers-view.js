@@ -26,8 +26,12 @@
         (E.events.isDealDay(state.day)?' or Deal Day session':'')+
         '. Review price and stock age; nothing is guaranteed.</p></div>';
     }
-    const who='<div class="sales-customer-meta"><span>'+esc(c.name)+'</span>'+
-      '<span>'+esc(c.channel)+'</span><span>'+esc(statuses[c.status])+'</span></div>';
+    const rep=E.people.salesRep(state,c);
+    const who='<div class="sales-customer-meta"><span>'+esc(c.name)+'</span>'+ 
+      '<span>'+esc(c.channel)+'</span><span>'+esc(statuses[c.status])+'</span>'+ 
+      '<span>SALES ADVISER: '+esc(rep?.name||'Owner-managed')+
+      (rep?' · '+Math.round(E.people.salesProfile(rep).commissionRate*100)+'% GROSS MARGIN COMMISSION':'')+
+      '</span></div>';
     const cancel='<button type="button" class="trade-button trade-button-outline" data-action="cancel-customer" data-id="'+id+
       '">DEALERSHIP CANCELS / REFUND</button>';
     const buyerWithdraw='<button type="button" class="trade-button trade-button-secondary" data-action="customer-withdrawal" data-id="'+id+
