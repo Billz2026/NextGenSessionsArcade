@@ -115,8 +115,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
   assert.match(html, /PRE-ALPHA · v0\.9\.34/);
-  assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
-  assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
+  assert.match(html, /<small>FORECOURT<\/small><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
   assert.match(css, /\.vehicle-photo-missing\[hidden\]/);
   const registered = {};
@@ -5477,8 +5476,11 @@ test('v0.9.34 facility options are gated on reputation and total protected cash'
   assert.ok(quote.shortfall>0);
   assert.match(screen,/CASH SHORTFALL|Cash shortfall/);
   assert.match(screen,/SHORT BY £/);
-  assert.match(screen,/CASH RUNWAY ALERT/);
+  assert.doesNotMatch(screen,/CASH RUNWAY ALERT/);
   assert.match(screen,/£202/);
+  state.cash=20;
+  assert.match(app.premisesView.render(state,site),/CASH RUNWAY ALERT/);
+  state.cash=202;
   assert.match(screen,/CASH NEEDED INCL. BUFFERS/);
   assert.match(screen,/REPUTATION LOCKED/);
   assert.match(screen,/data-kind="forecourt" disabled/);
