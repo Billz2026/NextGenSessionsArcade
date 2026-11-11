@@ -157,6 +157,8 @@
   let stockFilter = 'all';
   let selectedWorkshopId = null;
   let workshopFilter = 'all';
+  let selectedSalesId = null;
+  let salesFilter = 'all';
   let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
   function gameDate(day) {
@@ -345,7 +347,9 @@
     byId('workshop-board').innerHTML=view.html;
   }
   function renderSales() {
-    byId('sales-list').innerHTML=CV.render(career,E);
+    const view=CV.render(career,E,{selectedId:selectedSalesId,filter:salesFilter});
+    selectedSalesId=view.selectedId;
+    byId('sales-list').innerHTML=view.html;
   }
   function renderLedger() {
     const history = byId('ledger-list');
@@ -637,6 +641,8 @@
     stockFilter='all';
     selectedWorkshopId=null;
     workshopFilter='all';
+    selectedSalesId=null;
+    salesFilter='all';
     screen = 'career';
     currentPage = 'dashboard';
     const saved = persistCareer();
@@ -704,6 +710,7 @@
       if(career&&Number.isSafeInteger(id)&&career.vehicles.some(v=>v.id===id)){
         if(destination==='workshop'){selectedWorkshopId=id;workshopFilter='all';}
         if(destination==='stock'){selectedStockId=id;stockFilter='all';}
+        if(destination==='sales'){selectedSalesId=id;salesFilter='all';}
       }
       show(destination);
       return;
@@ -916,6 +923,17 @@
       case 'list-stock':
         if (career) saveResult(E.advertise(career,Number(button.dataset.id),
           inputNumber('stock-price-' + button.dataset.id)));
+        break;
+      case 'select-sales':
+        if(career&&career.vehicles.some(v=>v.id===Number(button.dataset.id)&&v.status==='listed')){
+          selectedSalesId=Number(button.dataset.id);currentPage='sales';render();
+        }
+        break;
+      case 'filter-sales':
+        if(career&&CV.FILTERS.includes(button.dataset.filter)){
+          salesFilter=button.dataset.filter;selectedSalesId=null;
+          currentPage='sales';render();
+        }
         break;
       case 'open-customer':
         if(career)saveResult(E.openCustomer(career,Number(button.dataset.id)));

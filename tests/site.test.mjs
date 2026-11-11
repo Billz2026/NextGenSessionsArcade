@@ -75,8 +75,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=36/);
-  assert.match(html, /simulator\.js\?v=29/);
+  assert.match(html, /styles\.css\?v=37/);
+  assert.match(html, /simulator\.js\?v=30/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
@@ -92,7 +92,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=19/);
-  assert.match(html, /customers-view\.js\?v=5/);
+  assert.match(html, /customers-view\.js\?v=6/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=4/);
   assert.match(html, /monthly-view\.js\?v=6/);
@@ -112,7 +112,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.22/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.23/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -341,7 +341,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -595,7 +595,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=36/);
+  assert.match(html, /styles\.css\?v=37/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4437,7 +4437,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.22/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.23/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4506,7 +4506,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.22/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.23/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4643,4 +4643,72 @@ test('v0.9.22 repair booking difference is explicit and is not double-counted',(
   assert.equal(app.workshopView.paid(v),v.workshop.repairCost);
   assert.equal(s.ledger.filter(x=>x.note.startsWith('Workshop repair booking:')).length,1);
   // Cash was increased synthetically to isolate booked pricing and labour savings.
+});
+
+
+test('v0.9.23 Sales Office compact register, case selection and filters preserve saves',()=>{
+  const storage=new Map(),app=browser(storage),E=app.productionEngine;
+  app.click('new-career');app.submitCareer('Sales Office UI');
+  for(const lead of E.market(1).sellers){
+    app.setInput('seller-offer-'+lead.id,lead.ask);
+    app.click('buy-seller',{id:lead.id});
+  }
+  for(const v of JSON.parse(storage.get(STORAGE_KEY)).vehicles){
+    app.click('prepare-stock',{id:String(v.id)});
+    app.setInput('stock-price-'+v.id,Math.max(500,v.retail));
+    app.click('list-stock',{id:String(v.id)});
+  }
+  const before=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(before.vehicles.length,2);
+  assert.ok(before.vehicles.every(v=>v.status==='listed'));
+  app.go('sales');
+  const htmlUI=app.nodes.get('sales-list').innerHTML;
+  assert.match(htmlUI,/RETAIL CASE REGISTER/);
+  assert.match(htmlUI,/ADVERTISED VEHICLES/);
+  assert.match(htmlUI,/VEHICLE FINANCIALS/);
+  assert.match(htmlUI,/CURRENT CUSTOMER POSITION/);
+  assert.match(htmlUI,/data-action="select-sales"/);
+  assert.match(htmlUI,/data-action="filter-sales"/);
+  app.click('select-sales',{id:'2'});
+  assert.match(app.nodes.get('sales-list').innerHTML,/RETAIL FILE · STOCK 2/);
+  app.click('filter-sales',{filter:'deposits'});
+  assert.match(app.nodes.get('sales-list').innerHTML,/No vehicles match this filter/);
+  app.click('filter-sales',{filter:'all'});
+  assert.deepEqual(JSON.parse(storage.get(STORAGE_KEY)),before);
+  assert.match(css,/\.so-layout\{display:grid/);
+});
+
+test('v0.9.23 Sales Office keeps live enquiry and collection actions in focused case file',()=>{
+  const app=browser(new Map()),E=app.productionEngine,C=E.customers;
+  const state=E.create('Focused Sale',[]);
+  const car=E.marketFor(state).sellers[0];
+  assert.ok(E.acquireSeller(state,car.id,car.ask).ok);
+  const v=state.vehicles[0];
+  // The test uses a prepared fixture so customer presentation can be isolated.
+  v.status='listed';v.listedDay=1;v.asking=v.retail;v.workshop.stage='ready';
+  v.workshop.completedDay=1;v.workshop.repairCost=0;
+  let rendered=app.customersView.render(state,E);
+  assert.match(rendered.html,/SALES PROGRESSION|Sales progression|so-flow/);
+  assert.match(rendered.html,/RETAIL FILE/);
+  const current=app.customersView.lead(state,v,E);
+  assert.ok(['AWAITING BUYER INTEREST','NEW CUSTOMER ENQUIRY'].includes(current.title));
+  const caseObj={id:'C-1-0-1-1',vehicleId:v.id,createdDay:1,createdSession:0,
+    name:'Test Customer',channel:'ONLINE',status:'collectable',
+    preferredMode:'cash',appointmentDay:null,agreedDay:1,price:v.asking,
+    allowance:null,collectionDay:1,held:250,counters:0,reason:'',
+    terms:'in-person',prepCost:75,exchange:null,salespersonId:null};
+  state.customerCases[String(v.id)]=caseObj;
+  rendered=app.customersView.render(state,E,{selectedId:v.id});
+  assert.match(rendered.html,/READY FOR COLLECTION/);
+  assert.match(rendered.html,/BALANCE TO COLLECT TODAY/);
+  assert.match(rendered.html,/handover-customer/);
+  assert.equal(rendered.selectedId,v.id);
+});
+
+test('v0.9.23 Sales Office removes duplicated top notices but retains policy information',()=>{
+  assert.match(html,/id="sales-list" class="so-control"/);
+  assert.match(html,/class="so-policy"/);
+  assert.doesNotMatch(html,/id="sales-list" class="trade-card-grid trade-sales-grid"/);
+  assert.match(css,/#events-banner:has\(\.event-neutral-banner\)/);
+  assert.match(css,/\[data-panel="sales"\]>.page-heading h1/);
 });

@@ -133,52 +133,135 @@
     }
     return who+'<div class="sales-case-content">'+body+'</div>';
   }
-  function render(state,E){
-    const C=E.customers,month=state.monthPlan,stats=C.stats(state,month.startDay,state.day);
-    const listed=state.vehicles.filter(v=>v.status==='listed');
-    const active=Object.values(state.customerCases).filter(c=>c.status!=='lost');
-    const held=C.heldDeposits(state);
-    const top='<div class="sales-pipeline-summary">'+
-      [['CARS ADVERTISED',listed.length],['OPEN CUSTOMER CASES',active.length],
-      ['APPOINTMENTS BOOKED',active.filter(c=>c.status==='booked'||c.standby?.status==='booked').length],
-      ['HELD CUSTOMER DEPOSITS',cash(held)]].map(([label,value])=>
-        '<div><small>'+label+'</small><strong>'+value+'</strong></div>').join('')+'</div>'+
-      '<p class="sales-pipeline-note">Viewings happen within 48 game-hours. An appointment without a deposit never reserves a car: other buyers can view and buy it. '+
-      'Appointments, test drives and negotiations may still fail. '+
-      'Deposits are part-payment, held in a separate customer account until collection. '+
-      'Buyer cancellations can lose a fair portion linked to actual extra costs, not automatically the full amount; dealer fault requires a refund. The remaining cash balance is collected on handover.</p>'+
-      '<div class="sales-pipeline-activity">THIS MONTH · '+stats.enquiries+' ENQUIRIES · '+
-      stats.appointments+' APPOINTMENTS · '+stats.noShows+' NO-SHOWS · '+
-      stats.testDrives+' TEST DRIVES · '+stats.completedSales+' COMPLETED SALES</div>';
-    const soldCards=state.sold.slice(-4).reverse().map(v=>
-      '<article class="vehicle-sold-card">'+VC.photo(v,'sold')+
-      '<div class="vehicle-sold-copy"><h4>'+esc(v.title)+'</h4>'+
-      '<span>'+esc(v.color||'Colour unverified')+' · Sold day '+v.day+'</span>'+
-      '<div class="sales-payment-breakdown">'+
-      '<span>Completed sale</span><strong>'+cash(v.price)+'</strong>'+
-      '<span>Deposit already paid</span><strong>'+cash(v.depositApplied||0)+'</strong>'+
-      '<span>Final balance received</span><strong>'+cash(v.customerBalancePaid??v.price)+'</strong>'+
-      '<span>Gross vehicle margin</span><strong>'+cash(v.profit)+'</strong>'+
-      '</div></div></article>').join('');
-    const salesHistory=soldCards?'<section class="sales-sold-recent"><h3>RECENT COMPLETED HANDOVERS</h3>'+
-      '<div class="sales-sold-grid">'+soldCards+'</div></section>':'';
-    if(!listed.length)return top+'<div class="trade-empty"><h2>NO CARS READY FOR RETAIL.</h2>'+
-      '<p>Assess, repair, pass quality control and advertise a vehicle before expecting customer enquiries.</p>'+
-      '<button type="button" class="trade-button" data-page="stock">OPEN VEHICLE STOCK →</button></div>'+salesHistory;
-    const deadline=E.events.isDealDay(state.day);
-    const header=deadline?'<div class="deadline-retail-intro"><strong>DEAL DAY · '+
-      esc(E.events.outlook(state).label)+' · '+esc(E.events.dealSession(state).time)+
-      '</strong><p>Walk-in customers may arrive without appointments, but test drives, negotiations and handovers still matter. '+
-      'Unfinished walk-in cases expire when the next session begins.</p></div>':'';
-    return top+header+'<div class="sales-case-grid">'+listed.map(v=>
-      '<article class="trade-card sales-case-card">'+
-      VC.heading(v,C.caseFor(state,v.id)?.held?'reserved':'stock',
-        'STOCK '+v.id+' · '+Math.max(0,state.day-v.listedDay)+' DAYS ADVERTISED')+
-      '<div class="trade-pricing"><div><small>YOUR ASKING PRICE</small><strong>'+cash(v.asking)+
-      '</strong></div><div><small>BUY / PREP COST</small><strong>'+cash(v.cost+v.prepSpent)+
-      '</strong></div><div><small>LIKELY SALE GUIDE</small><strong>'+
-      cash(v.profile?.likelySale||v.retail)+'</strong></div></div>'+
-      actions(state,v,E)+'</article>').join('')+'</div>'+salesHistory;
+  const FILTERS=Object.freeze(['all','action','appointments','deposits']);
+  const STEP=['ENQUIRY','VIEWING','TEST DRIVE','AGREEMENT','COLLECTION'];
+  function lead(state,v,E){
+    const c=E.customers.caseFor(state,v.id),available=!c&&E.customers.demand(state,v);
+    const title=c?statuses[c.status]||'CUSTOMER CASE':
+      available?'NEW CUSTOMER ENQUIRY':'AWAITING BUYER INTEREST';
+    const step=!c?(available?0:-1):{
+      enquiry:0,booked:1,arrived:1,discussing:2,agreed:3,
+      reserved:4,collectable:4,lost:-1
+    }[c.status]??-1;
+    const actionable=available||!!c&&
+      ['enquiry','arrived','discussing','agreed','collectable'].includes(c.status);
+    return {c,available,title,step,actionable,
+      tone:c?.status==='lost'?'lost':
+        ['reserved','collectable'].includes(c?.status)?'deposit':
+        actionable?'action':c?.status==='booked'?'appointment':'quiet'};
   }
-  window.MotorTradeCustomersView=Object.freeze({render});
+  function snapshot(state,E){
+    const C=E.customers,listed=state.vehicles.filter(v=>v.status==='listed');
+    const rows=listed.map(v=>({vehicle:v,caseData:lead(state,v,E)}));
+    const live=rows.filter(r=>r.caseData.c&&r.caseData.c.status!=='lost').length;
+    const appointments=rows.filter(r=>r.caseData.c?.status==='booked').length;
+    const deposits=rows.filter(r=>r.caseData.c?.held>0).length;
+    return {rows,live,appointments,deposits,
+      attention:rows.filter(r=>r.caseData.actionable).length,
+      held:C.heldDeposits(state)};
+  }
+  function unit(state,entry,selected){
+    const v=entry.vehicle,k=entry.caseData;
+    const days=Math.max(0,state.day-v.listedDay);
+    return '<article class="so-unit'+(selected?' so-unit-active':'')+'">'+
+      '<div class="so-thumb">'+VC.photo(v,'stock')+'</div>'+
+      '<button type="button" class="so-pick" data-action="select-sales" data-id="'+v.id+
+      '" aria-pressed="'+String(selected)+'"><small>STOCK '+v.id+
+      ' · '+days+' DAYS ADVERTISED</small><strong>'+esc(v.title)+'</strong>'+
+      '<span>ASKING '+cash(v.asking)+'</span>'+
+      '<em class="so-status so-status-'+k.tone+'">'+esc(k.title)+'</em></button></article>';
+  }
+  function progress(info){
+    return '<div class="so-flow" aria-label="Sales progression">'+STEP.map((name,i)=>
+      '<span class="'+(i<info.step?'so-flow-done':i===info.step?'so-flow-current':'')+
+      '">'+name+'</span>').join('')+'</div>';
+  }
+  function details(state,E,entry){
+    const v=entry.vehicle,leadInfo=entry.caseData,c=leadInfo.c;
+    const invested=v.cost+v.prepSpent;
+    const indicative=v.profile?.likelySale??v.retail;
+    const days=Math.max(0,state.day-v.listedDay);
+    return '<article class="so-file" aria-label="Selected sales case">'+
+      '<header class="so-file-head"><div><small>RETAIL FILE · STOCK '+v.id+
+      (c?' · '+esc(c.channel):' · ADVERTISED VEHICLE')+'</small>'+
+      '<h3>'+esc(v.title)+'</h3></div>'+
+      '<span class="so-status so-status-'+leadInfo.tone+'">'+esc(leadInfo.title)+'</span></header>'+
+      progress(leadInfo)+
+      '<div class="so-file-grid"><section class="so-car">'+
+      '<div class="so-car-photo">'+VC.photo(v,'stock')+'</div>'+
+      '<div class="so-specs"><span>'+new Intl.NumberFormat('en-GB').format(v.miles)+
+      ' MILES · '+esc(v.fuel)+' · '+esc(v.gearbox)+'</span>'+
+      '<small>'+esc(v.color||'COLOUR NOT RECORDED')+' · '+days+
+      ' DAYS ADVERTISED</small></div>'+
+      '<h4>VEHICLE FINANCIALS</h4><div class="so-figures">'+
+      '<div><span>ADVERTISED PRICE</span><strong>'+cash(v.asking)+'</strong></div>'+
+      '<div><span>ACQUISITION + PREPARATION</span><strong>'+cash(invested)+'</strong></div>'+
+      '<div><span>LIKELY ACHIEVED SALE</span><strong>'+cash(indicative)+'</strong></div>'+
+      (c?.price!==null&&c?.price!==undefined?
+        '<div class="so-figures-strong"><span>AGREED SALE PRICE</span><strong>'+cash(c.price)+'</strong></div>':'')+
+      '</div><p class="so-caveat">Valuations are fictional. An agreed price is not a completed sale until handover.</p>'+
+      '</section><section class="so-customer"><div class="so-customer-heading">'+
+      '<div><small>CURRENT CUSTOMER POSITION</small><h4>'+esc(leadInfo.title)+'</h4></div>'+
+      (c?'<span>'+esc(c.name)+'</span>':'')+'</div>'+
+      actions(state,v,E)+'</section></div></article>';
+  }
+  function history(state){
+    if(!state.sold.length)return '';
+    return '<details class="so-history"><summary>RECENT COMPLETED HANDOVERS · '+
+      state.sold.length+' SALES <span>VIEW HISTORY</span></summary>'+
+      '<div class="so-history-list">'+state.sold.slice(-5).reverse().map(v=>
+        '<div class="so-history-row"><div><strong>'+esc(v.title)+'</strong>'+
+        '<small>DAY '+v.day+' · '+esc(v.color||'COLOUR NOT RECORDED')+'</small></div>'+
+        '<span>SALE '+cash(v.price)+'</span><span>GROSS '+cash(v.profit)+'</span></div>'
+      ).join('')+'</div></details>';
+  }
+  function render(state,E,{selectedId=null,filter='all'}={}){
+    const s=snapshot(state,E),f=FILTERS.includes(filter)?filter:'all';
+    const stats=E.customers.stats(state,state.monthPlan.startDay,state.day);
+    const top='<div class="so-kpis">'+[
+      ['ADVERTISED VEHICLES',s.rows.length],['ACTIVE CUSTOMER CASES',s.live],
+      ['ACTION REQUIRED',s.attention],['HELD DEPOSITS',cash(s.held)]
+    ].map(([name,value])=>
+      '<div><small>'+name+'</small><strong>'+value+'</strong></div>').join('')+'</div>'+
+      '<div class="so-activity">THIS MONTH · '+stats.enquiries+' ENQUIRIES · '+
+      stats.appointments+' VIEWINGS BOOKED · '+stats.testDrives+' TEST DRIVES · '+
+      stats.completedSales+' COMPLETED HANDOVERS</div>';
+    if(!s.rows.length)return {selectedId:null,html:top+
+      '<div class="trade-empty so-empty"><h2>NO CARS ADVERTISED.</h2>'+
+      '<p>Prepare a vehicle, pass workshop quality control, then set the retail price in Vehicle Stock.</p>'+
+      '<button type="button" class="trade-button" data-page="stock">OPEN VEHICLE STOCK</button></div>'+
+      history(state)};
+    const filterDefs=[['all','ALL VEHICLES',s.rows.length],
+      ['action','ACTION REQUIRED',s.attention],
+      ['appointments','APPOINTMENTS',s.appointments],
+      ['deposits','DEPOSIT HELD',s.deposits]];
+    const toolbar='<div class="so-toolbar"><strong>RETAIL CASE REGISTER</strong>'+
+      '<div class="so-filters" role="group" aria-label="Filter retail sales cases">'+
+      filterDefs.map(([key,label,n])=>
+        '<button type="button" data-action="filter-sales" data-filter="'+key+
+        '" aria-pressed="'+String(key===f)+'">'+label+' <b>'+n+'</b></button>').join('')+'</div></div>';
+    const filtered=s.rows.filter(r=>f==='all'||(f==='action'?r.caseData.actionable:
+      f==='appointments'?r.caseData.c?.status==='booked':
+      r.caseData.c?.held>0)).slice().sort((a,b)=>{
+        const p=x=>x.caseData.actionable?0:x.caseData.c?.held>0?1:
+          x.caseData.c?.status==='booked'?2:3;
+        return p(a)-p(b)||a.vehicle.listedDay-b.vehicle.listedDay||
+          a.vehicle.id-b.vehicle.id;
+      });
+    const selected=filtered.find(r=>r.vehicle.id===selectedId)||filtered[0]||null;
+    const list=filtered.length?filtered.map(r=>unit(state,r,r.vehicle.id===selected?.vehicle.id)).join(''):
+      '<p class="so-empty-filter">No vehicles match this filter. Select All Vehicles to review the full register.</p>';
+    const deadline=E.events.isDealDay(state.day)?
+      '<div class="so-deal-day">DEAL DAY · '+esc(E.events.outlook(state).label)+
+      ' · '+esc(E.events.dealSession(state).time)+
+      ' — Walk-in enquiries can change between sessions.</div>':'';
+    return {selectedId:selected?.vehicle.id??null,html:top+deadline+toolbar+
+      '<div class="so-layout"><aside class="so-register" aria-label="Advertised vehicle and customer cases">'+
+      '<header>ADVERTISED STOCK <span>'+filtered.length+' SHOWN</span></header>'+
+      '<div class="so-register-list">'+list+'</div></aside>'+
+      (selected?details(state,E,selected):
+        '<div class="so-file so-empty-filter">No selected customer case.</div>')+'</div>'+
+      history(state)};
+  }
+  window.MotorTradeCustomersView=Object.freeze({render,FILTERS,lead,snapshot});
 })();
