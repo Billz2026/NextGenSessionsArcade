@@ -4,6 +4,14 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.11 — Compact dealership dashboard and live management priorities (11 November 2026)
+
+- **One-screen control centre:** The dashboard now uses a compact heading, a short event status banner and six linked metrics rather than an oversized welcome header, repeated calendar card and tall tiles. Cash balance, forecourt capacity, current-month sales, operating contribution, reputation and the next weekly auction are visible near the top. Each figure takes the player to its relevant business department.
+- **Real information, not hard-coded advice:** The Manager's Desk shows up to three high-priority actions derived from the existing game state: binding auction invoices, board meetings/Deal Day, staff and premises arrears, customer viewings, vehicle assessments/quality checks, prepared cars not listed, empty forecourt, ageing stock, unread mail and approaching monthly targets. Every action links to the right playable screen.
+- **Operating workload without clutter:** A compact linked strip shows advertised cars, cars awaiting preparation, booked viewings, outstanding bills and cumulative career sales. The Inbox shows the two newest unread messages first, then recent messages, without modifying unread flags.
+- **Clear finance definitions:** The cash tile remains the cash balance, not an invented "free cash" figure. It identifies actual protected workshop repair funding where present. The monthly result is explicitly an **operating contribution** after recorded staff charges and accrued premises overheads, not net profit. The fuller target and career gross-margin breakdown remains expandable.
+- **Scope, accessibility, continuity:** Styling is restricted to Dashboard, including smaller event notices, readable mobile layouts and keyboard focus states. The backend, staffing, auctions, seller market, monthly settlement and saved-career schema remain unchanged. No extra simulation turns or artificial alerts are introduced.
+
 ### v0.9.10 — Weekly Monday auctions, bid-to-withdrawal, and final payment (11 November 2026)
 
 - Auction Hall now runs **once per game week, normally Mondays** (career days 1, 8, 15, 22, 29, …). Day 1 is Monday 9 November 2026. If a Monday overlaps with month-end Deal Day (e.g. game day 120), the auction is moved to **Tuesday of the same week**. Saturdays and Sundays never host auctions. The next scheduled weekday is shown on closed days. Other business and private sellers continue trading, including when the auction house is shut. This first-pass weekly schedule will be refined later.
