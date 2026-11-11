@@ -15,7 +15,7 @@
       (r.hammer?' · HAMMER '+money(r.hammer):'')+'</small></div><b>'+
       (r.kind==='won'?money(r.total)+' ALL-IN':'£0 SPENT')+'</b></div>';
   }
-  function render(state,E,reportCard){
+  function render(state,E,reportCard,previewId=null){
     const h=state.auctionHall,lots=E.marketFor(state).auctions;
     const own=state.auctionHistory.filter(x=>x.kind==='won');
     const history=state.auctionHistory.slice(-10).reverse();
@@ -40,7 +40,8 @@
           '<strong>'+esc(lot.title)+'</strong>'+
           '<small>'+esc(lot.fuel)+' · '+esc(lot.gearbox)+' · GRADE '+lot.profile.grade+
           ' · GUIDE '+money(lot.guide)+'</small><b>'+ (r?status[r.kind]:active?'ON THE ROSTRUM':spent?'ALREADY OWNED':'UPCOMING')+
-          '</b></article>';
+          '</b><button type="button" class="auction-catalogue-review" data-action="preview-auction" data-id="'+
+          esc(lot.id)+'">VIEW LOT REPORT</button></article>';
       }).join('')+'</div></div>':'';
     if(!lots.length)
       return header+notice+'<div class="trade-empty auction-closed"><h2>NO AUCTION SESSION TODAY.</h2>'+
@@ -54,6 +55,14 @@
         '<div class="auction-final-actions"><button type="button" class="trade-button" data-page="stock">VIEW VEHICLE STOCK</button>'+
         '<button type="button" class="trade-button trade-button-secondary" data-page="auctions">PRIVATE SELLER DESK</button></div></div>';
     const lot=lots[h.index],current=h.currentBid||lot.guide;
+    const previewLot=lots.find(x=>x.id===previewId&&x.id!==lot.id)||null;
+    const preview=previewLot?'<section class="panel-card auction-preview"><div class="auction-preview-head"><div><span>CATALOGUE INSPECTION · NOT ON THE ROSTRUM</span><h3>LOT '+
+      E.lotNumber(lots.indexOf(previewLot))+' · '+esc(previewLot.title)+
+      '</h3></div><button type="button" class="trade-button trade-button-secondary" data-action="close-auction-preview">CLOSE PREVIEW</button></div>'+
+      '<div class="auction-preview-body">'+VC.heading(previewLot,'auction',
+      'CATALOGUE LOT '+E.lotNumber(lots.indexOf(previewLot)))+
+      reportCard(previewLot,'auction',previewLot.guide+250)+
+      '<p>Review this lot ahead of its turn. You cannot bid on it until the current lot is finished.</p></div></section>':'';
     const expectedNext=current+100,inspection=!!state.reports?.[lot.id];
     const q=E.quote(lot,'auction',expectedNext,inspection);
     const intelligence=E.people.buyerEstimate(state,lot.rival);
@@ -113,7 +122,7 @@
     const recent=history.filter(x=>x.day<state.day).length?
       '<div class="panel-card auction-results"><h3>RECENT SESSION RESULTS</h3>'+
       history.filter(x=>x.day<state.day).slice(0,6).map(resultRow).join('')+'</div>':'';
-    return header+notice+catalogue+lotView+results+recent;
+    return header+notice+catalogue+preview+lotView+results+recent;
   }
   window.MotorTradeAuctionHallView=Object.freeze({render});
 })();
