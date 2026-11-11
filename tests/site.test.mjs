@@ -3289,7 +3289,7 @@ test('v0.9.9 upcoming catalogue previews protect undisclosed faults until paid i
   app.click('preview-auction',{id:lot.id});
   let markup=app.nodes.get('auction-hall-view').innerHTML;
   assert.match(markup,new RegExp('LOT '+String(lots.indexOf(lot)+1).padStart(3,'0')));
-  assert.doesNotMatch(markup,new RegExp(lot.profile.hiddenFault.item.replace(/[.*+?^$()|[\]{}]/g,'\\$&')));
+  assert.ok(!markup.includes(lot.profile.hiddenFault.item),'Hidden faults must remain confidential before inspection');
   app.click('inspect-lead',{kind:'auction',id:lot.id});
   const state=JSON.parse(storage.get(STORAGE_KEY));
   assert.equal(state.reports[lot.id].fee,lot.profile.inspectionFee);
