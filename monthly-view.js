@@ -211,11 +211,40 @@
         'This historical report predates detailed Deal Day market tracking. No figures have been invented.':
         'Deal Day outcomes are not known yet. The completed results will be recorded when the month closes.')+
       '</p></section>';
-    return archivePicker(state,selected)+reportHeader+badges+targets+
-      '<div class="report-columns">'+cash+saleLine+customerSection+inventory+staff+trust+dealDaySection+'</div>'+
-      '<p class="trade-alert report-caveat">Operating months currently contain 30 game days. '+
-      'Actual calendar months, UK payroll law, VAT, tax, rents, financing, warranties and statutory accounts '+
-      'require a future business-economics release. All transactions, figures and vehicle markets are fictional.</p>';
+    const contribution=r.operatingContribution??r.grossAfterStaff;
+    const needed=Math.max(0,r.targetUnits-r.soldUnits);
+    const flags=[];
+    if(needed)flags.push(['SALES REQUIRED',needed+' handovers still needed']);
+    if(contribution<0)flags.push(['OPERATING LOSS',money(contribution)+' after staff and premises']);
+    if(r.agedStock)flags.push(['AGEING STOCK',r.agedStock+' vehicles held for 14+ days']);
+    if(r.stockAwaitingPrep)flags.push(['WORKSHOP BACKLOG',r.stockAwaitingPrep+' vehicles unprepared']);
+    if((r.payrollArrears||0)+(r.premisesArrears||0))flags.push(['UNPAID BILLS',
+      money((r.payrollArrears||0)+(r.premisesArrears||0))+' in outstanding obligations']);
+    const alerts=(flags.length?flags:[['NO IMMEDIATE FLAGS','No flagged exceptions']]).slice(0,4).map(item=>
+      '<div class="mr-flag"><strong>'+item[0]+'</strong><span>'+item[1]+'</span></div>').join('');
+    const top='<div class="mr-overview"><div class="mr-head"><div><small>MONTH '+r.month+' · DAYS '+
+      r.startDay+'–'+r.endDay+' · '+(isClosed?'ARCHIVED RESULT':'LIVE POSITION')+
+      '</small><h2>MANAGEMENT REVIEW</h2></div><b>'+status+'</b></div>'+
+      '<div class="mr-kpis">'+
+      cell('VEHICLES HANDED OVER',r.soldUnits+' / '+r.targetUnits,'Monthly target')+
+      cell('OPERATING CONTRIBUTION',money(contribution),'After staff and premises costs',
+        contribution<0?'report-value-negative':'report-value-positive')+
+      cell(isClosed?'CLOSING CASH':'CURRENT CASH',money(r.closingCash),'Opening '+money(r.openingCash))+
+      cell('CASH INVESTED IN STOCK',money(r.stockCapital),r.stockCount+' unsold vehicles')+'</div>'+
+      '<div class="mr-focus"><section class="mr-panel"><h3>ARE WE ON TARGET?</h3>'+
+      progress(r.soldUnits,r.targetUnits,'Completed handovers')+
+      progress(r.turnover,r.targetTurnover,'Turnover guide')+
+      progress(Math.max(0,r.grossMargin),r.targetMargin,'Gross margin guide')+
+      '<p>Company success requires enough handovers and positive operating contribution.</p></section>'+
+      '<section class="mr-panel"><h3>WHAT NEEDS ATTENTION?</h3>'+alerts+'</section></div></div>';
+    const detail=(title,body)=>'<details class="mr-detail"><summary>'+title+
+      ' · EXPAND</summary>'+body+'</details>';
+    return archivePicker(state,selected)+top+'<section class="mr-records"><h3>DETAILED MANAGEMENT RECORDS</h3>'+
+      detail('MONTHLY OBJECTIVES',targets)+detail('CASH FLOW & FINANCES',cash)+
+      detail('SALES & PURCHASING',saleLine)+detail('STOCK & WORKING CAPITAL',inventory)+
+      detail('SALES TEAM SCORECARDS',staff)+detail('RETAIL CUSTOMER JOURNEY',customerSection)+
+      detail('CUSTOMER TRUST & RISKS',trust)+detail('DEAL DAY RESULTS',dealDaySection)+'</section>'+
+      '<p class="mr-note">Fictional management figures only; not statutory UK accounts. VAT, tax and some liabilities are not modelled.</p>';
   }
   window.MotorTradeMonthlyView=Object.freeze({renderReport,liveGoals});
 })();
