@@ -28,7 +28,7 @@
       '<div><small>ACTIVE LOT</small><strong>'+(h.phase==='finished'||!lots.length?'—':E.lotNumber(h.index))+'</strong></div>'+
       '<div><small>WON TODAY</small><strong>'+won+'</strong></div>'+
       '<div><small>CAREER AUCTION WINS</small><strong>'+own.length+'</strong></div></div></div>';
-    const notice='<p class="trade-alert">All amounts are simulated GBP. A successful bid is binding and the hammer, buyer fee and reserved preparation funds are charged immediately. '+
+    const notice='<p class="trade-alert">All amounts are simulated GBP. A bid becomes binding when the hammer falls. The winning hammer and buyer fee are paid immediately; preparation cash is protected until the workshop charges for repairs. '+
       'A paid inspection is optional and non-refundable. A lot without a met vendor reserve remains unsold. '+
       'No fees are charged for losing or passing. Competitor bidding is fixed for the day and cannot be rerolled.</p>';
     const catalogue=lots.length?'<div class="auction-catalogue"><h3>NUMBERED LOT CATALOGUE</h3>'+
