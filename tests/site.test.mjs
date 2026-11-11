@@ -57,22 +57,22 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=2/);
-  assert.match(html, /people\.js\?v=4/);
+  assert.match(html, /people\.js\?v=5/);
   assert.match(html, /monthly\.js\?v=5/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=2/);
-  assert.match(html, /customers\.js\?v=4/);
+  assert.match(html, /customers\.js\?v=5/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=12/);
-  assert.match(html, /customers-view\.js\?v=4/);
+  assert.match(html, /trading\.js\?v=13/);
+  assert.match(html, /customers-view\.js\?v=5/);
   assert.match(html, /workshop-view\.js\?v=3/);
   assert.match(html, /events-view\.js\?v=3/);
   assert.match(html, /monthly-view\.js\?v=5/);
-  assert.match(html, /people-view\.js\?v=2/);
+  assert.match(html, /people-view\.js\?v=3/);
   assert.match(html, /vehicle-view\.js\?v=3/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
@@ -88,7 +88,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.6/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.7/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -564,7 +564,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=20/);
+  assert.match(html, /styles\.css\?v=21/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -1139,7 +1139,9 @@ test('sales staff improves buyer offers, earns commission and influences reputat
   assert.ok(sale.ok);
   assert.ok(state.reputationScore>before);
   assert.equal(state.staff[0].deals,1);
-  assert.equal(state.sold[0].salesCommission,Math.round(Math.max(0,state.sold[0].profit)*.03));
+  assert.equal(state.sold[0].salesCommission,
+    Math.round(Math.max(0,state.sold[0].profit)*.06));
+  assert.equal(state.sold[0].salesCommissionRatePct,6);
   assert.ok(state.ledger.some(x=>x.note.startsWith('Sales commission:')));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
@@ -1953,10 +1955,10 @@ test('recruiting a technician changes workshop prices and internal bay capacity'
 test('four mechanics start available and handle four separate in-house repair jobs', () => {
   const E=browser(new Map()).productionEngine,P=E.people,s=E.create('Four Bay Motors',[]);
   const candidates=P.applicants(1).filter(x=>x.role==='technician');
-  assert.equal(candidates.length,4);
+  assert.equal(candidates.length,8);
   assert.equal(P.technicianLimit(s),4);
   assert.equal(P.staffLimit(s),6);
-  for(const candidate of candidates)assert.ok(P.hire(s,candidate.id).ok);
+  for(const candidate of candidates.slice(0,4))assert.ok(P.hire(s,candidate.id).ok);
   assert.equal(s.staff.length,4);
   assert.equal(P.hire(s,candidates[0].id).ok,false);
   // Test fixture injects investment capital for stock only, not production gameplay.
@@ -1978,7 +1980,7 @@ test('four mechanics start available and handle four separate in-house repair jo
   assert.ok(P.valid(s,s.day));
   s.reputationScore=40;
   assert.equal(P.technicianLimit(s),6);
-  assert.equal(P.staffLimit(s),8);
+  assert.equal(P.staffLimit(s),9);
   s.day=29;
   const additional=P.applicants(s.day).find(x=>x.role==='technician'&&
     !s.staff.some(e=>e.name===x.name));
@@ -1986,7 +1988,7 @@ test('four mechanics start available and handle four separate in-house repair jo
   assert.ok(P.hire(s,additional.id).ok,'Higher reputation unlocks more technicians');
   s.reputationScore=80;
   assert.equal(P.technicianLimit(s),8);
-  assert.equal(P.staffLimit(s),10);
+  assert.equal(P.staffLimit(s),12);
 });
 test('staff training pauses internal jobs, but transfer can rescue a stalled workshop', () => {
   const E=browser(new Map()).engine,P=E.people,s=E.create('Repair Team',[]);
@@ -2846,4 +2848,99 @@ test('v0.9.6 paying a deposit displaces an earlier unsecured appointment but no 
   assert.equal(C.heldDeposits(state),250);
   assert.equal(state.customerHistory.filter(h=>h.type==='appointment-displaced').length,1);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('v0.9.7 recruitment exposes eight technicians and affordable, transparent three-day wage cover', () => {
+  const E=browser(new Map()).productionEngine,P=E.people,s=E.create('Transparent Recruitment',[]);
+  const technicians=P.applicants(1).filter(c=>c.role==='technician');
+  const sellers=P.applicants(1).filter(c=>c.role==='sales');
+  assert.equal(technicians.length,8);
+  assert.equal(sellers.length,4);
+  assert.equal(P.technicianLimit(s),4);
+  assert.equal(P.salesLimit(s),1);
+  assert.equal(P.WAGE_COVER_DAYS,3);
+  let previousCash=s.cash;
+  for(const candidate of technicians.slice(0,4)){
+    const quote=P.hireQuote(s,candidate);
+    assert.equal(quote.shortfall,0,'Four technicians must be affordable initially');
+    assert.equal(quote.required,P.HIRING_FEE+quote.dailyWages*3);
+    assert.ok(P.hire(s,candidate.id).ok);
+    assert.equal(s.cash,previousCash-P.HIRING_FEE);
+    previousCash=s.cash;
+  }
+  assert.equal(s.staff.filter(e=>e.role==='technician').length,4);
+  assert.equal(P.hire(s,technicians[4].id).code,'role');
+  assert.ok(P.valid(s,s.day));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.7 sales salaries, customer conversion, appointment speed and commissions reflect ability', () => {
+  const E=browser(new Map()).productionEngine,P=E.people,C=E.customers;
+  const candidates=P.applicants(1).filter(c=>c.role==='sales');
+  const excellent=candidates.find(c=>c.skills.sales>=17);
+  const budget=candidates.find(c=>c.skills.sales<=9);
+  assert.ok(excellent&&budget);
+  const strong=P.salesProfile(excellent),cheap=P.salesProfile(budget);
+  assert.ok(strong.enquiryLift>cheap.enquiryLift);
+  assert.ok(strong.driveLift>cheap.driveLift);
+  assert.equal(strong.fastViewing,true);
+  assert.ok(strong.commissionRate>cheap.commissionRate);
+  assert.ok(excellent.monthlySalary>budget.monthlySalary);
+  const s=E.create('Sales Hire Test',[]);
+  assert.ok(P.hire(s,excellent.id).ok);
+  s.day=2;
+  assert.ok(P.salesImpact(s,1).enquiryLift>0);
+  assert.ok(P.salesImpact(s,1).fastViewing);
+  let found=null;
+  for(let i=0;i<160;i++){
+    const ready=readyForRetail(E,'Sales Speed '+i);
+    const {state:r,v:car}=ready;
+    const candidate=P.applicants(r.day).find(c=>c.role==='sales'&&c.skills.sales>=15);
+    if(!candidate||!P.hire(r,candidate.id).ok)continue;
+    r.day++;
+    if(!C.demand(r,car))continue;
+    assert.ok(E.openCustomer(r,car.id).ok);
+    assert.ok(E.bookCustomer(r,car.id).ok);
+    assert.equal(C.caseFor(r,car.id).appointmentDay,r.day+1);
+    assert.equal(C.caseFor(r,car.id).salespersonId,r.staff[0].id);
+    assert.ok(E.normalize(JSON.parse(JSON.stringify(r))));
+    found=r;break;
+  }
+  assert.ok(found,'Qualified salesperson should secure a next-day viewing');
+});
+
+test('v0.9.7 good sales staff produce more actual enquiries with equal stock and reputation', () => {
+  const E=browser(new Map()).productionEngine,P=E.people,C=E.customers;
+  let baseline=0,improved=0,eligible=0;
+  for(let i=0;i<160;i++){
+    const {state:owner,v}=readyForRetail(E,'Sales Funnel '+i);
+    const staffed=E.normalize(JSON.parse(JSON.stringify(owner)));
+    const candidate=P.applicants(staffed.day).find(x=>x.role==='sales'&&x.skills.sales>=15);
+    if(!candidate||!P.hire(staffed,candidate.id).ok)continue;
+    owner.day++;staffed.day++;
+    eligible++;
+    if(C.demand(owner,v))baseline++;
+    if(C.demand(staffed,staffed.vehicles[0]))improved++;
+  }
+  assert.ok(eligible>80);
+  assert.ok(improved>baseline,'A stronger salesperson should increase real leads across fixed simulation sample');
+});
+
+test('v0.9.7 multiple salespeople unlock at reputation milestones and divide active cases', () => {
+  const E=browser(new Map()).productionEngine,P=E.people,s=E.create('Growing Sales Team',[]);
+  const people=P.applicants(1).filter(x=>x.role==='sales');
+  assert.equal(P.salesLimit(s),1);
+  assert.ok(P.hire(s,people[0].id).ok);
+  assert.equal(P.hire(s,people[1].id).code,'role');
+  s.reputationScore=40;
+  assert.equal(P.salesLimit(s),2);
+  assert.ok(P.hire(s,people[1].id).ok);
+  s.day++;
+  assert.notEqual(P.salesRep(s,1).id,P.salesRep(s,2).id);
+  assert.equal(P.staffLimit(s),9);
+  s.reputationScore=80;
+  assert.equal(P.salesLimit(s),3);
+  assert.equal(P.staffLimit(s),12);
+  assert.ok(P.valid(s,s.day));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });

@@ -415,7 +415,7 @@
     // Buyers benchmark against a market-derived achievable retail value.
     // An inflated asking price does not force an unrealistically high offer.
     const fair = vehicle.profile?.likelySale ?? (vehicle.asking - 250);
-    const support=state?P.salesBonus(state):0;
+    const support=state?P.salesBonus(state,C.caseFor(state,vehicle.id)||vehicle.id):0;
     const motivation=state?D.customerBonus(state,vehicle):0;
     const meetingPush=state?D.meetingBonus(state,'sales'):0;
     const reputationAdvantage=state&&state.reputationScore>=40?50:0;
@@ -522,11 +522,12 @@
     });
     if(px)addCar(state,px,'part-ex',agreedAllowance,'PX-'+c.agreedDay+'-'+v.id);
     state.stock=state.vehicles.length;state.sales=state.sold.length;
-    const review=P.sale(state,v,price,realised);
+    const review=P.sale(state,v,price,realised,c);
     state.reputation=P.tier(state.reputationScore);
     const completed=state.sold.at(-1);
     completed.reputationDelta=review.reputationDelta;
     completed.salesCommission=review.commission;
+    completed.salesCommissionRatePct=review.commissionRatePct;
     completed.salespersonId=review.salespersonId??null;
     completed.salespersonName=review.salespersonName??'Owner-managed';
     return success(v.title+' handed over to '+c.name+' for £'+price+

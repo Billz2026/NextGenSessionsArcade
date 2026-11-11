@@ -313,6 +313,11 @@
 
 /* v0.5: staff recruitment and reputation, scoped to career management panels. */
 .people-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:16px}
+.people-grid>.trade-alert{grid-column:1/-1;margin:0}
+.people-recruit-group{grid-column:1/-1;min-width:0}
+.people-recruit-group h3{margin:0 0 12px;color:#f1d1a0;font:800 22px var(--title);letter-spacing:.035em}
+.people-recruit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+@media(max-width:1120px){.people-recruit-grid{grid-template-columns:1fr}}
 .people-card{min-width:0;background:linear-gradient(155deg,#1d3440,#12252f);border:1px solid #405864;
  border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:13px}
 .people-card:hover{border-color:#8f9d91}
