@@ -11,6 +11,8 @@
  */
 (() => {
   const D=window.MotorTradeEvents;
+  const P=window.MotorTradePeople;
+  if(!P)throw new Error('Load people.js before customers.js');
   const ints=Number.isSafeInteger;
   const STATUS=Object.freeze(['enquiry','booked','arrived','discussing','agreed',
     'reserved','collectable','lost']);
@@ -62,7 +64,7 @@
     const overpriced=Math.max(0,(vehicle.asking-fair)/Math.max(fair,1));
     const grade=vehicle.profile?.grade||3;
     let percent=65-Math.round(overpriced*100)-(grade>=4?12:0)+
-      Math.floor(state.reputationScore/8);
+      Math.floor(state.reputationScore/8)+P.salesImpact(state,vehicle.id).enquiryLift;
     if(D.isDealDay(state.day)){
       const c=D.outlook(state);
       percent+=c.type==='quiet'?-13:c.type==='subdued'?-5:
@@ -90,7 +92,8 @@
       status:walkIn?'arrived':'enquiry',preferredMode:preferPX?'part-ex':'cash',
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
       collectionDay:null,held:0,counters:0,reason:'',
-      terms:'in-person',prepCost:0,exchange:null
+      terms:'in-person',prepCost:0,exchange:null,
+      salespersonId:P.salesRep(state,id)?.id??null
     };
     state.customerCases[String(id)]=c;
     vehicle.cashOffer=null;
@@ -103,7 +106,8 @@
     const c=caseFor(state,id);
     if(!c||c.status!=='enquiry')return fail('stage','A new enquiry is required to book a viewing.');
     // A normal viewing must take place within 48 game-hours.
-    c.appointmentDay=state.day+1+(hash('appointment|'+c.id)%2);
+    c.appointmentDay=state.day+1+
+      (P.salesImpact(state,c).fastViewing?0:hash('appointment|'+c.id)%2);
     c.status='booked';
     append(state,c,'appointment','Day '+c.appointmentDay);
     return ok(c.name+' has booked a viewing for day '+c.appointmentDay+
@@ -117,14 +121,16 @@
     const fair=vehicle.profile?.likelySale||vehicle.retail;
     const overpriced=Math.max(0,(vehicle.asking-fair)/Math.max(fair,1));
     const percent=clamp(58-Math.round(overpriced*90)-
-      (vehicle.profile?.grade>=4?9:0)+Math.floor(state.reputationScore/10),12,82);
+      (vehicle.profile?.grade>=4?9:0)+Math.floor(state.reputationScore/10)+
+      Math.floor(P.salesImpact(state,id).enquiryLift/2),12,88);
     // Stable within the same game day: repeated clicks cannot reroll demand.
     return chance('other-buyer|'+state.name+'|'+state.day+'|'+id+'|'+c.id,percent);
   }
   function attendBooked(state,c,notices){
     if(state.day<c.appointmentDay)return;
     // A short-notice viewing is a much stronger indicator of intent.
-    const turnsUp=chance('show|'+c.id,clamp(96+Math.floor(state.reputationScore/15),90,99));
+    const turnsUp=chance('show|'+c.id,clamp(96+Math.floor(state.reputationScore/15)+
+      P.salesImpact(state,c).arrivalLift,90,99));
     if(turnsUp){
       c.status='arrived';
       append(state,c,'arrived','Attended appointment within 48 game-hours');
@@ -163,6 +169,7 @@
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
       collectionDay:null,held:0,counters:0,reason:'',
       terms:'in-person',prepCost:0,exchange:null,
+      salespersonId:P.salesRep(state,id+1)?.id??null,
       standby:{...booked,standby:null}
     };
     state.customerCases[String(id)]=c;
@@ -179,7 +186,7 @@
     const grade=v.profile?.grade||3;
     // An attended test drive is a strong buying signal. Condition still matters.
     const pass=chance(key,clamp(91-(grade>=4?15:0)+
-      Math.floor(state.reputationScore/12),65,97));
+      Math.floor(state.reputationScore/12)+P.salesImpact(state,c).driveLift,65,98));
     append(state,c,pass?'test-drive-pass':'test-drive-reject',
       pass?'Customer wants to discuss terms':'Customer did not proceed');
     if(!pass){
@@ -204,7 +211,8 @@
         ' cannot increase their offer beyond their budget.'};
     }
     const receptive=chance('counter|'+c.id+'|'+c.counters,
-      clamp(82+(state.reputationScore>=40?6:0)-(c.counters-1)*12,35,94));
+      clamp(82+(state.reputationScore>=40?6:0)-(c.counters-1)*12+
+      P.salesImpact(state,c).counterLift,35,96));
     if(!receptive){
       const walk=chance('walk|'+c.id+'|'+c.counters,25);
       append(state,c,'counter-rejected',walk?'Customer walked away':'Customer declined increase');
@@ -409,6 +417,8 @@
       STATUS.includes(c.status)&&['cash','part-ex'].includes(c.preferredMode)&&
       no(c.createdDay,36500)&&c.createdDay>=1&&c.createdDay<=state.day&&
       no(c.createdSession,4)&&
+      (c.salespersonId==null||(ints(c.salespersonId)&&c.salespersonId>0&&
+        c.salespersonId<100000))&&
       ['appointmentDay','agreedDay','collectionDay'].every(k=>
         c[k]===null||(no(c[k],36505)&&c[k]>=c.createdDay))&&
       ['price','allowance'].every(k=>c[k]===null||no(c[k]))&&
