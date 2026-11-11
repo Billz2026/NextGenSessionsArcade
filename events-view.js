@@ -14,7 +14,9 @@
         '<h3>DEAL DAY · '+esc(climate.label)+'</h3>'+
         '<p>Auctions are closed. '+esc(climate.description)+
         ' New enquiries and better terms are never guaranteed. Advance each session to check trading conditions.</p></div>'+
-        '<button type="button" class="secondary-button" data-page="events">OPEN DEAL DAY ↗</button></div>';
+        '<button type="button" class="secondary-button" data-page="events">'+
+        (state.deadlineSession>=d.PHASES.length-1?'CLOSE MONTH ↗':'OPEN DEAL DAY ↗')+
+        '</button></div>';
     }
     if(d.meetingDue(state)){
       return '<div class="event-banner event-meeting-banner"><div><small>DAY 1 OF MONTH '+

@@ -8,7 +8,17 @@
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const money=n=>new Intl.NumberFormat('en-GB',{
     style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n);
-  const titleCase=s=>String(s).toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+  // A unit target and a profitable month are different claims. This indicator
+  // reports vehicle volume only; operating contribution is a separate KPI.
+  function salesProgress(report,daysToGo){
+    if(report.targetUnits===0)return {text:'No unit target set',positive:false};
+    const over=report.soldUnits-report.targetUnits;
+    if(over>0)return {text:'✓ Unit target exceeded by '+over+' vehicle'+(over===1?'':'s'),positive:true};
+    if(over===0)return {text:'✓ Unit target reached',positive:true};
+    const remaining=-over;
+    return {text:remaining+' sale'+(remaining===1?'':'s')+' to target · '+daysToGo+
+      ' game day'+(daysToGo===1?'':'s')+' left',positive:false};
+  }
   function snapshot(state,E){
     const report=E.monthly.statement(state);
     const events=E.events,customers=Object.values(state.customerCases||{});
@@ -100,14 +110,21 @@
       add(13,'appointments',booked+' upcoming booked viewing'+(booked===1?'':'s'),
         'Your sales team has appointments in the pipeline.',
         'sales','VIEW PIPELINE');
-    if(tasks.length<3)
-      add(14,'finances','Check your operating position',
-        'Review cash commitments, staffing costs and this month’s contribution.',
-        'finance','OPEN FINANCES');
-    if(tasks.length<3)
-      add(15,'work-plan','Review this week’s stock plan',
-        'Balance buying, repairs and selling before taking on more overheads.',
-        'stock','VIEW STOCK');
+    if(report.operatingContribution<0&&report.soldUnits>0&&daysToGo<=5)
+      add(13,'negative-contribution','Trading costs exceed your vehicle margin',
+        'Current-month operating contribution is '+money(report.operatingContribution)+
+          '. Review costs and selling margins before the month closes.',
+        'finance','REVIEW OPERATING COSTS','attention');
+    // Only suggest the next auction if there is room to buy; never pad the
+    // management desk with generic advice when the dealership is healthy.
+    if(tasks.length<3&&!auctionOpen&&vehicles.length<state.capacity&&
+       auctionDay>state.day&&state.auctionHall?.phase!=='payment'){
+      const gap=auctionDay-state.day;
+      add(14,'next-auction','Prepare for Day '+auctionDay+' auction',
+        (auctionWeekday==='TUE'?'Tuesday':'Monday')+' session in '+gap+
+          ' game day'+(gap===1?'':'s')+'. Plan your maximum bid, fees and repair budget.',
+        'auctionHall','VIEW AUCTION SCHEDULE');
+    }
     tasks.sort((a,b)=>a.rank-b.rank);
     return {
       day:state.day,report,listed,awaitingPrep,unassessed,prepared,booked,unread,
@@ -116,6 +133,9 @@
     };
   }
   function priorities(model){
+    if(!model.tasks.length)return '<div class="dashboard-all-clear">'+
+      '<strong>No urgent decisions outstanding</strong><small>Your current stock, '+
+      'appointments and bills show no action requiring immediate attention.</small></div>';
     return model.tasks.map((t,i)=>
       '<button type="button" class="dashboard-action-row dashboard-action-'+esc(t.tone)+
       '" data-page="'+esc(t.page)+'" aria-label="'+esc(t.title)+' — '+esc(t.action)+'">'+
@@ -138,5 +158,5 @@
       '" aria-label="'+label+': '+esc(value)+'"><small>'+label+'</small>'+
       '<strong>'+esc(value)+'</strong></button>').join('');
   }
-  window.MotorTradeDashboardView=Object.freeze({snapshot,priorities,operations});
+  window.MotorTradeDashboardView=Object.freeze({snapshot,salesProgress,priorities,operations});
 })();

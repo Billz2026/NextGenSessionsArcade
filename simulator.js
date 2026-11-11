@@ -389,7 +389,10 @@
       money.format(d.reserved)+' earmarked for repairs':'Before future operating bills');
     bindText('dashboard-stock-note',d.listed+' listed · '+d.awaitingPrep+' awaiting prep');
     bindText('dashboard-monthly-sales',d.report.soldUnits+' / '+d.report.targetUnits);
-    bindText('dashboard-sales-note',d.unitsLeft+' to target · '+d.daysToGo+' game days left');
+    const sales=DV.salesProgress(d.report,d.daysToGo);
+    bindText('dashboard-sales-note',sales.text);
+    for(const node of all('[data-bind="dashboard-sales-note"]'))
+      node.className=sales.positive?'dashboard-target-positive':'';
     bindText('dashboard-operating',money.format(d.report.operatingContribution));
     bindText('dashboard-auction',d.auctionOpen?'TODAY':'DAY '+d.auctionDay);
     bindText('dashboard-auction-note',d.auctionWeekday==='TUE'?

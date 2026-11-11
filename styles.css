@@ -975,3 +975,9 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
 @media(prefers-reduced-motion:reduce){
   .dashboard-control .dashboard-kpi{transition:none}
 }
+
+/* v0.9.12 — final dashboard polish */
+.dashboard-control .dashboard-kpi>small.dashboard-target-positive{color:#a9d7b0;font-weight:800}
+.dashboard-all-clear{display:flex;flex-direction:column;gap:7px;padding:22px 17px;color:#a6d2b6;background:#16312c;border-left:3px solid #83a991}
+.dashboard-all-clear>strong{font:800 14px/1.4 var(--body);color:#d5ead8}
+.dashboard-all-clear>small{font:500 11px/1.6 var(--body);color:#a8c8b6}
