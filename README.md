@@ -4,6 +4,15 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.14 — Supervisor recruitment, delegated staff care & professional owner correspondence (11 November 2026)
+
+- **Choose a real staff supervisor:** Recruit from named applicants with different leadership ratings, experience, and monthly salaries in Staff & Recruitment. Exactly one supervisor post is available, in addition to existing sales/buying/workshop roles. The chosen supervisor costs the standard recruitment fee plus daily payroll and starts the next game day; absent, unpaid or training supervisors do not act.
+- **Management hierarchy with consequences:** An active supervisor handles routine employee check-ins automatically every seven game days when wages are current. Employees needing extra care receive a small measurable morale increase, at no extra budget. For serious low morale (45/100 or less), the supervisor submits a specific one-off rota/support/recognition proposal to the owner. The owner can **APPROVE** the stated cost and increase the employee's morale, or **DECLINE** without spending or artificially boosting morale. An approved intervention is debited once, recorded as a staff expense and acknowledged by a paid-copy receipt. Declines and approvals persist and cannot be replayed.
+- **No fictitious magic morale fix:** Outstanding payroll arrears block discretionary employee-welfare spending and normal supervisor activity. The owner receives a payroll shortfall escalation instead. When no supervisor is employed, the Inbox prompts the owner to recruit one rather than claiming the owner performed HR duties. Normal retention and resignation risks remain.
+- **Readable real correspondence:** Owner emails now display a clear branded letterhead, sender, recipient, game day, department and status; paragraphs and cost/risk breakdowns receive visual structure. Workshop requests, Accounts summaries and staff recommendations remain tied to existing engine records, with escaped content to avoid HTML injection.
+- **v14 saved-career compatibility:** Version 13 careers retain cash, completed transactions, customer deposits, ongoing repairs, staff, historical correspondence and mail-read states. New decisions are validated on reload; no previous wages or supplier invoices are charged again.
+- **Scoped improvement:** This release develops the Staff Supervisor and Inbox workflows together. It does not introduce unmodelled holiday, grievance, disciplinary or redundancy mechanics; those should require their own real business rules later.
+
 ### v0.9.13 — Owner's Inbox: actionable messages and accountable Accounts (11 November 2026)
 
 - **Compact desktop and mobile workspace:** Short header, live approval/unread/paid-copy totals, seven inbox filters, a scrollable message list and a clear reading pane. The layout stays compact at 100% desktop zoom and stacks sensibly on smaller screens. Unresolved approvals take priority over older read mail; all unread/read flags continue to persist.
