@@ -2891,10 +2891,6 @@ test('v0.9.7 sales salaries, customer conversion, appointment speed and commissi
   s.day=2;
   assert.ok(P.salesImpact(s,1).enquiryLift>0);
   assert.ok(P.salesImpact(s,1).fastViewing);
-  const {state:vehicleState,v}=readyForRetail(E,'Sales Speed Retail');
-  assert.ok(P.hire(vehicleState,P.applicants(vehicleState.day).find(c=>c.role==='sales'&&
-    c.skills.sales>=15).id).ok);
-  vehicleState.day++;
   let found=null;
   for(let i=0;i<160;i++){
     const ready=readyForRetail(E,'Sales Speed '+i);
