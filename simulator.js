@@ -15,7 +15,8 @@
   const SITE_VIEW = window.MotorTradePremisesView;
   const DV = window.MotorTradeDashboardView;
   const IN = window.MotorTradeInbox;
-  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV || !IN)
+  const BV = window.MotorTradeBuyingDeskView;
+  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV || !IN || !BV)
     throw new Error('Customer, workshop and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
@@ -150,6 +151,7 @@
   let expandedReportId = null;
   let auctionPreviewId = null;
   let offerDrafts = {};
+  let selectedSellerId = null;
   let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
   function gameDate(day) {
@@ -313,44 +315,15 @@
     const progression=E.marketStatus(career);
     const next=progression.next;
     byId('market-progression').innerHTML=
-      '<div><small>YOUR DEALERSHIP LEVEL</small><strong>'+VC.esc(progression.current.label)+'</strong></div>'+
-      '<p>'+(next?'NEXT: '+VC.esc(next.label)+' · NEED '+cashText(next.minCash)+
-      ' CASH AND '+next.minRep+' REPUTATION.':
-      'TOP TIER UNLOCKED · LUXURY STOCK IS NOW AVAILABLE.')+
-      ' Catalogue eligibility uses opening-day cash and monthly reputation.</p>';
-    const {sellers} = E.marketFor(career);
-    const sellersHtml = sellers.length ? sellers.map(car => {
-      const negotiation = (career.negotiations || {})[car.id];
-      const owned = career.vehicles.some(v => v.origin === car.id);
-      const closed = owned || negotiation?.status === 'walked';
-      const warning = purchaseWarning(car.ask + repairReserve(car));
-      const asking = Number.isSafeInteger(offerDrafts[car.id]) ?
-        offerDrafts[car.id] : negotiation?.status === 'counter' ? negotiation.counter : car.ask;
-      const offerStatus = owned ? '<div class="trade-inline-feedback trade-feedback-success">PURCHASED — car added to Vehicle Stock.</div>' :
-        negotiation?.status === 'walked' ? '<div class="trade-inline-feedback trade-feedback-warning">OWNER WALKED AWAY — enquiry closed for today.</div>' :
-        negotiation?.status === 'counter' ?
-          '<div class="trade-inline-feedback trade-feedback-counter"><strong>SELLER COUNTEROFFER: '+cashText(negotiation.counter)+'</strong> — accept, revise or walk away.</div>' : '';
-      const controls = closed ? '<button type="button" class="trade-button" disabled>ENQUIRY CLOSED</button>' :
-        '<div class="trade-action-row"><label>YOUR OFFER (£)<input class="trade-input" type="number" inputmode="numeric" min="100" max="'+car.ask+
-        '" step="25" id="seller-offer-'+car.id+'" value="'+asking+'"></label>'+
-        '<button type="button" class="trade-button" data-action="buy-seller" data-id="'+car.id+
-        '">'+(negotiation?.status==='counter'?'SUBMIT OFFER':'MAKE OFFER')+'</button></div>'+
-        (negotiation?.status==='counter'?'<div class="trade-offer-buttons"><button type="button" class="trade-button trade-button-secondary" data-action="accept-seller-counter" data-id="'+car.id+
-          '">ACCEPT '+cashText(negotiation.counter)+'</button><button type="button" class="trade-button trade-button-outline" data-action="walk-seller" data-id="'+car.id+'">WALK AWAY</button></div>':'');
-      return '<article class="trade-card">' + cardHeader(car,'DIRECT SELLER / '+car.id) +
-        reportCard(car,'seller',asking) +
-        '<div class="trade-pricing"><div><small>OWNER ASKS</small><strong>'+cashText(car.ask)+
-        '</strong></div><div><small>EST. RETAIL</small><strong>'+cashText(car.retail)+
-        '</strong></div><div><small>EST. PREP</small><strong>'+cashText(car.prep)+
-        '</strong></div><div><small>BUYER FEE</small><strong>£0</strong></div></div>'+
-        '<div class="trade-actions"><span class="trade-extra">The owner can accept your offer, negotiate, or leave. Each enquiry is limited to two rounds.</span>'+
-        (warning && !closed ? '<div class="trade-purchase-warning">'+escapeText(warning)+'</div>' : '')+
-        offerStatus+leadFeedback(car.id)+controls+'</div></article>';
-    }).join('') : D.isDealDay(career.day)?
-      '<div class="trade-empty"><h2>NO PRIVATE SELLER ENQUIRIES THIS SESSION.</h2>'+
-      '<p>This month may be quiet. The next session could bring new sellers, but nothing is guaranteed. Auctions are closed.</p></div>' :
-      '<div class="trade-empty">No private or walk-in seller leads today. Check auction lots or the next game day.</div>';
-    byId('market-sellers').innerHTML = sellersHtml;
+      '<span>STOCK ACCESS <strong>'+VC.esc(progression.current.label)+'</strong></span>'+
+      '<small>'+(next?'NEXT: '+VC.esc(next.label)+' · '+cashText(next.minCash)+
+        ' OPENING CASH / '+next.minRep+' REPUTATION':
+        'TOP TIER UNLOCKED')+'</small>';
+    const desk=BV.render(career,E,{
+      selectedId:selectedSellerId,drafts:offerDrafts,reportCard,leadFeedback
+    });
+    selectedSellerId=desk.selectedId;
+    byId('market-sellers').innerHTML=desk.html;
   }
   function renderStock() {
     const container = byId('stock-list');
@@ -417,7 +390,7 @@
   }
   function renderEvents() {
     const banner=byId('events-banner');
-    banner.className='events-banner'+(currentPage==='dashboard'?' dashboard-event-compact':'');
+    banner.className='events-banner'+(['dashboard','auctions'].includes(currentPage)?' dashboard-event-compact':'');
     banner.innerHTML=EV.banner(career);
     byId('events-view').innerHTML=EV.render(career);
   }
@@ -575,6 +548,7 @@
       E.nextCustomerSession(career);
       expandedReportId=null;
       offerDrafts={};
+      selectedSellerId=null;
       lastTradeResult=null;
       currentPage='events';
       eventNotice=event.message;
@@ -616,6 +590,7 @@
     expandedReportId = null;
     career.reports = {};
     offerDrafts = {};
+    selectedSellerId=null;
     // Prior negotiations are tied to that day's leads. Keep the save bounded.
     career.negotiations = {};
     career.auctionBids = {};
@@ -684,6 +659,7 @@
     selectedMonth = 'current';
     expandedReportId = null;
     offerDrafts = {};
+    selectedSellerId=null;
     screen = 'career';
     currentPage = 'dashboard';
     const saved = persistCareer();
@@ -699,20 +675,41 @@
   });
   byId('dealership-name').addEventListener('input', event => event.target.setCustomValidity(''));
   document.addEventListener('input', event => {
-    if (!career || !event.target?.id) return;
+    if(!career||!event.target?.id)return;
     const match=/^(auction-bid-|seller-offer-)([AS]-[0-9]+-[0-9]+)$/.exec(event.target.id);
-    if (!match) return;
+    if(!match)return;
     const kind=match[1]==='auction-bid-'?'auction':'seller';
-    const catalogue=E.market(career.day,career.reputationScore,career.deadlineSession,
-      career.name,career.monthPlan.startingReputation);
-    const car=(kind==='auction'?catalogue.auctions:catalogue.sellers).find(v=>v.id===match[2]);
-    const output=byId('projection-'+match[2]);
-    if (!car || !output) return;
+    const car=E.marketFor(career)[kind==='auction'?'auctions':'sellers']
+      .find(v=>v.id===match[2]);
+    if(!car)return;
     const price=Number(event.target.value);
-    offerDrafts[match[2]]=Number.isSafeInteger(price) && event.target.value!==''?
-      price:null;
-    output.textContent=Number.isSafeInteger(price) && event.target.value!==''?
-      expectedMarginText(car,kind,price):'ENTER A VALID OFFER';
+    const valid=event.target.value!==''&&Number.isSafeInteger(price);
+    offerDrafts[match[2]]=valid?price:null;
+    const output=byId('projection-'+match[2]);
+    if(output)output.textContent=valid?expectedMarginText(car,kind,price):'ENTER A VALID OFFER';
+    if(kind!=='seller')return;
+    const set=(id,text)=>{const el=byId(id+'-'+car.id);if(el)el.textContent=text;return el;};
+    if(!valid||price<100||price>car.ask){
+      set('desk-projection','ENTER VALID OFFER');
+      const signal=byId('desk-signal-'+car.id);
+      if(signal){signal.className='buy-decision buy-decision-risk';
+        signal.textContent='Offer must be between £100 and '+cashText(car.ask)+'.';}
+      return;
+    }
+    const model=BV.figures(car,career,E,price);
+    set('desk-offer',cashText(price));
+    set('desk-prep',cashText(model.quote.prep));
+    set('desk-total',cashText(model.quote.total));
+    const margin=set('desk-projection',cashText(model.quote.expectedMargin));
+    if(margin)margin.className=model.quote.expectedMargin<0?'buy-negative':'';
+    const headroom=set('desk-headroom',cashText(model.remaining));
+    if(headroom)headroom.className=model.remaining<0?'buy-negative':'';
+    const signal=byId('desk-signal-'+car.id);
+    if(signal){
+      signal.className='buy-decision buy-decision-'+model.position.kind;
+      signal.innerHTML='<strong>'+VC.esc(model.position.label)+'</strong>'+
+        '<p>'+VC.esc(model.position.text)+'</p>';
+    }
   });
   document.addEventListener('click', event => {
     const button = event.target.closest('button[data-action],button[data-page]');
@@ -780,8 +777,17 @@
           }
         }
         break;
+      case 'select-seller': {
+        if(career&&E.marketFor(career).sellers.some(car=>car.id===button.dataset.id)){
+          selectedSellerId=button.dataset.id;
+          currentPage='auctions';
+          render();
+        }
+        break;
+      }
       case 'toggle-report':
         if (career) {
+          if(button.dataset.kind==='seller')selectedSellerId=button.dataset.id;
           const key=button.dataset.kind+':'+button.dataset.id;
           if(button.dataset.kind==='auction'&&
              E.auctionLot(career)?.id!==button.dataset.id)
@@ -792,6 +798,7 @@
         break;
       case 'inspect-lead':
         if (career) {
+          if(button.dataset.kind==='seller')selectedSellerId=button.dataset.id;
           expandedReportId=button.dataset.kind+':'+button.dataset.id;
           if(button.dataset.kind==='auction'&&
              E.auctionLot(career)?.id!==button.dataset.id)
@@ -865,16 +872,19 @@
           inputNumber('auction-bid-' + button.dataset.id)),button.dataset.id);
         break;
       case 'buy-seller':
+        if(career)selectedSellerId=button.dataset.id;
         if (career) saveResult(E.acquireSeller(career,button.dataset.id,
           inputNumber('seller-offer-' + button.dataset.id)),button.dataset.id);
         break;
       case 'accept-seller-counter':
         if (career) {
+          selectedSellerId=button.dataset.id;
           const offer=career.negotiations?.[button.dataset.id]?.counter;
           saveResult(E.acquireSeller(career,button.dataset.id,offer),button.dataset.id);
         }
         break;
       case 'walk-seller':
+        if(career)selectedSellerId=button.dataset.id;
         if (career) saveResult(E.walkSeller(career,button.dataset.id),button.dataset.id);
         break;
       case 'dismiss-feedback':

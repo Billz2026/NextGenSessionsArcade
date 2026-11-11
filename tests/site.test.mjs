@@ -27,6 +27,7 @@ const workshopView = readFileSync(new URL('workshop-view.js', root), 'utf8');
 const customers = readFileSync(new URL('customers.js', root), 'utf8');
 const customersView = readFileSync(new URL('customers-view.js', root), 'utf8');
 const auctionHallView = readFileSync(new URL('auction-hall-view.js', root), 'utf8');
+const buyingDeskView = readFileSync(new URL('buying-desk-view.js', root), 'utf8');
 const dashboardView = readFileSync(new URL('dashboard-view.js', root), 'utf8');
 const inboxOffice = readFileSync(new URL('inbox-office.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
@@ -70,7 +71,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /auction-hall-view\.js\?v=2/);
-  assert.match(html, /simulator\.js\?v=25/);
+  assert.match(html, /buying-desk-view\.js\?v=1/);
+  assert.match(html, /styles\.css\?v=30/);
+  assert.match(html, /simulator\.js\?v=26/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
@@ -85,7 +88,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=17/);
+  assert.match(html, /trading\.js\?v=18/);
   assert.match(html, /customers-view\.js\?v=5/);
   assert.match(html, /workshop-view\.js\?v=3/);
   assert.match(html, /events-view\.js\?v=4/);
@@ -106,7 +109,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.15/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.16/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -184,7 +187,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   const listeners = {};
   const document = {
     getElementById: id => {
-      if (!nodes.has(id) && /^(auction-bid-|seller-offer-|stock-price-|px-allowance-|projection-)/.test(id)) {
+      if (!nodes.has(id) && /^(auction-bid-|seller-offer-|stock-price-|px-allowance-|projection-|desk-offer-|desk-prep-|desk-total-|desk-projection-|desk-headroom-|desk-signal-)/.test(id)) {
         const dynamicInput = new Node();
         nodes.set(id,dynamicInput);
       }
@@ -299,6 +302,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(customersView, context, { timeout: 1500 });
   vm.runInNewContext(premisesView, context, { timeout: 1500 });
   vm.runInNewContext(auctionHallView, context, { timeout: 1500 });
+  vm.runInNewContext(buyingDeskView, context, { timeout: 1500 });
   vm.runInNewContext(dashboardView, context, { timeout: 1500 });
   vm.runInNewContext(inboxOffice, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
@@ -333,7 +337,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -587,7 +591,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=29/);
+  assert.match(html, /styles\.css\?v=30/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4128,4 +4132,155 @@ test('v0.9.15 email filter and read controls preserve actual owner approval stat
     'Unread status is independent of owner authorisation status');
   assert.equal(request.decision,undefined);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('v0.9.16 Buying Desk shows compact lead list and actual financial context, not repeated auction banners',()=>{
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Focused Buyer');
+  const htmlDesk=app.nodes.get('market-sellers').innerHTML;
+  assert.match(html,/class="career-panel buying-desk-control"/);
+  assert.doesNotMatch(html,/AUCTION BUYING HAS MOVED/);
+  assert.doesNotMatch(html,/WEEKLY MONDAY AUCTION<\/strong>/);
+  assert.match(htmlDesk,/SELLER SHORTLIST/);
+  assert.match(htmlDesk,/buy-desk-stats/);
+  assert.match(htmlDesk,/buy-seller-focus/);
+  assert.match(htmlDesk,/BUYING APPRAISAL/);
+  assert.match(htmlDesk,/PROJECTED GROSS CONTRIBUTION/);
+  assert.match(htmlDesk,/data-action="select-seller"/);
+  assert.match(htmlDesk,/data-action="buy-seller"/);
+  assert.match(htmlDesk,/TRADE VALUE/);
+  assert.match(htmlDesk,/LIKELY ACHIEVED SALE/);
+  assert.match(htmlDesk,/SUGGESTED MAX OFFER/);
+  assert.match(htmlDesk,/VIEW FULL REPORT/);
+  assert.match(app.nodes.get('market-progression').innerHTML,/STOCK ACCESS/);
+  assert.match(css,/\.buy-main-grid/);
+  assert.match(css,/@media\(max-width:760px\)/);
+  assert.match(css,/\.buy-seller-focus\{height:clamp/);
+  assert.equal(app.nodes.get('events-banner').className,'events-banner dashboard-event-compact');
+});
+
+test('v0.9.16 selecting private seller changes focused dossier without reserving car or spending cash',()=>{
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Sourcing Control');
+  const sellers=app.engine.market(1).sellers;
+  assert.equal(sellers.length,2);
+  const first=app.nodes.get('market-sellers').innerHTML;
+  assert.ok(first.includes('SELLER VEHICLE · '+sellers[0].id));
+  assert.equal(first.includes('SELLER VEHICLE · '+sellers[1].id),false);
+  const before=JSON.parse(storage.get(STORAGE_KEY));
+  app.click('select-seller',{id:sellers[1].id});
+  const after=JSON.parse(storage.get(STORAGE_KEY));
+  const second=app.nodes.get('market-sellers').innerHTML;
+  assert.ok(second.includes('SELLER VEHICLE · '+sellers[1].id));
+  assert.ok(second.includes('aria-pressed="true"'));
+  assert.equal(after.cash,before.cash);
+  assert.equal(after.vehicles.length,0);
+  assert.equal(after.ledger.length,before.ledger.length);
+  app.go('dashboard');app.go('auctions');
+  assert.ok(app.nodes.get('market-sellers').innerHTML.includes('SELLER VEHICLE · '+sellers[1].id),
+    'Selected vehicle remains in focus while visiting another page');
+});
+
+test('v0.9.16 changing a proposed offer updates every visible appraisal metric',()=>{
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Margin Calculator');
+  const E=app.productionEngine,car=E.market(1).sellers[0],offer=car.ask-125;
+  const state=E.create('Margin Calculator',[]);
+  const model=app.buyingDesk.figures(car,state,E,offer);
+  assert.equal(model.quote.price,offer);
+  assert.equal(model.quote.prep,car.profile.basePrep+car.profile.riskAllowance);
+  assert.equal(model.quote.expectedMargin,model.quote.likelySale-model.quote.total);
+  app.typeInput('seller-offer-'+car.id,offer);
+  const formatted=new Intl.NumberFormat('en-GB',{style:'currency',
+    currency:'GBP',maximumFractionDigits:0});
+  assert.equal(app.nodes.get('projection-'+car.id).textContent,
+    formatted.format(model.quote.expectedMargin));
+  assert.equal(app.nodes.get('desk-projection-'+car.id).textContent,
+    formatted.format(model.quote.expectedMargin));
+  assert.equal(app.nodes.get('desk-total-'+car.id).textContent,formatted.format(model.quote.total));
+  assert.equal(app.nodes.get('desk-offer-'+car.id).textContent,formatted.format(offer));
+  assert.equal(app.nodes.get('desk-headroom-'+car.id).textContent,formatted.format(model.remaining));
+  app.typeInput('seller-offer-'+car.id,car.ask+100);
+  assert.equal(app.nodes.get('desk-projection-'+car.id).textContent,'ENTER VALID OFFER');
+});
+
+test('v0.9.16 actual buying decisions preserve counteroffers, no fee, stock and workshop routing',()=>{
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Disciplined Buyer');
+  const car=app.engine.market(1).sellers[0];
+  const initial=JSON.parse(storage.get(STORAGE_KEY));
+  app.typeInput('seller-offer-'+car.id,car.floor-75);
+  app.click('buy-seller',{id:car.id});
+  const counter=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(counter.vehicles.length,0);
+  assert.equal(counter.cash,initial.cash);
+  assert.equal(counter.negotiations[car.id].status,'counter');
+  assert.match(app.nodes.get('market-sellers').innerHTML,/SELLER COUNTEROFFER/);
+  app.click('accept-seller-counter',{id:car.id});
+  const paid=JSON.parse(storage.get(STORAGE_KEY));
+  const agreed=counter.negotiations[car.id].counter;
+  assert.equal(paid.cash,initial.cash-agreed);
+  assert.equal(paid.vehicles.length,1);
+  assert.equal(paid.vehicles[0].origin,car.id);
+  assert.equal(paid.vehicles[0].cost,agreed);
+  assert.equal(paid.vehicles[0].status,'acquired');
+  assert.equal(paid.vehicles[0].workshop.stage,'unassessed');
+  assert.match(app.nodes.get('market-sellers').innerHTML,/PURCHASED/);
+  assert.match(app.nodes.get('market-sellers').innerHTML,/VIEW VEHICLE STOCK/);
+  assert.equal(paid.ledger.filter(l=>l.note.startsWith('Direct purchase:')).length,1);
+  assert.equal(app.productionEngine.normalize(paid)?.cash,paid.cash);
+});
+
+test('v0.9.16 seller temperaments influence stable counteroffers without resetting daily leads',()=>{
+  const E=browser(new Map()).productionEngine;
+  const s=E.create('Seller Personality',[]);
+  const day1=E.marketFor(s).sellers[0];
+  assert.equal(E.sellerApproach(s,day1).label,'PRIVATE OWNER');
+  assert.equal(E.sellerApproach(s,day1).concession,50);
+  const styles=new Set();
+  for(let day=2;day<=24;day++){
+    s.day=day;
+    const sellers=E.marketFor(s).sellers;
+    for(const car of sellers){
+      const a=E.sellerApproach(s,car);
+      const b=E.sellerApproach(s,car);
+      assert.equal(a.label,b.label);
+      assert.equal(a.firstCounter,b.firstCounter);
+      assert.ok([25,50,75].includes(a.concession));
+      styles.add(a.label);
+    }
+  }
+  assert.ok(styles.has('TIME-SENSITIVE OWNER'));
+  assert.ok(styles.has('PRICE-CONSCIOUS OWNER'));
+  assert.ok(styles.has('PRIVATE OWNER'));
+  const target=Array.from({length:26},(_,i)=>i+2).flatMap(day=>{
+    const x=E.market(day,5,0,'Seller Personality',5,12500).sellers;
+    return x.map(car=>({day,car,profile:E.sellerApproach({...s,day},car)}));
+  }).find(x=>x.profile.label==='PRICE-CONSCIOUS OWNER');
+  assert.ok(target);
+  const first=E.create('Firm Seller',[]);first.day=target.day;
+  const other=E.create('Firm Seller',[]);other.day=target.day;
+  const offer=target.car.floor-75;
+  const a=E.acquireSeller(first,target.car.id,offer);
+  const b=E.acquireSeller(other,target.car.id,offer);
+  assert.equal(a.code,'counter');
+  assert.equal(b.code,'counter');
+  assert.equal(first.negotiations[target.car.id].counter,other.negotiations[target.car.id].counter);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(first))));
+});
+
+test('v0.9.16 no seller leads produces honest sourcing guidance without phantom vehicles',()=>{
+  const E=browser(new Map()).productionEngine,app=browser(new Map());
+  const candidate=Array.from({length:180},(_,i)=>i+2).find(day=>
+    E.market(day,5,0,'Quiet Seller Test',5,12500).sellers.length===0);
+  assert.ok(candidate,'Market has quiet days with no seller offers');
+  const state=E.create('Quiet Seller Test',[]);
+  state.day=candidate;
+  E.rollAuctionHall(state);
+  const view=app.buyingDesk.render(state,E,{
+    reportCard:()=>'',leadFeedback:()=>''});
+  assert.equal(view.selectedId,null);
+  assert.match(view.html,/NO PRIVATE SELLERS THIS SESSION/);
+  assert.doesNotMatch(view.html,/data-action="buy-seller"/);
+  assert.equal(state.cash,12500);
 });
