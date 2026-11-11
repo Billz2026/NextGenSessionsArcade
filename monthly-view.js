@@ -1,5 +1,5 @@
 'use strict';
-/* v0.6 monthly management report UI. Uses recorded events only. */
+/* v0.9.29 compact monthly management report UI. Uses recorded events only. */
 (() => {
   const esc=x=>String(x).replace(/[&<>"']/g,c=>({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,10 +19,10 @@
     return '<div class="report-line"><span>'+esc(label)+
       '</span><strong>'+value+'</strong></div>';
   }
-  function progress(actual,target,label){
+  function progress(actual,target,label,asMoney=false){
     const pct=target>0?Math.min(100,Math.round(actual*100/target)):100;
     return '<div class="report-progress"><div class="report-progress-head"><span>'+esc(label)+
-      '</span><strong>'+actual+' / '+target+'</strong></div>'+
+      '</span><strong>'+(asMoney?money(actual)+' / '+money(target):actual+' / '+target)+'</strong></div>'+
       '<div class="report-track"><span style="width:'+pct+'%"></span></div></div>';
   }
   function liveGoals(state,M){
@@ -214,7 +214,7 @@
     const contribution=r.operatingContribution??r.grossAfterStaff;
     const needed=Math.max(0,r.targetUnits-r.soldUnits);
     const flags=[];
-    if(needed)flags.push(['SALES REQUIRED',needed+' handovers still needed']);
+    if(needed)flags.push([isClosed?'SALES TARGET MISSED':'SALES REQUIRED',needed+' handover'+(needed===1?'':'s')+(isClosed?' short of the final target':' still needed')]);
     if(contribution<0)flags.push(['OPERATING LOSS',money(contribution)+' after staff and premises']);
     if(r.agedStock)flags.push(['AGEING STOCK',r.agedStock+' vehicle'+(r.agedStock===1?'':'s')+' held for 14+ days']);
     if(r.stockAwaitingPrep)flags.push(['WORKSHOP BACKLOG',r.stockAwaitingPrep+' vehicle'+(r.stockAwaitingPrep===1?'':'s')+' unprepared']);
@@ -233,17 +233,22 @@
       cell('CASH INVESTED IN STOCK',money(r.stockCapital),r.stockCount+' unsold vehicles')+'</div>'+
       '<div class="mr-focus"><section class="mr-panel"><h3>ARE WE ON TARGET?</h3>'+
       progress(r.soldUnits,r.targetUnits,'Completed handovers')+
-      progress(r.turnover,r.targetTurnover,'Turnover guide')+
-      progress(Math.max(0,r.grossMargin),r.targetMargin,'Gross margin guide')+
+      progress(r.turnover,r.targetTurnover,'Turnover guide',true)+
+      progress(Math.max(0,r.grossMargin),r.targetMargin,'Gross margin guide',true)+
       '<p>Company success requires enough handovers and positive operating contribution.</p></section>'+
       '<section class="mr-panel"><h3>WHAT NEEDS ATTENTION?</h3>'+alerts+'</section></div>'+      '<div class="mr-mini"><div><small>GROSS TRADE MARGIN</small><strong>'+money(r.grossMargin)+'</strong></div>'+      '<div><small>STOCK AGED 14+ DAYS</small><strong>'+r.agedStock+'</strong></div>'+      '<div><small>RETAIL ENQUIRIES</small><strong>'+(r.customerJourney?r.customerJourney.enquiries:'NOT RECORDED')+'</strong></div>'+      '<div><small>REPUTATION</small><strong>'+r.closingReputation+'/100</strong></div></div></div>';
     const detail=(title,body)=>'<details class="mr-detail"><summary>'+title+
       ' · EXPAND</summary>'+body+'</details>';
-    return archivePicker(state,selected)+top+'<section class="mr-records"><h3>DETAILED MANAGEMENT RECORDS</h3>'+
-      detail('MONTHLY OBJECTIVES',targets)+detail('CASH FLOW & FINANCES',cash)+
+    const detailsBody=detail('MONTHLY OBJECTIVES',targets)+detail('CASH FLOW & FINANCES',cash)+
       detail('SALES & PURCHASING',saleLine)+detail('STOCK & WORKING CAPITAL',inventory)+
       detail('SALES TEAM SCORECARDS',staff)+detail('RETAIL CUSTOMER JOURNEY',customerSection)+
-      detail('CUSTOMER TRUST & RISKS',trust)+detail('DEAL DAY RESULTS',dealDaySection)+'</section>'+
+      detail('CUSTOMER TRUST & RISKS',trust)+detail('DEAL DAY RESULTS',dealDaySection);
+    return archivePicker(state,selected)+top+
+      '<details class="mr-records" aria-label="Detailed Management Records">'+
+      '<summary class="mr-records-summary"><strong>DETAILED MANAGEMENT RECORDS</strong>'+
+      '<span>8 REPORTS · EXPAND</span></summary>'+
+      '<div class="mr-records-body"><p>Choose a report below to examine the supporting figures.</p>'+
+      '<div class="mr-details">'+detailsBody+'</div></div></details>'+
       '<p class="mr-note">Fictional management figures only; not statutory UK accounts. VAT, tax and some liabilities are not modelled.</p>';
   }
   window.MotorTradeMonthlyView=Object.freeze({renderReport,liveGoals});
