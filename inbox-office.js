@@ -239,6 +239,44 @@
     return Object.fromEntries(categories.map(category=>
       [category,filtered(messages,state,category).length]));
   }
+  function formatMail(message,state){
+    const category=infer(message);
+    const decision=message.decision||'';
+    const status=decision?decision.toUpperCase():
+      needsAction(message,state)?'OWNER APPROVAL REQUIRED':
+      message.subject.startsWith('PAID COPY')?'PAYMENT CONFIRMED':'FOR YOUR INFORMATION';
+    const sections=String(message.body||'').split(/\\n{2,}/);
+    const content=sections.map(part=>{
+      const lines=part.split('\\n').filter(x=>x.trim().length);
+      if(!lines.length)return '';
+      const mark=line=>{
+        const value=line.trim();
+        if(/^[A-Z][A-Z 0-9/&£+·—-]{5,65}$/.test(value))
+          return '<h3 class="inbox-letter-subhead">'+esc(value)+'</h3>';
+        const match=/^([A-Z][A-Z 0-9/&-]{2,45}:)(.*)$/.exec(value);
+        if(match)return '<div class="inbox-letter-fact"><strong>'+esc(match[1])+
+          '</strong><span>'+esc(match[2].trim())+'</span></div>';
+        return '<p>'+esc(value)+'</p>';
+      };
+      return '<section class="inbox-letter-section">'+lines.map(mark).join('')+'</section>';
+    }).join('');
+    return '<article class="inbox-letter">'+
+      '<div class="inbox-letter-letterhead">'+
+        '<div class="inbox-letter-crest" aria-hidden="true">MT</div>'+
+        '<div><strong>'+esc(state.name)+'</strong><small>INTERNAL DEALERSHIP COMMUNICATION</small></div>'+
+        '<span class="inbox-letter-state">'+esc(status)+'</span>'+
+      '</div>'+
+      '<div class="inbox-letter-meta">'+
+        '<div><span>FROM</span><strong>'+esc(message.from)+'</strong></div>'+
+        '<div><span>TO</span><strong>DEALERSHIP OWNER</strong></div>'+
+        '<div><span>RECEIVED</span><strong>GAME DAY '+String(message.day).padStart(2,'0')+'</strong></div>'+
+        '<div><span>DEPARTMENT</span><strong>'+esc(labels[category]||category)+'</strong></div>'+
+      '</div>'+
+      '<div class="inbox-letter-content">'+content+'</div>'+
+      '<footer class="inbox-letter-signoff"><span>INTERNAL MESSAGE · '+esc(category.toUpperCase())+
+      '</span><span>FILED IN OWNER INBOX</span></footer>'+
+    '</article>';
+  }
   function quoteControls(message,state,engine){
     const car=actionFor(message,state);
     const moraleEmployeeId=moraleId(message);
@@ -278,6 +316,6 @@
   }
   window.MotorTradeInbox=Object.freeze({
     categories,labels,infer,quoteId,moraleId,actionFor,needsAction,sync,filtered,counters,
-    quoteControls,emit,esc
+    quoteControls,formatMail,emit,esc
   });
 })();
