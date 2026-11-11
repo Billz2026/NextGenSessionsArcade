@@ -142,8 +142,8 @@
       '</small><strong>'+new Intl.NumberFormat('en-GB').format(v.miles)+' MI</strong>'+
       '<span>'+age(s,v)+' DAYS HELD · '+esc(v.color||'UNKNOWN COLOUR')+'</span></div></div>'+
       items(v)+'<p class="ws-caveat">Simulated assessment and QC are not a real MOT or roadworthiness certificate.</p>'+
-      '</div><div class="ws-detail-control"><h4>COST CONTROL</h4>'+costs(v)+
-      actions(s,W,v)+disposal(v)+'</div></div></article>';
+      '</div><div class="ws-detail-control">'+actions(s,W,v)+
+      '<h4>COST CONTROL</h4>'+costs(v)+disposal(v)+'</div></div></article>';
   }
   function render(s,W,{filter='all',selectedId=null}={}){
     const q=summary(s,W),f=FILTERS.includes(filter)?filter:'all';

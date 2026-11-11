@@ -75,7 +75,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=34/);
+  assert.match(html, /styles\.css\?v=35/);
   assert.match(html, /simulator\.js\?v=29/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -93,7 +93,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=19/);
   assert.match(html, /customers-view\.js\?v=5/);
-  assert.match(html, /workshop-view\.js\?v=4/);
+  assert.match(html, /workshop-view\.js\?v=5/);
   assert.match(html, /events-view\.js\?v=4/);
   assert.match(html, /monthly-view\.js\?v=6/);
   assert.match(html, /people-view\.js\?v=4/);
@@ -112,7 +112,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.20/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.21/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -595,7 +595,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=34/);
+  assert.match(html, /styles\.css\?v=35/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4437,7 +4437,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.20/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.21/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4500,6 +4500,34 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
   assert.ok(E.startPrep(s,v.id,'external').ok);
   const active=app.workshopView.render(s,E.workshop);
   assert.match(active.html,/REPAIRS BOOKED/);
+  assert.equal(app.workshopView.paid(v),v.workshop.repairCost);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+
+test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
+  assert.match(html,/PRE-ALPHA · v0\.9\.21/);
+  assert.match(css,/@media\(min-width:1021px\)/);
+  assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
+  assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
+  assert.match(css,/#events-banner:has\(\.event-meeting-banner\)/);
+  assert.match(css,/\.ws-kpis>div\{min-height:51px/);
+  assert.match(css,/\.ws-photo \.vehicle-photo-frame\{height:59px/);
+});
+
+test('v0.9.21 Workshop puts next decision above costs without changing repair actions',()=>{
+  const app=browser(new Map()),E=app.productionEngine,s=E.create('Job Priority',[]);
+  const lead=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+  const v=s.vehicles[0];
+  assert.ok(E.assessStock(s,v.id).ok);
+  assert.ok(E.startPrep(s,v.id,'external').ok);
+  const htmlWork=app.workshopView.render(s,E.workshop).html;
+  const action=htmlWork.indexOf('REPAIRS BOOKED');
+  const cost=htmlWork.indexOf('COST CONTROL');
+  assert.ok(action>=0&&cost>action,'Workshop action should be encountered before the finance table');
+  assert.match(htmlWork,/GAME DAYS/);
+  assert.match(htmlWork,/REPAIRS PAID \/ BOOKED/);
   assert.equal(app.workshopView.paid(v),v.workshop.repairCost);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
