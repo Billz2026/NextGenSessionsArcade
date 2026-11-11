@@ -7,7 +7,7 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 4;
-  const VERSION = 13;
+  const VERSION = 14;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
@@ -331,7 +331,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -340,6 +340,7 @@
       typeof m.subject === 'string' && typeof m.preview === 'string' &&
       typeof m.body === 'string' && typeof m.read === 'boolean' &&
       (m.category===undefined||['operations','staff','accounts','sales','reports'].includes(m.category))&&
+      (m.decision===undefined||['approved','declined'].includes(m.decision))&&
       (m.reference===undefined||m.reference===null||
         (typeof m.reference==='string'&&m.reference.length>0&&m.reference.length<=150))&&
       (m.linkPage === null || ['dashboard','inbox','auctions','stock','sales','finance','staff','reputation','reports','business','workshop','events','auctionHall'].includes(m.linkPage)));
@@ -348,7 +349,8 @@
       id:m.id,day:m.day,from:m.from,subject:m.subject,preview:m.preview,
       body:m.body,linkPage:m.linkPage,read:m.read,
       ...(m.category?{category:m.category}:{}),
-      ...(m.reference?{reference:m.reference}:{})
+      ...(m.reference?{reference:m.reference}:{}),
+      ...(m.decision?{decision:m.decision}:{})
     }));
     if (saved.version === 1) {
       // Previous release contained no trade transactions; keep name, day and inbox.
@@ -358,10 +360,10 @@
       legacy.auctionHall=initialAuctionHall(saved.day);
       return M.initialize(legacy,{migrating:true});
     }
-    if(saved.version>=VERSION&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
+    if(saved.version>=12&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
     // An untouched old catalogue can be refreshed after a day change without
     // losing any bid or payment. Never silently discard a live or decided lot.
-    const staleEmptyHall=saved.version>=VERSION&&saved.auctionHall?.day!==saved.day&&
+    const staleEmptyHall=saved.version>=12&&saved.auctionHall?.day!==saved.day&&
       saved.auctionHall?.phase==='catalogue'&&saved.auctionHall?.index===0&&
       saved.auctionHall?.currentBid===0&&saved.auctionHall?.rounds===0&&
       Array.isArray(saved.auctionHall?.feed)&&saved.auctionHall.feed.length===0&&
@@ -376,7 +378,7 @@
     }
     if(!SITE.valid(site))return null;
     const expectedCapacity=SITE.capacity({premises:site});
-    if(saved.version>=VERSION&&(!integer(saved.inboxLedgerCursor)||
+    if(saved.version>=13&&(!integer(saved.inboxLedgerCursor)||
       saved.inboxLedgerCursor<0||saved.inboxLedgerCursor>saved.ledger?.length))return null;
     if ((saved.version>=10?saved.capacity!==expectedCapacity:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
       !Array.isArray(saved.sold) || !Array.isArray(saved.ledger) ||
@@ -384,7 +386,7 @@
       !cashValue(saved.cash) || saved.vehicles.length > expectedCapacity ||
       saved.vehicles.length > 250 || saved.sold.length > 20000 ||
       saved.ledger.length > 60000 ||
-      (saved.version===VERSION&&(!Array.isArray(saved.wholesale)||saved.wholesale.length>20000)))return null;
+      (saved.version>=12&&(!Array.isArray(saved.wholesale)||saved.wholesale.length>20000)))return null;
     const validLook=v=>typeof v.color==='string'&&PH.COLOURS.includes(v.color)&&
       typeof v.generation==='string'&&v.generation.length>0&&v.generation.length<48&&
       (PH.identity(v).generation===v.generation);
@@ -404,7 +406,7 @@
       (saved.version === 2 || v.prepBudget === v.profile.basePrep +
         (v.profile.hiddenFault?.cost || 0)) &&
       (saved.version<7 || W.valid(v,saved.day)) &&
-      (saved.version<VERSION || validLook(v));
+      (saved.version<10 || validLook(v));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
       cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
@@ -451,11 +453,11 @@
     const restored={
       version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:expectedCapacity,
       premises:SITE.clone(site),
-      inboxLedgerCursor:saved.version>=VERSION?saved.inboxLedgerCursor:saved.ledger.length,
+      inboxLedgerCursor:saved.version>=13?saved.inboxLedgerCursor:saved.ledger.length,
       // Migrate older daily auction saves: keep completed results in history,
       // but remove an obsolete mid-session catalogue on a closed weekday.
       auctionHall:saved.version>=11&&!staleEmptyHall&&
-        (saved.version>=VERSION||saved.day===1)?
+        (saved.version>=12||saved.day===1)?
         JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
       auctionHistory:saved.version>=11?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
       stock:saved.vehicles.length,sales:saved.sold.length,
@@ -467,8 +469,8 @@
             mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
             hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}
       })),
-      wholesale:wholesale.map(d=>({...d,...(saved.version<VERSION?PH.describe(d):{})})),
-      sold:saved.sold.map(v => ({...v,...(saved.version<VERSION?PH.describe(v):{}),profile:v.profile?{...v.profile,
+      wholesale:wholesale.map(d=>({...d,...(saved.version<10?PH.describe(d):{})})),
+      sold:saved.sold.map(v => ({...v,...(saved.version<10?PH.describe(v):{}),profile:v.profile?{...v.profile,
         knownRepairs:v.profile.knownRepairs.map(r=>({...r})),
         mot:{...v.profile.mot,advisories:[...v.profile.mot.advisories]},
         hiddenFault:v.profile.hiddenFault?{...v.profile.hiddenFault}:null}:null})),
@@ -826,6 +828,9 @@
     state.reputation=P.tier(state.reputationScore);
     return out;
   }
+  function decideStaffMorale(state,messageId,approve){
+    return P.decideMorale(state,messageId,approve);
+  }
   function hireStaff(state,id){
     const result=P.hire(state,id);
     if(result.ok){
@@ -843,7 +848,7 @@
     customers:C,openCustomer,bookCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
-    wholesaleOffer,disposeStock,hireStaff,
+    wholesaleOffer,disposeStock,hireStaff,decideStaffMorale,
     market,marketFor,marketStatus,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     advertise,buyers,counter,completeSale,totalMargin
