@@ -16,7 +16,8 @@
   const DV = window.MotorTradeDashboardView;
   const IN = window.MotorTradeInbox;
   const BV = window.MotorTradeBuyingDeskView;
-  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV || !IN || !BV)
+  const SV = window.MotorTradeStockView;
+  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV || !IN || !BV || !SV)
     throw new Error('Customer, workshop and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
@@ -152,6 +153,8 @@
   let auctionPreviewId = null;
   let offerDrafts = {};
   let selectedSellerId = null;
+  let selectedStockId = null;
+  let stockFilter = 'all';
   let selectedMonth = 'current'; // Current-day input, retained while opening a report.
 
   function gameDate(day) {
@@ -330,47 +333,9 @@
     byId('market-sellers').innerHTML=desk.html;
   }
   function renderStock() {
-    const container = byId('stock-list');
-    if (!career.vehicles.length) {
-      container.innerHTML = '<div class="trade-empty"><h2>YOUR FORECOURT IS EMPTY.</h2><p>Visit the Auction Hall for bidding or the Buying Desk for private seller negotiations.</p></div>';
-      return;
-    }
-    container.innerHTML = career.vehicles.map(car => {
-      const status = car.status === 'acquired' ?
-          ({
-            unassessed:'NEEDS WORKSHOP ASSESSMENT',
-            quoted:'WAITING FOR REPAIR APPROVAL',
-            'in-progress':'REPAIRS IN PROGRESS',
-            'quality-check':'QUALITY CHECK DUE'
-          }[car.workshop?.stage]||'WORKSHOP REQUIRED') :
-        car.status === 'prepared' ? 'READY TO ADVERTISE' : 'ADVERTISED';
-      const age = career.day - car.acquiredDay;
-      const totals = car.cost + car.prepSpent;
-      const action = car.status === 'acquired'
-        ? '<div class="workshop-stock-action"><p>Preparation takes time. '+
-          (car.workshop?.stage==='in-progress'?
-            car.workshop.remainingDays+' day(s) until repairs finish, then quality control is due.' :
-            car.workshop?.stage==='quality-check'?'Repairs finished. Complete quality control before advertising.' :
-            'Authorise an assessment and choose an internal or external garage.')+
-          '</p><button class="trade-button" type="button" data-page="workshop">'+
-          'OPEN WORKSHOP →</button></div>'
-        : '<div class="trade-action-row"><label>RETAIL ASKING PRICE (£)<input class="trade-input" id="stock-price-' + car.id +
-          '" type="number" inputmode="numeric" min="500" max="75000" step="50" value="' + (car.asking ?? car.retail) +
-          '"></label><button class="trade-button" type="button" data-action="list-stock" data-id="' + car.id +
-          '">' + (car.status === 'listed' ? 'UPDATE PRICE' : 'ADVERTISE') + '</button></div>';
-      return '<article class="trade-card">' + cardHeader(car,car.source.toUpperCase() + ' / STOCK ' + car.id) +
-        reportCard(car,'stock',car.asking??car.retail) +
-        '<div class="trade-pricing"><div><small>ACQUISITION</small><strong>' + cashText(car.cost) +
-        '</strong></div><div><small>PREP SPENT</small><strong>' + cashText(car.prepSpent) +
-        '</strong></div><div><small>COST TO DATE</small><strong>' + cashText(totals) +
-        '</strong></div><div><small>EST. RETAIL</small><strong>' + cashText(car.retail) +
-        '</strong></div></div><div class="trade-actions"><span class="trade-status">' + status +
-        ' · DAY ' + car.acquiredDay + ' · ' + age + ' DAYS HELD</span>' +
-        (car.status === 'acquired' ?
-          '<span class="trade-extra">Workshop assessment, repair turnaround and final quality control are required before advertising. Original repair budget: '+
-          cashText(car.prepBudget)+'.</span>' : '') +
-        action + '</div></article>';
-    }).join('');
+    const view=SV.render(career,{selectedId:selectedStockId,filter:stockFilter,reportCard});
+    selectedStockId=view.selectedId;
+    byId('stock-list').innerHTML=view.html;
   }
   function renderWorkshop() {
     byId('workshop-board').innerHTML=WV.render(career,W);
@@ -664,6 +629,8 @@
     expandedReportId = null;
     offerDrafts = {};
     selectedSellerId=null;
+    selectedStockId=null;
+    stockFilter='all';
     screen = 'career';
     currentPage = 'dashboard';
     const saved = persistCareer();
@@ -906,6 +873,21 @@
         if(career){
           currentPage='workshop';
           eventNotice='Vehicle preparation now requires assessment, booked repairs, elapsed game days and final quality control.';
+          render();
+        }
+        break;
+      case 'select-stock':
+        if(career&&career.vehicles.some(v=>v.id===Number(button.dataset.id))){
+          selectedStockId=Number(button.dataset.id);
+          currentPage='stock';
+          render();
+        }
+        break;
+      case 'filter-stock':
+        if(career&&SV.FILTERS.includes(button.dataset.filter)){
+          stockFilter=button.dataset.filter;
+          selectedStockId=null;
+          currentPage='stock';
           render();
         }
         break;

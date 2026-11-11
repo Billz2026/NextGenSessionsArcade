@@ -28,6 +28,7 @@ const customers = readFileSync(new URL('customers.js', root), 'utf8');
 const customersView = readFileSync(new URL('customers-view.js', root), 'utf8');
 const auctionHallView = readFileSync(new URL('auction-hall-view.js', root), 'utf8');
 const buyingDeskView = readFileSync(new URL('buying-desk-view.js', root), 'utf8');
+const stockView = readFileSync(new URL('stock-view.js', root), 'utf8');
 const dashboardView = readFileSync(new URL('dashboard-view.js', root), 'utf8');
 const inboxOffice = readFileSync(new URL('inbox-office.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
@@ -60,6 +61,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="auction-hall-view"/);
   assert.match(html, /id="market-sellers"/);
   assert.match(html, /id="stock-list"/);
+  assert.match(html, /class="stock-control"/);
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=2/);
@@ -72,8 +74,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=31/);
-  assert.match(html, /simulator\.js\?v=27/);
+  assert.match(html, /stock-view\.js\?v=1/);
+  assert.match(html, /styles\.css\?v=32/);
+  assert.match(html, /simulator\.js\?v=28/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
@@ -109,7 +112,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.17/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.18/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -303,6 +306,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(premisesView, context, { timeout: 1500 });
   vm.runInNewContext(auctionHallView, context, { timeout: 1500 });
   vm.runInNewContext(buyingDeskView, context, { timeout: 1500 });
+  vm.runInNewContext(stockView, context, { timeout: 1500 });
   vm.runInNewContext(dashboardView, context, { timeout: 1500 });
   vm.runInNewContext(inboxOffice, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
@@ -337,7 +341,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -591,7 +595,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=31/);
+  assert.match(html, /styles\.css\?v=32/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4329,4 +4333,104 @@ test('v0.9.17 suggested offer, funding warning and short-screen layout',()=>{
   assert.equal(model.affordable,false);
   assert.match(app.buyingDesk.fundingWarning(match.s,model),/INSUFFICIENT CASH/);
   assert.equal(E.acquireSeller(match.s,match.c.id,match.c.ask).code,'cash');
+});
+
+test('v0.9.18 Vehicle Stock is a filterable single-unit workspace without save changes',()=>{
+  const storage=new Map(),app=browser(storage);
+  app.click('new-career');app.submitCareer('Forecourt File');
+  const seller=app.engine.market(1).sellers[0];
+  app.setInput('seller-offer-'+seller.id,seller.ask);
+  app.click('buy-seller',{id:seller.id});
+  const before=JSON.parse(storage.get(STORAGE_KEY));
+  app.go('stock');
+  const layout=app.nodes.get('stock-list').innerHTML;
+  assert.match(layout,/STOCK REGISTER/);
+  assert.match(layout,/CASH INVESTED/);
+  assert.match(layout,/UNSPENT PREP/);
+  assert.match(layout,/STOCK 1/);
+  assert.match(layout,/VEHICLE FILE/);
+  assert.match(layout,/PROJECTED GROSS CONTRIBUTION/);
+  assert.match(layout,/OPEN WORKSHOP/);
+  assert.match(layout,/data-action="filter-stock"/);
+  app.click('filter-stock',{filter:'listed'});
+  assert.match(app.nodes.get('stock-list').innerHTML,/No vehicles in this category/);
+  app.click('filter-stock',{filter:'all'});
+  assert.match(app.nodes.get('stock-list').innerHTML,/VEHICLE FILE/);
+  assert.deepEqual(JSON.parse(storage.get(STORAGE_KEY)),before,'UI filters must not mutate career save');
+});
+
+test('v0.9.18 accounting keeps paid booked repairs in invested capital before QC',()=>{
+  const app=browser(),E=app.productionEngine,SV=app.stockView;
+  const s=E.create('Repair accounting',[]);
+  const car=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+  const v=s.vehicles[0],base=v.cost;
+  assert.equal(SV.figures(v).invested,base);
+  assert.equal(SV.figures(v).futurePrep,v.prepBudget);
+  assert.ok(E.assessStock(s,v.id).ok);
+  assert.equal(SV.figures(v).invested,v.cost);
+  const booked=E.startPrep(s,v.id,'external');
+  assert.ok(booked.ok,booked.message);
+  assert.equal(v.prepSpent,0,'Legacy realised repair spend stays zero before QC');
+  assert.ok(v.workshop.repairCost>0);
+  assert.equal(SV.figures(v).paidRepairs,v.workshop.repairCost);
+  assert.equal(SV.figures(v).invested,v.cost+v.workshop.repairCost);
+  assert.equal(SV.figures(v).futurePrep,0);
+  assert.equal(SV.summary(s).invested,SV.figures(v).invested);
+  assert.equal(SV.summary(s).reserved,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
+    'Existing career structure and financial integrity still validate');
+});
+
+test('v0.9.18 selecting one vehicle changes dossier and sorting remains deterministic',()=>{
+  const storage=new Map(),app=browser(storage),E=app.productionEngine;
+  app.click('new-career');app.submitCareer('Stock Search');
+  const sellers=E.market(1).sellers;
+  for(const seller of sellers){
+    app.setInput('seller-offer-'+seller.id,seller.ask);
+    app.click('buy-seller',{id:seller.id});
+  }
+  const s=JSON.parse(storage.get(STORAGE_KEY));
+  assert.equal(s.vehicles.length,2);
+  app.go('stock');
+  let html=app.nodes.get('stock-list').innerHTML;
+  assert.match(html,/aria-pressed="true"/);
+  app.click('select-stock',{id:'2'});
+  html=app.nodes.get('stock-list').innerHTML;
+  assert.match(html,/VEHICLE FILE · STOCK 2/);
+  assert.match(html,/data-action="select-stock" data-id="2" aria-pressed="true"/);
+  assert.equal(html.includes('id="stock-price-2"'),false,'Unprepared stock cannot be priced');
+  assert.equal(JSON.parse(storage.get(STORAGE_KEY)).cash,s.cash);
+  assert.ok(E.normalize(JSON.parse(storage.get(STORAGE_KEY))));
+});
+
+test('v0.9.18 ready and listed cars keep proper advertising controls and locked deals',()=>{
+  const app=browser(),E=app.productionEngine,SV=app.stockView;
+  const s=E.create('Stock lifecycle',[]);
+  const car=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,car.id,car.ask).ok);
+  const v=s.vehicles[0];
+  v.status='prepared';v.workshop.stage='ready';v.prepSpent=400;
+  let view=SV.render(s,{reportCard:()=>''});
+  assert.match(view.html,/ADVERTISE VEHICLE/);
+  assert.match(view.html,/stock-price-1/);
+  assert.equal(SV.summary(s).ready,1);
+  v.status='listed';v.asking=v.retail;v.listedDay=s.day;
+  view=SV.render(s,{filter:'listed',reportCard:()=>''});
+  assert.match(view.html,/UPDATE PRICE/);
+  assert.match(view.html,/OPEN SALES OFFICE/);
+  assert.equal(SV.summary(s).listed,1);
+  s.customerCases[String(v.id)]={status:'reserved'};
+  view=SV.render(s,{reportCard:()=>''});
+  assert.match(view.html,/PRICING LOCKED/);
+  assert.match(view.html,/data-action="list-stock" data-id="1" disabled/);
+});
+
+test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
+  const app=browser(),state=app.productionEngine.create('Empty',[]);
+  const view=app.stockView.render(state);
+  assert.match(view.html,/YOUR FORECOURT IS EMPTY/);
+  assert.match(view.html,/data-page="auctions"/);
+  assert.match(view.html,/data-page="auctionHall"/);
+  assert.equal(view.selectedId,null);
 });
