@@ -595,9 +595,9 @@
         preview:workforceEvent.support.length+' employee'+(workforceEvent.support.length===1?'':'s')+
           ' supported through delegated rota and wellbeing check-ins.',
         body:'ROUTINE STAFF SUPPORT · NO OWNER APPROVAL NEEDED\\n\\n'+
-          workforceEvent.supervisor+' has carried out this week’s low-cost employee check-ins.\\n'+
-          workforceEvent.support.join('\\n')+
-          '\\n\\nNo additional company expenditure was authorised. More significant welfare expenditure will be proposed separately for your approval.',
+          workforceEvent.supervisor+' has carried out this week’s low-cost employee check-ins.\n'+
+          workforceEvent.support.join('\n')+
+          '\n\nNo additional company expenditure was authorised. More significant welfare expenditure will be proposed separately for your approval.',
         linkPage:'staff',reference:'supervisor-checkins:'+career.day});
     }
     const premisesEvent=E.premisesDay(career);
