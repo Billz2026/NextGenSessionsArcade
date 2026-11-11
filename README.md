@@ -4,6 +4,13 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.12 — Dashboard final accuracy pass (11 November 2026)
+
+- **Truthful unit-target feedback:** The dashboard now distinguishes under-target sales, reaching the unit goal and exceeding it. A 7/2 month displays "Unit target exceeded by 5 vehicles" with a restrained green check, rather than the misleading "0 to target". This indicator refers to volume only; operating contribution remains a separate financial measure.
+- **Deal Day actions agree:** At 17:00 (session five of five), the upper event banner says "CLOSE MONTH" rather than "OPEN DEAL DAY". Both the banner and priority link to Deal Day & Meetings, where the existing closing action completes the month; earlier sessions continue to show "OPEN DEAL DAY".
+- **No filler priorities:** Removed the generic "Check your operating position" and "Review this week's stock plan" tasks. When meaningful, the dashboard now warns of a negative operating contribution near period-end or identifies the next weekly auction and preparation window (e.g., game day 64 after day 60). If no real action exists, it explicitly states that no urgent decisions are outstanding.
+- No backend, historical save, staffing, vehicle or auction changes. The compact Dashboard layout is otherwise locked.
+
 ### v0.9.11 — Compact dealership dashboard and live management priorities (11 November 2026)
 
 - **One-screen control centre:** The dashboard now uses a compact heading, a short event status banner and six linked metrics rather than an oversized welcome header, repeated calendar card and tall tiles. Cash balance, forecourt capacity, current-month sales, operating contribution, reputation and the next weekly auction are visible near the top. Each figure takes the player to its relevant business department.
