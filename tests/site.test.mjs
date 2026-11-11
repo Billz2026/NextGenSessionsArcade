@@ -3529,8 +3529,9 @@ test('v0.9.11 dashboard tasks respond to actual unassessed stock, unpaid staff a
   state.premises.arrears=175;
   model=V.snapshot(state,E);
   assert.equal(model.arrears,575);
-  assert.equal(model.tasks[0].key,'payroll');
-  assert.equal(model.tasks[1].key,'rent');
+  assert.equal(model.tasks[0].key,'board-meeting','Start-of-career meeting remains a mandatory first action');
+  assert.equal(model.tasks[1].key,'payroll');
+  assert.equal(model.tasks[2].key,'rent');
   assert.match(V.priorities(model),/data-page="staff"/);
   assert.match(V.priorities(model),/data-page="business"/);
   assert.match(V.operations(model,state),/£575/);
