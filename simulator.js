@@ -225,18 +225,13 @@
     const actionable=IN.needsAction(selected,career);
     const category=IN.infer(selected);
     detail.innerHTML=
-      '<div class="detail-heading">'+
+      '<div class="inbox-mail-heading">'+
         '<span class="section-overline">DAY '+String(selected.day).padStart(2,'0')+
           ' · '+escapeText(IN.labels[category]||category)+
           (actionable?' · APPROVAL REQUIRED':'')+'</span>'+
         '<h2>'+escapeText(selected.subject)+'</h2>'+
-        '<span class="detail-sender">FROM: '+escapeText(selected.from)+
-          '</span>'+
-        (selected.subject.startsWith('PAID COPY')?
-          '<span class="inbox-paid-status">PAYMENT ALREADY POSTED · NO ACTION REQUIRED</span>':'')+
       '</div>'+
-      '<p class="detail-body">'+escapeText(selected.body)+'</p>'+
-      IN.quoteControls(selected,career,E);
+      IN.formatMail(selected,career)+IN.quoteControls(selected,career,E);
     if(selected.linkPage&&Object.prototype.hasOwnProperty.call(PAGES,selected.linkPage)){
       const action=document.createElement('button');
       action.type='button';
@@ -594,6 +589,17 @@
       currentPage='events'; // Surface the special event automatically.
     }
     const workforceEvent=E.staffDay(career);
+    if(workforceEvent.support?.length){
+      IN.emit(career,{from:'STAFF SUPERVISOR · '+workforceEvent.supervisor,
+        category:'staff',subject:'Supervisor completed weekly staff check-ins',
+        preview:workforceEvent.support.length+' employee'+(workforceEvent.support.length===1?'':'s')+
+          ' supported through delegated rota and wellbeing check-ins.',
+        body:'ROUTINE STAFF SUPPORT · NO OWNER APPROVAL NEEDED\\n\\n'+
+          workforceEvent.supervisor+' has carried out this week’s low-cost employee check-ins.\\n'+
+          workforceEvent.support.join('\\n')+
+          '\\n\\nNo additional company expenditure was authorised. More significant welfare expenditure will be proposed separately for your approval.',
+        linkPage:'staff',reference:'supervisor-checkins:'+career.day});
+    }
     const premisesEvent=E.premisesDay(career);
     const workshopEvents=E.advanceWorkshop(career);
     const customerEvents=E.advanceCustomers(career);
@@ -944,6 +950,30 @@
           render();
         }
         break;
+      case 'decide-staff-welfare': {
+        if(!career)break;
+        const id=Number(button.dataset.id);
+        const approve=button.dataset.decision==='approve';
+        if(!['approve','decline'].includes(button.dataset.decision))break;
+        const request=career.messages.find(m=>m.id===id);
+        if(!request)break;
+        if(approve){
+          const employeeId=IN.moraleId(request);
+          const plan=employeeId!==null?P.moraleProposal(career,employeeId):null;
+          if(!plan){
+            eventNotice='That supervisor recommendation is no longer valid.';
+            render();break;
+          }
+          if(!window.confirm('Approve '+money.format(plan.cost)+
+            ' of company funds for '+plan.employee.name+'’s staff welfare plan?'))break;
+        }
+        const result=E.decideStaffMorale(career,id,approve);
+        if(result.ok){
+          inboxFilter='all';selectedMessageId=id;currentPage='inbox';
+        }
+        saveResult(result);
+        break;
+      }
       case 'approve-inbox-repair': {
         if(!career)break;
         const selected=career.messages.find(m=>m.id===selectedMessageId);
