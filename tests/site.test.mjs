@@ -1981,7 +1981,7 @@ test('four mechanics start available and handle four separate in-house repair jo
   const candidates=P.applicants(1).filter(x=>x.role==='technician');
   assert.equal(candidates.length,8);
   assert.equal(P.technicianLimit(s),4);
-  assert.equal(P.staffLimit(s),6);
+  assert.equal(P.staffLimit(s),7,'One additional place is reserved for a staff supervisor');
   for(const candidate of candidates.slice(0,4))assert.ok(P.hire(s,candidate.id).ok);
   assert.equal(s.staff.length,4);
   assert.equal(P.hire(s,candidates[0].id).ok,false);
@@ -2965,10 +2965,10 @@ test('v0.9.7 multiple salespeople unlock at reputation milestones and divide act
   assert.ok(P.hire(s,people[1].id).ok);
   s.day++;
   assert.notEqual(P.salesRep(s,1).id,P.salesRep(s,2).id);
-  assert.equal(P.staffLimit(s),7,'Extra sales places do not create physical repair bays');
+  assert.equal(P.staffLimit(s),8,'Supervisor headcount does not create extra repair bays');
   s.reputationScore=80;
   assert.equal(P.salesLimit(s),3);
-  assert.equal(P.staffLimit(s),8,'Further mechanic places require workshop investment');
+  assert.equal(P.staffLimit(s),9,'Further mechanic places require workshop investment');
   assert.ok(P.valid(s,s.day));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
@@ -3782,7 +3782,8 @@ test('v0.9.13 staff issues generate evidence-backed owner notifications without 
   assert.ok(I.sync(s,E));
   const subjects=s.messages.map(m=>m.subject);
   assert.ok(subjects.includes('New employee onboarded · Cost confirmed'));
-  assert.ok(subjects.some(x=>x.startsWith('Staff concern · ')));
+  assert.ok(!subjects.some(x=>x.startsWith('Staff concern · ')),
+    'Payroll arrears are the root cause; paid morale interventions must not be suggested');
   assert.ok(subjects.includes('ACTION REQUIRED · Outstanding wages'));
   assert.ok(subjects.includes('ACTION REQUIRED · Premises payment shortfall'));
   const count=s.messages.length,cash=s.cash;
