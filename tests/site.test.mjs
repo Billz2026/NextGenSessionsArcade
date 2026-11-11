@@ -57,22 +57,22 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=2/);
-  assert.match(html, /people\.js\?v=3/);
+  assert.match(html, /people\.js\?v=4/);
   assert.match(html, /monthly\.js\?v=5/);
   assert.match(html, /events\.js\?v=2/);
-  assert.match(html, /workshop\.js\?v=1/);
-  assert.match(html, /customers\.js\?v=2/);
-  assert.match(html, /vehicle-photos\.js\?v=4/);
+  assert.match(html, /workshop\.js\?v=2/);
+  assert.match(html, /customers\.js\?v=3/);
+  assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
   assert.match(html, /trading\.js\?v=11/);
-  assert.match(html, /customers-view\.js\?v=2/);
-  assert.match(html, /workshop-view\.js\?v=2/);
+  assert.match(html, /customers-view\.js\?v=3/);
+  assert.match(html, /workshop-view\.js\?v=3/);
   assert.match(html, /events-view\.js\?v=3/);
   assert.match(html, /monthly-view\.js\?v=5/);
-  assert.match(html, /people-view\.js\?v=1/);
+  assert.match(html, /people-view\.js\?v=2/);
   assert.match(html, /vehicle-view\.js\?v=3/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
@@ -88,7 +88,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.4/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.5/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong>4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -451,7 +451,7 @@ test('v0.9.4 mild hybrids are not advertised as full hybrids',()=>{
 
 test('v0.9.4 photo source registry is stable and paint never chosen to fit photograph',()=>{
   const {market:M,photos:P}=browser(new Map());
-  assert.equal(P.LIBRARY.length,16);
+  assert.equal(P.LIBRARY.length,19);
   for(const shot of P.LIBRARY){
     assert.match(shot.file,/\.jpg$/);
     assert.match(P.source(shot),/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
@@ -2307,7 +2307,7 @@ test('customer cancellation always returns held deposits without adding or losin
 test('some customers cancel before collecting despite a paid reservation', () => {
   const E=browser(new Map()).productionEngine,C=E.customers;
   let cancelled=null;
-  for(let i=0;i<180;i++){
+  for(let i=0;i<480;i++){
     const {state,v}=readyForRetail(E,'Deposit Cancel '+i);
     if(!C.demand(state,v))continue;
     E.openCustomer(state,v.id);
@@ -2474,7 +2474,7 @@ test('overdue collection cancels a reserved agreement and returns customer holdi
   state.day=c.collectionDay;
   E.advanceCustomers(state);
   if(c.status==='collectable'){
-    state.day=c.collectionDay+3;
+    state.day=c.collectionDay+6;
     const notices=E.advanceCustomers(state);
     assert.equal(c.status,'lost');
     assert.ok(notices.some(x=>x.includes('retained')||x.includes('refunded')));
