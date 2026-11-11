@@ -2006,7 +2006,7 @@ test('four mechanics start available and handle four separate in-house repair jo
   assert.equal(P.technicianLimit(s),4,'Reputation opens permission but workshop expansion adds physical bays');
   assert.ok(E.upgradePremises(s,'workshop').ok);
   assert.equal(P.technicianLimit(s),6);
-  assert.equal(P.staffLimit(s),9);
+  assert.equal(P.staffLimit(s),10,'Expanded workshop still reserves one separate supervisor post');
   s.day=29;
   const additional=P.applicants(s.day).find(x=>x.role==='technician'&&
     !s.staff.some(e=>e.name===x.name));
