@@ -11,13 +11,15 @@
   const EV = window.MotorTradeEventsView;
   const WV = window.MotorTradeWorkshopView;
   const CV = window.MotorTradeCustomersView;
-  if (!E || !PV || !MV || !EV || !WV || !CV)
+  const SITE_VIEW = window.MotorTradePremisesView;
+  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW)
     throw new Error('Customer, workshop and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
   const D = E.events;
   const W = E.workshop;
   const C = E.customers;
+  const SITE = E.premises;
   const VC = window.MotorTradeCards;
   if(!VC)throw new Error('Load vehicle-cards.js before simulator.js');
   const MARKET = window.MotorTradeMarket;
@@ -77,7 +79,7 @@
         'auctions'),
       makeMessage(3,1,'ACCOUNTS OFFICE','Protect your opening £12,500',
         'Gross margin is different from cash flow.',
-        'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. Gross trade margin currently excludes VAT, tax, business overheads, finance and after-sale consumer claims.',
+        'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. Gross trade margin excludes staff and premises overheads; the management report shows an operating contribution after those charges. VAT, tax, finance and after-sale claims remain unmodelled.',
         'finance')
     ];
   }
@@ -410,6 +412,9 @@
     byId('monthly-report-view').innerHTML=MV.renderReport(career,M,selectedMonth);
     bindText('monthly-target',r.soldUnits+' / '+r.targetUnits);
   }
+  function renderBusiness(){
+    byId('premises-view').innerHTML=SITE_VIEW.render(career,SITE);
+  }
   function renderPeople() {
     byId('people-totals').innerHTML=PV.totals(career,P);
     byId('people-roster').innerHTML=PV.roster(career,P);
@@ -424,6 +429,7 @@
     renderLedger();
     renderPeople();
     renderMonthly();
+    renderBusiness();
     renderEvents();
   }
 
@@ -452,6 +458,10 @@
     bindText('cash', money.format(career.cash));
     bindText('customer-deposits',money.format(C.heldDeposits(career)));
     bindText('stock', career.stock + ' / ' + career.capacity);
+    bindText('forecourt-capacity',career.capacity+' vehicles');
+    bindText('workshop-bays',String(SITE.bays(career)));
+    bindText('premises-daily',money.format(SITE.costs(career).total)+'/day');
+    bindText('premises-arrears',money.format(career.premises.arrears));
     bindText('stock-count', String(career.stock));
     bindText('trade-profit', money.format(E.totalMargin(career)));
     bindText('sales', String(career.sales));
@@ -544,6 +554,7 @@
       currentPage='events'; // Surface the special event automatically.
     }
     const workforceEvent=E.staffDay(career);
+    const premisesEvent=E.premisesDay(career);
     const workshopEvents=E.advanceWorkshop(career);
     const customerEvents=E.advanceCustomers(career);
     lastTradeResult = null;
@@ -567,6 +578,9 @@
       if(workforceEvent.departures.length)
         eventNotice+=' Departures: '+workforceEvent.departures.join(', ')+'.';
     }
+    eventNotice+=' PREMISES: '+money.format(premisesEvent.paid)+' of '+
+      money.format(premisesEvent.due)+' daily rent/utilities paid; '+
+      money.format(premisesEvent.arrears)+' outstanding.';
     if(workshopEvents.length)
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
     if(customerEvents.length)
@@ -711,6 +725,15 @@
         break;
       case 'hire-staff':
         if (career) saveResult(E.hireStaff(career,button.dataset.id));
+        break;
+      case 'upgrade-premises':
+        if(career&&['forecourt','workshop'].includes(button.dataset.kind)){
+          const quote=SITE.quote(career,button.dataset.kind);
+          if(quote&&!quote.maximum&&window.confirm('Invest '+money.format(quote.cost)+
+            ' in '+button.dataset.kind+' expansion? Daily rent and utilities will increase by '+
+            money.format(quote.dailyIncrease)+'. Existing workshop reserves remain protected.'))
+            saveResult(E.upgradePremises(career,button.dataset.kind));
+        }
         break;
       case 'select-report':
         if(career){
