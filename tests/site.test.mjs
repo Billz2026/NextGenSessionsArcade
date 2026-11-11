@@ -71,9 +71,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=2/);
   assert.match(html, /auction-hall-view\.js\?v=2/);
-  assert.match(html, /buying-desk-view\.js\?v=1/);
-  assert.match(html, /styles\.css\?v=30/);
-  assert.match(html, /simulator\.js\?v=26/);
+  assert.match(html, /buying-desk-view\.js\?v=2/);
+  assert.match(html, /styles\.css\?v=31/);
+  assert.match(html, /simulator\.js\?v=27/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
   assert.match(html, /id="premises-view"/);
@@ -88,13 +88,13 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=18/);
+  assert.match(html, /trading\.js\?v=19/);
   assert.match(html, /customers-view\.js\?v=5/);
   assert.match(html, /workshop-view\.js\?v=3/);
   assert.match(html, /events-view\.js\?v=4/);
   assert.match(html, /monthly-view\.js\?v=6/);
   assert.match(html, /people-view\.js\?v=4/);
-  assert.match(html, /vehicle-view\.js\?v=3/);
+  assert.match(html, /vehicle-view\.js\?v=4/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -109,7 +109,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.16/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.17/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -187,7 +187,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   const listeners = {};
   const document = {
     getElementById: id => {
-      if (!nodes.has(id) && /^(auction-bid-|seller-offer-|stock-price-|px-allowance-|projection-|desk-offer-|desk-prep-|desk-total-|desk-projection-|desk-headroom-|desk-signal-)/.test(id)) {
+      if (!nodes.has(id) && /^(auction-bid-|seller-offer-|stock-price-|px-allowance-|projection-|desk-offer-|desk-prep-|desk-total-|desk-projection-|desk-headroom-|desk-signal-|desk-funding-warning-)/.test(id)) {
         const dynamicInput = new Node();
         nodes.set(id,dynamicInput);
       }
@@ -591,7 +591,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=30/);
+  assert.match(html, /styles\.css\?v=31/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4283,4 +4283,50 @@ test('v0.9.16 no seller leads produces honest sourcing guidance without phantom 
   assert.match(view.html,/NO PRIVATE SELLERS THIS SESSION/);
   assert.doesNotMatch(view.html,/data-action="buy-seller"/);
   assert.equal(state.cash,12500);
+});
+
+test('v0.9.17 closed auction inspections neither charge nor display a purchase control',()=>{
+  const E=browser(new Map()).productionEngine,s=E.create('Closed Lot',[]);
+  const lot=E.marketFor(s).auctions[0],cash=s.cash;
+  assert.ok(E.passAuction(s).ok);
+  assert.equal(E.inspectLead(s,'auction',lot.id).code,'closed');
+  assert.equal(s.cash,cash);
+  assert.equal(s.ledger.length,0);
+  const pending=E.create('Hammer',[]),current=E.marketFor(pending).auctions[0];
+  pending.auctionHall.phase='payment';
+  assert.equal(E.inspectLead(pending,'auction',current.id).code,'closed');
+  const app=browser(new Map());
+  app.click('new-career');app.submitCareer('Closed Lot UI');
+  app.go('auctionHall');app.click('pass-auction');
+  app.click('toggle-report',{kind:'auction',id:lot.id});
+  const page=app.nodes.get('auction-hall-view').innerHTML;
+  assert.match(page,/LOT CLOSED · INSPECTION UNAVAILABLE/);
+  assert.doesNotMatch(page,new RegExp('data-action="inspect-lead" data-id="'+lot.id+'"'));
+});
+
+test('v0.9.17 suggested offer, funding warning and short-screen layout',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  app.click('new-career');app.submitCareer('Fair Opener');
+  const car=E.market(1).sellers[0],offer=app.buyingDesk.openingOffer(car);
+  assert.ok(offer>=100&&offer<car.ask&&offer%25===0);
+  const page=app.nodes.get('market-sellers').innerHTML;
+  assert.match(page,/SUGGESTED OPENING OFFER/);
+  assert.ok(page.includes('id="seller-offer-'+car.id+'" value="'+offer+'"'));
+  app.typeInput('seller-offer-'+car.id,car.ask-100);
+  assert.equal(app.nodes.get('desk-funding-warning-'+car.id).hidden,true);
+  assert.match(css,/@media\(min-width:1081px\) and \(max-height:800px\)/);
+  let match;
+  for(let day=1;day<=120&&!match;day++){
+    const s=E.create('Reserve Check',[]);s.day=day;E.rollAuctionHall(s);
+    const c=E.marketFor(s).sellers.find(v=>v.profile.hiddenFault?.cost>v.profile.riskAllowance);
+    if(c)match={s,c};
+  }
+  assert.ok(match);
+  const quote=E.quote(match.c,'seller',match.c.ask,false);
+  match.s.cash=match.c.ask+quote.prep;
+  const model=app.buyingDesk.figures(match.c,match.s,E,match.c.ask);
+  assert.equal(model.remaining,0);
+  assert.equal(model.affordable,false);
+  assert.match(app.buyingDesk.fundingWarning(match.s,model),/INSUFFICIENT CASH/);
+  assert.equal(E.acquireSeller(match.s,match.c.id,match.c.ask).code,'cash');
 });

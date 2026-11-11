@@ -8,6 +8,18 @@
   if(!VC)throw new Error('Load vehicle-cards.js before buying-desk-view.js');
   const money=VC.money,esc=VC.esc;
   const miles=n=>new Intl.NumberFormat('en-GB').format(n)+' mi';
+  function openingOffer(car){
+    // Use the advertised ask, not the owner's undisclosed floor.
+    const discount=Math.max(100,Math.min(500,Math.round(car.ask*.06/25)*25));
+    return Math.max(100,Math.min(car.ask,Math.round((car.ask-discount)/25)*25));
+  }
+  function fundingWarning(state,model){
+    if(state.vehicles.length>=state.capacity)
+      return 'FORECOURT FULL — sell stock before buying again.';
+    if(!model.affordable)
+      return 'INSUFFICIENT CASH — required workshop funding exceeds available cash. Reduce your offer or release stock.';
+    return '';
+  }
   function condition(car){
     const grade=car.profile?.grade??car.grade;
     return grade<=2?'GOOD':grade===3?'AVERAGE':'ATTENTION';
@@ -24,7 +36,10 @@
     // Buying cash: offer now; projected prep must be retained for the workshop.
     // The engine's hard affordability gate also protects any actual hidden fault.
     const remaining=state.cash-reserved-offer-quote.prep;
-    return {quote,inspected,remaining,reserved,position:position(quote)};
+    // Match the engine's full reserve gate while keeping hidden faults private.
+    const requiredPrep=car.profile.basePrep+(car.profile.hiddenFault?.cost||0);
+    const affordable=state.cash>=reserved+offer+requiredPrep;
+    return {quote,inspected,remaining,reserved,affordable,position:position(quote)};
   }
   function toolbar(state,E,sellers,selected){
     const negotiating=sellers.filter(x=>state.negotiations?.[x.id]?.status==='counter'&&
@@ -102,7 +117,7 @@
       '<div id="desk-signal-'+esc(car.id)+'" class="buy-decision buy-decision-'+signal.kind+'">'+
         '<strong>'+signal.label+'</strong><p>'+esc(signal.text)+'</p></div>'+
       '<p class="buy-budget-note">Gross contribution is an estimate before staff, premises, VAT/tax, retail finance and aftersales liabilities. Uninspected repair budgets include a risk allowance; actual faults can cost more. Existing repair reserves ('+
-        money(reserved)+') are protected separately from your offer.</p></div>';
+        money(reserved)+') are protected separately from your offer. Indicative headroom uses forecast preparation; purchase approval protects the full workshop commitment, which may be higher before inspection.</p></div>';
   }
   function tradingControls(car,state,E,offer,reportCard,leadFeedback){
     const [status,kind]=leadStatus(car,state);
@@ -110,11 +125,7 @@
     const closed=['done','closed'].includes(kind);
     const approach=E.sellerApproach(state,car);
     const f=figures(car,state,E,offer);
-    const required=f.quote.prep;
-    const cannot=state.vehicles.length>=state.capacity?
-      'FORECOURT FULL — sell stock before buying again.':
-      offer+required+E.workshop.reserved(state)>state.cash?
-        'INSUFFICIENT CASH — protected repair funding would be breached.':'';
+    const cannot=fundingWarning(state,f);
     const proposed=deal?.status==='counter'?
       '<div class="buy-counter"><small>OWNER COUNTEROFFER · ROUND '+deal.rounds+'</small>'+
         '<strong>SELLER COUNTEROFFER: '+money(deal.counter)+'</strong>'+
@@ -131,6 +142,7 @@
         ' inputmode="numeric" min="100" max="'+car.ask+'" step="25"></label>'+
         '<button type="button" class="trade-button" data-action="buy-seller" data-id="'+esc(car.id)+'">'+
           (deal?.status==='counter'?'REVISE OFFER':'MAKE AN OFFER')+'</button></div>'+
+      '<p class="buy-opening-hint">SUGGESTED OPENING OFFER '+money(openingOffer(car))+' · Editable — use the appraisal to set your own price.</p>'+
       (deal?.status==='counter'?
         '<div class="buy-counter-actions"><button type="button" class="trade-button trade-button-secondary" data-action="accept-seller-counter" data-id="'+esc(car.id)+'">ACCEPT '+money(deal.counter)+'</button>'+
         '<button type="button" class="trade-button trade-button-outline" data-action="walk-seller" data-id="'+esc(car.id)+'">WALK AWAY</button></div>':'');
@@ -140,7 +152,8 @@
       '<div class="buy-trading-heading"><strong>NEGOTIATE THE PURCHASE</strong>'+
         '<small>NO BUYER FEE · CASH PURCHASE</small></div>'+
       proposed+notices+leadFeedback(car.id)+
-      (cannot&&!closed?'<p class="trade-purchase-warning">'+esc(cannot)+'</p>':'')+
+      '<p id="desk-funding-warning-'+esc(car.id)+'" class="trade-purchase-warning"'+
+        (cannot&&!closed?'':' hidden')+'>'+esc(closed?'':cannot)+'</p>'+
       controls+
       '<div class="buy-deal-terms"><strong>WHEN A DEAL IS AGREED</strong><p>Purchase cash is debited once, your vehicle joins stock and the workshop must assess it. An owner may counter or withdraw after an unreasonable offer. A paid inspection is non-refundable.</p></div>'+
     '</div>';
@@ -159,7 +172,7 @@
       opts.drafts[active]:null;
     const negotiation=state.negotiations?.[active];
     const offer=draft!==null?draft:
-      negotiation?.status==='counter'?negotiation.counter:car.ask;
+      negotiation?.status==='counter'?negotiation.counter:openingOffer(car);
     const report=opts.reportCard(car,'seller',offer);
     const heading='<div class="buy-detail-top"><span>VEHICLE REVIEW · '+esc(car.id)+'</span>'+
       '<span>GRADE '+car.profile.grade+'/5 · '+condition(car)+'</span></div>';
@@ -177,5 +190,5 @@
       '<div class="buy-main-grid">'+leadList(state,E,sellers,active)+detail+'</div>'+
       '<p class="buy-disclosure">All seller identities, inspection reports and valuations are fictional. Representative vehicle photography is not evidence of the exact vehicle. No live DVSA, DVLA or HPI verification is performed.</p>'};
   }
-  window.MotorTradeBuyingDeskView=Object.freeze({render,figures,position});
+  window.MotorTradeBuyingDeskView=Object.freeze({render,figures,position,openingOffer,fundingWarning});
 })();

@@ -296,10 +296,14 @@
   }
   function reportCard(car,kind,price) {
     const key=kind+':'+car.id;
+    const h=career.auctionHall;
+    const inspectionClosed=kind==='auction' &&
+      (h.results.some(r=>r.lotId===car.id) ||
+       (h.phase==='payment' && E.auctionLot(career)?.id===car.id));
     return window.MotorTradeVehicleView.render(car,kind,{
       open:expandedReportId===key,
       inspected:kind==='stock'?!!car.profile?.inspected:!!career.reports?.[car.id],
-      price
+      price,inspectionClosed
     });
   }
   function repairReserve(car) {
@@ -691,12 +695,19 @@
     const set=(id,text)=>{const el=byId(id+'-'+car.id);if(el)el.textContent=text;return el;};
     if(!valid||price<100||price>car.ask){
       set('desk-projection','ENTER VALID OFFER');
+      const warning=byId('desk-funding-warning-'+car.id);
+      if(warning){warning.hidden=true;warning.textContent='';}
       const signal=byId('desk-signal-'+car.id);
       if(signal){signal.className='buy-decision buy-decision-risk';
         signal.textContent='Offer must be between £100 and '+cashText(car.ask)+'.';}
       return;
     }
     const model=BV.figures(car,career,E,price);
+    const warning=byId('desk-funding-warning-'+car.id);
+    if(warning){
+      const message=BV.fundingWarning(career,model);
+      warning.textContent=message;warning.hidden=!message;
+    }
     set('desk-offer',cashText(price));
     set('desk-prep',cashText(model.quote.prep));
     set('desk-total',cashText(model.quote.total));

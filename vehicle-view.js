@@ -4,7 +4,7 @@
   const money=n=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n);
   const miles=n=>new Intl.NumberFormat('en-GB').format(n)+' miles';
   const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function render(car,kind,{open=false,inspected=false,price=null}={}) {
+  function render(car,kind,{open=false,inspected=false,price=null,inspectionClosed=false}={}) {
     if(!car?.profile)return '';
     const p=car.profile,E=window.MotorTradeEngine;
     const evidence=window.MotorTradeAccuracy?.lookup(car)||
@@ -82,6 +82,7 @@
          '</p>':'')+
       '<div class="intel-foot">'+(kind==='stock'?'':inspected?
         '<span class="intel-inspected">INSPECTION PAID · '+money(p.inspectionFee)+'</span>':
+        inspectionClosed?'<span class="intel-closed">LOT CLOSED · INSPECTION UNAVAILABLE</span>':
         '<button type="button" class="trade-button trade-button-secondary" data-action="inspect-lead" data-id="'+esc(car.id)+
           '" data-kind="'+kind+'">BUY INSPECTION · '+money(p.inspectionFee)+'</button>')+'</div></div>':'';
     return '<section class="intel-panel"><div class="intel-top">'+

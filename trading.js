@@ -623,6 +623,10 @@
     const leads = kind==='auction'?catalogue.auctions:catalogue.sellers;
     const car=leads.find(v=>v.id===id);
     if (!car) return fail('expired','That vehicle is no longer offered for sale.');
+    // Do not sell inspections once the lot has passed, sold or hammered.
+    if(kind==='auction' && (state.auctionHall.results.some(r=>r.lotId===id) ||
+       (state.auctionHall.phase==='payment' && auctionLot(state)?.id===id)))
+      return fail('closed','This auction lot has finished bidding. Inspections are no longer available.');
     if (state.vehicles.some(v=>v.origin===id)) return fail('owned','This car is already in your stock.');
     if (state.negotiations?.[id]?.status==='walked' ||
         state.auctionBids?.[id]?.status==='lost') return fail('closed','This opportunity is closed.');
