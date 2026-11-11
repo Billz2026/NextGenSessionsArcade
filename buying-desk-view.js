@@ -127,8 +127,8 @@
       (kind==='done'?'<button type="button" class="trade-button trade-button-secondary" data-page="stock">VIEW VEHICLE STOCK</button>':''):
       '<div class="buy-offer-actions">'+
         '<label for="seller-offer-'+esc(car.id)+'">YOUR OFFER (£)'+
-        '<input class="trade-input" id="seller-offer-'+esc(car.id)+'" type="number"'+
-        ' inputmode="numeric" min="100" max="'+car.ask+'" step="25" value="'+offer+'"></label>'+
+        '<input class="trade-input" id="seller-offer-'+esc(car.id)+'" value="'+offer+'" type="number"'+
+        ' inputmode="numeric" min="100" max="'+car.ask+'" step="25"></label>'+
         '<button type="button" class="trade-button" data-action="buy-seller" data-id="'+esc(car.id)+'">'+
           (deal?.status==='counter'?'REVISE OFFER':'MAKE AN OFFER')+'</button></div>'+
       (deal?.status==='counter'?
