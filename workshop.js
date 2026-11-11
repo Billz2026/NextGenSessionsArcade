@@ -60,7 +60,9 @@
   function quote(state,vehicle,method){
     if(!methods.includes(method))return null;
     const tech=method==='internal'?P.availableTechnicians(state)[0]:null;
-    if(method==='internal'&&!tech)return null;
+    const busyBays=state.vehicles.filter(v=>v.workshop?.method==='internal'&&
+      ['in-progress','quality-check'].includes(v.workshop.stage)).length;
+    if(method==='internal'&&(!tech||busyBays>=(window.MotorTradePremises?.bays(state)??4)))return null;
     const base=vehicle.prepBudget;
     const saving=method==='internal'?P.labourSaving(state,vehicle,tech):0;
     const supplement=method==='external'?Math.round((base*.12+75)/5)*5:0;
