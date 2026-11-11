@@ -34,7 +34,7 @@
       const external=W.quote(state,vehicle,'external');
       const createOption=(method,quote)=>{
         if(!quote)return '<div class="workshop-option workshop-disabled"><h4>IN-HOUSE TECHNICIAN</h4>'+
-          '<p>No available technician. Hire one, finish their training or choose an external garage.</p></div>';
+          '<p>All technicians are busy, training or unavailable. Hire another, finish an assigned job or use an external garage.</p></div>';
         return '<div class="workshop-option"><h4>'+(method==='internal'?'IN-HOUSE TECHNICIAN':'EXTERNAL GARAGE')+
           '</h4><strong>'+cash(quote.cost)+'</strong>'+
           '<p>Estimated '+quote.duration+' game days · '+quote.partsDelay+
@@ -48,7 +48,9 @@
     } else if(job.stage==='in-progress'){
       actions='<div class="workshop-progress"><div><strong>'+
         (job.paused?'PAUSED · TECHNICIAN UNAVAILABLE':'REPAIRS BOOKED')+'</strong>'+
-        '<p>'+esc(job.method==='internal'?'In-house technician':'Independent external garage')+
+        '<p>'+esc(job.method==='internal'?
+          'In-house: '+(state.staff.find(s=>s.id===job.technicianId)?.name||'technician unavailable'):
+          'Independent external garage')+
         ' · '+job.remainingDays+' game day(s) remaining'+
         (job.partsDelay?' · '+job.partsDelay+' day(s) built in for parts':'')+'</p></div>'+
         '<div><small>REPAIR CHARGED</small><strong>'+cash(job.repairCost)+'</strong></div></div>'+
@@ -97,16 +99,19 @@
     const completed=state.vehicles.filter(x=>x.workshop?.stage==='ready');
     const internal=active.filter(x=>x.workshop.method==='internal').length;
     const outside=active.filter(x=>x.workshop.method==='external').length;
-    const staffed=!!window.MotorTradePeople.active(state,'technician');
+    const P=window.MotorTradePeople;
+    const staffed=P.activeTeam(state,'technician').length;
+    const free=P.availableTechnicians(state).length;
     const info='<div class="workshop-summary">'+
       [['AWAITING RETAIL PREP',pending.length],['ACTIVE REPAIR JOBS',active.length],
         ['QUALITY CHECK DUE',qc.length],['RETAIL READY / LISTED',completed.length]]
       .map(([label,value])=>'<div><small>'+label+'</small><strong>'+value+'</strong></div>').join('')+
-      '</div><div class="workshop-capacity"><span>IN-HOUSE REPAIR BAY: '+
-      internal+'/1 · '+(staffed?'AVAILABLE TECHNICIAN':'NO AVAILABLE TECHNICIAN')+
+      '</div><div class="workshop-capacity"><span>IN-HOUSE TECHNICIANS: '+
+      internal+' REPAIRS ACTIVE / '+P.technicianLimit(state)+' UNLOCKED BAYS · '+
+      free+' FREE · '+staffed+' ACTIVE'+
       '</span><span>EXTERNAL GARAGE SLOTS: '+outside+'/2</span></div>'+
       '<p class="trade-alert">Repair times run in actual game days. Work paid for and completed later does not create instant retail stock. '+
-      'An employed technician can work on one in-house vehicle at a time. External garages cost more but do not use your employee. '+
+      'Each active technician can repair one in-house vehicle concurrently; quality checks still reserve their assigned bay. External garages cost more but do not use your employees. '+
       'This is fictional workshop management, not a legal roadworthiness certificate or real MOT.</p>';
     if(!state.vehicles.length)return info+'<div class="trade-empty"><h2>NO VEHICLES TO PREPARE.</h2>'+
       '<p>Buy a car from the Buying Desk, then authorise its workshop assessment.</p></div>';
