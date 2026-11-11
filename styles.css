@@ -2780,3 +2780,114 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
 .hq-shortcuts button:hover{border-color:#e4b982;background:#34515c}
 .hq-shortcuts button:focus-visible{outline:2px solid #f3cb8c;outline-offset:2px}
 @media(max-width:560px){.hq-shortcuts>span{flex:0 0 100%}}
+
+
+/* v0.9.35 — Final My Dealership single-screen desktop polish.
+ * Compact repeated chrome without reducing financial values below readable size.
+ * The investment decisions precede their optional detailed cash tests. */
+.hq-upgrade-details{margin-top:1px;border-top:1px solid #39535d;padding-top:6px}
+.hq-upgrade-details summary{cursor:pointer;color:#e8c994;font:850 9px/1.4 var(--mono);padding:2px 0}
+.hq-upgrade-details p{font:550 10px/1.4 var(--body);color:#b5c6ca;margin:6px 0 1px}
+.hq-upgrade-details .hq-upgrade-costs{margin-top:6px}
+.hq-upgrade-details summary:focus-visible{outline:2px solid #f4c886;outline-offset:2px}
+.hq-upgrade-headline-costs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.hq-upgrade-headline-costs>.hq-cost-line{min-width:0;align-items:flex-start;flex-direction:column;gap:3px;border:1px solid #3e5761;border-radius:4px;background:#213c46;padding:6px 8px}
+.hq-upgrade-headline-costs>.hq-cost-line span{font-size:10px;line-height:1.3}
+.hq-upgrade-headline-costs>.hq-cost-line strong{font:900 16px/1.1 var(--title);color:#f1d4a3}
+@media(min-width:1021px){
+  .career-layout:has([data-panel="business"]:not([hidden])) .career-topbar{
+    min-height:60px;padding-top:7px;padding-bottom:7px
+  }
+  .career-layout:has([data-panel="business"]:not([hidden])) .topbar-location strong{font-size:21px}
+  .career-content:has([data-panel="business"]:not([hidden])){
+    padding-top:6px;padding-bottom:9px
+  }
+  [data-panel="business"]>.page-heading{margin-bottom:5px;gap:9px}
+  [data-panel="business"]>.page-heading h1{
+    font-size:clamp(29px,2.5vw,35px);line-height:1;margin:2px 0
+  }
+  [data-panel="business"]>.page-heading .section-overline{font-size:9px}
+  [data-panel="business"]>.page-heading p:last-child{font-size:10px;line-height:1.25}
+  [data-panel="business"]>.page-heading .hq-save{padding:7px 10px;font-size:10px}
+  .hq-identity{
+    padding:7px 9px;gap:9px;margin-bottom:6px;
+    grid-template-columns:minmax(205px,.65fr) minmax(0,2.3fr)
+  }
+  .hq-identity-title small{font-size:9px}
+  .hq-identity-title h2{font-size:clamp(22px,2.15vw,27px);margin:2px 0}
+  .hq-identity-title p{font-size:9px}
+  .hq-identity-facts{gap:4px}
+  .hq-identity-facts>div{padding:5px 6px;gap:3px}
+  .hq-identity-facts small{font-size:9px}
+  .hq-identity-facts strong{font-size:14px}
+  .hq-brief{margin-bottom:5px;gap:8px}
+  .hq-brief>div{gap:8px}
+  .hq-brief>div>strong{font-size:16px}
+  .hq-brief p{font-size:10px}
+  .hq-brief-status{font-size:9px;padding:4px 7px}
+  .hq-metrics{gap:6px;margin-bottom:6px}
+  .hq-metric{min-height:61px;padding:6px 9px;gap:3px}
+  .hq-metric small{font-size:9px}
+  .hq-metric strong{font-size:clamp(20px,2vw,25px)}
+  .hq-metric span{font-size:10px;line-height:1.2}
+  .hq-cost-panel{padding:7px 10px;margin-bottom:6px}
+  .hq-section-heading{margin-bottom:5px;gap:8px}
+  .hq-section-heading small{font-size:8px}
+  .hq-section-heading h3{font-size:17px;margin:2px 0 0}
+  .hq-text-link{font-size:9px;padding:6px 8px}
+  .hq-commit-grid{gap:1px 12px}
+  .hq-cost-panel .hq-cost-line{padding:3px 0}
+  .hq-cost-panel .hq-cost-line span{font-size:10px}
+  .hq-cost-panel .hq-cost-line strong{font-size:12px}
+  .hq-context{font-size:9px;line-height:1.3;margin-top:5px}
+  .hq-upgrade-section-head{margin-bottom:4px}
+  .hq-upgrades{gap:6px}
+  .hq-upgrade{padding:8px 10px;gap:5px}
+  .hq-upgrade-head{gap:7px}
+  .hq-upgrade-head small{font-size:9px}
+  .hq-upgrade-head h3{font-size:17px;margin-top:2px}
+  .hq-status{padding:4px 6px;font-size:9px}
+  .hq-upgrade-capacity{gap:7px}
+  .hq-upgrade-capacity strong{font-size:19px}
+  .hq-upgrade-capacity span{font-size:10px;line-height:1.2}
+  .hq-upgrade-headline-costs{gap:6px}
+  .hq-upgrade-headline-costs>.hq-cost-line{padding:5px 7px}
+  .hq-upgrade-headline-costs>.hq-cost-line strong{font-size:15px}
+  .hq-upgrade-warning,.hq-upgrade-success{font-size:10px;line-height:1.3;padding:4px 6px}
+  .hq-invest-button{min-height:31px;padding:6px 8px!important;font-size:10px!important}
+  .hq-upgrade-details{padding-top:4px}
+  .hq-upgrade-details summary{font-size:9px}
+  .hq-shortcuts{margin-top:6px;gap:4px}
+  .hq-shortcuts button{padding:5px 7px}
+  .hq-guidance{margin-top:5px}
+  .hq-guidance summary{padding:7px 9px}
+}
+@media(min-width:1280px){
+  /* Six business facts in a single row instead of two rows of three. */
+  [data-panel="business"] .hq-identity-facts{
+    grid-template-columns:repeat(6,minmax(0,1fr))
+  }
+}
+@media(min-width:1021px) and (max-width:1279px){
+  [data-panel="business"] .hq-identity{grid-template-columns:minmax(175px,.7fr) minmax(0,2fr)}
+}
+@media(min-width:1021px) and (max-height:760px){
+  .career-layout:has([data-panel="business"]:not([hidden])) .career-nav{gap:2px}
+  .career-layout:has([data-panel="business"]:not([hidden])) .career-nav button{
+    min-height:39px;padding:8px 10px;gap:10px
+  }
+  .career-layout:has([data-panel="business"]:not([hidden])) .sidebar-career{
+    padding:9px 11px;gap:5px
+  }
+  .career-layout:has([data-panel="business"]:not([hidden])) .sidebar-career strong{font-size:19px}
+  .career-layout:has([data-panel="business"]:not([hidden])) .sidebar-exit{
+    margin-top:7px;padding:9px
+  }
+  .career-layout:has([data-panel="business"]:not([hidden])) .career-footer{
+    padding-top:10px;padding-bottom:10px
+  }
+}
+@media(max-width:560px){
+  .hq-upgrade-headline-costs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hq-upgrade-headline-costs>.hq-cost-line strong{font-size:15px}
+}
