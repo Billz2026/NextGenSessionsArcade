@@ -4,6 +4,14 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.10 — Weekly Monday auctions, bid-to-withdrawal, and final payment (11 November 2026)
+
+- Auction Hall now runs **once per game week on Mondays** (career days 1, 8, 15, 22, 29, …). This is the game's weekday schedule: day 1 is Monday 9 November 2026, and Saturday/Sunday never host auctions. The next Monday is shown on closed days. Other business and private sellers continue trading, including when the auction house is shut. This first-pass weekly schedule will be refined later.
+- On the scheduled day, the full numbered-lot auction is available until the player advances the game day. Rivals use a **fixed per-lot limit** and automatically respond in £100 steps; the player may raise by £100, £250 or £500 or stop bidding. The last bidder wins **only if the vendor reserve is met**; otherwise the vehicle is unsold. There is no automatic win or arbitrary limit on the number of back-and-forth bids while the rival continues.
+- When a rival declines to match the player's final bid and the reserve is met, the **hammer falls**. The game shows a separate, itemised invoice: **hammer price + buyer fee = amount payable**. Until the user presses **FINALISE PAYMENT**, no cash is deducted and the vehicle does not enter owned stock. Once paid, existing vehicle acquisition / workshop preparation workflows apply as normal.
+- The buyer fee is an **additional cost**, not money subtracted from the winning hammer; it is deducted from business cash along with the hammer, and included in the vehicle's acquisition basis. Optional inspections remain separate. Unpaid winning invoices block other economic actions and calendar advancement; bids cannot be cancelled after the hammer.
+- The old daily lot schedule is retired. Version 12 saves retain cash, vehicles, staff, historical auction results and payments from v11 careers. Previously completed sales and auction ledger entries are not repeated. Test coverage includes non-auction weekdays/weekends, rivalry and settlement states, old saves, and economic protections.
+
 ### v0.9.9 — Dedicated Auction Hall: sequential numbered lots and real bidding decisions (11 November 2026)
 
 - **Separate trade departments:** The new Auction Hall in main navigation handles numbered live auction lots, bidding and results; the Buying Desk now focuses on private/walk-in sellers. All stock, cash, workshop and monthly accounting remain part of the same career.
