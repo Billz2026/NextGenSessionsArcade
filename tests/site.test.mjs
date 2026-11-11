@@ -77,7 +77,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=42/);
+  assert.match(html, /styles\.css\?v=43/);
   assert.match(html, /simulator\.js\?v=31/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -97,7 +97,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=4/);
-  assert.match(html, /monthly-view\.js\?v=7/);
+  assert.match(html, /monthly-view\.js\?v=8/);
   assert.match(html, /people-view\.js\?v=4/);
   assert.match(html, /vehicle-view\.js\?v=4/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
@@ -114,7 +114,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.28/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.29/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -598,7 +598,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=42/);
+  assert.match(html, /styles\.css\?v=43/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4440,7 +4440,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.28/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.29/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4509,7 +4509,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.28/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.29/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4967,7 +4967,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=42/);
+  assert.match(html,/styles\.css\?v=43/);
 });
 
 
@@ -5026,4 +5026,46 @@ test('v0.9.28 management priorities use recorded stock age and preparation backl
   assert.match(view,/WORKSHOP BACKLOG/);
   assert.match(view,/CASH INVESTED IN STOCK/);
   assert.match(view,/DAYS 1–30/);
+});
+
+
+test('v0.9.29 compact Management Reports puts all details behind one collapsed archive',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const s=E.create('One Page Reports',[]);
+  const view=app.monthlyView.renderReport(s,E.monthly);
+  assert.match(view,/<details class="mr-records" aria-label="Detailed Management Records">/);
+  assert.match(view,/<summary class="mr-records-summary">/);
+  assert.match(view,/8 REPORTS · EXPAND/);
+  assert.equal((view.match(/<details class="mr-detail">/g)||[]).length,8);
+  assert.ok(view.indexOf('mr-mini')<view.indexOf('mr-records'));
+  assert.match(view,/CASH FLOW & FINANCES/);
+  assert.match(view,/SALES TEAM SCORECARDS/);
+  assert.match(view,/RETAIL CUSTOMER JOURNEY/);
+  assert.match(view,/DEAL DAY RESULTS/);
+  assert.match(view,/£0 \/ £10,500/);
+  assert.match(view,/£0 \/ £1,200/);
+  assert.match(css,/\.mr-records-summary\{display:flex/);
+  assert.match(css,/\.mr-records-body\{padding/);
+  assert.match(css,/\.career-main:has\(\[data-panel="reports"\]:not\(\[hidden\]\)\) \.career-topbar/);
+  assert.match(css,/\[data-panel="reports"\]>\.page-heading p:last-child\{display:none\}/);
+});
+
+test('v0.9.29 archived reports stay accessible and labels reflect historical shortfall',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const s=E.create('History Matters',[]);
+  s.day=30;
+  const r=E.monthly.close(s);
+  assert.ok(r);
+  s.day=31;E.monthly.next(s);
+  const original=JSON.stringify(s.monthlyReports[0]);
+  const archive=app.monthlyView.renderReport(s,E.monthly,'1');
+  assert.match(archive,/ARCHIVED RESULT/);
+  assert.match(archive,/SALES TARGET MISSED/);
+  assert.match(archive,/2 handovers short of the final target/);
+  assert.match(archive,/CLOSING CASH/);
+  assert.match(archive,/8 REPORTS · EXPAND/);
+  assert.equal(JSON.stringify(s.monthlyReports[0]),original);
+  const current=app.monthlyView.renderReport(s,E.monthly,'current');
+  assert.match(current,/SALES REQUIRED/);
+  assert.match(current,/CURRENT CASH/);
 });
