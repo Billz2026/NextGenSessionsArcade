@@ -3837,3 +3837,28 @@ test('v0.9.13 paid invoice copies preserve read status and filter after page rel
   assert.equal(resumed.nodes.get('inbox-list').children.length,1);
   assert.match(resumed.nodes.get('inbox-detail').innerHTML,/New employee onboarded/);
 });
+
+test('v0.9.13 weekly Accounts brief gives established careers current truthful financial mail',()=>{
+  const app=browser(new Map()),E=app.productionEngine,I=app.inbox;
+  const s=E.create('First Lot Motors',[]);
+  s.day=60;
+  s.monthPlan.month=2;
+  s.monthPlan.startDay=31;
+  s.monthPlan.endDay=60;
+  E.rollAuctionHall(s);
+  const cash=s.cash;
+  const forecast=E.monthly.statement(s);
+  assert.ok(I.sync(s,E));
+  const briefs=s.messages.filter(m=>m.reference==='weekly-brief:8');
+  assert.equal(briefs.length,1);
+  assert.equal(briefs[0].from,'ACCOUNTS OFFICE');
+  assert.equal(briefs[0].category,'reports');
+  assert.match(briefs[0].body,/OWNER FINANCIAL BRIEF/);
+  assert.ok(briefs[0].body.includes('Cash £12,500'));
+  assert.ok(briefs[0].body.includes('Month sales '+forecast.soldUnits+'/'+forecast.targetUnits));
+  assert.ok(briefs[0].body.includes('Operating contribution after recorded staff and premises expenses'));
+  assert.equal(s.cash,cash);
+  assert.equal(I.sync(s,E),false,'Weekly report is sent once, not on every refresh');
+  assert.equal(s.messages.filter(m=>m.reference==='weekly-brief:8').length,1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
