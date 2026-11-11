@@ -5486,7 +5486,8 @@ test('v0.9.34 facility options are gated on reputation and total protected cash'
   assert.match(screen,/data-kind="forecourt" disabled/);
   state.cash=12500;
   screen=app.premisesView.render(state,site);
-  assert.match(screen,/READY TO EXPAND/);
+  assert.match(screen,/ELIGIBLE/);
+  assert.match(screen,/Both reputation and cash requirements are met/);
   assert.match(screen,/APPROVE £1,800 INVESTMENT/);
   assert.match(screen,/data-kind="forecourt"/);
   assert.ok(!/data-kind="forecourt" disabled/.test(screen));
