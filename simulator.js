@@ -503,6 +503,12 @@
       render();
       return;
     }
+    if(career.auctionHall.phase==='bidding'){
+      currentPage='auctionHall';
+      eventNotice='The rival dealer is still bidding. Match the latest bid or choose PASS / LEAVE LOT to finish before advancing the game day.';
+      render();
+      return;
+    }
     if(D.meetingBlocksContinue(career)){
       currentPage='events';
       eventNotice='Your monthly management meeting is due. Review the previous month and agree one priority before advancing to the next day.';
