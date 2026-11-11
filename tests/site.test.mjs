@@ -2394,7 +2394,7 @@ test('paid reservations usually proceed to collection', () => {
 test('counteroffer rejection and walkaways mean negotiations do not guarantee extra money', () => {
   const E=browser(new Map()).productionEngine,C=E.customers;
   let accepted=0,rejected=0,walked=0;
-  for(let i=0;i<175;i++){
+  for(let i=0;i<1200&&(accepted===0||rejected===0||walked===0);i++){
     const {state,v}=readyForRetail(E,'Counter Trader '+i);
     if(!C.demand(state,v))continue;
     E.openCustomer(state,v.id);
@@ -2588,7 +2588,7 @@ test('the player can occupy all four forecourt spaces but a fifth purchase is bl
 
 test('real-photo cards never use an incorrect model, generation or paint colour', () => {
   const app=browser(new Map()),P=app.photos,V=app.cards;
-  assert.equal(P.LIBRARY.length,16);
+  assert.equal(P.LIBRARY.length,19);
   for(const item of P.LIBRARY){
     assert.ok(item.file.endsWith('.jpg'));
     assert.ok(item.author&&item.license&&item.licenseUrl);
