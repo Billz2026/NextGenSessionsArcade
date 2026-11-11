@@ -20,6 +20,10 @@
     if(/REPORT|MANAGEMENT/.test(sender))return 'reports';
     return 'operations';
   };
+  const moraleId=m=>{
+    const match=/^morale:(\\d+):\\d+$/.exec(m.reference||'');
+    return match?Number(match[1]):null;
+  };
   const quoteId=m=>{
     const match=/^repair:(\d+)$/.exec(m.reference||'');
     return match?Number(match[1]):null;
@@ -30,7 +34,14 @@
       state.vehicles.find(v=>v.id===id&&v.status==='acquired'&&
         v.workshop?.stage==='quoted')||null;
   }
-  function needsAction(m,state){return !!actionFor(m,state);}
+  function needsAction(m,state){
+    if(actionFor(m,state))return true;
+    const id=moraleId(m);
+    return id!==null&&!m.decision&&state.payrollArrears===0&&
+      !!state.staff.find(e=>e.id===id&&e.morale>0&&e.morale<=45)&&
+      !!state.staff.find(e=>e.role==='supervisor'&&state.day>=e.startDay&&
+        (e.trainingUntil===null||state.day>=e.trainingUntil));
+  }
   function nextId(state){return state.messages.reduce((highest,m)=>Math.max(highest,m.id),0)+1;}
   function emit(state,entry){
     if(entry.reference&&state.messages.some(m=>m.reference===entry.reference))return false;
@@ -168,13 +179,37 @@
         body:'Our premises charges have accrued but insufficient unreserved cash was available to pay the full balance.\n\nOutstanding: '+money(state.premises.arrears)+
           '.\nAmounts continue to be paid through the existing daily accounts process when cash is available. This email is NOT a payment button or duplicate invoice.',
         linkPage:'finance',reference:'premises-arrears:'+week})||changed;
+    const supervisor=engine.people.supervisor(state);
     for(const employee of state.staff){
-      if(employee.morale>0&&employee.morale<=45)
+      if(employee.role==='supervisor'||employee.morale<=0||employee.morale>45)continue;
+      const plan=engine.people.moraleProposal(state,employee.id);
+      if(plan){
+        const body=[
+          'I have met with '+employee.name+' following a staff welfare review.',
+          '',
+          'CURRENT MORALE: '+employee.morale+'/100',
+          'PROPOSED ACTION: '+supervisor.name+' will adjust the rota, provide a structured one-to-one support meeting and authorise a modest staff recognition budget.',
+          'ONE-OFF COST: '+money(plan.cost),
+          'ESTIMATED MORALE IMPROVEMENT: +'+plan.gain+' points (to '+Math.min(100,employee.morale+plan.gain)+'/100).',
+          '',
+          'Small daily check-ins are already handled by the supervisor. This one-off programme requires your permission because it uses company funds.',
+          'Please approve or decline. Declining does not charge the business or immediately remove the employee, but the underlying retention risk remains.'
+        ].join('\\n');
+        changed=emit(state,{from:'STAFF SUPERVISOR · '+supervisor.name,category:'staff',
+          subject:'APPROVAL · '+employee.name+' welfare plan',
+          preview:'Morale '+employee.morale+'/100 · '+money(plan.cost)+' proposed · your decision required.',
+          body,linkPage:'staff',reference:'morale:'+employee.id+':'+week})||changed;
+      }else if(state.payrollArrears===0&&!supervisor){
         changed=emit(state,{from:'PEOPLE & PAYROLL',category:'staff',
-          subject:'Staff concern · '+employee.name,
-          preview:'Morale '+employee.morale+'/100. Employee retention and work quality are at risk.',
-          body:employee.name+' is reporting low morale ('+employee.morale+'/100).\n\nPlease review workload, training opportunities and whether wages are being paid. Training can improve morale, but it costs cash and temporarily removes the employee from the rota. This is a personnel update rather than an automatic resignation or salary request.',
-          linkPage:'staff',reference:'morale:'+employee.id+':'+week})||changed;
+          subject:'SUPERVISOR VACANCY · '+employee.name+' at risk',
+          preview:'Morale '+employee.morale+'/100. Hire a supervisor to manage employee welfare.',
+          body:'STAFFING ESCALATION\\n\\n'+employee.name+
+            ' has morale '+employee.morale+'/100. There is currently no active staff supervisor to investigate the cause, handle routine concerns or submit a costed improvement plan.\\n\\nYour action is to choose and hire a Staff Supervisor from recruitment. The supervisor starts the next game day and will handle routine support, escalating only decisions involving company funds.',
+          linkPage:'staff',reference:'supervisor-gap:'+employee.id+':'+week})||changed;
+      }else if(state.payrollArrears>0){
+        // Root cause must be resolved before recognition spending can help.
+        // Payroll-arrears escalation above already informs the owner.
+      }
     }
     for(const c of Object.values(state.customerCases||{})){
       if(c?.status==='booked'&&Number.isSafeInteger(c.appointmentDay)&&c.appointmentDay>=state.day)
@@ -199,6 +234,27 @@
   }
   function quoteControls(message,state,engine){
     const car=actionFor(message,state);
+    const moraleEmployeeId=moraleId(message);
+    if(moraleEmployeeId!==null){
+      const employee=state.staff.find(e=>e.id===moraleEmployeeId);
+      if(message.decision)return '<div class="inbox-resolved">SUPERVISOR PLAN '+
+        esc(message.decision.toUpperCase())+'. This is a recorded decision; '+
+        'no duplicate expense is possible. Check the current employee status in Staff & Recruitment.</div>';
+      const plan=engine.people.moraleProposal(state,moraleEmployeeId);
+      if(!plan)return '<div class="inbox-resolved">This staff welfare recommendation is no longer actionable. '+
+        'Review the latest supervisor report, payroll situation and employee roster.</div>';
+      return '<div class="inbox-approval inbox-staff-approval">'+
+        '<div class="inbox-approval-intro"><strong>OWNER AUTHORISATION REQUIRED</strong>'+ 
+        '<small>'+esc(plan.manager.name)+' proposes a '+money(plan.cost)+
+        ' one-off rota-support and staff welfare intervention for '+esc(employee.name)+
+        '. Morale '+employee.morale+'/100 → '+Math.min(100,employee.morale+plan.gain)+
+        '/100. Routine check-ins remain delegated.</small></div>'+ 
+        '<div class="inbox-approval-choices">'+
+        '<button class="trade-button" data-action="decide-staff-welfare" data-decision="approve" data-id="'+
+          message.id+'">APPROVE · '+money(plan.cost)+'</button>'+ 
+        '<button class="trade-button trade-button-outline" data-action="decide-staff-welfare" data-decision="decline" data-id="'+
+          message.id+'">DECLINE · £0</button></div></div>';
+    }
     if(quoteId(message)===null)return '';
     if(!car)return '<div class="inbox-resolved">This repair request is no longer pending. '+
       'Review the vehicle’s actual status in Workshop.</div>';
@@ -214,7 +270,7 @@
       '</div></div>';
   }
   window.MotorTradeInbox=Object.freeze({
-    categories,labels,infer,quoteId,actionFor,needsAction,sync,filtered,counters,
-    quoteControls,esc
+    categories,labels,infer,quoteId,moraleId,actionFor,needsAction,sync,filtered,counters,
+    quoteControls,emit,esc
   });
 })();
