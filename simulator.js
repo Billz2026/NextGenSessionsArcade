@@ -14,7 +14,8 @@
   const AV = window.MotorTradeAuctionHallView;
   const SITE_VIEW = window.MotorTradePremisesView;
   const DV = window.MotorTradeDashboardView;
-  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV)
+  const IN = window.MotorTradeInbox;
+  if (!E || !PV || !MV || !EV || !WV || !CV || !SITE_VIEW || !AV || !DV || !IN)
     throw new Error('Customer, workshop and report modules must load before simulator.js');
   const P = E.people;
   const M = E.monthly;
@@ -143,6 +144,7 @@
   let screen = 'menu'; // The cinematic main menu is the entry point for all careers.
   let currentPage = 'dashboard';
   let selectedMessageId = null;
+  let inboxFilter = 'all';
   let eventNotice = '';
   let lastTradeResult = null;
   let expandedReportId = null;
@@ -164,7 +166,10 @@
     button.type = 'button';
     button.dataset.action = 'read-message';
     button.dataset.id = String(message.id);
-    button.className = (compact ? 'message-preview' : 'inbox-row') + (message.read ? '' : ' is-unread');
+    const pending=IN.needsAction(message,career);
+    const category=IN.infer(message);
+    button.className = (compact ? 'message-preview' : 'inbox-row')+
+      (message.read ? '' : ' is-unread')+(pending?' inbox-row-action':'');
     if (!compact) button.setAttribute('aria-pressed', String(message.id === selectedMessageId));
     const stamp = message.day === 1 ? 'DAY 01' : 'DAY ' + String(message.day).padStart(2, '0');
     button.innerHTML =
@@ -172,41 +177,72 @@
       '<span class="message-copy">' +
         '<span class="message-from"><span>' + escapeText(message.from) + '</span><time>' + stamp + '</time></span>' +
         '<span class="message-title">' + escapeText(message.subject) + '</span>' +
+        (!compact?'<span class="inbox-message-tags"><b>'+escapeText(IN.labels[category]||category)+
+          '</b>'+(pending?'<b class="inbox-tag-action">APPROVAL REQUIRED</b>':'')+
+          (message.subject.startsWith('PAID COPY')?'<b class="inbox-tag-paid">ALREADY PAID</b>':'')+
+          '</span>':'') +
         '<span class="message-summary">' + escapeText(message.preview) + '</span>' +
       '</span>' +
       (message.read ? '' : '<span class="message-unread" aria-label="Unread"></span>');
     return button;
   }
   function renderInbox() {
-    if (!career) return;
-    const ordered = [...career.messages].sort((a, b) => b.day - a.day || b.id - a.id);
-    const preview = byId('dashboard-inbox');
-    const list = byId('inbox-list');
-    const spotlight=[...ordered.filter(m=>!m.read),...ordered.filter(m=>m.read)].slice(0,2);
-    preview.replaceChildren(...spotlight.map(m => renderMessageRow(m, true)));
-    list.replaceChildren(...ordered.map(m => renderMessageRow(m, false)));
-    const unread = unreadCount();
-    byId('widget-unread-label').textContent = unread + ' UNREAD';
-    byId('inbox-unread-count').textContent = unread + ' UNREAD';
-    const selected = career.messages.find(m => m.id === selectedMessageId);
-    const detail = byId('inbox-detail');
-    if (!selected) {
-      detail.textContent = 'Select a message to read it.';
+    if(!career)return;
+    const ordered=IN.filtered(career.messages,career,inboxFilter);
+    const recent=IN.filtered(career.messages,career,'all');
+    const preview=byId('dashboard-inbox');
+    const spotlight=[...recent.filter(m=>IN.needsAction(m,career)),
+      ...recent.filter(m=>!IN.needsAction(m,career)&&!m.read),
+      ...recent.filter(m=>!IN.needsAction(m,career)&&m.read)].slice(0,2);
+    preview.replaceChildren(...spotlight.map(m=>renderMessageRow(m,true)));
+    const list=byId('inbox-list');
+    list.replaceChildren(...ordered.map(m=>renderMessageRow(m,false)));
+    const unread=unreadCount();
+    const counts=IN.counters(career.messages,career);
+    const actions=counts.action;
+    byId('widget-unread-label').textContent=unread+' UNREAD'+
+      (actions?' · '+actions+' APPROVAL'+(actions===1?'':'S'):'');
+    byId('inbox-unread-count').textContent=unread+' UNREAD';
+    byId('inbox-action-count').textContent=String(actions);
+    byId('inbox-unread-summary').textContent=String(unread);
+    byId('inbox-paid-count').textContent=String(
+      career.messages.filter(m=>m.subject.startsWith('PAID COPY')).length);
+    byId('inbox-filter-count').textContent=String(ordered.length)+' SHOWN';
+    byId('inbox-filter-buttons').innerHTML=IN.categories.map(filter=>
+      '<button type="button" data-action="filter-inbox" data-filter="'+filter+
+      '" aria-pressed="'+String(inboxFilter===filter)+'">'+
+      IN.esc(IN.labels[filter])+
+      (filter==='action'&&counts.action?' · '+counts.action:'')+'</button>').join('');
+    const detail=byId('inbox-detail');
+    if(selectedMessageId===null||!ordered.some(m=>m.id===selectedMessageId))
+      selectedMessageId=ordered[0]?.id??null;
+    const selected=ordered.find(m=>m.id===selectedMessageId);
+    if(!selected){
+      detail.innerHTML='<div class="inbox-empty"><strong>No messages in this category.</strong>'+
+        '<p>Use All Mail to see your communications history. New decisions and receipts appear as genuine trading events occur.</p></div>';
       return;
     }
-    detail.innerHTML =
-      '<div class="detail-heading">' +
-        '<span class="section-overline">DAY ' + String(selected.day).padStart(2, '0') + ' / MESSAGE</span>' +
-        '<h2>' + escapeText(selected.subject) + '</h2>' +
-        '<span class="detail-sender">FROM: ' + escapeText(selected.from) + '</span>' +
-      '</div>' +
-      '<p class="detail-body">' + escapeText(selected.body) + '</p>';
-    if (selected.linkPage && Object.prototype.hasOwnProperty.call(PAGES, selected.linkPage)) {
-      const action = document.createElement('button');
-      action.type = 'button';
-      action.className = 'secondary-button detail-action';
-      action.dataset.page = selected.linkPage;
-      action.textContent = 'OPEN ' + PAGES[selected.linkPage] + ' ↗';
+    const actionable=IN.needsAction(selected,career);
+    const category=IN.infer(selected);
+    detail.innerHTML=
+      '<div class="detail-heading">'+
+        '<span class="section-overline">DAY '+String(selected.day).padStart(2,'0')+
+          ' · '+escapeText(IN.labels[category]||category)+
+          (actionable?' · APPROVAL REQUIRED':'')+'</span>'+
+        '<h2>'+escapeText(selected.subject)+'</h2>'+
+        '<span class="detail-sender">FROM: '+escapeText(selected.from)+
+          '</span>'+
+        (selected.subject.startsWith('PAID COPY')?
+          '<span class="inbox-paid-status">PAYMENT ALREADY POSTED · NO ACTION REQUIRED</span>':'')+
+      '</div>'+
+      '<p class="detail-body">'+escapeText(selected.body)+'</p>'+
+      IN.quoteControls(selected,career,E);
+    if(selected.linkPage&&Object.prototype.hasOwnProperty.call(PAGES,selected.linkPage)){
+      const action=document.createElement('button');
+      action.type='button';
+      action.className='secondary-button detail-action';
+      action.dataset.page=selected.linkPage;
+      action.textContent='OPEN '+PAGES[selected.linkPage]+' ↗';
       detail.appendChild(action);
     }
   }
@@ -447,6 +483,9 @@
         career.name + ' / Day ' + String(career.day).padStart(2, '0');
     }
     if (screen !== 'career' || !career) return;
+    // Derive mail from actual invoices, workshop quotes and staffing activity.
+    // Never repeat a ledger receipt when reloading the same saved career.
+    if(IN.sync(career,E))persistCareer();
     const date = gameDate(career.day);
     const short = dateShort.format(date).toUpperCase();
     bindText('company', career.name);
@@ -566,8 +605,10 @@
     career.negotiations = {};
     career.auctionBids = {};
     const eventFactory = scheduledMessages[career.day];
-    if (eventFactory && !career.messages.some(m => m.day === career.day)) {
-      career.messages.push(eventFactory());
+    const scheduled=eventFactory?eventFactory():null;
+    if (scheduled && !career.messages.some(m=>m.day===career.day&&m.subject===scheduled.subject)) {
+      scheduled.id=career.messages.reduce((high,m)=>Math.max(high,m.id),0)+1;
+      career.messages.push(scheduled);
       eventNotice = 'New inbox message received. Your game calendar has advanced by one day.';
     } else {
       eventNotice = E.auctionDay(career.day)?
@@ -623,6 +664,7 @@
     if (career && !window.confirm('Replace your existing career? This will overwrite your saved dealership and inbox history.')) return;
     career = E.create(name, welcomeMessages());
     selectedMessageId = null;
+    inboxFilter='all';
     lastTradeResult = null;
     selectedMonth = 'current';
     expandedReportId = null;
@@ -892,6 +934,28 @@
         const guide = byId('menu-guide');
         guide.hidden = !guide.hidden;
         button.setAttribute('aria-expanded', String(!guide.hidden));
+        break;
+      }
+      case 'filter-inbox':
+        if(career&&IN.categories.includes(button.dataset.filter)){
+          inboxFilter=button.dataset.filter;
+          selectedMessageId=null;
+          currentPage='inbox';
+          render();
+        }
+        break;
+      case 'approve-inbox-repair': {
+        if(!career)break;
+        const selected=career.messages.find(m=>m.id===selectedMessageId);
+        const car=selected&&IN.actionFor(selected,career);
+        const method=button.dataset.method;
+        if(!car||car.id!==Number(button.dataset.id)||!['internal','external'].includes(method)){
+          eventNotice='This repair request is no longer awaiting approval.';
+          render();
+          break;
+        }
+        if(!window.confirm('Authorise '+method+' repairs on '+car.title+'? The workshop will immediately debit the agreed booking cost and begin the job.'))break;
+        saveResult(E.startPrep(career,car.id,method));
         break;
       }
       case 'read-message': {

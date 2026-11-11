@@ -981,3 +981,74 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
 .dashboard-all-clear{display:flex;flex-direction:column;gap:7px;padding:22px 17px;color:#a6d2b6;background:#16312c;border-left:3px solid #83a991}
 .dashboard-all-clear>strong{font:800 14px/1.4 var(--body);color:#d5ead8}
 .dashboard-all-clear>small{font:500 11px/1.6 var(--body);color:#a8c8b6}
+
+/* v0.9.13 — compact owner inbox / operational message centre */
+.inbox-control .inbox-heading{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:0 0 13px}
+.inbox-control .inbox-heading h1{font:900 clamp(29px,3.3vw,40px)/1.05 var(--title);margin:5px 0;color:#f2eee4}
+.inbox-control .inbox-heading h1 em{font-style:normal;color:var(--gold)}
+.inbox-control .inbox-heading p:last-child{font:500 11px/1.55 var(--body);color:#9fb7c0}
+.inbox-control .inbox-heading .secondary-button{flex-shrink:0;padding:10px 13px;font-size:9px}
+.inbox-stat-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#172c35;border:1px solid #3b525c;border-radius:8px;overflow:hidden;margin-bottom:12px}
+.inbox-stat-strip>div{display:flex;align-items:center;justify-content:space-between;gap:12px;border-right:1px solid #334b56;padding:11px 17px}
+.inbox-stat-strip>div:last-child{border-right:0}
+.inbox-stat-strip span{font:800 9px/1.4 var(--mono);color:#a8c0c5}
+.inbox-stat-strip strong{font:900 21px/1 var(--title);color:#ecc990}
+.inbox-filters{display:flex;align-items:center;gap:7px;overflow-x:auto;scrollbar-width:thin;margin:0 0 11px;padding:2px 0 6px}
+.inbox-filters button{appearance:none;flex:0 0 auto;background:#192e38;color:#b1c4c8;border:1px solid #3c5863;border-radius:5px;padding:9px 11px;font:800 9px/1 var(--mono);cursor:pointer}
+.inbox-filters button:hover{background:#294650;border-color:#a7a67e}
+.inbox-filters button[aria-pressed="true"]{background:#3c4840;border-color:#d5ad76;color:#f1d3a2}
+.inbox-control .inbox-layout{height:clamp(405px,calc(100dvh - 385px),630px);min-height:0;grid-template-columns:minmax(290px,.85fr) minmax(0,1.15fr)}
+.inbox-control .inbox-column{min-width:0;min-height:0;display:flex;flex-direction:column}
+.inbox-control .inbox-column-head{flex:0 0 auto;padding:10px 13px;background:#203843;font-size:9px}
+.inbox-control .inbox-column-head>span:first-child{display:flex;align-items:center;gap:10px}
+.inbox-control .inbox-column-head small{font:650 9px var(--mono);color:#9fb5bd}
+.inbox-control .inbox-list{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.inbox-control .inbox-row{min-height:71px;padding:10px 13px;gap:10px;align-items:center}
+.inbox-control .inbox-row .message-icon{width:27px;height:27px;font-size:14px}
+.inbox-control .inbox-row .message-title{font-size:11px;line-height:1.3}
+.inbox-control .inbox-row .message-summary{font-size:9px;line-height:1.5}
+.inbox-control .inbox-row .message-from{font-size:8px}
+.inbox-control .inbox-row-action{box-shadow:inset 3px 0 #e3b16e}
+.inbox-message-tags{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px}
+.inbox-message-tags b{font:800 8px/1.3 var(--mono);color:#829eac}
+.inbox-message-tags .inbox-tag-action{color:#eeb876}
+.inbox-message-tags .inbox-tag-paid{color:#9bc8ac}
+.inbox-control .inbox-detail{min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:21px 25px}
+.inbox-control .inbox-detail .detail-heading{padding-bottom:13px}
+.inbox-control .inbox-detail h2{font:900 clamp(24px,2.6vw,34px)/1.1 var(--title);margin:8px 0 10px}
+.inbox-control .inbox-detail .detail-body{margin:16px 0 0;font:500 11px/1.85 var(--body);max-width:760px;white-space:pre-line}
+.inbox-control .inbox-detail .detail-action{margin-top:15px;padding:10px 12px;font-size:9px}
+.inbox-paid-status{display:block;color:#b3dfb7;font:800 9px/1.5 var(--mono);margin-top:8px}
+.inbox-accounts-disclosure{margin:9px 0 0;color:#8faab2;font:500 9px/1.6 var(--body)}
+.inbox-resolved{margin-top:16px;padding:13px 14px;border-left:3px solid #85a78e;background:#213c35;color:#b7dac0;font:650 11px/1.6 var(--body)}
+.inbox-empty{padding:30px 12px;color:#b3c5ca}
+.inbox-empty strong{font:900 20px/1.3 var(--title);color:#e7dbc2}
+.inbox-empty p{font:500 11px/1.6 var(--body);margin-top:8px}
+.inbox-approval{border:1px solid #987b53;background:#243934;border-radius:8px;padding:14px;margin-top:16px}
+.inbox-approval-intro{display:flex;flex-direction:column;gap:6px}
+.inbox-approval-intro strong{color:#efca90;font:900 15px/1.3 var(--title)}
+.inbox-approval-intro small{color:#bad0c9;font:500 10px/1.6 var(--body)}
+.inbox-approval-choices{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.inbox-approval-choices .trade-button{flex:1 1 170px;font:800 9px/1.4 var(--mono);white-space:normal;min-height:42px}
+.inbox-approval-choices .trade-button:disabled{cursor:not-allowed;opacity:.6}
+.inbox-control .inbox-row:focus-visible,.inbox-control .inbox-filters button:focus-visible,.inbox-control .inbox-approval-choices button:focus-visible{outline:3px solid #ecc48c;outline-offset:-3px}
+@media(max-width:1120px){.inbox-control .inbox-layout{grid-template-columns:minmax(245px,.88fr) minmax(0,1.12fr)}.inbox-control .inbox-detail{padding:17px}.inbox-stat-strip>div{padding:11px}}
+@media(max-width:780px){
+ .inbox-control .inbox-heading{align-items:flex-start}
+ .inbox-control .inbox-heading h1{font-size:31px}
+ .inbox-control .inbox-layout{height:auto;display:flex;flex-direction:column}
+ .inbox-control .inbox-column{border-right:0;border-bottom:1px solid #344b55}
+ .inbox-control .inbox-list{max-height:300px;overflow-y:auto}
+ .inbox-control .inbox-detail{min-height:210px;max-height:none;overflow-y:visible}
+ .inbox-stat-strip span{font-size:8px}
+}
+@media(max-width:570px){
+ .inbox-control .inbox-heading{flex-direction:column;gap:10px}
+ .inbox-control .inbox-heading .secondary-button{align-self:flex-start}
+ .inbox-stat-strip{grid-template-columns:1fr}
+ .inbox-stat-strip>div{border-right:0;border-bottom:1px solid #334b56;padding:9px 13px}
+ .inbox-stat-strip>div:last-child{border-bottom:0}
+ .inbox-control .inbox-list{max-height:255px}
+ .inbox-control .inbox-detail{padding:14px}
+ .inbox-control .inbox-row{min-height:62px}
+}
