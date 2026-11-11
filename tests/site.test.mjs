@@ -1565,7 +1565,7 @@ test('pressing continue on Deal Day advances hours, not game days or wages', () 
   assert.equal(state.day,30);
   assert.equal(state.deadlineSession,0);
   assert.equal(app.nodes.get('continue-label').textContent,'NEXT SESSION');
-  assert.match(app.nodes.get('auction-hall-view').innerHTML,/AUCTIONS CLOSED/);
+  assert.match(app.nodes.get('auction-hall-view').innerHTML,/NO AUCTION SESSION TODAY/);
   assert.match(app.nodes.get('events-view').innerHTML,/09:00/);
   assert.match(app.nodes.get('events-view').innerHTML,/FINAL TRADING DAY/);
   const cash=state.cash,ledger=state.ledger.length;
