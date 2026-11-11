@@ -766,6 +766,9 @@
       case 'book-customer':
         if(career)saveResult(E.bookCustomer(career,Number(button.dataset.id)));
         break;
+      case 'competing-customer':
+        if(career)saveResult(E.competingCustomer(career,Number(button.dataset.id)));
+        break;
       case 'test-drive':
         if(career)saveResult(E.testDrive(career,Number(button.dataset.id)));
         break;
