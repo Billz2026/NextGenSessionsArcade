@@ -254,7 +254,7 @@
   function decideMorale(state,messageId,approve){
     if(typeof approve!=='boolean')return failure('decision','Choose approve or decline.');
     const message=state.messages.find(m=>m.id===messageId);
-    const match=message&&/^morale:(\\d+):\\d+$/.exec(message.reference||'');
+    const match=message&&/^supervisor-morale:(\d+):\d+$/.exec(message.reference||'');
     if(!match||message.decision)return failure('stage','This supervisor recommendation is no longer pending.');
     const plan=moraleProposal(state,Number(match[1]));
     if(!plan)return failure('expired','This recommendation is no longer valid. Recheck the employee and supervisor availability.');
