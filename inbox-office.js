@@ -85,9 +85,9 @@
       from='PEOPLE & PAYROLL';category='staff';linkPage='staff';
       subject='PAID COPY · Approved staff welfare budget';
       preview=money(amount)+' one-off employee support spend, approved by the owner.';
-      body='APPROVED STAFF WELFARE EXPENDITURE\\n\\n'+note+
-        '\\nAmount settled: '+money(amount)+
-        '.\\nStatus: PAID. The supervisor is responsible for implementing the agreed rota and welfare support. No additional invoice is payable.';
+      body='APPROVED STAFF WELFARE EXPENDITURE\n\n'+note+
+        '\nAmount settled: '+money(amount)+
+        '.\nStatus: PAID. The supervisor is responsible for implementing the agreed rota and welfare support. No additional invoice is payable.';
     }else if(note.startsWith('Staff development:')){
       from='PEOPLE & PAYROLL';category='staff';linkPage='staff';
       subject='Staff training booked · Cost confirmed';
@@ -245,9 +245,9 @@
     const status=decision?decision.toUpperCase():
       needsAction(message,state)?'OWNER APPROVAL REQUIRED':
       message.subject.startsWith('PAID COPY')?'PAYMENT CONFIRMED':'FOR YOUR INFORMATION';
-    const sections=String(message.body||'').split(/\\n{2,}/);
+    const sections=String(message.body||'').split(/\n{2,}/);
     const content=sections.map(part=>{
-      const lines=part.split('\\n').filter(x=>x.trim().length);
+      const lines=part.split('\n').filter(x=>x.trim().length);
       if(!lines.length)return '';
       const mark=line=>{
         const value=line.trim();
