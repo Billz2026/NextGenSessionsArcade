@@ -2719,11 +2719,7 @@ test('v0.9.6 bookings are within 48 game-hours and never reserve unpaid stock', 
   const E=browser(new Map()).productionEngine,C=E.customers;
   let checked=0;
   for(let i=0;i<80;i++){
-    const s=E.create('48 Hour Booking '+i,[]);
-    const seller=E.market(1).sellers[0];
-    assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
-    const v=s.vehicles[0];
-    v.status='listed';v.asking=5200;v.listedDay=s.day;
+    const {state:s,v}=readyForRetail(E,'48 Hour Booking '+i);
     if(!C.demand(s,v))continue;
     assert.ok(E.openCustomer(s,v.id).ok);
     assert.ok(E.bookCustomer(s,v.id).ok);
@@ -2742,11 +2738,7 @@ test('v0.9.6 another buyer can inspect an unsecured booked car without losing th
   const E=browser(new Map()).productionEngine,C=E.customers;
   let found=null;
   for(let i=0;i<250;i++){
-    const s=E.create('Competing Viewer '+i,[]);
-    const seller=E.market(1).sellers[0];
-    E.acquireSeller(s,seller.id,seller.ask);
-    const v=s.vehicles[0];
-    v.status='listed';v.asking=5200;v.listedDay=s.day;
+    const {state:s,v}=readyForRetail(E,'Competing Viewer '+i);
     if(!C.demand(s,v))continue;
     E.openCustomer(s,v.id);E.bookCustomer(s,v.id);
     if(!C.competingInterest(s,v.id))continue;
@@ -2775,11 +2767,7 @@ test('v0.9.6 a competing buyer can buy, cancelling only the unsecured appointmen
   const E=browser(new Map()).productionEngine,C=E.customers;
   let found=null;
   for(let i=0;i<380;i++){
-    const s=E.create('Competing Sale '+i,[]);
-    const seller=E.market(1).sellers[0];
-    E.acquireSeller(s,seller.id,seller.ask);
-    const v=s.vehicles[0];
-    v.status='listed';v.asking=5200;v.listedDay=s.day;
+    const {state:s,v}=readyForRetail(E,'Competing Sale '+i);
     if(!C.demand(s,v))continue;
     E.openCustomer(s,v.id);E.bookCustomer(s,v.id);
     if(!C.competingInterest(s,v.id))continue;
