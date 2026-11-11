@@ -77,7 +77,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=41/);
+  assert.match(html, /styles\.css\?v=42/);
   assert.match(html, /simulator\.js\?v=31/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=1/);
@@ -97,7 +97,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=4/);
-  assert.match(html, /monthly-view\.js\?v=6/);
+  assert.match(html, /monthly-view\.js\?v=7/);
   assert.match(html, /people-view\.js\?v=4/);
   assert.match(html, /vehicle-view\.js\?v=4/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
@@ -114,7 +114,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.27/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.28/);
   assert.match(html, /FORECOURT CAPACITY[\s\S]*?<strong>4 vehicles<\/strong>/);
   assert.match(html, /Forecourt capacity<\/span><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
@@ -344,7 +344,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -598,7 +598,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=41/);
+  assert.match(html, /styles\.css\?v=42/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4440,7 +4440,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.27/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.28/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4509,7 +4509,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.27/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.28/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4967,5 +4967,63 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=41/);
+  assert.match(html,/styles\.css\?v=42/);
+});
+
+
+test('v0.9.28 management overview shows key measures before detailed reports',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const state=E.create('Report Overview',[]);
+  const page=app.monthlyView.renderReport(state,E.monthly);
+  assert.match(page,/MANAGEMENT REVIEW/);
+  assert.match(page,/LIVE POSITION/);
+  assert.match(page,/VEHICLES HANDED OVER/);
+  assert.match(page,/OPERATING CONTRIBUTION/);
+  assert.match(page,/CURRENT CASH/);
+  assert.match(page,/CASH INVESTED IN STOCK/);
+  assert.match(page,/ARE WE ON TARGET/);
+  assert.match(page,/WHAT NEEDS ATTENTION/);
+  assert.match(page,/SALES REQUIRED/);
+  assert.match(page,/DETAILED MANAGEMENT RECORDS/);
+  assert.equal((page.match(/class="mr-detail"/g)||[]).length,8);
+  assert.ok(page.indexOf('mr-kpis')<page.indexOf('CASH FLOW & FINANCES'));
+  assert.match(page,/Wages paid/);
+  assert.match(page,/SALES TEAM SCORECARDS/);
+  assert.match(page,/STOCK & WORKING CAPITAL/);
+  assert.match(css,/\.mr-focus\{display:grid/);
+  assert.match(html,/class="mr-control"/);
+});
+
+test('v0.9.28 archived report shows recorded result, not current-month balance',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const state=E.create('Closed Reports',[]);
+  state.day=30;
+  const closed=E.monthly.close(state);
+  assert.ok(closed);
+  state.day=31;E.monthly.next(state);
+  const frozen=JSON.stringify(state.monthlyReports[0]);
+  const archived=app.monthlyView.renderReport(state,E.monthly,1);
+  assert.match(archived,/ARCHIVED RESULT/);
+  assert.match(archived,/CLOSING CASH/);
+  assert.match(archived,/MONTH 1/);
+  assert.match(archived,/TARGET MISSED/);
+  assert.match(archived,/RETAIL CUSTOMER JOURNEY/);
+  const live=app.monthlyView.renderReport(state,E.monthly,'current');
+  assert.match(live,/CURRENT CASH/);
+  assert.match(live,/MONTH 2/);
+  assert.equal(JSON.stringify(state.monthlyReports[0]),frozen);
+});
+
+test('v0.9.28 management priorities use recorded stock age and preparation backlog',()=>{
+  const app=browser(new Map()),E=app.productionEngine;
+  const state=E.create('Stock Review',[]);
+  const seller=E.marketFor(state).sellers[0];
+  assert.ok(E.acquireSeller(state,seller.id,seller.ask).ok);
+  state.day=16;
+  const view=app.monthlyView.renderReport(state,E.monthly);
+  assert.match(view,/AGEING STOCK/);
+  assert.match(view,/14\+ days/);
+  assert.match(view,/WORKSHOP BACKLOG/);
+  assert.match(view,/CASH INVESTED IN STOCK/);
+  assert.match(view,/GAME DAYS 1/); 
 });
