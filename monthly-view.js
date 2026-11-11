@@ -216,8 +216,8 @@
     const flags=[];
     if(needed)flags.push(['SALES REQUIRED',needed+' handovers still needed']);
     if(contribution<0)flags.push(['OPERATING LOSS',money(contribution)+' after staff and premises']);
-    if(r.agedStock)flags.push(['AGEING STOCK',r.agedStock+' vehicles held for 14+ days']);
-    if(r.stockAwaitingPrep)flags.push(['WORKSHOP BACKLOG',r.stockAwaitingPrep+' vehicles unprepared']);
+    if(r.agedStock)flags.push(['AGEING STOCK',r.agedStock+' vehicle'+(r.agedStock===1?'':'s')+' held for 14+ days']);
+    if(r.stockAwaitingPrep)flags.push(['WORKSHOP BACKLOG',r.stockAwaitingPrep+' vehicle'+(r.stockAwaitingPrep===1?'':'s')+' unprepared']);
     if((r.payrollArrears||0)+(r.premisesArrears||0))flags.push(['UNPAID BILLS',
       money((r.payrollArrears||0)+(r.premisesArrears||0))+' in outstanding obligations']);
     const alerts=(flags.length?flags:[['NO IMMEDIATE FLAGS','No flagged exceptions']]).slice(0,4).map(item=>
@@ -236,7 +236,7 @@
       progress(r.turnover,r.targetTurnover,'Turnover guide')+
       progress(Math.max(0,r.grossMargin),r.targetMargin,'Gross margin guide')+
       '<p>Company success requires enough handovers and positive operating contribution.</p></section>'+
-      '<section class="mr-panel"><h3>WHAT NEEDS ATTENTION?</h3>'+alerts+'</section></div></div>';
+      '<section class="mr-panel"><h3>WHAT NEEDS ATTENTION?</h3>'+alerts+'</section></div>'+      '<div class="mr-mini"><div><small>GROSS TRADE MARGIN</small><strong>'+money(r.grossMargin)+'</strong></div>'+      '<div><small>STOCK AGED 14+ DAYS</small><strong>'+r.agedStock+'</strong></div>'+      '<div><small>RETAIL ENQUIRIES</small><strong>'+(r.customerJourney?r.customerJourney.enquiries:'NOT RECORDED')+'</strong></div>'+      '<div><small>REPUTATION</small><strong>'+r.closingReputation+'/100</strong></div></div></div>';
     const detail=(title,body)=>'<details class="mr-detail"><summary>'+title+
       ' · EXPAND</summary>'+body+'</details>';
     return archivePicker(state,selected)+top+'<section class="mr-records"><h3>DETAILED MANAGEMENT RECORDS</h3>'+
