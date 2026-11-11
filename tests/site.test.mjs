@@ -1950,6 +1950,44 @@ test('recruiting a technician changes workshop prices and internal bay capacity'
   assert.equal(s.vehicles.filter(x=>x.workshop.stage==='in-progress').length,2);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
+test('four mechanics start available and handle four separate in-house repair jobs', () => {
+  const E=browser(new Map()).productionEngine,P=E.people,s=E.create('Four Bay Motors',[]);
+  const candidates=P.applicants(1).filter(x=>x.role==='technician');
+  assert.equal(candidates.length,4);
+  assert.equal(P.technicianLimit(s),4);
+  assert.equal(P.staffLimit(s),6);
+  for(const candidate of candidates)assert.ok(P.hire(s,candidate.id).ok);
+  assert.equal(s.staff.length,4);
+  assert.equal(P.hire(s,candidates[0].id).ok,false);
+  // Test fixture injects investment capital for stock only, not production gameplay.
+  s.cash=200000;
+  for(let day=2;day<=25&&s.vehicles.length<4;day++){
+    s.day=day;
+    for(const car of E.market(day).sellers){
+      if(s.vehicles.length===4)break;
+      E.acquireSeller(s,car.id,car.ask);
+    }
+  }
+  assert.equal(s.vehicles.length,4);
+  for(const v of s.vehicles){
+    assert.ok(E.assessStock(s,v.id).ok);
+    assert.ok(E.startPrep(s,v.id,'internal').ok);
+  }
+  assert.equal(new Set(s.vehicles.map(v=>v.workshop.technicianId)).size,4);
+  assert.equal(P.availableTechnicians(s).length,0);
+  assert.ok(P.valid(s,s.day));
+  s.reputationScore=40;
+  assert.equal(P.technicianLimit(s),6);
+  assert.equal(P.staffLimit(s),8);
+  s.day=29;
+  const additional=P.applicants(s.day).find(x=>x.role==='technician'&&
+    !s.staff.some(e=>e.name===x.name));
+  assert.ok(additional);
+  assert.ok(P.hire(s,additional.id).ok,'Higher reputation unlocks more technicians');
+  s.reputationScore=80;
+  assert.equal(P.technicianLimit(s),8);
+  assert.equal(P.staffLimit(s),10);
+});
 test('staff training pauses internal jobs, but transfer can rescue a stalled workshop', () => {
   const E=browser(new Map()).engine,P=E.people,s=E.create('Repair Team',[]);
   const tech=P.applicants(1).find(x=>x.role==='technician');
