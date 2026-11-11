@@ -87,8 +87,8 @@
   }
   const scheduledMessages = Object.freeze({
     2: () => makeMessage(4,2,'BUYING DESK','Today\'s stock opportunities have refreshed',
-      'New auction lots and private sellers are on the market.',
-      'Each new day brings a refreshed set of fictional auction and direct-sale opportunities. Look at total acquisition cost and your preparation budget before agreeing a deal.',
+      'Private seller opportunities have refreshed.',
+      'Auctions run once per week, normally Monday or Tuesday when Monday is Deal Day. Other days are for private sellers and retail trading.',
       'auctionHall'),
     3: () => makeMessage(5,3,'SALES ADVISER','Cash sale or part-exchange?',
       'Both deals can move your stock, but they affect your cash differently.',
@@ -469,8 +469,10 @@
       D.meetingDue(career)?
         'FIRST-DAY MEETING: review the previous month and agree this month’s management priority.' :
       career.day <= 7
-        ? 'Day ' + career.day + ' of your career. Check the inbox for business updates.'
-        : 'Auction lots, direct sellers and customer opportunities refresh daily. Check your stock age and cash.';
+        ? 'Day ' + career.day + ' of your career. Auction Day is Monday; check the inbox for business updates.'
+        : E.auctionDay(career.day)?
+          'WEEKLY AUCTION DAY: this week’s numbered-lot catalogue is open.':
+          'Next weekly auction: game day '+E.nextAuctionDay(career.day)+'. Private seller leads refresh daily.';
     byId('save-warning').hidden = storageAvailable;
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;
@@ -495,6 +497,18 @@
   }
   function advanceDay() {
     if (!career || career.day >= MAX_DAY) return;
+    if(career.auctionHall.phase==='payment'){
+      currentPage='auctionHall';
+      eventNotice='An auction hammer has fallen. Finalise the winning bid and buyer fee before advancing the game day.';
+      render();
+      return;
+    }
+    if(career.auctionHall.phase==='bidding'){
+      currentPage='auctionHall';
+      eventNotice='The rival dealer is still bidding. Match the latest bid or choose PASS / LEAVE LOT to finish before advancing the game day.';
+      render();
+      return;
+    }
     if(D.meetingBlocksContinue(career)){
       currentPage='events';
       eventNotice='Your monthly management meeting is due. Review the previous month and agree one priority before advancing to the next day.';
@@ -544,7 +558,10 @@
       career.messages.push(eventFactory());
       eventNotice = 'New inbox message received. Your game calendar has advanced by one day.';
     } else {
-      eventNotice = 'One game day completed. New auction lots and private seller leads are available.';
+      eventNotice = E.auctionDay(career.day)?
+        'WEEKLY AUCTION DAY: this week’s numbered lots are open.':
+        'One game day completed. Private sellers have refreshed; next weekly auction is game day '+
+          E.nextAuctionDay(career.day)+'.';
     }
     if(workforceEvent.payroll || workforceEvent.arrears){
       eventNotice += ' Staff wage settlement: '+money.format(workforceEvent.paid)+
@@ -634,6 +651,16 @@
     const destination = button.dataset.page;
     if (destination && Object.prototype.hasOwnProperty.call(PAGES, destination)) {
       show(destination);
+      return;
+    }
+    // A hammered lot creates a binding invoice. Do not allow other purchases,
+    // workshops, payroll decisions or time progression to spend its funds.
+    if(career?.auctionHall?.phase==='payment'&&
+       !['settle-auction','toggle-report','preview-auction','close-auction-preview',
+         'menu','resume','dashboard','new-career','select-report'].includes(button.dataset.action)){
+      currentPage='auctionHall';
+      eventNotice='Auction invoice outstanding. Pay the hammer plus buyer fee before other dealership decisions.';
+      render();
       return;
     }
     switch (button.dataset.action) {
@@ -751,6 +778,9 @@
         break;
       case 'bid-live-auction':
         if(career)saveResult(E.bidLiveAuction(career,Number(button.dataset.increment)));
+        break;
+      case 'settle-auction':
+        if(career)saveResult(E.settleAuction(career));
         break;
       case 'pass-auction':
         if(career)saveResult(E.passAuction(career));

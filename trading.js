@@ -7,7 +7,7 @@
 (() => {
   const STARTING_CASH = 12500;
   const CAPACITY = 4;
-  const VERSION = 11;
+  const VERSION = 12;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
@@ -41,19 +41,31 @@
     return (v ^ (v >>> 16)) >>> 0;
   };
   const nearest25 = n => Math.round(n / 25) * 25;
+  // Game calendar starts Monday 9 November 2026. Normally Monday auction;
+  // where Monday is month-end Deal Day, use Tuesday of the SAME game week.
+  // This guarantees exactly one weekday auction per week, never weekends.
+  function scheduledAuctionDay(day){
+    const monday=1+Math.floor((day-1)/7)*7;
+    return D.isDealDay(monday)?monday+1:monday;
+  }
+  const auctionDay=day=>integer(day)&&day>=1&&day===scheduledAuctionDay(day);
+  function nextAuctionDay(day){
+    const thisWeek=scheduledAuctionDay(day);
+    return thisWeek>day?thisWeek:scheduledAuctionDay(day+7);
+  }
   function market(day,reputationScore=0,session=0,dealershipName='',
     periodReputation=reputationScore,cash=STARTING_CASH) {
     const tier=MARKET.tierFor(cash,reputationScore).key;
     const dealSellers=MARKET.sellersForDealDay(cash,reputationScore);
     const special=D.customers(day,periodReputation,session,dealSellers,I.profile,dealershipName);
     if(special)return {auctions:[],sellers:special.sellers.map(x=>({...x,...PH.describe(x)}))};
-    const auctionCount=day===1?3:
-      (sample(day,0,17)%7===0?0:1+(sample(day,1,29)%3));
+    const auctionCount=auctionDay(day)?
+      (day===1?3:3+(sample(day,1,29)%3)):0;
     const baselineSellers=day===1?2:
       (sample(day,0,31)%5===0?0:1+(sample(day,1,37)%3));
     const sellerCount=Math.min(4,baselineSellers+
       (day>1&&reputationScore>=40&&baselineSellers>0?1:0));
-    const aCount=auctionCount||sellerCount?auctionCount:1;
+    const aCount=auctionCount;
     const usedAuction=new Set(),usedSeller=new Set();
     const starter=MARKET.CATALOGUE.starter;
     const auctions=Array.from({length:aCount},(_,i)=>{
@@ -102,11 +114,10 @@
       state.monthPlan?.startingReputation??state.reputationScore,
       state.cash-todaysMovement);
   };
-  // The in-person hall is a stateful sequence, not the historical instant
-  // maximum-bid form. Every bid represents a legally binding game commitment
-  // while the player's bid is highest. The hammer occurs as soon as the
-  // rival dealer folds and the vendor reserve is met.
-  const auctionPhases=['catalogue','bidding','result','finished'];
+  // Weekly live auctions: sequential numbered lots; bids continue until one
+  // dealer drops out. When the highest bid meets reserve, the hammer creates
+  // a separate invoice that must be paid before workshop transfer.
+  const auctionPhases=['catalogue','bidding','payment','result','finished'];
   const auctionKinds=['won','lost','passed','unsold','owned'];
   const auctionIncrements=[100,250,500];
   const initialAuctionHall=day=>({
@@ -142,6 +153,9 @@
          (h.currentBid!==0||h.playerBid!==0||h.rounds!==0||h.feed.length>0))||
        (h.phase==='bidding'&&
          (h.currentBid<lots[h.index].guide||h.leader==='none'||h.rounds>250))||
+       (h.phase==='payment'&&(!lots[h.index]||h.leader!=='player'||
+         !h.rivalFolded||h.currentBid!==h.playerBid||
+         h.currentBid<lots[h.index].reserve))||
        (h.phase==='finished'&&h.feed.length>0))return false;
     const validResult=r=>r&&typeof r==='object'&&!Array.isArray(r)&&
       integer(r.day)&&r.day>=1&&r.day<=state.day&&
@@ -185,7 +199,8 @@
     const lot=auctionLot(state);
     if(!lot)return fail('closed','No auction lots are available in this session.');
     if(state.vehicles.some(v=>v.origin===lot.id)||
-       state.sold.some(v=>v.origin===lot.id))
+       state.sold.some(v=>v.origin===lot.id)||
+       state.auctionHistory.some(r=>r.kind==='won'&&r.lotId===lot.id))
       return resolveAuction(state,'owned',0,
         'LOT '+lotNumber(h.index)+' was already purchased before the Auction Hall update. No additional charge.');
     h.phase='bidding';h.currentBid=lot.guide;h.leader='rival';
@@ -200,6 +215,7 @@
     const h=state.auctionHall;
     if(h.phase!=='bidding')return fail('stage','Open this lot for bidding first.');
     if(!auctionIncrements.includes(increment))return fail('bid','Choose a £100, £250 or £500 increment.');
+    if(h.leader!=='rival')return fail('stage','Only raise against another dealer. The bidding has already ended.');
     const lot=auctionLot(state);
     if(!lot)return fail('closed','This auction lot is no longer available.');
     const bid=h.currentBid+increment;
@@ -222,22 +238,45 @@
         money(h.currentBid)+'. Raise your bid or pass. No money has been taken.'};
     }
     h.rivalFolded=true;
-    h.feed.push('Rival dealer drops out at '+money(bid)+'.');
+    h.feed.push('Regional dealer cannot match '+money(bid)+' and withdraws.');
     if(bid<lot.reserve){
-      h.feed.push('Auctioneer: vendor reserve not yet met. Increase your bid or pass.');
-      if(h.feed.length>65)h.feed=h.feed.slice(-65);
-      return {ok:true,changed:true,message:'You lead at '+money(bid)+
-        ', but the vendor reserve has not been met. Raise your bid or pass with no fee.'};
+      h.feed.push('Auctioneer: vendor reserve not met — lot remains unsold.');
+      return resolveAuction(state,'unsold',0,'LOT '+lotNumber(h.index)+
+        ' received no competing bid above '+money(bid)+
+        ', but the vendor reserve was not met. No sale or buyer fee.');
     }
-    // Hammer is immediate after a highest bid meets the reserve. It is not
-    // possible to retract a successful bid or make free bids against yourself.
-    pay(state,-(bid+lot.fee),'Auction purchase: '+lot.title+
-      ' (bid '+bid+', buyer fee '+lot.fee+')');
-    addCar(state,lot,'auction',bid+lot.fee,lot.id);
-    h.feed.push('HAMMER DOWN. Sold to your dealership at '+money(bid)+'.');
-    return resolveAuction(state,'won',bid,'LOT '+lotNumber(h.index)+
-      ' WON at '+money(bid)+' hammer. Buyer fee '+money(lot.fee)+
-      '; '+money(bid+lot.fee)+' paid, plus any separate inspection already purchased. Vehicle enters your stock.');
+    // Hammer is final, but ownership and payment transfer occur only after
+    // the separate buyer invoice has been confirmed.
+    h.phase='payment';
+    h.feed.push('HAMMER DOWN at '+money(bid)+'. Rival is out. Payment required before collection.');
+    if(h.feed.length>65)h.feed=h.feed.slice(-65);
+    return {ok:true,changed:true,message:'HAMMER FALLEN — LOT '+lotNumber(h.index)+
+      ' at '+money(bid)+'. Rival dealer has dropped out. Finalise payment of '+
+      money(bid+lot.fee)+' including buyer fee '+money(lot.fee)+
+      ' to transfer the car into your workshop.'};
+  }
+  function settleAuction(state){
+    const h=state.auctionHall;
+    if(h.phase!=='payment')return fail('stage','There is no outstanding auction invoice.');
+    const lot=auctionLot(state);
+    if(!lot)return fail('closed','This auction invoice cannot be matched to a lot.');
+    if(state.vehicles.some(v=>v.origin===lot.id)||
+       state.auctionHistory.some(r=>r.kind==='won'&&r.lotId===lot.id))
+      return fail('owned','This lot has already been settled. No second payment is permitted.');
+    const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
+    const blocked=canBuy(state,h.currentBid+lot.fee,requiredPrep);
+    if(blocked)return blocked;
+    const hammer=h.currentBid;
+    pay(state,-(hammer+lot.fee),'Auction purchase: '+lot.title+
+      ' (bid '+hammer+', buyer fee '+lot.fee+')');
+    addCar(state,lot,'auction',hammer+lot.fee,lot.id);
+    h.feed.push('SETTLED. £'+hammer.toLocaleString('en-GB')+
+      ' hammer plus £'+lot.fee.toLocaleString('en-GB')+
+      ' buyer fee paid. Car sent for workshop assessment.');
+    return resolveAuction(state,'won',hammer,'LOT '+lotNumber(h.index)+
+      ' PAID & TRANSFERRED TO WORKSHOP: £'+(hammer+lot.fee).toLocaleString('en-GB')+
+      ' (£'+hammer.toLocaleString('en-GB')+' hammer + £'+lot.fee.toLocaleString('en-GB')+
+      ' buyer fee). Any optional paid inspection is separate.');
   }
   function passAuction(state){
     const h=state.auctionHall;
@@ -247,16 +286,21 @@
     if(!lot)return fail('closed','There are no remaining auction lots.');
     if(h.phase==='catalogue')return resolveAuction(state,'passed',0,
       'LOT '+lotNumber(h.index)+' skipped before bidding. No fee charged.');
+    // Refusing to match the last rival bid awards the car to the rival only
+    // if its actual bid meets reserve. Never invent a higher hammer amount.
     if(h.leader==='player'&&h.currentBid<lot.reserve)
       return resolveAuction(state,'unsold',0,'LOT '+lotNumber(h.index)+
-        ' did not meet the vendor reserve. No sale and no fee.');
-    const finalBid=Math.max(h.currentBid,lot.reserve);
-    return resolveAuction(state,lot.rival>=finalBid?'lost':'unsold',
-      lot.rival>=finalBid?finalBid:0,
-      lot.rival>=finalBid?'LOT '+lotNumber(h.index)+
-        ' sold to a rival dealer at £'+finalBid.toLocaleString('en-GB')+
-        '. You walked away with no fees.':'LOT '+lotNumber(h.index)+
-        ' remained unsold below the vendor reserve. No fees charged.');
+        ' remained unsold below reserve. No sale or buyer fee.');
+    if(h.leader==='player')
+      return fail('stage','You already hold the winning bid; settle the hammer first.');
+    const rivalWins=h.currentBid>=lot.reserve;
+    return resolveAuction(state,rivalWins?'lost':'unsold',
+      rivalWins?h.currentBid:0,
+      rivalWins?'LOT '+lotNumber(h.index)+
+        ' SOLD TO RIVAL for £'+h.currentBid.toLocaleString('en-GB')+
+        '. You declined to match and pay no fee.':'LOT '+lotNumber(h.index)+
+        ' UNSOLD. You withdrew and the last rival bid did not meet the vendor reserve. No fee.');
+
   }
   function nextAuctionLot(state){
     const h=state.auctionHall;
@@ -286,7 +330,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,8,9,10,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -399,9 +443,12 @@
     const restored={
       version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:expectedCapacity,
       premises:SITE.clone(site),
-      auctionHall:saved.version>=VERSION&&!staleEmptyHall?
+      // Migrate older daily auction saves: keep completed results in history,
+      // but remove an obsolete mid-session catalogue on a closed weekday.
+      auctionHall:saved.version>=11&&!staleEmptyHall&&
+        (saved.version>=VERSION||saved.day===1)?
         JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
-      auctionHistory:saved.version>=VERSION?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
+      auctionHistory:saved.version>=11?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
@@ -780,6 +827,7 @@
   }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
+    auctionDay,nextAuctionDay,settleAuction,
     startAuction,bidLiveAuction,passAuction,nextAuctionLot,rollAuctionHall,
     auctionLot,lotNumber,auctionValid,
     upgradePremises,monthly:M,events:D,
