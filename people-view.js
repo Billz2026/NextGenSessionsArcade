@@ -327,7 +327,7 @@
         '" aria-pressed="'+String(f===id)+'">'+
         (id==='all'?'ALL ROLES':groupName[id])+'</button>').join('')+
       '</div></div>';
-    const listing=filtered.length?filtered.map(p=>staffRow(state,P,p,p===chosen)).join(''):
+    const listing=filtered.length?filtered.map(p=>staffRow(state,P,p,activeMode,p===chosen)).join(''):
       '<div class="sd-no-results">'+(activeMode==='team'?
         'No employees in this role yet. Review candidates to fill the vacancy.':
         'No candidates match this role this week.')+'</div>';
