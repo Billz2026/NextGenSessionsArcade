@@ -85,6 +85,7 @@
     const forecourt=site.quote(state,'forecourt'),workshop=site.quote(state,'workshop');
     const possible=[forecourt,workshop].filter(q=>!q.maximum&&q.eligible&&!q.shortfall).length;
     const nextState=r.arrears?'PAYMENT PRESSURE':
+      state.cash<r.runningDaily?'CASH RUNWAY ALERT':
       r.freeSpaces===0?'FORECOURT FULL':
       possible?'EXPANSION POSSIBLE':'OPERATIONS ACTIVE';
     const metrics='<div class="hq-metrics">'+
@@ -100,7 +101,8 @@
     const head='<div class="hq-brief"><div><small>LIVE BUSINESS OPERATIONS</small>'+
       '<strong>RUNNING YOUR DEALERSHIP</strong>'+
       '<p>Monitor your physical capacity, commitments and investment options.</p></div>'+
-      '<span class="hq-brief-status">'+nextState+'</span></div>';
+      '<span class="hq-brief-status'+(r.arrears||state.cash<r.runningDaily?' hq-brief-alert':'')+'">'+
+      nextState+'</span></div>';
     const cost='<section class="hq-cost-panel"><div class="hq-section-heading">'+
       '<div><small>FIXED COSTS / CASH DISCIPLINE</small><h3>OPERATING COMMITMENTS</h3></div>'+
       '<button type="button" class="hq-text-link" data-page="finance">FULL FINANCES</button></div>'+
@@ -125,9 +127,14 @@
       'Only the investment is debited immediately; future rent and utilities increase per game day. '+
       'Blocked upgrades cannot be bought. These are fictional operating figures, not UK property quotations.</p>'+
       '</details>';
+    const shortcuts='<nav class="hq-shortcuts" aria-label="Dealership departments">'+
+      '<span>CONTINUE OPERATIONS</span>'+[
+      ['stock','VEHICLE STOCK'],['workshop','WORKSHOP'],
+      ['staff','YOUR STAFF'],['reports','MANAGEMENT REPORTS']].map(([page,title])=>
+      '<button type="button" data-page="'+page+'">'+title+'</button>').join('')+'</nav>';
     return '<div class="hq-control">'+head+metrics+cost+upgradeHead+
       '<div class="hq-upgrades">'+card(state,site,'forecourt')+
-        card(state,site,'workshop')+'</div>'+more+'</div>';
+        card(state,site,'workshop')+'</div>'+shortcuts+more+'</div>';
   }
   window.MotorTradePremisesView=Object.freeze({figures,render,card});
 })();
