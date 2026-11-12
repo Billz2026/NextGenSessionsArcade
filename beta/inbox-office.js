@@ -140,11 +140,16 @@
       if(c.status!=='enquiry')continue;
       const vehicle=state.vehicles.find(v=>v.id===c.vehicleId&&v.status==='listed');
       if(!vehicle)continue;
+      const indicative=engine.buyers(vehicle,state)?.cashOffer;
+      const budget=Number.isSafeInteger(indicative)?money(indicative):null;
       changed=emit(state,{
         from:'SALES OFFICE',category:'sales',
         subject:'NEW CUSTOMER ENQUIRY · '+vehicle.title,
-        preview:c.name+' has enquired about your advertised stock '+vehicle.id+'.',
+        preview:c.name+' has asked about stock '+vehicle.id+
+          (budget?' · indicative price '+budget+'.':'.'),
         body:c.name+' enquired about '+vehicle.title+' on game day '+c.createdDay+'.\n\n'+
+          (budget?'PRE-VIEWING PRICE INDICATION: '+budget+' (NOT a firm or accepted offer).\n'+
+            'This is an initial buyer budget question. Actual terms require inspection, a test drive and final negotiation.\n\n':'')+
           'Your buyer is waiting for a response. Open the Sales Office to book a viewing before game day '+
           (c.createdDay+3)+'. The enquiry does not guarantee a purchase: the customer must attend, test drive and agree terms.',
         linkPage:'sales',reference:'retail-enquiry:'+c.id

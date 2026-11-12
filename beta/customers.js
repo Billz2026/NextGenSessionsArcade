@@ -78,11 +78,26 @@
     // These are scenario probabilities, not measured independent-dealer lead rates.
     return chance('buyer|'+leadKey(state,vehicle),clamp(percent,modern?1:8,modern?48:91));
   }
-  function open(state,id){
+  function priceCheckCandidate(state){
+    // After a genuinely silent fortnight the fictional online listing can
+    // attract a price-question, even when none of the normal day-by-day
+    // serious enquiries materialised. This is a game pacing safeguard, NOT
+    // a guaranteed buyer or an empirically measured real-world lead rate.
+    if(state.financialScenario!=='uk2026'||D.isDealDay(state.day))return null;
+    if(state.customerHistory.some(h=>h.type==='enquiry'&&h.day>=state.day-12))return null;
+    return state.vehicles.filter(v=>v.status==='listed'&&
+      v.listedDay!=null&&state.day-v.listedDay>=12&&!caseFor(state,v.id))
+      .sort((a,b)=>L.value(state,a).gapRatio-L.value(state,b).gapRatio||
+        a.listedDay-b.listedDay||a.id-b.id)[0]||null;
+  }
+  function open(state,id,source='normal'){
     const vehicle=state.vehicles.find(v=>v.id===id);
     if(!vehicle||vehicle.status!=='listed')return fail('stock','Advertise a retail-ready vehicle first.');
     if(caseFor(state,id))return fail('existing','This car already has an active customer case.');
-    if(!demand(state,vehicle))return fail('no-enquiry','No customer has enquired about this car this session. Try another day or review its price.');
+    const priceQuestion=source==='online-price-question'&&
+      priceCheckCandidate(state)?.id===id;
+    if(!priceQuestion&&!demand(state,vehicle))return fail('no-enquiry',
+      'No customer has enquired about this car this session. Try another day or review its price.');
     const key=leadKey(state,vehicle);
     const mode=hash('mode|'+key)%100;
     const preferPX=mode<38&&
@@ -94,7 +109,8 @@
       vehicleId:id,createdDay:state.day,createdSession:slot(state),
       name:FIRST[hash('first|'+key)%FIRST.length]+' '+
         LAST[hash('last|'+key)%LAST.length],
-      channel:walkIn?'MONTH-END WALK-IN':(hash('channel|'+key)%2?'ONLINE':'TELEPHONE'),
+      channel:priceQuestion?'ONLINE PRICE QUESTION':
+        walkIn?'MONTH-END WALK-IN':(hash('channel|'+key)%2?'ONLINE':'TELEPHONE'),
       status:walkIn?'arrived':'enquiry',preferredMode:preferPX?'part-ex':'cash',
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
       collectionDay:null,held:0,counters:0,reason:'',
@@ -105,7 +121,8 @@
     vehicle.cashOffer=null;
     append(state,c,'enquiry',c.channel);
     return ok(c.name+' contacted the dealership about '+vehicle.title+
-      (walkIn?'. The customer is here now for a viewing.':
+      (priceQuestion?'. They asked whether your asking price is negotiable. This is not a firm offer or a promised sale. Book a viewing if you want to progress.':
+        walkIn?'. The customer is here now for a viewing.':
         '. Book a viewing before proceeding to a test drive.'));
   }
   function book(state,id){
@@ -378,6 +395,18 @@
         const c=caseFor(state,vehicle.id);
         received.push('NEW RETAIL ENQUIRY: '+c.name+' for stock '+vehicle.id+
           '. Respond in the Sales Office within three game days.');
+      }
+    }
+    if(!received.length){
+      const target=priceCheckCandidate(state);
+      if(target){
+        const reply=open(state,target.id,'online-price-question');
+        if(reply.ok){
+          const c=caseFor(state,target.id);
+          received.push('NEW RETAIL ENQUIRY: '+c.name+
+            ' has asked about negotiating stock '+target.id+
+            ' asking price. This is an initial price question, NOT a firm offer. Open Sales Office to respond within three game days.');
+        }
       }
     }
     return received;
