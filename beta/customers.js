@@ -434,7 +434,8 @@
     if(state.financialScenario!=='uk2026'||c.status!=='enquiry'||
       state.day!==c.createdDay+1)return;
     const rep=P.salesRep(state,c);
-    if(!rep)return;
+    if(!rep||state.customerHistory.some(h=>
+      h.type==='sales-follow-up'&&h.leadId===c.id))return;
     // A paid representative calls back ONE time, the day after a lead.
     // This is not a free buyer or automatic sale. The buyer can fail to
     // answer, decline a viewing or still reject the car on a test drive.
