@@ -54,7 +54,8 @@
     vatPayments:'VAT remitted to HMRC (cash)',
     customerRefunds:'Customer refunds on rejected vehicles',
     customerCollection:'Vehicle collection after rejection',
-    customerRepairs:'Dealer-funded consumer repairs'
+    customerRepairs:'Dealer-funded consumer repairs',
+    customerAdjustments:'Negotiated partial retail price refunds'
   };
   function renderReport(state,M,selected='current'){
     const historical=String(selected)!=='current';
@@ -117,6 +118,7 @@
       (r.refundTurnover!==undefined?
         amount('Returned consumer sales (reversed turnover)',-r.refundTurnover)+
         countLine('Consumer vehicle rejections',r.refundedUnits)+
+        countLine('Customer price reductions (car retained)',r.priceReducedUnits)+
         amount('Customer repair & recovery expenses',-r.aftercareCost):'')+
       amount('Recorded staff expenses paid',-r.staffCosts)+
       amount('Gross margin less staff costs',r.grossAfterStaff)+
