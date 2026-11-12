@@ -268,7 +268,7 @@
         repairs.some(x=>x.delta!==-c.quote||x.day<c.openedDay))return false;
       if(['repairing','repair-failed','resolved'].includes(c.status)&&c.repairAttempts!==1)
         return false;
-      if(['open','refund-due','refunded'].includes(c.status)&&c.repairAttempts>0)
+      if(c.status==='open'&&c.repairAttempts>0)
         return false;
       const isFull=['refund-due','refunded'].includes(c.status);
       const isReduced=['reduction-due','reduced'].includes(c.status);
