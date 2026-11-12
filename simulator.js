@@ -11,6 +11,7 @@
   const EV = window.MotorTradeEventsView;
   const WV = window.MotorTradeWorkshopView;
   const CV = window.MotorTradeCustomersView;
+  const AFTV=window.MotorTradeAftersalesView;
   const AV = window.MotorTradeAuctionHallView;
   const SITE_VIEW = window.MotorTradePremisesView;
   const DV = window.MotorTradeDashboardView;
@@ -358,6 +359,7 @@
     const view=CV.render(career,E,{selectedId:selectedSalesId,filter:salesFilter});
     selectedSalesId=view.selectedId;
     byId('sales-list').innerHTML=view.html;
+    byId('aftersales-board').innerHTML=AFTV.render(career,E);
   }
   function renderFinances() {
     byId('finance-overview').innerHTML=FV.summary(career,E).html;
@@ -566,6 +568,7 @@
         linkPage:'staff',reference:'supervisor-checkins:'+career.day});
     }
     const premisesEvent=E.premisesDay(career);
+    const aftersalesEvents=E.aftersalesDay(career);
     const vatEvent=E.vatDay(career);
     const workshopEvents=E.advanceWorkshop(career);
     const customerEvents=E.advanceCustomers(career);
@@ -625,6 +628,8 @@
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
     if(customerEvents.length)
       eventNotice+=' CUSTOMERS: '+customerEvents.join(' ');
+    if(aftersalesEvents.length)
+      eventNotice+=' AFTERSALES: '+aftersalesEvents.join(' ');
     if(closed){
       const id=career.messages.reduce((n,message)=>Math.max(n,message.id),0)+1;
       const status=closed.targetMet?'ACHIEVED':'MISSED';
@@ -1051,6 +1056,17 @@
       case 'sell-part-ex':
         if (career) saveResult(E.completeSale(career,Number(button.dataset.id),'part-ex',
           inputNumber('px-allowance-' + button.dataset.id)));
+        break;
+      case 'aftersales-repair':
+        if(career&&window.confirm('Authorise a VAT-inclusive outsourced consumer remedy? The customer pays nothing and your dealership pays the repair invoice.'))
+          saveResult(E.repairAftersales(career,Number(button.dataset.id)));
+        break;
+      case 'aftersales-refund':
+        if(career&&window.confirm('Accept the full retail refund and dealer-funded vehicle collection? This becomes a binding customer liability, even if the business has insufficient cash. Part-exchange consideration is returned as a cash equivalent only with the simulated customer agreement.'))
+          saveResult(E.refundAftersales(career,Number(button.dataset.id)));
+        break;
+      case 'aftersales-recover':
+        if(career)saveResult(E.releaseReturned(career,Number(button.dataset.id)));
         break;
       case 'filter-ledger':
         if(career&&FV.FILTERS.includes(button.dataset.filter)){
