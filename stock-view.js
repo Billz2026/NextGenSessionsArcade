@@ -109,6 +109,17 @@
       age>=30?'STOCK AGE WARNING · REVIEW PRICING AND DEMAND':'';
     const ageModel=state.financialScenario==='uk2026'?
       window.MotorTradeRetailLiquidity?.value(state,v):null;
+    const reviewTarget=ageModel&&v.status==='listed'?
+      Math.max(500,Math.round(ageModel.indicative/50)*50):null;
+    const reviewNeeded=ageModel&&ageModel.advertisedDays>=30&&
+      Number.isSafeInteger(v.asking)&&v.asking>=reviewTarget+100;
+    const priceReview=reviewNeeded?
+      '<div class="stock-aged-alert"><strong>30+ DAYS ADVERTISED · REVIEW PRICE</strong>'+
+      '<p>Simulated achievable-price sensitivity is around '+money(reviewTarget)+
+      ' versus your current '+money(v.asking)+' ask. Consider revising the price using the control below. '+
+      (reviewTarget<f.invested?'That may crystallise a loss against cash invested; review trade exit costs as well.':
+      'Repricing may improve enquiries but reduces possible margin.')+
+      ' This is not a buyer offer or a verified market valuation, and no sale is guaranteed.</p></div>':'';
     return '<section class="stock-dossier" aria-label="Selected vehicle file">'+
       '<div class="stock-dossier-top"><div><span>VEHICLE FILE · STOCK '+v.id+'</span>'+
       '<strong>'+esc(v.title)+'</strong></div><span class="stock-status stock-status-'+p.tone+'">'+p.label+'</span></div>'+
@@ -120,6 +131,7 @@
       '<div><small>SOURCE</small><strong>'+esc(source)+'</strong></div>'+
       '<div><small>CONDITION</small><strong>GRADE '+grade+' / 5</strong></div></div>'+
       (risk?'<div class="stock-aged-alert">'+risk+'</div>':'')+
+      priceReview+
       reportCard(v,'stock',v.asking??v.retail)+'</div>'+
       '<div class="stock-dossier-finance"><div class="stock-finance-heading">'+
       '<small>STOCK UNIT FINANCIALS</small><h3>THE NUMBERS.</h3></div>'+

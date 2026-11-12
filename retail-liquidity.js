@@ -5,9 +5,14 @@
  * sensitivities, NOT observed auction hammers, completed retail sales,
  * valuations, stock write-downs, depreciation or statutory accounts.
  * Published UK backdrop: Auto Trader's 9 Nov 2026 market commentary reports
- * 29 days average retail days-to-sell in October 2026. This is a broad market
- * statistic, not a measured conversion rate for a four-space independent.
+ * 29 days average retail days-to-sell in October 2026, a broad market number.
+ * Cazoo's Oct 2026 market report separately estimates 49.6 days for
+ * independents (typically much larger stock than this 4-space game).
+ * Neither source gives a daily lead-conversion probability, so the player
+ * funnel is calibrated by observed synthetic career turnover, not fit to
+ * either statistic as a causal estimate.
  * https://plc.autotrader.co.uk/news-views/press-releases/commentary-q3-used-car-transactions-2026/
+ * https://dealer.cazoo.co.uk/news/cazoo-market-view-reports-softening-of-used-prices-in-october-driven-by-younger-age-profile-cars/
  * Use historical retail comparables as a starting point, then disclose model
  * uncertainty; never reroll purchases or generate cash simply by looking.
  */
@@ -36,11 +41,12 @@
     const premium=x.gapRatio>0?-Math.round(x.gapRatio*95):
       Math.min(8,Math.round(-x.gapRatio*40));
     const gradePenalty=grade>=5?7:grade===4?4:0;
-    const stockPenalty=Math.min(7,Math.floor(x.advertisedDays/30)*2);
-    const reputation=Math.floor(clamp(state.reputationScore||0,0,100)/20);
-    const salesperson=Math.round(clamp(salesLift,0,16)*0.4);
+    // Long adverts retain a nonzero enquiry path; repricing improves demand.
+    const stockPenalty=Math.min(3,Math.floor(x.advertisedDays/45));
+    const reputation=Math.floor(clamp(state.reputationScore||0,0,100)/35);
+    const salesperson=Math.round(clamp(salesLift,0,16)*0.25);
     const fuelAdjustment=v.fuel==='Hybrid'?2:v.fuel==='Diesel'?-1:0;
-    return clamp(12+premium-gradePenalty-stockPenalty+reputation+
+    return clamp(5+premium-gradePenalty-stockPenalty+reputation+
       salesperson+fuelAdjustment+marketAdjustment,1,40);
   }
   function snapshot(state,E){
