@@ -64,7 +64,12 @@
     const vehicleEngine=(typeof car.engineSpec==='string'&&car.engineSpec.length<75
       ? car.engineSpec : Object.entries(power).find(([k]) => name.includes(k))?.[1]) ||
       (car.fuel==='Electric'?'Electric motor specification unverified':'Engine specification unverified');
-    const basePrep=Math.max(150,Math.round((Number(car.prep)||350)));
+    const repairPlan=car.repairScenario==='uk2026'?
+      window.MotorTradeRepairPrices?.plan(car):null;
+    if(car.repairScenario==='uk2026'&&!repairPlan)
+      throw new Error('Load repair-prices.js before modern vehicle intelligence');
+    const basePrep=repairPlan?.basePrep??
+      Math.max(150,Math.round((Number(car.prep)||350)));
     const mode=grade>=4?'heavy':grade===3?'medium':'light';
     const labelsFor=car.fuel==='Electric'?
       ['EV safety / charging assessment','Tyres and brakes allowance','Cooling and software checks']:
@@ -73,7 +78,7 @@
       labels[mode];
     const splitA=moneyRound(basePrep*.42);
     const splitB=moneyRound(basePrep*.32);
-    const knownRepairs=[
+    const knownRepairs=repairPlan?.knownRepairs||[
       {item:labelsFor[0],cost:splitA},
       {item:labelsFor[1],cost:splitB},
       {item:labelsFor[2],cost:basePrep-splitA-splitB}
@@ -97,7 +102,7 @@
     const conditionDiscount=grade>=4?350:grade===3?200:75;
     const demandAdjustment=demand==='STRONG'?100:demand==='LOW'?250:170;
     const likelySale=moneyRound(Math.max(850,retail-conditionDiscount-demandAdjustment));
-    const riskAllowance=grade>=4?385:grade===3?220:120;
+    const riskAllowance=repairPlan?.riskAllowance??(grade>=4?385:grade===3?220:120);
     const targetMargin=moneyRound(Math.max(575,likelySale*.13));
     const trade=moneyRound(Math.max(300,likelySale-basePrep-riskAllowance-targetMargin-225));
     const inspectionFee=car.kind==='auction'||car.source==='auction'?95:75;
@@ -107,6 +112,7 @@
       mot:{monthsRemaining:motMonths,recordedMiles:motRecordedMiles,
         result:'PASS',advisories:motAdvisories},
       knownRepairs,hiddenFault,basePrep,riskAllowance,
+      ...(repairPlan?{repairBasis:repairPlan.repairBasis,majorExposure:repairPlan.majorExposure}:{}),
       inspectionFee,demand,retail,likelySale,trade,targetMargin,
       inspected:false,legacy:false
     };
