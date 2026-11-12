@@ -86,7 +86,7 @@
       source:'https://certmotors.com/vehicles/car/Volkswagen/Polo',
       note:'2018 model year and mileage model; trim needs validation',confidence:'medium'},
     '2020 Vauxhall Corsa SE Premium':{
-      retail:6250,sourcePrice:5795,sourceMiles:101511,tradeGuide:3450,
+      retail:6250,sourcePrice:5800,sourceMiles:101511,tradeGuide:3450,
       source:'https://www.askcar.co.uk/used-cars/vauxhall/corsa/se-premium/2020',
       note:'2020 comparable 100k+ petrol cars £5.5k-£5.8k, turbo derivative may differ',confidence:'low'},
     '2022 MG4 EV SE Standard Range':{
