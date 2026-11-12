@@ -7099,7 +7099,8 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
   const changePrice=(v,age=0)=>{
     const guide=Math.min(v.retail,v.profile?.likelySale||v.retail);
     const ageDiscount=policy==='overpriced'?0:
-      Math.floor(Math.max(0,age-25)/opts.drop)*75;
+      Math.floor(Math.max(0,age-25)/opts.drop)*
+        (policy==='balanced'?150:policy==='cautious'?125:75);
     return Math.min(75000,Math.max(500,round(
       guide+opts.premium-(Number.isFinite(ageDiscount)?ageDiscount:0))));
   };
