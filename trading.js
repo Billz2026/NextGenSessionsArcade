@@ -12,7 +12,7 @@
     premisesDeposit:3000,prepaidInsurance:3000,fixtures:2000,launchExpense:2000
   });
   const CAPACITY = 4;
-  const VERSION = 17;
+  const VERSION = 18;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
@@ -35,6 +35,8 @@
   if (!P) throw new Error('Load people.js before trading.js');
   const EMP=window.MotorTradeEmployment;
   if(!EMP)throw new Error('Load employment-2026.js before trading.js');
+  const AFT=window.MotorTradeAftersales;
+  if(!AFT)throw new Error('Load aftersales.js before trading.js');
   const SITE = window.MotorTradePremises;
   if (!SITE) throw new Error('Load premises.js before trading.js');
   const I = window.MotorTradeIntel;
@@ -380,14 +382,15 @@
       auctionHall:initialAuctionHall(1),auctionHistory:[],
       inboxLedgerCursor:0,
       premises:SITE.initial(),...P.initial(),
-      ...(standard?{employmentScenario:'uk2026-payroll',payroll2026:EMP.initial()}: {})
+      ...(standard?{employmentScenario:'uk2026-payroll',payroll2026:EMP.initial(),
+        aftersalesScenario:AFT.MODE,aftersales:AFT.initial()}: {})
     };
     M.initialize(state);
     Object.assign(state,D.initial());
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -522,6 +525,8 @@
          Object.keys(STANDARD_STARTUP).some(k=>saved.startupAccounts[k]!==STANDARD_STARTUP[k]))return null;
       if(saved.version>=17&&saved.employmentScenario!=='uk2026-payroll')return null;
       if(saved.version<=16&&saved.employmentScenario!==undefined)return null;
+      if(saved.version>=18&&saved.aftersalesScenario!==AFT.MODE)return null;
+      if(saved.version<18&&(saved.aftersalesScenario!==undefined||saved.aftersales!==undefined))return null;
     }
     if(standard){
       // An auction transport invoice must match the modelled lot route and
@@ -575,12 +580,15 @@
       negotiations:Object.fromEntries(Object.entries(negotiations).map(([k,v])=>[k,{...v}])),
       auctionBids:Object.fromEntries(Object.entries(auctionBids).map(([k,v])=>[k,{...v}])),
       reports:Object.fromEntries(Object.entries(reports).map(([k,v])=>[k,{...v}])),
+      ...(standard&&saved.version>=18?{aftersalesScenario:AFT.MODE,
+        aftersales:AFT.clone(saved.aftersales)}:{}),
       ...P.clone(workforce)
     };
     if(!M.restore(restored,saved))return null;
     if(!D.restore(restored,saved))return null;
     if(!C.valid(restored,saved))return null;
     if(!VAT.valid(restored))return null;
+    if(!AFT.valid(restored))return null;
     if(!auctionValid(restored))return null;
     return restored;
   }
@@ -620,8 +628,9 @@
     // Otherwise a second purchase could consume the cash needed to retail the first.
     const pendingPrep=W.reserved(state);
     const taxReserve=VAT.enabled(state)?Math.ceil(VAT.outstandingPence(state)/100):0;
-    if (cost + preparation + pendingPrep + taxReserve > state.cash)
-      return fail('cash','Not enough cash to buy this car while reserving stock preparation and any outstanding VAT liabilities.');
+    const customerRefunds=AFT.pendingRefunds(state);
+    if (cost + preparation + pendingPrep + taxReserve + customerRefunds > state.cash)
+      return fail('cash','Not enough cash to buy while reserving preparation, VAT and agreed customer refunds.');
     return null;
   }
   // An unsuccessful maximum bid does not incur a buyer's fee in this
@@ -903,6 +912,7 @@
       acquisition:v.cost,prep:v.prepSpent,profit:realised,
       ...(vatRecord?{vat:vatRecord}:{}),
       profile:v.profile?{...v.profile}:null,
+      ...(AFT.enabled(state)?{vehicleSnapshot:JSON.parse(JSON.stringify(v))}:{}),
       exchange:px?px.title:null,allowance:px?agreedAllowance:0
     });
     if(vatRecord)state.ledger.push({day:state.day,delta:0,
@@ -956,7 +966,8 @@
       '. No retail sale, target credit or reputation benefit.');
   }
   function totalMargin(state) { return sum(state.sold,'profit')+
-    sum(state.wholesale,'profit'); }
+    sum(state.wholesale,'profit')-
+    (AFT.enabled(state)?sum(state.aftersales.history,'originalProfit'):0); }
   function premisesDay(state){
     const out=SITE.advance(state);
     state.reputation=P.tier(state.reputationScore);
@@ -964,6 +975,7 @@
   }
   const upgradePremises=(state,kind)=>SITE.upgrade(state,kind);
   const vatDay=state=>VAT.advance(state);
+  const aftersalesDay=state=>AFT.advance(state);
   function staffDay(state) {
     const out=P.advance(state);
     state.reputation=P.tier(state.reputationScore);
@@ -982,7 +994,9 @@
   }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, STANDARD_STARTUP, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
-    employment:EMP,vat:VAT,vatDay,
+    employment:EMP,vat:VAT,vatDay,aftersales:AFT,aftersalesDay,
+    reportAftersales:AFT.report,repairAftersales:AFT.repair,
+    refundAftersales:AFT.refund,releaseReturned:AFT.releaseReturned,
     auctionDay,nextAuctionDay,auctionFee,auctionTransport,settleAuction,
     startAuction,bidLiveAuction,passAuction,nextAuctionLot,rollAuctionHall,
     auctionLot,lotNumber,auctionValid,
