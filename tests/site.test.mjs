@@ -5781,7 +5781,7 @@ test('2026 pricing uses dated 2026 comparables but keeps the classic catalogue i
   const mg4=M.CATALOGUE.modern.find(v=>v.title==='2022 MG4 EV SE Standard Range');
   assert.equal(M.priceFor(mg4,'uk2026').retail,10650);
   assert.equal(mg4.retail,13250);
-  const pending=M.CATALOGUE.starter.find(v=>v.title==='2018 Toyota Yaris Icon Hybrid');
+  const pending=M.CATALOGUE.starter.find(v=>v.title==='2019 Kia Rio 2');
   assert.equal(M.priceFor(pending,'uk2026').priceAudit.status,'unverified');
   const modern=E.create('Audited Trader',[],'uk2026');
   const lot=E.marketFor(modern).auctions.find(v=>v.title===oldCorsa.title);
