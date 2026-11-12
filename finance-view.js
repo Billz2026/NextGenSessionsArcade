@@ -139,7 +139,7 @@
         vat.dateForDay(upcoming).toLocaleDateString('en-GB')):'')+
       '<p class="fin-detail">For new 2026 careers, used vehicles are ASSUMED margin-scheme eligible. Tax is 1/6 of a positive vehicle purchase-to-sale margin, not 20% of profit. Whole-pound VAT cash remittances fall due after simulated calendar quarters. Buyer-fee invoice classification and margin eligibility must be verified on real purchases. Input VAT recovery, proper VAT returns, invoicing/VRN stockbook and aftersales reversals are still not modelled.</p>'+
       '</section>':'';
-    const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional, not a statutory VAT return or final net profit; employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
+    const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional and not statutory net profit or a statutory VAT return; employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
     return {snapshot:x,html:top+openingPanel+vatPanel+cashflow+'<div class="fin-secondary">'+
       commitments+performance+'</div>'+footer};
   }
