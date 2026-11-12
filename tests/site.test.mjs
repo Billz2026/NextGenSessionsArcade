@@ -7079,10 +7079,19 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
       releaseLossAfter:1000,focus:'sales',deposits:false},
     discount:{slots:4,margin:200,premium:-200,drop:35,
       releaseLossAfter:35,focus:'sales',deposits:true},
+    staffed:{slots:4,margin:650,premium:125,drop:20,
+      releaseLossAfter:95,focus:'sales',deposits:false},
     inactive:{slots:0,margin:Infinity,premium:0,drop:0,
       releaseLossAfter:1000,focus:'sales',deposits:false}};
   const opts=values[policy];
   if(!opts)throw Error('Unknown dealer policy: '+policy);
+  if(policy==='staffed'){
+    const candidates=E.people.applicants(1,state).filter(p=>p.role==='sales')
+      .sort((a,b)=>b.skills.sales-a.skills.sales);
+    assert.ok(candidates.length>0);
+    assert.ok(E.hireStaff(state,candidates[0].id).ok);
+  }
+  let complaintsHandled=0,remedyAgreed=0;
   let attempts=0,purchased=0,blocked=0,prepared=0,
     enquiriesOpened=0,rejected=0,handovers=0,liquidated=0,
     savedCheckpoints=0,daysUnderCashBuffer=0;
@@ -7135,6 +7144,22 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
         if(E.completeSale(state,v.id,'cash',null).ok)handovers++;
       }else if(c?.status==='collectable'){
         if(E.completeSale(state,v.id,'cash',null).ok)handovers++;
+      }
+    }
+  }
+  function handleAftersales(){
+    // The real engine automatically reports faults after handover. A
+    // responsible owner must pay for appropriate repairs or customer remedies.
+    for(const c of state.aftersales.cases){
+      if(c.status==='open'){
+        const r=E.repairAftersales(state,c.id);
+        if(r.ok)complaintsHandled++;
+        else if(r.code==='cash'&&E.refundAftersales(state,c.id).ok)
+          remedyAgreed++;
+      }else if(c.status==='repair-failed'){
+        const r=E.reduceAftersales(state,c.id);
+        if(r.ok)remedyAgreed++;
+        else if(E.refundAftersales(state,c.id).ok)remedyAgreed++;
       }
     }
   }
@@ -7211,6 +7236,7 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
       assert.ok(E.events.holdMeeting(state,opts.focus).ok,
         'A monthly board meeting should be completable');
     }
+    handleAftersales();
     handleVehicles();
     serveCustomers();
     sourceVehicles();
@@ -7219,6 +7245,7 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
         const session=E.events.advanceSession(state);
         assert.ok(session.ok);
         E.nextCustomerSession(state);
+        handleAftersales();
         handleVehicles();
         serveCustomers();
         if(policy!=='inactive')sourceVehicles();
@@ -7256,6 +7283,10 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
     grossMargin:E.totalMargin(state),
     purchased,attempts,blocked,prepared,enquiriesOpened,rejected,
     handovers,liquidated,daysUnderCashBuffer,savedCheckpoints,
+    complaintsHandled,remedyAgreed,
+    consumerClaims:state.aftersales.cases.length,
+    complaintsResolved:state.aftersales.cases.filter(x=>x.status==='resolved').length,
+    consumerRemediesOutstanding:E.aftersales.pendingRefunds(state),
     arrears:state.premises.arrears+state.payrollArrears,
     payableVat:Math.ceil(E.vat.outstandingPence(state)/100),
     monthlyReports:state.monthlyReports.length,
@@ -7271,7 +7302,7 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
 
 test('Phase 8C: one full UK2026 trading year runs with real customer lifecycle and cash accounting',()=>{
   const app=browser(),E=app.productionEngine;
-  const paths=['balanced','cautious','overpriced','discount','inactive'];
+  const paths=['balanced','cautious','overpriced','discount','inactive','staffed'];
   const results=paths.map(strategy=>
     runActiveDealerCareer(E,'Phase8C Dealer '+strategy,360,strategy));
   for(const r of results){
@@ -7287,7 +7318,8 @@ test('Phase 8C: one full UK2026 trading year runs with real customer lifecycle a
       policy:r.policy,bank:r.bank,sold:r.sold,purchased:r.purchased,
       stock:r.stock,margin:r.grossMargin,enquiries:r.enquiriesOpened,
       blocked:r.blocked,arrears:r.arrears,lowCashDays:r.daysUnderCashBuffer,
-      avgAdDays:r.averageAdvertisedDays
+      avgAdDays:r.averageAdvertisedDays,
+      claims:r.consumerClaims,repairs:r.complaintsHandled,remedies:r.remedyAgreed
     }));
   }
   assert.equal(results.find(x=>x.policy==='inactive').sold,0);
@@ -7322,7 +7354,8 @@ test('Phase 8C: active 36 and 60 month careers preserve real cash, stock and unp
       arrears:r.arrears,lowCashDays:r.daysUnderCashBuffer,
       validatedSaveCheckpoints:r.savedCheckpoints,years,
       cashGateAttempts:r.blocked,quotedAttempts:r.attempts,
-      avgAdDays:r.averageAdvertisedDays
+      avgAdDays:r.averageAdvertisedDays,
+      claims:r.consumerClaims,repairs:r.complaintsHandled,remedies:r.remedyAgreed
     }));
   }
 });
