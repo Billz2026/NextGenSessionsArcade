@@ -66,7 +66,8 @@
       '<div class="vehicle-spec-proof"><strong>2026 RETAIL PRICE COMPARABLE · '+esc(valuation.confidence.toUpperCase())+' CONFIDENCE</strong>'+
       '<p>Comparator asking '+money(valuation.comparisonAsk)+' at '+miles(valuation.comparisonMiles)+
       '. '+esc(valuation.note)+'. As of '+esc(valuation.asOf)+
-      '. No verified wholesale/hammer observation. Auction guide is still a simulation assumption.</p>'+
+      '. No verified wholesale/hammer observation. Auction guide is still a simulation assumption.</p>'+ 
+      (valuation.buyingRisk?'<p class="intel-small"><strong>BUYING VIABILITY WARNING:</strong> '+esc(valuation.buyingRisk)+'</p>':'')+
       '<a href="'+esc(valuation.source)+'" target="_blank" rel="noopener noreferrer">VIEW COMPARATOR</a></div>':
       '<div class="vehicle-spec-proof vehicle-spec-pending"><strong>2026 VALUATION REQUIRES VERIFICATION</strong>'+
       '<p>Trade guide and retail asking are provisional game figures, not live CAP/Auction or exact-match dealer quotes.</p></div>';
