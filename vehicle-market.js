@@ -296,7 +296,8 @@
         confidence:evidence.confidence,source:evidence.source,
         comparisonAsk:evidence.sourcePrice,comparisonMiles:evidence.sourceMiles,
         note:evidence.note,
-        tradeGuide:'Illustrative game-model assumption, not a verified auction result'
+        tradeGuide:'Illustrative game-model assumption, not a verified auction result',
+        ...(guide>=evidence.retail?{buyingRisk:'WARNING: UNSOURCED wholesale guide is at or above retail asking. Buying at this guide is commercially loss-making even before fees and preparation.'}:{})
       }};
   }
   const KEYS=Object.freeze(['starter','modern','premium','luxury']);
