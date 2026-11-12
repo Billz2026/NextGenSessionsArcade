@@ -5820,14 +5820,14 @@ test('2026 live auction fee increases at hammer threshold and all finance desks 
   assert.equal(E.normalize(falsified),null,'Tampered 2026 rate must be rejected');
 });
 
-test('2026 catalogue is 15 evidenced retail reviews and 35 explicitly unverified prices',()=>{
+test('2026 catalogue is 20 evidenced retail reviews and 30 explicitly unverified prices',()=>{
   const app=browser(),M=app.market,E=app.productionEngine;
   const catalogue=Object.values(M.CATALOGUE).flat();
   assert.equal(catalogue.length,50);
-  assert.equal(Object.keys(M.PRICING_2026).length,15);
+  assert.equal(Object.keys(M.PRICING_2026).length,20);
   const scenarios=catalogue.map(car=>M.priceFor(car,'uk2026'));
-  assert.equal(scenarios.filter(c=>c.priceAudit.status==='retail-comparable').length,15);
-  assert.equal(scenarios.filter(c=>c.priceAudit.status==='unverified').length,35);
+  assert.equal(scenarios.filter(c=>c.priceAudit.status==='retail-comparable').length,20);
+  assert.equal(scenarios.filter(c=>c.priceAudit.status==='unverified').length,30);
   for(const car of scenarios){
     assert.equal(car.repairScenario,'uk2026');
     const classic=catalogue.find(x=>x.title===car.title);
@@ -5839,6 +5839,11 @@ test('2026 catalogue is 15 evidenced retail reviews and 35 explicitly unverified
   }
   for(const [name,ask] of [
     ['2016 Ford Focus Zetec',3450],
+    ['2018 Toyota Yaris Icon Hybrid',7250],
+    ['2019 Hyundai i20 SE',6150],
+    ['2019 Honda Jazz SE',5900],
+    ['2018 Volkswagen Golf SE',6950],
+    ['2020 Nissan Leaf Acenta',7350],
     ['2018 Peugeot 208 Active',3350],
     ['2017 Nissan Qashqai Acenta',4700],
     ['2021 Vauxhall Corsa SE Premium',8800],
@@ -6029,4 +6034,30 @@ test('new 2026 cars record the auction hammer as VAT purchase price and sale as 
   assert.equal(V.enabled(migrated),false);
   const classic=E.create('Classic Old Trader',[]);
   assert.equal(V.enabled(classic),false);
+});
+
+test('2026 part-exchange purchase records actual customer allowance as VAT margin basis',()=>{
+  const app=browser(),E=app.engine,V=app.vat;
+  const s=E.create('2026 Part Exchange VAT',[],'uk2026');
+  const seller=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const original=s.vehicles[0];
+  assert.equal(original.vatPurchasePrice,seller.ask);
+  assert.ok(E.prepare(s,original.id).ok);
+  assert.ok(E.advertise(s,original.id,Math.round(original.retail/50)*50).ok);
+  const buyer=E.buyers(original,s);
+  assert.ok(buyer.exchange,'Buyer must offer a fictional part exchange for test');
+  const allowance=buyer.exchange.ask;
+  const sale=E.completeSale(s,original.id,'part-ex',allowance);
+  assert.ok(sale.ok,sale.message);
+  const outgoing=s.sold.at(-1),incoming=s.vehicles.find(v=>v.source==='part-ex');
+  assert.ok(incoming,'Part-exchange becomes stock, not retail cash');
+  assert.equal(outgoing.vat.purchaseBasis,seller.ask);
+  assert.equal(outgoing.vat.sellingPrice,outgoing.price,
+    'Margin scheme selling price includes full value of part exchange');
+  assert.equal(incoming.vatPurchasePrice,allowance,
+    'Future VAT purchase-price basis equals agreed full part-ex allowance');
+  assert.equal(outgoing.vat.outputPence,V.marginVatPence(outgoing.price,seller.ask));
+  assert.ok(app.productionEngine.normalize(JSON.parse(JSON.stringify(s))),
+    'Part-exchange customer consideration, VAT and stock preserve saved invariants');
 });
