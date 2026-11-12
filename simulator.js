@@ -596,7 +596,7 @@
         eventNotice+=' Departures: '+workforceEvent.departures.join(', ')+'.';
     }
     eventNotice+=' PREMISES: '+money.format(premisesEvent.paid)+' of '+
-      money.format(premisesEvent.due)+' daily rent/utilities paid; '+
+      money.format(premisesEvent.due)+(career.financialScenario==='uk2026'?' daily operating bills paid; ':' daily rent/utilities paid; ')+
       money.format(premisesEvent.arrears)+' outstanding.';
     if(workshopEvents.length)
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
