@@ -299,12 +299,17 @@
          p.pension.reduce((n,x)=>n+x.remaining,0)};
   };
   const quoteHire=(state,candidate)=>{
-    const active=state.staff.reduce((sum,e)=>sum+monthlyQuote(baseSalary(e,state.day)).employerCost,0);
-    const hireCost=monthlyQuote(baseSalary(candidate,state.day)).employerCost;
+    // Hiring cash buffer is CONSERVATIVE: never assume the employer can
+    // rely on relief to cover future NI, even if allowance remains today.
+    const loaded=e=>monthlyQuote(baseSalary(e,state.day),
+      {allowanceRemaining:0}).employerCost;
+    const active=state.staff.reduce((sum,e)=>sum+loaded(e),0);
+    const hireCost=loaded(candidate);
     const forecastNI=state.payroll2026?.allowanceUsed>=ALLOWANCE;
     return {monthlyEmployerCost:active+hireCost,
       candidateMonthlyEmployerCost:hireCost,
-      employerNiConservative:forecastNI,
+      employerNiConservative:true,
+      allowanceAlreadyExhausted:forecastNI,
       salary:baseSalary(candidate,state.day),
       holiday:LEAVE_DAYS,weeklyHours:candidate.contractHours??REQUIRED_HOURS};
   };
