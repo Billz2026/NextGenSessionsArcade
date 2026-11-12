@@ -80,7 +80,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /monthly\.js\?v=13/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=5/);
-  assert.match(html, /customers\.js\?v=5/);
+  assert.match(html, /customers\.js\?v=6/);
   assert.match(html, /aftersales\.js\?v=2/);
   assert.match(html, /aftersales-view\.js\?v=2/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
@@ -93,7 +93,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=6/);
   assert.match(html, /buying-desk-view\.js\?v=3/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=12/);
+  assert.match(html, /finance-view\.js\?v=13/);
   assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=38/);
@@ -6805,6 +6805,8 @@ test('Phase 8 only: independent dealer lead pressure is deterministic and reacts
   s.day=125;
   assert.ok(L.enquiryPercent(s,v)<fair,'Older adverts lose momentum at unchanged asking');
   assert.ok(L.value(s,v).indicative<L.value({...s,day:10},v).indicative);
+  // Compare grade while the lead chance is not already at its 1% floor.
+  s.day=10;
   v.profile.grade=5;
   assert.ok(L.enquiryPercent(s,v)<L.enquiryPercent(s,{...v,profile:{...v.profile,grade:2}}));
   const classic=E.create('Classic Days',[]);
