@@ -145,8 +145,8 @@ for(const item of sizes){
     }finally{await context.close();}
   });
 }
-await run('desktop purchase/repair/advertise/retail/save/ledger',async()=>{
-  const {page,context,errors}=await make({width:1440,height:900});
+async function retailJourney(viewport,label){
+  const {page,context,errors}=await make(viewport);
   try{
     await start(page,'Actual Trading Browser QA');
     await nav(page,'auctions');
@@ -166,7 +166,7 @@ await run('desktop purchase/repair/advertise/retail/save/ledger',async()=>{
     equal(s.vehicles.length,1,'Bought one actual owner-sourced vehicle');
     equal(s.cash,before.cash-choice.ask,'Private owner purchase debits exactly agreed offer');
     ok(s.ledger.some(x=>x.note.startsWith('Direct purchase: ')),'Cash purchase is in permanent ledger');
-    await capture(page,'desktop-actual-private-owner-purchase');
+    await capture(page,label+'-actual-private-owner-purchase');
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('#menu-continue').click();
     s=await state(page);
@@ -183,7 +183,7 @@ await run('desktop purchase/repair/advertise/retail/save/ledger',async()=>{
     s=await state(page);
     equal(s.vehicles[0].workshop.stage,'in-progress','Repairs booked, not instantly completed');
     ok(s.vehicles[0].workshop.repairCost>0,'Workshop expense genuinely paid');
-    await capture(page,'desktop-actual-workshop-booked');
+    await capture(page,label+'-actual-workshop-booked');
     for(let i=0;i<15;i++){
       s=await state(page);
       if(s.vehicles[0].status==='prepared')break;
@@ -204,7 +204,7 @@ await run('desktop purchase/repair/advertise/retail/save/ledger',async()=>{
     equal(s.vehicles[0].asking,asking,'Retail price posted via onscreen stock form');
     equal(s.vehicles[0].status,'listed','Car advertised after QC');
     const listDay=s.vehicles[0].listedDay;
-    await capture(page,'desktop-actual-retail-listing');
+    await capture(page,label+'-actual-retail-listing');
     let sold=false;
     for(let i=0;i<145&&!sold;i++){
       await nav(page,'sales');
@@ -234,7 +234,7 @@ await run('desktop purchase/repair/advertise/retail/save/ledger',async()=>{
     ok(s.sold[0].day>listDay,'No instant retail exit without genuine lead');
     ok(s.ledger.some(x=>x.note.startsWith('Retail balance received on collection:')),'Real bank receipt');
     await nav(page,'finance');
-    await capture(page,'desktop-actual-completed-sale-finances');
+    await capture(page,label+'-actual-completed-sale-finances');
     await page.reload({waitUntil:'domcontentloaded'});
     await page.locator('#menu-continue').click();
     const restored=await state(page);
@@ -243,7 +243,9 @@ await run('desktop purchase/repair/advertise/retail/save/ledger',async()=>{
     equal(restored.ledger.length,s.ledger.length,'Reload never duplicates invoices');
     equal(errors.length,0,'No uncaught JS while completing 150-day retail lifecycle: '+JSON.stringify(errors));
   }finally{await context.close();}
-});
+}
+await run('desktop full retail lifecycle',()=>retailJourney({width:1440,height:900},'desktop'));
+await run('phone-390 full touch retail lifecycle',()=>retailJourney({width:390,height:844},'phone-390'));
 await run('desktop auction binding invoice and settlement',async()=>{
   const {page,context,errors}=await make({width:1365,height:768});
   try{
