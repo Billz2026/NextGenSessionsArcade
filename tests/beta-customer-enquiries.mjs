@@ -229,6 +229,7 @@ assert.ok((await page.locator('#dashboard-priorities').innerText()).includes('cu
 await page.locator('.career-nav [data-page="inbox"]').click();
 const mails=await page.locator('#inbox-list').innerText();
 assert.ok(mails.includes('NEW CUSTOMER ENQUIRY'),'Inbox must show an enquiry without manually opening Sales Office');
+assert.ok(mails.includes('indicative price'),'Customer enquiries must contain a non-binding indicative buyer price before viewing');
 const savedBefore=await page.evaluate(()=>JSON.parse(localStorage.getItem('the-motor-trade-career-beta-v1')));
 await page.reload({waitUntil:'domcontentloaded'});
 await page.locator('#menu-continue').click();
@@ -239,6 +240,11 @@ assert.equal(savedAfter.messages.filter(m=>m.reference?.startsWith('retail-enqui
   savedBefore.messages.filter(m=>m.reference?.startsWith('retail-enquiry:')).length,
   'Reload cannot resend customer enquiry emails');
 await page.locator('.career-nav [data-page="sales"]').click();
+const salesText=await page.locator('[data-panel="sales"]').innerText();
+assert.ok(salesText.includes('PRE-VIEWING PRICE INDICATION'),
+  'Players must see an initial buyer budget, not a blank enquiry');
+assert.ok(salesText.includes('BUYER INTEREST / PRICE CHECK'),
+  'The Sales Office must explain asking-price positioning and lead probability');
 const book=page.locator('[data-panel="sales"] [data-action="book-customer"][data-id="'+active.vehicleId+'"]');
 assert.ok(await book.isVisible(),'The generated enquiry must be actionable in the normal Sales Office');
 await book.click();
