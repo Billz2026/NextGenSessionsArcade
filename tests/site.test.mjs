@@ -66,7 +66,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=2/);
-  assert.match(html, /people\.js\?v=7/);
+  assert.match(html, /people\.js\?v=8/);
   assert.match(html, /monthly\.js\?v=7/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=4/);
@@ -76,11 +76,11 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=2/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=2/);
+  assert.match(html, /finance-view\.js\?v=3/);
   assert.match(html, /styles\.css\?v=49/);
-  assert.match(html, /simulator\.js\?v=32/);
-  assert.match(html, /premises\.js\?v=1/);
-  assert.match(html, /premises-view\.js\?v=3/);
+  assert.match(html, /simulator\.js\?v=33/);
+  assert.match(html, /premises\.js\?v=2/);
+  assert.match(html, /premises-view\.js\?v=4/);
   assert.match(html, /id="premises-view"/);
   assert.match(html, /dashboard-view\.js\?v=2/);
   assert.match(html, /inbox-office\.js\?v=3/);
@@ -93,11 +93,11 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=19/);
+  assert.match(html, /trading\.js\?v=20/);
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=6/);
-  assert.match(html, /monthly-view\.js\?v=8/);
+  assert.match(html, /monthly-view\.js\?v=9/);
   assert.match(html, /people-view\.js\?v=7/);
   assert.match(html, /vehicle-view\.js\?v=4/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
@@ -4968,7 +4968,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=2/);
+  assert.match(html,/finance-view\.js\?v=3/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
@@ -5606,7 +5606,7 @@ test('v0.9.35 blocked and maximum upgrades still retain accurate eligibility',()
 test('v0.9.35 one-page desktop polish is scoped to My Dealership and retains mobile layout',()=>{
   assert.match(html,/PRE-ALPHA · v0\.9\.35/);
   assert.match(html,/styles\.css\?v=49/);
-  assert.match(html,/premises-view\.js\?v=3/);
+  assert.match(html,/premises-view\.js\?v=4/);
   assert.match(css,/v0\.9\.35 — Final My Dealership single-screen desktop polish/);
   assert.match(css,/\.career-layout:has\(\[data-panel="business"\]:not\(\[hidden\]\)\) \.career-topbar/);
   assert.match(css,/\.hq-upgrade-headline-costs\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
