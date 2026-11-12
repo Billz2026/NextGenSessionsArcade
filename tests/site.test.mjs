@@ -7055,7 +7055,7 @@ test('Phase 8B: every Finance screen reconciles uncommitted cash with creditor p
   assert.equal(stock.monthlyBurn,solvent.monthlyOperating);
   const html=F.summary(s,E).html;
   assert.match(html,/CREDITOR HOLD ACTIVE/);
-  assert.match(html,/Protected workshop, VAT, payroll, refunds & unpaid premises/);
+  assert.match(html,/Protected workshop, VAT, payroll, refunds &amp; unpaid premises/);
   assert.match(app.dashboard.snapshot(s,E).tasks[0].key,/creditor-hold|rent/,
     'Management desk should surface an unpaid creditor situation');
 });
