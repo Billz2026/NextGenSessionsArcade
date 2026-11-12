@@ -5742,14 +5742,16 @@ test('2026 buyer fee follows hammer in quote and settlement while classic remain
   const invoice=F.invoice(bid);
   const quote=E.quote(lot,'auction',bid,false);
   assert.equal(quote.fee,invoice.buyerFee);
-  assert.equal(quote.total,bid+invoice.buyerFee+quote.prep);
+  const transport=app.auctionTransport.quote(lot.id);
+  assert.equal(quote.transport,transport.gross);
+  assert.equal(quote.total,bid+invoice.buyerFee+transport.gross+quote.prep);
   assert.ok(quote.maxBid<=24999);
   assert.equal(quote.feeQuoteRequired,false);
   const before=s.cash;
   const result=E.acquireAuction(s,lot.id,bid);
   assert.ok(result.ok,result.message);
-  assert.equal(s.cash,before-invoice.totalDue);
-  assert.equal(s.vehicles[0].cost,invoice.totalDue);
+  assert.equal(s.cash,before-invoice.totalDue-transport.gross);
+  assert.equal(s.vehicles[0].cost,invoice.totalDue+transport.gross);
   assert.ok(s.ledger.some(row=>row.delta===-invoice.totalDue&&
     row.note.includes('buyer fee '+invoice.buyerFee)));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
@@ -5797,12 +5799,14 @@ test('2026 live auction fee increases at hammer threshold and all finance desks 
   assert.equal(s.auctionHall.phase,'payment');
   assert.equal(s.auctionHall.currentBid,2450);
   assert.equal(F.feeAtHammer(2450),636,'Exact hammer fee is higher than at guide');
-  assert.equal(app.financeView.snapshot(s,E).auctionInvoice,3086);
-  assert.match(app.dashboard.snapshot(s,E).tasks.find(x=>x.key==='auction-invoice').description,/3,086/);
+  const delivery=app.auctionTransport.quote(lot.id);
+  const totalDue=3086+delivery.gross;
+  assert.equal(app.financeView.snapshot(s,E).auctionInvoice,totalDue);
+  assert.ok(app.dashboard.snapshot(s,E).tasks.find(x=>x.key==='auction-invoice').description.includes(totalDue.toLocaleString('en-GB')));
   const settled=E.settleAuction(s);
   assert.ok(settled.ok,settled.message);
-  assert.equal(s.cash,50000-3086);
-  assert.equal(s.vehicles[0].cost,3086);
+  assert.equal(s.cash,50000-totalDue);
+  assert.equal(s.vehicles[0].cost,totalDue);
   assert.equal(s.auctionHistory.at(-1).fee,636);
   assert.equal(s.auctionHistory.at(-1).total,3086);
   const resume=E.normalize(JSON.parse(JSON.stringify(s)));
@@ -5898,4 +5902,37 @@ test('2026 auction purchase and paid assessment flow into true stock cost with e
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
     '2026 assessed and booked repair job must reconcile after a save/reload');
   assert.equal(E.premises.bays(state),0,'External prep does not invent equipped dealership bays');
+});
+
+test('2026 simulated auction transport quotes remain distinct from hammer fees and preserve saved cash',()=>{
+  const app=browser(),T=app.auctionTransport,E=app.productionEngine;
+  const q=T.quote('A-1-0');
+  assert.equal(q.routeMiles,65);
+  assert.equal(q.gross,111);
+  assert.equal(q.rateIncVat,1.70);
+  assert.equal(q.routeReal,false,'Never imply a real auction-to-dealer route');
+  assert.equal(T.quote('X-1-0'),null);
+  for(let day=1;day<=90;day++)for(let lot=0;lot<=4;lot++){
+    const x=T.quote('A-'+day+'-'+lot);
+    assert.ok(Number.isSafeInteger(x.gross));
+    assert.ok(x.routeMiles>=45&&x.routeMiles<=155);
+    assert.ok(x.gross>=75);
+  }
+  const modern=E.create('Transport Test',[],'uk2026');
+  const lot=E.marketFor(modern).auctions[0];
+  assert.equal(E.auctionTransport(modern,lot).gross,q.gross);
+  const classic=E.create('Classic',[]);
+  assert.equal(E.auctionTransport(classic,lot).gross,0);
+  const before=modern.cash;
+  const bid=Math.max(lot.reserve,lot.rival);
+  assert.ok(E.acquireAuction(modern,lot.id,bid).ok);
+  const fee=E.auctionFee(modern,lot,bid);
+  assert.equal(modern.cash,before-bid-fee-q.gross);
+  assert.equal(modern.vehicles[0].cost,bid+fee+q.gross);
+  assert.equal(modern.ledger.filter(x=>x.note.startsWith('Auction transport:')).length,1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(modern))));
+  const altered=JSON.parse(JSON.stringify(modern));
+  const transportRow=altered.ledger.find(x=>x.note.startsWith('Auction transport:'));
+  transportRow.note=transportRow.note.replace('simulated 65 miles','simulated 67 miles');
+  assert.equal(E.normalize(altered),null,'Transport audit trail cannot be silently falsified');
 });
