@@ -29,7 +29,7 @@
   const safe=n=>Number.isSafeInteger(n)&&n>=0&&n<=100000000;
   const pence=n=>'£'+(n/100).toFixed(2);
   const enabled=state=>state?.financialScenario==='uk2026'&&
-    Number.isSafeInteger(state.vatRegistrationDay);
+    Number.isSafeInteger(state.vatRegistrationDay)&&state.vatRegistrationDay>=1;
   const dateForDay=day=>new Date(START+(day-1)*DAY_MS);
   const dayForDate=d=>Math.round((d.getTime()-START)/DAY_MS)+1;
   const periodForDay=day=>{
@@ -83,11 +83,15 @@
       outputPence:outstandingPence(state)};
   }
   function valid(state){
-    if(!enabled(state))return state?.financialScenario!=='uk2026';
+    if(!enabled(state))return state?.financialScenario!=='uk2026'||
+      (state.vatRegistrationDay===0&&
+       !state.ledger.some(x=>x.note.startsWith('VAT remittance:'))&&
+       [...state.sold,...(state.wholesale||[])].every(x=>x.vat===undefined));
     if(state.vatRegistrationDay<1||state.vatRegistrationDay>state.day+1)return false;
     for(const x of [...state.sold,...(state.wholesale||[])]){
       if(x.day<state.vatRegistrationDay)continue;
-      if(!x.vat||x.vat.scheme!=='assumed-eligible-margin'||!safe(x.vat.purchaseBasis))return false;
+      if(!x.vat||x.vat.scheme!=='assumed-eligible-margin'||!safe(x.vat.purchaseBasis)||
+         x.vat.purchaseBasis>(x.acquisition??x.basis))return false;
       const sellingPrice=x.price??x.proceeds;
       const expected=record(x.vat.purchaseBasis,sellingPrice,x.day);
       if(!expected||Object.keys(expected).some(k=>expected[k]!==x.vat[k]))return false;
