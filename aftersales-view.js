@@ -37,7 +37,7 @@
     if(!cases.length)html+='<p>No aftersales complaints reported yet. A qualifying fault may emerge after delivery. Cash reserves should allow for this risk.</p>';
     for(const c of cases){
       const sale=A.saleFor(state,c.saleId),days=state.day-sale.day;
-      const overdue=c.status==='refund-due'&&state.day>c.refundDueDay;
+      const overdue=['refund-due','reduction-due'].includes(c.status)&&state.day>c.refundDueDay;
       const right=c.phase==='short-term-rejection'?
         'First 30 days: short-term rejection may be available for a proven non-conforming car. Repair cannot be forced.':
         c.phase==='six-month-presumption'?
