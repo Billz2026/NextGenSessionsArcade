@@ -32,10 +32,14 @@
     const currentGross=state.payroll2026?
       Object.values(state.payroll2026.earnings).reduce((n,e)=>
         n+e.salary+e.commission+(e.notice||0),0):0;
+    const refundLiability=E.aftersales.pendingRefunds(state);
+    const heldReturns=E.aftersales.enabled(state)?
+      state.aftersales.cases.filter(x=>x.heldReturned).reduce((n,x)=>
+        n+x.heldReturned.cost,0):0;
     return {cash:state.cash,reserved,vatOutstanding,vatReserve,
-      employment,currentGross,
-      afterReserve:state.cash-reserved-vatReserve-employment.total,
-      stock:r.stockCapital,held,arrears,staffDaily,premisesDaily,
+      employment,currentGross,refundLiability,heldReturns,
+      afterReserve:state.cash-reserved-vatReserve-employment.total-refundLiability,
+      stock:r.stockCapital+heldReturns,held,arrears,staffDaily,premisesDaily,
       dailyCommitment:staffDaily+premisesDaily,
       grossLifetime:E.totalMargin(state),lifetimeSales:state.sales,
       auctionInvoice,report:r,
@@ -55,10 +59,12 @@
     const noRepairReserve=x.reserved===0;
     const is2026=state.financialScenario==='uk2026';
     const modernPayroll=E.employment.is2026(state);
-    const workingLabel=modernPayroll?'CASH AFTER REPAIR, VAT & PAYROLL RESERVES':
+    const workingLabel=E.aftersales.enabled(state)?'CASH AFTER REPAIR, VAT, PAYROLL & REFUND RESERVES':
+      modernPayroll?'CASH AFTER REPAIR, VAT & PAYROLL RESERVES':
       is2026?'CASH AFTER REPAIR & VAT RESERVES':
       noRepairReserve?'WORKING CASH AVAILABLE':'CASH AFTER REPAIR RESERVES';
-    const workingDetail=modernPayroll?'Less booked repairs, accrued VAT and due payroll liabilities; before ordinary bills':
+    const workingDetail=E.aftersales.enabled(state)?'Less repair, tax, payroll and agreed customer-refund liabilities':
+      modernPayroll?'Less booked repairs, accrued VAT and due payroll liabilities; before ordinary bills':
       is2026?'Less booked repair reserves and accrued output VAT; before routine bills':
       noRepairReserve?'No workshop funds reserved · before upcoming bills':
         'After earmarked repairs · before upcoming bills';
@@ -103,6 +109,10 @@
       '<button type="button" class="fin-text-button" data-page="workshop">WORKSHOP</button></div>'+
       line('Workshop cash earmarked',money(x.reserved))+
       (is2026?line('Accrued output VAT protected',E.vat.pence(x.vatOutstanding)): '')+
+      (E.aftersales.enabled(state)?
+        line('Accepted customer refunds & collection owed',money(x.refundLiability),
+          x.refundLiability?' fin-due':'')+
+        line('Returned cars held offsite (capital value)',money(x.heldReturns)):'')+
       line(modernPayroll?'Base wage accrual / day (indicative)':'Wages per game day',money(x.staffDaily))+
       (modernPayroll?
         line('Current calendar-month wages accrued',money(x.currentGross))+
@@ -151,10 +161,12 @@
       line('Trailing 365-day taxable sales',money(rolling))+
       line('Statutory turnover threshold (2026)',money(vat.THRESHOLD))+
       line('VAT output accrued (less remittances)',vat.pence(x.vatOutstanding))+
+      (E.aftersales.enabled(state)?line('VAT credit carried after full refunds',
+        vat.pence(vat.creditBalancePence(state))):'')+
       line('VAT past simulated due date',vat.pence(nowDue),nowDue>0?' fin-due':'')+
       (upcoming?line('Next modelled quarterly filing date',
         vat.dateForDay(upcoming).toLocaleDateString('en-GB')):'')+
-      '<p class="fin-detail">For new 2026 careers, used vehicles are ASSUMED margin-scheme eligible. Tax is 1/6 of a positive vehicle purchase-to-sale margin, not 20% of profit. Whole-pound VAT cash remittances fall due after simulated calendar quarters. Buyer-fee invoice classification and margin eligibility must be verified on real purchases. Input VAT recovery, proper VAT returns, invoicing/VRN stockbook and aftersales reversals are still not modelled.</p>'+
+      '<p class="fin-detail">For new 2026 careers, used vehicles are ASSUMED margin-scheme eligible. Tax is 1/6 of a positive vehicle purchase-to-sale margin, not 20% of profit. Whole-pound VAT cash remittances fall due after simulated calendar quarters. Buyer-fee invoice classification and margin eligibility must be verified on real purchases. Input VAT recovery, proper VAT returns and full VRN/VIN stockbook are not yet modelled; the aftersales pilot reverses eligible VAT output on paid full refunds.</p>'+
       '</section>':'';
     const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional and not statutory net profit or a statutory VAT return; employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
     return {snapshot:x,html:top+openingPanel+vatPanel+cashflow+'<div class="fin-secondary">'+
@@ -166,6 +178,7 @@
     if(/^(Workshop |Preparation and inspection)/.test(note))return 'WORKSHOP';
     if(/^(Staff |Sales commission|Recruitment )/.test(note))return 'STAFF';
     if(/^VAT (output|remittance)/.test(note))return 'TAX / VAT';
+    if(/^Aftersales /.test(note))return 'CUSTOMER REMEDIES';
     if(/^Premises /.test(note))return 'PREMISES';
     return 'OTHER';
   }
