@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0c151c">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="The Motor Trade 2026 independent-dealer playtest beta — a separate test build that does not overwrite your current live game career.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="NextGen Sessions">
+  <meta property="og:title" content="The Motor Trade | UK Car Dealership Simulator">
+  <meta property="og:description" content="Every car is a decision. Start a dealership career.">
+  <meta property="og:url" content="https://billz2026.github.io/TheMotorTrade/beta/">
+  <link rel="canonical" href="https://billz2026.github.io/TheMotorTrade/beta/">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css?v=50">
+  <script src="./repair-prices.js?v=1" defer></script>
+  <script src="./vat.js?v=3" defer></script>
+  <script src="./employment-2026.js?v=3" defer></script>
+  <script src="./vehicle-intel.js?v=7" defer></script>
+  <script src="./vehicle-photos.js?v=5" defer></script>
+  <script src="./vehicle-accuracy.js?v=1" defer></script>
+  <script src="./vehicle-market.js?v=7" defer></script>
+  <script src="./auction-fees.js?v=1" defer></script>
+  <script src="./auction-transport.js?v=1" defer></script>
+  <script src="./premises.js?v=2" defer></script>
+  <script src="./people.js?v=10" defer></script>
+  <script src="./monthly.js?v=14" defer></script>
+  <script src="./events.js?v=2" defer></script>
+  <script src="./workshop.js?v=5" defer></script>
+  <script src="./retail-liquidity.js?v=3" defer></script>
+  <script src="./customers.js?v=7" defer></script>
+  <script src="./aftersales.js?v=2" defer></script>
+  <script src="./commercial-controls.js?v=2" defer></script>
+  <script src="./trading.js?v=33" defer></script>
+  <script src="./vehicle-cards.js?v=4" defer></script>
+  <script src="./vehicle-view.js?v=9" defer></script>
+  <script src="./people-view.js?v=9" defer></script>
+  <script src="./monthly-view.js?v=13" defer></script>
+  <script src="./events-view.js?v=6" defer></script>
+  <script src="./workshop-view.js?v=8" defer></script>
+  <script src="./customers-view.js?v=9" defer></script>
+  <script src="./aftersales-view.js?v=2" defer></script>
+  <script src="./premises-view.js?v=4" defer></script>
+  <script src="./auction-hall-view.js?v=6" defer></script>
+  <script src="./dashboard-view.js?v=6" defer></script>
+  <script src="./inbox-office.js?v=3" defer></script>
+  <script src="./buying-desk-view.js?v=3" defer></script>
+  <script src="./stock-view.js?v=3" defer></script>
+  <script src="./economics-stress.js?v=1" defer></script>
+  <script src="./finance-view.js?v=16" defer></script>
+  <script src="./simulator.js?v=39" defer></script>
+  <title>The Motor Trade | Playtest Beta — 2026 Dealer</title>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to game</a>
+  <div class="top-stripe" aria-hidden="true"></div>
+  <div id="app" role="main">
+    <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
+      <header class="menu-top"><span class="menu-status">2026 PLAYTEST BETA · PHASE 8E</span></header>
+      <div class="menu-layout">
+        <div class="menu-lead">
+          <div class="brand-lockup brand-lockup-large">
+            <img class="parent-wordmark" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
+            <h1 id="menu-title" class="trade-wordmark-hero"><img src="./assets/the-motor-trade-premium.svg" alt="The Motor Trade" width="1034" height="191"></h1>
+          </div>
+          <nav class="menu-actions" aria-label="Main menu">
+            <button type="button" class="action-btn action-btn-primary" id="menu-continue" data-action="resume" hidden><span class="button-mark" aria-hidden="true">▶</span><span><strong>CONTINUE</strong><small id="menu-resume-description" class="menu-visually-hidden">Resume your dealership</small></span><span class="arrow" aria-hidden="true">›</span></button>
+            <button type="button" class="action-btn action-btn-primary" id="menu-new-career" data-action="new-career"><span class="button-mark" aria-hidden="true">＋</span><span><strong>NEW CAREER</strong></span><span class="arrow" aria-hidden="true">›</span></button>
+            <button type="button" class="action-btn action-btn-muted" data-action="toggle-settings" aria-controls="menu-guide" aria-expanded="false"><span class="button-mark" aria-hidden="true">⚙</span><span><strong>SETTINGS</strong></span><span class="arrow" aria-hidden="true">›</span></button>
+          </nav>
+          <div class="menu-guide" id="menu-guide" hidden aria-label="Display settings">
+            <div class="menu-setting-row"><span>SHOWROOM BACKGROUND</span><button type="button" id="menu-setting-bg" data-action="toggle-showroom" aria-pressed="true">ON</button></div>
+            <div class="menu-setting-row"><span>MENU ANIMATION</span><button type="button" id="menu-setting-motion" data-action="toggle-motion" aria-pressed="true">ON</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="setup-screen" id="screen-setup" hidden aria-labelledby="setup-title">
+      <header class="setup-header"><button type="button" class="quiet-button" data-action="menu">← MAIN MENU</button><span>NEW CAREER / STEP 01</span></header>
+      <div class="setup-layout">
+        <div class="setup-intro">
+          <div class="brand-lockup brand-lockup-setup">
+            <img class="parent-wordmark" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
+            <span class="trade-wordmark" aria-hidden="true">MOTOR <b>TRADE<span>.</span></b></span>
+          </div>
+          <p class="section-overline">THE JOURNEY BEGINS</p>
+          <h1 id="setup-title">BUILD YOUR <em>DEALERSHIP.</em></h1>
+          <p>Every trader starts somewhere. Name your business, take control of your starting cash, and enter your new office.</p>
+        </div>
+        <div class="setup-card">
+          <div class="setup-card-top"><span>DEALERSHIP REGISTRATION</span><span>01 / 01</span></div>
+          <form id="career-form">
+            <label class="input-label" for="dealership-name">DEALERSHIP NAME</label>
+            <input id="dealership-name" name="dealershipName" type="text" maxlength="36" minlength="2" value="First Lot Motors" autocomplete="organization" required>
+            <p class="field-help">Use 2–36 characters. You can build your own dealership identity.</p>
+            <label class="input-label" for="career-realism">CAREER ECONOMICS</label>
+            <label class="field-help" for="career-realism" style="display:block;cursor:pointer">
+              <input type="checkbox" id="career-realism" checked>
+              <strong>2026 INDEPENDENT DEALER — RECOMMENDED</strong>
+            </label>
+            <p class="field-help"><strong>PLAYTEST BETA: A SEPARATE CAREER SAVE. Your live £12,500 game is untouched.</strong> £60,000 owner investment; £10,000 opening commitments; £50,000 bank cash. Four selling spaces, no in-house workshop, illustrative UK running costs and simulated voluntary VAT registration from opening. Untick for the original classic £12,500 career.</p>
+            <div class="setup-facts">
+              <div><span>STARTING BANK CASH</span><strong id="starting-cash-fact">£50,000</strong></div>
+              <div><span>FORECOURT CAPACITY</span><strong>4 vehicles</strong></div>
+              <div><span>CAREER TYPE</span><strong id="career-type-fact">2026 independent</strong></div>
+              <div><span>STARTING STOCK</span><strong>None</strong></div>
+            </div>
+            <p class="notice-box">Trade in a fictional UK market: auction bids, sellers, workshop preparation, enquiries and part-exchanges. The 2026 pilot models published BCA Blue buyer-fee bands, provisional margin-scheme output VAT, assumed operating costs, repair job cards and simulated delivery. All 50 retail vehicle prices now have dated asking-price comparisons, but 14 have low match confidence and four commercially contradictory, unverified wholesale guides are excluded from new 2026 sourcing pending evidence. Actual wholesale sold data, invoice-specific VAT eligibility, input VAT recovery, exact HMRC payroll and full consumer-rights case handling are not yet verified.</p>
+            <button class="primary-button setup-submit" type="submit">BEGIN CAREER <span aria-hidden="true">→</span></button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="game-screen" id="screen-career" hidden aria-label="Career mode">
+      <div class="career-layout">
+        <aside class="career-sidebar">
+          <button type="button" class="sidebar-logo" data-action="dashboard" aria-label="Go to dashboard">
+            <img class="parent-wordmark" src="./assets/nextgen-header-wordmark-2026.webp" alt="NextGen Sessions" width="1600" height="663">
+            <span class="trade-wordmark" aria-hidden="true">MOTOR <b>TRADE<span>.</span></b></span>
+            <span class="logo-caption">DEALERSHIP MANAGEMENT</span>
+          </button>
+          <div class="sidebar-rule"></div>
+          <p class="nav-heading">YOUR BUSINESS</p>
+          <nav class="career-nav" aria-label="Career navigation">
+            <button type="button" data-page="dashboard" aria-current="page"><span class="nav-icon">▦</span> Dashboard</button>
+            <button type="button" data-page="inbox"><span class="nav-icon">✉</span> Inbox <span class="nav-unread" data-bind="unread" hidden>3</span></button>
+            <button type="button" data-page="auctionHall"><span class="nav-icon">◈</span> Auction Hall</button>
+            <button type="button" data-page="auctions"><span class="nav-icon">◆</span> Buying Desk</button>
+            <button type="button" data-page="stock"><span class="nav-icon">▤</span> Vehicle Stock</button>
+            <button type="button" data-page="workshop"><span class="nav-icon">⚒</span> Workshop</button>
+            <button type="button" data-page="sales"><span class="nav-icon">♧</span> Sales Office</button>
+            <button type="button" data-page="finance"><span class="nav-icon">£</span> Finances</button>
+            <button type="button" data-page="reports"><span class="nav-icon">▦</span> Management Reports</button>
+            <button type="button" data-page="events"><span class="nav-icon">◷</span> Deal Day & Meetings</button>
+            <button type="button" data-page="staff"><span class="nav-icon">♟</span> Staff & Recruitment</button>
+            <button type="button" data-page="reputation"><span class="nav-icon">★</span> Reputation</button>
+            <button type="button" data-page="business"><span class="nav-icon">▣</span> My Dealership</button>
+          </nav>
+          <div class="sidebar-bottom">
+            <div class="sidebar-career">
+              <span class="section-overline">CURRENT CAREER</span>
+              <strong data-bind="company">FIRST LOT MOTORS</strong>
+              <small>INDEPENDENT MOTOR TRADER</small>
+            </div>
+            <button type="button" class="sidebar-exit" data-action="menu">← MAIN MENU</button>
+          </div>
+        </aside>
+
+        <div class="career-main">
+          <header class="career-topbar">
+            <div class="topbar-location"><small>THE MOTOR TRADE <span>/</span> CAREER</small><strong id="topbar-page">DASHBOARD</strong></div>
+            <div class="topbar-actions">
+              <div class="game-clock"><span class="clock-icon">▣</span><div><small>GAME DATE</small><strong data-bind="date">MON 09 NOV 2026</strong></div></div>
+              <button type="button" id="continue-day" class="continue-button" data-action="continue"><span id="continue-label">CONTINUE</span><b aria-hidden="true">▶</b></button>
+            </div>
+          </header>
+          <div class="game-notice" id="save-warning" role="status" hidden>Browser storage is unavailable. This career is playable in this tab, but progress may not be saved after you leave.</div>
+          <div class="game-notice game-event" id="event-notice" role="status" hidden></div>
+          <button type="button" id="trade-feedback-toast" class="trade-feedback-toast" data-action="dismiss-feedback" role="status" aria-live="polite" aria-label="Trading result, click to dismiss" hidden></button>
+
+          <div class="career-content">
+            <div id="events-banner" class="events-banner" aria-live="polite"></div>
+            <section class="career-panel dashboard-control" data-panel="dashboard" aria-labelledby="dashboard-title">
+              <div class="dashboard-heading">
+                <div><p class="section-overline">YOUR DEALERSHIP / LIVE MANAGEMENT OVERVIEW</p><h1 id="dashboard-title">DEALERSHIP <em>OVERVIEW.</em></h1></div>
+                <span class="dashboard-day-tag" data-bind="day-label">DAY 01</span>
+              </div>
+
+              <div class="stat-grid dashboard-kpis" role="group" aria-label="Live dealership key figures">
+                <button type="button" class="stat-tile dashboard-kpi" data-page="finance" aria-label="Open finances">
+                  <span>CASH BALANCE</span><strong data-bind="cash">£12,500</strong>
+                  <small data-bind="dashboard-cash-note">Before future bills</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi" data-page="stock" aria-label="Open vehicle stock">
+                  <span>FORECOURT STOCK</span><strong data-bind="stock">0 / 4</strong>
+                  <small data-bind="dashboard-stock-note">0 listed for sale</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi" data-page="reports" aria-label="Open monthly sales target">
+                  <span>SALES THIS MONTH</span><strong data-bind="dashboard-monthly-sales">0 / 2</strong>
+                  <small data-bind="dashboard-sales-note">2 units to target</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi" data-page="finance" aria-label="Open operating performance">
+                  <span>OPERATING CONTRIBUTION</span><strong data-bind="dashboard-operating">£0</strong>
+                  <small>Current month · before tax and finance</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi stat-tile-gold" data-page="reputation" aria-label="Open trade reputation">
+                  <span>TRADE REPUTATION</span><strong data-bind="reputation-score">5 / 100</strong>
+                  <small data-bind="reputation">NEW TRADER</small>
+                </button>
+                <button type="button" class="stat-tile dashboard-kpi" data-page="auctionHall" aria-label="Open weekly auction calendar">
+                  <span>WEEKLY AUCTION</span><strong data-bind="dashboard-auction">DAY 01</strong>
+                  <small data-bind="dashboard-auction-note">Monday · auction available</small>
+                </button>
+              </div>
+
+              <div id="dashboard-operating-strip" class="dashboard-operating-strip" aria-label="Stock, customers and operating commitments"></div>
+
+              <div class="dashboard-grid dashboard-command-grid">
+                <section class="panel-card priorities dashboard-task-panel" aria-labelledby="priorities-title">
+                  <div class="panel-card-header"><div><p class="section-overline">MANAGER'S DESK</p><h2 id="priorities-title">WHAT NEEDS ATTENTION</h2></div><span class="tiny-index">TOP 3 ACTIONS</span></div>
+                  <div id="dashboard-priorities" class="dashboard-priority-list" aria-live="polite"></div>
+                </section>
+                <section class="panel-card inbox-widget dashboard-updates-panel" aria-labelledby="widget-inbox-title">
+                  <div class="panel-card-header"><div><p class="section-overline">BUSINESS COMMUNICATIONS</p><h2 id="widget-inbox-title">LATEST MESSAGES <small id="widget-unread-label">0 UNREAD</small></h2></div><button type="button" class="text-link" data-page="inbox">INBOX ↗</button></div>
+                  <div id="dashboard-inbox" class="inbox-preview"></div>
+                </section>
+              </div>
+
+              <details class="dashboard-detail-drawer">
+                <summary><span>MONTHLY PERFORMANCE & CAREER DETAILS</span><span class="dashboard-career-summary">CAREER SOLD <strong data-bind="sales">0</strong> · GROSS TRADE MARGIN <strong data-bind="trade-profit">£0</strong></span></summary>
+                <div id="monthly-dashboard-target" class="monthly-dashboard-target" aria-live="polite"></div>
+                <p>Operating contribution reflects recorded vehicle margin, staff costs and accrued premises expenses. It is not net profit and excludes unmodelled tax, finance and depreciation.</p>
+              </details>
+            </section>
+
+            <section class="career-panel inbox-control" data-panel="inbox" hidden aria-labelledby="inbox-title">
+              <header class="inbox-heading">
+                <div><p class="section-overline">YOUR BUSINESS / OWNER COMMUNICATIONS</p><h1 id="inbox-title">OWNER'S <em>INBOX.</em></h1><p>Messages from your team, approval requests, customer updates and payment confirmations.</p></div>
+                <button type="button" class="secondary-button" data-action="mark-all-read">MARK ALL READ</button>
+              </header>
+              <div class="inbox-stat-strip" aria-label="Inbox status">
+                <div><span>REQUIRES YOUR DECISION</span><strong id="inbox-action-count">0</strong></div>
+                <div><span>UNREAD MESSAGES</span><strong id="inbox-unread-summary">0</strong></div>
+                <div><span>PAID TRANSACTION COPIES</span><strong id="inbox-paid-count">0</strong></div>
+              </div>
+              <nav id="inbox-filter-buttons" class="inbox-filters" aria-label="Filter dealership communications"></nav>
+              <div class="inbox-layout panel-card">
+                <div class="inbox-column">
+                  <div class="inbox-column-head"><span>MESSAGES <small id="inbox-filter-count">ALL MAIL</small></span><span id="inbox-unread-count">0 UNREAD</span></div>
+                  <div class="inbox-list" id="inbox-list"></div>
+                </div>
+                <div class="inbox-detail" id="inbox-detail"><p>Select a message to read it.</p></div>
+              </div>
+              <p class="inbox-accounts-disclosure">Accounts pays routine charges through the normal business ledger. Invoice copies confirm money already paid; opening or marking a message as read never moves cash. Workshop repair approvals are new financial decisions and are checked against available cash before booking.</p>
+            </section>
+
+            <section class="career-panel" data-panel="auctionHall" hidden aria-labelledby="auction-hall-title">
+              <div class="page-heading"><div><p class="section-overline">TRADE AUCTION / NUMERICAL LOT CATALOGUE</p><h1 id="auction-hall-title">THE AUCTION <em>HALL.</em></h1><p>One Monday auction per game week. Bid against another dealer until one side drops out; then finalise the hammer and buyer-fee payment before workshop transfer.</p></div><span class="career-chip">ONE LOT AT A TIME</span></div>
+              <div id="auction-hall-view" aria-live="polite"></div>
+            </section>
+
+            <section class="career-panel buying-desk-control" data-panel="auctions" hidden aria-labelledby="auctions-title">
+              <header class="buy-page-heading">
+                <div><p class="section-overline">VEHICLE SOURCING / DIRECT SELLER DESK</p>
+                  <h1 id="auctions-title">BUYING <em>DESK.</em></h1>
+                  <p>Review private sellers, calculate a safe purchase price and negotiate before committing cash.</p>
+                </div>
+                <span class="buy-page-badge">PRIVATE & WALK-IN SELLERS</span>
+              </header>
+              <div id="market-progression" class="buy-level-strip" aria-live="polite"></div>
+              <div id="market-sellers" class="buying-desk-content" aria-live="polite"></div>
+            </section>
+
+            <section class="career-panel" data-panel="stock" hidden aria-labelledby="stock-title">
+              <div class="page-heading"><div><p class="section-overline">THE FORECOURT / VEHICLE MANAGEMENT</p><h1 id="stock-title">VEHICLE <em>STOCK.</em></h1><p>Track each vehicle's acquisition, repair progress, true cost and readiness to advertise. Preparation now takes game days.</p></div><span class="career-chip">SPACE <span data-bind="stock">0 / 4</span></span></div>
+              <div id="stock-list" class="stock-control"></div>
+            </section>
+
+            <section class="career-panel" data-panel="workshop" hidden aria-labelledby="workshop-title">
+              <div class="page-heading"><div><p class="section-overline">OPERATIONS / VEHICLE PREPARATION</p><h1 id="workshop-title">WORKSHOP <em>OPERATIONS.</em></h1><p>Diagnose faults, approve in-house or external repair jobs, wait for work to finish and pass quality control before advertising.</p></div><span class="career-chip">REAL GAME-DAY TURNAROUND</span></div>
+              <div id="workshop-board" class="ws-control" aria-live="polite"></div>
+            </section>
+
+            <section class="career-panel sales-control" data-panel="sales" hidden aria-labelledby="sales-title">
+              <div class="page-heading"><div><p class="section-overline">RETAIL PIPELINE / CUSTOMER AGREEMENTS</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Identify buyer interest, manage each customer and complete handovers without losing track of stock.</p></div><span class="career-chip">LIVE RETAIL CASES</span></div>
+              <div id="sales-list" class="so-control" aria-live="polite"></div>
+              <div id="aftersales-board" class="so-control" aria-live="polite"></div>
+              <details class="so-policy"><summary>CUSTOMER DEPOSITS & PART-EXCHANGE RULES</summary><p>A customer enquiry or viewing is not a reservation. A £250 deposit is held separately from business cash until collection; only the remaining balance is collected at handover. Buyer cancellation may allow fair retention for actual customer-specific costs, while dealership fault requires a full refund. Part-exchanges require an agreed allowance and occupy a stock space. No retail sale or revenue is recorded until handover.</p></details>
+            </section>
+
+            <section class="career-panel finance-control" data-panel="finance" hidden aria-labelledby="finance-title">
+              <div class="page-heading"><div><p class="section-overline">THE DEALERSHIP / MONEY & CASH FLOW</p><h1 id="finance-title">BUSINESS <em>FINANCES.</em></h1><p>Know what is in the bank, what is committed and what trading has actually earned.</p></div><span class="career-chip">LIVE CASH POSITION</span></div>
+              <div id="finance-overview" class="fin-control" aria-live="polite"></div>
+              <section class="fin-ledger-section" aria-label="Transaction history"><div id="finance-ledger-toolbar"></div><div id="ledger-list" class="fin-ledger-list"></div></section>
+              <details class="fin-help"><summary>HOW TO READ THE FINANCES</summary><p><strong>Cash balance</strong> is actual dealership cash. <strong>Cash after repair reserves</strong> removes funds earmarked for outstanding vehicle preparation, but not future rent, wages or auction invoices. <strong>Stock invested</strong> is money already spent on vehicles still held; it cannot be used until a vehicle sells. <strong>Gross trade margin</strong> reflects completed deals, while <strong>operating contribution</strong> also deducts recorded staff costs and accrued premises expenses. Customer deposits are held separately. This is a fictional management view, not statutory accounts.</p></details>
+            </section>
+
+            <section class="career-panel" data-panel="events" hidden aria-labelledby="events-title">
+              <div class="page-heading"><div><p class="section-overline">TRADING CALENDAR / MONTHLY STRATEGY</p><h1 id="events-title">DEAL DAY & <em>MEETINGS.</em></h1><p>Track month-end opportunities, make the right decisions and review each month's results.</p></div><span class="career-chip">EVENT CONTROL</span></div>
+              <div id="events-view" class="eo-control" aria-live="polite"></div>
+            </section>
+
+            <section class="career-panel" data-panel="reports" hidden aria-labelledby="reports-title">
+              <div class="page-heading"><div><p class="section-overline">PERFORMANCE / MONTHLY BOARD REVIEW</p><h1 id="reports-title">MANAGEMENT <em>REPORTS.</em></h1><p>Understand the dealership's sales, operating performance, stock and priorities at a glance.</p></div><span class="career-chip">30-DAY REPORTS</span></div>
+              <div id="monthly-report-view" class="mr-control" aria-live="polite"></div>
+              <details class="mr-guide"><summary>HOW MONTHLY TARGETS AND ARCHIVED REPORTS WORK</summary><p>Sales targets are set at the start of each 30-day game month. Success requires the unit sales target and positive operating contribution after staff and premises costs. Salesperson targets adjust for tenure. Completed reports remain archived in your saved career, and are not recalculated from the live business.</p></details>
+            </section>
+
+            <section class="career-panel" data-panel="staff" hidden aria-labelledby="staff-title">
+              <div class="page-heading"><div><p class="section-overline">DEALERSHIP OPERATIONS / EMPLOYMENT</p><h1 id="staff-title">STAFF & <em>RECRUITMENT.</em></h1><p>Manage your team, check who is available, review candidates and control the wage bill.</p></div><span class="career-chip">PERSONNEL DESK</span></div>
+              <div id="people-board" class="sd-control" aria-live="polite"></div>
+            </section>
+
+            <section class="career-panel" data-panel="reputation" hidden aria-labelledby="reputation-title">
+              <div class="page-heading"><div><p class="section-overline">DEALERSHIP STANDING / CUSTOMER TRUST</p><h1 id="reputation-title">YOUR <em>REPUTATION.</em></h1><p>Follow your standing, understand what affects it and see the next genuine milestone.</p></div><span class="career-chip">LIVE TRUST SCORE</span></div>
+              <div id="reputation-view" class="rep-view" aria-live="polite"></div>
+            </section>
+
+            <section class="career-panel" data-panel="business" hidden aria-labelledby="business-title">
+              <div class="page-heading"><div><p class="section-overline">OWNER'S OFFICE / BUSINESS OPERATIONS</p><h1 id="business-title">MY <em>DEALERSHIP.</em></h1><p>Your business identity, operating commitments and next investment decisions in one place.</p></div><button type="button" class="secondary-button hq-save" data-action="save">SAVE CAREER</button></div>
+              <div class="hq-identity"><div class="hq-identity-title"><small id="owner-startup-label">INDEPENDENT MOTOR TRADER · OPENING BANK CASH £50,000</small><h2 data-bind="company">First Lot Motors</h2><p>DEALERSHIP CAREER PROFILE</p></div><div class="hq-identity-facts">
+                <div><small>CAREER</small><strong data-bind="day-label">DAY 01</strong></div>
+                <div><small>REPUTATION</small><strong data-bind="reputation-score">5 / 100</strong></div>
+                <div><small>STAFF</small><strong data-bind="staff-count">0</strong></div>
+                <div><small>FORECOURT</small><strong data-bind="forecourt-capacity">4 vehicles</strong></div>
+                <div><small>WORKSHOP</small><strong data-bind="workshop-bays">4</strong></div>
+                <div><small>MONTHLY TARGET</small><strong data-bind="monthly-target">0 / 2</strong></div>
+              </div></div>
+              <div id="premises-view" class="hq-view" aria-live="polite"></div>
+            </section>
+          </div>
+          <footer class="career-footer"><span>THE MOTOR TRADE <b>•</b> NEXTGEN SESSIONS</span><span>2026 PLAYTEST BETA · SEPARATE LOCAL CAREER SAVE</span></footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <noscript><p class="noscript">JavaScript is required for career mode. Enable JavaScript to start The Motor Trade.</p></noscript>
+</body>
+</html>

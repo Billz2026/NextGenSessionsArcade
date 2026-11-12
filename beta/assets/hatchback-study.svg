@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 390" role="img" aria-labelledby="t d"><title id="t">Generic five door hatchback</title><desc id="d">Original illustrated side view of a blue grey compact hatchback.</desc>
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2=".2" y2="1"><stop offset="0" stop-color="#7c98a2"/><stop offset=".52" stop-color="#43616d"/><stop offset="1" stop-color="#253f4b"/></linearGradient>
+<linearGradient id="glass" x1="0" y1="0" x2=".4" y2="1"><stop stop-color="#c3e0e5"/><stop offset=".34" stop-color="#567d8c"/><stop offset="1" stop-color="#1c3b48"/></linearGradient>
+<linearGradient id="highlight"><stop stop-color="#e8c489"/><stop offset=".5" stop-color="#d2e5dd"/><stop offset="1" stop-color="#496b75"/></linearGradient>
+<radialGradient id="ground"><stop stop-color="#0a1e25" stop-opacity=".77"/><stop offset="1" stop-color="#0a1e25" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="470" cy="319" rx="390" ry="45" fill="url(#ground)"/>
+<path d="M99 236 Q91 226 111 217 L188 199 L254 134 Q278 105 322 103 L568 101 Q619 102 661 137 L739 190 L815 207 Q845 213 848 243 L842 281 Q828 290 807 291 L129 290 Q100 286 95 263 Z" fill="url(#body)" stroke="#a7bdc0" stroke-width="3"/>
+<path d="M216 196 L269 139 Q289 117 328 117 L413 115 L414 197 Z" fill="url(#glass)" stroke="#203e4d" stroke-width="5"/>
+<path d="M429 115 L564 116 Q607 116 639 148 L707 197 L431 197 Z" fill="url(#glass)" stroke="#203e4d" stroke-width="5"/>
+<path d="M646 155 L690 187 L664 190 L632 162" fill="#152d38" opacity=".5"/>
+<path d="M127 223 Q458 211 811 218" stroke="url(#highlight)" stroke-width="3" fill="none" opacity=".7"/>
+<path d="M427 117 L427 283" stroke="#233b47" stroke-width="3" opacity=".72"/>
+<path d="M672 195 L684 283" stroke="#233b47" stroke-width="3" opacity=".72"/>
+<path d="M187 220 Q190 200 209 201" stroke="#233b47" stroke-width="4" fill="none"/>
+<path d="M447 212 L494 212" stroke="#d4e0d7" stroke-width="7" stroke-linecap="round" opacity=".74"/>
+<path d="M692 212 L728 212" stroke="#d4e0d7" stroke-width="6" stroke-linecap="round" opacity=".74"/>
+<path d="M215 244 H765" stroke="#203e4b" stroke-width="5" opacity=".57"/>
+<path d="M104 232 L145 225 Q163 228 157 246 L103 253 Z" fill="#f0cba1"/>
+<path d="M800 211 L841 220 L849 247 L806 243 Z" fill="#a94b45"/>
+<path d="M113 271 L823 274" stroke="#0b1c25" stroke-width="6" opacity=".72"/>
+<g>
+<circle cx="259" cy="284" r="54" fill="#08141c" stroke="#22303c" stroke-width="5"/>
+<circle cx="259" cy="284" r="34" fill="#a7b4b8" stroke="#596d78" stroke-width="7"/>
+<circle cx="259" cy="284" r="18" fill="#3c5561" stroke="#d4d9d5" stroke-width="4"/>
+<g stroke="#cbd3d0" stroke-width="6"><path d="M259 251 V269"/><path d="M259 299 V317"/><path d="M226 284 H244"/><path d="M274 284 H292"/></g>
+</g>
+<g>
+<circle cx="736" cy="284" r="54" fill="#08141c" stroke="#22303c" stroke-width="5"/>
+<circle cx="736" cy="284" r="34" fill="#a7b4b8" stroke="#596d78" stroke-width="7"/>
+<circle cx="736" cy="284" r="18" fill="#3c5561" stroke="#d4d9d5" stroke-width="4"/>
+<g stroke="#cbd3d0" stroke-width="6"><path d="M736 251 V269"/><path d="M736 299 V317"/><path d="M703 284 H721"/><path d="M751 284 H769"/></g>
+</g>
+<path d="M107 261 L133 264 L138 279 L106 274 Z" fill="#26363e"/>
+<path d="M812 259 L843 259 L838 274 L818 276 Z" fill="#26363e"/>
+</svg>
