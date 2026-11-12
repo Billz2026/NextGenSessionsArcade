@@ -7167,9 +7167,14 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
     const offers=E.marketFor(state);
     const picks=[];
     for(const car of offers.sellers){
-      const quote=E.quote(car,'seller',car.ask);
-      if(quote.maxBid>=car.ask&&quote.expectedMargin>=opts.margin)
-        picks.push({kind:'seller',car,bid:car.ask,margin:quote.expectedMargin});
+      // Offer below the publicly advertised asking price. The owner can
+      // counter or walk; the bot never reads hidden vendor reserve/floor.
+      const fraction=policy==='cautious'?.91:
+        policy==='balanced'?.94:policy==='discount'?.97:.98;
+      const bid=Math.max(100,Math.min(car.ask,round(car.ask*fraction)));
+      const quote=E.quote(car,'seller',bid);
+      if(quote.maxBid>=bid&&quote.expectedMargin>=opts.margin)
+        picks.push({kind:'seller',car,bid,margin:quote.expectedMargin});
     }
     if(E.auctionDay(state.day)){
       for(const car of offers.auctions){
@@ -7183,9 +7188,19 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
     picks.sort((a,b)=>b.margin-a.margin);
     for(const pick of picks.slice(0,3)){
       attempts++;
-      const r=pick.kind==='seller'?
+      let r=pick.kind==='seller'?
         E.acquireSeller(state,pick.car.id,pick.bid):
         E.acquireAuction(state,pick.car.id,pick.bid);
+      // A genuine owner counteroffer is visible to the player. Decide
+      // whether its real quoted margin still meets the strategy hurdle.
+      if(pick.kind==='seller'&&r.code==='counter'){
+        const counter=state.negotiations[pick.car.id]?.counter;
+        if(Number.isSafeInteger(counter)&&counter<=pick.car.ask){
+          const revised=E.quote(pick.car,'seller',counter);
+          if(revised.maxBid>=counter&&revised.expectedMargin>=opts.margin)
+            r=E.acquireSeller(state,pick.car.id,counter);
+        }
+      }
       if(r.ok){purchased++;break;}
       if(['cash','creditor-hold'].includes(r.code))blocked++;
     }
@@ -7292,11 +7307,18 @@ test('Phase 8C: active 36 and 60 month careers preserve real cash, stock and unp
     assert.ok(r.bank>=0);
     assert.equal(r.purchased,r.sold+r.wholesale+r.stock);
     assert.ok(E.normalize(JSON.parse(JSON.stringify(r.finalState))));
+    const years=Array.from({length:r.months/12},(_,i)=>{
+      const rows=r.reports.slice(i*12,(i+1)*12);
+      return {year:i+1,sold:rows.reduce((n,x)=>n+x.soldUnits,0),
+        bank:rows.at(-1)?.closingCash,
+        contribution:rows.reduce((n,x)=>n+(x.operatingAfterVat||0),0)};
+    });
     console.log('PHASE8C_LONG '+JSON.stringify({
       policy:r.policy,months:r.months,bank:r.bank,sold:r.sold,
       purchased:r.purchased,stock:r.stock,margin:r.grossMargin,
       arrears:r.arrears,lowCashDays:r.daysUnderCashBuffer,
-      validatedSaveCheckpoints:r.savedCheckpoints
+      validatedSaveCheckpoints:r.savedCheckpoints,years,
+      cashGateAttempts:r.blocked,quotedAttempts:r.attempts
     }));
   }
 });
