@@ -78,11 +78,11 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="ledger-list"/);
   assert.match(html, /vehicle-intel\.js\?v=7/);
   assert.match(html, /people\.js\?v=10/);
-  assert.match(html, /monthly\.js\?v=13/);
+  assert.match(html, /monthly\.js\?v=14/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=5/);
-  assert.match(html, /retail-liquidity\.js\?v=2/);
-  assert.match(html, /commercial-controls\.js\?v=1/);
+  assert.match(html, /retail-liquidity\.js\?v=3/);
+  assert.match(html, /commercial-controls\.js\?v=2/);
   assert.match(html, /customers\.js\?v=7/);
   assert.match(html, /aftersales\.js\?v=2/);
   assert.match(html, /aftersales-view\.js\?v=2/);
@@ -95,8 +95,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /employment-2026\.js\?v=3/);
   assert.match(html, /auction-hall-view\.js\?v=6/);
   assert.match(html, /buying-desk-view\.js\?v=3/);
-  assert.match(html, /stock-view\.js\?v=2/);
-  assert.match(html, /finance-view\.js\?v=15/);
+  assert.match(html, /stock-view\.js\?v=3/);
+  assert.match(html, /finance-view\.js\?v=16/);
   assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=39/);
@@ -4999,7 +4999,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=15/);
+  assert.match(html,/finance-view\.js\?v=16/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
@@ -7422,4 +7422,35 @@ test('Phase 8C: same-seed balanced and overpriced dealers demonstrate meaningful
     'Plausible asking and customer follow-through should beat persistent overpricing across matching market seeds');
   assert.ok(samples.some(x=>x.claimCases>0),
     'Active careers must genuinely include consumer aftersales events');
+});
+
+
+test('Phase 8C: aged advertised car offers actionable, honest price review without an automatic sale',()=>{
+  const app=browser(),E=app.productionEngine,s=E.create('Aged Stock Review',[],'uk2026');
+  const lead=E.marketFor(s).sellers[0];
+  assert.ok(lead);
+  assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+  const v=s.vehicles[0];
+  assert.ok(E.assessStock(s,v.id).ok);
+  assert.ok(E.startPrep(s,v.id,'external').ok);
+  for(let i=0;i<25&&v.status!=='prepared';i++){
+    if(v.workshop.stage==='in-progress'){
+      s.day++;E.advanceWorkshop(s);
+    }else if(v.workshop.stage==='quality-check'){
+      assert.ok(E.finishPrep(s,v.id).ok);
+    }else assert.fail('Unexpected workshop stage '+v.workshop.stage);
+  }
+  assert.equal(v.status,'prepared');
+  assert.ok(E.advertise(s,v.id,Math.min(75000,Math.round(v.retail*1.18/50)*50)).ok);
+  const dateListed=v.listedDay,balance=s.cash;
+  s.day+=75;
+  const review=app.stockView.render(s,{selectedId:v.id}).html;
+  assert.match(review,/30\+ DAYS ADVERTISED · REVIEW PRICE/);
+  assert.match(review,/not a buyer offer or a verified market valuation/);
+  assert.match(review,/no sale is guaranteed/);
+  assert.match(review,/UPDATE PRICE/);
+  assert.equal(v.listedDay,dateListed);
+  assert.equal(s.cash,balance);
+  assert.equal(s.sold.length,0,'Read-only review must not create completed sales');
+  assert.match(app.financeView.summary(s,E).html,/Owner salary\/drawings are NOT modelled/);
 });
