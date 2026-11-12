@@ -77,6 +77,26 @@
   // Untouched rows are explicitly marked review-pending instead of masquerading
   // as live valuations. The classic career retains the original catalogue.
   const PRICING_2026=Object.freeze({
+    '2018 Toyota Yaris Icon Hybrid':{
+      retail:7250,sourcePrice:8972,sourceMiles:87241,
+      source:'https://askcar.co.uk/used-cars/toyota/yaris/icon/2018',
+      note:'87k-mile Icon 1.5 VVT-h advertised £8,972; 114k-mile grade-3 simulator stock retains £7,250 asking. Sparse exact high-mileage hybrid cohort and condition uncertainty.',confidence:'low'},
+    '2019 Hyundai i20 SE':{
+      retail:6150,sourcePrice:6899,sourceMiles:82900,
+      source:'https://www.askcar.co.uk/used-cars/hyundai/i20/se/2019',
+      note:'Exact 2019 1.2 SE manual 82,900 miles £6,899 and 76,960 miles £7,297; a 106k-mile car at £6,150 is a conservative mileage-adjusted estimate.',confidence:'medium'},
+    '2019 Honda Jazz SE':{
+      retail:5900,sourcePrice:7995,sourceMiles:73131,
+      source:'https://www.askcar.co.uk/used-cars/honda/jazz/se/2019',
+      note:'2019 1.3 i-VTEC SE 73,131 miles advertised £7,995 and 64,353 miles £9,495. Sparse 108k-mile listings; retain £5,900 pending exact comparison.',confidence:'low'},
+    '2018 Volkswagen Golf SE':{
+      retail:6950,sourcePrice:8093,sourceMiles:82600,
+      source:'https://askcar.co.uk/used-cars/volkswagen/golf/se/2018',
+      note:'2018 Golf SE 1.6 TDI 82,600 miles estate advertised £8,093 and 72,884-mile hatchback £8,995. At 131k and grade-4 the game estimate £6,950 is an extrapolation; estate is different body.',confidence:'low'},
+    '2020 Nissan Leaf Acenta':{
+      retail:7350,sourcePrice:6750,sourceMiles:103759,
+      source:'https://www.autouncle.co.uk/en-gb/used-cars/Nissan/Leaf/y-2020',
+      note:'2020 higher-trim Tekna 62kWh at 103,759mi advertised £6,750; Acenta 40kWh 89,600mi not an exact battery/mileage match. Retained £7,350 provisional pending SOH and exact trim comparables.',confidence:'low'},
     '2016 Ford Focus Zetec':{
       retail:3450,sourcePrice:3190,sourceMiles:104000,
       source:'https://askcar.co.uk/used-cars/ford/focus/zetec/2016',
