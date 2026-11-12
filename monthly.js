@@ -85,6 +85,7 @@
     if(note.startsWith('Workshop assessment:'))return 'inspections';
     if(note.startsWith('Pre-purchase inspection:'))return 'inspections';
     if(note.startsWith('Aftersales refund:'))return 'customerRefunds';
+    if(note.startsWith('Aftersales price reduction:'))return 'customerAdjustments';
     if(note.startsWith('Aftersales collection:'))return 'customerCollection';
     if(note.startsWith('Aftersales repair:'))return 'customerRepairs';
     if(note.startsWith('Staff payroll monthly net wages settlement'))return 'payrollCash';
@@ -104,7 +105,7 @@
     'partExchangePurchases','preparation','inspections','payroll','commission',
     'recruitment','training','staffExit','other','premisesPayments','premisesInvestment','vatPayments',
     'payrollCash','hmrcRemittance','pensionRemittance',
-    'customerRefunds','customerCollection','customerRepairs'];
+    'customerRefunds','customerCollection','customerRepairs','customerAdjustments'];
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
@@ -186,7 +187,9 @@
       marginMet:grossMargin>=p.marginTarget,
       grossAfterStaff:grossMargin-payrollCost,
       ...(state.aftersalesScenario==='cra2015-2026'?{
-        aftercareCost,refundTurnover,refundedUnits:returned.length,
+        aftercareCost,refundTurnover,
+        refundedUnits:returned.filter(x=>x.type!=='price-reduction').length,
+        priceReducedUnits:returned.filter(x=>x.type==='price-reduction').length,
         netRetailTurnover:turnover-refundTurnover}:{}),
       premisesExpense,premisesPaid:-bucket.premisesPayments,
       premisesInvestment:-bucket.premisesInvestment,
@@ -313,7 +316,7 @@
       !categories.every(k=>whole(r.ledgerBreakdown[k])||
         (['premisesPayments','premisesInvestment','auctionTransport','vatPayments',
           'payrollCash','hmrcRemittance','pensionRemittance',
-          'customerRefunds','customerCollection','customerRepairs'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
+          'customerRefunds','customerCollection','customerRepairs','customerAdjustments'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.premisesExpense!==undefined&&(
       !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
@@ -324,7 +327,8 @@
       !nonneg(r.payrollCashPaid)||!nonneg(r.payrollStatutoryDue)))return false;
     if(r.aftercareCost!==undefined&&(
       !nonneg(r.aftercareCost)||!nonneg(r.refundTurnover)||
-      !nonneg(r.refundedUnits)||!whole(r.netRetailTurnover)))return false;
+      !nonneg(r.refundedUnits)||!nonneg(r.priceReducedUnits)||
+      !whole(r.netRetailTurnover)))return false;
     if(r.vatOutputAccruedPence!==undefined&&(
       !whole(r.vatOutputAccruedPence)||!whole(r.operatingAfterVat)||
       !nonneg(r.vatPayments)))return false;
