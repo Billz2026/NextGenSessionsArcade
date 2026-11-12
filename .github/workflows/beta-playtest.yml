@@ -4,12 +4,14 @@ on:
     paths:
       - 'beta/**'
       - 'tests/beta-site-smoke.mjs'
+      - 'tests/beta-customer-enquiries.mjs'
       - '.github/workflows/beta-playtest.yml'
   push:
     branches: [main]
     paths:
       - 'beta/**'
       - 'tests/beta-site-smoke.mjs'
+      - 'tests/beta-customer-enquiries.mjs'
       - '.github/workflows/beta-playtest.yml'
 permissions:
   contents: read
@@ -34,6 +36,8 @@ jobs:
           curl --fail --silent http://127.0.0.1:4173/beta/ >/dev/null
       - name: Confirm separate live and beta careers and mobile UI
         run: node tests/beta-site-smoke.mjs
+      - name: Test genuine buyer enquiries across five active 30-day careers
+        run: node tests/beta-customer-enquiries.mjs
       - name: Keep beta browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
