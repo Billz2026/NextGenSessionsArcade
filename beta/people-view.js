@@ -38,7 +38,7 @@
       ' Buyer callbacks, contact volume and appointment conversion depend on their availability and skills. Extra contacts are NOT guaranteed extra sales.</div>';
   }
   function applicants(state,P){
-    const candidates=P.applicants(state.day);
+    const candidates=P.applicants(state.day,state);
     const cards=candidates.map(candidate=>{
       const already=state.staff.some(e=>e.name===candidate.name);
       const filled=state.staff.filter(e=>e.role===candidate.role).length>=
