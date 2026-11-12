@@ -1065,6 +1065,10 @@
         if(career&&window.confirm('Accept the full retail refund and dealer-funded vehicle collection? This becomes a binding customer liability, even if the business has insufficient cash. Part-exchange consideration is returned as a cash equivalent only with the simulated customer agreement.'))
           saveResult(E.refundAftersales(career,Number(button.dataset.id)));
         break;
+      case 'aftersales-reduce':
+        if(career&&window.confirm('The customer agrees to keep the car after the failed repair in return for the displayed case-specific price reduction. Authorise the partial refund and corresponding VAT adjustment?'))
+          saveResult(E.reduceAftersales(career,Number(button.dataset.id)));
+        break;
       case 'aftersales-recover':
         if(career)saveResult(E.releaseReturned(career,Number(button.dataset.id)));
         break;
