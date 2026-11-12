@@ -5939,3 +5939,94 @@ test('2026 simulated auction transport quotes remain distinct from hammer fees a
   transportRow.note=transportRow.note.replace('simulated 65 miles','simulated 67 miles');
   assert.equal(E.normalize(altered),null,'Transport audit trail cannot be silently falsified');
 });
+
+test('UK 2026 margin VAT is one-sixth of positive sale-minus-purchase, not trading profit',()=>{
+  const V=browser().vat;
+  assert.equal(V.THRESHOLD,90000);
+  assert.equal(V.marginVatPence(7500,5000),41667);
+  assert.equal(V.marginVatPence(4500,5000),0);
+  assert.equal(V.marginVatPence(5000,5000),0);
+  assert.equal(V.marginVatPence(7500,-1),null);
+  const sale=V.record(5000,7500,1);
+  assert.equal(sale.purchaseBasis,5000);
+  assert.equal(sale.outputPence,41667);
+  assert.equal(sale.period,'2026-Q4');
+  assert.equal(V.dateForDay(sale.dueDay).toISOString().slice(0,10),'2027-02-07');
+  assert.equal(V.periodForDay(1),'2026-Q4');
+  assert.equal(sale.sellingPrice,7500);
+});
+
+test('2026 quarterly VAT cash remittance retains pence and never charges twice',()=>{
+  const V=browser().vat,record=V.record(5000,7500,1);
+  const state={financialScenario:'uk2026',vatRegistrationDay:1,day:1,
+    cash:10000,ledger:[],sold:[{day:1,price:7500,acquisition:5400,vat:record}],
+    wholesale:[]};
+  assert.equal(V.outputPence(state),41667);
+  assert.equal(V.outstandingPence(state),41667);
+  assert.equal(V.maturedPence(state,1),0);
+  assert.equal(V.advance(state).paid,0,'No VAT cash charge before a due return');
+  assert.equal(state.cash,10000);
+  state.day=record.dueDay;
+  assert.equal(V.maturedPence(state),41667);
+  const first=V.advance(state);
+  assert.equal(first.paid,416);
+  assert.equal(state.cash,9584);
+  assert.equal(first.duePence,67);
+  assert.equal(V.outstandingPence(state),67);
+  assert.equal(V.advance(state).paid,0,'Pence carried forward without duplicate whole-pound payment');
+  assert.equal(state.ledger.length,1);
+  assert.equal(V.valid(state),true);
+  const fake=JSON.parse(JSON.stringify(state));
+  fake.ledger[0].delta=-500;
+  assert.equal(V.valid(fake),false,'Paying more than recorded output tax must fail validation');
+});
+
+test('VAT threshold monitoring uses complete retail and wholesale sales prices',()=>{
+  const V=browser().vat;
+  const state={sold:[
+    {day:1,price:30000},{day:10,price:31000},{day:20,price:29000},
+    {day:30,price:2000}
+  ],wholesale:[{day:30,proceeds:1000}]};
+  assert.equal(V.rollingTurnover(state,30),93000);
+  assert.ok(V.rollingTurnover(state,30)>V.THRESHOLD);
+  assert.equal(V.rollingTurnover(state,400),0,'Transactions age out after 365 days');
+  const newState={sold:[{day:1,price:8000}],wholesale:[]};
+  assert.equal(V.rollingTurnover(newState,1),8000,'Do not use taxable margin for registration turnover');
+});
+
+test('new 2026 cars record the auction hammer as VAT purchase price and sale as margin output',()=>{
+  const app=browser(),E=app.engine,V=app.vat,real=app.productionEngine;
+  const state=E.create('VAT Used Car Trader',[],'uk2026');
+  assert.equal(state.vatRegistrationDay,1);
+  const lot=E.marketFor(state).auctions[0];
+  const hammer=Math.max(lot.reserve,lot.rival);
+  assert.ok(E.acquireAuction(state,lot.id,hammer).ok);
+  const vehicle=state.vehicles[0];
+  assert.equal(vehicle.vatPurchasePrice,hammer);
+  assert.ok(vehicle.cost>hammer,'Buyer fees/transport included in cost but not VAT purchase basis');
+  const prep=E.prepare(state,vehicle.id);
+  assert.ok(prep.ok,prep.message);
+  assert.equal(vehicle.workshop.stage,'ready');
+  assert.ok(E.advertise(state,vehicle.id,vehicle.retail).ok);
+  const handover=E.completeSale(state,vehicle.id,'cash',null);
+  assert.ok(handover.ok,handover.message);
+  const sold=state.sold.at(-1);
+  assert.equal(sold.vat.purchaseBasis,hammer);
+  assert.equal(sold.vat.outputPence,V.marginVatPence(sold.price,hammer));
+  assert.equal(V.outstandingPence(state),sold.vat.outputPence);
+  assert.equal(real.monthly.statement(state).vatOutputAccruedPence,sold.vat.outputPence);
+  assert.ok(state.ledger.some(x=>x.note.startsWith('VAT output accrued:')&&x.delta===0));
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(state))),
+    'Real 2026 vehicle sale and VAT output must save and restore correctly');
+
+  const prev=E.create('Old Pilot',[],'uk2026');
+  prev.version=15;
+  delete prev.vatRegistrationDay;
+  const migrated=real.normalize(prev);
+  assert.ok(migrated);
+  assert.equal(migrated.vatRegistrationDay,0,
+    'Do not retroactively charge VAT on unverified old pilot records');
+  assert.equal(V.enabled(migrated),false);
+  const classic=E.create('Classic Old Trader',[]);
+  assert.equal(V.enabled(classic),false);
+});
