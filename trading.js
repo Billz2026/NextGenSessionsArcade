@@ -17,6 +17,8 @@
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
   if(!MARKET)throw new Error('Load vehicle-market.js before trading.js');
+  const AUCTION_FEES=window.MotorTradeAuctionFees;
+  if(!AUCTION_FEES)throw new Error('Load auction-fees.js before trading.js');
   const C = window.MotorTradeCustomers;
   if(!C)throw new Error('Load customers.js before trading.js');
   const W = window.MotorTradeWorkshop;
@@ -59,7 +61,7 @@
     return thisWeek>day?thisWeek:scheduledAuctionDay(day+7);
   }
   function market(day,reputationScore=0,session=0,dealershipName='',
-    periodReputation=reputationScore,cash=STARTING_CASH) {
+    periodReputation=reputationScore,cash=STARTING_CASH,feeScenario='classic') {
     const tier=MARKET.tierFor(cash,reputationScore).key;
     const dealSellers=MARKET.sellersForDealDay(cash,reputationScore);
     const special=D.customers(day,periodReputation,session,dealSellers,I.profile,dealershipName);
@@ -80,9 +82,12 @@
       const delta=guide-base.guide;
       const miles=Math.max(3500,base.miles+
         (day===1?0:((sample(day,i,54)%250)-125)*100));
-      const fee=base.fee+(day===1?0:25*((sample(day,i,82)%3)-1));
+      const modern=feeScenario==='uk2026';
+      const fee=modern?AUCTION_FEES.feeAtHammer(guide):
+        base.fee+(day===1?0:25*((sample(day,i,82)%3)-1));
       return {...base,guide,reserve:base.reserve+delta,rival:base.rival+delta,
         retail:base.retail+delta,miles,fee,
+        ...(modern?{feeModel:'bca-blue-2026',feeQuoteRequired:fee===null}:{}),
         id:'A-'+day+'-'+i,kind:'auction',day};
     });
     const sellers=Array.from({length:sellerCount},(_,i)=>{
@@ -117,7 +122,7 @@
     return market(state.day,state.monthPlan?.startingReputation??state.reputationScore,
       state.deadlineSession,state.name,
       state.monthPlan?.startingReputation??state.reputationScore,
-      state.cash-todaysMovement);
+      state.cash-todaysMovement,state.financialScenario==='uk2026'?'uk2026':'classic');
   };
   // Weekly live auctions: sequential numbered lots; bids continue until one
   // dealer drops out. When the highest bid meets reserve, the hammer creates
@@ -130,6 +135,13 @@
     playerBid:0,rivalFolded:false,rounds:0,feed:[],results:[]
   });
   const lotNumber=index=>String(index+1).padStart(3,'0');
+  // The new 2026 scenario uses a *published account tariff* for the hammer;
+  // classic careers retain the original lot-level fictional fee.
+  function auctionFee(state,lot,hammer){
+    if(state.financialScenario==='uk2026')
+      return AUCTION_FEES.feeAtHammer(hammer);
+    return lot?.fee??null;
+  }
   function auctionLot(state){
     return marketFor(state).auctions[state.auctionHall.index]||null;
   }
@@ -186,7 +198,8 @@
   }
   function resolveAuction(state,kind,hammer,detail){
     const h=state.auctionHall,lot=auctionLot(state);
-    const fee=kind==='won'?lot.fee:0;
+    const fee=kind==='won'?auctionFee(state,lot,hammer):0;
+    if(fee===null)return fail('fee-quote','Auctioneer fee quotation required for this hammer. No invoice can be finalised.');
     const result={day:state.day,lotId:lot.id,
       lotNumber:lotNumber(h.index),title:lot.title,
       kind,hammer,fee,total:hammer+fee,detail};
@@ -227,8 +240,10 @@
     if(bid>100000)return fail('bid','The live bid exceeds the supported auction price.');
     if(state.vehicles.some(v=>v.origin===lot.id))
       return fail('owned','This car has already been bought.');
+    const fee=auctionFee(state,lot,bid);
+    if(fee===null)return fail('fee-quote','No published buyer fee above £24,999 under the 2026 Blue Standard schedule. Obtain a quotation before bidding on this high-value lot.');
     const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
-    const blocked=canBuy(state,bid+lot.fee,requiredPrep);
+    const blocked=canBuy(state,bid+fee,requiredPrep);
     if(blocked)return blocked;
     const money=n=>'£'+n.toLocaleString('en-GB');
     h.currentBid=bid;h.playerBid=bid;h.leader='player';h.rounds++;
@@ -257,7 +272,7 @@
     if(h.feed.length>65)h.feed=h.feed.slice(-65);
     return {ok:true,changed:true,message:'HAMMER FALLEN — LOT '+lotNumber(h.index)+
       ' at '+money(bid)+'. Rival dealer has dropped out. Finalise payment of '+
-      money(bid+lot.fee)+' including buyer fee '+money(lot.fee)+
+      money(bid+fee)+' including buyer fee '+money(fee)+
       ' to transfer the car into your workshop.'};
   }
   function settleAuction(state){
@@ -268,19 +283,21 @@
     if(state.vehicles.some(v=>v.origin===lot.id)||
        state.auctionHistory.some(r=>r.kind==='won'&&r.lotId===lot.id))
       return fail('owned','This lot has already been settled. No second payment is permitted.');
-    const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
-    const blocked=canBuy(state,h.currentBid+lot.fee,requiredPrep);
-    if(blocked)return blocked;
     const hammer=h.currentBid;
-    pay(state,-(hammer+lot.fee),'Auction purchase: '+lot.title+
-      ' (bid '+hammer+', buyer fee '+lot.fee+')');
-    addCar(state,lot,'auction',hammer+lot.fee,lot.id);
+    const fee=auctionFee(state,lot,hammer);
+    if(fee===null)return fail('fee-quote','The published 2026 tariff has no rate for this hammer. Payment cannot be assumed.');
+    const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
+    const blocked=canBuy(state,hammer+fee,requiredPrep);
+    if(blocked)return blocked;
+    pay(state,-(hammer+fee),'Auction purchase: '+lot.title+
+      ' (bid '+hammer+', buyer fee '+fee+')');
+    addCar(state,lot,'auction',hammer+fee,lot.id);
     h.feed.push('SETTLED. £'+hammer.toLocaleString('en-GB')+
-      ' hammer plus £'+lot.fee.toLocaleString('en-GB')+
+      ' hammer plus £'+fee.toLocaleString('en-GB')+
       ' buyer fee paid. Car sent for workshop assessment.');
     return resolveAuction(state,'won',hammer,'LOT '+lotNumber(h.index)+
-      ' PAID & TRANSFERRED TO WORKSHOP: £'+(hammer+lot.fee).toLocaleString('en-GB')+
-      ' (£'+hammer.toLocaleString('en-GB')+' hammer + £'+lot.fee.toLocaleString('en-GB')+
+      ' PAID & TRANSFERRED TO WORKSHOP: £'+(hammer+fee).toLocaleString('en-GB')+
+      ' (£'+hammer.toLocaleString('en-GB')+' hammer + £'+fee.toLocaleString('en-GB')+
       ' buyer fee). Any optional paid inspection is separate.');
   }
   function passAuction(state){
@@ -551,7 +568,9 @@
       return fail('bid','Enter a valid maximum bid of at least the guide price.');
     if (state.vehicles.some(v => v.origin === lot.id)) return fail('owned','You have already bought this lot. Check Vehicle Stock.');
     const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
-    const blocked = canBuy(state,bid + lot.fee,requiredPrep);
+    const fee=auctionFee(state,lot,bid);
+    if(fee===null)return fail('fee-quote','No published buyer fee for this hammer above £24,999. Obtain an individual quotation before buying.');
+    const blocked = canBuy(state,bid + fee,requiredPrep);
     if (blocked) return blocked;
     if (bid < Math.max(lot.rival,lot.reserve)) {
       const attempts = (activity?.attempts ?? 0) + 1;
@@ -561,11 +580,11 @@
         closed ? 'A rival dealer has secured this lot. No fee charged; look at another car.' :
         'Outbid on this lot. No fee charged. You can raise your maximum bid once more.'),changed:true};
     }
-    pay(state,-(bid+lot.fee),'Auction purchase: '+lot.title+' (bid '+bid+', buyer fee '+lot.fee+')');
-    addCar(state,lot,'auction',bid+lot.fee,lot.id);
+    pay(state,-(bid+fee),'Auction purchase: '+lot.title+' (bid '+bid+', buyer fee '+fee+')');
+    addCar(state,lot,'auction',bid+fee,lot.id);
     if(activity) delete state.auctionBids[id];
     return success('Won '+lot.title+' at £'+bid.toLocaleString('en-GB')+
-      '. Buyer fee £'+lot.fee.toLocaleString('en-GB')+' charged. Vehicle added to stock.');
+      '. Buyer fee £'+fee.toLocaleString('en-GB')+' charged. Vehicle added to stock.');
   }
   // The same seller keeps the same fictional negotiating temperament for
   // the session. It changes counteroffer movement, never resets after reload.
@@ -878,7 +897,7 @@
   }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, STANDARD_STARTUP, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
-    auctionDay,nextAuctionDay,settleAuction,
+    auctionDay,nextAuctionDay,auctionFee,settleAuction,
     startAuction,bidLiveAuction,passAuction,nextAuctionLot,rollAuctionHall,
     auctionLot,lotNumber,auctionValid,
     upgradePremises,monthly:M,events:D,
