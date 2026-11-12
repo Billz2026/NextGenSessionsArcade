@@ -22,7 +22,8 @@
     const held=E.customers.heldDeposits(state);
     const auction=state.auctionHall;
     const lot=auction?.phase==='payment'?E.auctionLot(state):null;
-    const auctionInvoice=lot?auction.currentBid+lot.fee:0;
+    const auctionFee=lot?E.auctionFee(state,lot,auction.currentBid):null;
+    const auctionInvoice=lot&&auctionFee!==null?auction.currentBid+auctionFee:0;
     return {cash:state.cash,reserved,afterReserve:state.cash-reserved,
       stock:r.stockCapital,held,arrears,staffDaily,premisesDaily,
       dailyCommitment:staffDaily+premisesDaily,
