@@ -83,7 +83,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /aftersales\.js\?v=2/);
   assert.match(html, /aftersales-view\.js\?v=2/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
-  assert.match(html, /vehicle-market\.js\?v=6/);
+  assert.match(html, /vehicle-market\.js\?v=7/);
   assert.match(html, /auction-fees\.js\?v=1/);
   assert.match(html, /auction-transport\.js\?v=1/);
   assert.match(html, /repair-prices\.js\?v=1/);
@@ -92,7 +92,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=6/);
   assert.match(html, /buying-desk-view\.js\?v=3/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=11/);
+  assert.match(html, /finance-view\.js\?v=12/);
   assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=38/);
@@ -116,7 +116,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /events-view\.js\?v=6/);
   assert.match(html, /monthly-view\.js\?v=13/);
   assert.match(html, /people-view\.js\?v=9/);
-  assert.match(html, /vehicle-view\.js\?v=8/);
+  assert.match(html, /vehicle-view\.js\?v=9/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -4993,7 +4993,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=11/);
+  assert.match(html,/finance-view\.js\?v=12/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
@@ -6681,6 +6681,7 @@ test('2026 all 50 vehicle retail records retain source, mileage, confidence and 
   const q=M.priceFor(qBase,'uk2026');
   assert.equal(q.retail,10950);
   assert.equal(q.guide,qBase.guide);
+  assert.match(q.priceAudit.buyingRisk,/loss-making/);
   assert.ok(q.guide>q.retail,
     'Clearly disclose commercially impossible unsourced wholesale buy guide');
   const audit=E.quote({...q,id:'A-1-2',feeModel:'bca-blue-2026'},'auction',q.guide);
