@@ -169,8 +169,31 @@
         vat.dateForDay(upcoming).toLocaleDateString('en-GB')):'')+
       '<p class="fin-detail">For new 2026 careers, used vehicles are ASSUMED margin-scheme eligible. Tax is 1/6 of a positive vehicle purchase-to-sale margin, not 20% of profit. Whole-pound VAT cash remittances fall due after simulated calendar quarters. Buyer-fee invoice classification and margin eligibility must be verified on real purchases. Input VAT recovery, proper VAT returns and full VRN/VIN stockbook are not yet modelled; the aftersales pilot reverses eligible VAT output on paid full refunds.</p>'+
       '</section>':'';
+    const STRESS=window.MotorTradeCashStress;
+    const stressPanel=is2026&&STRESS?
+      '<details class="fin-panel"><summary>12 / 36 / 60-MONTH CASH-FLOW STRESS SENSITIVITIES</summary>'+
+      '<p class="fin-detail">Illustrative sensitivity, NOT a business forecast. The per-sale contribution assumption already deducts vehicle buying, auction fees, repair, transport and provisional VAT. Each vehicle is assumed bought and sold within the same month: this omits working capital tied in stock, delays, finance and unsold vehicles. No loan/overdraft is invented. Existing tax, repair and accepted refund liabilities reduce available cash at the outset.</p>'+
+      [12,36,60].map(months=>{
+        const low=STRESS.project(state,E,{months,unitsPerMonth:1,
+          contributionPerSale:700,annualClaimCost:2500});
+        const target=STRESS.project(state,E,{months,unitsPerMonth:3,
+          contributionPerSale:1000,annualClaimCost:2500});
+        const high=STRESS.project(state,E,{months,unitsPerMonth:4,
+          contributionPerSale:1400,annualClaimCost:5000});
+        const explain=x=>'Bank '+money(x.endingBankCash)+
+          ', unpaid '+money(x.unfundedCommitments)+
+          (x.firstCashShortfallMonth!==null?
+            ', first shortfall month '+x.firstCashShortfallMonth:
+            ', no projected shortfall');
+        return '<h4>'+months+' GAME MONTHS</h4>'+
+          line('1 sale/mo · £700 each, £2,500 claim/year',explain(low))+
+          line('3 sales/mo · £1,000 each, £2,500 claim/year',explain(target))+
+          line('4 sales/mo · £1,400 each, £5,000 claim/year',explain(high));
+      }).join('')+
+      '<p class="fin-detail">Your scenario uses the current forecourt overhead budget and conservative full employer payroll before NI relief. Insurance renewal is charged every 360 game days. Unpaid commitments are not hidden as borrowing or negative bank cash. Never rely on these outcomes as guaranteed profits or actual future sales.</p>'+
+      '</details>':'';
     const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional and not statutory net profit or a statutory VAT return; employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
-    return {snapshot:x,html:top+openingPanel+vatPanel+cashflow+'<div class="fin-secondary">'+
+    return {snapshot:x,html:top+openingPanel+vatPanel+stressPanel+cashflow+'<div class="fin-secondary">'+
       commitments+performance+'</div>'+footer};
   }
   function category(note){
