@@ -23,7 +23,8 @@
     const auction=state.auctionHall;
     const lot=auction?.phase==='payment'?E.auctionLot(state):null;
     const auctionFee=lot?E.auctionFee(state,lot,auction.currentBid):null;
-    const auctionInvoice=lot&&auctionFee!==null?auction.currentBid+auctionFee:0;
+    const transport=lot?E.auctionTransport(state,lot):null;
+    const auctionInvoice=lot&&auctionFee!==null&&transport?auction.currentBid+auctionFee+transport.gross:0;
     return {cash:state.cash,reserved,afterReserve:state.cash-reserved,
       stock:r.stockCapital,held,arrears,staffDaily,premisesDaily,
       dailyCommitment:staffDaily+premisesDaily,
@@ -79,8 +80,8 @@
       '<p class="fin-warning">UNPAID BILLS: '+money(x.arrears)+
         ' of staff or premises obligations remain outstanding.</p>':'';
     const auctionNotice=x.auctionInvoice?
-      '<p class="fin-warning">AUCTION INVOICE PENDING: '+money(x.auctionInvoice)+
-        ' must be settled separately before further buying.</p>':'';
+      '<p class="fin-warning">AUCTION PAYMENT PENDING: '+money(x.auctionInvoice)+
+        ' includes hammer, buyer fee and simulated outsourced transport where applicable.</p>':'';
     const commitments='<section class="fin-panel"><div class="fin-panel-head"><div>'+
       '<small>CASH COMMITMENTS</small><h3>WHAT IS ALREADY SPOKEN FOR?</h3></div>'+
       '<button type="button" class="fin-text-button" data-page="workshop">WORKSHOP</button></div>'+
