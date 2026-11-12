@@ -91,6 +91,11 @@ const result=await page.evaluate(()=>{
         }
       }
       const log=s.customerHistory.slice(beforeHistory);
+      const followups=log.filter(x=>x.type==='sales-follow-up');
+      if(new Set(followups.map(x=>x.leadId)).size!==followups.length)
+        throw Error('Employee called the same buyer twice for one daily follow-up');
+      const salaryAccrualDays=s.ledger.filter(r=>r.day>startDay&&
+        r.note.startsWith('Staff salary expense accrued:')).length;
       const counts=type=>log.filter(x=>x.type===type).length;
       const allBalances=(s.financialScenario==='uk2026'?50000:12500)+
         s.ledger.reduce((sum,r)=>sum+r.delta,0);
@@ -102,7 +107,8 @@ const result=await page.evaluate(()=>{
         followupDays:followupDays.size,enquiries:counts('enquiry'),
         callbacks:counts('sales-follow-up'),booked:counts('appointment'),
         viewings:counts('arrived'),noShows:counts('no-show'),
-        profit:0,staffCount:s.staff.length,
+        profit:0,staffCount:s.staff.length,salaryAccrualDays,
+        payrollLiabilities:E.employment.liabilities(s).total,
         rep:s.staff.find(x=>x.role==='sales')?
           {name:s.staff[0].name,contacts:s.staff[0].workDone,deals:s.staff[0].deals,
             salary:s.staff[0].monthlySalary}:null};
@@ -119,6 +125,8 @@ assert.ok(summary.every(x=>x.solo.staffCount===0&&x.team.staffCount===1));
 assert.ok(summary.every(x=>x.solo.callbacks===0));
 assert.ok(summary.every(x=>x.team.callbacks>=1),
   'A paid sales executive should contact real prospects instead of sitting idle');
+assert.ok(summary.every(x=>x.team.salaryAccrualDays>=20&&x.solo.salaryAccrualDays===0),
+  'Employment must accrue real wages during the month even without a retail sale');
 assert.ok(summary.every(x=>x.team.rep.contacts>=x.team.callbacks),
   'Staff register must credit genuine callbacks and inbound enquiries');
 assert.ok(summary.every(x=>x.team.booked>=1),
