@@ -74,17 +74,19 @@
   function makeMessage(id, day, from, subject, preview, body, linkPage) {
     return { id, day, from, subject, preview, body, linkPage, read: false };
   }
-  function welcomeMessages() {
+  function welcomeMessages(realistic=false) {
     return [
       makeMessage(1,1,'BUSINESS SUPPORT','Welcome to the motor trade',
-        'Run your first dealership, with £12,500 in capital.',
-        'Your dealership starts with £12,500 in cash and four forecourt spaces. Visit the Auction Hall for live numbered-lot bidding, and the Buying Desk for customers selling cars directly.\n\nA car needs workshop assessment, timed repairs and a passed final quality check before advertising. Once listed, customer enquiries are not guaranteed: book appointments, arrange test drives, negotiate and complete handover. A part-exchange becomes your next stock vehicle.',
+        realistic?'Open your independent dealership with £50,000 in bank cash.':
+          'Run your first dealership, with £12,500 in capital.',
+        (realistic?'£60,000 owner capital funded your business. £10,000 was committed before opening (lease deposit, prepaid insurance, equipment and launch). You begin with £50,000 bank cash, four selling spaces and outsourced repairs. ': 'Your dealership starts with £12,500 in cash and four forecourt spaces. ')+
+        'Visit the Auction Hall for live numbered-lot bidding, and the Buying Desk for customers selling cars directly.\n\nA car needs workshop assessment, timed repairs and a passed final quality check before advertising. Once listed, customer enquiries are not guaranteed: book appointments, arrange test drives, negotiate and complete handover. A part-exchange becomes your next stock vehicle.',
         'auctionHall'),
       makeMessage(2,1,'BUYING DESK','Three ways to find your next car',
         'Auctions, direct sellers and part-exchanges all supply vehicles.',
         'Auctions have competing traders and buyer fees. Direct sellers can reject low offers. Part-exchanges happen when you sell one of your advertised cars and agree an allowance for the customer\'s existing vehicle.\n\nEvery route affects your cash and stock differently. Your first market opportunities are waiting.',
         'auctionHall'),
-      makeMessage(3,1,'ACCOUNTS OFFICE','Protect your opening £12,500',
+      makeMessage(3,1,'ACCOUNTS OFFICE',realistic?'Protect your opening £50,000':'Protect your opening £12,500',
         'Gross margin is different from cash flow.',
         'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. Gross trade margin excludes staff and premises overheads; the management report shows an operating contribution after those charges. VAT, tax, finance and after-sale claims remain unmodelled.',
         'finance')
@@ -443,6 +445,9 @@
     const date = gameDate(career.day);
     const short = dateShort.format(date).toUpperCase();
     bindText('company', career.name);
+    byId('owner-startup-label').textContent=career.financialScenario==='uk2026'?
+      'INDEPENDENT DEALER · OWNER CAPITAL £60,000 · OPENING BANK £50,000':
+      'INDEPENDENT MOTOR TRADER · STARTING CAPITAL £12,500';
     bindText('cash', money.format(career.cash));
     bindText('customer-deposits',money.format(C.heldDeposits(career)));
     bindText('stock', career.stock + ' / ' + career.capacity);
@@ -629,7 +634,8 @@
     }
     input.setCustomValidity('');
     if (career && !window.confirm('Replace your existing career? This will overwrite your saved dealership and inbox history.')) return;
-    career = E.create(name, welcomeMessages());
+    const realistic=byId('career-realism').checked===true;
+    career = E.create(name, welcomeMessages(realistic),realistic?'uk2026':'classic');
     selectedMessageId = null;
     inboxFilter='all';
     lastTradeResult = null;
@@ -662,6 +668,11 @@
     startCareer();
   });
   byId('dealership-name').addEventListener('input', event => event.target.setCustomValidity(''));
+  byId('career-realism').addEventListener('change',event=>{
+    const modern=event.target.checked;
+    byId('starting-cash-fact').textContent=modern?'£50,000':'£12,500';
+    byId('career-type-fact').textContent=modern?'2026 independent':'Classic independent';
+  });
   document.addEventListener('input', event => {
     if(!career||!event.target?.id)return;
     const match=/^(auction-bid-|seller-offer-)([AS]-[0-9]+-[0-9]+)$/.exec(event.target.id);
