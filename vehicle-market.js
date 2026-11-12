@@ -71,6 +71,54 @@
       ['2023 Range Rover Sport P440e',33800,'Plug-in Hybrid','Automatic','3.0 petrol PHEV',50800,66000,1625,2,'Full']
     ]
   });
+  // Only the audited 2026 scenario uses these dated asking-price anchors.
+  // These ARE UK retail advertisements, NOT auction hammer or CAP trade values.
+  // The trade guides below remain transparent, illustrative game assumptions.
+  // Untouched rows are explicitly marked review-pending instead of masquerading
+  // as live valuations. The classic career retains the original catalogue.
+  const PRICING_2026=Object.freeze({
+    '2017 Ford Fiesta Zetec':{
+      retail:3950,sourcePrice:3979,sourceMiles:100923,tradeGuide:1750,
+      source:'https://certmotors.com/vehicles/car/Ford/Fiesta',
+      note:'Model-year/mileage regression, trim and condition unverified',confidence:'medium'},
+    '2018 Volkswagen Polo SE':{
+      retail:7550,sourcePrice:7599,sourceMiles:101539,tradeGuide:4250,
+      source:'https://certmotors.com/vehicles/car/Volkswagen/Polo',
+      note:'2018 model year and mileage model; trim needs validation',confidence:'medium'},
+    '2020 Vauxhall Corsa SE Premium':{
+      retail:6250,sourcePrice:5795,sourceMiles:101511,tradeGuide:3450,
+      source:'https://www.askcar.co.uk/used-cars/vauxhall/corsa/se-premium/2020',
+      note:'2020 comparable 100k+ petrol cars £5.5k-£5.8k, turbo derivative may differ',confidence:'low'},
+    '2022 MG4 EV SE Standard Range':{
+      retail:10650,sourcePrice:10500,sourceMiles:53956,tradeGuide:7100,
+      source:'https://askcar.co.uk/car/mg-mg4-2022-85693825dda8',
+      note:'Three 2022 SE examples 50k-62k miles near £10.5k-£11.2k',confidence:'medium'},
+    '2021 Nissan Leaf N-Connecta':{
+      retail:8550,sourcePrice:9000,sourceMiles:38000,tradeGuide:5450,
+      source:'https://www.askcar.co.uk/used-cars/nissan/leaf/n-connecta/2021',
+      note:'2021 trim median, car has above-median miles; battery SOH unverified',confidence:'low'}
+  });
+  const MARKET_2026_REVIEW_DATE='2026-11-12';
+  function priceFor(base,scenario='classic'){
+    if(scenario!=='uk2026')return base;
+    const evidence=PRICING_2026[base.title];
+    if(!evidence)return {...base,priceAudit:{
+      status:'unverified',asOf:MARKET_2026_REVIEW_DATE,
+      note:'Illustrative game guide/asking prices awaiting derivative, mileage and condition benchmarking.'}};
+    const guide=evidence.tradeGuide;
+    return {...base,guide,retail:evidence.retail,
+      reserve:guide+Math.round(guide*.07/25)*25,
+      rival:guide+Math.round(guide*.13/25)*25,
+      ask:guide+Math.max(300,Math.round(guide*.08/25)*25),
+      floor:guide-125,
+      priceAudit:{
+        status:'retail-comparable',asOf:MARKET_2026_REVIEW_DATE,
+        confidence:evidence.confidence,source:evidence.source,
+        comparisonAsk:evidence.sourcePrice,comparisonMiles:evidence.sourceMiles,
+        note:evidence.note,
+        tradeGuide:'Illustrative game-model assumption, not a verified auction result'
+      }};
+  }
   const KEYS=Object.freeze(['starter','modern','premium','luxury']);
   const TIERS=Object.freeze([
     {key:'starter',label:'STARTER DEALER',minCash:0,minRep:0},
@@ -153,5 +201,5 @@
     const id=Number(vehicle.id)||0;
     return affordable[hash('part-ex|'+vehicle.origin+'|'+id)%affordable.length];
   }
-  window.MotorTradeMarket=Object.freeze({TIERS,CATALOGUE,tierFor,progress,pool,pick,sellersForDealDay,exchangeFor});
+  window.MotorTradeMarket=Object.freeze({TIERS,CATALOGUE,PRICING_2026,MARKET_2026_REVIEW_DATE,priceFor,tierFor,progress,pool,pick,sellersForDealDay,exchangeFor});
 })();
