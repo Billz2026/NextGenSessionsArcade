@@ -5809,3 +5809,90 @@ test('2026 live auction fee increases at hammer threshold and all finance desks 
   falsified.auctionHistory[0].total=3046;
   assert.equal(E.normalize(falsified),null,'Tampered 2026 rate must be rejected');
 });
+
+test('2026 catalogue is 15 evidenced retail reviews and 35 explicitly unverified prices',()=>{
+  const app=browser(),M=app.market,E=app.productionEngine;
+  const catalogue=Object.values(M.CATALOGUE).flat();
+  assert.equal(catalogue.length,50);
+  assert.equal(Object.keys(M.PRICING_2026).length,15);
+  const scenarios=catalogue.map(car=>M.priceFor(car,'uk2026'));
+  assert.equal(scenarios.filter(c=>c.priceAudit.status==='retail-comparable').length,15);
+  assert.equal(scenarios.filter(c=>c.priceAudit.status==='unverified').length,35);
+  for(const car of scenarios){
+    assert.equal(car.repairScenario,'uk2026');
+    const classic=catalogue.find(x=>x.title===car.title);
+    assert.ok(classic);
+    if(!Number.isSafeInteger(M.PRICING_2026[car.title]?.tradeGuide)){
+      assert.equal(car.guide,classic.guide,
+        car.title+' must not acquire invented wholesale hammer evidence from retail adverts');
+    }
+  }
+  for(const [name,ask] of [
+    ['2016 Ford Focus Zetec',3450],
+    ['2018 Peugeot 208 Active',3350],
+    ['2017 Nissan Qashqai Acenta',4700],
+    ['2021 Vauxhall Corsa SE Premium',8800],
+    ['2021 Peugeot 208 Allure',9250],
+    ['2021 Toyota Yaris Design Hybrid',12800],
+    ['2022 Ford Puma Titanium',11300],
+    ['2022 Toyota Corolla Icon Hybrid',15500],
+    ['2023 Tesla Model Y Long Range',26800]
+  ]){
+    assert.equal(scenarios.find(x=>x.title===name)?.retail,ask,name);
+  }
+  assert.equal(E.marketFor(E.create('Modern',[],'uk2026')).auctions[0].retail,3450);
+  assert.equal(E.marketFor(E.create('Classic',[])).auctions[0].retail,4250);
+});
+
+test('2026 job card reconciles gross VAT-inclusive garage jobs without double billing diagnostics',()=>{
+  const R=browser().repairPrices;
+  assert.equal(R.quote('service').gross,204);
+  assert.equal(R.quote('frontBrakes').gross,278);
+  assert.equal(R.quote('rearBrakes').gross,248);
+  assert.equal(R.quote('tyres').gross,235);
+  const seed={title:'2018 Peugeot 208 Active',engineSpec:'1.2 PureTech',
+    fuel:'Petrol',miles:113800,grade:4,history:'Partial'};
+  const estimate=R.plan(seed);
+  assert.equal(estimate.basePrep,687);
+  assert.equal(estimate.knownRepairs.reduce((sum,x)=>sum+x.cost,0),687);
+  assert.equal(estimate.knownRepairs.some(x=>x.item.includes('diagnostic')),false,
+    'Separate assessment covers diagnostics, so job card must not charge twice');
+  assert.ok(estimate.majorExposure.maxIndicativeCost>=650);
+  assert.match(estimate.majorExposure.note,/Confirm exact engine/);
+  assert.ok(estimate.riskAllowance>385);
+  const ev=R.plan({title:'2022 MG4 EV SE Standard Range',engineSpec:'51 kWh EV',
+    fuel:'Electric',miles:57500,grade:2,history:'Full'});
+  assert.equal(ev.basePrep,R.quote('evService').gross);
+  assert.equal(ev.majorExposure,null);
+});
+
+test('2026 auction purchase and paid assessment flow into true stock cost with external prep once',()=>{
+  const app=browser(),E=app.productionEngine;
+  const state=E.create('Workshop Audit',[],'uk2026');
+  const lot=E.marketFor(state).auctions[0];
+  assert.equal(lot.profile.basePrep,687);
+  assert.ok(lot.profile.knownRepairs.every(x=>x.labourRate===72));
+  const hammer=Math.max(lot.reserve,lot.rival);
+  const buy=E.acquireAuction(state,lot.id,hammer);
+  assert.ok(buy.ok,buy.message);
+  const vehicle=state.vehicles[0];
+  const purchased=vehicle.cost;
+  const initialCash=state.cash;
+  const assessed=E.assessStock(state,vehicle.id);
+  assert.ok(assessed.ok,assessed.message);
+  assert.equal(vehicle.workshop.assessmentFee,80);
+  assert.equal(vehicle.cost,purchased+80);
+  assert.equal(state.cash,initialCash-80);
+  const q=E.prepQuote(state,vehicle.id,'external');
+  assert.ok(q);
+  assert.equal(q.supplement,0,'2026 cost card already contains external garage labour and VAT');
+  assert.equal(q.cost,vehicle.prepBudget);
+  const before=state.cash;
+  const booked=E.startPrep(state,vehicle.id,'external');
+  assert.ok(booked.ok,booked.message);
+  assert.equal(state.cash,before-q.cost);
+  assert.equal(vehicle.workshop.repairCost,q.cost);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
+    '2026 assessed and booked repair job must reconcile after a save/reload');
+  assert.equal(E.premises.bays(state),0,'External prep does not invent equipped dealership bays');
+});
