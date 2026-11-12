@@ -5614,3 +5614,20 @@ test('v0.9.35 one-page desktop polish is scoped to My Dealership and retains mob
   assert.match(css,/\.hq-upgrade-details summary:focus-visible/);
   assert.match(css,/@media\(max-width:560px\)/);
 });
+
+test('2026 new full-time recruitment candidates satisfy the adult 21+ wage floor',()=>{
+  const P=browser(new Map()).productionEngine.people;
+  const MIN_ANNUAL=12.71*40*52;
+  for(const day of [1,8,15,29]){
+    const pool=P.applicants(day);
+    assert.equal(pool.length,16);
+    for(const person of pool){
+      assert.ok(person.monthlySalary*12>=MIN_ANNUAL,
+        person.name+' in '+person.role+' would be below the full-time 2026 minimum');
+    }
+    assert.ok(pool.filter(person=>person.role==='technician')
+      .every(person=>person.monthlySalary>=2850));
+    assert.ok(pool.filter(person=>person.role==='supervisor')
+      .every(person=>person.monthlySalary>=3100));
+  }
+});
