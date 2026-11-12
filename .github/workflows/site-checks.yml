@@ -103,3 +103,32 @@ jobs:
         run: node --check aftersales.js && node --check aftersales-view.js && node --check economics-stress.js && node --check retail-liquidity.js && node --check commercial-controls.js && node --check employment-2026.js && node --check vat.js && node --check auction-fees.js && node --check auction-transport.js && node --check repair-prices.js && node --check vehicle-intel.js && node --check vehicle-photos.js && node --check vehicle-accuracy.js && node --check vehicle-market.js && node --check vehicle-cards.js && node --check vehicle-view.js && node --check premises.js && node --check premises-view.js && node --check people.js && node --check people-view.js && node --check monthly.js && node --check monthly-view.js && node --check events.js && node --check events-view.js && node --check workshop.js && node --check workshop-view.js && node --check customers.js && node --check customers-view.js && node --check trading.js && node --check auction-hall-view.js && node --check buying-desk-view.js && node --check stock-view.js && node --check finance-view.js && node --check dashboard-view.js && node --check inbox-office.js && node --check simulator.js
       - name: Validate full career and trading interactions
         run: node --test tests/site.test.mjs
+
+  browser-release-gate:
+    name: Chromium desktop/mobile release gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real-browser test dependencies
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Serve the exact pull request build locally
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/motortrade-browser-server.log 2>&1 &
+          sleep 2
+          curl --fail --silent http://127.0.0.1:4173/ > /dev/null
+      - name: Exercise all pages and actual trading in Chromium
+        run: node tests/browser-release-gate.mjs
+      - name: Retain screenshots for desktop/mobile review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: motortrade-browser-evidence
+          path: browser-evidence/
+          if-no-files-found: ignore
+          retention-days: 14
