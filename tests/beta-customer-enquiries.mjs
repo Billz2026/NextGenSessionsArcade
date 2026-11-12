@@ -126,7 +126,8 @@ let generated=null;
 for(let day=0;day<20;day++){
   await page.locator('#continue-day').click();
   const current=await page.evaluate(()=>JSON.parse(localStorage.getItem('the-motor-trade-career-beta-v1')));
-  generated=Object.values(current.customerCases).find(c=>c.status==='enquiry');
+  generated=Object.values(current.customerCases).find(c=>
+    c.status==='enquiry'&&c.createdDay===current.day);
   if(generated){
     assert.ok((await page.locator('#event-notice').innerText()).includes('NEW RETAIL ENQUIRY'),
       'Player must see an unsolicited new buyer enquiry without having entered Sales Office');
