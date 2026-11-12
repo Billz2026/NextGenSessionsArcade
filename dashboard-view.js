@@ -48,10 +48,11 @@
     if(state.auctionHall?.phase==='payment'){
       const lot=E.auctionLot(state);
       const auctionFee=lot?E.auctionFee(state,lot,state.auctionHall.currentBid):null;
-      const due=lot&&auctionFee!==null?state.auctionHall.currentBid+auctionFee:null;
+      const transport=lot?E.auctionTransport(state,lot):null;
+      const due=lot&&auctionFee!==null&&transport?state.auctionHall.currentBid+auctionFee+transport.gross:null;
       add(0,'auction-invoice','Settle your auction purchase',
         due==null?'A winning hammer invoice needs payment before trading can continue.':
-          money(due)+' due including the buyer fee. Vehicle awaits workshop transfer.',
+          money(due)+' due including the buyer fee and simulated delivery where applicable. Vehicle awaits workshop transfer.',
         'auctionHall','PAY INVOICE','urgent');
     }
     if(events.meetingDue(state))
