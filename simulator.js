@@ -566,6 +566,7 @@
         linkPage:'staff',reference:'supervisor-checkins:'+career.day});
     }
     const premisesEvent=E.premisesDay(career);
+    const vatEvent=E.vatDay(career);
     const workshopEvents=E.advanceWorkshop(career);
     const customerEvents=E.advanceCustomers(career);
     lastTradeResult = null;
@@ -598,6 +599,12 @@
     eventNotice+=' PREMISES: '+money.format(premisesEvent.paid)+' of '+
       money.format(premisesEvent.due)+(career.financialScenario==='uk2026'?' daily operating bills paid; ':' daily rent/utilities paid; ')+
       money.format(premisesEvent.arrears)+' outstanding.';
+    if(vatEvent.paid)
+      eventNotice+=' HMRC VAT remittance: '+money.format(vatEvent.paid)+
+        ' paid; '+E.vat.pence(vatEvent.duePence)+' of overdue output VAT remains.';
+    else if(vatEvent.duePence>=100)
+      eventNotice+=' VAT PAYMENT OVERDUE: '+E.vat.pence(vatEvent.duePence)+
+        ' owed on the simplified eligible used-vehicle margin scheme.';
     if(workshopEvents.length)
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
     if(customerEvents.length)
