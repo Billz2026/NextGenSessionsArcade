@@ -71,7 +71,7 @@
       if(c.status==='refund-due')html+='<p'+(overdue?' class="sd-issue"':'')+
         '>Full customer refund '+money(c.refundAmount)+' plus dealer-paid collection '+
         money(c.collectionCost)+' is accepted and must be settled without undue delay. '+
-        (overdue?'**OVERDUE** — ':'')+'Latest modelled payment Day '+c.refundDueDay+
+        (overdue?'<strong>OVERDUE</strong> — ':'')+'Latest modelled payment Day '+c.refundDueDay+
         '. The business pays automatically when liquid funds cover both. Insufficient cash does not cancel the debt.'+
         (c.cashEquivalentConsent?' The fictional customer expressly agreed a cash-equivalent return of their original part-exchange allowance.':'')+
         '</p>';
