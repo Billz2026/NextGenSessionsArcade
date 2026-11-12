@@ -93,6 +93,7 @@ const samples=await page.evaluate(()=>{
     if(s.vehicles.some(v=>v.status!=='listed'))throw Error(name+
       ' could not list all 3 cars: '+s.vehicles.map(v=>v.workshop.stage+'/'+v.status));
     const firstAdvertDay=s.day;
+    const firstAdvertState=JSON.parse(JSON.stringify(s));
     // No player action in Sales Office: enquiries must nevertheless happen
     // automatically during the next thirty simulated game days.
     for(let i=0;i<30;i++){tick();manage();}
@@ -103,18 +104,40 @@ const samples=await page.evaluate(()=>{
       .filter(c=>c.status==='enquiry').length;
     return {name,firstAdvertDay,stock:s.vehicles.length,listed:s.vehicles.filter(v=>v.status==='listed').length,
       enquiries:enquiryIds.size,noticeDays:daysSeen.size,notified:notified.length,
-      finalActive:physicalCases,firstLead,
+      finalActive:physicalCases,firstAdvertState,firstLead,
       totalMonths:Math.floor((s.day-1)/30)+1,
       version:s.version,bank:s.cash};
   });
 });
-const view=samples.map(({firstLead,...rest})=>rest);
+const view=samples.map(({firstLead,firstAdvertState,...rest})=>rest);
 console.log('BETA_CUSTOMER_30DAY_SCENARIOS '+JSON.stringify(view));
 assert.ok(samples.every(x=>x.stock===3&&x.listed===3),'All sample dealers must have three advertised cars');
 assert.ok(samples.every(x=>x.enquiries===x.notified),'Every genuine enquiry must produce one saved inbox notification');
 assert.ok(samples.every(x=>x.enquiries>0),'Three fairly priced advertised cars should not go thirty days with no enquiries in the five test seeds');
 const total=samples.reduce((n,x)=>n+x.enquiries,0);
 assert.ok(total>=10&&total<=60,'Test careers should have repeated but bounded leads, never a guaranteed sale factory');
+// Exercise real Continue clicks on an existing career without visiting Sales
+// Office. A previously missed day-only demand opportunity must now survive.
+const starting=samples[0].firstAdvertState;
+await page.evaluate(s=>localStorage.setItem('the-motor-trade-career-beta-v1',JSON.stringify(s)),starting);
+await page.reload({waitUntil:'domcontentloaded'});
+await page.locator('#menu-continue').click();
+let generated=null;
+for(let day=0;day<20;day++){
+  await page.locator('#continue-day').click();
+  const current=await page.evaluate(()=>JSON.parse(localStorage.getItem('the-motor-trade-career-beta-v1')));
+  generated=Object.values(current.customerCases).find(c=>c.status==='enquiry');
+  if(generated){
+    assert.ok((await page.locator('#event-notice').innerText()).includes('NEW RETAIL ENQUIRY'),
+      'Player must see an unsolicited new buyer enquiry without having entered Sales Office');
+    assert.ok(current.messages.some(m=>m.reference==='retail-enquiry:'+generated.id),
+      'Automatic enquiry must appear in Inbox immediately on Continue');
+    break;
+  }
+}
+assert.ok(generated,'A player continuing normal days must encounter a genuine buyer enquiry');
+const actualSaved=await page.evaluate(()=>JSON.parse(localStorage.getItem('the-motor-trade-career-beta-v1')));
+assert.ok(actualSaved.cash>=0,'A real UI save must exist after the daily lead');
 const sample=samples.find(x=>x.firstLead)?.firstLead;
 assert.ok(sample,'At least one real customer enquiry should exist for UI verification');
 const active=Object.values(sample.customerCases).find(c=>c.status==='enquiry');
