@@ -88,7 +88,7 @@
         'auctionHall'),
       makeMessage(3,1,'ACCOUNTS OFFICE',realistic?'Protect your opening £50,000':'Protect your opening £12,500',
         'Gross margin is different from cash flow.',
-        'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. Gross trade margin excludes staff and premises overheads; the management report shows an operating contribution after those charges. VAT, tax, finance and after-sale claims remain unmodelled.',
+        'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. '+(realistic?'Your 2026 dealer is modelled as voluntarily VAT-registered from day one. Eligible fictional used-car sales accrue one-sixth VAT on the positive vehicle purchase-to-sale margin, with a separate quarterly tax payment. Input VAT recovery and full statutory returns are not modelled; employer taxes and aftersales claims still require auditing.':'Gross trade margin excludes staff and premises overheads; the management report shows an operating contribution after those charges. VAT, tax, finance and after-sale claims remain unmodelled.'),
         'finance')
     ];
   }
