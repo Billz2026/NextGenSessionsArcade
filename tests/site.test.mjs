@@ -615,7 +615,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 14);
+  assert.equal(opening.version,15);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -747,7 +747,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,14);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,15);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -983,7 +983,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,14);
+  assert.equal(migrated.version,15);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -1062,7 +1062,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,14);
+  assert.equal(saved.version,15);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
@@ -1072,7 +1072,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,14);
+  assert.equal(app.engine.VERSION,15);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
@@ -1266,7 +1266,7 @@ test('v0.4 career migrates with stock, sold vehicles and financial balances unto
   assert.equal(newApp.nodes.get('menu-continue').hidden,false);
   newApp.click('resume');newApp.click('save');
   const restored=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,15);
   assert.equal(restored.cash,v3.cash);
   assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
   assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
@@ -1351,7 +1351,7 @@ test('new dealerships receive achievable company targets and a live monthly dash
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Monthly Review Motors');
   const E=app.engine,state=E.create('Standalone',[]);
-  assert.equal(E.VERSION,14);
+  assert.equal(E.VERSION,15);
   assert.equal(state.monthPlan.month,1);
   assert.equal(state.monthPlan.startDay,1);
   assert.equal(state.monthPlan.endDay,30);
@@ -1478,7 +1478,7 @@ test('day 30 close generates an inbox message and immutable archived review', ()
   assert.equal(JSON.stringify(state.monthlyReports[0]),archived);
   const resumed=browser(storage);
   resumed.click('resume');
-  assert.equal(resumed.engine.VERSION,14);
+  assert.equal(resumed.engine.VERSION,15);
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).monthlyReports.length,1);
 });
 test('monthly targets credit salesperson performance only during active duty', () => {
@@ -1515,7 +1515,7 @@ test('migration from v0.5 preserves staff, outstanding balances and day without 
   assert.equal(resumed.nodes.get('menu-continue').hidden,false);
   resumed.click('resume');resumed.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,14);
+  assert.equal(after.version,15);
   assert.equal(after.day,before.day);
   assert.equal(after.cash,before.cash);
   assert.equal(after.ledger.length,before.ledger.length);
@@ -1746,7 +1746,7 @@ test('old v0.6 saved careers migrate without losing sales, staff, stock or cash'
   next.click('resume');
   next.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,14);
+  assert.equal(after.version,15);
   assert.equal(after.cash,old.cash);
   assert.equal(after.staff.length,1);
   assert.equal(after.vehicles.length,1);
@@ -2144,7 +2144,7 @@ test('v0.7.1 saved stock migrates without adding hidden charges or altering comp
   for(const v of old.vehicles)delete v.workshop;
   const restored=E.normalize(old);
   assert.ok(restored,'Historic save should migrate instead of being discarded');
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,15);
   assert.equal(restored.cash,old.cash);
   assert.equal(restored.ledger.length,old.ledger.length);
   assert.equal(restored.vehicles[0].prepSpent,old.vehicles[0].prepSpent);
@@ -2244,7 +2244,7 @@ test('v0.9 gives four spaces to fresh and existing two-space dealerships without
   delete old.customerCases;delete old.customerHistory;
   const upgraded=E.normalize(old);
   assert.ok(upgraded);
-  assert.equal(upgraded.version,14);
+  assert.equal(upgraded.version,15);
   assert.equal(upgraded.capacity,4);
   assert.equal(upgraded.cash,old.cash);
   assert.equal(upgraded.vehicles.length,old.vehicles.length);
@@ -2659,7 +2659,7 @@ test('live photo identity survives buying, saving, and v8 migration', () => {
   delete old.vehicles[0].color;delete old.vehicles[0].generation;
   const migrated=E.normalize(old);
   assert.ok(migrated);
-  assert.equal(migrated.version,14);
+  assert.equal(migrated.version,15);
   assert.equal(migrated.cash,state.cash);
   assert.ok(P.COLOURS.includes(migrated.vehicles[0].color));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(migrated))));
@@ -2989,7 +2989,7 @@ test('v0.9.7 multiple salespeople unlock at reputation milestones and divide act
 test('v0.9.8 premises investment unlocks capacity only with earned reputation and affordable cash', () => {
   const E=browser(new Map()).productionEngine,site=E.premises;
   const state=E.create('Expansion Economics',[]);
-  assert.equal(E.VERSION,14);
+  assert.equal(E.VERSION,15);
   assert.equal(state.capacity,4);
   assert.equal(site.bays(state),4);
   assert.equal(site.costs(state).total,25);
@@ -3059,7 +3059,7 @@ test('v0.9.8 old version 9 careers migrate to a four-space premises without losi
   delete old.premises;
   const after=E.normalize(old);
   assert.ok(after);
-  assert.equal(after.version,14);
+  assert.equal(after.version,15);
   assert.equal(after.capacity,4);
   assert.equal(after.premises.forecourtLevel,0);
   assert.equal(after.premises.workshopLevel,0);
@@ -3274,7 +3274,7 @@ test('v0.9.9 prior v10 expanded dealership saves retain stock capacity, cash and
   delete previous.auctionHistory;
   const restored=E.normalize(previous);
   assert.ok(restored);
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,15);
   assert.equal(restored.capacity,6);
   assert.equal(restored.premises.forecourtLevel,1);
   assert.equal(restored.cash,previous.cash);
@@ -3490,7 +3490,7 @@ test('v0.9.10 migrates previous v11 careers on now-closed weekdays without losin
     results:[{...s.auctionHistory[0]}]};
   const restored=E.normalize(old);
   assert.ok(restored,'Old v11 save must survive schedule change');
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,15);
   assert.equal(restored.cash,s.cash);
   assert.equal(restored.auctionHistory.length,1);
   assert.equal(restored.auctionHall.day,2);
@@ -3817,7 +3817,7 @@ test('v0.9.13 previous v12 career preserves history and does not resend old invo
   delete old.inboxLedgerCursor;
   const restored=E.normalize(old);
   assert.ok(restored);
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,15);
   assert.equal(restored.inboxLedgerCursor,old.ledger.length);
   assert.equal(restored.cash,old.cash);
   assert.equal(restored.stock,old.stock);
@@ -4027,7 +4027,7 @@ test('v0.9.14 v13 saves keep historic employee messages, ledger cursor and cash'
   legacy.version=13;
   const restored=E.normalize(legacy);
   assert.ok(restored);
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,15);
   assert.equal(restored.cash,legacy.cash);
   assert.equal(restored.messages[0].body,'Older staff advisory');
   assert.equal(restored.messages[0].read,true);
@@ -5630,4 +5630,76 @@ test('2026 new full-time recruitment candidates satisfy the adult 21+ wage floor
     assert.ok(pool.filter(person=>person.role==='supervisor')
       .every(person=>person.monthlySalary>=3100));
   }
+});
+
+test('2026 independent scenario keeps capital, cash and historic save bases distinct',()=>{
+  const E=browser(new Map()).productionEngine;
+  const independent=E.create('Audited Independent',[],'uk2026');
+  assert.equal(independent.cash,50000);
+  assert.equal(independent.financialScenario,'uk2026');
+  assert.equal(independent.startupAccounts.ownerCapital,60000);
+  assert.equal(independent.startupAccounts.openingBank,50000);
+  assert.equal(independent.startupAccounts.premisesDeposit,3000);
+  assert.equal(independent.startupAccounts.prepaidInsurance,3000);
+  assert.equal(independent.startupAccounts.fixtures,2000);
+  assert.equal(independent.startupAccounts.launchExpense,2000);
+  assert.equal(E.premises.bays(independent),0);
+  assert.equal(E.premises.capacity(independent),4);
+  assert.equal(E.monthly.statement(independent).openingCash,50000);
+  const saved=E.normalize(JSON.parse(JSON.stringify(independent)));
+  assert.ok(saved,'2026 startup career must pass full save reconciliation');
+  assert.equal(saved.cash,50000);
+  assert.equal(saved.financialScenario,'uk2026');
+  const classic=E.create('Classic Trader',[]);
+  assert.equal(classic.cash,12500);
+  assert.equal(E.premises.bays(classic),4);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(classic))));
+  const v14=JSON.parse(JSON.stringify(classic));
+  v14.version=14;
+  const migrated=E.normalize(v14);
+  assert.ok(migrated,'v14 career must migrate intact to v15');
+  assert.equal(migrated.cash,12500);
+  assert.equal(migrated.financialScenario,undefined);
+  const tampered=JSON.parse(JSON.stringify(independent));
+  tampered.startupAccounts.ownerCapital=60001;
+  assert.equal(E.normalize(tampered),null,'Capital journal tampering must invalidate save');
+});
+
+test('2026 independent four-space forecourt has £2550 expense and £2300 cash bills per 30 days',()=>{
+  const E=browser(new Map()).productionEngine;
+  const state=E.create('Period Cost Audit',[],'uk2026');
+  let expense=0,cashBills=0,insurance=0;
+  for(let day=1;day<=30;day++){
+    state.day=day;
+    const cost=E.premises.costs(state);
+    assert.equal(cost.monthlyGuide,2550);
+    assert.equal(cost.monthlyCashGuide,2300);
+    expense+=cost.total;cashBills+=cost.cashDue;insurance+=cost.insurance;
+  }
+  assert.equal(expense,2550);
+  assert.equal(cashBills,2300);
+  assert.equal(insurance,250);
+  state.day=2;
+  const before=state.cash;
+  const due=E.premises.costs(state);
+  const payment=E.premises.advance(state);
+  assert.equal(payment.expense,due.total);
+  assert.equal(payment.paid,due.cashDue);
+  assert.equal(state.cash,before-due.cashDue);
+  assert.equal(state.premises.arrears,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
+    '2026 daily operating settlement must survive save reconciliation');
+});
+
+test('the new-career screen offers the recommended 2026 scenario but tests preserve classic fixtures',()=>{
+  assert.match(html,/id="career-realism" checked/);
+  assert.match(html,/id="starting-cash-fact"/);
+  const app=browser(new Map());
+  app.nodes.get('career-realism').checked=true;
+  app.click('new-career');
+  app.submitCareer('Pilot 2026');
+  const state=JSON.parse(app.storage.get(STORAGE_KEY));
+  assert.equal(state.financialScenario,'uk2026');
+  assert.equal(state.cash,50000);
+  assert.match(app.nodes.get('finance-overview').innerHTML,/50,000/);
 });
