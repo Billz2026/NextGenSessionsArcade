@@ -119,7 +119,7 @@
   }
   function category(note){
     if(/^(Retail |Customer deposit applied|Customer-specific |Fair cancellation)/.test(note))return 'CUSTOMER / SALE';
-    if(/^(Auction purchase|Direct purchase|Part-exchange acquisition|Pre-purchase inspection)/.test(note))return 'VEHICLE BUYING';
+    if(/^(Auction purchase|Auction transport|Direct purchase|Part-exchange acquisition|Pre-purchase inspection)/.test(note))return 'VEHICLE BUYING';
     if(/^(Workshop |Preparation and inspection)/.test(note))return 'WORKSHOP';
     if(/^(Staff |Sales commission|Recruitment )/.test(note))return 'STAFF';
     if(/^Premises /.test(note))return 'PREMISES';
