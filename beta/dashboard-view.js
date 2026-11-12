@@ -102,8 +102,8 @@
         'Manage booked viewings and any buyers ready for negotiation.',
         'sales','OPEN SALES','attention');
     if(pendingEnquiries)
-      add(5.5,'new-enquiries',pendingEnquiries+' customer enquiry'+
-        (pendingEnquiries===1?'':'ies')+' awaiting your response',
+      add(5.5,'new-enquiries',pendingEnquiries+' customer '+
+        (pendingEnquiries===1?'enquiry':'enquiries')+' awaiting your response',
         'A buyer has contacted your dealership about advertised stock. Book a viewing in the Sales Office before the enquiry expires.',
         'sales','RESPOND TO CUSTOMERS','attention');
     if(unassessed||quoted||qc)
@@ -183,8 +183,7 @@
     const items=[
       ['LISTED FOR SALE',model.listed,'stock'],
       ['AWAITING PREP',model.awaitingPrep,'workshop'],
-      ['BUYER ENQUIRIES',model.pendingEnquiries,'sales'],
-      ['BOOKED VIEWINGS',model.booked,'sales'],
+      ['ACTIVE BUYER CASES',model.pendingEnquiries+model.booked,'sales'],
       ['OUTSTANDING BILLS',money(model.arrears),'finance'],
       ['CAREER SALES',state.sales,'reports']
     ];
