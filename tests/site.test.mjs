@@ -37,6 +37,7 @@ const auctionHallView = readFileSync(new URL('auction-hall-view.js', root), 'utf
 const buyingDeskView = readFileSync(new URL('buying-desk-view.js', root), 'utf8');
 const stockView = readFileSync(new URL('stock-view.js', root), 'utf8');
 const financeView = readFileSync(new URL('finance-view.js', root), 'utf8');
+const economicsStress = readFileSync(new URL('economics-stress.js', root), 'utf8');
 const dashboardView = readFileSync(new URL('dashboard-view.js', root), 'utf8');
 const inboxOffice = readFileSync(new URL('inbox-office.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
@@ -91,7 +92,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=6/);
   assert.match(html, /buying-desk-view\.js\?v=3/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=10/);
+  assert.match(html, /finance-view\.js\?v=11/);
+  assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=38/);
   assert.match(html, /premises\.js\?v=2/);
@@ -330,6 +332,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(auctionHallView, context, { timeout: 1500 });
   vm.runInNewContext(buyingDeskView, context, { timeout: 1500 });
   vm.runInNewContext(stockView, context, { timeout: 1500 });
+  vm.runInNewContext(economicsStress, context, { timeout: 1500 });
   vm.runInNewContext(financeView, context, { timeout: 1500 });
   vm.runInNewContext(dashboardView, context, { timeout: 1500 });
   vm.runInNewContext(inboxOffice, context, { timeout: 1500 });
@@ -365,7 +368,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,aftersalesView:context.window.MotorTradeAftersalesView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, cashStress:context.window.MotorTradeCashStress, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,aftersalesView:context.window.MotorTradeAftersalesView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -4990,7 +4993,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=10/);
+  assert.match(html,/finance-view\.js\?v=11/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
