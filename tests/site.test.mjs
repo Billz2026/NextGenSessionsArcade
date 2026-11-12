@@ -6327,3 +6327,158 @@ test('2026 employee notice pay is accrued as a future payroll liability instead 
   assert.equal(s.payrollArrears,0,'Not overdue before the next payday');
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
+
+test('2026 consumer case restores the original car, reverses margin and VAT and pays full statutory refund',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales,V=app.vat;
+  const s=E.create('Refund Accountability Motors',[],'uk2026');
+  assert.equal(real.VERSION,18);
+  assert.equal(s.aftersalesScenario,'cra2015-2026');
+  const lot=E.marketFor(s).auctions[0];
+  const hammer=Math.max(lot.reserve,lot.rival);
+  assert.ok(E.acquireAuction(s,lot.id,hammer).ok);
+  const original=s.vehicles[0];
+  assert.ok(E.prepare(s,original.id).ok);
+  assert.ok(E.advertise(s,original.id,original.retail).ok);
+  const completed=E.completeSale(s,original.id,'cash',null);
+  assert.ok(completed.ok,completed.message);
+  const sold=s.sold[0],initialVat=V.outstandingPence(s),initialProfit=real.totalMargin(s);
+  assert.ok(sold.vehicleSnapshot);
+  assert.equal(sold.vehicleSnapshot.id,sold.id);
+  assert.ok(initialVat>0);
+  const bankBeforeRefund=s.cash;
+  const claim=A.report(s,sold.id);
+  assert.ok(claim.ok,claim.message);
+  const caseFile=s.aftersales.cases[0];
+  assert.equal(caseFile.phase,'short-term-rejection');
+  assert.equal(caseFile.status,'open');
+  const accepted=A.refund(s,caseFile.id);
+  assert.ok(accepted.ok,accepted.message);
+  assert.equal(caseFile.status,'refund-due');
+  assert.equal(A.pendingRefunds(s),sold.price+caseFile.collectionCost);
+  const notices=A.advance(s);
+  assert.ok(notices.some(x=>x.includes('CUSTOMER REFUND PAID')));
+  assert.equal(caseFile.status,'refunded');
+  assert.equal(A.pendingRefunds(s),0);
+  assert.equal(s.cash,bankBeforeRefund-sold.price-caseFile.collectionCost);
+  assert.equal(s.vehicles.length,1);
+  assert.equal(s.vehicles[0].returnOf,sold.id);
+  assert.equal(s.vehicles[0].status,'acquired');
+  assert.equal(s.vehicles[0].workshop.stage,'unassessed');
+  assert.equal(s.vehicles[0].cost,sold.acquisition+sold.prep);
+  assert.equal(caseFile.creditedVatPence,initialVat);
+  assert.equal(V.outstandingPence(s),0);
+  assert.equal(V.rollingTurnover(s),0);
+  assert.equal(real.totalMargin(s),initialProfit-sold.profit);
+  const report=real.monthly.statement(s);
+  assert.equal(report.refundTurnover,sold.price);
+  assert.equal(report.refundedUnits,1);
+  assert.equal(report.aftercareCost,caseFile.collectionCost);
+  assert.equal(report.grossMargin,0);
+  assert.equal(report.operatingAfterVat,report.operatingContribution);
+  assert.equal(report.openingCash+report.cashIn-report.cashOut,s.cash);
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(s))),
+    'A completed rejection, new stock asset and VAT credit must survive a save');
+});
+
+test('2026 first repair is free to customer and takes time; not every fault is an automatic rejection',()=>{
+  const app=browser(),E=app.engine,A=app.productionEngine.aftersales;
+  const s=E.create('Remedial Repair Motors',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];
+  assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  s.day=2;
+  assert.ok(A.report(s,s.sold[0].id).ok);
+  const c=s.aftersales.cases[0],price=c.quote,cash=s.cash;
+  assert.ok(A.repair(s,c.id).ok);
+  assert.equal(s.cash,cash-price);
+  assert.equal(c.status,'repairing');
+  assert.equal(c.repairAttempts,1);
+  assert.equal(A.repair(s,c.id).ok,false,'No automatic unlimited second repair');
+  s.day=c.repairDoneDay;
+  A.advance(s);
+  assert.ok(['resolved','repair-failed'].includes(c.status));
+  assert.ok(s.ledger.some(l=>l.note.startsWith('Aftersales repair: sale ')&&l.delta===-price));
+  if(c.status==='repair-failed')
+    assert.ok(A.refund(s,c.id).ok,'One unsuccessful repair permits final rejection');
+  else assert.equal(A.refund(s,c.id).ok,false,'Repaired compliant car is not automatically owed a refund');
+});
+
+test('2026 agreed refund remains a creditor obligation if cash is short, with no negative balance',()=>{
+  const app=browser(),E=app.engine,A=app.productionEngine.aftersales;
+  const s=E.create('Refund Shortfall Dealer',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  const sold=s.sold[0];const previously=s.cash;
+  s.cash=100;s.ledger.push({day:s.day,delta:100-previously,
+    note:'Test fixture: demonstrably paid unrelated debt'});
+  assert.ok(A.report(s,sold.id).ok);
+  const c=s.aftersales.cases[0];
+  assert.ok(A.refund(s,c.id).ok);
+  A.advance(s);
+  assert.equal(c.status,'refund-due');
+  assert.equal(s.cash,100);
+  assert.equal(A.pendingRefunds(s),sold.price+c.collectionCost);
+  assert.ok(app.financeView.summary(s,app.productionEngine).html.includes('Accepted customer refunds'));
+  assert.ok(app.productionEngine.normalize(JSON.parse(JSON.stringify(s))));
+  s.day=c.refundDueDay+1;
+  A.advance(s);
+  assert.equal(c.status,'refund-due','14-day statutory period does not erase a refund obligation');
+  assert.ok(s.reputationScore<5);
+  const gross=c.refundAmount+c.collectionCost;
+  s.cash+=gross;s.ledger.push({day:s.day,delta:gross,
+    note:'Test fixture: unrelated cash investment receipt'});
+  A.advance(s);
+  assert.equal(c.status,'refunded');
+  assert.equal(s.cash,100);
+  assert.ok(app.productionEngine.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('2026 aftersales refuses duplicate refunds and rejects falsified VAT credits and recovered assets',()=>{
+  const app=browser(),E=app.engine,A=app.productionEngine.aftersales;
+  const s=E.create('Audit Remedy Motors',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  assert.ok(A.report(s,s.sold[0].id).ok);
+  assert.equal(A.report(s,s.sold[0].id).ok,false);
+  assert.ok(A.refund(s,s.aftersales.cases[0].id).ok);
+  A.advance(s);
+  const valid=app.productionEngine.normalize(JSON.parse(JSON.stringify(s)));
+  assert.ok(valid);
+  const changed=JSON.parse(JSON.stringify(s));
+  changed.aftersales.cases[0].creditedVatPence=0;
+  assert.equal(app.productionEngine.normalize(changed),null);
+  const fictitious=JSON.parse(JSON.stringify(s));
+  fictitious.aftersales.cases[0].returnedVehicleId+=3;
+  assert.equal(app.productionEngine.normalize(fictitious),null);
+  const lostCash=JSON.parse(JSON.stringify(s));
+  lostCash.ledger=lostCash.ledger.filter(row=>!row.note.startsWith('Aftersales refund:'));
+  assert.equal(app.productionEngine.normalize(lostCash),null);
+  const classic=E.create('Original Dealer',[]);
+  assert.equal(A.enabled(classic),false);
+  const old=E.create('Pre-Remedy 2026',[],'uk2026');
+  old.version=17;delete old.aftersalesScenario;delete old.aftersales;
+  assert.ok(app.productionEngine.normalize(old),
+    'Phase 6 must not invent past complaints or refund liabilities on v17 saves');
+});
+
+test('2026 Consumer Rights Act phase includes first 30 days, rebuttable six months and later evidence',()=>{
+  const app=browser(),V=app.vat,A=app.productionEngine.aftersales;
+  const state={day:1,sold:[]};
+  const sale={day:1};
+  assert.equal(A.legalPhase(state,sale,1),'short-term-rejection');
+  assert.equal(A.legalPhase(state,sale,31),'short-term-rejection');
+  assert.equal(A.legalPhase(state,sale,32),'six-month-presumption');
+  const year=V.dateForDay(1);
+  assert.equal(year.toISOString().slice(0,10),'2026-11-09');
+  const six=V.dayForDate(new Date(Date.UTC(2027,4,9)));
+  assert.equal(A.legalPhase(state,sale,six),'later-evidence-required');
+});
