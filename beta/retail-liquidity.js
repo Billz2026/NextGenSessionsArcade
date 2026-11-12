@@ -51,16 +51,19 @@
     // Long adverts retain a nonzero enquiry path; repricing improves demand.
     const stockPenalty=Math.min(2,Math.floor(x.advertisedDays/60));
     const reputation=Math.floor(clamp(state.reputationScore||0,0,100)/35);
-    const salesperson=Math.round(clamp(salesLift,0,16)*0.25);
+    // An active paid sales executive answers inbound contacts and actively
+    // markets listed stock. The contact lift is intentionally measurable but
+    // does NOT guarantee a viewing, deal or additional profit after salary.
+    const salesperson=Math.round(clamp(salesLift,0,16)*0.65);
     // A newly advertised, realistically priced car gets a modest initial
     // marketing boost. This 2-point uplift is a game design assumption,
     // not an independently measured UK customer conversion statistic.
     const freshListing=x.advertisedDays<21?2:0;
     const fuelAdjustment=v.fuel==='Hybrid'?2:v.fuel==='Diesel'?-1:0;
-    // 4% is a SIMULATED minimum rate for enquiries / price questions,
-    // not a 4% chance of a completed retail sale. Visits, test drives and
-    // negotiation remain independent; buyers can bid far below the ask.
-    return clamp(6+freshListing+premium-gradePenalty-stockPenalty+reputation+
+    // The larger top-of-funnel includes low-intent tyre-kickers and price
+    // questions, not just buyers ready for a deposit. The game qualifies
+    // prospects separately at booking; these are uncalibrated game rates.
+    return clamp(14+freshListing+premium-gradePenalty-stockPenalty+reputation+
       salesperson+fuelAdjustment+marketAdjustment,4,40);
   }
   function snapshot(state,E){
