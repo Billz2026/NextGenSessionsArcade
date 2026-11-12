@@ -17,32 +17,40 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css?v=49">
-  <script src="./vehicle-intel.js?v=2" defer></script>
+  <script src="./repair-prices.js?v=1" defer></script>
+  <script src="./vat.js?v=3" defer></script>
+  <script src="./employment-2026.js?v=3" defer></script>
+  <script src="./vehicle-intel.js?v=7" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
-  <script src="./vehicle-market.js?v=2" defer></script>
-  <script src="./premises.js?v=1" defer></script>
-  <script src="./people.js?v=7" defer></script>
-  <script src="./monthly.js?v=7" defer></script>
+  <script src="./vehicle-market.js?v=7" defer></script>
+  <script src="./auction-fees.js?v=1" defer></script>
+  <script src="./auction-transport.js?v=1" defer></script>
+  <script src="./premises.js?v=2" defer></script>
+  <script src="./people.js?v=10" defer></script>
+  <script src="./monthly.js?v=13" defer></script>
   <script src="./events.js?v=2" defer></script>
-  <script src="./workshop.js?v=4" defer></script>
+  <script src="./workshop.js?v=5" defer></script>
   <script src="./customers.js?v=5" defer></script>
-  <script src="./trading.js?v=19" defer></script>
+  <script src="./aftersales.js?v=2" defer></script>
+  <script src="./trading.js?v=30" defer></script>
   <script src="./vehicle-cards.js?v=4" defer></script>
-  <script src="./vehicle-view.js?v=4" defer></script>
-  <script src="./people-view.js?v=7" defer></script>
-  <script src="./monthly-view.js?v=8" defer></script>
+  <script src="./vehicle-view.js?v=9" defer></script>
+  <script src="./people-view.js?v=9" defer></script>
+  <script src="./monthly-view.js?v=13" defer></script>
   <script src="./events-view.js?v=6" defer></script>
   <script src="./workshop-view.js?v=6" defer></script>
   <script src="./customers-view.js?v=8" defer></script>
-  <script src="./premises-view.js?v=3" defer></script>
-  <script src="./auction-hall-view.js?v=2" defer></script>
-  <script src="./dashboard-view.js?v=2" defer></script>
+  <script src="./aftersales-view.js?v=2" defer></script>
+  <script src="./premises-view.js?v=4" defer></script>
+  <script src="./auction-hall-view.js?v=6" defer></script>
+  <script src="./dashboard-view.js?v=5" defer></script>
   <script src="./inbox-office.js?v=3" defer></script>
-  <script src="./buying-desk-view.js?v=2" defer></script>
+  <script src="./buying-desk-view.js?v=3" defer></script>
   <script src="./stock-view.js?v=1" defer></script>
-  <script src="./finance-view.js?v=2" defer></script>
-  <script src="./simulator.js?v=32" defer></script>
+  <script src="./economics-stress.js?v=1" defer></script>
+  <script src="./finance-view.js?v=12" defer></script>
+  <script src="./simulator.js?v=38" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -88,13 +96,19 @@
             <label class="input-label" for="dealership-name">DEALERSHIP NAME</label>
             <input id="dealership-name" name="dealershipName" type="text" maxlength="36" minlength="2" value="First Lot Motors" autocomplete="organization" required>
             <p class="field-help">Use 2–36 characters. You can build your own dealership identity.</p>
+            <label class="input-label" for="career-realism">CAREER ECONOMICS</label>
+            <label class="field-help" for="career-realism" style="display:block;cursor:pointer">
+              <input type="checkbox" id="career-realism" checked>
+              <strong>2026 INDEPENDENT DEALER — RECOMMENDED</strong>
+            </label>
+            <p class="field-help">£60,000 owner investment; £10,000 opening commitments; £50,000 bank cash. Four selling spaces, no in-house workshop, illustrative UK running costs and simulated voluntary VAT registration from opening. Untick for the original classic £12,500 career.</p>
             <div class="setup-facts">
-              <div><span>STARTING CASH</span><strong>£12,500</strong></div>
+              <div><span>STARTING BANK CASH</span><strong id="starting-cash-fact">£50,000</strong></div>
               <div><span>FORECOURT CAPACITY</span><strong>4 vehicles</strong></div>
-              <div><span>CAREER TYPE</span><strong>Independent trader</strong></div>
+              <div><span>CAREER TYPE</span><strong id="career-type-fact">2026 independent</strong></div>
               <div><span>STARTING STOCK</span><strong>None</strong></div>
             </div>
-            <p class="notice-box">Trade in a fictional UK market: auction bids, walk-in sellers, stock preparation, retail enquiries and part-exchanges. Prices and margins are illustrative; VAT, taxes, overheads and consumer claims are not yet modelled.</p>
+            <p class="notice-box">Trade in a fictional UK market: auction bids, sellers, workshop preparation, enquiries and part-exchanges. The 2026 pilot models published BCA Blue buyer-fee bands, provisional margin-scheme output VAT, assumed operating costs, repair job cards and simulated delivery. All 50 retail vehicle prices now have dated asking-price comparisons, but 14 have low match confidence and four unsourced wholesale buying guides exceed the estimated retail asking price. Actual wholesale sold data, invoice-specific VAT eligibility, input VAT recovery, exact HMRC payroll and full consumer-rights case handling are not yet verified.</p>
             <button class="primary-button setup-submit" type="submit">BEGIN CAREER <span aria-hidden="true">→</span></button>
           </form>
         </div>
@@ -254,6 +268,7 @@
             <section class="career-panel sales-control" data-panel="sales" hidden aria-labelledby="sales-title">
               <div class="page-heading"><div><p class="section-overline">RETAIL PIPELINE / CUSTOMER AGREEMENTS</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Identify buyer interest, manage each customer and complete handovers without losing track of stock.</p></div><span class="career-chip">LIVE RETAIL CASES</span></div>
               <div id="sales-list" class="so-control" aria-live="polite"></div>
+              <div id="aftersales-board" class="so-control" aria-live="polite"></div>
               <details class="so-policy"><summary>CUSTOMER DEPOSITS & PART-EXCHANGE RULES</summary><p>A customer enquiry or viewing is not a reservation. A £250 deposit is held separately from business cash until collection; only the remaining balance is collected at handover. Buyer cancellation may allow fair retention for actual customer-specific costs, while dealership fault requires a full refund. Part-exchanges require an agreed allowance and occupy a stock space. No retail sale or revenue is recorded until handover.</p></details>
             </section>
 
@@ -287,7 +302,7 @@
 
             <section class="career-panel" data-panel="business" hidden aria-labelledby="business-title">
               <div class="page-heading"><div><p class="section-overline">OWNER'S OFFICE / BUSINESS OPERATIONS</p><h1 id="business-title">MY <em>DEALERSHIP.</em></h1><p>Your business identity, operating commitments and next investment decisions in one place.</p></div><button type="button" class="secondary-button hq-save" data-action="save">SAVE CAREER</button></div>
-              <div class="hq-identity"><div class="hq-identity-title"><small>INDEPENDENT MOTOR TRADER · STARTING CAPITAL £12,500</small><h2 data-bind="company">First Lot Motors</h2><p>DEALERSHIP CAREER PROFILE</p></div><div class="hq-identity-facts">
+              <div class="hq-identity"><div class="hq-identity-title"><small id="owner-startup-label">INDEPENDENT MOTOR TRADER · OPENING BANK CASH £50,000</small><h2 data-bind="company">First Lot Motors</h2><p>DEALERSHIP CAREER PROFILE</p></div><div class="hq-identity-facts">
                 <div><small>CAREER</small><strong data-bind="day-label">DAY 01</strong></div>
                 <div><small>REPUTATION</small><strong data-bind="reputation-score">5 / 100</strong></div>
                 <div><small>STAFF</small><strong data-bind="staff-count">0</strong></div>

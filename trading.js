@@ -6,12 +6,23 @@
  */
 (() => {
   const STARTING_CASH = 12500;
+  // Legacy careers retain their authentic £12,500 ledger base.
+  const STANDARD_STARTUP=Object.freeze({
+    mode:'uk2026',ownerCapital:60000,openingBank:50000,
+    premisesDeposit:3000,prepaidInsurance:3000,fixtures:2000,launchExpense:2000
+  });
   const CAPACITY = 4;
-  const VERSION = 14;
+  const VERSION = 18;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
   if(!MARKET)throw new Error('Load vehicle-market.js before trading.js');
+  const AUCTION_FEES=window.MotorTradeAuctionFees;
+  if(!AUCTION_FEES)throw new Error('Load auction-fees.js before trading.js');
+  const TRANSPORT=window.MotorTradeTransport;
+  if(!TRANSPORT)throw new Error('Load auction-transport.js before trading.js');
+  const VAT=window.MotorTradeVat;
+  if(!VAT)throw new Error('Load vat.js before trading.js');
   const C = window.MotorTradeCustomers;
   if(!C)throw new Error('Load customers.js before trading.js');
   const W = window.MotorTradeWorkshop;
@@ -22,6 +33,10 @@
   if (!M) throw new Error('Load monthly.js before trading.js');
   const P = window.MotorTradePeople;
   if (!P) throw new Error('Load people.js before trading.js');
+  const EMP=window.MotorTradeEmployment;
+  if(!EMP)throw new Error('Load employment-2026.js before trading.js');
+  const AFT=window.MotorTradeAftersales;
+  if(!AFT)throw new Error('Load aftersales.js before trading.js');
   const SITE = window.MotorTradePremises;
   if (!SITE) throw new Error('Load premises.js before trading.js');
   const I = window.MotorTradeIntel;
@@ -54,9 +69,9 @@
     return thisWeek>day?thisWeek:scheduledAuctionDay(day+7);
   }
   function market(day,reputationScore=0,session=0,dealershipName='',
-    periodReputation=reputationScore,cash=STARTING_CASH) {
+    periodReputation=reputationScore,cash=STARTING_CASH,feeScenario='classic') {
     const tier=MARKET.tierFor(cash,reputationScore).key;
-    const dealSellers=MARKET.sellersForDealDay(cash,reputationScore);
+    const dealSellers=MARKET.sellersForDealDay(cash,reputationScore).map(x=>MARKET.priceFor(x,feeScenario));
     const special=D.customers(day,periodReputation,session,dealSellers,I.profile,dealershipName);
     if(special)return {auctions:[],sellers:special.sellers.map(x=>({...x,...PH.describe(x)}))};
     const auctionCount=auctionDay(day)?
@@ -69,19 +84,22 @@
     const usedAuction=new Set(),usedSeller=new Set();
     const starter=MARKET.CATALOGUE.starter;
     const auctions=Array.from({length:aCount},(_,i)=>{
-      const base=day===1?starter[i]:MARKET.pick('auction',tier,day,i,usedAuction);
+      const base=MARKET.priceFor(day===1?starter[i]:MARKET.pick('auction',tier,day,i,usedAuction),feeScenario);
       const offset=day===1?0:nearest25((sample(day,i,91)%851)-425);
       const guide=Math.max(850,base.guide+offset);
       const delta=guide-base.guide;
       const miles=Math.max(3500,base.miles+
         (day===1?0:((sample(day,i,54)%250)-125)*100));
-      const fee=base.fee+(day===1?0:25*((sample(day,i,82)%3)-1));
+      const modern=feeScenario==='uk2026';
+      const fee=modern?AUCTION_FEES.feeAtHammer(guide):
+        base.fee+(day===1?0:25*((sample(day,i,82)%3)-1));
       return {...base,guide,reserve:base.reserve+delta,rival:base.rival+delta,
         retail:base.retail+delta,miles,fee,
+        ...(modern?{feeModel:'bca-blue-2026',feeQuoteRequired:fee===null}:{}),
         id:'A-'+day+'-'+i,kind:'auction',day};
     });
     const sellers=Array.from({length:sellerCount},(_,i)=>{
-      const base=day===1?starter[3+i]:MARKET.pick('seller',tier,day,i,usedSeller);
+      const base=MARKET.priceFor(day===1?starter[3+i]:MARKET.pick('seller',tier,day,i,usedSeller),feeScenario);
       const offset=day===1?0:nearest25((sample(day,i,51)%601)-300);
       const ask=Math.max(950,base.ask+offset);
       const delta=ask-base.ask;
@@ -112,7 +130,7 @@
     return market(state.day,state.monthPlan?.startingReputation??state.reputationScore,
       state.deadlineSession,state.name,
       state.monthPlan?.startingReputation??state.reputationScore,
-      state.cash-todaysMovement);
+      state.cash-todaysMovement,state.financialScenario==='uk2026'?'uk2026':'classic');
   };
   // Weekly live auctions: sequential numbered lots; bids continue until one
   // dealer drops out. When the highest bid meets reserve, the hammer creates
@@ -125,6 +143,18 @@
     playerBid:0,rivalFolded:false,rounds:0,feed:[],results:[]
   });
   const lotNumber=index=>String(index+1).padStart(3,'0');
+  // The new 2026 scenario uses a *published account tariff* for the hammer;
+  // classic careers retain the original lot-level fictional fee.
+  function auctionFee(state,lot,hammer){
+    if(state.financialScenario==='uk2026')
+      return AUCTION_FEES.feeAtHammer(hammer);
+    return lot?.fee??null;
+  }
+  function auctionTransport(state,lotOrId){
+    if(state.financialScenario!=='uk2026')return {
+      gross:0,routeMiles:0,routeReal:false,scenario:'classic-no-transport'};
+    return TRANSPORT.quote(lotOrId);
+  }
   function auctionLot(state){
     return marketFor(state).auctions[state.auctionHall.index]||null;
   }
@@ -169,19 +199,32 @@
       integer(r.total)&&r.total===r.hammer+r.fee&&
       typeof r.detail==='string'&&r.detail.length<=160;
     if(!history.every(validResult)||!h.results.every(validResult))return false;
+    if(state.financialScenario==='uk2026'&&
+       [...history,...h.results].some(r=>r.kind==='won'&&
+         r.fee!==AUCTION_FEES.feeAtHammer(r.hammer)))return false;
     if(h.results.some((r,i)=>r.day!==state.day||r.lotId!==lots[i]?.id||
       r.lotNumber!==lotNumber(i)))return false;
     if(h.phase==='bidding'&&h.leader==='player'&&
       h.currentBid>=lots[h.index].reserve)return false;
     const winners=[...history,...h.results].filter(r=>r.kind==='won');
-    return winners.every(r=>state.ledger.some(l=>l.day===r.day&&
-      l.delta===-r.total&&
-      l.note.startsWith('Auction purchase: '+r.title+' (bid '+r.hammer+
-        ', buyer fee '+r.fee+')')));
+    return winners.every(r=>{
+      const purchase=state.ledger.some(l=>l.day===r.day&&
+        l.delta===-r.total&&
+        l.note.startsWith('Auction purchase: '+r.title+' (bid '+r.hammer+
+          ', buyer fee '+r.fee+')'));
+      if(!purchase)return false;
+      if(state.financialScenario!=='uk2026')return true;
+      const delivery=TRANSPORT.quote(r.lotId);
+      return !!delivery&&state.ledger.some(l=>l.day===r.day&&
+        l.delta===-delivery.gross&&
+        l.note==='Auction transport: '+r.title+' (lot '+r.lotId+
+          ', simulated '+delivery.routeMiles+' miles)');
+    });
   }
   function resolveAuction(state,kind,hammer,detail){
     const h=state.auctionHall,lot=auctionLot(state);
-    const fee=kind==='won'?lot.fee:0;
+    const fee=kind==='won'?auctionFee(state,lot,hammer):0;
+    if(fee===null)return fail('fee-quote','Auctioneer fee quotation required for this hammer. No invoice can be finalised.');
     const result={day:state.day,lotId:lot.id,
       lotNumber:lotNumber(h.index),title:lot.title,
       kind,hammer,fee,total:hammer+fee,detail};
@@ -222,8 +265,12 @@
     if(bid>100000)return fail('bid','The live bid exceeds the supported auction price.');
     if(state.vehicles.some(v=>v.origin===lot.id))
       return fail('owned','This car has already been bought.');
+    const fee=auctionFee(state,lot,bid);
+    if(fee===null)return fail('fee-quote','No published buyer fee above £24,999 under the 2026 Blue Standard schedule. Obtain a quotation before bidding on this high-value lot.');
+    const transport=auctionTransport(state,lot);
+    if(!transport)return fail('transport','Auction collection cost could not be estimated.');
     const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
-    const blocked=canBuy(state,bid+lot.fee,requiredPrep);
+    const blocked=canBuy(state,bid+fee+transport.gross,requiredPrep);
     if(blocked)return blocked;
     const money=n=>'£'+n.toLocaleString('en-GB');
     h.currentBid=bid;h.playerBid=bid;h.leader='player';h.rounds++;
@@ -252,7 +299,8 @@
     if(h.feed.length>65)h.feed=h.feed.slice(-65);
     return {ok:true,changed:true,message:'HAMMER FALLEN — LOT '+lotNumber(h.index)+
       ' at '+money(bid)+'. Rival dealer has dropped out. Finalise payment of '+
-      money(bid+lot.fee)+' including buyer fee '+money(lot.fee)+
+      money(bid+fee+transport.gross)+' including buyer fee '+money(fee)+
+      (transport.gross?' and simulated transport '+money(transport.gross):'')+
       ' to transfer the car into your workshop.'};
   }
   function settleAuction(state){
@@ -263,19 +311,25 @@
     if(state.vehicles.some(v=>v.origin===lot.id)||
        state.auctionHistory.some(r=>r.kind==='won'&&r.lotId===lot.id))
       return fail('owned','This lot has already been settled. No second payment is permitted.');
-    const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
-    const blocked=canBuy(state,h.currentBid+lot.fee,requiredPrep);
-    if(blocked)return blocked;
     const hammer=h.currentBid;
-    pay(state,-(hammer+lot.fee),'Auction purchase: '+lot.title+
-      ' (bid '+hammer+', buyer fee '+lot.fee+')');
-    addCar(state,lot,'auction',hammer+lot.fee,lot.id);
+    const fee=auctionFee(state,lot,hammer);
+    const transport=auctionTransport(state,lot);
+    if(!transport)return fail('transport','Cannot price this auction collection route.');
+    if(fee===null)return fail('fee-quote','The published 2026 tariff has no rate for this hammer. Payment cannot be assumed.');
+    const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
+    const blocked=canBuy(state,hammer+fee+transport.gross,requiredPrep);
+    if(blocked)return blocked;
+    pay(state,-(hammer+fee),'Auction purchase: '+lot.title+
+      ' (bid '+hammer+', buyer fee '+fee+')');
+    if(transport.gross)pay(state,-transport.gross,'Auction transport: '+lot.title+
+      ' (lot '+lot.id+', simulated '+transport.routeMiles+' miles)');
+    addCar(state,lot,'auction',hammer+fee+transport.gross,lot.id,hammer);
     h.feed.push('SETTLED. £'+hammer.toLocaleString('en-GB')+
-      ' hammer plus £'+lot.fee.toLocaleString('en-GB')+
+      ' hammer plus £'+fee.toLocaleString('en-GB')+
       ' buyer fee paid. Car sent for workshop assessment.');
     return resolveAuction(state,'won',hammer,'LOT '+lotNumber(h.index)+
-      ' PAID & TRANSFERRED TO WORKSHOP: £'+(hammer+lot.fee).toLocaleString('en-GB')+
-      ' (£'+hammer.toLocaleString('en-GB')+' hammer + £'+lot.fee.toLocaleString('en-GB')+
+      ' PAID & TRANSFERRED TO WORKSHOP: £'+(hammer+fee).toLocaleString('en-GB')+
+      ' (£'+hammer.toLocaleString('en-GB')+' hammer + £'+fee.toLocaleString('en-GB')+
       ' buyer fee). Any optional paid inspection is separate.');
   }
   function passAuction(state){
@@ -316,22 +370,27 @@
     state.auctionHall=initialAuctionHall(state.day);
   }
 
-  function create(name, messages) {
+  function create(name, messages, mode='classic') {
+    const standard=mode==='uk2026';
     const state={
-      version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
+      version:VERSION,name,day:1,cash:standard?STANDARD_STARTUP.openingBank:STARTING_CASH,capacity:CAPACITY,
+      ...(standard?{financialScenario:'uk2026',startupAccounts:{...STANDARD_STARTUP},
+        vatRegistrationDay:1}:{}),
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       customerCases:{},customerHistory:[],customerFunds:[],
       auctionHall:initialAuctionHall(1),auctionHistory:[],
       inboxLedgerCursor:0,
-      premises:SITE.initial(),...P.initial()
+      premises:SITE.initial(),...P.initial(),
+      ...(standard?{employmentScenario:'uk2026-payroll',payroll2026:EMP.initial(),
+        aftersalesScenario:AFT.MODE,aftersales:AFT.initial()}: {})
     };
     M.initialize(state);
     Object.assign(state,D.initial());
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -406,11 +465,16 @@
       (saved.version === 2 || v.prepBudget === v.profile.basePrep +
         (v.profile.hiddenFault?.cost || 0)) &&
       (saved.version<7 || W.valid(v,saved.day)) &&
-      (saved.version<10 || validLook(v));
+      (saved.version<10 || validLook(v))&&
+      (v.vatPurchasePrice===undefined||cashValue(v.vatPurchasePrice));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
       cashValue(s.price) && integer(s.profit) && ['cash','part-ex'].includes(s.mode) &&
-      (s.profile==null || I.validProfile(s.profile));
+      (s.profile==null || I.validProfile(s.profile))&&
+      (s.vat===undefined||(
+        s.vat&&s.vat.scheme==='assumed-eligible-margin'&&
+        integer(s.vat.purchaseBasis)&&s.vat.purchaseBasis>=0&&
+        integer(s.vat.outputPence)&&s.vat.outputPence>=0));
     const goodLedger = l => l && integer(l.day) && l.day >= 1 && l.day <= saved.day &&
       integer(l.delta) && Math.abs(l.delta) <= 10000000 &&
       typeof l.note === 'string' && l.note.length < 200;
@@ -419,7 +483,11 @@
       typeof d.title==='string'&&d.title.length<100&&
       integer(d.day)&&d.day>=1&&d.day<=saved.day&&
       cashValue(d.proceeds)&&cashValue(d.basis)&&
-      integer(d.profit)&&d.profit===d.proceeds-d.basis;
+      integer(d.profit)&&d.profit===d.proceeds-d.basis&&
+      (d.vat===undefined||(
+        d.vat&&d.vat.scheme==='assumed-eligible-margin'&&
+        integer(d.vat.purchaseBasis)&&d.vat.purchaseBasis>=0&&
+        integer(d.vat.outputPence)&&d.vat.outputPence>=0));
     if (!Array.isArray(wholesale)||!wholesale.every(goodWholesale)||
       !saved.vehicles.every(goodVehicle) || !saved.sold.every(goodSold) ||
         !saved.ledger.every(goodLedger)) return null;
@@ -448,10 +516,44 @@
     if (!P.valid(workforce,saved.day)) return null;
     const ids = [...saved.vehicles,...saved.sold,...wholesale].map(v => v.id);
     if (new Set(ids).size !== ids.length || ids.some(id => id >= saved.nextId)) return null;
-    const balance = STARTING_CASH + sum(saved.ledger,'delta');
+    // The starting cash source varies by scenario. Owner equity, refundable
+    // deposits, prepaid insurance and fixtures are not trading revenue/costs.
+    const standard=saved.financialScenario==='uk2026';
+    if(saved.financialScenario!==undefined&&!standard)return null;
+    if(standard){
+      if(saved.version<15||!saved.startupAccounts||
+         Object.keys(STANDARD_STARTUP).some(k=>saved.startupAccounts[k]!==STANDARD_STARTUP[k]))return null;
+      if(saved.version>=17&&saved.employmentScenario!=='uk2026-payroll')return null;
+      if(saved.version<=16&&saved.employmentScenario!==undefined)return null;
+      if(saved.version>=18&&saved.aftersalesScenario!==AFT.MODE)return null;
+      if(saved.version<18&&(saved.aftersalesScenario!==undefined||saved.aftersales!==undefined))return null;
+    }
+    if(standard){
+      // An auction transport invoice must match the modelled lot route and
+      // its separate hammer purchase. This also covers the classic-style
+      // direct auction purchase path, which has no Auction Hall result row.
+      const auctionPurchases=saved.ledger.filter(x=>x.note.startsWith('Auction purchase: '));
+      const deliveries=saved.ledger.filter(x=>x.note.startsWith('Auction transport: '));
+      if(auctionPurchases.length!==deliveries.length)return null;
+      const seenRoutes=new Set();
+      for(const row of deliveries){
+        const match=/^Auction transport: (.+) \(lot (A-\d+-\d+), simulated (\d+) miles\)$/.exec(row.note);
+        if(!match)return null;
+        const [,title,id,distanceText]=match;
+        const q=TRANSPORT.quote(id);
+        if(!q||q.routeMiles!==Number(distanceText)||
+           row.delta!==-q.gross||seenRoutes.has(id))return null;
+        seenRoutes.add(id);
+        if(!auctionPurchases.some(p=>p.day===row.day&&p.note.startsWith(
+          'Auction purchase: '+title+' (bid ')))return null;
+      }
+    }
+    const balance = (standard?STANDARD_STARTUP.openingBank:STARTING_CASH) + sum(saved.ledger,'delta');
     if (balance !== saved.cash || balance < 0 || balance > 100000000) return null;
     const restored={
       version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:expectedCapacity,
+      ...(standard?{financialScenario:'uk2026',startupAccounts:{...STANDARD_STARTUP},
+        vatRegistrationDay:saved.version>=16?saved.vatRegistrationDay:0}:{}),
       premises:SITE.clone(site),
       inboxLedgerCursor:saved.version>=13?saved.inboxLedgerCursor:saved.ledger.length,
       // Migrate older daily auction saves: keep completed results in history,
@@ -478,11 +580,15 @@
       negotiations:Object.fromEntries(Object.entries(negotiations).map(([k,v])=>[k,{...v}])),
       auctionBids:Object.fromEntries(Object.entries(auctionBids).map(([k,v])=>[k,{...v}])),
       reports:Object.fromEntries(Object.entries(reports).map(([k,v])=>[k,{...v}])),
+      ...(standard&&saved.version>=18?{aftersalesScenario:AFT.MODE,
+        aftersales:AFT.clone(saved.aftersales)}:{}),
       ...P.clone(workforce)
     };
     if(!M.restore(restored,saved))return null;
     if(!D.restore(restored,saved))return null;
     if(!C.valid(restored,saved))return null;
+    if(!VAT.valid(restored))return null;
+    if(!AFT.valid(restored))return null;
     if(!auctionValid(restored))return null;
     return restored;
   }
@@ -492,7 +598,7 @@
     state.cash += delta;
     state.ledger.push({day:state.day,delta,note});
   }
-  function addCar(state, template, source, cost, ref) {
+  function addCar(state, template, source, cost, ref, vatPurchasePrice=null) {
     const p = template.profile || I.profile({...template,id:ref,kind:source});
     const inspected = !!state.reports?.[ref];
     const inspectionFee = inspected ? state.reports[ref].fee : 0;
@@ -504,6 +610,7 @@
       fuel:template.fuel,gearbox:template.gearbox,history:template.history,
       note:template.note,retail:p.retail,
       source,origin:ref,cost:cost+inspectionFee,
+      ...(VAT.enabled(state)?{vatPurchasePrice}:{}),
       profile,prepBudget:p.basePrep+(p.hiddenFault?.cost||0),
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
       listedDay:null,
@@ -520,8 +627,10 @@
     // No lending or wholesale exit yet: reserve preparation for *all* acquired cars.
     // Otherwise a second purchase could consume the cash needed to retail the first.
     const pendingPrep=W.reserved(state);
-    if (cost + preparation + pendingPrep > state.cash)
-      return fail('cash','Not enough cash to buy this car while reserving all required stock preparation.');
+    const taxReserve=VAT.enabled(state)?Math.ceil(VAT.outstandingPence(state)/100):0;
+    const customerRefunds=AFT.pendingRefunds(state);
+    if (cost + preparation + pendingPrep + taxReserve + customerRefunds > state.cash)
+      return fail('cash','Not enough cash to buy while reserving preparation, VAT and agreed customer refunds.');
     return null;
   }
   // An unsuccessful maximum bid does not incur a buyer's fee in this
@@ -535,7 +644,11 @@
       return fail('bid','Enter a valid maximum bid of at least the guide price.');
     if (state.vehicles.some(v => v.origin === lot.id)) return fail('owned','You have already bought this lot. Check Vehicle Stock.');
     const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
-    const blocked = canBuy(state,bid + lot.fee,requiredPrep);
+    const fee=auctionFee(state,lot,bid);
+    if(fee===null)return fail('fee-quote','No published buyer fee for this hammer above £24,999. Obtain an individual quotation before buying.');
+    const transport=auctionTransport(state,lot);
+    if(!transport)return fail('transport','Cannot price this auction collection route.');
+    const blocked = canBuy(state,bid + fee+transport.gross,requiredPrep);
     if (blocked) return blocked;
     if (bid < Math.max(lot.rival,lot.reserve)) {
       const attempts = (activity?.attempts ?? 0) + 1;
@@ -545,11 +658,13 @@
         closed ? 'A rival dealer has secured this lot. No fee charged; look at another car.' :
         'Outbid on this lot. No fee charged. You can raise your maximum bid once more.'),changed:true};
     }
-    pay(state,-(bid+lot.fee),'Auction purchase: '+lot.title+' (bid '+bid+', buyer fee '+lot.fee+')');
-    addCar(state,lot,'auction',bid+lot.fee,lot.id);
+    pay(state,-(bid+fee),'Auction purchase: '+lot.title+' (bid '+bid+', buyer fee '+fee+')');
+    if(transport.gross)pay(state,-transport.gross,'Auction transport: '+lot.title+
+      ' (lot '+lot.id+', simulated '+transport.routeMiles+' miles)');
+    addCar(state,lot,'auction',bid+fee+transport.gross,lot.id,bid);
     if(activity) delete state.auctionBids[id];
     return success('Won '+lot.title+' at £'+bid.toLocaleString('en-GB')+
-      '. Buyer fee £'+lot.fee.toLocaleString('en-GB')+' charged. Vehicle added to stock.');
+      '. Buyer fee £'+fee.toLocaleString('en-GB')+' charged. Vehicle added to stock.');
   }
   // The same seller keeps the same fictional negotiating temperament for
   // the session. It changes counteroffer movement, never resets after reload.
@@ -580,7 +695,7 @@
     if (blocked) return blocked;
     if (previous?.status === 'counter' && offer >= previous.counter) {
       pay(state,-offer,'Direct purchase: '+car.title);
-      addCar(state,car,'seller',offer,car.id);
+      addCar(state,car,'seller',offer,car.id,offer);
       delete state.negotiations[id];
       return success('Deal agreed at £'+offer.toLocaleString('en-GB')+'. '+car.title+' is now in Vehicle Stock.');
     }
@@ -588,7 +703,7 @@
       D.sellerDiscount(state,car.id)-D.meetingBonus(state,'buying'));
     if (!previous && offer >= effectiveFloor + 25) {
       pay(state,-offer,'Direct purchase: '+car.title);
-      addCar(state,car,'seller',offer,car.id);
+      addCar(state,car,'seller',offer,car.id,offer);
       return success('Owner accepted £'+offer.toLocaleString('en-GB')+'. '+car.title+' added to stock.');
     }
     if (offer < effectiveFloor - 175 || (previous && previous.rounds >= 2)) {
@@ -680,8 +795,8 @@
     vehicle.cashOffer = null;
     return success(vehicle.title + ' is advertised at ' + asking + '. Check the Sales Office.');
   }
-  function pxTemplate(vehicle) {
-    const base=MARKET.exchangeFor(vehicle);
+  function pxTemplate(vehicle,state=null) {
+    const base=MARKET.priceFor(MARKET.exchangeFor(vehicle),state?.financialScenario||'classic');
     const origin='PX-'+vehicle.acquiredDay+'-'+vehicle.id;
     return {...base,origin,...PH.describe({...base,origin})};
   }
@@ -700,7 +815,7 @@
       Math.round(motivation*.65)+meetingPush));
     const start=Math.max(500,Math.min(limit,vehicle.asking-400+support+
       motivation+meetingPush,fair-125+support+motivation+meetingPush));
-    const standardPx=pxTemplate(vehicle);
+    const standardPx=pxTemplate(vehicle,state);
     const customer=state?C.caseFor(state,vehicle.id):null;
     const px=customer?
       customer.preferredMode==='part-ex'?
@@ -772,6 +887,8 @@
         pxProfile.basePrep+(pxProfile.hiddenFault?.cost||0))
         return fail('cash','Insufficient funds to complete this part-exchange and reserve vehicle preparation.');
     }
+    const vatRecord=VAT.enabled(state)?VAT.record(v.vatPurchasePrice,price,state.day):null;
+    if(VAT.enabled(state)&&!vatRecord)return fail('vat','The purchase invoice lacks a verifiable margin-scheme basis; this sale cannot be finalised without correction.');
     const result=C.complete(state,id);
     if(!result.ok)return result;
     const realised=price-v.cost-v.prepSpent;
@@ -793,12 +910,17 @@
       color:v.color,generation:v.generation,origin:v.origin,
       depositApplied,customerBalancePaid:cashBalance,
       acquisition:v.cost,prep:v.prepSpent,profit:realised,
+      ...(vatRecord?{vat:vatRecord}:{}),
       profile:v.profile?{...v.profile}:null,
+      ...(AFT.enabled(state)?{vehicleSnapshot:JSON.parse(JSON.stringify(v))}:{}),
       exchange:px?px.title:null,allowance:px?agreedAllowance:0
     });
-    if(px)addCar(state,px,'part-ex',agreedAllowance,'PX-'+c.agreedDay+'-'+v.id);
+    if(vatRecord)state.ledger.push({day:state.day,delta:0,
+      note:'VAT output accrued: '+VAT.pence(vatRecord.outputPence)+' on margin sale '+v.title});
+    if(px)addCar(state,px,'part-ex',agreedAllowance,'PX-'+c.agreedDay+'-'+v.id,agreedAllowance);
     state.stock=state.vehicles.length;state.sales=state.sold.length;
-    const review=P.sale(state,v,price,realised,c);
+    const review=P.sale(state,v,price,
+      realised-(vatRecord?Math.ceil(vatRecord.outputPence/100):0),c);
     state.reputation=P.tier(state.reputationScore);
     const completed=state.sold.at(-1);
     completed.reputationDelta=review.reputationDelta;
@@ -811,7 +933,9 @@
         ' already paid; cash balance £'+cashBalance+' received at collection)':
         px?' (cash balance £'+cashBalance+' received after part-exchange allowance)':'')+
       (px?'; part-exchange allowance £'+agreedAllowance+'.':'.')+
-      ' Gross trading margin: £'+realised+' before overheads, tax and aftersales.');
+      ' Gross trading margin: £'+realised+
+      (vatRecord?' before £'+(vatRecord.outputPence/100).toFixed(2)+
+        ' VAT output, overheads, other taxes and aftersales.':' before overheads, tax and aftersales.'));
   }
   function wholesaleOffer(vehicle){
     // Simplified emergency trade bid. A trade outlet is not a retail sale
@@ -826,9 +950,15 @@
       return fail('stage','Trade disposal is available only before repair work has been booked.');
     const proceeds=wholesaleOffer(vehicle);
     const basis=vehicle.cost;
+    const vatRecord=VAT.enabled(state)?VAT.record(vehicle.vatPurchasePrice,proceeds,state.day):null;
+    if(VAT.enabled(state)&&!vatRecord)return fail('vat','Wholesale exit requires an identifiable used-car VAT purchase basis.');
     pay(state,proceeds,'Wholesale stock disposal: '+vehicle.title);
+    if(vatRecord)state.ledger.push({day:state.day,delta:0,
+      note:'VAT output accrued: '+VAT.pence(vatRecord.outputPence)+' on wholesale '+vehicle.title});
     state.wholesale.push({id:vehicle.id,title:vehicle.title,day:state.day,
-      proceeds,basis,profit:proceeds-basis,color:vehicle.color,
+      proceeds,basis,profit:proceeds-basis,
+      ...(vehicle.returnOf?{returnOf:vehicle.returnOf,origin:vehicle.origin}:{}),
+      ...(vatRecord?{vat:vatRecord}:{}),color:vehicle.color,
       generation:vehicle.generation});
     state.vehicles=state.vehicles.filter(v=>v.id!==id);
     state.stock=state.vehicles.length;
@@ -837,13 +967,18 @@
       '. No retail sale, target credit or reputation benefit.');
   }
   function totalMargin(state) { return sum(state.sold,'profit')+
-    sum(state.wholesale,'profit'); }
+    sum(state.wholesale,'profit')-
+    (AFT.enabled(state)?state.aftersales.cases.reduce((n,c)=>n+
+      (c.refundApprovedDay===null?0:c.remedy==='price-reduction'?
+        c.refundAmount:(state.sold.find(x=>x.id===c.saleId)?.profit||0)),0):0); }
   function premisesDay(state){
     const out=SITE.advance(state);
     state.reputation=P.tier(state.reputationScore);
     return out;
   }
   const upgradePremises=(state,kind)=>SITE.upgrade(state,kind);
+  const vatDay=state=>VAT.advance(state);
+  const aftersalesDay=state=>AFT.advance(state);
   function staffDay(state) {
     const out=P.advance(state);
     state.reputation=P.tier(state.reputationScore);
@@ -861,8 +996,12 @@
     return result;
   }
   window.MotorTradeEngine = Object.freeze({
-    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
-    auctionDay,nextAuctionDay,settleAuction,
+    VERSION, STARTING_CASH, STANDARD_STARTUP, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
+    employment:EMP,vat:VAT,vatDay,aftersales:AFT,aftersalesDay,
+    reportAftersales:AFT.report,repairAftersales:AFT.repair,
+    refundAftersales:AFT.refund,reduceAftersales:AFT.reduce,
+    releaseReturned:AFT.releaseReturned,
+    auctionDay,nextAuctionDay,auctionFee,auctionTransport,settleAuction,
     startAuction,bidLiveAuction,passAuction,nextAuctionLot,rollAuctionHall,
     auctionLot,lotNumber,auctionValid,
     upgradePremises,monthly:M,events:D,

@@ -111,12 +111,12 @@
       '<div><small>FIXED COSTS / CASH DISCIPLINE</small><h3>OPERATING COMMITMENTS</h3></div>'+
       '<button type="button" class="hq-text-link" data-page="finance">FULL FINANCES</button></div>'+
       '<div class="hq-commit-grid">'+
-      line('PREMISES / DAY',cash(p.total))+
+      line(state.financialScenario==='uk2026'?'CORE EXPENSE / DAY':'PREMISES / DAY',cash(p.total))+
       line('STAFF WAGES / DAY',cash(r.dailyWages))+
       line('WORKSHOP FUNDS RESERVED',cash(r.reserve))+
-      line('MONTHLY PREMISES GUIDE',cash(p.monthlyGuide))+
+      line(state.financialScenario==='uk2026'?'MONTHLY CORE EXPENSE':'MONTHLY PREMISES GUIDE',cash(p.monthlyGuide))+
       line('OUTSTANDING OBLIGATIONS',cash(r.arrears),r.arrears?' hq-due':'')+
-      line('MONTH-TO-DATE PREMISES COST',cash(monthly?.premisesExpense??0))+
+      line(state.financialScenario==='uk2026'?'MONTH-TO-DATE CORE EXPENSE':'MONTH-TO-DATE PREMISES COST',cash(monthly?.premisesExpense??0))+
       '</div><p class="hq-context">Daily premises and staff costs continue even when no cars sell. '+
       'Repair reserves are part of existing cash, not an additional charge.</p></section>';
     const upgradeHead='<div class="hq-section-heading hq-upgrade-section-head">'+

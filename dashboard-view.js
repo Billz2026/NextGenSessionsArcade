@@ -35,7 +35,8 @@
       Number.isSafeInteger(c.appointmentDay)&&c.appointmentDay<=state.day+1).length;
     const unread=state.messages.filter(m=>!m.read).length;
     const reserved=E.workshop.reserved(state);
-    const arrears=(state.payrollArrears||0)+(state.premises?.arrears||0);
+    const arrears=(state.payrollArrears||0)+(state.premises?.arrears||0)+
+      E.aftersales.pendingRefunds(state);
     const age=vehicles.filter(v=>v.status==='listed'&&state.day-v.acquiredDay>=14).length;
     const auctionOpen=E.auctionDay(state.day)&&state.auctionHall?.phase!=='finished';
     const auctionDay=auctionOpen?state.day:E.nextAuctionDay(state.day);
@@ -47,11 +48,27 @@
       tasks.push({rank,key,title,description,page,action,tone});
     if(state.auctionHall?.phase==='payment'){
       const lot=E.auctionLot(state);
-      const due=lot?state.auctionHall.currentBid+lot.fee:null;
+      const auctionFee=lot?E.auctionFee(state,lot,state.auctionHall.currentBid):null;
+      const transport=lot?E.auctionTransport(state,lot):null;
+      const due=lot&&auctionFee!==null&&transport?state.auctionHall.currentBid+auctionFee+transport.gross:null;
       add(0,'auction-invoice','Settle your auction purchase',
         due==null?'A winning hammer invoice needs payment before trading can continue.':
-          money(due)+' due including the buyer fee. Vehicle awaits workshop transfer.',
+          money(due)+' due including the buyer fee and simulated delivery where applicable. Vehicle awaits workshop transfer.',
         'auctionHall','PAY INVOICE','urgent');
+    }
+    if(E.aftersales.enabled(state)){
+      const cases=state.aftersales.cases;
+      const owed=cases.filter(x=>['refund-due','reduction-due'].includes(x.status));
+      const claims=cases.filter(x=>['open','repair-failed'].includes(x.status));
+      const cost=E.aftersales.pendingRefunds(state);
+      if(owed.length)
+        add(0.5,'aftersales-refunds',owed.length+' agreed customer remedy payment'+(owed.length===1?'':'s')+' outstanding',
+          money(cost)+' due including collection; an accepted statutory refund remains owed even when the bank is short.',
+          'sales','REVIEW CUSTOMER REFUNDS','urgent');
+      if(claims.length)
+        add(2.5,'aftersales-claims',claims.length+' unresolved consumer fault claim'+(claims.length===1?'':'s'),
+          'Confirm remedy, authorise a timely repair or accept the appropriate rejection / reduction.',
+          'sales','OPEN AFTERSALES','urgent');
     }
     if(events.meetingDue(state))
       add(1,'board-meeting','Complete management meeting',
@@ -71,7 +88,7 @@
         'staff','REVIEW PAYROLL','urgent');
     if(state.premises?.arrears>0)
       add(4,'rent','Unpaid premises overheads',
-        money(state.premises.arrears)+' in rent and utilities outstanding.',
+        money(state.premises.arrears)+(state.financialScenario==='uk2026'?' in operating bills outstanding.':' in rent and utilities outstanding.'),
         'business','VIEW COSTS','urgent');
     if(dueViewing)
       add(5,'viewing',dueViewing+' customer viewing'+(dueViewing===1?'':'s')+' due',

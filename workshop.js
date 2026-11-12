@@ -44,7 +44,7 @@
     if(vehicle.status!=='acquired'||job.stage!=='unassessed')
       return fail('already','Assessment is only available for newly acquired, unassessed stock.');
     const technician=P.active(state,'technician');
-    const fee=technician?30:55;
+    const fee=state.financialScenario==='uk2026'?(technician?65:80):(technician?30:55);
     if(state.cash<reserved(state)+fee)
       return fail('cash','Insufficient unreserved cash for the £'+fee+' assessment. Preparation reserves are protected.');
     charge(state,fee,'Workshop assessment: '+vehicle.title);
@@ -65,7 +65,10 @@
     if(method==='internal'&&(!tech||busyBays>=(window.MotorTradePremises?.bays(state)??4)))return null;
     const base=vehicle.prepBudget;
     const saving=method==='internal'?P.labourSaving(state,vehicle,tech):0;
-    const supplement=method==='external'?Math.round((base*.12+75)/5)*5:0;
+    // Modern job cards already include external-garage labour, parts and VAT.
+    // Adding the classic external uplift again would double-count labour.
+    const supplement=method==='external'&&state.financialScenario!=='uk2026'?
+      Math.round((base*.12+75)/5)*5:0;
     const cost=base-saving+supplement;
     const grade=vehicle.profile?.grade??3;
     const partsDelay=hash(vehicle.origin+'|parts')%3; // Stable 0–2 day delay.

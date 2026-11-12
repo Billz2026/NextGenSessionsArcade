@@ -4,6 +4,7 @@
   const VC=window.MotorTradeCards;
   if(!VC)throw new Error('Load vehicle-cards.js before auction-hall-view.js');
   const money=VC.money,esc=VC.esc;
+  const quoteMoney=n=>n===null?'QUOTE REQUIRED':money(n);
   const status={
     won:'HAMMERED TO YOU',lost:'RIVAL WON',passed:'PASSED',unsold:'UNSOLD',owned:'PREVIOUS PURCHASE'
   };
@@ -13,7 +14,7 @@
     return '<div class="auction-result-row '+className+'"><span>LOT '+esc(r.lotNumber)+
       '</span><div><strong>'+esc(r.title)+'</strong><small>'+esc(status[r.kind]||r.kind)+
       (r.hammer?' · HAMMER '+money(r.hammer):'')+'</small></div><b>'+
-      (r.kind==='won'?money(r.total)+' ALL-IN':'£0 SPENT')+'</b></div>';
+      (r.kind==='won'?money(r.total)+' HAMMER + FEE':'£0 SPENT')+'</b></div>';
   }
   function render(state,E,reportCard,previewId=null){
     const h=state.auctionHall,lots=E.marketFor(state).auctions;
@@ -30,7 +31,9 @@
       '<div><small>ACTIVE LOT</small><strong>'+(h.phase==='finished'||!lots.length?'—':E.lotNumber(h.index))+'</strong></div>'+
       '<div><small>WON TODAY</small><strong>'+won+'</strong></div>'+
       '<div><small>CAREER AUCTION WINS</small><strong>'+own.length+'</strong></div></div></div>';
-    const notice='<p class="trade-alert">All amounts are simulated GBP. A winning bid becomes binding when the hammer falls. '+
+    const notice='<p class="trade-alert">All amounts are simulated GBP. '+
+      (state.financialScenario==='uk2026'?'Buyer-fee bands use the published April 2026 BCA Blue Standard VAT-inclusive schedule, not a universal auction quotation. Over £24,999 requires a direct fee quote. Transport, storage and optional inspections are extra. ':'')+
+      'A winning bid becomes binding when the hammer falls. '+
       'Confirm the separate invoice for the winning bid PLUS buyer fee before the car joins your workshop. Preparation funds are protected, not spent at the auction. '+
       'A paid inspection is optional and non-refundable. A lot without a met vendor reserve remains unsold. '+
       'No fees are charged for losing or passing. Competitor bidding is fixed for the day and cannot be rerolled.</p>';
@@ -73,6 +76,9 @@
     const paymentDue=h.phase==='payment';
     const expectedNext=paymentDue?current:current+100,inspection=!!state.reports?.[lot.id];
     const q=E.quote(lot,'auction',expectedNext,inspection);
+    const hammerFee=E.auctionFee(state,lot,current);
+    const delivery=E.auctionTransport(state,lot)||{gross:0,routeMiles:0};
+    const feeUnknown=q.feeQuoteRequired;
     const intelligence=E.people.buyerEstimate(state,lot.rival);
     const already=state.vehicles.some(v=>v.origin===lot.id)||
       state.sold.some(v=>v.origin===lot.id);
@@ -82,22 +88,27 @@
       h.leader==='rival'?'RIVAL DEALER LEADS':'YOU LEAD';
     const controls=paymentDue?
       '<button type="button" class="trade-button auction-primary" data-action="settle-auction">FINALISE PAYMENT · '+
-      money(current+lot.fee)+'</button>':
+      quoteMoney(hammerFee===null?null:current+hammerFee+delivery.gross)+'</button>':
       h.phase==='catalogue'?
-      '<button type="button" class="trade-button auction-primary" data-action="start-auction">OPEN BIDDING — LOT '+
-      E.lotNumber(h.index)+'</button>'+
-      '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">SKIP THIS LOT</button>':
+      (feeUnknown?
+        '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">SKIP — BUYER FEE NOT QUOTED</button>':
+        '<button type="button" class="trade-button auction-primary" data-action="start-auction">OPEN BIDDING — LOT '+
+        E.lotNumber(h.index)+'</button>'+
+        '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">SKIP THIS LOT</button>'):
       h.phase==='bidding'?
-      '<button type="button" class="trade-button auction-primary" data-action="bid-live-auction" data-increment="100">BID +£100</button>'+
-      '<button type="button" class="trade-button" data-action="bid-live-auction" data-increment="250">BID +£250</button>'+
-      '<button type="button" class="trade-button trade-button-secondary" data-action="bid-live-auction" data-increment="500">BID +£500</button>'+
-      '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">PASS / LEAVE LOT</button>':
+      (feeUnknown?
+        '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">PASS — FEE QUOTE REQUIRED</button>':
+        '<button type="button" class="trade-button auction-primary" data-action="bid-live-auction" data-increment="100">BID +£100</button>'+
+        '<button type="button" class="trade-button" data-action="bid-live-auction" data-increment="250">BID +£250</button>'+
+        '<button type="button" class="trade-button trade-button-secondary" data-action="bid-live-auction" data-increment="500">BID +£500</button>'+
+        '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">PASS / LEAVE LOT</button>'):
       '<button type="button" class="trade-button auction-primary" data-action="next-auction-lot">'+
       (h.index+1>=lots.length?'FINISH SESSION & VIEW RESULTS':'NEXT LOT '+E.lotNumber(h.index+1))+
       '</button>';
     const cashWarning=paymentDue?'':state.vehicles.length>=state.capacity?
       '<p class="auction-risk">YOUR FORECOURT IS FULL. You cannot bid again until you sell stock.</p>':
-      E.workshop.reserved(state)+expectedNext+lot.fee+
+      feeUnknown?'<p class="auction-risk">PUBLISHED BUYER FEE UNAVAILABLE ABOVE £24,999. Obtain an individual auctioneer quotation before bidding.</p>':
+      E.workshop.reserved(state)+expectedNext+q.fee+q.transport+
         lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0)>state.cash?
       '<p class="auction-risk">The next £100 bid may exceed available cash after buyer fees and reserved preparation. Consider passing.</p>':'';
     const log=h.feed.length?'<div class="auction-feed" aria-live="polite">'+
@@ -105,9 +116,9 @@
       '<div class="auction-feed"><p>Inspect the lot before opening the bidding. When you bid, competitors respond immediately.</p></div>';
     const settlement=paymentDue?'<div class="auction-hammer-result auction-hammer-won">'+
       '<strong>HAMMER DOWN — RIVAL DEALER HAS DROPPED OUT</strong><p>Winning hammer '+money(current)+
-      ' + buyer fee '+money(lot.fee)+' = TOTAL DUE '+money(current+lot.fee)+
+      ' + buyer fee '+quoteMoney(hammerFee)+' + simulated transport '+money(delivery.gross)+' = TOTAL CASH DUE '+quoteMoney(hammerFee===null?null:current+hammerFee+delivery.gross)+
       '. Finalise payment to deduct this amount and transfer the car to Vehicle Stock for workshop assessment. '+
-      'The auction cannot continue or advance the game day until this invoice is paid.</p></div>':'';
+      'Route mileage is fictional and the delivery amount is an illustrative provider-benchmark charge, not a live transport quote. The auction cannot continue or advance the game day until both auction and collection costs are paid.</p></div>':'';
     const resolved=h.phase==='result'?'<div class="auction-hammer-result '+(h.results.at(-1).kind==='won'?'auction-hammer-won':'')+'">'+
       '<strong>'+esc(status[h.results.at(-1).kind])+'</strong><p>'+
       esc(h.results.at(-1).detail)+'</p></div>':'';
@@ -117,7 +128,7 @@
       ' / '+lots.length+'</span><strong>'+esc(statusText)+'</strong></div>'+
       '<div class="auction-car-content">'+VC.heading(lot,'auction','LOT '+E.lotNumber(h.index)+' · '+esc(lot.id))+
       '<div class="auction-prices"><div><small>GUIDE</small><strong>'+money(lot.guide)+'</strong></div>'+
-      '<div><small>BUYER FEE</small><strong>'+money(lot.fee)+'</strong></div>'+
+      '<div><small>'+(state.financialScenario==='uk2026'?'FEE AT GUIDE (INDICATIVE)':'BUYER FEE')+'</small><strong>'+quoteMoney(lot.fee)+'</strong></div>'+
       '<div><small>KNOWN PREP ESTIMATE</small><strong>'+money(lot.profile.basePrep+(inspection?(lot.profile.hiddenFault?.cost||0):0))+'</strong></div>'+
       '<div><small>LIKELY RETAIL SALE</small><strong>'+money(lot.profile.likelySale)+'</strong></div></div>'+
       reportCard(lot,'auction',expectedNext)+
@@ -125,9 +136,11 @@
       '<aside class="panel-card auction-bid-box"><div class="auction-bid-box-top"><small>LIVE HAMMER POSITION</small>'+
       '<strong>'+money(current)+'</strong><span>'+esc(statusText)+'</span></div>'+
       '<div class="auction-bid-maths"><div><span>'+(paymentDue?'WINNING HAMMER':'NEXT £100 BID')+'</span><b>'+money(expectedNext)+'</b></div>'+
-      '<div><span>PLUS BUYER FEE</span><b>'+money(lot.fee)+'</b></div>'+
+      '<div><span>PLUS BUYER FEE AT SHOWN BID</span><b>'+quoteMoney(q.fee)+'</b></div>'+
+      (state.financialScenario==='uk2026'?'<div><span>SIMULATED TRANSPORT · '+delivery.routeMiles+' MILES</span><b>'+money(delivery.gross)+'</b></div>':'')+
       '<div><span>PLUS EXPECTED PREPARATION</span><b>'+money(q.prep)+'</b></div>'+
-      '<div><span>PROJECTED GROSS CONTRIBUTION</span><b class="'+(q.expectedMargin<0?'auction-negative':'')+'">'+money(q.expectedMargin)+'</b></div></div>'+
+      (state.financialScenario==='uk2026'?'<div><span>EST. OUTPUT VAT ON ELIGIBLE MARGIN</span><b>'+money(Math.ceil(q.vatEstimatePence/100))+'</b></div>':'')+
+      '<div><span>'+(state.financialScenario==='uk2026'?'PROJECTED AFTER OUTPUT VAT':'PROJECTED GROSS CONTRIBUTION')+'</span><b class="'+(q.expectedMargin!==null&&q.expectedMargin<0?'auction-negative':'')+'">'+quoteMoney(q.expectedMargin)+'</b></div></div>'+
       (intelligence?'<div class="people-bid-intel">VEHICLE BUYER INTELLIGENCE: COMPETITOR BID RANGE '+
         money(intelligence.lower)+'–'+money(intelligence.upper)+
         '. Forecast only — not the actual reserve or final bid.</div>':'')+

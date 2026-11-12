@@ -6,6 +6,8 @@
  */
 (() => {
   const MAX_STAFF=13, HIRING_FEE=150, TRAINING_FEE=275, WAGE_COVER_DAYS=3;
+  const EMP=window.MotorTradeEmployment;
+  if(!EMP)throw new Error('Load employment-2026.js before people.js');
   const ROLES=['sales','buyer','technician','supervisor'];
   const CANDIDATES=Object.freeze({
     sales:[
@@ -72,7 +74,8 @@
   }
   function initial(){return {reputationScore:5,staff:[],nextStaffId:1,
     payrollArrears:0,reputationHistory:[]};}
-  function applicants(day){
+  function applicants(day,state=null){
+    const modern=state?.employmentScenario==='uk2026-payroll';
     const cycle=Math.floor((day-1)/7);
     return ROLES.flatMap((role,index)=>{
       const source=CANDIDATES[role];
@@ -88,9 +91,31 @@
           efficiency:role==='technician'?clamp(ability+1,1,20):clamp(ability-3,1,20),
           reliability
         };
-        return {id,name,role,skills,monthlySalary:salary,experience};
+        return {id,name,role,skills,monthlySalary:marketSalary(role,salary,modern),experience,
+          ...(modern?{contractHours:EMP.REQUIRED_HOURS,ageBand:'25+',pensionEnrolled:true}: {})};
       });
     });
+  }
+  // 2026/27 GB 21+ National Living Wage £12.71/hour. New candidates are
+  // modelled as 40 paid hours/week, 52 weeks/year; minimum legal basic is
+  // £26,436.80/year. Round the minimum *up*, never down. Commission is extra
+  // and cannot be relied on to make an unpaid day compliant.
+  const MINIMUM_FULL_TIME_MONTHLY=Math.ceil(12.71*40*52/12);
+  const PAY_BANDS=Object.freeze({
+    sales:{minimum:2250,uplift:0},buyer:{minimum:2550,uplift:350},
+    technician:{minimum:2850,uplift:750},supervisor:{minimum:3100,uplift:450}
+  });
+  function marketSalary(role,legacyMonthly,modern=false){
+    const band=PAY_BANDS[role];
+    if(!modern)return Math.max(MINIMUM_FULL_TIME_MONTHLY,band.minimum,legacyMonthly+band.uplift);
+    const modernBand={
+      sales:{minimum:2300,uplift:200},
+      buyer:{minimum:2800,uplift:700},
+      technician:{minimum:3050,uplift:1125},
+      supervisor:{minimum:3500,uplift:850}
+    }[role];
+    return Math.max(EMP.minimumMonthly(EMP.REQUIRED_HOURS,1),
+      modernBand.minimum,legacyMonthly+modernBand.uplift);
   }
   const dailyCost=employee=>Math.ceil(employee.monthlySalary/30);
   // Reputation grants more repair bays; existing hires remain employed if
@@ -104,7 +129,8 @@
     role==='sales'?salesLimit(state):1;
   const isActive=(state,employee)=>!!employee&&state.payrollArrears===0&&
     state.day>=employee.startDay&&
-    (employee.trainingUntil===null||state.day>=employee.trainingUntil);
+    (employee.trainingUntil===null||state.day>=employee.trainingUntil)&&
+    (!EMP.is2026(state)||!EMP.absence(employee,state.day));
   const activeTeam=(state,role)=>state.staff.filter(s=>s.role===role&&isActive(state,s));
   const active=(state,role)=>activeTeam(state,role)[0]||null;
   const supervisor=state=>active(state,'supervisor');
@@ -185,12 +211,27 @@
   function hireQuote(state,candidate){
     const daily=state.staff.reduce((n,e)=>n+dailyCost(e),0)+dailyCost(candidate);
     const protectedStock=reserve(state);
+    if(EMP.is2026(state)){
+      const estimate=EMP.quoteHire(state,candidate);
+      const obligations=EMP.liabilities(state);
+      const vat=window.MotorTradeVat.enabled(state)?
+        Math.ceil(window.MotorTradeVat.outstandingPence(state)/100):0;
+      // One full calendar month's TOTAL employment cost is protected,
+      // including potential gross employer NIC if allowance has expired.
+      const required=HIRING_FEE+protectedStock+estimate.monthlyEmployerCost+
+        obligations.total+vat;
+      return {required,protectedStock,dailyWages:daily,coverDays:30,
+        monthlyEmployerCost:estimate.monthlyEmployerCost,
+        candidateEmployerCost:estimate.candidateMonthlyEmployerCost,
+        taxLiabilities:obligations.hmrc+obligations.pension,vatReserve:vat,
+        shortfall:Math.max(0,required-state.cash)};
+    }
     const required=HIRING_FEE+protectedStock+daily*WAGE_COVER_DAYS+state.payrollArrears;
     return {required,protectedStock,dailyWages:daily,coverDays:WAGE_COVER_DAYS,
       shortfall:Math.max(0,required-state.cash)};
   }
   function hire(state,id){
-    const candidate=applicants(state.day).find(c=>c.id===id);
+    const candidate=applicants(state.day,state).find(c=>c.id===id);
     if(!candidate)return failure('expired','That applicant is no longer available this week.');
     if(state.staff.some(s=>s.name===candidate.name))
       return failure('duplicate','That applicant is already on your payroll.');
@@ -204,7 +245,7 @@
     const quote=hireQuote(state,candidate);
     if(quote.shortfall)return failure('cash','Need £'+quote.required.toLocaleString('en-GB')+
       ' total cash (£'+quote.shortfall.toLocaleString('en-GB')+
-      ' short), including the joining fee, three days of wages and protected vehicle repairs. '+ 
+      ' short), including the joining fee, '+(EMP.is2026(state)?'one month of all-in employment costs':'three days of wages')+' and protected vehicle repairs. '+ 
       'Sell prepared stock or use an external garage until the payroll is affordable.');
     expense(state,HIRING_FEE,'Recruitment and onboarding: '+candidate.name);
     state.staff.push({...candidate,candidateId:candidate.id,id:state.nextStaffId++,hiredDay:state.day,
@@ -279,7 +320,13 @@
     const index=state.staff.findIndex(s=>s.id===id);
     if(index<0)return failure('missing','Employee not found.');
     const employee=state.staff[index];
-    const notice=dailyCost(employee)*7;
+    const notice=EMP.is2026(state)?Math.ceil(employee.monthlySalary*12/52):dailyCost(employee)*7;
+    if(EMP.is2026(state)){
+      EMP.creditOtherPay(state,employee,notice,'notice');
+      state.staff.splice(index,1);
+      return ok(employee.name+' released. Approximate one-week contractual notice pay £'+notice+
+        ' accrued for the next payroll, not paid twice. This pilot does not calculate length-of-service redundancy rights.');
+    }
     const covered=Math.min(Math.max(0,state.cash-reserve(state)),notice);
     expense(state,covered,'Staff exit and provisional notice payment: '+employee.name);
     state.payrollArrears+=notice-covered;
@@ -288,11 +335,17 @@
       (notice>covered?'; £'+(notice-covered)+' remains payable.':'.'));
   }
   function advance(state){
-    const payroll=state.staff.reduce((total,employee)=>total+dailyCost(employee),0);
-    const due=state.payrollArrears+payroll;
-    const paid=Math.min(Math.max(0,state.cash-reserve(state)),due);
-    expense(state,paid,'Staff payroll daily settlement');
-    state.payrollArrears=due-paid;
+    const modern=EMP.is2026(state);
+    const employment=modern?EMP.advance(state):null;
+    const payroll=modern?employment.payroll:
+      state.staff.reduce((total,employee)=>total+dailyCost(employee),0);
+    let paid=employment?.paid??0;
+    if(!modern){
+      const due=state.payrollArrears+payroll;
+      paid=Math.min(Math.max(0,state.cash-reserve(state)),due);
+      expense(state,paid,'Staff payroll daily settlement');
+      state.payrollArrears=due-paid;
+    }
     const support=[];
     for(const employee of state.staff){
       if(state.payrollArrears>0)employee.morale=clamp(employee.morale-9,0,100);
@@ -319,9 +372,11 @@
       // liabilities; the game never silently writes off staff pay.
       const departures=state.staff.filter(e=>e.morale<=15).map(e=>e.name);
       state.staff=state.staff.filter(e=>e.morale>15);
-      return {payroll,paid,arrears:state.payrollArrears,departures,support,supervisor:manager?.name??null};
+      return {payroll,paid,arrears:state.payrollArrears,departures,support,supervisor:manager?.name??null,
+        ...(modern?employment:{})};
     }
-    return {payroll,paid,arrears:state.payrollArrears,departures:[],support,supervisor:manager?.name??null};
+    return {payroll,paid,arrears:state.payrollArrears,departures:[],support,supervisor:manager?.name??null,
+      ...(modern?employment:{})};
   }
   function record(state,delta,reason){
     state.reputationHistory.push({day:state.day,delta,reason});
@@ -355,9 +410,13 @@
       // Preserve the workshop reserve for existing and incoming part-ex stock.
       // Any unpaid sales commission remains a liability; gross margin is
       // deliberately reported before staff costs.
-      const paid=Math.min(Math.max(0,state.cash-reserve(state)),commission);
-      expense(state,paid,'Sales commission: '+worker.name);
-      state.payrollArrears+=commission-paid;
+      if(EMP.is2026(state)){
+        EMP.creditCommission(state,worker,commission);
+      }else{
+        const paid=Math.min(Math.max(0,state.cash-reserve(state)),commission);
+        expense(state,paid,'Sales commission: '+worker.name);
+        state.payrollArrears+=commission-paid;
+      }
     }
     return {reputationDelta:applied,reason,commission,
       commissionRatePct:Math.round(impact.commissionRate*100),
@@ -369,6 +428,7 @@
     if(tech){tech.workDone++;tech.morale=clamp(tech.morale+1,0,100);}
   }
   function valid(state,day){
+    if(!EMP.valid(state))return false;
     if(!integer(state.reputationScore)||state.reputationScore<0||state.reputationScore>100||
        !Array.isArray(state.staff)||state.staff.length>MAX_STAFF||
        !integer(state.nextStaffId)||state.nextStaffId<1||
@@ -392,6 +452,10 @@
          !s.skills||typeof s.skills!=='object'||!Object.values(s.skills).every(skill)||
          !['sales','negotiation','care','knowledge','diagnostics','efficiency','reliability']
            .every(k=>skill(s.skills[k])))return false;
+      if(EMP.is2026(state)&&(
+        s.contractHours!==EMP.REQUIRED_HOURS||s.ageBand!=='25+'||
+        s.pensionEnrolled!==true||
+        s.monthlySalary<EMP.minimumMonthly(s.contractHours,day)))return false;
       keys.add(s.id);names.add(s.name);roleCounts[s.role]++;
     }
     if(roleCounts.sales>3||roleCounts.buyer>1||roleCounts.technician>8||roleCounts.supervisor>1)return false;
@@ -403,7 +467,9 @@
     return {reputationScore:state.reputationScore,
       staff:state.staff.map(e=>({...e,skills:{...e.skills}})),
       nextStaffId:state.nextStaffId,payrollArrears:state.payrollArrears,
-      reputationHistory:state.reputationHistory.map(e=>({...e}))};
+      reputationHistory:state.reputationHistory.map(e=>({...e})),
+      ...(EMP.is2026(state)?{employmentScenario:'uk2026-payroll',
+        payroll2026:EMP.clone(state.payroll2026)}:{})};
   }
   window.MotorTradePeople=Object.freeze({
     MAX_STAFF,HIRING_FEE,TRAINING_FEE,ROLES,tier,legacyScore,initial,

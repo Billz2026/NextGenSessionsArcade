@@ -64,7 +64,12 @@
     const vehicleEngine=(typeof car.engineSpec==='string'&&car.engineSpec.length<75
       ? car.engineSpec : Object.entries(power).find(([k]) => name.includes(k))?.[1]) ||
       (car.fuel==='Electric'?'Electric motor specification unverified':'Engine specification unverified');
-    const basePrep=Math.max(150,Math.round((Number(car.prep)||350)));
+    const repairPlan=car.repairScenario==='uk2026'?
+      window.MotorTradeRepairPrices?.plan(car):null;
+    if(car.repairScenario==='uk2026'&&!repairPlan)
+      throw new Error('Load repair-prices.js before modern vehicle intelligence');
+    const basePrep=repairPlan?.basePrep??
+      Math.max(150,Math.round((Number(car.prep)||350)));
     const mode=grade>=4?'heavy':grade===3?'medium':'light';
     const labelsFor=car.fuel==='Electric'?
       ['EV safety / charging assessment','Tyres and brakes allowance','Cooling and software checks']:
@@ -73,7 +78,7 @@
       labels[mode];
     const splitA=moneyRound(basePrep*.42);
     const splitB=moneyRound(basePrep*.32);
-    const knownRepairs=[
+    const knownRepairs=repairPlan?.knownRepairs||[
       {item:labelsFor[0],cost:splitA},
       {item:labelsFor[1],cost:splitB},
       {item:labelsFor[2],cost:basePrep-splitA-splitB}
@@ -97,7 +102,7 @@
     const conditionDiscount=grade>=4?350:grade===3?200:75;
     const demandAdjustment=demand==='STRONG'?100:demand==='LOW'?250:170;
     const likelySale=moneyRound(Math.max(850,retail-conditionDiscount-demandAdjustment));
-    const riskAllowance=grade>=4?385:grade===3?220:120;
+    const riskAllowance=repairPlan?.riskAllowance??(grade>=4?385:grade===3?220:120);
     const targetMargin=moneyRound(Math.max(575,likelySale*.13));
     const trade=moneyRound(Math.max(300,likelySale-basePrep-riskAllowance-targetMargin-225));
     const inspectionFee=car.kind==='auction'||car.source==='auction'?95:75;
@@ -107,6 +112,7 @@
       mot:{monthsRemaining:motMonths,recordedMiles:motRecordedMiles,
         result:'PASS',advisories:motAdvisories},
       knownRepairs,hiddenFault,basePrep,riskAllowance,
+      ...(repairPlan?{repairBasis:repairPlan.repairBasis,majorExposure:repairPlan.majorExposure}:{}),
       inspectionFee,demand,retail,likelySale,trade,targetMargin,
       inspected:false,legacy:false
     };
@@ -127,15 +133,48 @@
   function quote(car,source,offer,inspected=false) {
     const p=car.profile||profile(car);
     const hidden=inspected&&p.hiddenFault?p.hiddenFault.cost:0;
-    const prep= p.basePrep + (inspected?hidden:p.riskAllowance);
-    const fee=source==='auction'?Number(car.fee||0):0;
+    const prep=p.basePrep+(inspected?hidden:p.riskAllowance);
     const inspection=inspected?p.inspectionFee:0;
     const price=Number.isSafeInteger(offer)?offer:(source==='auction'?car.guide:car.ask);
-    const total=price+fee+prep+inspection;
-    const maximumBid=Math.max(0,moneyRound(p.likelySale-fee-prep-inspection-p.targetMargin));
+    const published=source==='auction'&&car.feeModel==='bca-blue-2026';
+    const fees=window.MotorTradeAuctionFees;
+    const fee=source!=='auction'?0:published?
+      (fees?.feeAtHammer(price)??null):Number(car.fee||0);
+    const transport=published?window.MotorTradeTransport?.quote(car.id)?.gross??null:0;
+    const feeQuoteRequired=published&&(fee===null||transport===null);
+    const total=feeQuoteRequired?null:price+fee+transport+prep+inspection;
+    // The new 2026 dealer starts voluntarily VAT-registered. Only the
+    // PURCHASE-TO-SALE margin is taxed; reconditioning is not deductible
+    // when calculating the margin scheme's VAT output.
+    const vatModel=car.repairScenario==='uk2026'?window.MotorTradeVat:null;
+    const outputVatAt=purchase=>vatModel?
+      Math.ceil(vatModel.marginVatPence(p.likelySale,purchase)/100):0;
+    const vatEstimatePence=vatModel?.marginVatPence(p.likelySale,price)??0;
+    let maximumBid;
+    if(published){
+      // A fee-band increase AND changing VAT margin affect the next bid.
+      maximumBid=0;
+      for(let candidate=25;candidate<=fees.MAX_PUBLISHED_HAMMER;candidate+=25){
+        const charge=fees.feeAtHammer(candidate);
+        if(charge===null||candidate+charge+transport+prep+inspection+
+          outputVatAt(candidate)+p.targetMargin>p.likelySale)break;
+        maximumBid=candidate;
+      }
+    }else if(vatModel){
+      maximumBid=0;
+      for(let candidate=25;candidate<=p.likelySale;candidate+=25){
+        if(candidate+fee+prep+inspection+outputVatAt(candidate)+
+          p.targetMargin>p.likelySale)break;
+        maximumBid=candidate;
+      }
+    }else{
+      maximumBid=Math.max(0,moneyRound(p.likelySale-fee-prep-inspection-p.targetMargin));
+    }
     return {likelySale:p.likelySale,trade:p.trade,retail:p.retail,
-      prep,fee,inspection,price,total,
-      expectedMargin:p.likelySale-total,
+      prep,fee,transport,inspection,price,total,feeQuoteRequired,
+      vatEstimatePence,
+      expectedMargin:feeQuoteRequired?null:p.likelySale-total-
+        Math.ceil(vatEstimatePence/100),
       targetMargin:p.targetMargin,maxBid:maximumBid,
       riskUncertain:!inspected};
   }

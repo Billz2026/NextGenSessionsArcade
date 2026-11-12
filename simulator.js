@@ -11,6 +11,7 @@
   const EV = window.MotorTradeEventsView;
   const WV = window.MotorTradeWorkshopView;
   const CV = window.MotorTradeCustomersView;
+  const AFTV=window.MotorTradeAftersalesView;
   const AV = window.MotorTradeAuctionHallView;
   const SITE_VIEW = window.MotorTradePremisesView;
   const DV = window.MotorTradeDashboardView;
@@ -74,19 +75,21 @@
   function makeMessage(id, day, from, subject, preview, body, linkPage) {
     return { id, day, from, subject, preview, body, linkPage, read: false };
   }
-  function welcomeMessages() {
+  function welcomeMessages(realistic=false) {
     return [
       makeMessage(1,1,'BUSINESS SUPPORT','Welcome to the motor trade',
-        'Run your first dealership, with £12,500 in capital.',
-        'Your dealership starts with £12,500 in cash and four forecourt spaces. Visit the Auction Hall for live numbered-lot bidding, and the Buying Desk for customers selling cars directly.\n\nA car needs workshop assessment, timed repairs and a passed final quality check before advertising. Once listed, customer enquiries are not guaranteed: book appointments, arrange test drives, negotiate and complete handover. A part-exchange becomes your next stock vehicle.',
+        realistic?'Open your independent dealership with £50,000 in bank cash.':
+          'Run your first dealership, with £12,500 in capital.',
+        (realistic?'£60,000 owner capital funded your business. £10,000 was committed before opening (lease deposit, prepaid insurance, equipment and launch). You begin with £50,000 bank cash, four selling spaces and outsourced repairs. ': 'Your dealership starts with £12,500 in cash and four forecourt spaces. ')+
+        'Visit the Auction Hall for live numbered-lot bidding, and the Buying Desk for customers selling cars directly.\n\nA car needs workshop assessment, timed repairs and a passed final quality check before advertising. Once listed, customer enquiries are not guaranteed: book appointments, arrange test drives, negotiate and complete handover. A part-exchange becomes your next stock vehicle.',
         'auctionHall'),
       makeMessage(2,1,'BUYING DESK','Three ways to find your next car',
         'Auctions, direct sellers and part-exchanges all supply vehicles.',
         'Auctions have competing traders and buyer fees. Direct sellers can reject low offers. Part-exchanges happen when you sell one of your advertised cars and agree an allowance for the customer\'s existing vehicle.\n\nEvery route affects your cash and stock differently. Your first market opportunities are waiting.',
         'auctionHall'),
-      makeMessage(3,1,'ACCOUNTS OFFICE','Protect your opening £12,500',
+      makeMessage(3,1,'ACCOUNTS OFFICE',realistic?'Protect your opening £50,000':'Protect your opening £12,500',
         'Gross margin is different from cash flow.',
-        'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. Gross trade margin excludes staff and premises overheads; the management report shows an operating contribution after those charges. VAT, tax, finance and after-sale claims remain unmodelled.',
+        'Every purchase and preparation job costs cash. Customer sales return cash, while part-exchange deals include the incoming vehicle as a separate purchase.\n\nThe Finances page records each transaction. '+(realistic?'Your 2026 dealer is modelled as voluntarily VAT-registered from day one. Eligible fictional used-car sales accrue one-sixth VAT on the positive vehicle purchase-to-sale margin, with a separate quarterly tax payment. Input VAT recovery and full statutory returns are not modelled; employer taxes and aftersales claims still require auditing.':'Gross trade margin excludes staff and premises overheads; the management report shows an operating contribution after those charges. VAT, tax, finance and after-sale claims remain unmodelled.'),
         'finance')
     ];
   }
@@ -356,6 +359,7 @@
     const view=CV.render(career,E,{selectedId:selectedSalesId,filter:salesFilter});
     selectedSalesId=view.selectedId;
     byId('sales-list').innerHTML=view.html;
+    byId('aftersales-board').innerHTML=AFTV.render(career,E);
   }
   function renderFinances() {
     byId('finance-overview').innerHTML=FV.summary(career,E).html;
@@ -443,6 +447,9 @@
     const date = gameDate(career.day);
     const short = dateShort.format(date).toUpperCase();
     bindText('company', career.name);
+    byId('owner-startup-label').textContent=career.financialScenario==='uk2026'?
+      'INDEPENDENT DEALER · OWNER CAPITAL £60,000 · OPENING BANK £50,000':
+      'INDEPENDENT MOTOR TRADER · STARTING CAPITAL £12,500';
     bindText('cash', money.format(career.cash));
     bindText('customer-deposits',money.format(C.heldDeposits(career)));
     bindText('stock', career.stock + ' / ' + career.capacity);
@@ -561,6 +568,8 @@
         linkPage:'staff',reference:'supervisor-checkins:'+career.day});
     }
     const premisesEvent=E.premisesDay(career);
+    const aftersalesEvents=E.aftersalesDay(career);
+    const vatEvent=E.vatDay(career);
     const workshopEvents=E.advanceWorkshop(career);
     const customerEvents=E.advanceCustomers(career);
     lastTradeResult = null;
@@ -583,20 +592,44 @@
         'One game day completed. Private sellers have refreshed; next weekly auction is game day '+
           E.nextAuctionDay(career.day)+'.';
     }
-    if(workforceEvent.payroll || workforceEvent.arrears){
+    if(career.employmentScenario==='uk2026-payroll'){
+      if(workforceEvent.periodClose){
+        eventNotice+=' CALENDAR-MONTH PAYROLL: gross '+money.format(workforceEvent.gross)+
+          ', net wages due '+money.format(workforceEvent.netWages)+
+          ', employer NI after allowance '+money.format(workforceEvent.employerNi)+
+          ', employer pension '+money.format(workforceEvent.employerPension)+
+          ', Employment Allowance used '+money.format(workforceEvent.allowanceRelief)+'.';
+      }
+      if(workforceEvent.paid||workforceEvent.arrears)
+        eventNotice+=' NET PAYROLL: '+money.format(workforceEvent.paid)+
+          ' paid today; '+money.format(workforceEvent.arrears)+' wages unpaid.';
+      if(workforceEvent.hmrcPaid||workforceEvent.pensionPaid)
+        eventNotice+=' PAYROLL REMITTANCES: HMRC '+money.format(workforceEvent.hmrcPaid)+
+          ', pension '+money.format(workforceEvent.pensionPaid)+'.';
+    }else if(workforceEvent.payroll || workforceEvent.arrears){
       eventNotice += ' Staff wage settlement: '+money.format(workforceEvent.paid)+
         ' paid of '+money.format(workforceEvent.payroll)+
         '; unpaid balance '+money.format(workforceEvent.arrears)+'.';
       if(workforceEvent.departures.length)
         eventNotice+=' Departures: '+workforceEvent.departures.join(', ')+'.';
     }
+    if(workforceEvent.departures.length&&career.employmentScenario==='uk2026-payroll')
+      eventNotice+=' Departures: '+workforceEvent.departures.join(', ')+'.';
     eventNotice+=' PREMISES: '+money.format(premisesEvent.paid)+' of '+
-      money.format(premisesEvent.due)+' daily rent/utilities paid; '+
+      money.format(premisesEvent.due)+(career.financialScenario==='uk2026'?' daily operating bills paid; ':' daily rent/utilities paid; ')+
       money.format(premisesEvent.arrears)+' outstanding.';
+    if(vatEvent.paid)
+      eventNotice+=' HMRC VAT remittance: '+money.format(vatEvent.paid)+
+        ' paid; '+E.vat.pence(vatEvent.duePence)+' of overdue output VAT remains.';
+    else if(vatEvent.duePence>=100)
+      eventNotice+=' VAT PAYMENT OVERDUE: '+E.vat.pence(vatEvent.duePence)+
+        ' owed on the simplified eligible used-vehicle margin scheme.';
     if(workshopEvents.length)
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
     if(customerEvents.length)
       eventNotice+=' CUSTOMERS: '+customerEvents.join(' ');
+    if(aftersalesEvents.length)
+      eventNotice+=' AFTERSALES: '+aftersalesEvents.join(' ');
     if(closed){
       const id=career.messages.reduce((n,message)=>Math.max(n,message.id),0)+1;
       const status=closed.targetMet?'ACHIEVED':'MISSED';
@@ -629,7 +662,8 @@
     }
     input.setCustomValidity('');
     if (career && !window.confirm('Replace your existing career? This will overwrite your saved dealership and inbox history.')) return;
-    career = E.create(name, welcomeMessages());
+    const realistic=byId('career-realism').checked===true;
+    career = E.create(name, welcomeMessages(realistic),realistic?'uk2026':'classic');
     selectedMessageId = null;
     inboxFilter='all';
     lastTradeResult = null;
@@ -662,6 +696,11 @@
     startCareer();
   });
   byId('dealership-name').addEventListener('input', event => event.target.setCustomValidity(''));
+  byId('career-realism').addEventListener('change',event=>{
+    const modern=event.target.checked;
+    byId('starting-cash-fact').textContent=modern?'£50,000':'£12,500';
+    byId('career-type-fact').textContent=modern?'2026 independent':'Classic independent';
+  });
   document.addEventListener('input', event => {
     if(!career||!event.target?.id)return;
     const match=/^(auction-bid-|seller-offer-)([AS]-[0-9]+-[0-9]+)$/.exec(event.target.id);
@@ -1017,6 +1056,21 @@
       case 'sell-part-ex':
         if (career) saveResult(E.completeSale(career,Number(button.dataset.id),'part-ex',
           inputNumber('px-allowance-' + button.dataset.id)));
+        break;
+      case 'aftersales-repair':
+        if(career&&window.confirm('Authorise a VAT-inclusive outsourced consumer remedy? The customer pays nothing and your dealership pays the repair invoice.'))
+          saveResult(E.repairAftersales(career,Number(button.dataset.id)));
+        break;
+      case 'aftersales-refund':
+        if(career&&window.confirm('Accept the full retail refund and dealer-funded vehicle collection? This becomes a binding customer liability, even if the business has insufficient cash. Part-exchange consideration is returned as a cash equivalent only with the simulated customer agreement.'))
+          saveResult(E.refundAftersales(career,Number(button.dataset.id)));
+        break;
+      case 'aftersales-reduce':
+        if(career&&window.confirm('The customer agrees to keep the car after the failed repair in return for the displayed case-specific price reduction. Authorise the partial refund and corresponding VAT adjustment?'))
+          saveResult(E.reduceAftersales(career,Number(button.dataset.id)));
+        break;
+      case 'aftersales-recover':
+        if(career)saveResult(E.releaseReturned(career,Number(button.dataset.id)));
         break;
       case 'filter-ledger':
         if(career&&FV.FILTERS.includes(button.dataset.filter)){

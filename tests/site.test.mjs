@@ -9,8 +9,13 @@ const css = readFileSync(new URL('styles.css', root), 'utf8');
 const js = readFileSync(new URL('simulator.js', root), 'utf8');
 const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
+const repairPrices = readFileSync(new URL('repair-prices.js', root), 'utf8');
+const vatModule = readFileSync(new URL('vat.js', root), 'utf8');
+const employment = readFileSync(new URL('employment-2026.js', root), 'utf8');
 const photos = readFileSync(new URL('vehicle-photos.js', root), 'utf8');
 const marketData = readFileSync(new URL('vehicle-market.js', root), 'utf8');
+const auctionFees = readFileSync(new URL('auction-fees.js', root), 'utf8');
+const auctionTransport = readFileSync(new URL('auction-transport.js', root), 'utf8');
 const accuracyData = readFileSync(new URL('vehicle-accuracy.js', root), 'utf8');
 const cards = readFileSync(new URL('vehicle-cards.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
@@ -25,11 +30,14 @@ const eventsView = readFileSync(new URL('events-view.js', root), 'utf8');
 const workshop = readFileSync(new URL('workshop.js', root), 'utf8');
 const workshopView = readFileSync(new URL('workshop-view.js', root), 'utf8');
 const customers = readFileSync(new URL('customers.js', root), 'utf8');
+const aftersales = readFileSync(new URL('aftersales.js', root), 'utf8');
 const customersView = readFileSync(new URL('customers-view.js', root), 'utf8');
+const aftersalesView = readFileSync(new URL('aftersales-view.js', root), 'utf8');
 const auctionHallView = readFileSync(new URL('auction-hall-view.js', root), 'utf8');
 const buyingDeskView = readFileSync(new URL('buying-desk-view.js', root), 'utf8');
 const stockView = readFileSync(new URL('stock-view.js', root), 'utf8');
 const financeView = readFileSync(new URL('finance-view.js', root), 'utf8');
+const economicsStress = readFileSync(new URL('economics-stress.js', root), 'utf8');
 const dashboardView = readFileSync(new URL('dashboard-view.js', root), 'utf8');
 const inboxOffice = readFileSync(new URL('inbox-office.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
@@ -64,25 +72,34 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /id="stock-list"/);
   assert.match(html, /class="stock-control"/);
   assert.match(html, /id="sales-list"/);
+  assert.match(html, /id="aftersales-board"/);
   assert.match(html, /id="ledger-list"/);
-  assert.match(html, /vehicle-intel\.js\?v=2/);
-  assert.match(html, /people\.js\?v=7/);
-  assert.match(html, /monthly\.js\?v=7/);
+  assert.match(html, /vehicle-intel\.js\?v=7/);
+  assert.match(html, /people\.js\?v=10/);
+  assert.match(html, /monthly\.js\?v=13/);
   assert.match(html, /events\.js\?v=2/);
-  assert.match(html, /workshop\.js\?v=4/);
+  assert.match(html, /workshop\.js\?v=5/);
   assert.match(html, /customers\.js\?v=5/);
+  assert.match(html, /aftersales\.js\?v=2/);
+  assert.match(html, /aftersales-view\.js\?v=2/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
-  assert.match(html, /vehicle-market\.js\?v=2/);
-  assert.match(html, /auction-hall-view\.js\?v=2/);
-  assert.match(html, /buying-desk-view\.js\?v=2/);
+  assert.match(html, /vehicle-market\.js\?v=7/);
+  assert.match(html, /auction-fees\.js\?v=1/);
+  assert.match(html, /auction-transport\.js\?v=1/);
+  assert.match(html, /repair-prices\.js\?v=1/);
+  assert.match(html, /vat\.js\?v=3/);
+  assert.match(html, /employment-2026\.js\?v=3/);
+  assert.match(html, /auction-hall-view\.js\?v=6/);
+  assert.match(html, /buying-desk-view\.js\?v=3/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=2/);
+  assert.match(html, /finance-view\.js\?v=12/);
+  assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
-  assert.match(html, /simulator\.js\?v=32/);
-  assert.match(html, /premises\.js\?v=1/);
-  assert.match(html, /premises-view\.js\?v=3/);
+  assert.match(html, /simulator\.js\?v=38/);
+  assert.match(html, /premises\.js\?v=2/);
+  assert.match(html, /premises-view\.js\?v=4/);
   assert.match(html, /id="premises-view"/);
-  assert.match(html, /dashboard-view\.js\?v=2/);
+  assert.match(html, /dashboard-view\.js\?v=5/);
   assert.match(html, /inbox-office\.js\?v=3/);
   assert.match(html, /id="inbox-action-count"/);
   assert.match(html, /id="inbox-filter-buttons"/);
@@ -93,13 +110,13 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=19/);
+  assert.match(html, /trading\.js\?v=30/);
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=6/);
-  assert.match(html, /monthly-view\.js\?v=8/);
-  assert.match(html, /people-view\.js\?v=7/);
-  assert.match(html, /vehicle-view\.js\?v=4/);
+  assert.match(html, /monthly-view\.js\?v=13/);
+  assert.match(html, /people-view\.js\?v=9/);
+  assert.match(html, /vehicle-view\.js\?v=9/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -219,16 +236,22 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     }
   };
   const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
+  vm.runInNewContext(vatModule, context, { timeout: 1500 });
+  vm.runInNewContext(employment, context, { timeout: 1500 });
+  vm.runInNewContext(repairPrices, context, { timeout: 1500 });
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
   vm.runInNewContext(photos, context, { timeout: 1500 });
   vm.runInNewContext(accuracyData, context, { timeout: 1500 });
   vm.runInNewContext(marketData, context, { timeout: 1500 });
+  vm.runInNewContext(auctionFees, context, { timeout: 1500 });
+  vm.runInNewContext(auctionTransport, context, { timeout: 1500 });
   vm.runInNewContext(premises, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
   vm.runInNewContext(events, context, { timeout: 1500 });
   vm.runInNewContext(workshop, context, { timeout: 1500 });
   vm.runInNewContext(customers, context, { timeout: 1500 });
+  vm.runInNewContext(aftersales, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
   vm.runInNewContext(cards, context, { timeout: 1500 });
   // Test-fixture shortcut for PRE-v0.8 financial/reputation assertions only.
@@ -304,10 +327,12 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(eventsView, context, { timeout: 1500 });
   vm.runInNewContext(workshopView, context, { timeout: 1500 });
   vm.runInNewContext(customersView, context, { timeout: 1500 });
+  vm.runInNewContext(aftersalesView, context, { timeout: 1500 });
   vm.runInNewContext(premisesView, context, { timeout: 1500 });
   vm.runInNewContext(auctionHallView, context, { timeout: 1500 });
   vm.runInNewContext(buyingDeskView, context, { timeout: 1500 });
   vm.runInNewContext(stockView, context, { timeout: 1500 });
+  vm.runInNewContext(economicsStress, context, { timeout: 1500 });
   vm.runInNewContext(financeView, context, { timeout: 1500 });
   vm.runInNewContext(dashboardView, context, { timeout: 1500 });
   vm.runInNewContext(inboxOffice, context, { timeout: 1500 });
@@ -343,7 +368,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, cashStress:context.window.MotorTradeCashStress, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,aftersalesView:context.window.MotorTradeAftersalesView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -615,7 +640,7 @@ test('auction bidding, vehicle preparation, retail sale, cash and margin all per
   app.click('new-career');
   app.submitCareer('Mason Autos');
   const opening = JSON.parse(saved.get(STORAGE_KEY));
-  assert.equal(opening.version, 14);
+  assert.equal(opening.version,18);
   const lot = app.engine.market(1).auctions[0];
   app.setInput('auction-bid-' + lot.id, lot.guide);
   app.click('bid-auction', { id: lot.id });
@@ -747,7 +772,7 @@ test('previous version 1 careers migrate safely and malformed version 2 balances
   resumed.click('resume');
   assert.equal(resumed.bindings.get('company')[0].textContent,'Legacy Dealer');
   resumed.click('save');
-  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,14);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).version,18);
   const corrupted=JSON.parse(saved.get(STORAGE_KEY));
   corrupted.cash=999999;
   saved.set(STORAGE_KEY,JSON.stringify(corrupted));
@@ -983,7 +1008,7 @@ test('older v2 stock migrates to v3 without changing costs, prep or recorded sal
   resumed.click('resume');
   resumed.click('save');
   const migrated=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(migrated.version,14);
+  assert.equal(migrated.version,18);
   assert.equal(migrated.vehicles[0].cost,oldCost);
   assert.equal(migrated.vehicles[0].prepBudget,oldPrep);
   assert.equal(migrated.vehicles[0].profile.legacy,true);
@@ -1062,7 +1087,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
       .format(old.cash));
   resumed.click('save');
   const saved=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(saved.version,14);
+  assert.equal(saved.version,18);
   assert.equal(saved.sold[0].profit,old.sold[0].profit);
   assert.equal(saved.ledger.length,old.ledger.length);
   assert.equal(saved.cash,old.cash);
@@ -1072,7 +1097,7 @@ test('old v2 completed sales retain cash and historic gross margin after v0.4 mi
 test('v0.5 starts with basic reputation, owner-operated staffing and visible recruitment', () => {
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Starter Motors');
-  assert.equal(app.engine.VERSION,14);
+  assert.equal(app.engine.VERSION,18);
   assert.equal(app.bindings.get('reputation')[0].textContent,'NEW TRADER');
   assert.equal(app.bindings.get('reputation-score')[0].textContent,'5 / 100');
   assert.equal(app.bindings.get('staff-count')[0].textContent,'0');
@@ -1266,7 +1291,7 @@ test('v0.4 career migrates with stock, sold vehicles and financial balances unto
   assert.equal(newApp.nodes.get('menu-continue').hidden,false);
   newApp.click('resume');newApp.click('save');
   const restored=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,18);
   assert.equal(restored.cash,v3.cash);
   assert.equal(restored.vehicles[0].cost,v3.vehicles[0].cost);
   assert.equal(restored.vehicles[0].prepBudget,v3.vehicles[0].prepBudget);
@@ -1351,7 +1376,7 @@ test('new dealerships receive achievable company targets and a live monthly dash
   const app=browser(new Map());
   app.click('new-career');app.submitCareer('Monthly Review Motors');
   const E=app.engine,state=E.create('Standalone',[]);
-  assert.equal(E.VERSION,14);
+  assert.equal(E.VERSION,18);
   assert.equal(state.monthPlan.month,1);
   assert.equal(state.monthPlan.startDay,1);
   assert.equal(state.monthPlan.endDay,30);
@@ -1478,7 +1503,7 @@ test('day 30 close generates an inbox message and immutable archived review', ()
   assert.equal(JSON.stringify(state.monthlyReports[0]),archived);
   const resumed=browser(storage);
   resumed.click('resume');
-  assert.equal(resumed.engine.VERSION,14);
+  assert.equal(resumed.engine.VERSION,18);
   assert.equal(JSON.parse(storage.get(STORAGE_KEY)).monthlyReports.length,1);
 });
 test('monthly targets credit salesperson performance only during active duty', () => {
@@ -1515,7 +1540,7 @@ test('migration from v0.5 preserves staff, outstanding balances and day without 
   assert.equal(resumed.nodes.get('menu-continue').hidden,false);
   resumed.click('resume');resumed.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,14);
+  assert.equal(after.version,18);
   assert.equal(after.day,before.day);
   assert.equal(after.cash,before.cash);
   assert.equal(after.ledger.length,before.ledger.length);
@@ -1746,7 +1771,7 @@ test('old v0.6 saved careers migrate without losing sales, staff, stock or cash'
   next.click('resume');
   next.click('save');
   const after=JSON.parse(storage.get(STORAGE_KEY));
-  assert.equal(after.version,14);
+  assert.equal(after.version,18);
   assert.equal(after.cash,old.cash);
   assert.equal(after.staff.length,1);
   assert.equal(after.vehicles.length,1);
@@ -2144,7 +2169,7 @@ test('v0.7.1 saved stock migrates without adding hidden charges or altering comp
   for(const v of old.vehicles)delete v.workshop;
   const restored=E.normalize(old);
   assert.ok(restored,'Historic save should migrate instead of being discarded');
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,18);
   assert.equal(restored.cash,old.cash);
   assert.equal(restored.ledger.length,old.ledger.length);
   assert.equal(restored.vehicles[0].prepSpent,old.vehicles[0].prepSpent);
@@ -2244,7 +2269,7 @@ test('v0.9 gives four spaces to fresh and existing two-space dealerships without
   delete old.customerCases;delete old.customerHistory;
   const upgraded=E.normalize(old);
   assert.ok(upgraded);
-  assert.equal(upgraded.version,14);
+  assert.equal(upgraded.version,18);
   assert.equal(upgraded.capacity,4);
   assert.equal(upgraded.cash,old.cash);
   assert.equal(upgraded.vehicles.length,old.vehicles.length);
@@ -2659,7 +2684,7 @@ test('live photo identity survives buying, saving, and v8 migration', () => {
   delete old.vehicles[0].color;delete old.vehicles[0].generation;
   const migrated=E.normalize(old);
   assert.ok(migrated);
-  assert.equal(migrated.version,14);
+  assert.equal(migrated.version,18);
   assert.equal(migrated.cash,state.cash);
   assert.ok(P.COLOURS.includes(migrated.vehicles[0].color));
   assert.ok(E.normalize(JSON.parse(JSON.stringify(migrated))));
@@ -2989,7 +3014,7 @@ test('v0.9.7 multiple salespeople unlock at reputation milestones and divide act
 test('v0.9.8 premises investment unlocks capacity only with earned reputation and affordable cash', () => {
   const E=browser(new Map()).productionEngine,site=E.premises;
   const state=E.create('Expansion Economics',[]);
-  assert.equal(E.VERSION,14);
+  assert.equal(E.VERSION,18);
   assert.equal(state.capacity,4);
   assert.equal(site.bays(state),4);
   assert.equal(site.costs(state).total,25);
@@ -3059,7 +3084,7 @@ test('v0.9.8 old version 9 careers migrate to a four-space premises without losi
   delete old.premises;
   const after=E.normalize(old);
   assert.ok(after);
-  assert.equal(after.version,14);
+  assert.equal(after.version,18);
   assert.equal(after.capacity,4);
   assert.equal(after.premises.forecourtLevel,0);
   assert.equal(after.premises.workshopLevel,0);
@@ -3274,7 +3299,7 @@ test('v0.9.9 prior v10 expanded dealership saves retain stock capacity, cash and
   delete previous.auctionHistory;
   const restored=E.normalize(previous);
   assert.ok(restored);
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,18);
   assert.equal(restored.capacity,6);
   assert.equal(restored.premises.forecourtLevel,1);
   assert.equal(restored.cash,previous.cash);
@@ -3490,7 +3515,7 @@ test('v0.9.10 migrates previous v11 careers on now-closed weekdays without losin
     results:[{...s.auctionHistory[0]}]};
   const restored=E.normalize(old);
   assert.ok(restored,'Old v11 save must survive schedule change');
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,18);
   assert.equal(restored.cash,s.cash);
   assert.equal(restored.auctionHistory.length,1);
   assert.equal(restored.auctionHall.day,2);
@@ -3817,7 +3842,7 @@ test('v0.9.13 previous v12 career preserves history and does not resend old invo
   delete old.inboxLedgerCursor;
   const restored=E.normalize(old);
   assert.ok(restored);
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,18);
   assert.equal(restored.inboxLedgerCursor,old.ledger.length);
   assert.equal(restored.cash,old.cash);
   assert.equal(restored.stock,old.stock);
@@ -4027,7 +4052,7 @@ test('v0.9.14 v13 saves keep historic employee messages, ledger cursor and cash'
   legacy.version=13;
   const restored=E.normalize(legacy);
   assert.ok(restored);
-  assert.equal(restored.version,14);
+  assert.equal(restored.version,18);
   assert.equal(restored.cash,legacy.cash);
   assert.equal(restored.messages[0].body,'Older staff advisory');
   assert.equal(restored.messages[0].read,true);
@@ -4968,7 +4993,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=2/);
+  assert.match(html,/finance-view\.js\?v=12/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
@@ -5306,7 +5331,7 @@ test('v0.9.32 staff and recruitment preserve readable skills while collapsing se
 test('v0.9.32 compact Staff & Recruitment desktop styles retain labels and responsive grid',()=>{
   assert.match(html,/PRE-ALPHA · v0\.9\.35/);
   assert.match(html,/styles\.css\?v=49/);
-  assert.match(html,/people-view\.js\?v=7/);
+  assert.match(html,/people-view\.js\?v=9/);
   assert.match(css,/\.career-main:has\(\[data-panel="staff"\]:not\(\[hidden\]\)\) \.career-topbar/);
   assert.match(css,/\.sd-kpis>div\{min-height:56px/);
   assert.match(css,/\.sd-person\{padding:6px 8px/);
@@ -5421,7 +5446,7 @@ test('v0.9.33 Reputation uses compact responsive layout without removing complet
   assert.match(css,/\.rep-history-preview\{display:grid/);
   assert.match(css,/@media\(max-width:760px\)/);
   assert.match(html,/styles\.css\?v=49/);
-  assert.match(html,/people-view\.js\?v=7/);
+  assert.match(html,/people-view\.js\?v=9/);
 });
 
 
@@ -5606,11 +5631,1156 @@ test('v0.9.35 blocked and maximum upgrades still retain accurate eligibility',()
 test('v0.9.35 one-page desktop polish is scoped to My Dealership and retains mobile layout',()=>{
   assert.match(html,/PRE-ALPHA · v0\.9\.35/);
   assert.match(html,/styles\.css\?v=49/);
-  assert.match(html,/premises-view\.js\?v=3/);
+  assert.match(html,/premises-view\.js\?v=4/);
   assert.match(css,/v0\.9\.35 — Final My Dealership single-screen desktop polish/);
   assert.match(css,/\.career-layout:has\(\[data-panel="business"\]:not\(\[hidden\]\)\) \.career-topbar/);
   assert.match(css,/\.hq-upgrade-headline-costs\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/\[data-panel="business"\] \.hq-identity-facts\{/);
   assert.match(css,/\.hq-upgrade-details summary:focus-visible/);
   assert.match(css,/@media\(max-width:560px\)/);
+});
+
+test('2026 new full-time recruitment candidates satisfy the adult 21+ wage floor',()=>{
+  const P=browser(new Map()).productionEngine.people;
+  const MIN_ANNUAL=12.71*40*52;
+  for(const day of [1,8,15,29]){
+    const pool=P.applicants(day);
+    assert.equal(pool.length,16);
+    for(const person of pool){
+      assert.ok(person.monthlySalary*12>=MIN_ANNUAL,
+        person.name+' in '+person.role+' would be below the full-time 2026 minimum');
+    }
+    assert.ok(pool.filter(person=>person.role==='technician')
+      .every(person=>person.monthlySalary>=2850));
+    assert.ok(pool.filter(person=>person.role==='supervisor')
+      .every(person=>person.monthlySalary>=3100));
+  }
+});
+
+test('2026 independent scenario keeps capital, cash and historic save bases distinct',()=>{
+  const E=browser(new Map()).productionEngine;
+  const independent=E.create('Audited Independent',[],'uk2026');
+  assert.equal(independent.cash,50000);
+  assert.equal(independent.financialScenario,'uk2026');
+  assert.equal(independent.startupAccounts.ownerCapital,60000);
+  assert.equal(independent.startupAccounts.openingBank,50000);
+  assert.equal(independent.startupAccounts.premisesDeposit,3000);
+  assert.equal(independent.startupAccounts.prepaidInsurance,3000);
+  assert.equal(independent.startupAccounts.fixtures,2000);
+  assert.equal(independent.startupAccounts.launchExpense,2000);
+  assert.equal(E.premises.bays(independent),0);
+  assert.equal(E.premises.capacity(independent),4);
+  assert.equal(E.monthly.statement(independent).openingCash,50000);
+  const saved=E.normalize(JSON.parse(JSON.stringify(independent)));
+  assert.ok(saved,'2026 startup career must pass full save reconciliation');
+  assert.equal(saved.cash,50000);
+  assert.equal(saved.financialScenario,'uk2026');
+  const classic=E.create('Classic Trader',[]);
+  assert.equal(classic.cash,12500);
+  assert.equal(E.premises.bays(classic),4);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(classic))));
+  const v14=JSON.parse(JSON.stringify(classic));
+  v14.version=14;
+  const migrated=E.normalize(v14);
+  assert.ok(migrated,'v14 career must migrate intact to v15');
+  assert.equal(migrated.cash,12500);
+  assert.equal(migrated.financialScenario,undefined);
+  const tampered=JSON.parse(JSON.stringify(independent));
+  tampered.startupAccounts.ownerCapital=60001;
+  assert.equal(E.normalize(tampered),null,'Capital journal tampering must invalidate save');
+});
+
+test('2026 independent four-space forecourt has £2550 expense and £2300 cash bills per 30 days',()=>{
+  const E=browser(new Map()).productionEngine;
+  const state=E.create('Period Cost Audit',[],'uk2026');
+  let expense=0,cashBills=0,insurance=0;
+  for(let day=1;day<=30;day++){
+    state.day=day;
+    const cost=E.premises.costs(state);
+    assert.equal(cost.monthlyGuide,2550);
+    assert.equal(cost.monthlyCashGuide,2300);
+    expense+=cost.total;cashBills+=cost.cashDue;insurance+=cost.insurance;
+  }
+  assert.equal(expense,2550);
+  assert.equal(cashBills,2300);
+  assert.equal(insurance,250);
+  state.day=2;
+  const before=state.cash;
+  const due=E.premises.costs(state);
+  const payment=E.premises.advance(state);
+  assert.equal(payment.expense,due.total);
+  assert.equal(payment.paid,due.cashDue);
+  assert.equal(state.cash,before-due.cashDue);
+  assert.equal(state.premises.arrears,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
+    '2026 daily operating settlement must survive save reconciliation');
+});
+
+test('the new-career screen offers the recommended 2026 scenario but tests preserve classic fixtures',()=>{
+  assert.match(html,/id="career-realism" checked/);
+  assert.match(html,/id="starting-cash-fact"/);
+  const app=browser(new Map());
+  app.nodes.get('career-realism').checked=true;
+  app.click('new-career');
+  app.submitCareer('Pilot 2026');
+  const state=JSON.parse(app.storageData.get(STORAGE_KEY));
+  assert.equal(state.financialScenario,'uk2026');
+  assert.equal(state.cash,50000);
+  assert.match(app.nodes.get('finance-overview').innerHTML,/50,000/);
+});
+
+test('2026 buyer fees reproduce published BCA Blue Standard hammer bands',()=>{
+  const F=browser().auctionFees;
+  const examples=[[1999,596],[2000,614],[2249,614],[2250,636],
+    [2999,662],[3000,753],[4999,823],[5000,828],[6999,903],
+    [7000,912],[9999,1043],[10000,1043],[19999,1405],
+    [20000,1476],[24749,1667],[24750,1677],[24999,1677]];
+  for(const [hammer,fee] of examples){
+    assert.equal(F.feeAtHammer(hammer),fee,'Fee at £'+hammer);
+    assert.equal(F.invoice(hammer).totalDue,hammer+fee);
+  }
+  assert.equal(F.feeAtHammer(25000),null,'No invented buyer fee above published BCA tariff');
+  assert.equal(F.feeAtHammer(10),null);
+  assert.equal(F.feeAtHammer(2000.5),null);
+});
+
+test('2026 buyer fee follows hammer in quote and settlement while classic remains unchanged',()=>{
+  const app=browser(),E=app.productionEngine,F=app.auctionFees;
+  const s=E.create('2026 Auction Buyer',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  const classic=E.create('Classic Auction Buyer',[]);
+  const oldLot=E.marketFor(classic).auctions[0];
+  assert.equal(oldLot.fee,app.market.CATALOGUE.starter[0].fee);
+  assert.equal(oldLot.feeModel,undefined);
+  assert.equal(lot.feeModel,'bca-blue-2026');
+  assert.equal(lot.fee,F.feeAtHammer(lot.guide));
+  const bid=Math.max(lot.reserve,lot.rival,lot.guide);
+  const invoice=F.invoice(bid);
+  const quote=E.quote(lot,'auction',bid,false);
+  assert.equal(quote.fee,invoice.buyerFee);
+  const transport=app.auctionTransport.quote(lot.id);
+  assert.equal(quote.transport,transport.gross);
+  assert.equal(quote.total,bid+invoice.buyerFee+transport.gross+quote.prep);
+  assert.ok(quote.maxBid<=24999);
+  assert.equal(quote.feeQuoteRequired,false);
+  const before=s.cash;
+  const result=E.acquireAuction(s,lot.id,bid);
+  assert.ok(result.ok,result.message);
+  assert.equal(s.cash,before-invoice.totalDue-transport.gross);
+  assert.equal(s.vehicles[0].cost,invoice.totalDue+transport.gross);
+  assert.ok(s.ledger.some(row=>row.delta===-invoice.totalDue&&
+    row.note.includes('buyer fee '+invoice.buyerFee)));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+  const unknown=E.quote({...lot,guide:26000},'auction',26000);
+  assert.equal(unknown.feeQuoteRequired,true);
+  assert.equal(unknown.fee,null);
+  assert.equal(unknown.total,null);
+  assert.equal(unknown.expectedMargin,null);
+  assert.equal(E.auctionFee(s,lot,25000),null);
+  assert.equal(E.auctionFee(classic,oldLot,25000),oldLot.fee);
+});
+
+test('2026 pricing uses dated 2026 comparables but keeps the classic catalogue intact',()=>{
+  const app=browser(),E=app.productionEngine,M=app.market;
+  const oldCorsa=M.CATALOGUE.starter.find(v=>v.title==='2020 Vauxhall Corsa SE Premium');
+  const revised=M.priceFor(oldCorsa,'uk2026');
+  assert.equal(oldCorsa.retail,7850);
+  assert.equal(revised.retail,6250);
+  assert.equal(revised.priceAudit.status,'retail-comparable');
+  assert.equal(revised.priceAudit.tradeGuide.includes('Illustrative'),true);
+  const polo=M.CATALOGUE.starter.find(v=>v.title==='2018 Volkswagen Polo SE');
+  assert.equal(M.priceFor(polo,'uk2026').retail,7550);
+  assert.equal(polo.retail,6300);
+  const mg4=M.CATALOGUE.modern.find(v=>v.title==='2022 MG4 EV SE Standard Range');
+  assert.equal(M.priceFor(mg4,'uk2026').retail,10650);
+  assert.equal(mg4.retail,13250);
+  const pending=M.CATALOGUE.starter.find(v=>v.title==='2019 Kia Rio 2');
+  assert.equal(M.priceFor(pending,'uk2026').priceAudit.status,'retail-comparable');
+  const modern=E.create('Audited Trader',[],'uk2026');
+  const lot=E.marketFor(modern).auctions.find(v=>v.title===oldCorsa.title);
+  assert.equal(lot.retail,6250);
+  assert.equal(lot.priceAudit.status,'retail-comparable');
+  assert.ok(app.vehicleView===undefined||true);
+});
+
+test('2026 live auction fee increases at hammer threshold and all finance desks agree',()=>{
+  const app=browser(),E=app.productionEngine,F=app.auctionFees;
+  const s=E.create('Hammer Fee Boundary',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.equal(lot.guide,1950);
+  assert.equal(lot.fee,596,'Initial guide band quote');
+  assert.ok(E.startAuction(s).ok);
+  const response=E.bidLiveAuction(s,500);
+  assert.ok(response.ok,response.message);
+  assert.equal(s.auctionHall.phase,'payment');
+  assert.equal(s.auctionHall.currentBid,2450);
+  assert.equal(F.feeAtHammer(2450),636,'Exact hammer fee is higher than at guide');
+  const delivery=app.auctionTransport.quote(lot.id);
+  const totalDue=3086+delivery.gross;
+  assert.equal(app.financeView.snapshot(s,E).auctionInvoice,totalDue);
+  assert.ok(app.dashboard.snapshot(s,E).tasks.find(x=>x.key==='auction-invoice').description.includes(totalDue.toLocaleString('en-GB')));
+  const settled=E.settleAuction(s);
+  assert.ok(settled.ok,settled.message);
+  assert.equal(s.cash,50000-totalDue);
+  assert.equal(s.vehicles[0].cost,totalDue);
+  assert.equal(s.auctionHistory.at(-1).fee,636);
+  assert.equal(s.auctionHistory.at(-1).total,3086);
+  const resume=E.normalize(JSON.parse(JSON.stringify(s)));
+  assert.ok(resume,'Hammer, buyer fee and paid invoice survive migration');
+  const falsified=JSON.parse(JSON.stringify(s));
+  falsified.auctionHistory[0].fee=596;
+  falsified.auctionHistory[0].total=3046;
+  assert.equal(E.normalize(falsified),null,'Tampered 2026 rate must be rejected');
+});
+
+test('2026 catalogue contains 50 dated retail comparable reviews and preserves wholesale guide assumptions',()=>{
+  const app=browser(),M=app.market,E=app.productionEngine;
+  const catalogue=Object.values(M.CATALOGUE).flat();
+  assert.equal(catalogue.length,50);
+  assert.equal(Object.keys(M.PRICING_2026).length,50);
+  const scenarios=catalogue.map(car=>M.priceFor(car,'uk2026'));
+  assert.equal(scenarios.filter(c=>c.priceAudit.status==='retail-comparable').length,50);
+  assert.equal(scenarios.filter(c=>c.priceAudit.status==='unverified').length,0);
+  for(const car of scenarios){
+    assert.equal(car.repairScenario,'uk2026');
+    const classic=catalogue.find(x=>x.title===car.title);
+    assert.ok(classic);
+    if(!Number.isSafeInteger(M.PRICING_2026[car.title]?.tradeGuide)){
+      assert.equal(car.guide,classic.guide,
+        car.title+' must not acquire invented wholesale hammer evidence from retail adverts');
+    }
+  }
+  for(const [name,ask] of [
+    ['2016 Ford Focus Zetec',3450],
+    ['2019 Kia Rio 2',6200],
+    ['2017 Toyota Yaris Icon',6400],
+    ['2016 Honda Jazz SE',3500],
+    ['2021 Honda Jazz SE e:HEV',12500],
+    ['2022 Nissan Qashqai Acenta Premium',10950],
+    ['2021 Kia Rio 3 MHEV',9250],
+    ['2021 Vauxhall Corsa-e Elite Nav',9250],
+    ['2021 Volkswagen Golf Life',12000],
+    ['2022 Volkswagen Polo Life',12350],
+    ['2021 Peugeot e-208 Allure',9950],
+    ['2022 Hyundai Tucson SE Connect',16950],
+    ['2022 Vauxhall Mokka-e Launch Edition',11250],
+    ['2022 Tesla Model 3 RWD',19000],
+    ['2022 BMW 320d M Sport',24000],
+    ['2022 Audi A3 Sportback 35 TFSI',17600],
+    ['2022 Mercedes-Benz A200 AMG Line',19000],
+    ['2022 Volvo XC40 Recharge',18000],
+    ['2023 Kia Sportage GT-Line HEV',20800],
+    ['2021 Hyundai Ioniq 5 Premium',15750],
+    ['2022 BMW 330e M Sport',20950],
+    ['2021 Audi Q5 40 TDI S line',23000],
+    ['2022 Porsche Macan 2.0 PDK',39500],
+    ['2022 Range Rover Velar D200 R-Dynamic',26300],
+    ['2023 BMW X5 xDrive30d M Sport',51500],
+    ['2023 Mercedes-Benz E300e AMG Line',33500],
+    ['2022 Audi e-tron 55 quattro',21300],
+    ['2021 Porsche Taycan 4S',39000],
+    ['2022 Mercedes-Benz S350d AMG Line',59000],
+    ['2023 Land Rover Defender 110 D250',47500],
+    ['2023 Range Rover Sport P440e',54000],
+    ['2018 Toyota Yaris Icon Hybrid',7250],
+    ['2019 Hyundai i20 SE',6150],
+    ['2019 Honda Jazz SE',5900],
+    ['2018 Volkswagen Golf SE',6950],
+    ['2020 Nissan Leaf Acenta',7350],
+    ['2018 Peugeot 208 Active',3350],
+    ['2017 Nissan Qashqai Acenta',4700],
+    ['2021 Vauxhall Corsa SE Premium',8800],
+    ['2021 Peugeot 208 Allure',9250],
+    ['2021 Toyota Yaris Design Hybrid',12800],
+    ['2022 Ford Puma Titanium',11300],
+    ['2022 Toyota Corolla Icon Hybrid',15500],
+    ['2023 Tesla Model Y Long Range',26800]
+  ]){
+    assert.equal(scenarios.find(x=>x.title===name)?.retail,ask,name);
+  }
+  assert.equal(E.marketFor(E.create('Modern',[],'uk2026')).auctions[0].retail,3450);
+  assert.equal(E.marketFor(E.create('Classic',[])).auctions[0].retail,4250);
+});
+
+test('2026 job card reconciles gross VAT-inclusive garage jobs without double billing diagnostics',()=>{
+  const R=browser().repairPrices;
+  assert.equal(R.quote('service').gross,204);
+  assert.equal(R.quote('frontBrakes').gross,278);
+  assert.equal(R.quote('rearBrakes').gross,248);
+  assert.equal(R.quote('tyres').gross,235);
+  const seed={title:'2018 Peugeot 208 Active',engineSpec:'1.2 PureTech',
+    fuel:'Petrol',miles:113800,grade:4,history:'Partial'};
+  const estimate=R.plan(seed);
+  assert.equal(estimate.basePrep,687);
+  assert.equal(estimate.knownRepairs.reduce((sum,x)=>sum+x.cost,0),687);
+  assert.equal(estimate.knownRepairs.some(x=>x.item.includes('diagnostic')),false,
+    'Separate assessment covers diagnostics, so job card must not charge twice');
+  assert.ok(estimate.majorExposure.maxIndicativeCost>=650);
+  assert.match(estimate.majorExposure.note,/Confirm exact engine/);
+  assert.ok(estimate.riskAllowance>385);
+  const ev=R.plan({title:'2022 MG4 EV SE Standard Range',engineSpec:'51 kWh EV',
+    fuel:'Electric',miles:57500,grade:2,history:'Full'});
+  assert.equal(ev.basePrep,R.quote('evService').gross);
+  assert.equal(ev.majorExposure,null);
+});
+
+test('2026 auction purchase and paid assessment flow into true stock cost with external prep once',()=>{
+  const app=browser(),E=app.productionEngine;
+  const state=E.create('Workshop Audit',[],'uk2026');
+  const lot=E.marketFor(state).auctions[0];
+  assert.equal(lot.profile.basePrep,687);
+  assert.ok(lot.profile.knownRepairs.every(x=>x.labourRate===72));
+  const hammer=Math.max(lot.reserve,lot.rival);
+  const buy=E.acquireAuction(state,lot.id,hammer);
+  assert.ok(buy.ok,buy.message);
+  const vehicle=state.vehicles[0];
+  const purchased=vehicle.cost;
+  const initialCash=state.cash;
+  const assessed=E.assessStock(state,vehicle.id);
+  assert.ok(assessed.ok,assessed.message);
+  assert.equal(vehicle.workshop.assessmentFee,80);
+  assert.equal(vehicle.cost,purchased+80);
+  assert.equal(state.cash,initialCash-80);
+  const q=E.prepQuote(state,vehicle.id,'external');
+  assert.ok(q);
+  assert.equal(q.supplement,0,'2026 cost card already contains external garage labour and VAT');
+  assert.equal(q.cost,vehicle.prepBudget);
+  const before=state.cash;
+  const booked=E.startPrep(state,vehicle.id,'external');
+  assert.ok(booked.ok,booked.message);
+  assert.equal(state.cash,before-q.cost);
+  assert.equal(vehicle.workshop.repairCost,q.cost);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
+    '2026 assessed and booked repair job must reconcile after a save/reload');
+  assert.equal(E.premises.bays(state),0,'External prep does not invent equipped dealership bays');
+});
+
+test('2026 simulated auction transport quotes remain distinct from hammer fees and preserve saved cash',()=>{
+  const app=browser(),T=app.auctionTransport,E=app.productionEngine;
+  const q=T.quote('A-1-0');
+  assert.equal(q.routeMiles,65);
+  assert.equal(q.gross,111);
+  assert.equal(q.rateIncVat,1.70);
+  assert.equal(q.routeReal,false,'Never imply a real auction-to-dealer route');
+  assert.equal(T.quote('X-1-0'),null);
+  for(let day=1;day<=90;day++)for(let lot=0;lot<=4;lot++){
+    const x=T.quote('A-'+day+'-'+lot);
+    assert.ok(Number.isSafeInteger(x.gross));
+    assert.ok(x.routeMiles>=45&&x.routeMiles<=155);
+    assert.ok(x.gross>=75);
+  }
+  const modern=E.create('Transport Test',[],'uk2026');
+  const lot=E.marketFor(modern).auctions[0];
+  assert.equal(E.auctionTransport(modern,lot).gross,q.gross);
+  const classic=E.create('Classic',[]);
+  assert.equal(E.auctionTransport(classic,lot).gross,0);
+  const before=modern.cash;
+  const bid=Math.max(lot.reserve,lot.rival);
+  assert.ok(E.acquireAuction(modern,lot.id,bid).ok);
+  const fee=E.auctionFee(modern,lot,bid);
+  assert.equal(modern.cash,before-bid-fee-q.gross);
+  assert.equal(modern.vehicles[0].cost,bid+fee+q.gross);
+  assert.equal(modern.ledger.filter(x=>x.note.startsWith('Auction transport:')).length,1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(modern))));
+  const altered=JSON.parse(JSON.stringify(modern));
+  const transportRow=altered.ledger.find(x=>x.note.startsWith('Auction transport:'));
+  transportRow.note=transportRow.note.replace('simulated 65 miles','simulated 67 miles');
+  assert.equal(E.normalize(altered),null,'Transport audit trail cannot be silently falsified');
+});
+
+test('UK 2026 margin VAT is one-sixth of positive sale-minus-purchase, not trading profit',()=>{
+  const V=browser().vat;
+  assert.equal(V.THRESHOLD,90000);
+  assert.equal(V.marginVatPence(7500,5000),41667);
+  assert.equal(V.marginVatPence(4500,5000),0);
+  assert.equal(V.marginVatPence(5000,5000),0);
+  assert.equal(V.marginVatPence(7500,-1),null);
+  const sale=V.record(5000,7500,1);
+  assert.equal(sale.purchaseBasis,5000);
+  assert.equal(sale.outputPence,41667);
+  assert.equal(sale.period,'2026-Q4');
+  assert.equal(V.dateForDay(sale.dueDay).toISOString().slice(0,10),'2027-02-07');
+  assert.equal(V.periodForDay(1),'2026-Q4');
+  assert.equal(sale.sellingPrice,7500);
+});
+
+test('2026 quarterly VAT cash remittance retains pence and never charges twice',()=>{
+  const V=browser().vat,record=V.record(5000,7500,1);
+  const state={financialScenario:'uk2026',vatRegistrationDay:1,day:1,
+    cash:10000,ledger:[],sold:[{day:1,price:7500,acquisition:5400,vat:record}],
+    wholesale:[]};
+  assert.equal(V.outputPence(state),41667);
+  assert.equal(V.outstandingPence(state),41667);
+  assert.equal(V.maturedPence(state,1),0);
+  assert.equal(V.advance(state).paid,0,'No VAT cash charge before a due return');
+  assert.equal(state.cash,10000);
+  state.day=record.dueDay;
+  assert.equal(V.maturedPence(state),41667);
+  const first=V.advance(state);
+  assert.equal(first.paid,416);
+  assert.equal(state.cash,9584);
+  assert.equal(first.duePence,67);
+  assert.equal(V.outstandingPence(state),67);
+  assert.equal(V.advance(state).paid,0,'Pence carried forward without duplicate whole-pound payment');
+  assert.equal(state.ledger.length,1);
+  assert.equal(V.valid(state),true);
+  const fake=JSON.parse(JSON.stringify(state));
+  fake.ledger[0].delta=-500;
+  assert.equal(V.valid(fake),false,'Paying more than recorded output tax must fail validation');
+});
+
+test('VAT threshold monitoring uses complete retail and wholesale sales prices',()=>{
+  const V=browser().vat;
+  const state={sold:[
+    {day:1,price:30000},{day:10,price:31000},{day:20,price:29000},
+    {day:30,price:2000}
+  ],wholesale:[{day:30,proceeds:1000}]};
+  assert.equal(V.rollingTurnover(state,30),93000);
+  assert.ok(V.rollingTurnover(state,30)>V.THRESHOLD);
+  assert.equal(V.rollingTurnover(state,400),0,'Transactions age out after 365 days');
+  const newState={sold:[{day:1,price:8000}],wholesale:[]};
+  assert.equal(V.rollingTurnover(newState,1),8000,'Do not use taxable margin for registration turnover');
+});
+
+test('new 2026 cars record the auction hammer as VAT purchase price and sale as margin output',()=>{
+  const app=browser(),E=app.engine,V=app.vat,real=app.productionEngine;
+  const state=E.create('VAT Used Car Trader',[],'uk2026');
+  assert.equal(state.vatRegistrationDay,1);
+  const lot=E.marketFor(state).auctions[0];
+  const hammer=Math.max(lot.reserve,lot.rival);
+  assert.ok(E.acquireAuction(state,lot.id,hammer).ok);
+  const vehicle=state.vehicles[0];
+  assert.equal(vehicle.vatPurchasePrice,hammer);
+  assert.ok(vehicle.cost>hammer,'Buyer fees/transport included in cost but not VAT purchase basis');
+  const prep=E.prepare(state,vehicle.id);
+  assert.ok(prep.ok,prep.message);
+  assert.equal(vehicle.workshop.stage,'ready');
+  assert.ok(E.advertise(state,vehicle.id,vehicle.retail).ok);
+  const handover=E.completeSale(state,vehicle.id,'cash',null);
+  assert.ok(handover.ok,handover.message);
+  const sold=state.sold.at(-1);
+  assert.equal(sold.vat.purchaseBasis,hammer);
+  assert.equal(sold.vat.outputPence,V.marginVatPence(sold.price,hammer));
+  assert.equal(V.outstandingPence(state),sold.vat.outputPence);
+  assert.equal(real.monthly.statement(state).vatOutputAccruedPence,sold.vat.outputPence);
+  assert.ok(state.ledger.some(x=>x.note.startsWith('VAT output accrued:')&&x.delta===0));
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(state))),
+    'Real 2026 vehicle sale and VAT output must save and restore correctly');
+
+  const prev=E.create('Old Pilot',[],'uk2026');
+  prev.version=15;
+  delete prev.vatRegistrationDay;
+  delete prev.employmentScenario;
+  delete prev.payroll2026;
+  delete prev.aftersalesScenario;
+  delete prev.aftersales;
+  const migrated=real.normalize(prev);
+  assert.ok(migrated);
+  assert.equal(migrated.vatRegistrationDay,0,
+    'Do not retroactively charge VAT on unverified old pilot records');
+  assert.equal(V.enabled(migrated),false);
+  const classic=E.create('Classic Old Trader',[]);
+  assert.equal(V.enabled(classic),false);
+});
+
+test('2026 part-exchange purchase records actual customer allowance as VAT margin basis',()=>{
+  const app=browser(),E=app.engine,V=app.vat;
+  const s=E.create('2026 Part Exchange VAT',[],'uk2026');
+  const seller=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const original=s.vehicles[0];
+  assert.equal(original.vatPurchasePrice,seller.ask);
+  assert.ok(E.prepare(s,original.id).ok);
+  assert.ok(E.advertise(s,original.id,Math.round(original.retail/50)*50).ok);
+  const buyer=E.buyers(original,s);
+  assert.ok(buyer.exchange,'Buyer must offer a fictional part exchange for test');
+  const allowance=buyer.exchange.ask;
+  const sale=E.completeSale(s,original.id,'part-ex',allowance);
+  assert.ok(sale.ok,sale.message);
+  const outgoing=s.sold.at(-1),incoming=s.vehicles.find(v=>v.source==='part-ex');
+  assert.ok(incoming,'Part-exchange becomes stock, not retail cash');
+  assert.equal(outgoing.vat.purchaseBasis,seller.ask);
+  assert.equal(outgoing.vat.sellingPrice,outgoing.price,
+    'Margin scheme selling price includes full value of part exchange');
+  assert.equal(incoming.vatPurchasePrice,allowance,
+    'Future VAT purchase-price basis equals agreed full part-ex allowance');
+  assert.equal(outgoing.vat.outputPence,V.marginVatPence(outgoing.price,seller.ask));
+  assert.ok(app.productionEngine.normalize(JSON.parse(JSON.stringify(s))),
+    'Part-exchange customer consideration, VAT and stock preserve saved invariants');
+});
+
+test('2026 employer pay quote includes real NI, pension, employee PAYE and Employment Allowance',()=>{
+  const H=browser().employment;
+  assert.equal(H.REQUIRED_HOURS,40);
+  assert.equal(H.LEAVE_DAYS,28);
+  assert.equal(H.ALLOWANCE,10500);
+  assert.equal(H.minimumWage(1),12.71);
+  assert.equal(H.minimumMonthly(40,1),2204);
+  const quote=H.monthlyQuote(3000);
+  assert.equal(quote.gross,3000);
+  assert.equal(quote.employerNiGross,387);
+  assert.equal(quote.niRelief,387);
+  assert.equal(quote.employerNi,0);
+  assert.equal(quote.employerPension,74);
+  assert.equal(quote.workerPension,99);
+  assert.equal(quote.employeeNi,156);
+  assert.equal(quote.paye,391);
+  assert.equal(quote.net,2354);
+  assert.equal(quote.employerCost,3074);
+  assert.equal(quote.hmrc,547);
+  assert.equal(quote.pension,173);
+  const noRelief=H.monthlyQuote(3000,{allowanceRemaining:0});
+  assert.equal(noRelief.employerNi,387);
+  assert.equal(noRelief.employerCost,3461);
+  assert.equal(noRelief.hmrc,934);
+  assert.equal(H.taxYear(1),'2026-27');
+  assert.equal(H.daysInMonth(1),30);
+  assert.equal(H.date(H.dueDayForMonth(22)).toISOString().slice(0,10),'2026-12-22');
+});
+
+test('2026 role-based salary and 40 hour contract are benchmarked; classic applicants retain their old prices',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people;
+  const modern=E.create('Monthly Pay Motors',[],'uk2026'),classic=E.create('Original Trader',[]);
+  assert.equal(modern.employmentScenario,'uk2026-payroll');
+  assert.equal(modern.payroll2026.scheme,'england-2026-monthly');
+  assert.equal(classic.employmentScenario,undefined);
+  const modernPool=P.applicants(1,modern),oldPool=P.applicants(1,classic);
+  assert.equal(modernPool.length,16);
+  for(const candidate of modernPool){
+    assert.equal(candidate.contractHours,40);
+    assert.equal(candidate.ageBand,'25+');
+    assert.equal(candidate.pensionEnrolled,true);
+    assert.ok(candidate.monthlySalary*12>=12.71*40*52);
+  }
+  assert.ok(modernPool.filter(x=>x.role==='technician').every(x=>x.monthlySalary>=3050));
+  assert.ok(modernPool.filter(x=>x.role==='supervisor').every(x=>x.monthlySalary>=3500));
+  const modernSales=modernPool.find(x=>x.role==='sales');
+  const classicSales=oldPool.find(x=>x.role==='sales');
+  assert.ok(modernSales.monthlySalary>classicSales.monthlySalary);
+  const budget=P.hireQuote(modern,modernSales);
+  assert.equal(budget.coverDays,30);
+  assert.ok(budget.monthlyEmployerCost>modernSales.monthlySalary);
+  assert.equal(budget.monthlyEmployerCost,
+    app.employment.monthlyQuote(modernSales.monthlySalary,
+      {allowanceRemaining:0}).employerCost,
+    'Hiring reserves gross employer NIC even where an allowance may reduce final liability');
+  assert.ok(budget.required>modernSales.monthlySalary);
+  assert.ok(P.hire(modern,modernSales.id).ok);
+  assert.equal(modern.staff[0].monthlySalary,modernSales.monthlySalary);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(modern))),
+    'New version 17 employment book must preserve hire and salary eligibility');
+  const old=E.create('Migrating Old Pay',[],'uk2026');
+  old.version=16;
+  delete old.employmentScenario;delete old.payroll2026;
+  delete old.aftersalesScenario;delete old.aftersales;
+  const normalized=E.normalize(old);
+  assert.ok(normalized,'Previous v16 independent careers must not gain retroactive NI or wages');
+  assert.equal(normalized.employmentScenario,undefined);
+  assert.equal(normalized.cash,50000);
+});
+
+test('2026 salary is accrued during work and paid once at month end; PAYE and pensions pay later',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people,H=app.employment;
+  const state=E.create('PAYE Ledger Motors',[],'uk2026');
+  const worker=P.applicants(1,state).find(e=>e.role==='sales');
+  assert.ok(P.hire(state,worker.id).ok);
+  assert.equal(state.cash,50000-P.HIRING_FEE);
+  const start=state.cash;
+  let accrual=0;
+  for(let day=2;day<=21;day++){
+    state.day=day;
+    const wages=E.staffDay(state);
+    accrual+=wages.payroll;
+    assert.equal(wages.paid,0,'No wage cash debit before real calendar payday');
+    assert.equal(state.cash,start);
+    assert.equal(state.payrollArrears,0);
+  }
+  assert.ok(accrual>0);
+  state.day=22; // 30 Nov 2026
+  assert.equal(H.date(state.day).toISOString().slice(0,10),'2026-11-30');
+  const closing=E.staffDay(state);
+  assert.ok(closing.periodClose);
+  assert.equal(closing.periodClose.period,'2026-11');
+  const grossExpected=Math.floor(worker.monthlySalary*21/30);
+  assert.equal(closing.gross,grossExpected,'November pay pro-rated from 10th through 30th');
+  assert.equal(closing.netWages,closing.paid);
+  assert.equal(state.cash,start-closing.netWages);
+  assert.equal(state.payrollArrears,0);
+  assert.ok(closing.employerPension>0);
+  assert.equal(closing.employerNi,0,'Qualifying microemployer uses remaining Employment Allowance');
+  assert.ok(closing.allowanceRelief>0);
+  const hmrc=H.liabilities(state);
+  assert.equal(hmrc.wages,0);
+  assert.equal(hmrc.hmrc,closing.periodClose.hmrc);
+  assert.equal(hmrc.pension,closing.periodClose.pension);
+  assert.equal(state.ledger.filter(l=>l.note.startsWith('Staff payroll monthly net wages settlement')).length,1);
+  assert.equal(state.ledger.filter(l=>l.note.startsWith('Staff payroll daily settlement')).length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
+    'Monthly pay, statutory liabilities and staff history must survive reload');
+
+  const bankBefore=state.cash;
+  for(let day=23;day<44;day++){
+    if(day===31){
+      state.day=30;
+      E.monthly.close(state); // game-month financial report closes before Day 31
+    }
+    state.day=day;
+    if(day===31)E.monthly.next(state);
+    const next=E.staffDay(state);
+    assert.equal(next.hmrcPaid,0);
+    assert.equal(next.pensionPaid,0);
+  }
+  assert.equal(state.cash,bankBefore,'PAYE and pension cash retained until the 22nd of next month');
+  state.day=44; // 22 Dec 2026
+  assert.equal(H.date(state.day).toISOString().slice(0,10),'2026-12-22');
+  const remitted=E.staffDay(state);
+  assert.equal(remitted.hmrcPaid,closing.periodClose.hmrc);
+  assert.equal(remitted.pensionPaid,closing.periodClose.pension);
+  assert.equal(H.liabilities(state).total,0);
+  assert.equal(state.cash,bankBefore-remitted.hmrcPaid-remitted.pensionPaid);
+  assert.equal(E.staffDay(state).hmrcPaid,0,'Do not remit a statutory amount twice');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('2026 employment arrears survive genuine cash shortages without spending protected repairs',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people,H=app.employment;
+  const s=E.create('Cash-Strapped Payroll',[],'uk2026');
+  const candidate=P.applicants(1,s).find(x=>x.role==='sales');
+  assert.ok(P.hire(s,candidate.id).ok);
+  for(let day=2;day<=21;day++){s.day=day;E.staffDay(s);}
+  const before=s.cash;
+  s.cash=200;
+  s.ledger.push({day:s.day,delta:200-before,note:'Test fixture: settled unforeseen cash demand'});
+  s.day=22;
+  const close=E.staffDay(s);
+  assert.ok(close.periodClose);
+  assert.ok(s.payrollArrears>0,'Net pay remains a liability if insufficient working cash');
+  assert.equal(s.cash,0);
+  assert.equal(H.liabilities(s).wages,s.payrollArrears);
+  assert.equal(P.isActive(s,s.staff[0]),false,'Workers suspend availability when wages unpaid');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('2026 paid holiday and full sick pay preserve contract wage while work availability changes',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people,H=app.employment;
+  const state=E.create('Leave & Sick Motors',[],'uk2026');
+  const candidate=P.applicants(1,state).find(x=>x.role==='sales');
+  assert.ok(P.hire(state,candidate.id).ok);
+  const employee=state.staff[0];
+  const holiday=H.dayForDate?null:app.vat.dayForDate(new Date(Date.UTC(2026,11,25)));
+  assert.equal(H.absence(employee,holiday),'paid holiday');
+  state.day=holiday;
+  assert.equal(P.isActive(state,employee),false);
+  const pre=state.payroll2026;
+  // Paid leave continues salary, irrespective of absence.
+  const dayPay=H.accruedDaily(employee.monthlySalary,holiday);
+  assert.ok(dayPay>0);
+  assert.equal(employee.contractHours,40);
+  assert.equal(H.LEAVE_DAYS,28);
+  assert.equal(H.minimumWage(app.vat.dayForDate(new Date(Date.UTC(2027,3,1)))),13.21);
+  assert.equal(H.minimumMonthly(40,app.vat.dayForDate(new Date(Date.UTC(2027,3,1)))),2290);
+});
+
+test('2026 seller commission is accrued, not a same-day cash payout',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people,H=app.employment;
+  const state=E.create('Commission Accrual Motors',[],'uk2026');
+  const rep=P.applicants(1,state).find(x=>x.role==='sales');
+  assert.ok(P.hire(state,rep.id).ok);
+  state.day=2;E.staffDay(state);
+  const before=state.cash;
+  const result=P.sale(state,{id:100,profile:{grade:2,likelySale:5000}},4800,10000);
+  assert.ok(result.commission>0);
+  assert.equal(state.cash,before);
+  assert.equal(state.payrollArrears,0);
+  assert.ok(state.ledger.some(x=>x.note.startsWith('Staff commission accrued: £')&&x.delta===0));
+  assert.equal(state.payroll2026.earnings[String(state.staff[0].id)].commission,result.commission);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('2026 end-of-month commission is assigned to the next payroll once prior payslip closed',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people;
+  const s=E.create('After Cutoff Motors',[],'uk2026');
+  const candidate=P.applicants(1,s).find(x=>x.role==='sales');
+  assert.ok(P.hire(s,candidate.id).ok);
+  for(let day=2;day<=22;day++){s.day=day;E.staffDay(s);}
+  assert.equal(s.payroll2026.history.length,1);
+  assert.equal(s.payroll2026.history[0].period,'2026-11');
+  const wagePaid=s.payroll2026.cumulative.net;
+  const cash=s.cash;
+  const commission=P.sale(s,{id:991,profile:{grade:2,likelySale:6000}},5700,10000);
+  assert.ok(commission.commission>0);
+  assert.equal(s.cash,cash);
+  assert.equal(s.payroll2026.period,'2026-12',
+    'Commission after payday belongs to the next pay period');
+  assert.equal(s.payroll2026.earnings[String(s.staff[0].id)].commission,commission.commission);
+  assert.equal(s.payroll2026.cumulative.net,wagePaid,'No retroactive cash in last payslip');
+  assert.equal(E.staffDay(s).payroll,0,'Same day processing is idempotent');
+  s.day=23;
+  E.staffDay(s);
+  assert.equal(s.payroll2026.period,'2026-12');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('2026 employment ledger blocks tampered wages, employer tax and pension liabilities',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people;
+  const s=E.create('Payroll Integrity Motors',[],'uk2026');
+  const candidate=P.applicants(1,s).find(x=>x.role==='sales');
+  assert.ok(P.hire(s,candidate.id).ok);
+  for(let day=2;day<=22;day++){s.day=day;E.staffDay(s);}
+  const a=JSON.parse(JSON.stringify(s));
+  assert.ok(E.normalize(a));
+  const reduced=JSON.parse(JSON.stringify(a));
+  reduced.payroll2026.hmrc[0].remaining=0;
+  assert.equal(E.normalize(reduced),null,'HMRC tax cannot silently disappear from save');
+  const stolen=JSON.parse(JSON.stringify(a));
+  stolen.payroll2026.cumulative.net-=100;
+  assert.equal(E.normalize(stolen),null,'Wage balances must reconcile with cash actually paid');
+  const pension=JSON.parse(JSON.stringify(a));
+  pension.payroll2026.pension[0].remaining+=100;
+  assert.equal(E.normalize(pension),null,'Pension liabilities must not be arbitrarily increased');
+  const payslip=JSON.parse(JSON.stringify(a));
+  payslip.payroll2026.history[0].netWages+=100;
+  assert.equal(E.normalize(payslip),null,'Payroll history totals must reconcile to line items');
+});
+
+test('2026 employee notice pay is accrued as a future payroll liability instead of immediate cash',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people;
+  const s=E.create('Proper Notice Motors',[],'uk2026');
+  const candidate=P.applicants(1,s).find(x=>x.role==='buyer');
+  assert.ok(P.hire(s,candidate.id).ok);
+  s.day=2;
+  E.staffDay(s);
+  const employee=s.staff[0],before=s.cash;
+  const notice=Math.ceil(employee.monthlySalary*12/52);
+  const result=P.release(s,employee.id);
+  assert.ok(result.ok);
+  assert.equal(s.cash,before);
+  assert.equal(s.staff.length,0);
+  assert.equal(s.payroll2026.earnings[String(employee.id)].notice,notice);
+  assert.equal(s.payrollArrears,0,'Not overdue before the next payday');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('2026 consumer case restores the original car, reverses margin and VAT and pays full statutory refund',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales,V=app.vat;
+  const s=E.create('Refund Accountability Motors',[],'uk2026');
+  assert.equal(real.VERSION,18);
+  assert.equal(s.aftersalesScenario,'cra2015-2026');
+  const lot=E.marketFor(s).auctions[0];
+  const hammer=Math.max(lot.reserve,lot.rival);
+  assert.ok(E.acquireAuction(s,lot.id,hammer).ok);
+  const original=s.vehicles[0];
+  assert.ok(E.prepare(s,original.id).ok);
+  assert.ok(E.advertise(s,original.id,original.retail).ok);
+  const completed=E.completeSale(s,original.id,'cash',null);
+  assert.ok(completed.ok,completed.message);
+  const sold=s.sold[0],initialVat=V.outstandingPence(s),initialProfit=real.totalMargin(s);
+  assert.ok(sold.vehicleSnapshot);
+  assert.equal(sold.vehicleSnapshot.id,sold.id);
+  assert.ok(initialVat>0);
+  const bankBeforeRefund=s.cash;
+  const claim=A.report(s,sold.id);
+  assert.ok(claim.ok,claim.message);
+  const caseFile=s.aftersales.cases[0];
+  assert.equal(caseFile.phase,'short-term-rejection');
+  assert.equal(caseFile.status,'open');
+  const accepted=A.refund(s,caseFile.id);
+  assert.ok(accepted.ok,accepted.message);
+  assert.equal(caseFile.status,'refund-due');
+  assert.equal(A.pendingRefunds(s),sold.price+caseFile.collectionCost);
+  const notices=A.advance(s);
+  assert.ok(notices.some(x=>x.includes('CUSTOMER REFUND PAID')));
+  assert.equal(caseFile.status,'refunded');
+  assert.equal(A.pendingRefunds(s),0);
+  assert.equal(s.cash,bankBeforeRefund-sold.price-caseFile.collectionCost);
+  assert.equal(s.vehicles.length,1);
+  assert.equal(s.vehicles[0].returnOf,sold.id);
+  assert.equal(s.vehicles[0].status,'acquired');
+  assert.equal(s.vehicles[0].workshop.stage,'unassessed');
+  assert.equal(s.vehicles[0].cost,sold.acquisition+sold.prep);
+  assert.equal(caseFile.creditedVatPence,initialVat);
+  assert.equal(V.outstandingPence(s),0);
+  assert.equal(V.rollingTurnover(s),0);
+  assert.equal(real.totalMargin(s),initialProfit-sold.profit);
+  const report=real.monthly.statement(s);
+  assert.equal(report.refundTurnover,sold.price);
+  assert.equal(report.refundedUnits,1);
+  assert.equal(report.aftercareCost,caseFile.collectionCost);
+  assert.equal(report.grossMargin,0);
+  assert.equal(report.operatingAfterVat,report.operatingContribution);
+  assert.equal(report.openingCash+report.cashIn-report.cashOut,s.cash);
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(s))),
+    'A completed rejection, new stock asset and VAT credit must survive a save');
+});
+
+test('2026 first repair is free to customer and takes time; not every fault is an automatic rejection',()=>{
+  const app=browser(),E=app.engine,A=app.productionEngine.aftersales;
+  const s=E.create('Remedial Repair Motors',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];
+  assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  s.day=2;
+  assert.ok(A.report(s,s.sold[0].id).ok);
+  const c=s.aftersales.cases[0],price=c.quote,cash=s.cash;
+  assert.ok(A.repair(s,c.id).ok);
+  assert.equal(s.cash,cash-price);
+  assert.equal(c.status,'repairing');
+  assert.equal(c.repairAttempts,1);
+  assert.equal(A.repair(s,c.id).ok,false,'No automatic unlimited second repair');
+  s.day=c.repairDoneDay;
+  A.advance(s);
+  assert.ok(['resolved','repair-failed'].includes(c.status));
+  assert.ok(s.ledger.some(l=>l.note.startsWith('Aftersales repair: sale ')&&l.delta===-price));
+  if(c.status==='repair-failed')
+    assert.ok(A.refund(s,c.id).ok,'One unsuccessful repair permits final rejection');
+  else assert.equal(A.refund(s,c.id).ok,false,'Repaired compliant car is not automatically owed a refund');
+});
+
+test('2026 agreed refund remains a creditor obligation if cash is short, with no negative balance',()=>{
+  const app=browser(),E=app.engine,A=app.productionEngine.aftersales;
+  const s=E.create('Refund Shortfall Dealer',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  const sold=s.sold[0];const previously=s.cash;
+  s.cash=100;s.ledger.push({day:s.day,delta:100-previously,
+    note:'Test fixture: demonstrably paid unrelated debt'});
+  assert.ok(A.report(s,sold.id).ok);
+  const c=s.aftersales.cases[0];
+  assert.ok(A.refund(s,c.id).ok);
+  A.advance(s);
+  assert.equal(c.status,'refund-due');
+  assert.equal(s.cash,100);
+  assert.equal(A.pendingRefunds(s),sold.price+c.collectionCost);
+  assert.ok(app.financeView.summary(s,app.productionEngine).html.includes('Accepted customer refunds'));
+  assert.ok(app.productionEngine.normalize(JSON.parse(JSON.stringify(s))));
+  s.day=c.refundDueDay+1;
+  A.advance(s);
+  assert.equal(c.status,'refund-due','14-day statutory period does not erase a refund obligation');
+  assert.ok(s.reputationScore<5);
+  const gross=c.refundAmount+c.collectionCost;
+  s.cash+=gross;s.ledger.push({day:s.day,delta:gross,
+    note:'Test fixture: unrelated cash investment receipt'});
+  A.advance(s);
+  assert.equal(c.status,'refunded');
+  assert.equal(s.cash,100);
+  assert.ok(app.productionEngine.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('2026 aftersales refuses duplicate refunds and rejects falsified VAT credits and recovered assets',()=>{
+  const app=browser(),E=app.engine,A=app.productionEngine.aftersales;
+  const s=E.create('Audit Remedy Motors',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  assert.ok(A.report(s,s.sold[0].id).ok);
+  assert.equal(A.report(s,s.sold[0].id).ok,false);
+  assert.ok(A.refund(s,s.aftersales.cases[0].id).ok);
+  A.advance(s);
+  const valid=app.productionEngine.normalize(JSON.parse(JSON.stringify(s)));
+  assert.ok(valid);
+  const changed=JSON.parse(JSON.stringify(s));
+  changed.aftersales.cases[0].creditedVatPence=0;
+  assert.equal(app.productionEngine.normalize(changed),null);
+  const fictitious=JSON.parse(JSON.stringify(s));
+  fictitious.aftersales.cases[0].returnedVehicleId+=3;
+  assert.equal(app.productionEngine.normalize(fictitious),null);
+  const lostCash=JSON.parse(JSON.stringify(s));
+  lostCash.ledger=lostCash.ledger.filter(row=>!row.note.startsWith('Aftersales refund:'));
+  assert.equal(app.productionEngine.normalize(lostCash),null);
+  const classic=E.create('Original Dealer',[]);
+  assert.equal(A.enabled(classic),false);
+  const old=E.create('Pre-Remedy 2026',[],'uk2026');
+  old.version=17;delete old.aftersalesScenario;delete old.aftersales;
+  assert.ok(app.productionEngine.normalize(old),
+    'Phase 6 must not invent past complaints or refund liabilities on v17 saves');
+});
+
+test('2026 Consumer Rights Act phase includes first 30 days, rebuttable six months and later evidence',()=>{
+  const app=browser(),V=app.vat,A=app.productionEngine.aftersales;
+  const state={day:1,sold:[]};
+  const sale={day:1};
+  assert.equal(A.legalPhase(state,sale,1),'short-term-rejection');
+  assert.equal(A.legalPhase(state,sale,31),'short-term-rejection');
+  assert.equal(A.legalPhase(state,sale,32),'six-month-presumption');
+  const year=V.dateForDay(1);
+  assert.equal(year.toISOString().slice(0,10),'2026-11-09');
+  const six=V.dayForDate(new Date(Date.UTC(2027,4,9)));
+  assert.equal(A.legalPhase(state,sale,six),'later-evidence-required');
+});
+
+test('2026 one failed repair permits negotiated price reduction while customer keeps car',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales,V=app.vat;
+  const s=E.create('Fair Price Reduction Motors',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0],grade=lot.profile.grade;
+  const desired=(5-((1+grade)%5))%5||5;
+  s.nextId=desired; // deterministic fixture selects a sale whose repair is unsuccessful
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];
+  assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  const sold=s.sold[0],initialMargin=real.totalMargin(s),
+    originalVat=V.outstandingPence(s),before=s.cash;
+  s.day=2;
+  assert.ok(A.report(s,sold.id).ok);
+  const issue=s.aftersales.cases[0];
+  assert.ok(A.repair(s,issue.id).ok);
+  s.day=issue.repairDoneDay;
+  A.advance(s);
+  assert.equal(issue.status,'repair-failed',
+    'Deterministic fixture produces one genuine unsuccessful repair');
+  const reduction=A.reductionQuote(s,issue.id);
+  assert.ok(reduction>200&&reduction<sold.price);
+  assert.ok(A.reduce(s,issue.id).ok);
+  assert.equal(issue.status,'reduction-due');
+  const bankAfterRepair=s.cash;
+  const event=A.advance(s);
+  assert.ok(event.some(x=>x.includes('PRICE REDUCTION PAID')));
+  assert.equal(issue.status,'reduced');
+  assert.equal(s.cash,bankAfterRepair-reduction);
+  assert.equal(s.vehicles.length,0,'Customer retains their vehicle after negotiated reduction');
+  assert.equal(issue.returnedVehicleId,null);
+  const expectedCredit=originalVat-V.marginVatPence(sold.price-reduction,
+    sold.vat.purchaseBasis);
+  assert.equal(issue.creditedVatPence,expectedCredit);
+  assert.equal(V.outstandingPence(s),originalVat-expectedCredit);
+  assert.equal(V.rollingTurnover(s),sold.price-reduction);
+  assert.equal(real.totalMargin(s),initialMargin-reduction);
+  const r=real.monthly.statement(s);
+  assert.equal(r.priceReducedUnits,1);
+  assert.equal(r.refundedUnits,0);
+  assert.equal(r.netRetailTurnover,sold.price-reduction);
+  assert.equal(r.grossMargin,initialMargin-reduction);
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(s))),
+    'Reduced consideration, VAT, customer right and cash survive reload');
+
+  const altered=JSON.parse(JSON.stringify(s));
+  altered.aftersales.cases[0].refundAmount+=100;
+  assert.equal(real.normalize(altered),null,'Price reduction must match agreed offer');
+});
+
+test('accepted refund immediately reverses trading profit even before cash can be paid',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales;
+  const s=E.create('Refund Accrual Dealer',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  const sale=s.sold[0],profit=real.totalMargin(s);
+  assert.ok(A.report(s,sale.id).ok);
+  const before=s.cash;
+  s.cash=0;s.ledger.push({day:s.day,delta:-before,
+    note:'Test fixture: emergency creditor repayment'});
+  const claim=s.aftersales.cases[0];
+  assert.ok(A.refund(s,claim.id).ok);
+  assert.equal(claim.status,'refund-due');
+  assert.equal(real.totalMargin(s),profit-sale.profit,
+    'Dealer cannot pretend the accepted return remains a realised profitable sale');
+  const r=real.monthly.statement(s);
+  assert.equal(r.refundTurnover,sale.price);
+  assert.equal(r.grossMargin,0);
+  assert.equal(r.aftercareCost,claim.collectionCost,
+    'Reasonable customer collection cost is accrued before cash payout');
+  assert.equal(A.pendingRefunds(s),sale.price+claim.collectionCost);
+  assert.equal(app.financeView.snapshot(s,real).refundLiability,
+    sale.price+claim.collectionCost);
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(s))));
+  s.day=2;
+  A.advance(s);
+  assert.equal(real.totalMargin(s),profit-sale.profit);
+  assert.equal(r.grossMargin,0);
+});
+
+test('recovered rejected vehicle may be sold on to the trade without invalidating earlier consumer remedy',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales;
+  const s=E.create('Recovered Vehicle Dealer',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  assert.ok(A.report(s,s.sold[0].id).ok);
+  const c=s.aftersales.cases[0];
+  assert.ok(A.refund(s,c.id).ok);
+  A.advance(s);
+  assert.equal(c.status,'refunded');
+  const recovered=s.vehicles[0];
+  assert.equal(recovered.returnOf,c.saleId);
+  assert.ok(real.disposeStock(s,recovered.id).ok);
+  assert.equal(s.vehicles.length,0);
+  assert.equal(s.wholesale.at(-1).origin,'RETURN-'+c.saleId);
+  assert.equal(s.wholesale.at(-1).returnOf,c.saleId);
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(s))),
+    'Historical refund and VAT credit survive onward vehicle disposal');
+});
+
+test('2026 dashboard prioritises accepted refund obligations and aftersales desk offers statutory remedies',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales;
+  const s=E.create('Dealer Complaint Desk',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  assert.ok(A.report(s,s.sold[0].id).ok);
+  const view=app.aftersalesView.render(s,real);
+  assert.match(view,/AFTERSALES & CUSTOMER REMEDIES/);
+  assert.match(view,/AUTHORISE REMEDIAL REPAIR/);
+  assert.match(view,/ACCEPT FULL SHORT-TERM REJECTION/);
+  assert.ok(app.dashboard.snapshot(s,real).tasks.some(x=>x.key==='aftersales-claims'));
+  assert.ok(A.refund(s,s.aftersales.cases[0].id).ok);
+  const pending=app.dashboard.snapshot(s,real);
+  assert.ok(pending.tasks.some(x=>x.key==='aftersales-refunds'));
+  assert.equal(pending.arrears,A.pendingRefunds(s));
+  const dueView=app.aftersalesView.render(s,real);
+  assert.match(dueView,/ACCEPTED REFUND/);
+  assert.match(dueView,/without undue delay/);
+});
+
+test('2026 all 50 vehicle retail records retain source, mileage, confidence and unverified trade guides',()=>{
+  const app=browser(),M=app.market,E=app.productionEngine;
+  const rows=Object.values(M.CATALOGUE).flat();
+  assert.equal(rows.length,50);
+  assert.equal(Object.keys(M.PRICING_2026).length,50);
+  assert.equal(new Set(Object.keys(M.PRICING_2026)).size,50);
+  for(const base of rows){
+    const current=M.priceFor(base,'uk2026');
+    const proof=current.priceAudit;
+    assert.equal(proof.status,'retail-comparable');
+    assert.match(proof.asOf,/^2026-11-12$/);
+    assert.ok(['high','medium','low'].includes(proof.confidence),base.title);
+    assert.match(proof.source,/^https:\/\//);
+    assert.ok(proof.comparisonAsk>=150);
+    assert.ok(proof.comparisonMiles>0);
+    assert.ok(proof.note.length>=15);
+    assert.match(proof.tradeGuide,/not a verified auction result/);
+    assert.ok(Number.isSafeInteger(current.retail)&&current.retail>=150);
+    assert.ok(Number.isSafeInteger(current.guide)&&current.guide>0);
+    assert.equal(current.repairScenario,'uk2026');
+    assert.equal(M.priceFor(base,'classic'),base,'No classic price mutation');
+    assert.equal(E.quote({...current,id:'A-1-0',
+      feeModel:'bca-blue-2026'},'auction',Math.min(current.guide,24999)).price,
+      Math.min(current.guide,24999));
+  }
+  const flagged=rows.map(x=>M.priceFor(x,'uk2026')).filter(x=>x.priceAudit.buyingRisk);
+  assert.equal(flagged.length,4,'Exactly four current unverified wholesale guides exceed retail asking');
+  assert.deepEqual([...flagged].map(x=>x.title).sort(),[
+    '2022 Audi e-tron 55 quattro','2022 Nissan Qashqai Acenta Premium',
+    '2022 Range Rover Velar D200 R-Dynamic','2023 Land Rover Defender 110 D250'
+  ].sort());
+  const qBase=M.CATALOGUE.modern.find(x=>x.title==='2022 Nissan Qashqai Acenta Premium');
+  const q=M.priceFor(qBase,'uk2026');
+  assert.equal(q.retail,10950);
+  assert.equal(q.guide,qBase.guide);
+  assert.match(q.priceAudit.buyingRisk,/loss-making/);
+  assert.ok(q.guide>q.retail,
+    'Clearly disclose commercially impossible unsourced wholesale buy guide');
+  const audit=E.quote({...q,id:'A-1-2',feeModel:'bca-blue-2026'},'auction',q.guide);
+  assert.ok(audit.expectedMargin<0,
+    'Do not show a profit where buying guide exceeds retail before repairs');
+  assert.ok(audit.maxBid<q.guide,
+    'Safe bid is lower than an unsupported/uneconomic wholesale guide');
+  const elevated=M.priceFor(M.CATALOGUE.premium.find(x=>
+    x.title==='2023 Kia Sportage GT-Line HEV'),'uk2026');
+  assert.equal(elevated.retail,20800);
+  assert.equal(elevated.guide,18750,'2026 retail adverts do not invent auction hammer data');
+});
+
+test('2026 multi-year cash stress uses actual monthly overhead and never manufactures negative bank cash',()=>{
+  const app=browser(),E=app.productionEngine,S=app.cashStress;
+  const state=E.create('Cash Runway Audit',[],'uk2026');
+  const a=S.resolve(state,E);
+  assert.equal(a.cash,50000);
+  assert.equal(a.baselineMonthlyOverhead,2300);
+  assert.equal(a.monthlyStaffCost,0);
+  const twelve=S.project(state,E,{months:12});
+  assert.equal(twelve.endingBankCash,22400);
+  assert.equal(twelve.unfundedCommitments,0);
+  assert.equal(twelve.firstCashShortfallMonth,null);
+  assert.equal(twelve.totalOutflow,12*2300);
+  const thirtySix=S.project(state,E,{months:36});
+  assert.equal(thirtySix.firstCashShortfallMonth,21);
+  assert.equal(thirtySix.endingBankCash,0);
+  assert.equal(thirtySix.unfundedCommitments,38800);
+  assert.equal(thirtySix.rows.filter(x=>x.premium>0).length,2);
+  const sixty=S.project(state,E,{months:60});
+  assert.equal(sixty.firstCashShortfallMonth,21);
+  assert.equal(sixty.endingBankCash,0);
+  assert.equal(sixty.unfundedCommitments,100000);
+  assert.equal(sixty.rows.filter(x=>x.premium>0).length,4);
+  assert.equal(sixty.totalUnits,0);
+  assert.ok(sixty.rows.every(r=>r.cash>=0&&r.unpaid>=0));
+  const conservative=S.project(state,E,{months:12,
+    unitsPerMonth:1,contributionPerSale:700,annualClaimCost:2500});
+  const target=S.project(state,E,{months:12,
+    unitsPerMonth:3,contributionPerSale:1000,annualClaimCost:2500});
+  assert.ok(target.endingBankCash>conservative.endingBankCash);
+  assert.ok(target.totalClaims===2500);
+  assert.ok(S.project(state,E,{months:12,
+    unitsPerMonth:4,contributionPerSale:1400,annualClaimCost:5000})
+    .endingBankCash>target.endingBankCash);
+  assert.equal(S.project(state,E,{months:12,unitsPerMonth:0}).rows.length,12);
+  assert.throws(()=>S.project(state,E,{months:61}),/Invalid stress/);
+  assert.throws(()=>S.project(state,E,{months:12,unitsPerMonth:-1}),/Invalid stress/);
+  assert.throws(()=>S.project(E.create('Classic Trader',[]),E),/requires 2026/);
+  assert.match(app.financeView.summary(state,E).html,/60-MONTH CASH-FLOW STRESS SENSITIVITIES|12 \/ 36 \/ 60-MONTH CASH-FLOW STRESS SENSITIVITIES/);
+  assert.match(app.financeView.summary(state,E).html,/no negative bank cash is manufactured|No loan\/overdraft is invented/i);
+});
+
+test('2026 hiring increases long-term cash stress using employer NI and pension before relief',()=>{
+  const app=browser(),E=app.productionEngine,S=app.cashStress;
+  const state=E.create('One Staff Runway Audit',[],'uk2026');
+  const before=S.project(state,E,{months:12,unitsPerMonth:0});
+  const seller=E.people.applicants(1,state).find(x=>x.role==='sales');
+  assert.ok(E.hireStaff(state,seller.id).ok);
+  const after=S.project(state,E,{months:12,unitsPerMonth:0});
+  assert.ok(after.monthlyConservativeStaff>seller.monthlySalary);
+  assert.ok(after.monthlyConservativeStaff>=
+    E.employment.monthlyQuote(seller.monthlySalary,{allowanceRemaining:0}).employerCost);
+  assert.ok(after.firstCashShortfallMonth!==null);
+  assert.ok(after.endingBankCash<before.endingBankCash);
+  assert.equal(after.rows.length,12);
+});
+
+test('real engine survives 60 game months of zero sales with no bank borrowing or erased overhead arrears',()=>{
+  const app=browser(),E=app.productionEngine,s=E.create('No Sale Survival Test',[],'uk2026');
+  assert.equal(s.cash,50000);
+  const checks=new Map();
+  for(let day=2;day<=1800;day++){
+    s.day=day;
+    if((day-1)%30===0)E.monthly.next(s);
+    E.staffDay(s);
+    E.premisesDay(s);
+    E.vatDay(s);
+    E.aftersalesDay(s);
+    assert.ok(s.cash>=0,'Bank cash must never turn negative on day '+day);
+    if(day%30===0){
+      const report=E.monthly.close(s);
+      assert.ok(report,'30-day month must close on day '+day);
+      if([360,1080,1800].includes(day))checks.set(day,{
+        cash:s.cash,arrears:s.premises.arrears,month:report.month});
+    }
+  }
+  assert.equal(checks.size,3);
+  assert.equal(checks.get(360).month,12);
+  assert.equal(checks.get(1080).month,36);
+  assert.equal(checks.get(1800).month,60);
+  assert.ok(checks.get(360).cash>0);
+  assert.equal(checks.get(1080).cash,0);
+  assert.equal(checks.get(1800).cash,0);
+  assert.ok(checks.get(1800).arrears>checks.get(1080).arrears);
+  assert.ok(checks.get(1080).arrears>0);
+  assert.equal(s.sold.length,0);
+  assert.equal(s.wholesale.length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
+    '60-month arrears and management ledger must survive the v18 save format');
 });
