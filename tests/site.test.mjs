@@ -68,9 +68,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /class="stock-control"/);
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
-  assert.match(html, /vehicle-intel\.js\?v=5/);
+  assert.match(html, /vehicle-intel\.js\?v=6/);
   assert.match(html, /people\.js\?v=8/);
-  assert.match(html, /monthly\.js\?v=7/);
+  assert.match(html, /monthly\.js\?v=8/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=5/);
   assert.match(html, /customers\.js\?v=5/);
@@ -79,16 +79,16 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-fees\.js\?v=1/);
   assert.match(html, /auction-transport\.js\?v=1/);
   assert.match(html, /repair-prices\.js\?v=1/);
-  assert.match(html, /auction-hall-view\.js\?v=4/);
+  assert.match(html, /auction-hall-view\.js\?v=5/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=4/);
+  assert.match(html, /finance-view\.js\?v=5/);
   assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=33/);
   assert.match(html, /premises\.js\?v=2/);
   assert.match(html, /premises-view\.js\?v=4/);
   assert.match(html, /id="premises-view"/);
-  assert.match(html, /dashboard-view\.js\?v=3/);
+  assert.match(html, /dashboard-view\.js\?v=4/);
   assert.match(html, /inbox-office\.js\?v=3/);
   assert.match(html, /id="inbox-action-count"/);
   assert.match(html, /id="inbox-filter-buttons"/);
@@ -99,13 +99,13 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=23/);
+  assert.match(html, /trading\.js\?v=24/);
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=6/);
-  assert.match(html, /monthly-view\.js\?v=9/);
+  assert.match(html, /monthly-view\.js\?v=10/);
   assert.match(html, /people-view\.js\?v=7/);
-  assert.match(html, /vehicle-view\.js\?v=6/);
+  assert.match(html, /vehicle-view\.js\?v=7/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -4977,7 +4977,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=3/);
+  assert.match(html,/finance-view\.js\?v=5/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
