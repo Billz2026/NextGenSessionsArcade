@@ -6671,6 +6671,12 @@ test('2026 all 50 vehicle retail records retain source, mileage, confidence and 
       feeModel:'bca-blue-2026'},'auction',Math.min(current.guide,24999)).price,
       Math.min(current.guide,24999));
   }
+  const flagged=rows.map(x=>M.priceFor(x,'uk2026')).filter(x=>x.priceAudit.buyingRisk);
+  assert.equal(flagged.length,4,'Exactly four current unverified wholesale guides exceed retail asking');
+  assert.deepEqual([...flagged].map(x=>x.title).sort(),[
+    '2022 Audi e-tron 55 quattro','2022 Nissan Qashqai Acenta Premium',
+    '2022 Range Rover Velar D200 R-Dynamic','2023 Land Rover Defender 110 D250'
+  ].sort());
   const qBase=M.CATALOGUE.modern.find(x=>x.title==='2022 Nissan Qashqai Acenta Premium');
   const q=M.priceFor(qBase,'uk2026');
   assert.equal(q.retail,10950);
