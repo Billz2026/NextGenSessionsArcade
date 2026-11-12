@@ -809,7 +809,11 @@
     if(state && D.isDealDay(state.day) && !C.caseFor(state,vehicle.id) && !D.retailActive(state,vehicle))return null;
     // Buyers benchmark against a market-derived achievable retail value.
     // An inflated asking price does not force an unrealistically high offer.
-    const fair = vehicle.profile?.likelySale ?? (vehicle.asking - 250);
+    // Age-sensitive 2026 retail offers use the same dated downside scenario
+    // as the Sales Office and Finance views, never an invented market quote.
+    const fair = state?.financialScenario==='uk2026'?
+      window.MotorTradeRetailLiquidity.value(state,vehicle).indicative:
+      (vehicle.profile?.likelySale ?? (vehicle.asking - 250));
     const support=state?P.salesBonus(state,C.caseFor(state,vehicle.id)||vehicle.id):0;
     const motivation=state?D.customerBonus(state,vehicle):0;
     const meetingPush=state?D.meetingBonus(state,'sales'):0;
