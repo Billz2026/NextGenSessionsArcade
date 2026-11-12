@@ -38,11 +38,18 @@
   function enquiryPercent(state,v,salesLift=0,marketAdjustment=0){
     const x=value(state,v);
     const grade=v.profile?.grade||3;
-    const premium=x.gapRatio>0?-Math.round(x.gapRatio*95):
-      Math.min(8,Math.round(-x.gapRatio*40));
-    const gradePenalty=grade>=5?7:grade===4?4:0;
+    // Buyers normally expect to negotiate below asking. Comparing an
+    // ADVERTISED asking price to an ACHIEVED-price estimate without this
+    // buffer wrongly reduced ordinary +10% adverts to a 1% daily chance.
+    // A high ask still cuts the chance of a serious buyer and caps offers at
+    // achievable-value sensitivity; a price-checking caller can still ask.
+    const negotiatingBuffer=0.08;
+    const premium=x.gapRatio>negotiatingBuffer?
+      -Math.round((x.gapRatio-negotiatingBuffer)*36):
+      x.gapRatio<0?Math.min(6,Math.round(-x.gapRatio*30)):0;
+    const gradePenalty=grade>=5?3:grade===4?2:0;
     // Long adverts retain a nonzero enquiry path; repricing improves demand.
-    const stockPenalty=Math.min(3,Math.floor(x.advertisedDays/45));
+    const stockPenalty=Math.min(2,Math.floor(x.advertisedDays/60));
     const reputation=Math.floor(clamp(state.reputationScore||0,0,100)/35);
     const salesperson=Math.round(clamp(salesLift,0,16)*0.25);
     // A newly advertised, realistically priced car gets a modest initial
@@ -50,8 +57,11 @@
     // not an independently measured UK customer conversion statistic.
     const freshListing=x.advertisedDays<21?2:0;
     const fuelAdjustment=v.fuel==='Hybrid'?2:v.fuel==='Diesel'?-1:0;
-    return clamp(5+freshListing+premium-gradePenalty-stockPenalty+reputation+
-      salesperson+fuelAdjustment+marketAdjustment,1,40);
+    // 4% is a SIMULATED minimum rate for enquiries / price questions,
+    // not a 4% chance of a completed retail sale. Visits, test drives and
+    // negotiation remain independent; buyers can bid far below the ask.
+    return clamp(6+freshListing+premium-gradePenalty-stockPenalty+reputation+
+      salesperson+fuelAdjustment+marketAdjustment,4,40);
   }
   function snapshot(state,E){
     const pendingPrep=E.workshop.reserved(state);
