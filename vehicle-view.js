@@ -44,12 +44,13 @@
     const stats='<div class="intel-numbers">'+numbers.map(([label,value],i)=>
       '<div><span>'+label+'</span><strong'+(quote&&i===3?' id="projection-'+esc(car.id)+'"':'')+
       (value!==null&&value<0?' class="intel-loss"':'')+'>'+quoteMoney(value)+'</strong></div>').join('')+'</div>';
-    const forecast=quote?'<p class="intel-formula">'+(quote.feeQuoteRequired?'Published tariff unavailable for this bid — obtain auctioneer fee quote. ': 'Forecast: likely sale − offer − fees − expected repairs − inspection if paid. ')+
+    const forecast=quote?'<p class="intel-formula">'+(quote.feeQuoteRequired?'Published tariff unavailable for this bid — obtain auctioneer fee quote. ': 'Forecast: likely sale − offer − buyer fees − simulated delivery where applicable − expected repairs − inspection if paid. ')+
       (inspected?'Inspected cost estimate.':'Uninspected risk allowance included.')+'</p>':'';
     const breakdown=quote?'<h4>MAXIMUM BID / OFFER WORKING</h4>'+
       '<div class="intel-repair"><span>Likely achieved sale</span><strong>'+money(quote.likelySale)+'</strong></div>'+
       '<div class="intel-repair"><span>Expected repair allowance</span><strong>− '+money(quote.prep)+'</strong></div>'+
       '<div class="intel-repair"><span>Buyer fees at this offer</span><strong>− '+quoteMoney(quote.fee)+'</strong></div>'+
+      (quote.transport?'<div class="intel-repair"><span>Illustrative collection / delivery (simulated distance)</span><strong>− '+money(quote.transport)+'</strong></div>':'')+
       '<div class="intel-repair"><span>Pre-purchase inspection if paid</span><strong>− '+money(quote.inspection)+'</strong></div>'+
       '<div class="intel-repair"><span>Target trading contribution</span><strong>− '+money(quote.targetMargin)+'</strong></div>'+
       '<div class="intel-repair intel-repair-total"><span>Indicative maximum offer (rounded)</span><strong>'+
