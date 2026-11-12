@@ -315,10 +315,21 @@
         returnedIds.add(c.returnedVehicleId);
         const physical=s.vehicles.find(v=>v.id===c.returnedVehicleId)||
           c.heldReturned;
-        if(!physical||physical.id!==c.returnedVehicleId||
-          physical.returnOf!==sale.id||
-          physical.cost!==sale.acquisition+sale.prep||
-          physical.origin!=='RETURN-'+sale.id)return false;
+        if(physical){
+          if(physical.id!==c.returnedVehicleId||
+            physical.returnOf!==sale.id||
+            physical.origin!=='RETURN-'+sale.id||
+            physical.cost<sale.acquisition+sale.prep)return false;
+        }else{
+          // A recovered car may legitimately be prepared and resold or
+          // disposed wholesale. Never require it to remain on the forecourt
+          // forever just to let the original refund record validate.
+          const onward=s.sold.find(v=>v.id===c.returnedVehicleId)||
+            (s.wholesale||[]).find(v=>v.id===c.returnedVehicleId);
+          if(!onward||onward.origin!=='RETURN-'+sale.id||
+            (onward.returnOf!==undefined&&onward.returnOf!==sale.id))
+            return false;
+        }
       }else if(c.returnedVehicleId!==null||c.heldReturned!==null)return false;
     }
     const settled=a.cases.filter(c=>['refunded','reduced'].includes(c.status));
