@@ -238,10 +238,17 @@
     if(!a||!Number.isSafeInteger(a.nextCaseId)||a.nextCaseId<1||
       !Array.isArray(a.cases)||a.cases.length>2000||
       !Array.isArray(a.history)||a.history.length>2000)return false;
+    // New aftersales careers preserve each delivered vehicle exactly enough
+    // for a lawful unwind and independent workshop assessment on recovery.
+    if(!s.sold.every(x=>x.vehicleSnapshot&&
+      x.vehicleSnapshot.id===x.id&&x.vehicleSnapshot.title===x.title&&
+      x.vehicleSnapshot.cost===x.acquisition&&
+      x.vehicleSnapshot.prepSpent===x.prep&&
+      x.vehicleSnapshot.status==='listed'))return false;
     const ids=new Set(),saleIds=new Set(),returnedIds=new Set();
     for(const c of a.cases){
       const sale=saleFor(s,c?.saleId);
-      if(!c||!sale||!sale.vehicleSnapshot||
+      if(!c||!sale||
         !Number.isSafeInteger(c.id)||c.id<1||c.id>=a.nextCaseId||
         ids.has(c.id)||saleIds.has(c.saleId)||c.title!==sale.title||
         !STATUSES.includes(c.status)||c.openedDay<sale.day||c.openedDay>s.day||
@@ -249,48 +256,81 @@
         !money(c.quote)||!money(c.refundAmount)||!money(c.collectionCost)||
         !Number.isSafeInteger(c.repairAttempts)||c.repairAttempts<0||c.repairAttempts>1||
         (c.repairAttempts===0&&c.repairDoneDay!==null)||
-        (c.status==='repairing'&&!(c.repairDoneDay>=c.openedDay))||
+        (c.repairAttempts===1&&
+          (!Number.isSafeInteger(c.repairDoneDay)||c.repairDoneDay<c.openedDay+4))||
         !Number.isSafeInteger(c.creditedVatPence)||c.creditedVatPence<0)return false;
+      const job=estimatedJob(sale);
+      if(c.quote!==job.quote||c.faultKey!==job.faultKey||c.issue!==job.issue)return false;
       ids.add(c.id);saleIds.add(c.saleId);
-      if(c.status==='refund-due'||c.status==='refunded'){
-        if(!Number.isSafeInteger(c.refundApprovedDay)||c.refundApprovedDay<c.openedDay||
-          c.refundApprovedDay>s.day||c.refundDueDay!==c.refundApprovedDay+14||
-          c.refundAmount!==sale.price||c.collectionCost!==collectionCost(sale)||
-          c.cashEquivalentConsent!==(sale.mode==='part-ex'))return false;
+      const repairs=s.ledger.filter(l=>l.note===
+        'Aftersales repair: sale '+c.saleId+' ('+c.faultKey+')');
+      if(repairs.length!==c.repairAttempts||
+        repairs.some(x=>x.delta!==-c.quote||x.day<c.openedDay))return false;
+      if(['repairing','repair-failed','resolved'].includes(c.status)&&c.repairAttempts!==1)
+        return false;
+      if(['open','refund-due','refunded'].includes(c.status)&&c.repairAttempts>0)
+        return false;
+      const isFull=['refund-due','refunded'].includes(c.status);
+      const isReduced=['reduction-due','reduced'].includes(c.status);
+      const due=isFull||isReduced;
+      if(due){
+        const expectedReduction=Math.min(sale.price,Math.max(200,
+          Math.round((c.quote+sale.price*.06)/25)*25));
+        if(!Number.isSafeInteger(c.refundApprovedDay)||
+          c.refundApprovedDay<c.openedDay||c.refundApprovedDay>s.day||
+          c.refundDueDay!==c.refundApprovedDay+14||
+          c.refundAmount!==(isFull?sale.price:expectedReduction)||
+          c.collectionCost!==(isFull?collectionCost(sale):0)||
+          c.cashEquivalentConsent!==(isFull&&sale.mode==='part-ex')||
+          c.remedy!==(isFull?'rejection':'price-reduction'))return false;
+        if(isReduced&&c.repairAttempts!==1)return false;
       }else if(c.refundAmount!==0||c.refundApprovedDay!==null||
-        c.refundDueDay!==null||c.creditedVatPence!==0)return false;
-      if(c.status==='refunded'){
-        if(c.creditedVatPence!==(sale.vat?.outputPence||0)||
-          !Number.isSafeInteger(c.returnedVehicleId)||c.returnedVehicleId<1||
+        c.refundDueDay!==null||c.creditedVatPence!==0||
+        c.remedy!==null)return false;
+      const paid=c.status==='refunded'||c.status==='reduced';
+      if(paid){
+        const vatOriginal=sale.vat?.outputPence||0;
+        const expectedCredit=isReduced?vatOriginal-
+          VAT.marginVatPence(sale.price-c.refundAmount,sale.vat?.purchaseBasis??0):
+          vatOriginal;
+        if(c.creditedVatPence!==expectedCredit)return false;
+        const spendNote=(isReduced?'Aftersales price reduction: sale ':
+          'Aftersales refund: sale ')+c.saleId+' ('+sale.title+')';
+        const spend=s.ledger.filter(l=>l.note===spendNote);
+        const collection=s.ledger.filter(l=>l.note===
+          'Aftersales collection: sale '+c.saleId+' ('+sale.title+')');
+        const credit=s.ledger.filter(l=>l.note.startsWith(
+          'VAT output reversal accrued: sale '+c.saleId+' ('));
+        if(spend.length!==1||spend[0].delta!==-c.refundAmount||
+          collection.length!==(isFull?1:0)||
+          collection.some(l=>l.delta!==-c.collectionCost)||
+          credit.length!==(c.creditedVatPence?1:0)||
+          credit.some(x=>x.delta!==0||x.note!==
+            'VAT output reversal accrued: sale '+c.saleId+
+              ' ('+VAT.pence(c.creditedVatPence)+')'))return false;
+      }
+      if(isFull&&paid){
+        if(!Number.isSafeInteger(c.returnedVehicleId)||c.returnedVehicleId<1||
           c.returnedVehicleId>=s.nextId||returnedIds.has(c.returnedVehicleId))return false;
         returnedIds.add(c.returnedVehicleId);
         const physical=s.vehicles.find(v=>v.id===c.returnedVehicleId)||
           c.heldReturned;
         if(!physical||physical.id!==c.returnedVehicleId||
           physical.returnOf!==sale.id||
-          physical.cost!==sale.acquisition+sale.prep)return false;
+          physical.cost!==sale.acquisition+sale.prep||
+          physical.origin!=='RETURN-'+sale.id)return false;
       }else if(c.returnedVehicleId!==null||c.heldReturned!==null)return false;
     }
-    const refunds=a.cases.filter(c=>c.status==='refunded');
-    for(const c of refunds){
-      const sale=saleFor(s,c.saleId);
-      const refund=s.ledger.filter(l=>l.note===
-        'Aftersales refund: sale '+c.saleId+' ('+sale.title+')');
-      const recovery=s.ledger.filter(l=>l.note===
-        'Aftersales collection: sale '+c.saleId+' ('+sale.title+')');
-      const credit=s.ledger.filter(l=>l.note.startsWith(
-        'VAT output reversal accrued: sale '+c.saleId+' ('));
-      if(refund.length!==1||refund[0].delta!==-c.refundAmount||
-        recovery.length!==1||recovery[0].delta!==-c.collectionCost||
-        credit.length!==(c.creditedVatPence?1:0))return false;
-    }
-    return a.history.length===refunds.length&&a.history.every(h=>
+    const settled=a.cases.filter(c=>['refunded','reduced'].includes(c.status));
+    return a.history.length===settled.length&&a.history.every(h=>
       Number.isSafeInteger(h.day)&&h.day<=s.day&&
-      refunds.some(c=>c.saleId===h.saleId&&
+      settled.some(c=>c.saleId===h.saleId&&
         h.refund===c.refundAmount&&h.recovery===c.collectionCost&&
         h.returnedVehicleId===c.returnedVehicleId&&
         h.creditedVatPence===c.creditedVatPence&&
-        h.originalProfit===saleFor(s,c.saleId).profit));
+        h.type===(c.status==='reduced'?'price-reduction':'rejection')&&
+        h.originalProfit===(c.status==='reduced'?c.refundAmount:
+          saleFor(s,c.saleId).profit)));
   }
   const clone=a=>JSON.parse(JSON.stringify(a));
   window.MotorTradeAftersales=Object.freeze({MODE,STATUSES,initial,enabled,
