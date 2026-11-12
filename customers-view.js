@@ -180,7 +180,9 @@
   function details(state,E,entry){
     const v=entry.vehicle,leadInfo=entry.caseData,c=leadInfo.c;
     const invested=v.cost+v.prepSpent;
-    const indicative=v.profile?.likelySale??v.retail;
+    const indicative=state.financialScenario==='uk2026'?
+      window.MotorTradeRetailLiquidity.value(state,v).indicative:
+      (v.profile?.likelySale??v.retail);
     const days=Math.max(0,state.day-v.listedDay);
     return '<article class="so-file" aria-label="Selected sales case">'+
       '<header class="so-file-head"><div><small>RETAIL FILE · STOCK '+v.id+
@@ -200,7 +202,9 @@
       '<div><span>LIKELY ACHIEVED SALE</span><strong>'+cash(indicative)+'</strong></div>'+
       (c?.price!==null&&c?.price!==undefined?
         '<div class="so-figures-strong"><span>AGREED SALE PRICE</span><strong>'+cash(c.price)+'</strong></div>':'')+
-      '</div><p class="so-caveat">Valuations are fictional. An agreed price is not a completed sale until handover.</p>'+
+      '</div><p class="so-caveat">Valuations are fictional'+
+      (state.financialScenario==='uk2026'?' and include a deliberately conservative aged-stock sensitivity, not a validated transaction price':'')+
+      '. An agreed price is not a completed sale until handover.</p>'+
       '</section><section class="so-customer"><div class="so-customer-heading">'+
       '<div><small>SALES CASE MANAGEMENT</small><h4>NEXT CUSTOMER ACTION</h4></div>'+
       (c?'<span>'+esc(c.name)+'</span>':'')+'</div>'+
