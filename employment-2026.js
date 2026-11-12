@@ -89,7 +89,8 @@
   const initial=()=>({
     scheme:'england-2026-monthly',period:null,earnings:{},wagesDue:0,
     hmrc:[],pension:[],allowanceYear:'2026-27',allowanceUsed:0,
-    history:[],leaveTaken:{},sickTaken:{},lastAdvanceDay:0
+    history:[],leaveTaken:{},sickTaken:{},lastAdvanceDay:0,
+    cumulative:{net:0,hmrc:0,pension:0}
   });
   function clone(p){
     return JSON.parse(JSON.stringify(p));
@@ -234,6 +235,9 @@
       employerPension:totalPension,allowanceRelief:totalRelief,
       netWages:totalNet,hmrc:totalHmrc,pension:totalPensionDue};
     p.wagesDue+=totalNet;
+    p.cumulative.net+=totalNet;
+    p.cumulative.hmrc+=totalHmrc;
+    p.cumulative.pension+=totalPensionDue;
     if(totalHmrc)p.hmrc.push({period:p.period,dueDay,remaining:totalHmrc});
     if(totalPensionDue)p.pension.push({period:p.period,dueDay,remaining:totalPensionDue});
     p.history.push(breakdown);
@@ -316,7 +320,9 @@
       !/^(20\d\d)-(\d\d)$/.test(p.allowanceYear)||
       !Array.isArray(p.hmrc)||!Array.isArray(p.pension)||
       !Array.isArray(p.history)||p.history.length>36||
-      !p.leaveTaken||!p.sickTaken)return false;
+      !p.leaveTaken||!p.sickTaken||!p.cumulative||
+      !validPounds(p.cumulative.net)||!validPounds(p.cumulative.hmrc)||
+      !validPounds(p.cumulative.pension))return false;
     for(const row of Object.values(p.earnings))
       if(!row||!validPounds(row.salary)||!validPounds(row.commission)||
         (row.notice!==undefined&&!validPounds(row.notice)))return false;
@@ -331,6 +337,24 @@
       validPounds(h.hmrc)&&validPounds(h.pension)&&validPounds(h.allowanceRelief)&&
       Array.isArray(h.pays)&&h.pays.every(x=>validPounds(x.gross)&&validPounds(x.net))))return false;
     if(state.payrollArrears!==p.wagesDue)return false;
+    const totalPaid=note=>(state.ledger||[]).filter(x=>note(x.note))
+      .reduce((n,x)=>n-x.delta,0);
+    const settledNet=totalPaid(n=>n==='Staff payroll monthly net wages settlement');
+    const settledHmrc=totalPaid(n=>n.startsWith('Staff HMRC PAYE and NI remittance ('));
+    const settledPension=totalPaid(n=>n.startsWith('Staff workplace pension remittance ('));
+    if(p.cumulative.net-settledNet!==p.wagesDue||
+       p.cumulative.hmrc-settledHmrc!==p.hmrc.reduce((n,x)=>n+x.remaining,0)||
+       p.cumulative.pension-settledPension!==p.pension.reduce((n,x)=>n+x.remaining,0))
+      return false;
+    // Keep cash and liabilities distinct, with a source amount for every
+    // salary month; changing a payable amount must break reconciliation.
+    if(p.history.some(h=>h.pays.reduce((n,x)=>n+x.gross,0)!==h.gross||
+      h.pays.reduce((n,x)=>n+x.net,0)!==h.netWages||
+      h.pays.reduce((n,x)=>n+x.hmrc,0)!==h.hmrc||
+      h.pays.reduce((n,x)=>n+x.pension,0)!==h.pension||
+      h.pays.reduce((n,x)=>n+x.employerNi,0)!==h.employerNi||
+      h.pays.reduce((n,x)=>n+x.employerPension,0)!==h.employerPension))
+      return false;
     // Every statutory payment must have a recorded month's payroll history.
     for(const bill of [...p.hmrc,...p.pension]){
       if(!p.history.some(h=>h.period===bill.period&&h.dueDay===bill.dueDay))return false;
