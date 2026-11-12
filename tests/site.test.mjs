@@ -6249,3 +6249,67 @@ test('2026 seller commission is accrued, not a same-day cash payout',()=>{
   assert.equal(state.payroll2026.earnings[String(state.staff[0].id)].commission,result.commission);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
+
+test('2026 end-of-month commission is assigned to the next payroll once prior payslip closed',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people;
+  const s=E.create('After Cutoff Motors',[],'uk2026');
+  const candidate=P.applicants(1,s).find(x=>x.role==='sales');
+  assert.ok(P.hire(s,candidate.id).ok);
+  for(let day=2;day<=22;day++){s.day=day;E.staffDay(s);}
+  assert.equal(s.payroll2026.history.length,1);
+  assert.equal(s.payroll2026.history[0].period,'2026-11');
+  const wagePaid=s.payroll2026.cumulative.net;
+  const cash=s.cash;
+  const commission=P.sale(s,{id:991,profile:{grade:2,likelySale:6000}},5700,10000);
+  assert.ok(commission.commission>0);
+  assert.equal(s.cash,cash);
+  assert.equal(s.payroll2026.period,'2026-12',
+    'Commission after payday belongs to the next pay period');
+  assert.equal(s.payroll2026.earnings[String(s.staff[0].id)].commission,commission.commission);
+  assert.equal(s.payroll2026.cumulative.net,wagePaid,'No retroactive cash in last payslip');
+  assert.equal(E.staffDay(s).payroll,0,'Same day processing is idempotent');
+  s.day=23;
+  E.staffDay(s);
+  assert.equal(s.payroll2026.period,'2026-12');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('2026 employment ledger blocks tampered wages, employer tax and pension liabilities',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people;
+  const s=E.create('Payroll Integrity Motors',[],'uk2026');
+  const candidate=P.applicants(1,s).find(x=>x.role==='sales');
+  assert.ok(P.hire(s,candidate.id).ok);
+  for(let day=2;day<=22;day++){s.day=day;E.staffDay(s);}
+  const a=JSON.parse(JSON.stringify(s));
+  assert.ok(E.normalize(a));
+  const reduced=JSON.parse(JSON.stringify(a));
+  reduced.payroll2026.hmrc[0].remaining=0;
+  assert.equal(E.normalize(reduced),null,'HMRC tax cannot silently disappear from save');
+  const stolen=JSON.parse(JSON.stringify(a));
+  stolen.payroll2026.cumulative.net-=100;
+  assert.equal(E.normalize(stolen),null,'Wage balances must reconcile with cash actually paid');
+  const pension=JSON.parse(JSON.stringify(a));
+  pension.payroll2026.pension[0].remaining+=100;
+  assert.equal(E.normalize(pension),null,'Pension liabilities must not be arbitrarily increased');
+  const payslip=JSON.parse(JSON.stringify(a));
+  payslip.payroll2026.history[0].netWages+=100;
+  assert.equal(E.normalize(payslip),null,'Payroll history totals must reconcile to line items');
+});
+
+test('2026 employee notice pay is accrued as a future payroll liability instead of immediate cash',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people;
+  const s=E.create('Proper Notice Motors',[],'uk2026');
+  const candidate=P.applicants(1,s).find(x=>x.role==='buyer');
+  assert.ok(P.hire(s,candidate.id).ok);
+  s.day=2;
+  E.staffDay(s);
+  const employee=s.staff[0],before=s.cash;
+  const notice=Math.ceil(employee.monthlySalary*12/52);
+  const result=P.release(s,employee.id);
+  assert.ok(result.ok);
+  assert.equal(s.cash,before);
+  assert.equal(s.staff.length,0);
+  assert.equal(s.payroll2026.earnings[String(employee.id)].notice,notice);
+  assert.equal(s.payrollArrears,0,'Not overdue before the next payday');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
