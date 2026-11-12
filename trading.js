@@ -957,6 +957,7 @@
       note:'VAT output accrued: '+VAT.pence(vatRecord.outputPence)+' on wholesale '+vehicle.title});
     state.wholesale.push({id:vehicle.id,title:vehicle.title,day:state.day,
       proceeds,basis,profit:proceeds-basis,
+      ...(vehicle.returnOf?{returnOf:vehicle.returnOf,origin:vehicle.origin}:{}),
       ...(vatRecord?{vat:vatRecord}:{}),color:vehicle.color,
       generation:vehicle.generation});
     state.vehicles=state.vehicles.filter(v=>v.id!==id);
