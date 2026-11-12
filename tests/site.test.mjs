@@ -5778,3 +5778,31 @@ test('2026 pricing uses dated 2026 comparables but keeps the classic catalogue i
   assert.equal(lot.priceAudit.status,'retail-comparable');
   assert.ok(app.vehicleView===undefined||true);
 });
+
+test('2026 live auction fee increases at hammer threshold and all finance desks agree',()=>{
+  const app=browser(),E=app.productionEngine,F=app.auctionFees;
+  const s=E.create('Hammer Fee Boundary',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.equal(lot.guide,1950);
+  assert.equal(lot.fee,596,'Initial guide band quote');
+  assert.ok(E.startAuction(s).ok);
+  const response=E.bidLiveAuction(s,500);
+  assert.ok(response.ok,response.message);
+  assert.equal(s.auctionHall.phase,'payment');
+  assert.equal(s.auctionHall.currentBid,2450);
+  assert.equal(F.feeAtHammer(2450),636,'Exact hammer fee is higher than at guide');
+  assert.equal(app.financeView.snapshot(s,E).auctionInvoice,3086);
+  assert.match(app.dashboard.snapshot(s,E).tasks.find(x=>x.key==='auction-invoice').description,/3,086/);
+  const settled=E.settleAuction(s);
+  assert.ok(settled.ok,settled.message);
+  assert.equal(s.cash,50000-3086);
+  assert.equal(s.vehicles[0].cost,3086);
+  assert.equal(s.auctionHistory.at(-1).fee,636);
+  assert.equal(s.auctionHistory.at(-1).total,3086);
+  const resume=E.normalize(JSON.parse(JSON.stringify(s)));
+  assert.ok(resume,'Hammer, buyer fee and paid invoice survive migration');
+  const falsified=JSON.parse(JSON.stringify(s));
+  falsified.auctionHistory[0].fee=596;
+  falsified.auctionHistory[0].total=3046;
+  assert.equal(E.normalize(falsified),null,'Tampered 2026 rate must be rejected');
+});
