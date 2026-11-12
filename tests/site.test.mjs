@@ -81,7 +81,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=5/);
   assert.match(html, /retail-liquidity\.js\?v=1/);
-  assert.match(html, /customers\.js\?v=6/);
+  assert.match(html, /customers\.js\?v=7/);
   assert.match(html, /aftersales\.js\?v=2/);
   assert.match(html, /aftersales-view\.js\?v=2/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
@@ -112,7 +112,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=31/);
+  assert.match(html, /trading\.js\?v=32/);
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=6/);
@@ -6845,6 +6845,10 @@ test('Phase 8: repricing a UK2026 retail listing does not reset market age or fa
   assert.equal(s.ledger.length,ledger,'Changing a listing cannot pay the dealer');
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
     'Price edit and original advert date must survive valid save restoration');
+  const firstLimit=E.buyers(car,s).cashLimit;
+  s.day+=105;
+  assert.ok(E.buyers(car,s).cashLimit<firstLimit,
+    'A car held over three more months must not retain its original optimistic buyer budget');
 });
 
 test('Phase 8: stock is capital at risk and cannot be silently counted as free bank cash',()=>{
