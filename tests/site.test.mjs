@@ -6173,7 +6173,12 @@ test('2026 salary is accrued during work and paid once at month end; PAYE and pe
 
   const bankBefore=state.cash;
   for(let day=23;day<44;day++){
+    if(day===31){
+      state.day=30;
+      E.monthly.close(state); // game-month financial report closes before Day 31
+    }
     state.day=day;
+    if(day===31)E.monthly.next(state);
     const next=E.staffDay(state);
     assert.equal(next.hmrcPaid,0);
     assert.equal(next.pensionPaid,0);
