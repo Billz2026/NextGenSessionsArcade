@@ -51,7 +51,10 @@
     commission:'Sales commission paid',recruitment:'Recruitment / onboarding',
     training:'Staff training',staffExit:'Staff exits / notice',other:'Other recorded cash movements',
     premisesPayments:'Rent and utilities paid',premisesInvestment:'Premises capital investment',
-    vatPayments:'VAT remitted to HMRC (cash)'
+    vatPayments:'VAT remitted to HMRC (cash)',
+    customerRefunds:'Customer refunds on rejected vehicles',
+    customerCollection:'Vehicle collection after rejection',
+    customerRepairs:'Dealer-funded consumer repairs'
   };
   function renderReport(state,M,selected='current'){
     const historical=String(selected)!=='current';
@@ -111,6 +114,10 @@
       Object.entries(nameByCategory).map(([key,label])=>
         amount(label,source[key]??0)).join('')+
       '<hr/>'+amount('Vehicle gross trading margin',r.grossMargin)+
+      (r.refundTurnover!==undefined?
+        amount('Returned consumer sales (reversed turnover)',-r.refundTurnover)+
+        countLine('Consumer vehicle rejections',r.refundedUnits)+
+        amount('Customer repair & recovery expenses',-r.aftercareCost):'')+
       amount('Recorded staff expenses paid',-r.staffCosts)+
       amount('Gross margin less staff costs',r.grossAfterStaff)+
       amount(state.financialScenario==='uk2026'?'Core operating expenses accrued':'Premises expenses accrued',-(r.premisesExpense??0))+
@@ -120,7 +127,7 @@
         amount('Operating contribution after output VAT',r.operatingAfterVat??r.operatingContribution):'')+
       '<p class="report-muted">Gross margin is recognised when a vehicle sells, whereas buying and preparation affect cash immediately. '+
       'Some inspection costs may remain outside realised vehicle margin until stock is sold. '+
-      'Recurring premises costs are accrued daily even if unpaid; investment reduces cash but is capital expenditure, not immediate operating expense. The 2026 VAT output model assumes eligible used-car invoices and does NOT yet model input VAT recovery, returns or a legally complete stockbook. These are management estimates, not statutory accounts or final taxable profit.</p></section>';
+      'Recurring premises costs are accrued daily even if unpaid; investment reduces cash but is capital expenditure, not immediate operating expense. The 2026 VAT output model assumes eligible used-car invoices and does NOT yet model input VAT recovery or a legally complete stockbook. The new aftersales pilot reverses modelled margin VAT on refunded sales. These are management estimates, not statutory accounts or final taxable profit.</p></section>';
     const saleLine='<section class="panel-card report-section"><h3>SALES & PURCHASING</h3>'+
       countLine('Cash retail sales',r.salesModes.cash)+
       countLine('Retail sales with part-exchanges',r.salesModes.partExchange)+
