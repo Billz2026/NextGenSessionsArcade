@@ -62,7 +62,7 @@
     .reduce((n,x)=>n-x.delta*100,0);
   const creditPence=state=>state.aftersalesScenario==='cra2015-2026'?
     (state.aftersales?.cases||[]).reduce((n,c)=>n+
-      (c.status==='refunded'?c.creditedVatPence:0),0):0;
+      (['refunded','reduced'].includes(c.status)?c.creditedVatPence:0),0):0;
   const outstandingPence=state=>Math.max(0,
     outputPence(state)-creditPence(state)-paidPence(state));
   const creditBalancePence=state=>Math.max(0,
@@ -73,12 +73,14 @@
     creditPence(state)-paidPence(state));
   const rollingTurnover=(state,day=state.day)=>{
     const from=day-364;
-    const refunded=new Set(state.aftersalesScenario==='cra2015-2026'?
+    const credits=new Map(state.aftersalesScenario==='cra2015-2026'?
       (state.aftersales?.cases||[])
-        .filter(x=>x.status==='refunded'&&x.refundApprovedDay<=day)
-        .map(x=>x.saleId):[]);
+        .filter(x=>['refunded','reduced'].includes(x.status)&&
+          x.refundApprovedDay<=day)
+        .map(x=>[x.saleId,x.refundAmount]):[]);
     return Math.max(0,(state.sold||[]).reduce((n,s)=>
-      n+(s.day>=from&&s.day<=day&&!refunded.has(s.id)?s.price:0),0)+
+      n+(s.day>=from&&s.day<=day?
+        Math.max(0,s.price-(credits.get(s.id)||0)):0),0)+
       (state.wholesale||[]).reduce((n,s)=>
         n+(s.day>=from&&s.day<=day?s.proceeds:0),0));
   };
