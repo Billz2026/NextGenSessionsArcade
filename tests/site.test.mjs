@@ -6030,6 +6030,8 @@ test('new 2026 cars record the auction hammer as VAT purchase price and sale as 
   const prev=E.create('Old Pilot',[],'uk2026');
   prev.version=15;
   delete prev.vatRegistrationDay;
+  delete prev.employmentScenario;
+  delete prev.payroll2026;
   const migrated=real.normalize(prev);
   assert.ok(migrated);
   assert.equal(migrated.vatRegistrationDay,0,
