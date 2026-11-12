@@ -7381,3 +7381,44 @@ test('Phase 8C: a sub-pound outstanding VAT rounding carry must not freeze a sol
     'The carried VAT liability is still reserved and shown; it is not erased');
   assert.equal(V.outstandingPence(s),V.maturedPence(s));
 });
+
+
+test('Phase 8C: real-world operational targets reflect forecourt capacity, not reputation alone',()=>{
+  const E=browser().productionEngine,M=E.monthly;
+  assert.equal(M.targetFor(85).unitTarget,6,'Classic target ladder unchanged');
+  assert.equal(M.targetFor2026(85,4).unitTarget,3);
+  assert.equal(M.targetFor2026(85,6).unitTarget,4);
+  assert.equal(M.targetFor2026(85,8).unitTarget,5);
+  assert.equal(M.targetFor2026(85,10).unitTarget,6);
+  assert.equal(M.targetFor2026(15,4).unitTarget,2);
+  assert.equal(M.targetFor2026(85,4,15).unitTarget,2,
+    'A half-period target must not require a full month of stock turnover');
+  const s=E.create('Four Bay Target',[],'uk2026');
+  assert.equal(s.capacity,4);
+  assert.equal(s.monthPlan.unitTarget,2);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+test('Phase 8C: same-seed balanced and overpriced dealers demonstrate meaningful pricing choices',()=>{
+  const E=browser().productionEngine;
+  const names=['Northwood','Fleetline','Riverside','West Quay','Central Trade'];
+  const samples=names.map(n=>{
+    const fair=runActiveDealerCareer(E,'Phase8C '+n,360,'balanced');
+    const expensive=runActiveDealerCareer(E,'Phase8C '+n,360,'overpriced');
+    const fairValue=fair.bank+fair.stockCost-fair.arrears;
+    const expensiveValue=expensive.bank+expensive.stockCost-expensive.arrears;
+    assert.equal(fair.cashLedger,fair.bank);
+    assert.equal(expensive.cashLedger,expensive.bank);
+    assert.ok(E.normalize(JSON.parse(JSON.stringify(fair.finalState))));
+    return {dealer:n,balancedSold:fair.sold,overpricedSold:expensive.sold,
+      balancedNetStockAndCash:fairValue,overpricedNetStockAndCash:expensiveValue,
+      balancedBank:fair.bank,avgAdvertDays:fair.averageAdvertisedDays,
+      claimCases:fair.consumerClaims,remedialJobs:fair.complaintsHandled};
+  });
+  console.log('PHASE8C_SEED_COMPARISON '+JSON.stringify(samples));
+  assert.ok(samples.reduce((n,x)=>n+x.balancedSold,0)>
+    samples.reduce((n,x)=>n+x.overpricedSold,0),
+    'Plausible asking and customer follow-through should beat persistent overpricing across matching market seeds');
+  assert.ok(samples.some(x=>x.claimCases>0),
+    'Active careers must genuinely include consumer aftersales events');
+});
