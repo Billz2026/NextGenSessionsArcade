@@ -89,7 +89,7 @@
   const initial=()=>({
     scheme:'england-2026-monthly',period:null,earnings:{},wagesDue:0,
     hmrc:[],pension:[],allowanceYear:'2026-27',allowanceUsed:0,
-    history:[],leaveTaken:{},sickTaken:{}
+    history:[],leaveTaken:{},sickTaken:{},lastAdvanceDay:0
   });
   function clone(p){
     return JSON.parse(JSON.stringify(p));
@@ -132,12 +132,21 @@
     const d=date(day),n=d.getUTCDate(),last=daysInMonth(day);
     return Math.floor(monthlySalary*n/last)-Math.floor(monthlySalary*(n-1)/last);
   }
+  function creditPeriod(state,p){
+    const key=periodKey(state.day);
+    // Sales/notice decisions can occur after a calendar-month payroll has
+    // already closed on the morning of that game date. They then belong to
+    // the NEXT month, not an already-paid payslip.
+    return isMonthEnd(state.day)&&p.history.some(h=>h.period===key)?
+      periodKey(state.day+1):key;
+  }
   function creditCommission(state,employee,amount){
     if(!is2026(state)||!validPounds(amount))return false;
     const p=state.payroll2026;
-    if(p.period!==periodKey(state.day)){
+    const target=creditPeriod(state,p);
+    if(p.period!==target){
       if(p.period!==null)return false;
-      p.period=periodKey(state.day);
+      p.period=target;
     }
     const id=String(employee.id);
     const row=p.earnings[id]??={salary:0,commission:0,notice:0};
@@ -149,8 +158,9 @@
   function creditOtherPay(state,employee,amount,kind='notice'){
     if(!is2026(state)||!validPounds(amount)||kind!=='notice')return false;
     const p=state.payroll2026;
-    if(p.period===null)p.period=periodKey(state.day);
-    if(p.period!==periodKey(state.day))return false;
+    const target=creditPeriod(state,p);
+    if(p.period===null)p.period=target;
+    if(p.period!==target)return false;
     const id=String(employee.id),row=p.earnings[id]??={salary:0,commission:0,notice:0};
     row.notice=(row.notice||0)+amount;
     state.ledger.push({day:state.day,delta:0,
@@ -239,6 +249,10 @@
     if(!is2026(state))return null;
     const p=state.payroll2026;
     if(!p||p.scheme!=='england-2026-monthly')throw Error('Missing 2026 payroll book');
+    if(p.lastAdvanceDay===state.day)return {payroll:0,paid:0,arrears:p.wagesDue,
+      gross:0,employerNi:0,employerPension:0,allowanceRelief:0,
+      netWages:0,hmrcPaid:0,pensionPaid:0,periodClose:null};
+    if(p.lastAdvanceDay>state.day)throw Error('Payroll cannot advance backwards in game time');
     const key=periodKey(state.day);
     if(p.period!==null&&p.period!==key)throw Error('Prior payroll period not closed');
     p.period=key;
@@ -263,6 +277,7 @@
     }
     const report=closePeriod(state);
     const paid=settleCash(state,p);
+    p.lastAdvanceDay=state.day;
     return {payroll,paid:paid.wagesPaid,arrears:p.wagesDue,
       gross:report?.gross??0,employerNi:report?.employerNi??0,
       employerPension:report?.employerPension??0,
@@ -296,6 +311,7 @@
       !(p.period===null||/^20\d\d-(0[1-9]|1[0-2])$/.test(p.period))||
       !p.earnings||typeof p.earnings!=='object'||Array.isArray(p.earnings)||
       !validPounds(p.wagesDue)||!validPounds(p.allowanceUsed)||
+      !Number.isSafeInteger(p.lastAdvanceDay)||p.lastAdvanceDay<0||p.lastAdvanceDay>state.day||
       p.allowanceUsed>ALLOWANCE||
       !/^(20\d\d)-(\d\d)$/.test(p.allowanceYear)||
       !Array.isArray(p.hmrc)||!Array.isArray(p.pension)||
