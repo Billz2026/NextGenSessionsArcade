@@ -139,7 +139,8 @@
       '<div><span>PLUS BUYER FEE AT SHOWN BID</span><b>'+quoteMoney(q.fee)+'</b></div>'+
       (state.financialScenario==='uk2026'?'<div><span>SIMULATED TRANSPORT · '+delivery.routeMiles+' MILES</span><b>'+money(delivery.gross)+'</b></div>':'')+
       '<div><span>PLUS EXPECTED PREPARATION</span><b>'+money(q.prep)+'</b></div>'+
-      '<div><span>PROJECTED GROSS CONTRIBUTION</span><b class="'+(q.expectedMargin!==null&&q.expectedMargin<0?'auction-negative':'')+'">'+quoteMoney(q.expectedMargin)+'</b></div></div>'+
+      (state.financialScenario==='uk2026'?'<div><span>EST. OUTPUT VAT ON ELIGIBLE MARGIN</span><b>'+money(Math.ceil(q.vatEstimatePence/100))+'</b></div>':'')+
+      '<div><span>'+(state.financialScenario==='uk2026'?'PROJECTED AFTER OUTPUT VAT':'PROJECTED GROSS CONTRIBUTION')+'</span><b class="'+(q.expectedMargin!==null&&q.expectedMargin<0?'auction-negative':'')+'">'+quoteMoney(q.expectedMargin)+'</b></div></div>'+
       (intelligence?'<div class="people-bid-intel">VEHICLE BUYER INTELLIGENCE: COMPETITOR BID RANGE '+
         money(intelligence.lower)+'–'+money(intelligence.upper)+
         '. Forecast only — not the actual reserve or final bid.</div>':'')+
