@@ -225,7 +225,7 @@
       }).join('')+
       '<p class="fin-detail">Your scenario uses the current forecourt overhead budget and conservative full employer payroll before NI relief. Insurance renewal is charged every 360 game days. Unpaid commitments are not hidden as borrowing or negative bank cash. Never rely on these outcomes as guaranteed profits or actual future sales.</p>'+
       '</details>':'';
-    const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional and not statutory net profit or a statutory VAT return; employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
+    const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional and not statutory net profit or a statutory VAT return. Owner salary/drawings are NOT modelled: apparent dealer contribution does not represent take-home pay. Employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
     return {snapshot:x,html:top+openingPanel+liquidityPanel+solvencyPanel+vatPanel+stressPanel+cashflow+'<div class="fin-secondary">'+
       commitments+performance+'</div>'+footer};
   }
