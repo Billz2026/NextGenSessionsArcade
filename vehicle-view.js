@@ -52,12 +52,13 @@
       '<div class="intel-repair"><span>Buyer fees at this offer</span><strong>− '+quoteMoney(quote.fee)+'</strong></div>'+
       (quote.transport?'<div class="intel-repair"><span>Illustrative collection / delivery (simulated distance)</span><strong>− '+money(quote.transport)+'</strong></div>':'')+
       '<div class="intel-repair"><span>Pre-purchase inspection if paid</span><strong>− '+money(quote.inspection)+'</strong></div>'+
+      (car.repairScenario==='uk2026'?'<div class="intel-repair"><span>Estimated output VAT on positive purchase-to-sale margin</span><strong>− '+money(Math.ceil(quote.vatEstimatePence/100))+'</strong></div>':'')+
       '<div class="intel-repair"><span>Target trading contribution</span><strong>− '+money(quote.targetMargin)+'</strong></div>'+
       '<div class="intel-repair intel-repair-total"><span>Indicative maximum offer (rounded)</span><strong>'+
         money(quote.maxBid)+'</strong></div>'+
       '<p class="intel-small">At your entered offer of '+money(quote.price)+
         ', estimated contribution is '+quoteMoney(quote.expectedMargin)+
-        '. A negative value indicates an expected loss before overheads.</p>':'';
+        '. A negative value indicates an expected loss before overheads. '+(car.repairScenario==='uk2026'?'Eligible margin-scheme output VAT is included provisionally; input VAT recovery is not modelled.':'')+'</p>':'';
     const known=p.knownRepairs.map(r=>
       '<div class="intel-repair"><span>'+esc(r.item)+'</span><strong>'+money(r.cost)+'</strong></div>').join('');
     const valuation=car.priceAudit;
