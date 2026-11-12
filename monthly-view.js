@@ -45,7 +45,7 @@
       'MONTH '+x.month+' · '+(x.targetMet?'TARGET HIT':'TARGET MISSED')+'</button>').join('')+'</div>';
   }
   const nameByCategory={
-    auctionPurchases:'Auction vehicle purchases',sellerPurchases:'Direct seller acquisitions',
+    auctionPurchases:'Auction vehicle purchases',auctionTransport:'Auction collection transport',sellerPurchases:'Direct seller acquisitions',
     partExchangePurchases:'Part-exchange allowances',preparation:'Stock preparation',
     inspections:'Pre-purchase inspections',payroll:'Wages paid',
     commission:'Sales commission paid',recruitment:'Recruitment / onboarding',
