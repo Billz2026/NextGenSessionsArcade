@@ -29,6 +29,7 @@
     const quoted=vehicles.filter(v=>v.workshop?.stage==='quoted').length;
     const qc=vehicles.filter(v=>v.workshop?.stage==='quality-check').length;
     const prepared=vehicles.filter(v=>v.status==='prepared').length;
+    const pendingEnquiries=customers.filter(c=>c.status==='enquiry').length;
     const booked=customers.filter(c=>c.status==='booked'&&
       Number.isSafeInteger(c.appointmentDay)&&c.appointmentDay>=state.day).length;
     const dueViewing=customers.filter(c=>c.status==='booked'&&
@@ -100,6 +101,11 @@
       add(5,'viewing',dueViewing+' customer viewing'+(dueViewing===1?'':'s')+' due',
         'Manage booked viewings and any buyers ready for negotiation.',
         'sales','OPEN SALES','attention');
+    if(pendingEnquiries)
+      add(5.5,'new-enquiries',pendingEnquiries+' customer enquiry'+
+        (pendingEnquiries===1?'':'ies')+' awaiting your response',
+        'A buyer has contacted your dealership about advertised stock. Book a viewing in the Sales Office before the enquiry expires.',
+        'sales','RESPOND TO CUSTOMERS','attention');
     if(unassessed||quoted||qc)
       add(6,'workshop',unassessed+quoted+qc+' vehicle'+(unassessed+quoted+qc===1?'':'s')+' need workshop decisions',
         [unassessed?'Assess '+unassessed:0,quoted?'Quote '+quoted:0,qc?'Quality-check '+qc:0]
@@ -109,6 +115,11 @@
       add(7,'prepared',prepared+' prepared vehicle'+(prepared===1?'':'s')+' not yet listed',
         'Set retail asking prices to start attracting buyers.',
         'stock','LIST VEHICLES','attention');
+    if(vehicles.length>0&&listed===0)
+      add(7.5,'not-advertised','No vehicles are advertised for retail',
+        'You own '+vehicles.length+' vehicle'+(vehicles.length===1?'':'s')+
+        ', but buying alone cannot create customer interest. Complete workshop preparation and set asking prices to start receiving enquiries.',
+        prepared?'stock':'workshop',prepared?'LIST VEHICLES':'PREPARE STOCK','attention');
     if(vehicles.length===0)
       add(8,'empty-stock','Your forecourt is empty',
         'No cars in stock or ready for retail. Review sourcing options and buying costs.',
@@ -150,7 +161,7 @@
     }
     tasks.sort((a,b)=>a.rank-b.rank);
     return {
-      day:state.day,report,listed,awaitingPrep,unassessed,prepared,booked,unread,
+      day:state.day,report,listed,awaitingPrep,unassessed,prepared,booked,pendingEnquiries,unread,
       reserved,arrears,age,unitsLeft,daysToGo,auctionOpen,auctionDay,
       auctionWeekday,tasks:tasks.slice(0,3)
     };
@@ -172,6 +183,7 @@
     const items=[
       ['LISTED FOR SALE',model.listed,'stock'],
       ['AWAITING PREP',model.awaitingPrep,'workshop'],
+      ['BUYER ENQUIRIES',model.pendingEnquiries,'sales'],
       ['BOOKED VIEWINGS',model.booked,'sales'],
       ['OUTSTANDING BILLS',money(model.arrears),'finance'],
       ['CAREER SALES',state.sales,'reports']
