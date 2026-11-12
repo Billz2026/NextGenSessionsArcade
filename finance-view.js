@@ -79,7 +79,8 @@
       tile(workingLabel,money(x.afterReserve),workingDetail,
         x.afterReserve<0?' fin-tile-alert':'')+
       tile('INVESTED IN UNSOLD VEHICLES',money(x.stock),
-        state.vehicles.length+' vehicle'+(state.vehicles.length===1?'':'s')+' still owned')+
+        (state.vehicles.length+(E.aftersales.enabled(state)?state.aftersales.cases.filter(k=>k.heldReturned).length:0))+
+        ' vehicle assets still owned (including any offsite consumer returns)')+
       tile(is2026?'MONTH CONTRIBUTION AFTER OUTPUT VAT':'MONTH OPERATING CONTRIBUTION',money(contribution),operatingDetail,
         contribution<0?' fin-tile-loss':'')+
       '</div>';
