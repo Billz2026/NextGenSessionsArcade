@@ -718,8 +718,8 @@
     vehicle.cashOffer = null;
     return success(vehicle.title + ' is advertised at ' + asking + '. Check the Sales Office.');
   }
-  function pxTemplate(vehicle) {
-    const base=MARKET.exchangeFor(vehicle);
+  function pxTemplate(vehicle,state=null) {
+    const base=MARKET.priceFor(MARKET.exchangeFor(vehicle),state?.financialScenario||'classic');
     const origin='PX-'+vehicle.acquiredDay+'-'+vehicle.id;
     return {...base,origin,...PH.describe({...base,origin})};
   }
@@ -738,7 +738,7 @@
       Math.round(motivation*.65)+meetingPush));
     const start=Math.max(500,Math.min(limit,vehicle.asking-400+support+
       motivation+meetingPush,fair-125+support+motivation+meetingPush));
-    const standardPx=pxTemplate(vehicle);
+    const standardPx=pxTemplate(vehicle,state);
     const customer=state?C.caseFor(state,vehicle.id):null;
     const px=customer?
       customer.preferredMode==='part-ex'?
