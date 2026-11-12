@@ -92,7 +92,20 @@
       });
     });
   }
-  // 2026/27 GB 21+ National Living Wage £12.71/hour. New candidates are\n  // modelled as 40 paid hours/week, 52 weeks/year; minimum legal basic is\n  // £26,436.80/year. Round the minimum *up*, never down. Commission is extra\n  // and cannot be relied on to make an unpaid day compliant.\n  const MINIMUM_FULL_TIME_MONTHLY=Math.ceil(12.71*40*52/12);\n  const PAY_BANDS=Object.freeze({\n    sales:{minimum:2250,uplift:0},buyer:{minimum:2550,uplift:350},\n    technician:{minimum:2850,uplift:750},supervisor:{minimum:3100,uplift:450}\n  });\n  function marketSalary(role,legacyMonthly){\n    const band=PAY_BANDS[role];\n    return Math.max(MINIMUM_FULL_TIME_MONTHLY,band.minimum,legacyMonthly+band.uplift);\n  }\n  const dailyCost=employee=>Math.ceil(employee.monthlySalary/30);
+  // 2026/27 GB 21+ National Living Wage £12.71/hour. New candidates are
+  // modelled as 40 paid hours/week, 52 weeks/year; minimum legal basic is
+  // £26,436.80/year. Round the minimum *up*, never down. Commission is extra
+  // and cannot be relied on to make an unpaid day compliant.
+  const MINIMUM_FULL_TIME_MONTHLY=Math.ceil(12.71*40*52/12);
+  const PAY_BANDS=Object.freeze({
+    sales:{minimum:2250,uplift:0},buyer:{minimum:2550,uplift:350},
+    technician:{minimum:2850,uplift:750},supervisor:{minimum:3100,uplift:450}
+  });
+  function marketSalary(role,legacyMonthly){
+    const band=PAY_BANDS[role];
+    return Math.max(MINIMUM_FULL_TIME_MONTHLY,band.minimum,legacyMonthly+band.uplift);
+  }
+  const dailyCost=employee=>Math.ceil(employee.monthlySalary/30);
   // Reputation grants more repair bays; existing hires remain employed if
   // reputation later drops, but new hires wait until the tier is restored.
   const technicianLimit=state=>Math.min(state.reputationScore>=80?8:
