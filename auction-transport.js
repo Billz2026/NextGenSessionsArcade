@@ -27,7 +27,9 @@
   function quote(lotOrId){
     const miles=routeMiles(lotOrId);
     if(miles===null)return null;
-    const gross=Math.max(MINIMUM_PENCE,miles*RATE_PENCE_PER_MILE)/100;
+    // The game's cash ledger stores whole pounds, so round the simulated
+    // VAT-inclusive quote once at booking rather than adding fractional cash.
+    const gross=Math.round(Math.max(MINIMUM_PENCE,miles*RATE_PENCE_PER_MILE)/100);
     const vat=Math.round(gross/6*100)/100;
     return {routeMiles:miles,gross,vat,net:Math.round((gross-vat)*100)/100,
       scenario:'simulated-roadworthy-open-transporter',
