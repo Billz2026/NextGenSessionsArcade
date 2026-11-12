@@ -6482,3 +6482,54 @@ test('2026 Consumer Rights Act phase includes first 30 days, rebuttable six mont
   const six=V.dayForDate(new Date(Date.UTC(2027,4,9)));
   assert.equal(A.legalPhase(state,sale,six),'later-evidence-required');
 });
+
+test('2026 one failed repair permits negotiated price reduction while customer keeps car',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales,V=app.vat;
+  const s=E.create('Fair Price Reduction Motors',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0],grade=lot.profile.grade;
+  const desired=(5-((1+grade)%5))%5||5;
+  s.nextId=desired; // deterministic fixture selects a sale whose repair is unsuccessful
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];
+  assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  const sold=s.sold[0],initialMargin=real.totalMargin(s),
+    originalVat=V.outstandingPence(s),before=s.cash;
+  s.day=2;
+  assert.ok(A.report(s,sold.id).ok);
+  const issue=s.aftersales.cases[0];
+  assert.ok(A.repair(s,issue.id).ok);
+  s.day=issue.repairDoneDay;
+  A.advance(s);
+  assert.equal(issue.status,'repair-failed',
+    'Deterministic fixture produces one genuine unsuccessful repair');
+  const reduction=A.reductionQuote(s,issue.id);
+  assert.ok(reduction>200&&reduction<sold.price);
+  assert.ok(A.reduce(s,issue.id).ok);
+  assert.equal(issue.status,'reduction-due');
+  const bankAfterRepair=s.cash;
+  const event=A.advance(s);
+  assert.ok(event.some(x=>x.includes('PRICE REDUCTION PAID')));
+  assert.equal(issue.status,'reduced');
+  assert.equal(s.cash,bankAfterRepair-reduction);
+  assert.equal(s.vehicles.length,0,'Customer retains their vehicle after negotiated reduction');
+  assert.equal(issue.returnedVehicleId,null);
+  const expectedCredit=originalVat-V.marginVatPence(sold.price-reduction,
+    sold.vat.purchaseBasis);
+  assert.equal(issue.creditedVatPence,expectedCredit);
+  assert.equal(V.outstandingPence(s),originalVat-expectedCredit);
+  assert.equal(V.rollingTurnover(s),sold.price-reduction);
+  assert.equal(real.totalMargin(s),initialMargin-reduction);
+  const r=real.monthly.statement(s);
+  assert.equal(r.priceReducedUnits,1);
+  assert.equal(r.refundedUnits,0);
+  assert.equal(r.netRetailTurnover,sold.price-reduction);
+  assert.equal(r.grossMargin,initialMargin-reduction);
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(s))),
+    'Reduced consideration, VAT, customer right and cash survive reload');
+
+  const altered=JSON.parse(JSON.stringify(s));
+  altered.aftersales.cases[0].refundAmount+=100;
+  assert.equal(real.normalize(altered),null,'Price reduction must match agreed offer');
+});
