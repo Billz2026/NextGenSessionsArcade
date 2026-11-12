@@ -81,8 +81,13 @@
       '<p class="intel-disclaimer">Mileage, prior keepers, MOT, service history, buying and selling valuations are fictional gameplay estimates. They are not DVLA, DVSA, CAP HPI or Auto Trader records. Manufacturer evidence, when linked, verifies only the model derivative and powertrain.</p>'+
       '<h4>MOT ADVISORIES</h4><p class="intel-small">'+
         (p.mot.advisories.length?esc(p.mot.advisories.join(' · ')):'No advisories recorded in this fictional report')+'</p>'+
-      '<h4>KNOWN PREPARATION ITEMS</h4>'+known+
+      '<h4>'+(p.repairBasis?'ILLUSTRATIVE 2026 WORKSHOP JOB CARD':'KNOWN PREPARATION ITEMS')+'</h4>'+known+
+      (p.repairBasis?'<p class="intel-small">'+esc(p.repairBasis)+'. These jobs are simulated planning estimates, not confirmed defects or a supplier invoice. The separate assessment fee is charged once.</p>':'')+
       '<div class="intel-repair intel-repair-total"><span>Known repair estimate</span><strong>'+money(p.basePrep)+'</strong></div>'+
+      (p.majorExposure?'<h4>UNCONFIRMED POWERTRAIN EXPOSURE</h4>'+
+        '<p class="intel-small">'+esc(p.majorExposure.item)+': possible additional '+money(p.majorExposure.maxIndicativeCost)+
+        ' if inspection or records warrant this repair. '+esc(p.majorExposure.note)+
+        ' The projected risk allowance is not a paid repair bill.</p>':'')+
       '<h4>ADDITIONAL CONDITION RISK</h4><p class="intel-small">'+hidden+'</p>'+breakdown+
       (kind==='stock'?'<p class="intel-small">Original diagnosed repair budget: '+
          money(totalPrep)+'. '+(car.workshop?.stage==='ready'?
