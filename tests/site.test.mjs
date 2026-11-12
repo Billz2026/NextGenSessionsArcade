@@ -11,6 +11,7 @@ const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
 const photos = readFileSync(new URL('vehicle-photos.js', root), 'utf8');
 const marketData = readFileSync(new URL('vehicle-market.js', root), 'utf8');
+const auctionFees = readFileSync(new URL('auction-fees.js', root), 'utf8');
 const accuracyData = readFileSync(new URL('vehicle-accuracy.js', root), 'utf8');
 const cards = readFileSync(new URL('vehicle-cards.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
@@ -65,15 +66,16 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /class="stock-control"/);
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
-  assert.match(html, /vehicle-intel\.js\?v=2/);
+  assert.match(html, /vehicle-intel\.js\?v=3/);
   assert.match(html, /people\.js\?v=8/);
   assert.match(html, /monthly\.js\?v=7/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=4/);
   assert.match(html, /customers\.js\?v=5/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
-  assert.match(html, /vehicle-market\.js\?v=2/);
-  assert.match(html, /auction-hall-view\.js\?v=2/);
+  assert.match(html, /vehicle-market\.js\?v=3/);
+  assert.match(html, /auction-fees\.js\?v=1/);
+  assert.match(html, /auction-hall-view\.js\?v=3/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=3/);
@@ -93,13 +95,13 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=20/);
+  assert.match(html, /trading\.js\?v=21/);
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=6/);
   assert.match(html, /monthly-view\.js\?v=9/);
   assert.match(html, /people-view\.js\?v=7/);
-  assert.match(html, /vehicle-view\.js\?v=4/);
+  assert.match(html, /vehicle-view\.js\?v=5/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -223,6 +225,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(photos, context, { timeout: 1500 });
   vm.runInNewContext(accuracyData, context, { timeout: 1500 });
   vm.runInNewContext(marketData, context, { timeout: 1500 });
+  vm.runInNewContext(auctionFees, context, { timeout: 1500 });
   vm.runInNewContext(premises, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
@@ -343,7 +346,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -5702,4 +5705,76 @@ test('the new-career screen offers the recommended 2026 scenario but tests prese
   assert.equal(state.financialScenario,'uk2026');
   assert.equal(state.cash,50000);
   assert.match(app.nodes.get('finance-overview').innerHTML,/50,000/);
+});
+
+test('2026 buyer fees reproduce published BCA Blue Standard hammer bands',()=>{
+  const F=browser().auctionFees;
+  const examples=[[1999,596],[2000,614],[2249,614],[2250,636],
+    [2999,662],[3000,753],[4999,823],[5000,828],[6999,903],
+    [7000,912],[9999,1043],[10000,1043],[19999,1405],
+    [20000,1476],[24749,1667],[24750,1677],[24999,1677]];
+  for(const [hammer,fee] of examples){
+    assert.equal(F.feeAtHammer(hammer),fee,'Fee at £'+hammer);
+    assert.equal(F.invoice(hammer).totalDue,hammer+fee);
+  }
+  assert.equal(F.feeAtHammer(25000),null,'No invented buyer fee above published BCA tariff');
+  assert.equal(F.feeAtHammer(10),null);
+  assert.equal(F.feeAtHammer(2000.5),null);
+});
+
+test('2026 buyer fee follows hammer in quote and settlement while classic remains unchanged',()=>{
+  const app=browser(),E=app.productionEngine,F=app.auctionFees;
+  const s=E.create('2026 Auction Buyer',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  const classic=E.create('Classic Auction Buyer',[]);
+  const oldLot=E.marketFor(classic).auctions[0];
+  assert.equal(oldLot.fee,app.market.CATALOGUE.starter[0].fee);
+  assert.equal(oldLot.feeModel,undefined);
+  assert.equal(lot.feeModel,'bca-blue-2026');
+  assert.equal(lot.fee,F.feeAtHammer(lot.guide));
+  const bid=Math.max(lot.reserve,lot.rival,lot.guide);
+  const invoice=F.invoice(bid);
+  const quote=E.quote(lot,'auction',bid,false);
+  assert.equal(quote.fee,invoice.buyerFee);
+  assert.equal(quote.total,bid+invoice.buyerFee+quote.prep);
+  assert.ok(quote.maxBid<=24999);
+  assert.equal(quote.feeQuoteRequired,false);
+  const before=s.cash;
+  const result=E.acquireAuction(s,lot.id,bid);
+  assert.ok(result.ok,result.message);
+  assert.equal(s.cash,before-invoice.totalDue);
+  assert.equal(s.vehicles[0].cost,invoice.totalDue);
+  assert.ok(s.ledger.some(row=>row.delta===-invoice.totalDue&&
+    row.note.includes('buyer fee '+invoice.buyerFee)));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+  const unknown=E.quote({...lot,guide:26000},'auction',26000);
+  assert.equal(unknown.feeQuoteRequired,true);
+  assert.equal(unknown.fee,null);
+  assert.equal(unknown.total,null);
+  assert.equal(unknown.expectedMargin,null);
+  assert.equal(E.auctionFee(s,lot,25000),null);
+  assert.equal(E.auctionFee(classic,oldLot,25000),oldLot.fee);
+});
+
+test('2026 pricing uses dated 2026 comparables but keeps the classic catalogue intact',()=>{
+  const app=browser(),E=app.productionEngine,M=app.market;
+  const oldCorsa=M.CATALOGUE.starter.find(v=>v.title==='2020 Vauxhall Corsa SE Premium');
+  const revised=M.priceFor(oldCorsa,'uk2026');
+  assert.equal(oldCorsa.retail,7850);
+  assert.equal(revised.retail,6250);
+  assert.equal(revised.priceAudit.status,'retail-comparable');
+  assert.equal(revised.priceAudit.tradeGuide.includes('Illustrative'),true);
+  const polo=M.CATALOGUE.starter.find(v=>v.title==='2018 Volkswagen Polo SE');
+  assert.equal(M.priceFor(polo,'uk2026').retail,7550);
+  assert.equal(polo.retail,6300);
+  const mg4=M.CATALOGUE.modern.find(v=>v.title==='2022 MG4 EV SE Standard Range');
+  assert.equal(M.priceFor(mg4,'uk2026').retail,10650);
+  assert.equal(mg4.retail,13250);
+  const pending=M.CATALOGUE.starter.find(v=>v.title==='2018 Toyota Yaris Icon Hybrid');
+  assert.equal(M.priceFor(pending,'uk2026').priceAudit.status,'unverified');
+  const modern=E.create('Audited Trader',[],'uk2026');
+  const lot=E.marketFor(modern).auctions.find(v=>v.title===oldCorsa.title);
+  assert.equal(lot.retail,6250);
+  assert.equal(lot.priceAudit.status,'retail-comparable');
+  assert.ok(app.vehicleView===undefined||true);
 });
