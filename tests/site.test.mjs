@@ -5792,7 +5792,7 @@ test('2026 pricing uses dated 2026 comparables but keeps the classic catalogue i
   assert.equal(M.priceFor(mg4,'uk2026').retail,10650);
   assert.equal(mg4.retail,13250);
   const pending=M.CATALOGUE.starter.find(v=>v.title==='2019 Kia Rio 2');
-  assert.equal(M.priceFor(pending,'uk2026').priceAudit.status,'unverified');
+  assert.equal(M.priceFor(pending,'uk2026').priceAudit.status,'retail-comparable');
   const modern=E.create('Audited Trader',[],'uk2026');
   const lot=E.marketFor(modern).auctions.find(v=>v.title===oldCorsa.title);
   assert.equal(lot.retail,6250);
@@ -5830,14 +5830,14 @@ test('2026 live auction fee increases at hammer threshold and all finance desks 
   assert.equal(E.normalize(falsified),null,'Tampered 2026 rate must be rejected');
 });
 
-test('2026 catalogue is 20 evidenced retail reviews and 30 explicitly unverified prices',()=>{
+test('2026 catalogue contains 50 dated retail comparable reviews and preserves wholesale guide assumptions',()=>{
   const app=browser(),M=app.market,E=app.productionEngine;
   const catalogue=Object.values(M.CATALOGUE).flat();
   assert.equal(catalogue.length,50);
-  assert.equal(Object.keys(M.PRICING_2026).length,20);
+  assert.equal(Object.keys(M.PRICING_2026).length,50);
   const scenarios=catalogue.map(car=>M.priceFor(car,'uk2026'));
-  assert.equal(scenarios.filter(c=>c.priceAudit.status==='retail-comparable').length,20);
-  assert.equal(scenarios.filter(c=>c.priceAudit.status==='unverified').length,30);
+  assert.equal(scenarios.filter(c=>c.priceAudit.status==='retail-comparable').length,50);
+  assert.equal(scenarios.filter(c=>c.priceAudit.status==='unverified').length,0);
   for(const car of scenarios){
     assert.equal(car.repairScenario,'uk2026');
     const classic=catalogue.find(x=>x.title===car.title);
@@ -5849,6 +5849,36 @@ test('2026 catalogue is 20 evidenced retail reviews and 30 explicitly unverified
   }
   for(const [name,ask] of [
     ['2016 Ford Focus Zetec',3450],
+    ['2019 Kia Rio 2',6200],
+    ['2017 Toyota Yaris Icon',6400],
+    ['2016 Honda Jazz SE',3500],
+    ['2021 Honda Jazz SE e:HEV',12500],
+    ['2022 Nissan Qashqai Acenta Premium',10950],
+    ['2021 Kia Rio 3 MHEV',9250],
+    ['2021 Vauxhall Corsa-e Elite Nav',9250],
+    ['2021 Volkswagen Golf Life',12000],
+    ['2022 Volkswagen Polo Life',12350],
+    ['2021 Peugeot e-208 Allure',9950],
+    ['2022 Hyundai Tucson SE Connect',16950],
+    ['2022 Vauxhall Mokka-e Launch Edition',11250],
+    ['2022 Tesla Model 3 RWD',19000],
+    ['2022 BMW 320d M Sport',24000],
+    ['2022 Audi A3 Sportback 35 TFSI',17600],
+    ['2022 Mercedes-Benz A200 AMG Line',19000],
+    ['2022 Volvo XC40 Recharge',18000],
+    ['2023 Kia Sportage GT-Line HEV',20800],
+    ['2021 Hyundai Ioniq 5 Premium',15750],
+    ['2022 BMW 330e M Sport',20950],
+    ['2021 Audi Q5 40 TDI S line',23000],
+    ['2022 Porsche Macan 2.0 PDK',39500],
+    ['2022 Range Rover Velar D200 R-Dynamic',26300],
+    ['2023 BMW X5 xDrive30d M Sport',51500],
+    ['2023 Mercedes-Benz E300e AMG Line',33500],
+    ['2022 Audi e-tron 55 quattro',21300],
+    ['2021 Porsche Taycan 4S',39000],
+    ['2022 Mercedes-Benz S350d AMG Line',59000],
+    ['2023 Land Rover Defender 110 D250',47500],
+    ['2023 Range Rover Sport P440e',54000],
     ['2018 Toyota Yaris Icon Hybrid',7250],
     ['2019 Hyundai i20 SE',6150],
     ['2019 Honda Jazz SE',5900],
