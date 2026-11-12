@@ -6798,7 +6798,7 @@ test('Phase 8 only: independent dealer lead pressure is deterministic and reacts
     fuel:'Petrol',status:'listed',profile:{likelySale:9800,grade:3}};
   s.day=10;
   const fair=L.enquiryPercent(s,v);
-  assert.ok(fair>=8&&fair<=20,'Fairly priced dealer stock has bounded baseline enquiry probability');
+  assert.ok(fair>=3&&fair<=12,'Fairly priced dealer stock has bounded independent-market enquiry probability');
   assert.equal(L.enquiryPercent(s,v),fair,'Looking at a screen cannot re-roll the model');
   v.asking=12000;
   const overpriced=L.enquiryPercent(s,v);
@@ -7261,6 +7261,8 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
     monthlyReports:state.monthlyReports.length,
     cashLedger:50000+state.ledger.reduce((n,row)=>n+row.delta,0),
     consumerEvents:state.customerHistory.length,
+    averageAdvertisedDays:state.sold.length?
+      Math.round(state.sold.reduce((n,v)=>n+Math.max(0,v.day-(v.vehicleSnapshot?.listedDay||v.day)),0)/state.sold.length):null,
     reports:state.monthlyReports,
     finalState:state
   };
@@ -7284,7 +7286,8 @@ test('Phase 8C: one full UK2026 trading year runs with real customer lifecycle a
     console.log('PHASE8C_12M '+JSON.stringify({
       policy:r.policy,bank:r.bank,sold:r.sold,purchased:r.purchased,
       stock:r.stock,margin:r.grossMargin,enquiries:r.enquiriesOpened,
-      blocked:r.blocked,arrears:r.arrears,lowCashDays:r.daysUnderCashBuffer
+      blocked:r.blocked,arrears:r.arrears,lowCashDays:r.daysUnderCashBuffer,
+      avgAdDays:r.averageAdvertisedDays
     }));
   }
   assert.equal(results.find(x=>x.policy==='inactive').sold,0);
@@ -7318,7 +7321,8 @@ test('Phase 8C: active 36 and 60 month careers preserve real cash, stock and unp
       purchased:r.purchased,stock:r.stock,margin:r.grossMargin,
       arrears:r.arrears,lowCashDays:r.daysUnderCashBuffer,
       validatedSaveCheckpoints:r.savedCheckpoints,years,
-      cashGateAttempts:r.blocked,quotedAttempts:r.attempts
+      cashGateAttempts:r.blocked,quotedAttempts:r.attempts,
+      avgAdDays:r.averageAdvertisedDays
     }));
   }
 });
