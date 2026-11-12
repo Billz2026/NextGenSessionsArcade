@@ -142,11 +142,11 @@
   function priceFor(base,scenario='classic'){
     if(scenario!=='uk2026')return base;
     const evidence=PRICING_2026[base.title];
-    if(!evidence)return {...base,priceAudit:{
+    if(!evidence)return {...base,repairScenario:'uk2026',priceAudit:{
       status:'unverified',asOf:MARKET_2026_REVIEW_DATE,
       note:'Illustrative game guide/asking prices awaiting derivative, mileage and condition benchmarking.'}};
     const guide=Number.isSafeInteger(evidence.tradeGuide)?evidence.tradeGuide:base.guide;
-    return {...base,guide,retail:evidence.retail,
+    return {...base,guide,retail:evidence.retail,repairScenario:'uk2026',
       reserve:guide+Math.round(guide*.07/25)*25,
       rival:guide+Math.round(guide*.13/25)*25,
       ask:guide+Math.max(300,Math.round(guide*.08/25)*25),
