@@ -5698,7 +5698,7 @@ test('the new-career screen offers the recommended 2026 scenario but tests prese
   app.nodes.get('career-realism').checked=true;
   app.click('new-career');
   app.submitCareer('Pilot 2026');
-  const state=JSON.parse(app.storage.get(STORAGE_KEY));
+  const state=JSON.parse(app.storageData.get(STORAGE_KEY));
   assert.equal(state.financialScenario,'uk2026');
   assert.equal(state.cash,50000);
   assert.match(app.nodes.get('finance-overview').innerHTML,/50,000/);
