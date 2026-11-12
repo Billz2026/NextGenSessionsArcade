@@ -38,7 +38,8 @@
         n+x.heldReturned.cost,0):0;
     return {cash:state.cash,reserved,vatOutstanding,vatReserve,
       employment,currentGross,refundLiability,heldReturns,
-      afterReserve:state.cash-reserved-vatReserve-employment.total-refundLiability,
+      afterReserve:state.cash-reserved-vatReserve-employment.total-refundLiability-
+        (state.financialScenario==='uk2026'?(state.premises?.arrears||0):0),
       stock:r.stockCapital+heldReturns,held,arrears,staffDaily,premisesDaily,
       dailyCommitment:staffDaily+premisesDaily,
       grossLifetime:E.totalMargin(state),lifetimeSales:state.sales,
@@ -63,7 +64,7 @@
       modernPayroll?'CASH AFTER REPAIR, VAT & PAYROLL RESERVES':
       is2026?'CASH AFTER REPAIR & VAT RESERVES':
       noRepairReserve?'WORKING CASH AVAILABLE':'CASH AFTER REPAIR RESERVES';
-    const workingDetail=E.aftersales.enabled(state)?'Less repair, tax, payroll and agreed customer-refund liabilities':
+    const workingDetail=E.aftersales.enabled(state)?'Less repair, tax, payroll, agreed customer refunds and unpaid premises bills':
       modernPayroll?'Less booked repairs, accrued VAT and due payroll liabilities; before ordinary bills':
       is2026?'Less booked repair reserves and accrued output VAT; before routine bills':
       noRepairReserve?'No workshop funds reserved · before upcoming bills':
@@ -176,7 +177,7 @@
       '<small>PHASE 8 · OPERATIONAL RISK</small><h3>STOCK TURN & CASH RUNWAY</h3></div>'+
       '<button type="button" class="fin-text-button" data-page="stock">REVIEW STOCK</button></div>'+
       line('Bank cash',money(liquidity.cash))+
-      line('Protected workshop, VAT, payroll & refunds',money(liquidity.committed))+
+      line('Protected workshop, VAT, payroll, refunds & unpaid premises',money(liquidity.committed))+
       line('Uncommitted bank cash',money(liquidity.freeCash))+
       line('Routine cash costs / 30 game days (incl. conservative wages)',money(liquidity.monthlyBurn))+
       line('Cash-only runway, no stock sales',liquidity.cashRunwayDays===null?'Not calculable':
