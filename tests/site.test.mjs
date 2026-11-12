@@ -6039,6 +6039,8 @@ test('new 2026 cars record the auction hammer as VAT purchase price and sale as 
   delete prev.vatRegistrationDay;
   delete prev.employmentScenario;
   delete prev.payroll2026;
+  delete prev.aftersalesScenario;
+  delete prev.aftersales;
   const migrated=real.normalize(prev);
   assert.ok(migrated);
   assert.equal(migrated.vatRegistrationDay,0,
@@ -6137,6 +6139,7 @@ test('2026 role-based salary and 40 hour contract are benchmarked; classic appli
   const old=E.create('Migrating Old Pay',[],'uk2026');
   old.version=16;
   delete old.employmentScenario;delete old.payroll2026;
+  delete old.aftersalesScenario;delete old.aftersales;
   const normalized=E.normalize(old);
   assert.ok(normalized,'Previous v16 independent careers must not gain retroactive NI or wages');
   assert.equal(normalized.employmentScenario,undefined);
