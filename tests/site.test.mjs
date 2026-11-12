@@ -7059,3 +7059,244 @@ test('Phase 8B: every Finance screen reconciles uncommitted cash with creditor p
   assert.ok(app.dashboard.snapshot(s,E).tasks.some(t=>t.key==='creditor-hold'),
     'Management desk should surface unpaid creditors even when a board meeting is more urgent');
 });
+
+
+/*
+ * Phase 8C: run the genuine uk2026 engine through daily dealership operations.
+ * This intentionally does NOT use the fixture E.prepare or fixture E.completeSale:
+ * every sale passes enquiry -> viewing -> test drive -> negotiation -> handover.
+ * Never manufacture enquiries, sale receipts, payroll payments or loan funding.
+ * A bot is a deterministic POLICY FOR AN ACTIVE HUMAN PLAYER, not a claim
+ * about how many real-world dealers would win/lose.
+ */
+function runActiveDealerCareer(E,name,days,policy='balanced'){
+  const state=E.create(name,[],'uk2026'),C=E.customers;
+  const values={balanced:{slots:3,margin:650,premium:125,drop:20,
+      releaseLossAfter:95,focus:'steady',deposits:false},
+    cautious:{slots:2,margin:1100,premium:50,drop:15,
+      releaseLossAfter:90,focus:'buying',deposits:false},
+    overpriced:{slots:3,margin:350,premium:2200,drop:0,
+      releaseLossAfter:1000,focus:'sales',deposits:false},
+    discount:{slots:4,margin:200,premium:-200,drop:35,
+      releaseLossAfter:35,focus:'sales',deposits:true},
+    inactive:{slots:0,margin:Infinity,premium:0,drop:0,
+      releaseLossAfter:1000,focus:'steady',deposits:false}};
+  const opts=values[policy];
+  if(!opts)throw Error('Unknown dealer policy: '+policy);
+  let attempts=0,purchased=0,blocked=0,prepared=0,
+    enquiriesOpened=0,rejected=0,handovers=0,liquidated=0,
+    savedCheckpoints=0,daysUnderCashBuffer=0;
+  const round=x=>Math.round(x/25)*25;
+  const changePrice=(v,age=0)=>{
+    const fair=E.commercialControls?window.notUsed:0; // No test-only pricing fixture.
+    const guide=Math.min(v.retail,v.profile?.likelySale||v.retail);
+    const ageDiscount=policy==='overpriced'?0:
+      Math.floor(Math.max(0,age-25)/opts.drop)*75;
+    return Math.min(75000,Math.max(500,round(
+      guide+opts.premium-(Number.isFinite(ageDiscount)?ageDiscount:0))));
+  };
+  function serveCustomers(){
+    for(const v of [...state.vehicles]){
+      if(v.status!=='listed')continue;
+      let c=C.caseFor(state,v.id);
+      if(!c&&C.demand(state,v)){
+        const r=E.openCustomer(state,v.id);
+        if(r.ok)enquiriesOpened++;
+        c=C.caseFor(state,v.id);
+      }
+      if(!c)continue;
+      if(c.status==='enquiry')E.bookCustomer(state,v.id);
+      c=C.caseFor(state,v.id);
+      if(c?.status==='arrived'){
+        const result=E.testDrive(state,v.id);
+        if(!result.ok&&result.changed)rejected++;
+      }
+      c=C.caseFor(state,v.id);
+      if(c?.status==='discussing'){
+        const offer=E.buyers(v,state)?.cashOffer||0;
+        const saleMargin=offer-v.cost-v.prepSpent;
+        const age=state.day-v.acquiredDay;
+        if(policy==='overpriced'&&offer<v.asking*.92){
+          E.cancelCustomer(state,v.id);
+          continue;
+        }
+        if(policy!=='discount'&&saleMargin<100&&age<opts.releaseLossAfter){
+          E.cancelCustomer(state,v.id);
+          continue;
+        }
+        if(E.agreeCustomer(state,v.id,'cash',null).ok){
+          if(opts.deposits&&state.day%3===0){
+            const deposit=E.depositCustomer(state,v.id);
+            if(!deposit.ok)E.completeSale(state,v.id,'cash',null);
+          }else if(E.completeSale(state,v.id,'cash',null).ok)handovers++;
+        }
+      }
+      c=C.caseFor(state,v.id);
+      if(c?.status==='agreed'&&c.agreedDay===state.day){
+        if(E.completeSale(state,v.id,'cash',null).ok)handovers++;
+      }else if(c?.status==='collectable'){
+        if(E.completeSale(state,v.id,'cash',null).ok)handovers++;
+      }
+    }
+  }
+  function handleVehicles(){
+    for(const v of [...state.vehicles]){
+      if(v.status==='acquired'){
+        if(v.workshop.stage==='unassessed')E.assessStock(state,v.id);
+        if(v.workshop.stage==='quoted'){
+          const start=E.startPrep(state,v.id,'external');
+          if(!start.ok&&['cash','busy'].includes(start.code)&&
+            state.day-v.acquiredDay>15){
+            if(E.disposeStock(state,v.id).ok)liquidated++;
+          }
+        }
+        if(v.workshop.stage==='quality-check')E.finishPrep(state,v.id);
+      }
+      if(v.status==='prepared'){
+        const ask=changePrice(v);
+        if(E.advertise(state,v.id,ask).ok)prepared++;
+      }else if(v.status==='listed'&&opts.drop>0&&
+        state.day-v.listedDay>=opts.drop&&state.day%opts.drop===0&&
+        !['agreed','reserved','collectable'].includes(C.caseFor(state,v.id)?.status)){
+        const ask=changePrice(v,state.day-v.acquiredDay);
+        if(ask!==v.asking)E.advertise(state,v.id,ask);
+      }
+    }
+  }
+  function sourceVehicles(){
+    if(policy==='inactive'||state.vehicles.length>=opts.slots||state.cash<3500)return;
+    const offers=E.marketFor(state);
+    const picks=[];
+    for(const car of offers.sellers){
+      const quote=E.quote(car,'seller',car.ask);
+      if(quote.maxBid>=car.ask&&quote.expectedMargin>=opts.margin)
+        picks.push({kind:'seller',car,bid:car.ask,margin:quote.expectedMargin});
+    }
+    if(E.auctionDay(state.day)){
+      for(const car of offers.auctions){
+        const bid=Math.max(car.rival,car.reserve);
+        const quote=E.quote(car,'auction',bid);
+        if(quote.maxBid>=bid&&quote.expectedMargin!==null&&
+          quote.expectedMargin>=opts.margin)
+          picks.push({kind:'auction',car,bid,margin:quote.expectedMargin});
+      }
+    }
+    picks.sort((a,b)=>b.margin-a.margin);
+    for(const pick of picks.slice(0,3)){
+      attempts++;
+      const r=pick.kind==='seller'?
+        E.acquireSeller(state,pick.car.id,pick.bid):
+        E.acquireAuction(state,pick.car.id,pick.bid);
+      if(r.ok){purchased++;break;}
+      if(['cash','creditor-hold'].includes(r.code))blocked++;
+    }
+  }
+  for(let day=1;day<=days;day++){
+    assert.equal(state.day,day,'Career clock must advance exactly once');
+    if(E.events.meetingDue(state)){
+      assert.ok(E.events.holdMeeting(state,opts.focus).ok,
+        'A monthly board meeting should be completable');
+    }
+    handleVehicles();
+    serveCustomers();
+    sourceVehicles();
+    if(day%30===0){
+      for(let phase=1;phase<E.events.PHASES.length;phase++){
+        const session=E.events.advanceSession(state);
+        assert.ok(session.ok);
+        E.nextCustomerSession(state);
+        handleVehicles();
+        serveCustomers();
+        if(policy!=='inactive')sourceVehicles();
+      }
+    }
+    if(E.commercialControls.status(state).freeBank<
+       E.commercialControls.status(state).minimumBuffer)
+      daysUnderCashBuffer++;
+    assert.ok(state.cash>=0,'Dealer bank must never be negative on game day '+day);
+    if(day<days){
+      const closed=day%30===0?E.monthly.close(state):null;
+      state.day++;
+      E.rollAuctionHall(state);
+      state.deadlineSession=0;
+      if(closed)E.monthly.next(state);
+      E.staffDay(state);
+      E.premisesDay(state);
+      E.aftersalesDay(state);
+      E.vatDay(state);
+      E.advanceWorkshop(state);
+      E.advanceCustomers(state);
+      state.reports={};state.negotiations={};state.auctionBids={};
+      if(day%360===0){
+        assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
+          'An active career must restore after year '+(day/360));
+        savedCheckpoints++;
+      }
+    }else if(day%30===0)E.monthly.close(state);
+  }
+  const activity={
+    days,months:days/30,policy,name,
+    bank:state.cash,stock:state.vehicles.length,
+    stockCost:state.vehicles.reduce((n,v)=>n+v.cost+v.prepSpent,0),
+    sold:state.sold.length,wholesale:state.wholesale.length,
+    grossMargin:E.totalMargin(state),
+    purchased,attempts,blocked,prepared,enquiriesOpened,rejected,
+    handovers,liquidated,daysUnderCashBuffer,savedCheckpoints,
+    arrears:state.premises.arrears+state.payrollArrears,
+    payableVat:Math.ceil(E.vat.outstandingPence(state)/100),
+    monthlyReports:state.monthlyReports.length,
+    cashLedger:50000+state.ledger.reduce((n,row)=>n+row.delta,0),
+    consumerEvents:state.customerHistory.length,
+    reports:state.monthlyReports,
+    finalState:state
+  };
+  return activity;
+}
+
+test('Phase 8C: one full UK2026 trading year runs with real customer lifecycle and cash accounting',()=>{
+  const app=browser(),E=app.productionEngine;
+  const paths=['balanced','cautious','overpriced','discount','inactive'];
+  const results=paths.map(strategy=>
+    runActiveDealerCareer(E,'Phase8C Dealer '+strategy,360,strategy));
+  for(const r of results){
+    assert.equal(r.monthlyReports,12,r.policy);
+    assert.equal(r.bank,r.cashLedger,r.policy);
+    assert.equal(r.sold,r.finalState.sales,r.policy);
+    assert.equal(r.purchased,r.finalState.sold.length+r.finalState.wholesale.length+
+      r.finalState.vehicles.length,r.policy);
+    assert.ok(r.consumerEvents>=r.sold,r.policy);
+    assert.ok(E.normalize(JSON.parse(JSON.stringify(r.finalState))),
+      'After month 12, finance, customer cases, stock and claims must be restorable');
+    console.log('PHASE8C_12M '+JSON.stringify({
+      policy:r.policy,bank:r.bank,sold:r.sold,purchased:r.purchased,
+      stock:r.stock,margin:r.grossMargin,enquiries:r.enquiriesOpened,
+      blocked:r.blocked,arrears:r.arrears,lowCashDays:r.daysUnderCashBuffer
+    }));
+  }
+  assert.equal(results.find(x=>x.policy==='inactive').sold,0);
+  assert.equal(results.find(x=>x.policy==='inactive').bank,22400,
+    'No-sales money burn must match a 12-month modelled overhead baseline');
+});
+
+test('Phase 8C: active 36 and 60 month careers preserve real cash, stock and unpaid obligations',()=>{
+  const app=browser(),E=app.productionEngine;
+  const studies=[
+    {name:'Phase8C Long Balanced',days:1080,policy:'balanced'},
+    {name:'Phase8C Long Cautious',days:1800,policy:'cautious'},
+    {name:'Phase8C Long Discount',days:1800,policy:'discount'}
+  ];
+  for(const sample of studies){
+    const r=runActiveDealerCareer(E,sample.name,sample.days,sample.policy);
+    assert.equal(r.monthlyReports,sample.days/30);
+    assert.equal(r.bank,r.cashLedger);
+    assert.ok(r.bank>=0);
+    assert.equal(r.purchased,r.sold+r.wholesale+r.stock);
+    assert.ok(E.normalize(JSON.parse(JSON.stringify(r.finalState))));
+    console.log('PHASE8C_LONG '+JSON.stringify({
+      policy:r.policy,months:r.months,bank:r.bank,sold:r.sold,
+      purchased:r.purchased,stock:r.stock,margin:r.grossMargin,
+      arrears:r.arrears,lowCashDays:r.daysUnderCashBuffer,
+      validatedSaveCheckpoints:r.savedCheckpoints
+    }));
+  }
+});
