@@ -22,6 +22,7 @@ on:
       - 'vat.js'
       - 'employment-2026.js'
       - 'economics-stress.js'
+      - 'retail-liquidity.js'
       - 'aftersales.js'
       - 'aftersales-view.js'
       - 'vehicle-accuracy.js'
@@ -62,6 +63,7 @@ on:
       - 'vat.js'
       - 'employment-2026.js'
       - 'economics-stress.js'
+      - 'retail-liquidity.js'
       - 'aftersales.js'
       - 'aftersales-view.js'
       - 'vehicle-accuracy.js'
@@ -96,6 +98,6 @@ jobs:
         with:
           node-version: '22'
       - name: Check game JavaScript syntax
-        run: node --check aftersales.js && node --check aftersales-view.js && node --check economics-stress.js && node --check employment-2026.js && node --check vat.js && node --check auction-fees.js && node --check auction-transport.js && node --check repair-prices.js && node --check vehicle-intel.js && node --check vehicle-photos.js && node --check vehicle-accuracy.js && node --check vehicle-market.js && node --check vehicle-cards.js && node --check vehicle-view.js && node --check premises.js && node --check premises-view.js && node --check people.js && node --check people-view.js && node --check monthly.js && node --check monthly-view.js && node --check events.js && node --check events-view.js && node --check workshop.js && node --check workshop-view.js && node --check customers.js && node --check customers-view.js && node --check trading.js && node --check auction-hall-view.js && node --check buying-desk-view.js && node --check stock-view.js && node --check finance-view.js && node --check dashboard-view.js && node --check inbox-office.js && node --check simulator.js
+        run: node --check aftersales.js && node --check aftersales-view.js && node --check economics-stress.js && node --check retail-liquidity.js && node --check employment-2026.js && node --check vat.js && node --check auction-fees.js && node --check auction-transport.js && node --check repair-prices.js && node --check vehicle-intel.js && node --check vehicle-photos.js && node --check vehicle-accuracy.js && node --check vehicle-market.js && node --check vehicle-cards.js && node --check vehicle-view.js && node --check premises.js && node --check premises-view.js && node --check people.js && node --check people-view.js && node --check monthly.js && node --check monthly-view.js && node --check events.js && node --check events-view.js && node --check workshop.js && node --check workshop-view.js && node --check customers.js && node --check customers-view.js && node --check trading.js && node --check auction-hall-view.js && node --check buying-desk-view.js && node --check stock-view.js && node --check finance-view.js && node --check dashboard-view.js && node --check inbox-office.js && node --check simulator.js
       - name: Validate full career and trading interactions
         run: node --test tests/site.test.mjs

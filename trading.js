@@ -791,7 +791,11 @@
     const current=C.caseFor(state,id);
     if(current&&['agreed','reserved','collectable'].includes(current.status))
       return fail('reserved','An agreed or reserved vehicle cannot be repriced until the customer arrangement is cancelled.');
-    vehicle.asking = asking;vehicle.status = 'listed';vehicle.listedDay = state.day;
+    // A price edit is not a new listing: preserve the true time on market.
+    // Previously repeated repricing silently made an aged unit look newly advertised.
+    const firstAdvert=vehicle.status!=='listed'||vehicle.listedDay===null;
+    vehicle.asking = asking;vehicle.status = 'listed';
+    if(firstAdvert)vehicle.listedDay=state.day;
     vehicle.cashOffer = null;
     return success(vehicle.title + ' is advertised at ' + asking + '. Check the Sales Office.');
   }
@@ -805,7 +809,11 @@
     if(state && D.isDealDay(state.day) && !C.caseFor(state,vehicle.id) && !D.retailActive(state,vehicle))return null;
     // Buyers benchmark against a market-derived achievable retail value.
     // An inflated asking price does not force an unrealistically high offer.
-    const fair = vehicle.profile?.likelySale ?? (vehicle.asking - 250);
+    // Age-sensitive 2026 retail offers use the same dated downside scenario
+    // as the Sales Office and Finance views, never an invented market quote.
+    const fair = state?.financialScenario==='uk2026'?
+      window.MotorTradeRetailLiquidity.value(state,vehicle).indicative:
+      (vehicle.profile?.likelySale ?? (vehicle.asking - 250));
     const support=state?P.salesBonus(state,C.caseFor(state,vehicle.id)||vehicle.id):0;
     const motivation=state?D.customerBonus(state,vehicle):0;
     const meetingPush=state?D.meetingBonus(state,'sales'):0;

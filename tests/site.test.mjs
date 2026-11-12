@@ -38,6 +38,7 @@ const buyingDeskView = readFileSync(new URL('buying-desk-view.js', root), 'utf8'
 const stockView = readFileSync(new URL('stock-view.js', root), 'utf8');
 const financeView = readFileSync(new URL('finance-view.js', root), 'utf8');
 const economicsStress = readFileSync(new URL('economics-stress.js', root), 'utf8');
+const retailLiquidity = readFileSync(new URL('retail-liquidity.js', root), 'utf8');
 const dashboardView = readFileSync(new URL('dashboard-view.js', root), 'utf8');
 const inboxOffice = readFileSync(new URL('inbox-office.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
@@ -79,7 +80,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /monthly\.js\?v=13/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=5/);
-  assert.match(html, /customers\.js\?v=5/);
+  assert.match(html, /retail-liquidity\.js\?v=1/);
+  assert.match(html, /customers\.js\?v=7/);
   assert.match(html, /aftersales\.js\?v=2/);
   assert.match(html, /aftersales-view\.js\?v=2/);
   assert.match(html, /vehicle-photos\.js\?v=5/);
@@ -91,8 +93,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /employment-2026\.js\?v=3/);
   assert.match(html, /auction-hall-view\.js\?v=6/);
   assert.match(html, /buying-desk-view\.js\?v=3/);
-  assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=12/);
+  assert.match(html, /stock-view\.js\?v=2/);
+  assert.match(html, /finance-view\.js\?v=13/);
   assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=38/);
@@ -110,8 +112,8 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=30/);
-  assert.match(html, /customers-view\.js\?v=8/);
+  assert.match(html, /trading\.js\?v=32/);
+  assert.match(html, /customers-view\.js\?v=9/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=6/);
   assert.match(html, /monthly-view\.js\?v=13/);
@@ -250,6 +252,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(monthly, context, { timeout: 1500 });
   vm.runInNewContext(events, context, { timeout: 1500 });
   vm.runInNewContext(workshop, context, { timeout: 1500 });
+  vm.runInNewContext(retailLiquidity, context, { timeout: 1500 });
   vm.runInNewContext(customers, context, { timeout: 1500 });
   vm.runInNewContext(aftersales, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
@@ -368,7 +371,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, cashStress:context.window.MotorTradeCashStress, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,aftersalesView:context.window.MotorTradeAftersalesView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, cashStress:context.window.MotorTradeCashStress, retailLiquidity:context.window.MotorTradeRetailLiquidity, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,aftersalesView:context.window.MotorTradeAftersalesView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -4993,7 +4996,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=12/);
+  assert.match(html,/finance-view\.js\?v=13/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
@@ -6783,4 +6786,117 @@ test('real engine survives 60 game months of zero sales with no bank borrowing o
   assert.equal(s.wholesale.length,0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
     '60-month arrears and management ledger must survive the v18 save format');
+});
+
+test('Phase 8 only: independent dealer lead pressure is deterministic and reacts to price, age and grade',()=>{
+  const app=browser(),E=app.productionEngine,L=app.retailLiquidity;
+  const s=E.create('Phase Eight Leads',[],'uk2026');
+  const v={id:41,acquiredDay:1,listedDay:4,asking:9800,retail:10000,
+    fuel:'Petrol',status:'listed',profile:{likelySale:9800,grade:3}};
+  s.day=10;
+  const fair=L.enquiryPercent(s,v);
+  assert.ok(fair>=8&&fair<=20,'Fairly priced dealer stock has bounded baseline enquiry probability');
+  assert.equal(L.enquiryPercent(s,v),fair,'Looking at a screen cannot re-roll the model');
+  v.asking=12000;
+  const overpriced=L.enquiryPercent(s,v);
+  assert.ok(overpriced<fair,'An overpriced vehicle must attract fewer enquiries');
+  v.asking=8500;
+  assert.ok(L.enquiryPercent(s,v)>fair,'A realistic markdown should improve buyer interest');
+  v.asking=9800;
+  s.day=125;
+  assert.ok(L.enquiryPercent(s,v)<fair,'Older adverts lose momentum at unchanged asking');
+  assert.ok(L.value(s,v).indicative<L.value({...s,day:10},v).indicative);
+  // Compare grade while the lead chance is not already at its 1% floor.
+  s.day=10;
+  v.profile.grade=5;
+  assert.ok(L.enquiryPercent(s,v)<L.enquiryPercent(s,{...v,profile:{...v.profile,grade:2}}));
+  const classic=E.create('Classic Days',[]);
+  assert.equal(classic.financialScenario,undefined);
+  assert.ok(E.customers.demand(classic,{...v,id:99,status:'listed'})===true||
+    E.customers.demand(classic,{...v,id:99,status:'listed'})===false);
+});
+
+test('Phase 8: repricing a UK2026 retail listing does not reset market age or fabricate revenue',()=>{
+  const app=browser(),E=app.productionEngine,L=app.retailLiquidity;
+  const s=E.create('Reprice Without Reset',[],'uk2026');
+  const lead=E.marketFor(s).sellers[0];
+  assert.ok(lead,'A new independent should have an opening sourcing lead');
+  assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+  const car=s.vehicles[0];
+  assert.ok(E.assessStock(s,car.id).ok);
+  assert.ok(E.startPrep(s,car.id,'external').ok);
+  for(let n=0;n<22&&car.status!=='prepared';n++){
+    if(car.workshop.stage==='quality-check'){
+      assert.ok(E.finishPrep(s,car.id).ok);
+    }else if(car.workshop.stage==='in-progress'){
+      s.day++;
+      E.advanceWorkshop(s);
+    }else break;
+  }
+  assert.equal(car.status,'prepared','Real preparation and QC must finish first');
+  const asking=Math.max(500,Math.round(car.retail/50)*50);
+  assert.ok(E.advertise(s,car.id,asking).ok);
+  const listed=car.listedDay,balance=s.cash,ledger=s.ledger.length;
+  s.day+=10;
+  assert.ok(E.advertise(s,car.id,asking+50).ok);
+  assert.equal(car.listedDay,listed,'An amended price is not a brand new advert');
+  assert.equal(L.listedDays(s,car),10);
+  assert.equal(s.cash,balance);
+  assert.equal(s.ledger.length,ledger,'Changing a listing cannot pay the dealer');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
+    'Price edit and original advert date must survive valid save restoration');
+  const firstLimit=E.buyers(car,s).cashLimit;
+  s.day+=105;
+  assert.ok(E.buyers(car,s).cashLimit<firstLimit,
+    'A car held over three more months must not retain its original optimistic buyer budget');
+});
+
+test('Phase 8: stock is capital at risk and cannot be silently counted as free bank cash',()=>{
+  const app=browser(),E=app.productionEngine,L=app.retailLiquidity;
+  const s=E.create('Cash And Stock Risk',[],'uk2026');
+  const opening=L.snapshot(s,E);
+  assert.equal(opening.cash,50000);
+  assert.equal(opening.stockInvested,0);
+  assert.equal(opening.threeMonthBuffer,opening.monthlyBurn*3);
+  const lead=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+  const car=s.vehicles[0];
+  const bankAfterPurchase=s.cash;
+  const before=L.snapshot(s,E);
+  assert.ok(before.stockInvested>=car.cost);
+  assert.ok(before.cash<opening.cash,'The actual purchase must use actual money');
+  assert.ok(before.freeCash<=bankAfterPurchase);
+  assert.equal(before.stockCount,1);
+  s.day=150;
+  const aged=L.snapshot(s,E);
+  assert.equal(s.cash,bankAfterPurchase,'Modelled ageing cannot debit cash');
+  assert.equal(aged.stockCount,1);
+  assert.equal(aged.aged60,1);
+  assert.ok(aged.stockIndicative<before.stockIndicative);
+  assert.ok(aged.stockInvested===before.stockInvested);
+  const html=app.financeView.summary(s,E).html;
+  assert.match(html,/STOCK TURN & CASH RUNWAY/);
+  assert.match(html,/Stock proceeds require an actual buyer/);
+  assert.match(app.stockView.render(s).html,/DAYS/);
+});
+
+test('Phase 8: a held vehicle does not generate phantom sales, cash or instant liquidity over 12 months',()=>{
+  const app=browser(),E=app.productionEngine,L=app.retailLiquidity;
+  const s=E.create('One Unsold Unit',[],'uk2026');
+  const lead=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,lead.id,lead.ask).ok);
+  const cashAfterBuy=s.cash;
+  for(let day=2;day<=360;day++){
+    s.day=day;
+    if((day-1)%30===0)E.monthly.next(s);
+    E.staffDay(s);E.premisesDay(s);E.vatDay(s);E.aftersalesDay(s);
+    assert.ok(s.cash>=0);
+    if(day%30===0)E.monthly.close(s);
+  }
+  assert.equal(s.sold.length,0);
+  assert.equal(s.vehicles.length,1,'Stock does not disappear because the game advances');
+  assert.ok(s.cash<cashAfterBuy,'Operating overheads consume real bank cash');
+  assert.equal(L.snapshot(s,E).aged60,1);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
+    'Unprofitable year and unsold stock must retain a restorable save');
 });

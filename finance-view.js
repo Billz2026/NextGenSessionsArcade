@@ -169,6 +169,24 @@
         vat.dateForDay(upcoming).toLocaleDateString('en-GB')):'')+
       '<p class="fin-detail">For new 2026 careers, used vehicles are ASSUMED margin-scheme eligible. Tax is 1/6 of a positive vehicle purchase-to-sale margin, not 20% of profit. Whole-pound VAT cash remittances fall due after simulated calendar quarters. Buyer-fee invoice classification and margin eligibility must be verified on real purchases. Input VAT recovery, proper VAT returns and full VRN/VIN stockbook are not yet modelled; the aftersales pilot reverses eligible VAT output on paid full refunds.</p>'+
       '</section>':'';
+    const LIQUIDITY=window.MotorTradeRetailLiquidity;
+    const liquidity=is2026&&LIQUIDITY?LIQUIDITY.snapshot(state,E):null;
+    const liquidityPanel=liquidity?
+      '<section class="fin-panel"><div class="fin-panel-head"><div>'+
+      '<small>PHASE 8 · OPERATIONAL RISK</small><h3>STOCK TURN & CASH RUNWAY</h3></div>'+
+      '<button type="button" class="fin-text-button" data-page="stock">REVIEW STOCK</button></div>'+
+      line('Bank cash',money(liquidity.cash))+
+      line('Protected workshop, VAT, payroll & refunds',money(liquidity.committed))+
+      line('Uncommitted bank cash',money(liquidity.freeCash))+
+      line('Routine cash costs / 30 game days (incl. conservative wages)',money(liquidity.monthlyBurn))+
+      line('Cash-only runway, no stock sales',liquidity.cashRunwayDays===null?'Not calculable':
+        liquidity.cashRunwayDays+' GAME DAYS')+
+      line('Prudent three-month operating reserve',money(liquidity.threeMonthBuffer))+
+      (liquidity.belowBuffer?'<p class="fin-warning">WARNING: Cash after existing commitments is below a three-month operating-cost reserve. This is an advisory warning, not an artificial ban on trading.</p>':'')+
+      line('Cash already tied up in owned stock',money(liquidity.stockInvested))+
+      line('Illustrative aggregate aged realisation',money(liquidity.stockIndicative))+
+      line('Units held 30+ / 60+ game days',liquidity.aged30+' / '+liquidity.aged60)+
+      '<p class="fin-detail">This is a cash-only runway if there are no future sales and no new stock purchases. Unpaid arrears and future exceptional claims can shorten it. Stock values are scenario sensitivities, NOT cash, liquidations, verified wholesale bids or booked impairment. Stock proceeds require an actual buyer, agreement, payment and collection.</p></section>':'';
     const STRESS=window.MotorTradeCashStress;
     const stressPanel=is2026&&STRESS?
       '<details class="fin-panel"><summary>12 / 36 / 60-MONTH CASH-FLOW STRESS SENSITIVITIES</summary>'+
@@ -193,7 +211,7 @@
       '<p class="fin-detail">Your scenario uses the current forecourt overhead budget and conservative full employer payroll before NI relief. Insurance renewal is charged every 360 game days. Unpaid commitments are not hidden as borrowing or negative bank cash. Never rely on these outcomes as guaranteed profits or actual future sales.</p>'+
       '</details>':'';
     const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional and not statutory net profit or a statutory VAT return; employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
-    return {snapshot:x,html:top+openingPanel+vatPanel+stressPanel+cashflow+'<div class="fin-secondary">'+
+    return {snapshot:x,html:top+openingPanel+liquidityPanel+vatPanel+stressPanel+cashflow+'<div class="fin-secondary">'+
       commitments+performance+'</div>'+footer};
   }
   function category(note){

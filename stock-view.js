@@ -107,6 +107,8 @@
     const source=labelSource[v.source]||v.source.toUpperCase();
     const risk=age>=45?'HIGH STOCK AGE · CAPITAL IS TIED UP':
       age>=30?'STOCK AGE WARNING · REVIEW PRICING AND DEMAND':'';
+    const ageModel=state.financialScenario==='uk2026'?
+      window.MotorTradeRetailLiquidity?.value(state,v):null;
     return '<section class="stock-dossier" aria-label="Selected vehicle file">'+
       '<div class="stock-dossier-top"><div><span>VEHICLE FILE · STOCK '+v.id+'</span>'+
       '<strong>'+esc(v.title)+'</strong></div><span class="stock-status stock-status-'+p.tone+'">'+p.label+'</span></div>'+
@@ -127,12 +129,14 @@
       costRow('CASH INVESTED TO DATE',f.invested,true)+
       costRow('Unspent preparation requirement',f.futurePrep)+
       costRow('Modelled likely achieved sale',f.likelySale)+
+      (ageModel?costRow('Aged-stock downside sale sensitivity',ageModel.indicative):'')+
       '<div class="stock-cost-emphasis stock-margin'+(f.contribution<0?' stock-margin-loss':'')+
       '"><span>PROJECTED GROSS CONTRIBUTION</span><strong>'+money(f.contribution)+'</strong></div>'+
       '</div>'+
       '<p class="stock-finance-note">Cash invested includes paid repair bookings even before final QC. Unspent preparation is a protected estimate, not money already paid. Likely sale is a fictional projection'+
       (v.status==='listed'?' capped at your asking price':'')+
-      '. Gross contribution excludes wages, premises, tax, aftersales and other overheads.</p>'+
+      '. Gross contribution excludes wages, premises, tax, aftersales and other overheads.'+
+      (ageModel?' The aged-stock figure is a separate 1.5%/30-day downside sensitivity after day 30, capped at 18%; it is NOT a verified selling price, booked impairment, or cash receipt. Original advertised stock age is retained when repricing.':'')+'</p>'+
       controls(v,state)+
       '</div></div></section>';
   }
