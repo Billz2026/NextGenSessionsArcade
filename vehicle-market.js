@@ -77,6 +77,46 @@
   // Untouched rows are explicitly marked review-pending instead of masquerading
   // as live valuations. The classic career retains the original catalogue.
   const PRICING_2026=Object.freeze({
+    '2016 Ford Focus Zetec':{
+      retail:3450,sourcePrice:3190,sourceMiles:104000,
+      source:'https://askcar.co.uk/used-cars/ford/focus/zetec/2016',
+      note:'Exact 1.5 TDCi Zetec 104k mile asking £3,190; 131k £2,490 and 92k £4,250; 118k estimate remains conditional on condition and MOT.',confidence:'medium'},
+    '2018 Vauxhall Corsa Energy':{
+      retail:4000,sourcePrice:3495,sourceMiles:110348,
+      source:'https://askcar.co.uk/used-cars/vauxhall/corsa/energy/2018',
+      note:'1.4 manual 110k-mile comparator £3,495; 105k ~£3,995, so existing £4,000 ask is towards high end for grade 4.',confidence:'medium'},
+    '2017 Nissan Qashqai Acenta':{
+      retail:4700,sourcePrice:4500,sourceMiles:132000,
+      source:'https://askcar.co.uk/used-cars/nissan/qashqai/acenta/2017',
+      note:'Exact 1.5 dCi Acenta manual 132k advertised £4,500, 114k £4,000. Scarce exact high-mileage sample.',confidence:'low'},
+    '2018 Peugeot 208 Active':{
+      retail:3350,sourcePrice:3490,sourceMiles:89000,
+      source:'https://askcar.co.uk/used-cars/peugeot/208/2018',
+      note:'2018 PureTech Active 89k £3,490 and 84k £3,450; 110k Allure Premium £3,149. Grade-4 114k estimate below lower-mileage comparators.',confidence:'medium'},
+    '2021 Vauxhall Corsa SE Premium':{
+      retail:8800,sourcePrice:7695,sourceMiles:66300,
+      source:'https://askcar.co.uk/used-cars/vauxhall/corsa/se-premium/2021',
+      note:'Exact 1.2 Turbo SE Premium manual 66k £7,695; 35k £9,998; 56.6k automatic £9,600 not directly comparable.',confidence:'medium'},
+    '2021 Peugeot 208 Allure':{
+      retail:9250,sourcePrice:8790,sourceMiles:51053,
+      source:'https://askcar.co.uk/used-cars/peugeot/208/allure/2021',
+      note:'Exact Allure 51k £8,790; 48.5k £9,998; 64k £7,995. Model asking price is not sale achieved.',confidence:'medium'},
+    '2021 Toyota Yaris Design Hybrid':{
+      retail:12800,sourcePrice:12488,sourceMiles:51702,
+      source:'https://askcar.co.uk/used-cars/toyota/yaris/design/2021',
+      note:'1.5 hybrid Design 51,702mi £12,488 and 43k £11,995; 30k £15,995; one local vehicle\'s condition may differ.',confidence:'medium'},
+    '2022 Ford Puma Titanium':{
+      retail:11300,sourcePrice:10560,sourceMiles:47107,
+      source:'https://askcar.co.uk/used-cars/ford/puma/titanium/2022',
+      note:'Exact 1.0 EcoBoost MHEV Titanium manual 47,107mi £10,560; 44,862mi £10,610; 41,848mi £11,749.',confidence:'medium'},
+    '2022 Toyota Corolla Icon Hybrid':{
+      retail:15500,sourcePrice:16000,sourceMiles:38000,
+      source:'https://www.askcar.co.uk/used-cars/toyota/corolla/icon/2022',
+      note:'2022 Icon hybrid median £16,000 at 38k median miles; model 52k mileage adjusted conservatively but no exact-match advert validated.',confidence:'low'},
+    '2023 Tesla Model Y Long Range':{
+      retail:26800,sourcePrice:27888,sourceMiles:36800,
+      source:'https://askcar.co.uk/used-cars/tesla/model-y/long-range/2023',
+      note:'2023 Long Range 36.8k-mi £27,888, 55k-mi £22,644 and 2023 median £25,500 at 46k; EV battery and warranty verified separately.',confidence:'medium'},
     '2017 Ford Fiesta Zetec':{
       retail:3950,sourcePrice:3979,sourceMiles:100923,tradeGuide:1750,
       source:'https://certmotors.com/vehicles/car/Ford/Fiesta',
@@ -105,7 +145,7 @@
     if(!evidence)return {...base,priceAudit:{
       status:'unverified',asOf:MARKET_2026_REVIEW_DATE,
       note:'Illustrative game guide/asking prices awaiting derivative, mileage and condition benchmarking.'}};
-    const guide=evidence.tradeGuide;
+    const guide=Number.isSafeInteger(evidence.tradeGuide)?evidence.tradeGuide:base.guide;
     return {...base,guide,retail:evidence.retail,
       reserve:guide+Math.round(guide*.07/25)*25,
       rival:guide+Math.round(guide*.13/25)*25,
