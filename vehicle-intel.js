@@ -127,15 +127,31 @@
   function quote(car,source,offer,inspected=false) {
     const p=car.profile||profile(car);
     const hidden=inspected&&p.hiddenFault?p.hiddenFault.cost:0;
-    const prep= p.basePrep + (inspected?hidden:p.riskAllowance);
-    const fee=source==='auction'?Number(car.fee||0):0;
+    const prep=p.basePrep+(inspected?hidden:p.riskAllowance);
     const inspection=inspected?p.inspectionFee:0;
     const price=Number.isSafeInteger(offer)?offer:(source==='auction'?car.guide:car.ask);
-    const total=price+fee+prep+inspection;
-    const maximumBid=Math.max(0,moneyRound(p.likelySale-fee-prep-inspection-p.targetMargin));
+    const published=source==='auction'&&car.feeModel==='bca-blue-2026';
+    const fees=window.MotorTradeAuctionFees;
+    const fee=source!=='auction'?0:published?
+      (fees?.feeAtHammer(price)??null):Number(car.fee||0);
+    const feeQuoteRequired=published&&fee===null;
+    const total=feeQuoteRequired?null:price+fee+prep+inspection;
+    let maximumBid;
+    if(published){
+      // Fee bands increase with the hammer, so subtracting one fixed guide
+      // fee is mathematically wrong. Search only published tariff amounts.
+      maximumBid=0;
+      for(let candidate=25;candidate<=fees.MAX_PUBLISHED_HAMMER;candidate+=25){
+        const charge=fees.feeAtHammer(candidate);
+        if(charge===null||candidate+charge+prep+inspection+p.targetMargin>p.likelySale)break;
+        maximumBid=candidate;
+      }
+    }else{
+      maximumBid=Math.max(0,moneyRound(p.likelySale-fee-prep-inspection-p.targetMargin));
+    }
     return {likelySale:p.likelySale,trade:p.trade,retail:p.retail,
-      prep,fee,inspection,price,total,
-      expectedMargin:p.likelySale-total,
+      prep,fee,inspection,price,total,feeQuoteRequired,
+      expectedMargin:feeQuoteRequired?null:p.likelySale-total,
       targetMargin:p.targetMargin,maxBid:maximumBid,
       riskUncertain:!inspected};
   }
