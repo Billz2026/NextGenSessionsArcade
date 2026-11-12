@@ -7417,6 +7417,15 @@ test('Phase 8C: same-seed balanced and overpriced dealers demonstrate meaningful
       claimCases:fair.consumerClaims,remedialJobs:fair.complaintsHandled};
   });
   console.log('PHASE8C_SEED_COMPARISON '+JSON.stringify(samples));
+  const sorted=samples.map(x=>x.balancedSold).sort((a,b)=>a-b);
+  const medianSales=sorted[Math.floor(sorted.length/2)];
+  const averageAdDays=samples.reduce((n,x)=>n+x.avgAdvertDays,0)/samples.length;
+  assert.ok(medianSales>=12&&medianSales<=35,
+    'Balanced small-dealer career should offer an achievable challenge, not zero turnover or instant scale');
+  assert.ok(averageAdDays>=25&&averageAdDays<=65,
+    'Small-dealer simulated advertised stock turns must remain plausibly near published UK market ranges');
+  assert.ok(samples.filter(x=>x.balancedBank>8000).length>=4,
+    'Reasonable purchasing should preserve some operating runway in most of the market seeds tested');
   assert.ok(samples.reduce((n,x)=>n+x.balancedSold,0)>
     samples.reduce((n,x)=>n+x.overpricedSold,0),
     'Plausible asking and customer follow-through should beat persistent overpricing across matching market seeds');
