@@ -75,6 +75,7 @@
        note.startsWith('Customer deposit applied to retail sale:'))return 'retailReceipts';
     if(note.startsWith('Auction purchase:'))return 'auctionPurchases';
     if(note.startsWith('Auction transport:'))return 'auctionTransport';
+    if(note.startsWith('VAT remittance:'))return 'vatPayments';
     if(note.startsWith('Direct purchase:'))return 'sellerPurchases';
     if(note.startsWith('Part-exchange acquisition:'))return 'partExchangePurchases';
     if(note.startsWith('Preparation and inspection:')||
@@ -95,7 +96,7 @@
   }
   const categories=['retailReceipts','auctionPurchases','auctionTransport','sellerPurchases',
     'partExchangePurchases','preparation','inspections','payroll','commission',
-    'recruitment','training','staffExit','other','premisesPayments','premisesInvestment'];
+    'recruitment','training','staffExit','other','premisesPayments','premisesInvestment','vatPayments'];
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
@@ -141,7 +142,15 @@
       workshopDaysLeft:v.workshop?.remainingDays??0
     }));
     const operatingContribution=grossMargin-payrollCost-premisesExpense;
-    const met=saleCount>=p.unitTarget && grossMargin>0&&operatingContribution>0;
+    const vatOutputAccruedPence=state.financialScenario==='uk2026'?
+      [...sales,...disposals].reduce((n,v)=>n+(v.vat?.outputPence||0),0):0;
+    // The game ledger is whole-pound cash. Show a conservative pound-rounded
+    // expense bridge while retaining the underlying pence liability exactly.
+    const operatingAfterVat=operatingContribution-
+      Math.ceil(vatOutputAccruedPence/100);
+    const vatPayments=-bucket.vatPayments;
+    const met=saleCount>=p.unitTarget && grossMargin>0&&
+      (state.financialScenario==='uk2026'?operatingAfterVat:operatingContribution)>0;
     const report={
       month:p.month,monthLabel:'MONTH '+p.month,
       startDay:p.startDay,endDay:p.endDay,partial:p.partial,
@@ -158,7 +167,7 @@
       premisesExpense,premisesPaid:-bucket.premisesPayments,
       premisesInvestment:-bucket.premisesInvestment,
       premisesArrears:state.premises?.arrears??0,
-      operatingContribution,
+      operatingContribution,operatingAfterVat,vatOutputAccruedPence,vatPayments,
       openingCash:p.openingCash,closingCash:state.cash,
       cashIn:inflow,cashOut:outflow,netCashChange:inflow-outflow,
       totalAcquisitions:acquisitions,prepCost,staffCosts:payrollCost,
@@ -275,13 +284,16 @@
       !Array.isArray(r.customerTrustEvents)||r.customerTrustEvents.length>200||
       !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
       !categories.every(k=>whole(r.ledgerBreakdown[k])||
-        (['premisesPayments','premisesInvestment','auctionTransport'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
+        (['premisesPayments','premisesInvestment','auctionTransport','vatPayments'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.premisesExpense!==undefined&&(
       !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
       !nonneg(r.premisesInvestment)||!nonneg(r.premisesArrears)||
       !whole(r.operatingContribution)||
       r.operatingContribution!==r.grossAfterStaff-r.premisesExpense))return false;
+    if(r.vatOutputAccruedPence!==undefined&&(
+      !nonneg(r.vatOutputAccruedPence)||!whole(r.operatingAfterVat)||
+      !nonneg(r.vatPayments)))return false;
     if(r.customerHoldingAtClose!==undefined&&
       (!nonneg(r.customerHoldingAtClose)||r.customerHoldingAtClose>1000))return false;
     if(r.customerPreparationExpense!==undefined&&
