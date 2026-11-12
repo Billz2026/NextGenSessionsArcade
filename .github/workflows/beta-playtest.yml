@@ -24,6 +24,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check every beta JavaScript file for syntax errors
+        run: |
+          for file in beta/*.js tests/beta-*.mjs; do node --check "$file"; done
       - name: Install Chromium
         run: |
           npm install --no-save playwright@1.58.2
