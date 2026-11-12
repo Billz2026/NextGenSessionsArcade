@@ -124,9 +124,10 @@
     if(!vehicle||vehicle.status!=='listed'||!c||c.status!=='booked'||
       c.held||c.standby||state.day>=c.appointmentDay||D.isDealDay(state.day))
       return false;
-    const fair=vehicle.profile?.likelySale||vehicle.retail;
-    const overpriced=Math.max(0,(vehicle.asking-fair)/Math.max(fair,1));
     const modern=state.financialScenario==='uk2026';
+    const fair=modern?L.value(state,vehicle).indicative:
+      (vehicle.profile?.likelySale||vehicle.retail);
+    const overpriced=Math.max(0,(vehicle.asking-fair)/Math.max(fair,1));
     const percent=modern?
       clamp(8-Math.round(overpriced*60)-(vehicle.profile?.grade>=4?3:0)+
         Math.floor(state.reputationScore/25)+
