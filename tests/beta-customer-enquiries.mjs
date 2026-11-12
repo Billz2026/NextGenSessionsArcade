@@ -166,7 +166,8 @@ const pricingStress=await page.evaluate(starts=>{
   const dormant=JSON.parse(JSON.stringify(starts[0]));
   dormant.customerCases={};dormant.customerHistory=[];
   let fallback=false;
-  for(let d=dormant.day+15;d<dormant.day+31;d++){
+  const dormantStart=dormant.day;
+  for(let d=dormantStart+15;d<dormantStart+31;d++){
     dormant.day=d;dormant.deadlineSession=0;
     if(D.isDealDay(d))continue;
     if(!dormant.vehicles.every(v=>!E.customers.demand(dormant,v)))continue;
