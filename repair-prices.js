@@ -64,7 +64,9 @@
     const grade=Number(car.grade)||3;
     const ev=car.fuel==='Electric';
     const hybrid=car.fuel==='Hybrid'||car.fuel==='Plug-in Hybrid';
-    const work=ev?['evService','evDiagnostics']:['service','diagnostics'];
+    // The separate paid £80 workshop assessment already covers diagnostics.
+    // Do not debit the OBD check again when the repair booking is authorised.
+    const work=ev?['evService']:['service'];
     if(grade>=3)work.push(grade%2?'frontBrakes':'rearBrakes');
     if(grade>=4)work.push('tyres');
     if(grade>=5)work.push('suspension');
