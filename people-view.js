@@ -212,18 +212,22 @@
   function totals(state,P){
     const wages=state.staff.reduce((sum,employee)=>sum+P.dailyCost(employee),0);
     const total=state.staff.reduce((sum,employee)=>sum+employee.monthlySalary,0);
+    const modern=state.employmentScenario==='uk2026-payroll';
+    const loaded=modern?state.staff.reduce((sum,e)=>sum+
+      window.MotorTradeEmployment.monthlyQuote(e.monthlySalary,{allowanceRemaining:0}).employerCost,0):0;
     const technicians=state.staff.filter(s=>s.role==='technician').length;
     const salespeople=state.staff.filter(s=>s.role==='sales').length;
     const next=state.reputationScore<40?'6 technician places at 40 reputation':
       state.reputationScore<80?'8 technician places at 80 reputation':null;
     return '<div class="people-metrics"><div><span>EMPLOYEES</span><strong>'+
       state.staff.length+' / '+P.staffLimit(state)+'</strong></div>'+
-      '<div><span>DAILY WAGE SETTLEMENT</span><strong>'+gbp(wages)+'</strong></div>'+
-      '<div><span>MONTHLY BASE PAY</span><strong>'+gbp(total)+'</strong></div>'+
+      '<div><span>'+(modern?'DAILY BASE ACCRUAL (EST.)':'DAILY WAGE SETTLEMENT')+'</span><strong>'+gbp(wages)+'</strong></div>'+
+      '<div><span>MONTHLY BASE PAY</span><strong>'+gbp(total)+'</strong></div>'+ 
+      (modern?'<div><span>FULL EMPLOYER COST BEFORE NI RELIEF</span><strong>'+gbp(loaded)+'</strong></div>':'')+
       '<div><span>UNPAID PAYROLL / NOTICE</span><strong>'+gbp(state.payrollArrears)+'</strong></div>'+
       '<div><span>IN-HOUSE TECHNICIANS</span><strong>'+technicians+' / '+P.technicianLimit(state)+'</strong></div>'+
       '<div><span>SALES EXECUTIVES</span><strong>'+salespeople+' / '+P.salesLimit(state)+'</strong></div>'+ 
-      '</div><p class="trade-alert">You can hire four technicians immediately, subject to a clear three-day wage buffer. '+
+      '</div><p class="trade-alert">'+(modern?'Full employer costs include NI and pensions before Employment Allowance. New independent forecourts must upgrade before in-house technician recruitment. ':'You can hire four technicians immediately, subject to a clear three-day wage buffer. ')+
       'Each works on a separate vehicle. You can hire one sales executive at first, two at 40 reputation and three at 80, alongside one buyer. '+
       (next?'NEXT UNLOCK: '+next+'.':'All eight technician places are unlocked.')+'</p>';
   }
@@ -238,6 +242,10 @@
       ['in-progress','quality-check'].includes(v.workshop.stage)):null;
     if(state.payrollArrears>0)return {name:'PAYROLL OVERDUE',tone:'warning'};
     if(state.day<e.startDay)return {name:'STARTS DAY '+e.startDay,tone:'waiting'};
+    if(state.employmentScenario==='uk2026-payroll'){
+      const off=window.MotorTradeEmployment.absence(e,state.day);
+      if(off)return {name:off.toUpperCase(),tone:'waiting'};
+    }
     if(e.trainingUntil!==null&&state.day<e.trainingUntil)
       return {name:'TRAINING TO DAY '+e.trainingUntil,tone:'waiting'};
     if(!P.isActive(state,e))return {name:'UNAVAILABLE',tone:'warning'};
@@ -254,7 +262,7 @@
     return {reason,quote,canHire:!hired&&!roleFull&&!teamFull&&!quote.shortfall};
   }
   function deskCounts(state,P){
-    const candidatePool=P.applicants(state.day);
+    const candidatePool=P.applicants(state.day,state);
     const employed=state.staff;
     return {employed:employed.length,active:employed.filter(e=>P.isActive(state,e)).length,
       techniciansFree:P.availableTechnicians(state).length,
@@ -301,9 +309,10 @@
       '<span class="sd-tag sd-tag-'+info.tone+'">'+esc(info.name)+'</span></header>'+
       '<div class="sd-staff-summary">'+
       '<div><small>MONTHLY BASE WAGE</small><strong>'+gbp(e.monthlySalary)+'</strong></div>'+
-      '<div><small>DAILY PAYROLL</small><strong>'+gbp(dayRate)+'</strong></div>'+
+      '<div><small>'+(state.employmentScenario==='uk2026-payroll'?'DAILY SALARY ACCRUAL (EST.)':'DAILY PAYROLL')+'</small><strong>'+gbp(dayRate)+'</strong></div>'+
       '<div><small>MORALE</small><strong>'+e.morale+' / 100</strong></div>'+
       '<div><small>START DATE</small><strong>DAY '+e.startDay+'</strong></div></div>'+
+      (state.employmentScenario==='uk2026-payroll'?'<p class="sd-fine">Contract: '+e.contractHours+' paid hours/week, '+e.ageBand+' adult rate; pension enrolled; paid holiday entitlement '+window.MotorTradeEmployment.LEAVE_DAYS+' days/year including bank holidays. Holiday and full-pay company sick leave reduce availability while salary continues.</p>':'')+
       '<div class="sd-person-detail"><div>'+skillSection(e,P)+
       '<div class="sd-performance"><div><small>RETAIL DEALS</small><strong>'+e.deals+
       '</strong></div><div><small>PREPARATION JOBS</small><strong>'+e.workDone+
@@ -335,7 +344,7 @@
       esc(info.reason)+'</span></header>'+
       '<div class="sd-staff-summary">'+
       '<div><small>MONTHLY BASE WAGE</small><strong>'+gbp(c.monthlySalary)+'</strong></div>'+
-      '<div><small>DAILY PAYROLL ADDED</small><strong>'+gbp(staffDaily)+'</strong></div>'+
+      '<div><small>'+(state.employmentScenario==='uk2026-payroll'?'DAILY BASE ACCRUAL':'DAILY PAYROLL ADDED')+'</small><strong>'+gbp(staffDaily)+'</strong></div>'+
       '<div><small>EXPERIENCE</small><strong>'+c.experience+' YEARS</strong></div>'+
       '<div><small>ROLE CAPACITY</small><strong>'+
       state.staff.filter(e=>e.role===c.role).length+' / '+P.roleLimit(state,c.role)+
@@ -348,8 +357,8 @@
       '<div><span>ONE-OFF ONBOARDING FEE</span><strong>'+gbp(P.HIRING_FEE)+'</strong></div>'+
       '<div><span>PROTECTED VEHICLE REPAIRS</span><strong>'+gbp(q.protectedStock)+'</strong></div>'+
       '<div><span>TEAM WAGES PER DAY AFTER HIRE</span><strong>'+gbp(q.dailyWages)+'</strong></div>'+
-      '<div><span>3-DAY WAGE COVER</span><strong>'+
-      gbp(q.dailyWages*P.WAGE_COVER_DAYS)+'</strong></div>'+
+      '<div><span>'+(state.employmentScenario==='uk2026-payroll'?'30-DAY EMPLOYMENT BUFFER':'3-DAY WAGE COVER')+'</span><strong>'+
+      gbp(state.employmentScenario==='uk2026-payroll'?q.monthlyEmployerCost:q.dailyWages*P.WAGE_COVER_DAYS)+'</strong></div>'+
       (state.payrollArrears?'<div><span>EXISTING PAYROLL ARREARS</span><strong>'+
         gbp(state.payrollArrears)+'</strong></div>':'')+
       '<div class="sd-required"><span>TOTAL CASH NEEDED TO HIRE</span><strong>'+
@@ -362,9 +371,7 @@
       esc(c.id)+'"'+(info.canHire?'':' disabled')+'>'+
       (info.canHire?'HIRE '+esc(c.name.toUpperCase())+' · '+gbp(P.HIRING_FEE):
         'CANNOT HIRE · '+esc(info.reason))+'</button>'+
-      '<p class="sd-fine">Hiring charges only the onboarding fee now. '+gbp(staffDaily)+
-      ' daily wages begin thereafter. Cash is reserved for three days of total payroll, '+
-      'existing arrears and outstanding vehicle preparation.</p>'+
+      '<p class="sd-fine">'+(state.employmentScenario==='uk2026-payroll'? 'Joining fee now; full base salary accrues after starting. Net wages settle on calendar-month payday, then PAYE/NI and pension contributions are remitted. Hiring requires a month of total employment cost including NI and pension before any Employment Allowance offset, with outstanding stock and tax reserves protected.':'Hiring charges only the onboarding fee now. '+gbp(staffDaily)+' daily wages begin thereafter. Cash is reserved for three days of total payroll, existing arrears and outstanding vehicle preparation.')+'</p>'+
       '</div></div></div>';
   }
   function staffDesk(state,P,{mode=null,role='all',selectedId=null}={}){
@@ -372,7 +379,7 @@
     const activeMode=DESK_MODES.includes(mode)?mode:
       state.staff.length?'team':'candidates';
     const f=DESK_ROLES.includes(role)?role:'all';
-    const source=activeMode==='team'?state.staff:P.applicants(state.day);
+    const source=activeMode==='team'?state.staff:P.applicants(state.day,state);
     const filtered=source.filter(person=>f==='all'||person.role===f);
     const chosen=filtered.find(p=>(activeMode==='team'?'e:':'c:')+p.id===selectedId)||
       filtered[0]||null;
@@ -382,7 +389,7 @@
     const quick='<div class="sd-kpis">'+[
       ['EMPLOYEES HIRED',counts.employed+' / '+counts.rolesTotal],
       ['ACTIVE TODAY',String(counts.active)],
-      ['DAILY WAGE BILL',gbp(counts.daily)],
+      [state.employmentScenario==='uk2026-payroll'?'DAILY SALARY ACCRUAL':'DAILY WAGE BILL',gbp(counts.daily)],
       ['CANDIDATES ON MARKET',String(counts.candidates)]
     ].map(([title,value])=>'<div><small>'+title+'</small><strong>'+value+
       '</strong></div>').join('')+'</div>';
@@ -424,11 +431,9 @@
       '<span>'+filtered.length+' SHOWN</span></div>'+
       '<div class="sd-register-list">'+listing+'</div></aside>'+body+'</div>'+
       '<details class="sd-policy"><summary>EMPLOYMENT RULES & PAYROLL EXPLANATION</summary>'+
-      '<p>Staff join on the following game day. Training takes two days, during which their work stops. '+
-      'Base wages are settled daily at approximately 1/30 of the monthly salary. Bonuses and '+
-      'provisional notice charges can increase payroll. Employer taxes, pensions, UK contracts '+
-      'and statutory notice rules are not simulated. Candidates change every seven game days. '+
-      'Hiring is limited by staffing places, role capacity and protected cash.</p></details>'};
+      '<p>'+(state.employmentScenario==='uk2026-payroll'?
+        '2026 independent: 40 contracted paid hours/week, 28 paid days of holiday including bank holidays, and full-pay company sick leave as an assumed benefit. Salary accrues daily, but wages are paid monthly. PAYE/NI and workplace pension cash is separately remitted. Eligibility for £10,500 Employment Allowance is assumed. This is indicative non-cumulative payroll rather than actual HMRC RTI or an individually verified employment contract.':
+        'Classic careers pay wages daily at 1/30 salary; NI, pensions and statutory contracts remain unmodelled.')+'</p></details>'};
   }
 
   window.MotorTradePeopleView=Object.freeze({applicants,roster,reputation,totals,
