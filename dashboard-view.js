@@ -82,6 +82,12 @@
           ' · '+events.dealSession(state).time+'.',
         'events',closing?'CLOSE MONTH':'OPEN DEAL DAY','urgent');
     }
+    const solvency=state.financialScenario==='uk2026'?
+      window.MotorTradeCommercialControls?.status(state):null;
+    if(solvency?.creditorHold)
+      add(2.8,'creditor-hold','New vehicle buying restricted by unpaid obligations',
+        money(solvency.overdue+solvency.refunds)+' in recorded overdue bills or accepted customer remedies. Sell stock and settle creditors before sourcing more vehicles.',
+        'finance','REVIEW CREDITOR HOLD','urgent');
     if(state.payrollArrears>0)
       add(3,'payroll','Outstanding staff wages',
         money(state.payrollArrears)+' remains owed to employees.',
