@@ -13,6 +13,7 @@ const repairPrices = readFileSync(new URL('repair-prices.js', root), 'utf8');
 const photos = readFileSync(new URL('vehicle-photos.js', root), 'utf8');
 const marketData = readFileSync(new URL('vehicle-market.js', root), 'utf8');
 const auctionFees = readFileSync(new URL('auction-fees.js', root), 'utf8');
+const auctionTransport = readFileSync(new URL('auction-transport.js', root), 'utf8');
 const accuracyData = readFileSync(new URL('vehicle-accuracy.js', root), 'utf8');
 const cards = readFileSync(new URL('vehicle-cards.js', root), 'utf8');
 const vehicleView = readFileSync(new URL('vehicle-view.js', root), 'utf8');
@@ -67,7 +68,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /class="stock-control"/);
   assert.match(html, /id="sales-list"/);
   assert.match(html, /id="ledger-list"/);
-  assert.match(html, /vehicle-intel\.js\?v=4/);
+  assert.match(html, /vehicle-intel\.js\?v=5/);
   assert.match(html, /people\.js\?v=8/);
   assert.match(html, /monthly\.js\?v=7/);
   assert.match(html, /events\.js\?v=2/);
@@ -76,17 +77,18 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-photos\.js\?v=5/);
   assert.match(html, /vehicle-market\.js\?v=4/);
   assert.match(html, /auction-fees\.js\?v=1/);
+  assert.match(html, /auction-transport\.js\?v=1/);
   assert.match(html, /repair-prices\.js\?v=1/);
-  assert.match(html, /auction-hall-view\.js\?v=3/);
+  assert.match(html, /auction-hall-view\.js\?v=4/);
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
-  assert.match(html, /finance-view\.js\?v=3/);
+  assert.match(html, /finance-view\.js\?v=4/);
   assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=33/);
   assert.match(html, /premises\.js\?v=2/);
   assert.match(html, /premises-view\.js\?v=4/);
   assert.match(html, /id="premises-view"/);
-  assert.match(html, /dashboard-view\.js\?v=2/);
+  assert.match(html, /dashboard-view\.js\?v=3/);
   assert.match(html, /inbox-office\.js\?v=3/);
   assert.match(html, /id="inbox-action-count"/);
   assert.match(html, /id="inbox-filter-buttons"/);
@@ -97,13 +99,13 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=22/);
+  assert.match(html, /trading\.js\?v=23/);
   assert.match(html, /customers-view\.js\?v=8/);
   assert.match(html, /workshop-view\.js\?v=6/);
   assert.match(html, /events-view\.js\?v=6/);
   assert.match(html, /monthly-view\.js\?v=9/);
   assert.match(html, /people-view\.js\?v=7/);
-  assert.match(html, /vehicle-view\.js\?v=5/);
+  assert.match(html, /vehicle-view\.js\?v=6/);
   assert.doesNotMatch(html, /NextGenSessionsArcade|looping\.zip|<iframe/);
   assert.equal(existsSync(new URL('lab/', root)), false);
 });
@@ -229,6 +231,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(accuracyData, context, { timeout: 1500 });
   vm.runInNewContext(marketData, context, { timeout: 1500 });
   vm.runInNewContext(auctionFees, context, { timeout: 1500 });
+  vm.runInNewContext(auctionTransport, context, { timeout: 1500 });
   vm.runInNewContext(premises, context, { timeout: 1500 });
   vm.runInNewContext(people, context, { timeout: 1500 });
   vm.runInNewContext(monthly, context, { timeout: 1500 });
@@ -349,7 +352,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
