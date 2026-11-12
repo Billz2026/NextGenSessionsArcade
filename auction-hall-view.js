@@ -89,14 +89,18 @@
       '<button type="button" class="trade-button auction-primary" data-action="settle-auction">FINALISE PAYMENT · '+
       quoteMoney(hammerFee===null?null:current+hammerFee)+'</button>':
       h.phase==='catalogue'?
-      '<button type="button" class="trade-button auction-primary" data-action="start-auction">OPEN BIDDING — LOT '+
-      E.lotNumber(h.index)+'</button>'+
-      '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">SKIP THIS LOT</button>':
+      (feeUnknown?
+        '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">SKIP — BUYER FEE NOT QUOTED</button>':
+        '<button type="button" class="trade-button auction-primary" data-action="start-auction">OPEN BIDDING — LOT '+
+        E.lotNumber(h.index)+'</button>'+
+        '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">SKIP THIS LOT</button>'):
       h.phase==='bidding'?
-      '<button type="button" class="trade-button auction-primary" data-action="bid-live-auction" data-increment="100">BID +£100</button>'+
-      '<button type="button" class="trade-button" data-action="bid-live-auction" data-increment="250">BID +£250</button>'+
-      '<button type="button" class="trade-button trade-button-secondary" data-action="bid-live-auction" data-increment="500">BID +£500</button>'+
-      '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">PASS / LEAVE LOT</button>':
+      (feeUnknown?
+        '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">PASS — FEE QUOTE REQUIRED</button>':
+        '<button type="button" class="trade-button auction-primary" data-action="bid-live-auction" data-increment="100">BID +£100</button>'+
+        '<button type="button" class="trade-button" data-action="bid-live-auction" data-increment="250">BID +£250</button>'+
+        '<button type="button" class="trade-button trade-button-secondary" data-action="bid-live-auction" data-increment="500">BID +£500</button>'+
+        '<button type="button" class="trade-button trade-button-outline" data-action="pass-auction">PASS / LEAVE LOT</button>'):
       '<button type="button" class="trade-button auction-primary" data-action="next-auction-lot">'+
       (h.index+1>=lots.length?'FINISH SESSION & VIEW RESULTS':'NEXT LOT '+E.lotNumber(h.index+1))+
       '</button>';
