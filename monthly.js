@@ -74,6 +74,7 @@
        note.startsWith('Retail balance received on collection:')||
        note.startsWith('Customer deposit applied to retail sale:'))return 'retailReceipts';
     if(note.startsWith('Auction purchase:'))return 'auctionPurchases';
+    if(note.startsWith('Auction transport:'))return 'auctionTransport';
     if(note.startsWith('Direct purchase:'))return 'sellerPurchases';
     if(note.startsWith('Part-exchange acquisition:'))return 'partExchangePurchases';
     if(note.startsWith('Preparation and inspection:')||
@@ -92,7 +93,7 @@
     if(note.startsWith('Premises investment:'))return 'premisesInvestment';
     return 'other';
   }
-  const categories=['retailReceipts','auctionPurchases','sellerPurchases',
+  const categories=['retailReceipts','auctionPurchases','auctionTransport','sellerPurchases',
     'partExchangePurchases','preparation','inspections','payroll','commission',
     'recruitment','training','staffExit','other','premisesPayments','premisesInvestment'];
   function statement(state){
@@ -112,8 +113,8 @@
     const payrollCost=-(bucket.payroll+bucket.commission+bucket.recruitment+
       bucket.training+bucket.staffExit);
     const prepCost=-bucket.preparation;
-    const acquisitions=-(bucket.auctionPurchases+bucket.sellerPurchases+
-      bucket.partExchangePurchases);
+    const acquisitions=-(bucket.auctionPurchases+bucket.auctionTransport+
+      bucket.sellerPurchases+bucket.partExchangePurchases);
     const soldModes={
       cash:sales.filter(v=>v.mode==='cash').length,
       partExchange:sales.filter(v=>v.mode==='part-ex').length
@@ -274,7 +275,7 @@
       !Array.isArray(r.customerTrustEvents)||r.customerTrustEvents.length>200||
       !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
       !categories.every(k=>whole(r.ledgerBreakdown[k])||
-        (['premisesPayments','premisesInvestment'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
+        (['premisesPayments','premisesInvestment','auctionTransport'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.premisesExpense!==undefined&&(
       !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
