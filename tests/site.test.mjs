@@ -6645,3 +6645,135 @@ test('2026 dashboard prioritises accepted refund obligations and aftersales desk
   assert.match(dueView,/ACCEPTED REFUND/);
   assert.match(dueView,/without undue delay/);
 });
+
+test('2026 all 50 vehicle retail records retain source, mileage, confidence and unverified trade guides',()=>{
+  const app=browser(),M=app.market,E=app.productionEngine;
+  const rows=Object.values(M.CATALOGUE).flat();
+  assert.equal(rows.length,50);
+  assert.equal(Object.keys(M.PRICING_2026).length,50);
+  assert.equal(new Set(Object.keys(M.PRICING_2026)).size,50);
+  for(const base of rows){
+    const current=M.priceFor(base,'uk2026');
+    const proof=current.priceAudit;
+    assert.equal(proof.status,'retail-comparable');
+    assert.match(proof.asOf,/^2026-11-12$/);
+    assert.ok(['high','medium','low'].includes(proof.confidence),base.title);
+    assert.match(proof.source,/^https:\/\//);
+    assert.ok(proof.comparisonAsk>=150);
+    assert.ok(proof.comparisonMiles>0);
+    assert.ok(proof.note.length>=15);
+    assert.match(proof.tradeGuide,/not a verified auction result/);
+    assert.ok(Number.isSafeInteger(current.retail)&&current.retail>=150);
+    assert.ok(Number.isSafeInteger(current.guide)&&current.guide>0);
+    assert.equal(current.repairScenario,'uk2026');
+    assert.equal(M.priceFor(base,'classic'),base,'No classic price mutation');
+    assert.equal(E.quote({...current,id:'A-1-0',
+      feeModel:'bca-blue-2026'},'auction',Math.min(current.guide,24999)).price,
+      Math.min(current.guide,24999));
+  }
+  const qBase=M.CATALOGUE.modern.find(x=>x.title==='2022 Nissan Qashqai Acenta Premium');
+  const q=M.priceFor(qBase,'uk2026');
+  assert.equal(q.retail,10950);
+  assert.equal(q.guide,qBase.guide);
+  assert.ok(q.guide>q.retail,
+    'Clearly disclose commercially impossible unsourced wholesale buy guide');
+  const audit=E.quote({...q,id:'A-1-2',feeModel:'bca-blue-2026'},'auction',q.guide);
+  assert.ok(audit.expectedMargin<0,
+    'Do not show a profit where buying guide exceeds retail before repairs');
+  assert.ok(audit.maxBid<q.guide,
+    'Safe bid is lower than an unsupported/uneconomic wholesale guide');
+  const elevated=M.priceFor(M.CATALOGUE.premium.find(x=>
+    x.title==='2023 Kia Sportage GT-Line HEV'),'uk2026');
+  assert.equal(elevated.retail,20800);
+  assert.equal(elevated.guide,18750,'2026 retail adverts do not invent auction hammer data');
+});
+
+test('2026 multi-year cash stress uses actual monthly overhead and never manufactures negative bank cash',()=>{
+  const app=browser(),E=app.productionEngine,S=app.cashStress;
+  const state=E.create('Cash Runway Audit',[],'uk2026');
+  const a=S.resolve(state,E);
+  assert.equal(a.cash,50000);
+  assert.equal(a.baselineMonthlyOverhead,2300);
+  assert.equal(a.monthlyStaffCost,0);
+  const twelve=S.project(state,E,{months:12});
+  assert.equal(twelve.endingBankCash,22400);
+  assert.equal(twelve.unfundedCommitments,0);
+  assert.equal(twelve.firstCashShortfallMonth,null);
+  assert.equal(twelve.totalOutflow,12*2300);
+  const thirtySix=S.project(state,E,{months:36});
+  assert.equal(thirtySix.firstCashShortfallMonth,21);
+  assert.equal(thirtySix.endingBankCash,0);
+  assert.equal(thirtySix.unfundedCommitments,38800);
+  assert.equal(thirtySix.rows.filter(x=>x.premium>0).length,2);
+  const sixty=S.project(state,E,{months:60});
+  assert.equal(sixty.firstCashShortfallMonth,21);
+  assert.equal(sixty.endingBankCash,0);
+  assert.equal(sixty.unfundedCommitments,100000);
+  assert.equal(sixty.rows.filter(x=>x.premium>0).length,4);
+  assert.equal(sixty.totalUnits,0);
+  assert.ok(sixty.rows.every(r=>r.cash>=0&&r.unpaid>=0));
+  const conservative=S.project(state,E,{months:12,
+    unitsPerMonth:1,contributionPerSale:700,annualClaimCost:2500});
+  const target=S.project(state,E,{months:12,
+    unitsPerMonth:3,contributionPerSale:1000,annualClaimCost:2500});
+  assert.ok(target.endingBankCash>conservative.endingBankCash);
+  assert.ok(target.totalClaims===2500);
+  assert.ok(S.project(state,E,{months:12,
+    unitsPerMonth:4,contributionPerSale:1400,annualClaimCost:5000})
+    .endingBankCash>target.endingBankCash);
+  assert.equal(S.project(state,E,{months:12,unitsPerMonth:0}).rows.length,12);
+  assert.throws(()=>S.project(state,E,{months:61}),/Invalid stress/);
+  assert.throws(()=>S.project(state,E,{months:12,unitsPerMonth:-1}),/Invalid stress/);
+  assert.throws(()=>S.project(E.create('Classic Trader',[]),E),/requires 2026/);
+  assert.match(app.financeView.summary(state,E).html,/60-MONTH CASH-FLOW STRESS SENSITIVITIES|12 \/ 36 \/ 60-MONTH CASH-FLOW STRESS SENSITIVITIES/);
+  assert.match(app.financeView.summary(state,E).html,/no negative bank cash is manufactured|No loan\/overdraft is invented/i);
+});
+
+test('2026 hiring increases long-term cash stress using employer NI and pension before relief',()=>{
+  const app=browser(),E=app.productionEngine,S=app.cashStress;
+  const state=E.create('One Staff Runway Audit',[],'uk2026');
+  const before=S.project(state,E,{months:12,unitsPerMonth:0});
+  const seller=E.people.applicants(1,state).find(x=>x.role==='sales');
+  assert.ok(E.hireStaff(state,seller.id).ok);
+  const after=S.project(state,E,{months:12,unitsPerMonth:0});
+  assert.ok(after.monthlyConservativeStaff>seller.monthlySalary);
+  assert.ok(after.monthlyConservativeStaff>=
+    E.employment.monthlyQuote(seller.monthlySalary,{allowanceRemaining:0}).employerCost);
+  assert.ok(after.firstCashShortfallMonth!==null);
+  assert.ok(after.endingBankCash<before.endingBankCash);
+  assert.equal(after.rows.length,12);
+});
+
+test('real engine survives 60 game months of zero sales with no bank borrowing or erased overhead arrears',()=>{
+  const app=browser(),E=app.productionEngine,s=E.create('No Sale Survival Test',[],'uk2026');
+  assert.equal(s.cash,50000);
+  const checks=new Map();
+  for(let day=2;day<=1800;day++){
+    s.day=day;
+    if((day-1)%30===0)E.monthly.next(s);
+    E.staffDay(s);
+    E.premisesDay(s);
+    E.vatDay(s);
+    E.aftersalesDay(s);
+    assert.ok(s.cash>=0,'Bank cash must never turn negative on day '+day);
+    if(day%30===0){
+      const report=E.monthly.close(s);
+      assert.ok(report,'30-day month must close on day '+day);
+      if([360,1080,1800].includes(day))checks.set(day,{
+        cash:s.cash,arrears:s.premises.arrears,month:report.month});
+    }
+  }
+  assert.equal(checks.size,3);
+  assert.equal(checks.get(360).month,12);
+  assert.equal(checks.get(1080).month,36);
+  assert.equal(checks.get(1800).month,60);
+  assert.ok(checks.get(360).cash>0);
+  assert.equal(checks.get(1080).cash,0);
+  assert.equal(checks.get(1800).cash,0);
+  assert.ok(checks.get(1800).arrears>checks.get(1080).arrears);
+  assert.ok(checks.get(1080).arrears>0);
+  assert.equal(s.sold.length,0);
+  assert.equal(s.wholesale.length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
+    '60-month arrears and management ledger must survive the v18 save format');
+});
