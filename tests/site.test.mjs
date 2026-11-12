@@ -6066,3 +6066,181 @@ test('2026 part-exchange purchase records actual customer allowance as VAT margi
   assert.ok(app.productionEngine.normalize(JSON.parse(JSON.stringify(s))),
     'Part-exchange customer consideration, VAT and stock preserve saved invariants');
 });
+
+test('2026 employer pay quote includes real NI, pension, employee PAYE and Employment Allowance',()=>{
+  const H=browser().employment;
+  assert.equal(H.REQUIRED_HOURS,40);
+  assert.equal(H.LEAVE_DAYS,28);
+  assert.equal(H.ALLOWANCE,10500);
+  assert.equal(H.minimumWage(1),12.71);
+  assert.equal(H.minimumMonthly(40,1),2204);
+  const quote=H.monthlyQuote(3000);
+  assert.equal(quote.gross,3000);
+  assert.equal(quote.employerNiGross,387);
+  assert.equal(quote.niRelief,387);
+  assert.equal(quote.employerNi,0);
+  assert.equal(quote.employerPension,74);
+  assert.equal(quote.workerPension,99);
+  assert.equal(quote.employeeNi,156);
+  assert.equal(quote.paye,391);
+  assert.equal(quote.net,2354);
+  assert.equal(quote.employerCost,3074);
+  assert.equal(quote.hmrc,547);
+  assert.equal(quote.pension,173);
+  const noRelief=H.monthlyQuote(3000,{allowanceRemaining:0});
+  assert.equal(noRelief.employerNi,387);
+  assert.equal(noRelief.employerCost,3461);
+  assert.equal(noRelief.hmrc,934);
+  assert.equal(H.taxYear(1),'2026-27');
+  assert.equal(H.daysInMonth(1),30);
+  assert.equal(H.date(H.dueDayForMonth(22)).toISOString().slice(0,10),'2026-12-22');
+});
+
+test('2026 role-based salary and 40 hour contract are benchmarked; classic applicants retain their old prices',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people;
+  const modern=E.create('Monthly Pay Motors',[],'uk2026'),classic=E.create('Original Trader',[]);
+  assert.equal(modern.employmentScenario,'uk2026-payroll');
+  assert.equal(modern.payroll2026.scheme,'england-2026-monthly');
+  assert.equal(classic.employmentScenario,undefined);
+  const modernPool=P.applicants(1,modern),oldPool=P.applicants(1,classic);
+  assert.equal(modernPool.length,16);
+  for(const candidate of modernPool){
+    assert.equal(candidate.contractHours,40);
+    assert.equal(candidate.ageBand,'25+');
+    assert.equal(candidate.pensionEnrolled,true);
+    assert.ok(candidate.monthlySalary*12>=12.71*40*52);
+  }
+  assert.ok(modernPool.filter(x=>x.role==='technician').every(x=>x.monthlySalary>=3050));
+  assert.ok(modernPool.filter(x=>x.role==='supervisor').every(x=>x.monthlySalary>=3500));
+  const modernSales=modernPool.find(x=>x.role==='sales');
+  const classicSales=oldPool.find(x=>x.role==='sales');
+  assert.ok(modernSales.monthlySalary>classicSales.monthlySalary);
+  const budget=P.hireQuote(modern,modernSales);
+  assert.equal(budget.coverDays,30);
+  assert.ok(budget.monthlyEmployerCost>modernSales.monthlySalary);
+  assert.ok(budget.required>modernSales.monthlySalary);
+  assert.ok(P.hire(modern,modernSales.id).ok);
+  assert.equal(modern.staff[0].monthlySalary,modernSales.monthlySalary);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(modern))),
+    'New version 17 employment book must preserve hire and salary eligibility');
+  const old=E.create('Migrating Old Pay',[],'uk2026');
+  old.version=16;
+  delete old.employmentScenario;delete old.payroll2026;
+  const normalized=E.normalize(old);
+  assert.ok(normalized,'Previous v16 independent careers must not gain retroactive NI or wages');
+  assert.equal(normalized.employmentScenario,undefined);
+  assert.equal(normalized.cash,50000);
+});
+
+test('2026 salary is accrued during work and paid once at month end; PAYE and pensions pay later',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people,H=app.employment;
+  const state=E.create('PAYE Ledger Motors',[],'uk2026');
+  const worker=P.applicants(1,state).find(e=>e.role==='sales');
+  assert.ok(P.hire(state,worker.id).ok);
+  assert.equal(state.cash,50000-P.HIRING_FEE);
+  const start=state.cash;
+  let accrual=0;
+  for(let day=2;day<=21;day++){
+    state.day=day;
+    const wages=E.staffDay(state);
+    accrual+=wages.payroll;
+    assert.equal(wages.paid,0,'No wage cash debit before real calendar payday');
+    assert.equal(state.cash,start);
+    assert.equal(state.payrollArrears,0);
+  }
+  assert.ok(accrual>0);
+  state.day=22; // 30 Nov 2026
+  assert.equal(H.date(state.day).toISOString().slice(0,10),'2026-11-30');
+  const closing=E.staffDay(state);
+  assert.ok(closing.periodClose);
+  assert.equal(closing.periodClose.period,'2026-11');
+  const grossExpected=Math.floor(worker.monthlySalary*21/30);
+  assert.equal(closing.gross,grossExpected,'November pay pro-rated from 10th through 30th');
+  assert.equal(closing.netWages,closing.paid);
+  assert.equal(state.cash,start-closing.netWages);
+  assert.equal(state.payrollArrears,0);
+  assert.ok(closing.employerPension>0);
+  assert.equal(closing.employerNi,0,'Qualifying microemployer uses remaining Employment Allowance');
+  assert.ok(closing.allowanceRelief>0);
+  const hmrc=H.liabilities(state);
+  assert.equal(hmrc.wages,0);
+  assert.equal(hmrc.hmrc,closing.periodClose.hmrc);
+  assert.equal(hmrc.pension,closing.periodClose.pension);
+  assert.equal(state.ledger.filter(l=>l.note.startsWith('Staff payroll monthly net wages settlement')).length,1);
+  assert.equal(state.ledger.filter(l=>l.note.startsWith('Staff payroll daily settlement')).length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
+    'Monthly pay, statutory liabilities and staff history must survive reload');
+
+  const bankBefore=state.cash;
+  for(let day=23;day<44;day++){
+    state.day=day;
+    const next=E.staffDay(state);
+    assert.equal(next.hmrcPaid,0);
+    assert.equal(next.pensionPaid,0);
+  }
+  assert.equal(state.cash,bankBefore,'PAYE and pension cash retained until the 22nd of next month');
+  state.day=44; // 22 Dec 2026
+  assert.equal(H.date(state.day).toISOString().slice(0,10),'2026-12-22');
+  const remitted=E.staffDay(state);
+  assert.equal(remitted.hmrcPaid,closing.periodClose.hmrc);
+  assert.equal(remitted.pensionPaid,closing.periodClose.pension);
+  assert.equal(H.liabilities(state).total,0);
+  assert.equal(state.cash,bankBefore-remitted.hmrcPaid-remitted.pensionPaid);
+  assert.equal(E.staffDay(state).hmrcPaid,0,'Do not remit a statutory amount twice');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state)));
+});
+
+test('2026 employment arrears survive genuine cash shortages without spending protected repairs',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people,H=app.employment;
+  const s=E.create('Cash-Strapped Payroll',[],'uk2026');
+  const candidate=P.applicants(1,s).find(x=>x.role==='sales');
+  assert.ok(P.hire(s,candidate.id).ok);
+  for(let day=2;day<=21;day++){s.day=day;E.staffDay(s);}
+  const before=s.cash;
+  s.cash=200;
+  s.ledger.push({day:s.day,delta:200-before,note:'Test fixture: settled unforeseen cash demand'});
+  s.day=22;
+  const close=E.staffDay(s);
+  assert.ok(close.periodClose);
+  assert.ok(s.payrollArrears>0,'Net pay remains a liability if insufficient working cash');
+  assert.equal(s.cash,0);
+  assert.equal(H.liabilities(s).wages,s.payrollArrears);
+  assert.equal(P.isActive(s,s.staff[0]),false,'Workers suspend availability when wages unpaid');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s)));
+});
+
+test('2026 paid holiday and full sick pay preserve contract wage while work availability changes',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people,H=app.employment;
+  const state=E.create('Leave & Sick Motors',[],'uk2026');
+  const candidate=P.applicants(1,state).find(x=>x.role==='sales');
+  assert.ok(P.hire(state,candidate.id).ok);
+  const employee=state.staff[0];
+  const holiday=H.dayForDate?null:app.vat.dayForDate(new Date(Date.UTC(2026,11,25)));
+  assert.equal(H.absence(employee,holiday),'paid holiday');
+  state.day=holiday;
+  assert.equal(P.isActive(state,employee),false);
+  const pre=state.payroll2026;
+  // Paid leave continues salary, irrespective of absence.
+  const dayPay=H.accruedDaily(employee.monthlySalary,holiday);
+  assert.ok(dayPay>0);
+  assert.equal(employee.contractHours,40);
+  assert.equal(H.LEAVE_DAYS,28);
+  assert.equal(H.minimumWage(app.vat.dayForDate(new Date(Date.UTC(2027,3,1)))),13.21);
+  assert.equal(H.minimumMonthly(40,app.vat.dayForDate(new Date(Date.UTC(2027,3,1)))),2290);
+});
+
+test('2026 seller commission is accrued, not a same-day cash payout',()=>{
+  const app=browser(),E=app.productionEngine,P=E.people,H=app.employment;
+  const state=E.create('Commission Accrual Motors',[],'uk2026');
+  const rep=P.applicants(1,state).find(x=>x.role==='sales');
+  assert.ok(P.hire(state,rep.id).ok);
+  state.day=2;E.staffDay(state);
+  const before=state.cash;
+  const result=P.sale(state,{id:100,profile:{grade:2,likelySale:5000}},4800,10000);
+  assert.ok(result.commission>0);
+  assert.equal(state.cash,before);
+  assert.equal(state.payrollArrears,0);
+  assert.ok(state.ledger.some(x=>x.note.startsWith('Staff commission accrued: £')&&x.delta===0));
+  assert.equal(state.payroll2026.earnings[String(state.staff[0].id)].commission,result.commission);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state)));
+});
