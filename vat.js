@@ -60,15 +60,27 @@
   const paidPence=state=>(state?.ledger||[])
     .filter(x=>x.note==='VAT remittance: output VAT on eligible used-car margins')
     .reduce((n,x)=>n-x.delta*100,0);
-  const outstandingPence=state=>Math.max(0,outputPence(state)-paidPence(state));
+  const creditPence=state=>state.aftersalesScenario==='cra2015-2026'?
+    (state.aftersales?.cases||[]).reduce((n,c)=>n+
+      (c.status==='refunded'?c.creditedVatPence:0),0):0;
+  const outstandingPence=state=>Math.max(0,
+    outputPence(state)-creditPence(state)-paidPence(state));
+  const creditBalancePence=state=>Math.max(0,
+    paidPence(state)+creditPence(state)-outputPence(state));
   const maturedPence=(state,day=state.day)=>Math.max(0,
     entries(state).filter(x=>x.vat.dueDay<=day)
-      .reduce((n,x)=>n+x.vat.outputPence,0)-paidPence(state));
+      .reduce((n,x)=>n+x.vat.outputPence,0)-
+    creditPence(state)-paidPence(state));
   const rollingTurnover=(state,day=state.day)=>{
     const from=day-364;
-    return (state.sold||[]).reduce((n,s)=>n+(s.day>=from&&s.day<=day?s.price:0),0)+
+    const refunded=new Set(state.aftersalesScenario==='cra2015-2026'?
+      (state.aftersales?.cases||[])
+        .filter(x=>x.status==='refunded'&&x.refundApprovedDay<=day)
+        .map(x=>x.saleId):[]);
+    return Math.max(0,(state.sold||[]).reduce((n,s)=>
+      n+(s.day>=from&&s.day<=day&&!refunded.has(s.id)?s.price:0),0)+
       (state.wholesale||[]).reduce((n,s)=>
-        n+(s.day>=from&&s.day<=day?s.proceeds:0),0);
+        n+(s.day>=from&&s.day<=day?s.proceeds:0),0));
   };
   function advance(state){
     if(!enabled(state))return {paid:0,duePence:0,outputPence:0};
@@ -109,6 +121,6 @@
   }
   window.MotorTradeVat=Object.freeze({THRESHOLD,START,
     dateForDay,dayForDate,periodForDay,dueDayForSale,marginVatPence,record,
-    enabled,entries,outputPence,paidPence,outstandingPence,maturedPence,
+    enabled,entries,outputPence,paidPence,creditPence,creditBalancePence,outstandingPence,maturedPence,
     rollingTurnover,advance,valid,pence});
 })();
