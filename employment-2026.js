@@ -140,10 +140,21 @@
       p.period=periodKey(state.day);
     }
     const id=String(employee.id);
-    const row=p.earnings[id]??={salary:0,commission:0};
+    const row=p.earnings[id]??={salary:0,commission:0,notice:0};
     row.commission+=amount;
     state.ledger.push({day:state.day,delta:0,
       note:'Staff commission accrued: £'+amount+' ('+employee.name+')'});
+    return true;
+  }
+  function creditOtherPay(state,employee,amount,kind='notice'){
+    if(!is2026(state)||!validPounds(amount)||kind!=='notice')return false;
+    const p=state.payroll2026;
+    if(p.period===null)p.period=periodKey(state.day);
+    if(p.period!==periodKey(state.day))return false;
+    const id=String(employee.id),row=p.earnings[id]??={salary:0,commission:0,notice:0};
+    row.notice=(row.notice||0)+amount;
+    state.ledger.push({day:state.day,delta:0,
+      note:'Staff notice expense accrued: £'+amount+' ('+employee.name+')'});
     return true;
   }
   function write(state,delta,note){
@@ -198,7 +209,7 @@
       totalNet=0,totalHmrc=0,totalPensionDue=0,totalRelief=0;
     for(const id of Object.keys(p.earnings).sort((a,b)=>Number(a)-Number(b))){
       const row=p.earnings[id];
-      const gross=row.salary+row.commission;
+      const gross=row.salary+row.commission+(row.notice||0);
       if(!gross)continue;
       const x=monthlyQuote(gross,{allowanceRemaining:ALLOWANCE-p.allowanceUsed});
       p.allowanceUsed+=x.niRelief;
@@ -239,7 +250,7 @@
       // rather than relying on extra sales commission to fix an illegal base.
       if(salary>e.monthlySalary)e.monthlySalary=salary;
       const base=accruedDaily(salary,state.day);
-      const row=p.earnings[String(e.id)]??={salary:0,commission:0};
+      const row=p.earnings[String(e.id)]??={salary:0,commission:0,notice:0};
       row.salary+=base;payroll+=base;
       if(base)state.ledger.push({day:state.day,delta:0,
         note:'Staff salary expense accrued: £'+base+' ('+e.name+')'});
@@ -291,7 +302,8 @@
       !Array.isArray(p.history)||p.history.length>36||
       !p.leaveTaken||!p.sickTaken)return false;
     for(const row of Object.values(p.earnings))
-      if(!row||!validPounds(row.salary)||!validPounds(row.commission))return false;
+      if(!row||!validPounds(row.salary)||!validPounds(row.commission)||
+        (row.notice!==undefined&&!validPounds(row.notice)))return false;
     const validBills=a=>a.every(x=>x&&
       /^20\d\d-(0[1-9]|1[0-2])$/.test(x.period)&&
       Number.isSafeInteger(x.dueDay)&&x.dueDay>0&&
@@ -313,6 +325,6 @@
     REQUIRED_HOURS,LEAVE_DAYS,ALLOWANCE,LIMITS,is2026,initial,clone,
     date,periodKey,daysInMonth,isMonthEnd,taxYear,minimumWage,minimumMonthly,
     baseSalary,monthlyQuote,absence,dueDayForMonth,accruedDaily,
-    creditCommission,advance,liabilities,quoteHire,valid
+    creditCommission,creditOtherPay,advance,liabilities,quoteHire,valid
   });
 })();
