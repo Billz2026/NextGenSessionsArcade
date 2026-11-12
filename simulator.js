@@ -589,13 +589,29 @@
         'One game day completed. Private sellers have refreshed; next weekly auction is game day '+
           E.nextAuctionDay(career.day)+'.';
     }
-    if(workforceEvent.payroll || workforceEvent.arrears){
+    if(career.employmentScenario==='uk2026-payroll'){
+      if(workforceEvent.periodClose){
+        eventNotice+=' CALENDAR-MONTH PAYROLL: gross '+money.format(workforceEvent.gross)+
+          ', net wages due '+money.format(workforceEvent.netWages)+
+          ', employer NI after allowance '+money.format(workforceEvent.employerNi)+
+          ', employer pension '+money.format(workforceEvent.employerPension)+
+          ', Employment Allowance used '+money.format(workforceEvent.allowanceRelief)+'.';
+      }
+      if(workforceEvent.paid||workforceEvent.arrears)
+        eventNotice+=' NET PAYROLL: '+money.format(workforceEvent.paid)+
+          ' paid today; '+money.format(workforceEvent.arrears)+' wages unpaid.';
+      if(workforceEvent.hmrcPaid||workforceEvent.pensionPaid)
+        eventNotice+=' PAYROLL REMITTANCES: HMRC '+money.format(workforceEvent.hmrcPaid)+
+          ', pension '+money.format(workforceEvent.pensionPaid)+'.';
+    }else if(workforceEvent.payroll || workforceEvent.arrears){
       eventNotice += ' Staff wage settlement: '+money.format(workforceEvent.paid)+
         ' paid of '+money.format(workforceEvent.payroll)+
         '; unpaid balance '+money.format(workforceEvent.arrears)+'.';
       if(workforceEvent.departures.length)
         eventNotice+=' Departures: '+workforceEvent.departures.join(', ')+'.';
     }
+    if(workforceEvent.departures.length&&career.employmentScenario==='uk2026-payroll')
+      eventNotice+=' Departures: '+workforceEvent.departures.join(', ')+'.';
     eventNotice+=' PREMISES: '+money.format(premisesEvent.paid)+' of '+
       money.format(premisesEvent.due)+(career.financialScenario==='uk2026'?' daily operating bills paid; ':' daily rent/utilities paid; ')+
       money.format(premisesEvent.arrears)+' outstanding.';
