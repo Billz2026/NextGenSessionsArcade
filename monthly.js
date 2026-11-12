@@ -84,6 +84,9 @@
        note.startsWith('Workshop quality rectification:'))return 'preparation';
     if(note.startsWith('Workshop assessment:'))return 'inspections';
     if(note.startsWith('Pre-purchase inspection:'))return 'inspections';
+    if(note.startsWith('Staff payroll monthly net wages settlement'))return 'payrollCash';
+    if(note.startsWith('Staff HMRC PAYE and NI remittance'))return 'hmrcRemittance';
+    if(note.startsWith('Staff workplace pension remittance'))return 'pensionRemittance';
     if(note.startsWith('Staff payroll'))return 'payroll';
     if(note.startsWith('Sales commission:'))return 'commission';
     if(note.startsWith('Recruitment and onboarding:'))return 'recruitment';
@@ -96,7 +99,8 @@
   }
   const categories=['retailReceipts','auctionPurchases','auctionTransport','sellerPurchases',
     'partExchangePurchases','preparation','inspections','payroll','commission',
-    'recruitment','training','staffExit','other','premisesPayments','premisesInvestment','vatPayments'];
+    'recruitment','training','staffExit','other','premisesPayments','premisesInvestment','vatPayments',
+    'payrollCash','hmrcRemittance','pensionRemittance'];
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
@@ -111,8 +115,15 @@
       .reduce((n,x)=>n+Number(/^Premises expense accrued: £(\d+)/.exec(x.note)?.[1]||0),0);
     const inflow=ledger.filter(x=>x.delta>0).reduce((n,x)=>n+x.delta,0);
     const outflow=-ledger.filter(x=>x.delta<0).reduce((n,x)=>n+x.delta,0);
-    const payrollCost=-(bucket.payroll+bucket.commission+bucket.recruitment+
-      bucket.training+bucket.staffExit);
+    const modernPayroll=state.employmentScenario==='uk2026-payroll';
+    const accrued=ledger.filter(x=>/^(Staff salary expense accrued: £|Staff commission accrued: £|Staff notice expense accrued: £|Staff employer charges accrued: £)/.test(x.note))
+      .reduce((n,x)=>n+Number(/^Staff (?:salary expense|commission|notice expense|employer charges) accrued: £(\d+)/.exec(x.note)?.[1]||0),0);
+    const payrollCost=modernPayroll?
+      accrued-(bucket.recruitment+bucket.training+bucket.staffExit):
+      -(bucket.payroll+bucket.commission+bucket.recruitment+
+        bucket.training+bucket.staffExit);
+    const payrollCashPaid=modernPayroll?
+      -(bucket.payrollCash+bucket.hmrcRemittance+bucket.pensionRemittance):0;
     const prepCost=-bucket.preparation;
     const acquisitions=-(bucket.auctionPurchases+bucket.auctionTransport+
       bucket.sellerPurchases+bucket.partExchangePurchases);
@@ -181,6 +192,9 @@
       workshopQualityChecks:stock.filter(x=>x.workshopStage==='quality-check').length,
       workshopWaiting:stock.filter(x=>['unassessed','quoted'].includes(x.workshopStage)).length,
       payrollArrears:state.payrollArrears,staffHeadcount:state.staff.length,
+      ...(modernPayroll?{payrollCashPaid,
+        payrollStatutoryDue:window.MotorTradeEmployment.liabilities(state).hmrc+
+          window.MotorTradeEmployment.liabilities(state).pension}:{}),
       customerTrustEvents:state.reputationHistory.filter(x=>x.day>=p.startDay&&x.day<=p.endDay).map(x=>({...x})),
       customerJourney:window.MotorTradeCustomers?
         window.MotorTradeCustomers.stats(state,p.startDay,Math.min(state.day,p.endDay)):null,
@@ -284,13 +298,16 @@
       !Array.isArray(r.customerTrustEvents)||r.customerTrustEvents.length>200||
       !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
       !categories.every(k=>whole(r.ledgerBreakdown[k])||
-        (['premisesPayments','premisesInvestment','auctionTransport','vatPayments'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
+        (['premisesPayments','premisesInvestment','auctionTransport','vatPayments',
+          'payrollCash','hmrcRemittance','pensionRemittance'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.premisesExpense!==undefined&&(
       !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
       !nonneg(r.premisesInvestment)||!nonneg(r.premisesArrears)||
       !whole(r.operatingContribution)||
       r.operatingContribution!==r.grossAfterStaff-r.premisesExpense))return false;
+    if(r.payrollCashPaid!==undefined&&(
+      !nonneg(r.payrollCashPaid)||!nonneg(r.payrollStatutoryDue)))return false;
     if(r.vatOutputAccruedPence!==undefined&&(
       !nonneg(r.vatOutputAccruedPence)||!whole(r.operatingAfterVat)||
       !nonneg(r.vatPayments)))return false;
