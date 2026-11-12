@@ -9,6 +9,8 @@
 (() => {
   const FORECOURT=Object.freeze([4,6,8,10]);
   const WORKSHOP=Object.freeze([4,6,8]);
+  const WORKSHOP_2026=Object.freeze([0,1,2]);
+  const WORK_COST_2026=Object.freeze([12000,10000]);
   const FOR_REP=Object.freeze([20,40,80]);
   const WORK_REP=Object.freeze([40,80]);
   const FOR_COST=Object.freeze([1800,3600,6500]);
@@ -17,23 +19,49 @@
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const initial=()=>({forecourtLevel:0,workshopLevel:0,arrears:0});
   const capacity=s=>FORECOURT[s.premises?.forecourtLevel??0]??4;
-  const bays=s=>WORKSHOP[s.premises?.workshopLevel??0]??4;
+  const bays=s=>(s.financialScenario==='uk2026'?WORKSHOP_2026:WORKSHOP)[s.premises?.workshopLevel??0]??4;
+  // Allocate integer-pound monthly costs across each 30-day game period
+  // without drifting by £1 at every rounding step.
+  const perDay=(monthly,day)=>{
+    const pos=((day-1)%30+30)%30;
+    return Math.floor(monthly*(pos+1)/30)-Math.floor(monthly*pos/30);
+  };
   function costs(s){
     const f=s.premises?.forecourtLevel??0;
     const w=s.premises?.workshopLevel??0;
+    if(s.financialScenario==='uk2026'){
+      // Hypothetical regional independent forecourt, not a commercial quote.
+      // The annual £3,000 motor-trade policy was prepaid at business opening.
+      // Its £250 monthly expense is not a second monthly cash payment.
+      const m={
+        rent:([1350,2050,2850,3750][f]??1350)+([0,450,950][w]??0),
+        utilities:([200,275,350,450][f]??200)+([0,100,180][w]??0),
+        advertising:450,software:100,administration:125,services:75,insurance:250
+      };
+      const day=s.day??1;
+      const bill={};for(const [k,v] of Object.entries(m))bill[k]=perDay(v,day);
+      const monthlyGuide=Object.values(m).reduce((n,v)=>n+v,0);
+      const total=Object.values(bill).reduce((n,v)=>n+v,0);
+      const cashDue=total-bill.insurance;
+      return {...bill,total,cashDue,monthlyGuide,monthlyCashGuide:monthlyGuide-m.insurance,
+        rentMonthly:m.rent,utilitiesMonthly:m.utilities,insurancePrepaid:true};
+    }
     const rent=[18,26,35,47][f]??18;
     const utilities=([7,9,11,14][f]??7)+([0,4,10][w]??0);
     const workshopLease=[0,10,22][w]??0;
-    return {rent:rent+workshopLease,utilities,
-      total:rent+workshopLease+utilities,monthlyGuide:(rent+workshopLease+utilities)*30};
+    const total=rent+workshopLease+utilities;
+    return {rent:rent+workshopLease,utilities,total,cashDue:total,
+      monthlyGuide:total*30,monthlyCashGuide:total*30,insurancePrepaid:false};
   }
   function quote(state,kind){
     if(!['forecourt','workshop'].includes(kind))return null;
     const f=kind==='forecourt',level=f?state.premises.forecourtLevel:state.premises.workshopLevel;
-    const sizes=f?FORECOURT:WORKSHOP,rep=f?FOR_REP:WORK_REP,fees=f?FOR_COST:WORK_COST;
+    const modern=state.financialScenario==='uk2026';
+    const sizes=f?FORECOURT:modern?WORKSHOP_2026:WORKSHOP,
+      rep=f?FOR_REP:WORK_REP,fees=f?FOR_COST:modern?WORK_COST_2026:WORK_COST;
     if(level>=sizes.length-1)return {kind,maximum:true};
     const requiredReputation=rep[level],cost=fees[level];
-    const after={
+    const after={...state,
       premises:{...state.premises,[f?'forecourtLevel':'workshopLevel']:level+1}
     };
     const beforeDaily=costs(state).total,afterDaily=costs(after).total;
@@ -75,7 +103,15 @@
     state.ledger.push({day:state.day,delta:0,
       note:'Premises expense accrued: £'+due.total+' (rent £'+due.rent+
         ', utilities £'+due.utilities+')'});
-    state.premises.arrears+=due.total;
+    // Prepaid policy renewal occurs after each completed 360-day policy term.
+    // The new policy cash charge does not increase this month's insurance
+    // expense, which is recognised separately at £250 per 30 days.
+    const insuranceRenewal=state.financialScenario==='uk2026' &&
+      state.day>1&&(state.day-1)%360===0?3000:0;
+    if(insuranceRenewal)state.ledger.push({day:state.day,delta:0,
+      note:'Motor-trade insurance annual renewal liability: £3000'});
+    const cashDue=due.cashDue+insuranceRenewal;
+    state.premises.arrears+=cashDue;
     const repairReserve=window.MotorTradeWorkshop?.reserved(state)??0;
     const available=Math.max(0,state.cash-repairReserve);
     const paid=Math.min(available,state.premises.arrears);
@@ -97,7 +133,7 @@
         if(state.reputationHistory.length>90)state.reputationHistory.shift();
       }
     }
-    return {due:due.total,paid,arrears:state.premises.arrears,reputationDelta};
+    return {due:cashDue,expense:due.total,paid,arrears:state.premises.arrears,reputationDelta};
   }
   function valid(record){
     return !!record&&typeof record==='object'&&!Array.isArray(record)&&
@@ -107,6 +143,6 @@
   }
   const clone=record=>({...record});
   window.MotorTradePremises=Object.freeze({
-    FORECOURT,WORKSHOP,initial,capacity,bays,costs,quote,upgrade,advance,valid,clone
+    FORECOURT,WORKSHOP,WORKSHOP_2026,initial,capacity,bays,costs,quote,upgrade,advance,valid,clone
   });
 })();
