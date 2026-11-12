@@ -51,7 +51,6 @@
           '">BOOK VIEWING →</button> '+cancel;
         break;
       }
-        break;
       case 'booked':
         body='<div class="sales-case-highlight"><strong>VIEWING WITHIN 48 GAME-HOURS · NO DEPOSIT</strong>'+ 
           '<p>'+esc(c.name)+' is due on <strong>GAME DAY '+c.appointmentDay+
