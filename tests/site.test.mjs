@@ -39,6 +39,7 @@ const stockView = readFileSync(new URL('stock-view.js', root), 'utf8');
 const financeView = readFileSync(new URL('finance-view.js', root), 'utf8');
 const economicsStress = readFileSync(new URL('economics-stress.js', root), 'utf8');
 const retailLiquidity = readFileSync(new URL('retail-liquidity.js', root), 'utf8');
+const commercialControls = readFileSync(new URL('commercial-controls.js', root), 'utf8');
 const dashboardView = readFileSync(new URL('dashboard-view.js', root), 'utf8');
 const inboxOffice = readFileSync(new URL('inbox-office.js', root), 'utf8');
 const STORAGE_KEY = 'the-motor-trade-career-v1';
@@ -81,6 +82,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=5/);
   assert.match(html, /retail-liquidity\.js\?v=1/);
+  assert.match(html, /commercial-controls\.js\?v=1/);
   assert.match(html, /customers\.js\?v=7/);
   assert.match(html, /aftersales\.js\?v=2/);
   assert.match(html, /aftersales-view\.js\?v=2/);
@@ -255,6 +257,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(retailLiquidity, context, { timeout: 1500 });
   vm.runInNewContext(customers, context, { timeout: 1500 });
   vm.runInNewContext(aftersales, context, { timeout: 1500 });
+  vm.runInNewContext(commercialControls, context, { timeout: 1500 });
   vm.runInNewContext(engine, context, { timeout: 1500 });
   vm.runInNewContext(cards, context, { timeout: 1500 });
   // Test-fixture shortcut for PRE-v0.8 financial/reputation assertions only.
@@ -371,7 +374,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, cashStress:context.window.MotorTradeCashStress, retailLiquidity:context.window.MotorTradeRetailLiquidity, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,aftersalesView:context.window.MotorTradeAftersalesView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, cashStress:context.window.MotorTradeCashStress, retailLiquidity:context.window.MotorTradeRetailLiquidity, commercialControls:context.window.MotorTradeCommercialControls, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,aftersalesView:context.window.MotorTradeAftersalesView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
