@@ -20,7 +20,10 @@
   function status(state){
     const repair=W.reserved(state);
     const vat=V.enabled(state)?ceilPence(V.outstandingPence(state)):0;
-    const maturedVat=V.enabled(state)?ceilPence(V.maturedPence(state)):0;
+    // The engine settles whole pounds only. A carried 1–99p VAT residue
+    // cannot be paid with the integer-pound ledger and is NOT grounds for
+    // freezing sourcing. Count only matured, payable whole-pound amounts.
+    const maturedVat=V.enabled(state)?Math.floor(V.maturedPence(state)/100):0;
     const refunds=A.pendingRefunds(state);
     const payroll=state.employmentScenario==='uk2026-payroll'?
       E.liabilities(state).total:Math.max(0,state.payrollArrears||0);
