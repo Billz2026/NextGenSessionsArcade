@@ -28,8 +28,13 @@
     const vat=E.vat;
     const vatOutstanding=vat.enabled(state)?vat.outstandingPence(state):0;
     const vatReserve=Math.ceil(vatOutstanding/100);
+    const employment=E.employment.liabilities(state);
+    const currentGross=state.payroll2026?
+      Object.values(state.payroll2026.earnings).reduce((n,e)=>
+        n+e.salary+e.commission+(e.notice||0),0):0;
     return {cash:state.cash,reserved,vatOutstanding,vatReserve,
-      afterReserve:state.cash-reserved-vatReserve,
+      employment,currentGross,
+      afterReserve:state.cash-reserved-vatReserve-employment.total,
       stock:r.stockCapital,held,arrears,staffDaily,premisesDaily,
       dailyCommitment:staffDaily+premisesDaily,
       grossLifetime:E.totalMargin(state),lifetimeSales:state.sales,
@@ -49,9 +54,12 @@
     const month='MONTH '+r.month+' · DAYS '+r.startDay+'–'+r.endDay;
     const noRepairReserve=x.reserved===0;
     const is2026=state.financialScenario==='uk2026';
-    const workingLabel=is2026?'CASH AFTER REPAIR & VAT RESERVES':
+    const modernPayroll=E.employment.is2026(state);
+    const workingLabel=modernPayroll?'CASH AFTER REPAIR, VAT & PAYROLL RESERVES':
+      is2026?'CASH AFTER REPAIR & VAT RESERVES':
       noRepairReserve?'WORKING CASH AVAILABLE':'CASH AFTER REPAIR RESERVES';
-    const workingDetail=is2026?'Less booked repair reserves and accrued output VAT; before routine bills':
+    const workingDetail=modernPayroll?'Less booked repairs, accrued VAT and due payroll liabilities; before ordinary bills':
+      is2026?'Less booked repair reserves and accrued output VAT; before routine bills':
       noRepairReserve?'No workshop funds reserved · before upcoming bills':
         'After earmarked repairs · before upcoming bills';
     const contribution=is2026?r.operatingAfterVat:r.operatingContribution;
@@ -95,12 +103,21 @@
       '<button type="button" class="fin-text-button" data-page="workshop">WORKSHOP</button></div>'+
       line('Workshop cash earmarked',money(x.reserved))+
       (is2026?line('Accrued output VAT protected',E.vat.pence(x.vatOutstanding)): '')+
-      line('Wages per game day',money(x.staffDaily))+
+      line(modernPayroll?'Base wage accrual / day (indicative)':'Wages per game day',money(x.staffDaily))+
+      (modernPayroll?
+        line('Current calendar-month wages accrued',money(x.currentGross))+
+        line('Net salaries awaiting payment',money(x.employment.wages),
+          x.employment.wages?' fin-due':'')+
+        line('PAYE + employer NI awaiting remittance',money(x.employment.hmrc))+
+        line('Pension provider contribution outstanding',money(x.employment.pension))+
+        line('Total due payroll liabilities',money(x.employment.total),
+          x.employment.total?' fin-due':'')+
+        line('Employment expense accrued in game month',money(r.staffCosts)):'')+
       line(state.financialScenario==='uk2026'?'Core operating expense per day':'Premises per game day',money(x.premisesDaily))+
       (state.financialScenario==='uk2026'?line('Cash overhead budget per 30 days',money(E.premises.costs(state).monthlyCashGuide)):'')+
       line('Outstanding bills',money(x.arrears),x.arrears?' fin-due':'')+
       notice+auctionNotice+
-      '<p class="fin-detail">Repair reserves are still included in your cash balance. Daily costs are future expenses, not money deducted twice.</p>'+
+      '<p class="fin-detail">Repair reserves remain within the bank balance. For the new 2026 scenario, PAYE, pension and employer NI have their own remittance obligations after wages are paid; the outstanding balances are protected above. Future unaccrued salaries remain a forecast, not a cash debit.</p>'+
       '</section>';
     const performance='<section class="fin-panel"><div class="fin-panel-head"><div>'+
       '<small>TRADING & CUSTOMER FUNDS</small><h3>WHAT YOU HAVE EARNED</h3></div>'+
