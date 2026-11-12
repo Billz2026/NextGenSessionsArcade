@@ -92,7 +92,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /employment-2026\.js\?v=3/);
   assert.match(html, /auction-hall-view\.js\?v=6/);
   assert.match(html, /buying-desk-view\.js\?v=3/);
-  assert.match(html, /stock-view\.js\?v=1/);
+  assert.match(html, /stock-view\.js\?v=2/);
   assert.match(html, /finance-view\.js\?v=13/);
   assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
@@ -4995,7 +4995,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=12/);
+  assert.match(html,/finance-view\.js\?v=13/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
