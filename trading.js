@@ -41,6 +41,8 @@
   if (!SITE) throw new Error('Load premises.js before trading.js');
   const I = window.MotorTradeIntel;
   if (!I) throw new Error('Load vehicle-intel.js before trading.js');
+  const CREDIT=window.MotorTradeCommercialControls;
+  if(!CREDIT)throw new Error('Load commercial-controls.js before trading.js');
   const MAX_DAY = 36500;
   // Stock templates are maintained in vehicle-market.js. Never mutate the
   // curated rows: daily price, mileage and identifiers are generated below.
@@ -73,7 +75,9 @@
     const tier=MARKET.tierFor(cash,reputationScore).key;
     const dealSellers=MARKET.sellersForDealDay(cash,reputationScore).map(x=>MARKET.priceFor(x,feeScenario));
     const special=D.customers(day,periodReputation,session,dealSellers,I.profile,dealershipName);
-    if(special)return {auctions:[],sellers:special.sellers.map(x=>({...x,...PH.describe(x)}))};
+    if(special)return {auctions:[],sellers:special.sellers
+      .filter(x=>feeScenario!=='uk2026'||!x.priceAudit?.buyingRisk)
+      .map(x=>({...x,...PH.describe(x)}))};
     const auctionCount=auctionDay(day)?
       (day===1?3:3+(sample(day,1,29)%3)):0;
     const baselineSellers=day===1?2:
@@ -110,8 +114,13 @@
         id:'S-'+day+'-'+i,kind:'seller',day};
     });
     return {
-      auctions:auctions.map(car=>({...car,...PH.describe(car),profile:I.profile(car)})),
-      sellers:sellers.map(car=>({...car,...PH.describe(car),profile:I.profile(car)}))
+      // Suspend four unverified above-retail guide rows from new UK2026
+      // sourcing. Do not substitute an invented trade value or let players
+      // transact against internally contradictory wholesale assumptions.
+      auctions:auctions.filter(x=>feeScenario!=='uk2026'||!x.priceAudit?.buyingRisk)
+        .map(car=>({...car,...PH.describe(car),profile:I.profile(car)})),
+      sellers:sellers.filter(x=>feeScenario!=='uk2026'||!x.priceAudit?.buyingRisk)
+        .map(car=>({...car,...PH.describe(car),profile:I.profile(car)}))
     };
   }
   // Daily catalogues must never reroll after a purchase, inspection or sale.
@@ -317,7 +326,7 @@
     if(!transport)return fail('transport','Cannot price this auction collection route.');
     if(fee===null)return fail('fee-quote','The published 2026 tariff has no rate for this hammer. Payment cannot be assumed.');
     const requiredPrep=lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0);
-    const blocked=canBuy(state,hammer+fee+transport.gross,requiredPrep);
+    const blocked=canBuy(state,hammer+fee+transport.gross,requiredPrep,{settlement:true});
     if(blocked)return blocked;
     pay(state,-(hammer+fee),'Auction purchase: '+lot.title+
       ' (bid '+hammer+', buyer fee '+fee+')');
@@ -622,10 +631,14 @@
     state.stock = state.vehicles.length;
     return v;
   }
-  function canBuy(state, cost, preparation) {
+  function canBuy(state, cost, preparation, options={}) {
     if (state.vehicles.length >= state.capacity) return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
-    // No lending or wholesale exit yet: reserve preparation for *all* acquired cars.
-    // Otherwise a second purchase could consume the cash needed to retail the first.
+    // Modern sourcing protects creditor cash plus a small operating buffer.
+    // An existing hammered invoice still requires payment but is exempt from
+    // imposing a discretionary NEW buying buffer after the hammer.
+    if(state.financialScenario==='uk2026')
+      return CREDIT.buyingGate(state,cost,preparation,options);
+    // Classic finance and save behaviour are unchanged.
     const pendingPrep=W.reserved(state);
     const taxReserve=VAT.enabled(state)?Math.ceil(VAT.outstandingPence(state)/100):0;
     const customerRefunds=AFT.pendingRefunds(state);
@@ -945,19 +958,32 @@
       (vatRecord?' before £'+(vatRecord.outputPence/100).toFixed(2)+
         ' VAT output, overheads, other taxes and aftersales.':' before overheads, tax and aftersales.'));
   }
-  function wholesaleOffer(vehicle){
-    // Simplified emergency trade bid. A trade outlet is not a retail sale
-    // or guaranteed profit; dispose of unprepared stock at a loss.
+  function wholesaleOffer(vehicle,state=null){
+    // Fictional immediate trade-exit sensitivity, NOT a dealer quote, CAP
+    // valuation or observed sold-auction hammer. Reconditioning may not be
+    // recovered on forced resale; a loss is not magically reimbursed.
+    const downside=state?.financialScenario==='uk2026'?
+      window.MotorTradeRetailLiquidity.value(state,vehicle).indicative*.80:Infinity;
     return Math.max(150,Math.round(Math.min(
-      vehicle.profile?.trade||vehicle.retail*.55,vehicle.cost*.88)/25)*25);
+      vehicle.profile?.trade||vehicle.retail*.55,vehicle.cost*.88,downside)/25)*25);
   }
   function disposeStock(state,id){
     const vehicle=own(state.vehicles,id);
     if(!vehicle)return fail('missing','Vehicle not found.');
-    if(vehicle.status!=='acquired'||!['unassessed','quoted'].includes(vehicle.workshop?.stage))
-      return fail('stage','Trade disposal is available only before repair work has been booked.');
-    const proceeds=wholesaleOffer(vehicle);
-    const basis=vehicle.cost;
+    // An active repair contract cannot be cancelled simply by pressing
+    // liquidate; once repairs finish or reach QC, the stock can be exited.
+    if(vehicle.workshop?.stage==='in-progress')
+      return fail('stage','Repairs are still running. Complete or transfer the workshop job before trade disposal.');
+    const customer=C.caseFor(state,id);
+    if(customer&&customer.status!=='lost')
+      return fail('customer','An active viewing, agreement or deposit must be resolved in the Sales Office before trade disposal. Never forfeit customer funds.');
+    if(!['acquired','prepared','listed'].includes(vehicle.status))
+      return fail('stage','Only stock still owned by the dealership can be sold to trade.');
+    const proceeds=wholesaleOffer(vehicle,state);
+    // Cost of repairs already paid is part of the realised economic loss.
+    const booked=vehicle.workshop?.stage==='quality-check'?
+      (vehicle.workshop.repairCost||0):0;
+    const basis=vehicle.cost+vehicle.prepSpent+booked;
     const vatRecord=VAT.enabled(state)?VAT.record(vehicle.vatPurchasePrice,proceeds,state.day):null;
     if(VAT.enabled(state)&&!vatRecord)return fail('vat','Wholesale exit requires an identifiable used-car VAT purchase basis.');
     pay(state,proceeds,'Wholesale stock disposal: '+vehicle.title);
@@ -969,6 +995,7 @@
       ...(vatRecord?{vat:vatRecord}:{}),color:vehicle.color,
       generation:vehicle.generation});
     state.vehicles=state.vehicles.filter(v=>v.id!==id);
+    if(customer?.status==='lost')delete state.customerCases[String(id)];
     state.stock=state.vehicles.length;
     return success(vehicle.title+' disposed of to a fictional trade buyer for £'+
       proceeds+'. Trading loss £'+Math.max(0,basis-proceeds)+
@@ -1016,7 +1043,7 @@
     customers:C,openCustomer,bookCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
-    wholesaleOffer,disposeStock,hireStaff,decideStaffMorale,
+    wholesaleOffer,disposeStock,commercialControls:CREDIT,hireStaff,decideStaffMorale,
     market,marketFor,marketStatus,sellerApproach,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     advertise,buyers,counter,completeSale,totalMargin
