@@ -79,6 +79,9 @@
       protectedCash,requiredCash,shortfall:Math.max(0,requiredCash-state.cash)};
   }
   function upgrade(state,kind){
+    if(state.financialScenario==='uk2026'&&
+      window.MotorTradeCommercialControls?.status(state).creditorHold)
+      return {ok:false,code:'creditor-hold',message:'Settle overdue creditors and accepted refunds before funding discretionary premises expansion.'};
     const q=quote(state,kind);
     if(!q)return {ok:false,code:'kind',message:'Unknown premises upgrade.'};
     if(q.maximum)return {ok:false,code:'max',message:'This facility is already at maximum capacity.'};
