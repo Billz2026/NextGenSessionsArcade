@@ -34,7 +34,8 @@
     return '<div class="people-caption"><strong>SALES IMPACT:</strong> +'+p.enquiryLift+
       ' lead-generation score (partly applied to the daily chance) · +'+p.driveLift+
       ' test-drive boost · NEXT-DAY BUYER CALLBACKS · '+(p.fastViewing?'NEXT-DAY VIEWINGS':'UP TO 48-HOUR VIEWINGS')+
-      ' · '+Math.round(p.commissionRate*100)+'% commission on positive gross margin.</div>';
+      ' · '+Math.round(p.commissionRate*100)+'% commission on positive gross margin.'+
+      ' Buyer callbacks, contact volume and appointment conversion depend on their availability and skills. Extra contacts are NOT guaranteed extra sales.</div>';
   }
   function applicants(state,P){
     const candidates=P.applicants(state.day);
@@ -230,7 +231,8 @@
       '<div><span>SALES EXECUTIVES</span><strong>'+salespeople+' / '+P.salesLimit(state)+'</strong></div>'+ 
       '</div><p class="trade-alert">'+(modern?'Full employer costs include NI and pensions before Employment Allowance. New independent forecourts must upgrade before in-house technician recruitment. ':'You can hire four technicians immediately, subject to a clear three-day wage buffer. ')+
       'Each works on a separate vehicle. You can hire one sales executive at first, two at 40 reputation and three at 80, alongside one buyer. '+
-      (next?'NEXT UNLOCK: '+next+'.':'All eight technician places are unlocked.')+'</p>';
+      (next?'NEXT UNLOCK: '+next+'.':'All eight technician places are unlocked.')+
+      ' On a three-car forecourt, employing a full-time salesperson may still cost more than the extra gross margin they generate. Compare genuine completed deals against all-in wages before hiring.</p>';
   }
 
   /* v0.9.31 — Staff control centre. Read-only view over existing people rules. */
