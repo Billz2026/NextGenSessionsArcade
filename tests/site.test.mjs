@@ -96,14 +96,14 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=6/);
   assert.match(html, /buying-desk-view\.js\?v=3/);
   assert.match(html, /stock-view\.js\?v=2/);
-  assert.match(html, /finance-view\.js\?v=13/);
+  assert.match(html, /finance-view\.js\?v=14/);
   assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
-  assert.match(html, /simulator\.js\?v=38/);
+  assert.match(html, /simulator\.js\?v=39/);
   assert.match(html, /premises\.js\?v=2/);
   assert.match(html, /premises-view\.js\?v=4/);
   assert.match(html, /id="premises-view"/);
-  assert.match(html, /dashboard-view\.js\?v=5/);
+  assert.match(html, /dashboard-view\.js\?v=6/);
   assert.match(html, /inbox-office\.js\?v=3/);
   assert.match(html, /id="inbox-action-count"/);
   assert.match(html, /id="inbox-filter-buttons"/);
@@ -114,9 +114,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /vehicle-accuracy\.js\?v=1/);
   assert.match(html, /id="market-progression"/);
   assert.match(html, /vehicle-cards\.js\?v=4/);
-  assert.match(html, /trading\.js\?v=32/);
+  assert.match(html, /trading\.js\?v=33/);
   assert.match(html, /customers-view\.js\?v=9/);
-  assert.match(html, /workshop-view\.js\?v=6/);
+  assert.match(html, /workshop-view\.js\?v=7/);
   assert.match(html, /events-view\.js\?v=6/);
   assert.match(html, /monthly-view\.js\?v=13/);
   assert.match(html, /people-view\.js\?v=9/);
@@ -4999,7 +4999,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=13/);
+  assert.match(html,/finance-view\.js\?v=14/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
@@ -6967,7 +6967,7 @@ test('Phase 8B: four above-retail unverified wholesale guides are quarantined, n
   const q=flagged.find(x=>x.title.includes('Qashqai'));
   assert.ok(q.guide>q.retail);
   assert.match(q.priceAudit.tradeGuide,/not a verified auction result/);
-  const classic=E.market(35,80,0,'Quarantine Traders',80,130000,'classic');
+  const classic=E.market(1,80,0,'Quarantine Traders',80,130000,'classic');
   assert.ok(classic.auctions.length+classic.sellers.length>0,
     'Classic catalogue is not forced into the new price quarantine');
 });
