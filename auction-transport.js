@@ -19,7 +19,7 @@
   function routeMiles(lotOrId){
     const id=typeof lotOrId==='string'?lotOrId:lotOrId?.id;
     if(typeof id!=='string'||!/^A-\d+-\d+$/.test(id))return null;
-    const [,day,index]=/^A-(\d+)-(\d+)$/.exec(id).slice(1).map(Number);
+    const [day,index]=/^A-(\d+)-(\d+)$/.exec(id).slice(1).map(Number);
     if(!Number.isSafeInteger(day)||!Number.isSafeInteger(index))return null;
     const buckets=[45,65,85,105,125,155];
     return buckets[(day*7+index*3)%buckets.length];
