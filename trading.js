@@ -6,8 +6,13 @@
  */
 (() => {
   const STARTING_CASH = 12500;
+  // Legacy careers retain their authentic £12,500 ledger base.
+  const STANDARD_STARTUP=Object.freeze({
+    mode:'uk2026',ownerCapital:60000,openingBank:50000,
+    premisesDeposit:3000,prepaidInsurance:3000,fixtures:2000,launchExpense:2000
+  });
   const CAPACITY = 4;
-  const VERSION = 14;
+  const VERSION = 15;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
@@ -316,9 +321,11 @@
     state.auctionHall=initialAuctionHall(state.day);
   }
 
-  function create(name, messages) {
+  function create(name, messages, mode='classic') {
+    const standard=mode==='uk2026';
     const state={
-      version:VERSION,name,day:1,cash:STARTING_CASH,capacity:CAPACITY,
+      version:VERSION,name,day:1,cash:standard?STANDARD_STARTUP.openingBank:STARTING_CASH,capacity:CAPACITY,
+      ...(standard?{financialScenario:'uk2026',startupAccounts:{...STANDARD_STARTUP}}:{}),
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       customerCases:{},customerHistory:[],customerFunds:[],
@@ -331,7 +338,7 @@
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,14,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -448,10 +455,19 @@
     if (!P.valid(workforce,saved.day)) return null;
     const ids = [...saved.vehicles,...saved.sold,...wholesale].map(v => v.id);
     if (new Set(ids).size !== ids.length || ids.some(id => id >= saved.nextId)) return null;
-    const balance = STARTING_CASH + sum(saved.ledger,'delta');
+    // The starting cash source varies by scenario. Owner equity, refundable
+    // deposits, prepaid insurance and fixtures are not trading revenue/costs.
+    const standard=saved.financialScenario==='uk2026';
+    if(saved.financialScenario!==undefined&&!standard)return null;
+    if(standard){
+      if(saved.version<15||!saved.startupAccounts||
+         Object.keys(STANDARD_STARTUP).some(k=>saved.startupAccounts[k]!==STANDARD_STARTUP[k]))return null;
+    }
+    const balance = (standard?STANDARD_STARTUP.openingBank:STARTING_CASH) + sum(saved.ledger,'delta');
     if (balance !== saved.cash || balance < 0 || balance > 100000000) return null;
     const restored={
       version:VERSION,name:saved.name.trim(),day:saved.day,cash:balance,capacity:expectedCapacity,
+      ...(standard?{financialScenario:'uk2026',startupAccounts:{...STANDARD_STARTUP}}:{}),
       premises:SITE.clone(site),
       inboxLedgerCursor:saved.version>=13?saved.inboxLedgerCursor:saved.ledger.length,
       // Migrate older daily auction saves: keep completed results in history,
@@ -861,7 +877,7 @@
     return result;
   }
   window.MotorTradeEngine = Object.freeze({
-    VERSION, STARTING_CASH, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
+    VERSION, STARTING_CASH, STANDARD_STARTUP, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
     auctionDay,nextAuctionDay,settleAuction,
     startAuction,bidLiveAuction,passAuction,nextAuctionLot,rollAuctionHall,
     auctionLot,lotNumber,auctionValid,
