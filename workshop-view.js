@@ -110,7 +110,9 @@
   function actions(s,W,v){
     const j=v.workshop,phase=j.stage;
     if(phase==='unassessed'){
-      const fee=P.active(s,'technician')?30:55;
+      const fee=s.financialScenario==='uk2026'?
+        (P.active(s,'technician')?65:80):
+        (P.active(s,'technician')?30:55);
       const can=s.cash>=W.reserved(s)+fee;
       return '<div class="ws-action"><h4>NEXT / ASSESS VEHICLE</h4>'+
         '<p>Confirm the repair requirement. The assessment costs '+cash(fee)+
