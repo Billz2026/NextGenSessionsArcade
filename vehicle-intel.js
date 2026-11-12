@@ -143,14 +143,28 @@
     const transport=published?window.MotorTradeTransport?.quote(car.id)?.gross??null:0;
     const feeQuoteRequired=published&&(fee===null||transport===null);
     const total=feeQuoteRequired?null:price+fee+transport+prep+inspection;
+    // The new 2026 dealer starts voluntarily VAT-registered. Only the
+    // PURCHASE-TO-SALE margin is taxed; reconditioning is not deductible
+    // when calculating the margin scheme's VAT output.
+    const vatModel=car.repairScenario==='uk2026'?window.MotorTradeVat:null;
+    const outputVatAt=purchase=>vatModel?
+      Math.ceil(vatModel.marginVatPence(p.likelySale,purchase)/100):0;
+    const vatEstimatePence=vatModel?.marginVatPence(p.likelySale,price)??0;
     let maximumBid;
     if(published){
-      // Fee bands increase with the hammer, so subtracting one fixed guide
-      // fee is mathematically wrong. Search only published tariff amounts.
+      // A fee-band increase AND changing VAT margin affect the next bid.
       maximumBid=0;
       for(let candidate=25;candidate<=fees.MAX_PUBLISHED_HAMMER;candidate+=25){
         const charge=fees.feeAtHammer(candidate);
-        if(charge===null||candidate+charge+transport+prep+inspection+p.targetMargin>p.likelySale)break;
+        if(charge===null||candidate+charge+transport+prep+inspection+
+          outputVatAt(candidate)+p.targetMargin>p.likelySale)break;
+        maximumBid=candidate;
+      }
+    }else if(vatModel){
+      maximumBid=0;
+      for(let candidate=25;candidate<=p.likelySale;candidate+=25){
+        if(candidate+fee+prep+inspection+outputVatAt(candidate)+
+          p.targetMargin>p.likelySale)break;
         maximumBid=candidate;
       }
     }else{
@@ -158,7 +172,9 @@
     }
     return {likelySale:p.likelySale,trade:p.trade,retail:p.retail,
       prep,fee,transport,inspection,price,total,feeQuoteRequired,
-      expectedMargin:feeQuoteRequired?null:p.likelySale-total,
+      vatEstimatePence,
+      expectedMargin:feeQuoteRequired?null:p.likelySale-total-
+        Math.ceil(vatEstimatePence/100),
       targetMargin:p.targetMargin,maxBid:maximumBid,
       riskUncertain:!inspected};
   }
