@@ -6187,7 +6187,7 @@ test('2026 salary is accrued during work and paid once at month end; PAYE and pe
   assert.equal(H.liabilities(state).total,0);
   assert.equal(state.cash,bankBefore-remitted.hmrcPaid-remitted.pensionPaid);
   assert.equal(E.staffDay(state).hmrcPaid,0,'Do not remit a statutory amount twice');
-  assert.ok(E.normalize(JSON.parse(JSON.stringify(state)));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
 
 test('2026 employment arrears survive genuine cash shortages without spending protected repairs',()=>{
@@ -6206,7 +6206,7 @@ test('2026 employment arrears survive genuine cash shortages without spending pr
   assert.equal(s.cash,0);
   assert.equal(H.liabilities(s).wages,s.payrollArrears);
   assert.equal(P.isActive(s,s.staff[0]),false,'Workers suspend availability when wages unpaid');
-  assert.ok(E.normalize(JSON.parse(JSON.stringify(s)));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
 });
 
 test('2026 paid holiday and full sick pay preserve contract wage while work availability changes',()=>{
@@ -6242,5 +6242,5 @@ test('2026 seller commission is accrued, not a same-day cash payout',()=>{
   assert.equal(state.payrollArrears,0);
   assert.ok(state.ledger.some(x=>x.note.startsWith('Staff commission accrued: £')&&x.delta===0));
   assert.equal(state.payroll2026.earnings[String(state.staff[0].id)].commission,result.commission);
-  assert.ok(E.normalize(JSON.parse(JSON.stringify(state)));
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
 });
