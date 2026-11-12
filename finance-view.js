@@ -38,7 +38,8 @@
         n+x.heldReturned.cost,0):0;
     return {cash:state.cash,reserved,vatOutstanding,vatReserve,
       employment,currentGross,refundLiability,heldReturns,
-      afterReserve:state.cash-reserved-vatReserve-employment.total-refundLiability,
+      afterReserve:state.cash-reserved-vatReserve-employment.total-refundLiability-
+        (state.financialScenario==='uk2026'?(state.premises?.arrears||0):0),
       stock:r.stockCapital+heldReturns,held,arrears,staffDaily,premisesDaily,
       dailyCommitment:staffDaily+premisesDaily,
       grossLifetime:E.totalMargin(state),lifetimeSales:state.sales,
@@ -63,7 +64,7 @@
       modernPayroll?'CASH AFTER REPAIR, VAT & PAYROLL RESERVES':
       is2026?'CASH AFTER REPAIR & VAT RESERVES':
       noRepairReserve?'WORKING CASH AVAILABLE':'CASH AFTER REPAIR RESERVES';
-    const workingDetail=E.aftersales.enabled(state)?'Less repair, tax, payroll and agreed customer-refund liabilities':
+    const workingDetail=E.aftersales.enabled(state)?'Less repair, tax, payroll, agreed customer refunds and unpaid premises bills':
       modernPayroll?'Less booked repairs, accrued VAT and due payroll liabilities; before ordinary bills':
       is2026?'Less booked repair reserves and accrued output VAT; before routine bills':
       noRepairReserve?'No workshop funds reserved · before upcoming bills':
@@ -176,7 +177,7 @@
       '<small>PHASE 8 · OPERATIONAL RISK</small><h3>STOCK TURN & CASH RUNWAY</h3></div>'+
       '<button type="button" class="fin-text-button" data-page="stock">REVIEW STOCK</button></div>'+
       line('Bank cash',money(liquidity.cash))+
-      line('Protected workshop, VAT, payroll & refunds',money(liquidity.committed))+
+      line('Protected workshop, VAT, payroll, refunds & unpaid premises',money(liquidity.committed))+
       line('Uncommitted bank cash',money(liquidity.freeCash))+
       line('Routine cash costs / 30 game days (incl. conservative wages)',money(liquidity.monthlyBurn))+
       line('Cash-only runway, no stock sales',liquidity.cashRunwayDays===null?'Not calculable':
@@ -187,6 +188,20 @@
       line('Illustrative aggregate aged realisation',money(liquidity.stockIndicative))+
       line('Units held 30+ / 60+ game days',liquidity.aged30+' / '+liquidity.aged60)+
       '<p class="fin-detail">This is a cash-only runway if there are no future sales and no new stock purchases. Unpaid arrears and future exceptional claims can shorten it. Stock values are scenario sensitivities, NOT cash, liquidations, verified wholesale bids or booked impairment. Stock proceeds require an actual buyer, agreement, payment and collection.</p></section>':'';
+    const CREDIT=window.MotorTradeCommercialControls;
+    const solvency=is2026&&CREDIT?CREDIT.status(state):null;
+    const solvencyPanel=solvency?'<section class="fin-panel"><div class="fin-panel-head"><div>'+
+      '<small>PHASE 8B · CREDITOR EXPOSURE</small><h3>NEW BUYING & PAYMENT CONTROLS</h3></div>'+
+      '<button type="button" class="fin-text-button" data-page="stock">REVIEW STOCK EXITS</button></div>'+
+      line('Operational assessment',solvency.tier.toUpperCase().replaceAll('-',' '))+
+      line('Protected repairs, VAT, payroll, refunds and overdue premises',money(solvency.commitments))+
+      line('Past-due simulated premises, wages and VAT',money(solvency.overdue))+
+      line('Accepted refunds awaiting payment',money(solvency.refunds))+
+      line('Uncommitted cash after all protected amounts',money(solvency.freeBank))+
+      line('Minimum 14-day core operating buffer for NEW buying',money(solvency.minimumBuffer))+
+      (solvency.creditorHold?'<p class="fin-warning">CREDITOR HOLD ACTIVE: New vehicle buying is restricted until overdue bills and accepted refund commitments are addressed. Selling owned stock, collecting contracted sales, refunding customers and settling binding auction invoices remain possible.</p>':'')+
+      (solvency.shortfall?'<p class="fin-warning">Cash already falls short of recognised protected commitments by '+money(solvency.shortfall)+'. No invented borrowing is recorded.</p>':'')+
+      '<p class="fin-detail">This is a simplified operational control, not a UK legal insolvency determination, director-liability assessment, credit score or statutory balance sheet. A creditor hold prevents voluntary new buying but does not terminate a career or erase creditors. A 14-day buffer is an explicitly hypothetical game risk rule.</p></section>':'';
     const STRESS=window.MotorTradeCashStress;
     const stressPanel=is2026&&STRESS?
       '<details class="fin-panel"><summary>12 / 36 / 60-MONTH CASH-FLOW STRESS SENSITIVITIES</summary>'+
@@ -211,7 +226,7 @@
       '<p class="fin-detail">Your scenario uses the current forecourt overhead budget and conservative full employer payroll before NI relief. Insurance renewal is charged every 360 game days. Unpaid commitments are not hidden as borrowing or negative bank cash. Never rely on these outcomes as guaranteed profits or actual future sales.</p>'+
       '</details>':'';
     const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional and not statutory net profit or a statutory VAT return; employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
-    return {snapshot:x,html:top+openingPanel+liquidityPanel+vatPanel+stressPanel+cashflow+'<div class="fin-secondary">'+
+    return {snapshot:x,html:top+openingPanel+liquidityPanel+solvencyPanel+vatPanel+stressPanel+cashflow+'<div class="fin-secondary">'+
       commitments+performance+'</div>'+footer};
   }
   function category(note){

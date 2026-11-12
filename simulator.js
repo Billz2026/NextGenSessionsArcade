@@ -822,8 +822,8 @@
         if(career){
           const vehicle=career.vehicles.find(v=>v.id===Number(button.dataset.id));
           if(vehicle&&window.confirm('Dispose of '+vehicle.title+
-            ' to the trade for '+money.format(E.wholesaleOffer(vehicle))+
-            '? This records a trading loss and frees the stock space.')){
+            ' to the trade for the simulated bid '+money.format(E.wholesaleOffer(vehicle,career))+
+            '? This crystallises the actual acquisition and paid repair costs, and frees a stock space. Do not treat this as a verified buyer quote.')){
             saveResult(E.disposeStock(career,vehicle.id));
           }
         }
