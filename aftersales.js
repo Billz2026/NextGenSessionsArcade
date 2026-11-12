@@ -51,7 +51,6 @@
   const seed=sale=>sale.id*19+sale.day*7+sale.price;
   const willComplain=sale=>seed(sale)%100<
     [0,5,8,13,23,34][severity(sale)];
-  const incidentDay=sale=>sale.day+3+(seed(sale*1)||0);
   function plannedDay(sale){
     const d=3+((sale.id*11+sale.day*7+sale.price)%38);
     return sale.day+d;
@@ -121,6 +120,7 @@
   function returnVehicle(s,sale,c){
     const old=sale.vehicleSnapshot;
     const copy=JSON.parse(JSON.stringify(old));
+    copy.status='acquired';copy.prepSpent=0;
     const v={...copy,id:s.nextId++,acquiredDay:s.day,
       source:'seller',origin:'RETURN-'+sale.id,returnOf:sale.id,
       status:'acquired',asking:null,
