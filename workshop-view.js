@@ -157,11 +157,13 @@
       '<button type="button" class="trade-button" data-page="stock" data-id="'+v.id+
       '">VIEW VEHICLE STOCK</button></div>';
   }
-  function disposal(v){
-    if(v.status!=='acquired'||!['unassessed','quoted'].includes(v.workshop.stage))return '';
-    const bid=window.MotorTradeEngine.wholesaleOffer(v);
+  function disposal(v,s){
+    if(v.workshop?.stage==='in-progress')return '';
+    const pending=s.customerCases?.[String(v.id)];
+    if(pending&&pending.status!=='lost')return '<p class="ws-caveat">Trade exit is unavailable while a customer appointment, negotiation, agreement or reservation is active. Resolve it in the Sales Office first.</p>';
+    const bid=window.MotorTradeEngine.wholesaleOffer(v,s);
     return '<details class="ws-disposal"><summary>TRADE DISPOSAL / CUT LOSSES</summary>'+
-      '<p>Fictional trade offer '+cash(bid)+'. Selling now frees a space but can realise a loss.</p>'+
+      '<p>Illustrative, unverified immediate trade bid '+cash(bid)+'. Completed repairs are sunk costs and will be reflected in the disposal loss. This is not a guaranteed auction or buyer quotation.</p>'+
       '<button class="trade-button trade-button-outline" type="button" data-action="dispose-workshop" data-id="'+
       v.id+'">SELL TO TRADE · '+cash(bid)+'</button></details>';
   }
@@ -177,7 +179,7 @@
       '<span>'+age(s,v)+' DAYS HELD · '+esc(v.color||'UNKNOWN COLOUR')+'</span></div></div>'+
       items(v)+'<p class="ws-caveat">Simulated assessment and QC are not a real MOT or roadworthiness certificate.</p>'+
       '</div><div class="ws-detail-control">'+actions(s,W,v)+
-      '<h4>COST CONTROL</h4>'+costs(v)+disposal(v)+'</div></div></article>';
+      '<h4>COST CONTROL</h4>'+costs(v)+disposal(v,s)+'</div></div></article>';
   }
   function render(s,W,{filter='all',selectedId=null}={}){
     const q=summary(s,W),f=FILTERS.includes(filter)?filter:'all';
