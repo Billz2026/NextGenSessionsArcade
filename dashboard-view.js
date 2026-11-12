@@ -47,7 +47,8 @@
       tasks.push({rank,key,title,description,page,action,tone});
     if(state.auctionHall?.phase==='payment'){
       const lot=E.auctionLot(state);
-      const due=lot?state.auctionHall.currentBid+lot.fee:null;
+      const auctionFee=lot?E.auctionFee(state,lot,state.auctionHall.currentBid):null;
+      const due=lot&&auctionFee!==null?state.auctionHall.currentBid+auctionFee:null;
       add(0,'auction-invoice','Settle your auction purchase',
         due==null?'A winning hammer invoice needs payment before trading can continue.':
           money(due)+' due including the buyer fee. Vehicle awaits workshop transfer.',
@@ -71,7 +72,7 @@
         'staff','REVIEW PAYROLL','urgent');
     if(state.premises?.arrears>0)
       add(4,'rent','Unpaid premises overheads',
-        money(state.premises.arrears)+' in rent and utilities outstanding.',
+        money(state.premises.arrears)+(state.financialScenario==='uk2026'?' in operating bills outstanding.':' in rent and utilities outstanding.'),
         'business','VIEW COSTS','urgent');
     if(dueViewing)
       add(5,'viewing',dueViewing+' customer viewing'+(dueViewing===1?'':'s')+' due',
