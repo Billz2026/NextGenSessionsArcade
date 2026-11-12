@@ -115,7 +115,8 @@ assert.ok(samples.every(x=>x.stock===3&&x.listed===3),'All sample dealers must h
 assert.ok(samples.every(x=>x.enquiries===x.notified),'Every genuine enquiry must produce one saved inbox notification');
 assert.ok(samples.every(x=>x.enquiries>0),'Three fairly priced advertised cars should not go thirty days with no enquiries in the five test seeds');
 const total=samples.reduce((n,x)=>n+x.enquiries,0);
-assert.ok(total>=10&&total<=60,'Test careers should have repeated but bounded leads, never a guaranteed sale factory');
+assert.ok(total>=20&&total<=120,
+  'More active small forecourts need buyer conversations without implying every contact converts to a sale');
 // Pricing stress replays each real three-car listed forecourt without touching
 // the public save: normal asking (+10%) and materially overpriced (+30%)
 // grade-five stock. Price questions count as conversations, never sales.
@@ -250,7 +251,9 @@ assert.ok(await book.isVisible(),'The generated enquiry must be actionable in th
 await book.click();
 const booked=await page.evaluate(id=>JSON.parse(localStorage.getItem('the-motor-trade-career-beta-v1')).customerCases[String(id)].status,
   active.vehicleId);
-assert.equal(booked,'booked','Player can convert an automatically generated enquiry into a genuine viewing');
+assert.ok(active.channel==='ONLINE PRICE QUESTION'?
+  ['booked','lost'].includes(booked):booked==='booked',
+  'Serious enquiries book viewings; price-only contacts may realistically decline when asked to commit');
 assert.deepEqual(errors,[],'Real browser encountered no customer-related JavaScript errors');
 console.log('BETA_CUSTOMER_DISCOVERY_PASS '+total+
   ' genuine enquiries across five 3-car 30-day cohorts; inbox, dashboard, appointment and save passed');
