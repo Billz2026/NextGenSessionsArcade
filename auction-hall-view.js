@@ -14,7 +14,7 @@
     return '<div class="auction-result-row '+className+'"><span>LOT '+esc(r.lotNumber)+
       '</span><div><strong>'+esc(r.title)+'</strong><small>'+esc(status[r.kind]||r.kind)+
       (r.hammer?' · HAMMER '+money(r.hammer):'')+'</small></div><b>'+
-      (r.kind==='won'?money(r.total)+' ALL-IN':'£0 SPENT')+'</b></div>';
+      (r.kind==='won'?money(r.total)+' HAMMER + FEE':'£0 SPENT')+'</b></div>';
   }
   function render(state,E,reportCard,previewId=null){
     const h=state.auctionHall,lots=E.marketFor(state).auctions;
