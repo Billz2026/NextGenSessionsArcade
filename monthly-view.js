@@ -112,7 +112,7 @@
       '<hr/>'+amount('Vehicle gross trading margin',r.grossMargin)+
       amount('Recorded staff expenses paid',-r.staffCosts)+
       amount('Gross margin less staff costs',r.grossAfterStaff)+
-      amount('Premises expenses accrued',-(r.premisesExpense??0))+
+      amount(state.financialScenario==='uk2026'?'Core operating expenses accrued':'Premises expenses accrued',-(r.premisesExpense??0))+
       amount('Premises arrears outstanding',r.premisesArrears??0)+
       amount('Operating contribution after premises costs',r.operatingContribution??r.grossAfterStaff)+
       '<p class="report-muted">Gross margin is recognised when a vehicle sells, whereas buying and preparation affect cash immediately. '+
