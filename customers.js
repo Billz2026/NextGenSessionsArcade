@@ -12,7 +12,9 @@
 (() => {
   const D=window.MotorTradeEvents;
   const P=window.MotorTradePeople;
+  const L=window.MotorTradeRetailLiquidity;
   if(!P)throw new Error('Load people.js before customers.js');
+  if(!L)throw new Error('Load retail-liquidity.js before customers.js');
   const ints=Number.isSafeInteger;
   const STATUS=Object.freeze(['enquiry','booked','arrived','discussing','agreed',
     'reserved','collectable','lost']);
@@ -63,14 +65,18 @@
     const fair=vehicle.profile?.likelySale||vehicle.retail;
     const overpriced=Math.max(0,(vehicle.asking-fair)/Math.max(fair,1));
     const grade=vehicle.profile?.grade||3;
-    let percent=65-Math.round(overpriced*100)-(grade>=4?12:0)+
-      Math.floor(state.reputationScore/8)+P.salesImpact(state,vehicle.id).enquiryLift;
+    const modern=state.financialScenario==='uk2026';
+    let percent=modern?
+      L.enquiryPercent(state,vehicle,P.salesImpact(state,vehicle.id).enquiryLift):
+      65-Math.round(overpriced*100)-(grade>=4?12:0)+
+        Math.floor(state.reputationScore/8)+P.salesImpact(state,vehicle.id).enquiryLift;
     if(D.isDealDay(state.day)){
       const c=D.outlook(state);
       percent+=c.type==='quiet'?-13:c.type==='subdued'?-5:
         c.type==='busy'?9:c.type==='exceptional'?13:0;
     }
-    return chance('buyer|'+leadKey(state,vehicle),clamp(percent,8,91));
+    // These are scenario probabilities, not measured independent-dealer lead rates.
+    return chance('buyer|'+leadKey(state,vehicle),clamp(percent,modern?1:8,modern?48:91));
   }
   function open(state,id){
     const vehicle=state.vehicles.find(v=>v.id===id);
@@ -120,17 +126,26 @@
       return false;
     const fair=vehicle.profile?.likelySale||vehicle.retail;
     const overpriced=Math.max(0,(vehicle.asking-fair)/Math.max(fair,1));
-    const percent=clamp(58-Math.round(overpriced*90)-
-      (vehicle.profile?.grade>=4?9:0)+Math.floor(state.reputationScore/10)+
-      Math.floor(P.salesImpact(state,id).enquiryLift/2),12,88);
+    const modern=state.financialScenario==='uk2026';
+    const percent=modern?
+      clamp(8-Math.round(overpriced*60)-(vehicle.profile?.grade>=4?3:0)+
+        Math.floor(state.reputationScore/25)+
+        Math.floor(P.salesImpact(state,id).enquiryLift/4),1,24):
+      clamp(58-Math.round(overpriced*90)-
+        (vehicle.profile?.grade>=4?9:0)+Math.floor(state.reputationScore/10)+
+        Math.floor(P.salesImpact(state,id).enquiryLift/2),12,88);
     // Stable within the same game day: repeated clicks cannot reroll demand.
     return chance('other-buyer|'+state.name+'|'+state.day+'|'+id+'|'+c.id,percent);
   }
   function attendBooked(state,c,notices){
     if(state.day<c.appointmentDay)return;
     // A short-notice viewing is a much stronger indicator of intent.
-    const turnsUp=chance('show|'+c.id,clamp(96+Math.floor(state.reputationScore/15)+
-      P.salesImpact(state,c).arrivalLift,90,99));
+    const modern=state.financialScenario==='uk2026';
+    const turnsUp=chance('show|'+c.id,modern?
+      clamp(77+Math.floor(state.reputationScore/20)+
+        P.salesImpact(state,c).arrivalLift,65,91):
+      clamp(96+Math.floor(state.reputationScore/15)+
+        P.salesImpact(state,c).arrivalLift,90,99));
     if(turnsUp){
       c.status='arrived';
       append(state,c,'arrived','Attended appointment within 48 game-hours');
@@ -185,8 +200,12 @@
     const key='test-drive|'+c.id;
     const grade=v.profile?.grade||3;
     // An attended test drive is a strong buying signal. Condition still matters.
-    const pass=chance(key,clamp(91-(grade>=4?15:0)+
-      Math.floor(state.reputationScore/12)+P.salesImpact(state,c).driveLift,65,98));
+    const modern=state.financialScenario==='uk2026';
+    const pass=chance(key,modern?
+      clamp(79-(grade>=4?13:0)+Math.floor(state.reputationScore/20)+
+        P.salesImpact(state,c).driveLift,52,94):
+      clamp(91-(grade>=4?15:0)+Math.floor(state.reputationScore/12)+
+        P.salesImpact(state,c).driveLift,65,98));
     append(state,c,pass?'test-drive-pass':'test-drive-reject',
       pass?'Customer wants to discuss terms':'Customer did not proceed');
     if(!pass){
@@ -211,8 +230,10 @@
         ' cannot increase their offer beyond their budget.'};
     }
     const receptive=chance('counter|'+c.id+'|'+c.counters,
-      clamp(82+(state.reputationScore>=40?6:0)-(c.counters-1)*12+
-      P.salesImpact(state,c).counterLift,35,96));
+      clamp((state.financialScenario==='uk2026'?66:82)+
+      (state.reputationScore>=40?6:0)-(c.counters-1)*12+
+      P.salesImpact(state,c).counterLift,35,
+      state.financialScenario==='uk2026'?90:96));
     if(!receptive){
       const walk=chance('walk|'+c.id+'|'+c.counters,25);
       append(state,c,'counter-rejected',walk?'Customer walked away':'Customer declined increase');
@@ -355,7 +376,8 @@
         attendBooked(state,c,notices);
       }else if(c.status==='reserved'&&state.day>=c.collectionDay){
         // A paid deposit is a genuine reservation, so no competing buyers.
-        if(chance('collect|'+c.id,96)){
+        if(chance('collect|'+c.id,
+          state.financialScenario==='uk2026'?90:96)){
           c.status='collectable';
           append(state,c,'collection-due','Customer ready to collect');
           notices.push(c.name+' is ready to collect stock '+c.vehicleId+'.');
