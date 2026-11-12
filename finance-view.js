@@ -25,7 +25,11 @@
     const auctionFee=lot?E.auctionFee(state,lot,auction.currentBid):null;
     const transport=lot?E.auctionTransport(state,lot):null;
     const auctionInvoice=lot&&auctionFee!==null&&transport?auction.currentBid+auctionFee+transport.gross:0;
-    return {cash:state.cash,reserved,afterReserve:state.cash-reserved,
+    const vat=E.vat;
+    const vatOutstanding=vat.enabled(state)?vat.outstandingPence(state):0;
+    const vatReserve=Math.ceil(vatOutstanding/100);
+    return {cash:state.cash,reserved,vatOutstanding,vatReserve,
+      afterReserve:state.cash-reserved-vatReserve,
       stock:r.stockCapital,held,arrears,staffDaily,premisesDaily,
       dailyCommitment:staffDaily+premisesDaily,
       grossLifetime:E.totalMargin(state),lifetimeSales:state.sales,
@@ -44,22 +48,26 @@
     const x=snapshot(state,E),r=x.report;
     const month='MONTH '+r.month+' · DAYS '+r.startDay+'–'+r.endDay;
     const noRepairReserve=x.reserved===0;
-    const workingLabel=noRepairReserve?'WORKING CASH AVAILABLE':'CASH AFTER REPAIR RESERVES';
-    const workingDetail=noRepairReserve?'No workshop funds reserved · before upcoming bills':
-      'After earmarked repairs · before upcoming bills';
-    const operatingDetail=r.operatingContribution<0?
-      'NEGATIVE THIS MONTH · After staff and premises costs':
-      r.operatingContribution>0?
-        'POSITIVE THIS MONTH · After staff and premises costs':
-        'BREAK-EVEN SO FAR · After staff and premises costs';
+    const is2026=state.financialScenario==='uk2026';
+    const workingLabel=is2026?'CASH AFTER REPAIR & VAT RESERVES':
+      noRepairReserve?'WORKING CASH AVAILABLE':'CASH AFTER REPAIR RESERVES';
+    const workingDetail=is2026?'Less booked repair reserves and accrued output VAT; before routine bills':
+      noRepairReserve?'No workshop funds reserved · before upcoming bills':
+        'After earmarked repairs · before upcoming bills';
+    const contribution=is2026?r.operatingAfterVat:r.operatingContribution;
+    const operatingDetail=contribution<0?
+      'NEGATIVE THIS MONTH · After staff, core costs and provisional VAT output':
+      contribution>0?
+        'POSITIVE THIS MONTH · After staff, core costs and provisional VAT output':
+        'BREAK-EVEN SO FAR · Before unmodelled business liabilities';
     const top='<div class="fin-primary">'+
       tile('CASH BALANCE',money(x.cash),'Dealership cash held today · includes repair reserves',' fin-tile-hero')+
       tile(workingLabel,money(x.afterReserve),workingDetail,
         x.afterReserve<0?' fin-tile-alert':'')+
       tile('INVESTED IN UNSOLD VEHICLES',money(x.stock),
         state.vehicles.length+' vehicle'+(state.vehicles.length===1?'':'s')+' still owned')+
-      tile('MONTH OPERATING CONTRIBUTION',money(r.operatingContribution),operatingDetail,
-        r.operatingContribution<0?' fin-tile-loss':'')+
+      tile(is2026?'MONTH CONTRIBUTION AFTER OUTPUT VAT':'MONTH OPERATING CONTRIBUTION',money(contribution),operatingDetail,
+        contribution<0?' fin-tile-loss':'')+
       '</div>';
     const cashflow='<section class="fin-panel fin-cashflow"><div class="fin-panel-head">'+
       '<div><small>'+month+'</small><h3>WHERE YOUR CASH WENT</h3></div>'+
@@ -86,6 +94,7 @@
       '<small>CASH COMMITMENTS</small><h3>WHAT IS ALREADY SPOKEN FOR?</h3></div>'+
       '<button type="button" class="fin-text-button" data-page="workshop">WORKSHOP</button></div>'+
       line('Workshop cash earmarked',money(x.reserved))+
+      (is2026?line('Accrued output VAT protected',E.vat.pence(x.vatOutstanding)): '')+
       line('Wages per game day',money(x.staffDaily))+
       line(state.financialScenario==='uk2026'?'Core operating expense per day':'Premises per game day',money(x.premisesDaily))+
       (state.financialScenario==='uk2026'?line('Cash overhead budget per 30 days',money(E.premises.costs(state).monthlyCashGuide)):'')+
@@ -113,8 +122,25 @@
       line('Opening bank cash',money(opening.openingBank))+
       '<p class="fin-detail">These pre-opening transactions are held in the career opening balance sheet, not posted as Month 1 sales or recurring charges. Annual insurance is expensed gradually without paying it twice. Future tax and depreciation accounting remains simplified.</p>'+
       '</section>':'';
-    const footer='<p class="fin-disclosure">Simulation figures only. Operating contribution is not statutory net profit: VAT, tax, finance, depreciation, warranties and other consumer liabilities are not fully modelled.</p>';
-    return {snapshot:x,html:top+openingPanel+cashflow+'<div class="fin-secondary">'+
+    const vat=E.vat;
+    const nowDue=vat.enabled(state)?vat.maturedPence(state):0;
+    const rolling=vat.rollingTurnover(state);
+    const upcoming=vat.enabled(state)?vat.entries(state)
+      .filter(x=>x.vat.outputPence>0).map(x=>x.vat.dueDay)
+      .filter(day=>day>=state.day).sort((a,b)=>a-b)[0]:null;
+    const vatPanel=is2026?'<section class="fin-panel"><div class="fin-panel-head"><div>'+
+      '<small>VAT / TAX LIABILITIES</small><h3>SECOND-HAND MOTOR VAT MODEL</h3></div></div>'+
+      line('Registration scenario',state.vatRegistrationDay===1?'Voluntary registration from opening':'Legacy pilot — VAT model not active')+
+      line('Trailing 365-day taxable sales',money(rolling))+
+      line('Statutory turnover threshold (2026)',money(vat.THRESHOLD))+
+      line('VAT output accrued (less remittances)',vat.pence(x.vatOutstanding))+
+      line('VAT past simulated due date',vat.pence(nowDue),nowDue>0?' fin-due':'')+
+      (upcoming?line('Next modelled quarterly filing date',
+        vat.dateForDay(upcoming).toLocaleDateString('en-GB')):'')+
+      '<p class="fin-detail">For new 2026 careers, used vehicles are ASSUMED margin-scheme eligible. Tax is 1/6 of a positive vehicle purchase-to-sale margin, not 20% of profit. Whole-pound VAT cash remittances fall due after simulated calendar quarters. Buyer-fee invoice classification and margin eligibility must be verified on real purchases. Input VAT recovery, proper VAT returns, invoicing/VRN stockbook and aftersales reversals are still not modelled.</p>'+
+      '</section>':'';
+    const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional, not a statutory VAT return or final net profit; employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
+    return {snapshot:x,html:top+openingPanel+vatPanel+cashflow+'<div class="fin-secondary">'+
       commitments+performance+'</div>'+footer};
   }
   function category(note){
@@ -122,6 +148,7 @@
     if(/^(Auction purchase|Auction transport|Direct purchase|Part-exchange acquisition|Pre-purchase inspection)/.test(note))return 'VEHICLE BUYING';
     if(/^(Workshop |Preparation and inspection)/.test(note))return 'WORKSHOP';
     if(/^(Staff |Sales commission|Recruitment )/.test(note))return 'STAFF';
+    if(/^VAT (output|remittance)/.test(note))return 'TAX / VAT';
     if(/^Premises /.test(note))return 'PREMISES';
     return 'OTHER';
   }
