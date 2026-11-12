@@ -365,7 +365,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
     setInput(id,value);
     if (listeners.input) listeners.input({target:{id,value:String(value)}});
   }
-  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
+  return { nodes, bindings, panels, nav, storageData, click, go, submitCareer, setInput, typeInput, employment:context.window.MotorTradeEmployment, vat:context.window.MotorTradeVat, auctionTransport:context.window.MotorTradeTransport, repairPrices:context.window.MotorTradeRepairPrices, auctionFees:context.window.MotorTradeAuctionFees, engine:context.window.MotorTradeEngine, productionEngine:liveEngine, market:context.window.MotorTradeMarket,accuracy:context.window.MotorTradeAccuracy,photos:context.window.MotorTradePhotos,cards:context.window.MotorTradeCards,dashboard:context.window.MotorTradeDashboardView,eventsView:context.window.MotorTradeEventsView,inbox:context.window.MotorTradeInbox,buyingDesk:context.window.MotorTradeBuyingDeskView,stockView:context.window.MotorTradeStockView,workshopView:context.window.MotorTradeWorkshopView,customersView:context.window.MotorTradeCustomersView,aftersalesView:context.window.MotorTradeAftersalesView,financeView:context.window.MotorTradeFinanceView,monthlyView:context.window.MotorTradeMonthlyView,peopleView:context.window.MotorTradePeopleView,premisesView:context.window.MotorTradePremisesView };
 }
 
 test('v0.9.3 curated catalogue contains 50 correctly modelled UK vehicles',()=>{
@@ -6588,4 +6588,27 @@ test('recovered rejected vehicle may be sold on to the trade without invalidatin
   assert.equal(s.wholesale.at(-1).returnOf,c.saleId);
   assert.ok(real.normalize(JSON.parse(JSON.stringify(s))),
     'Historical refund and VAT credit survive onward vehicle disposal');
+});
+
+test('2026 dashboard prioritises accepted refund obligations and aftersales desk offers statutory remedies',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales;
+  const s=E.create('Dealer Complaint Desk',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  assert.ok(A.report(s,s.sold[0].id).ok);
+  const view=app.aftersalesView.render(s,real);
+  assert.match(view,/AFTERSALES & CUSTOMER REMEDIES/);
+  assert.match(view,/AUTHORISE REMEDIAL REPAIR/);
+  assert.match(view,/ACCEPT FULL SHORT-TERM REJECTION/);
+  assert.ok(app.dashboard.snapshot(s,real).tasks.some(x=>x.key==='aftersales-claims'));
+  assert.ok(A.refund(s,s.aftersales.cases[0].id).ok);
+  const pending=app.dashboard.snapshot(s,real);
+  assert.ok(pending.tasks.some(x=>x.key==='aftersales-refunds'));
+  assert.equal(pending.arrears,A.pendingRefunds(s));
+  const dueView=app.aftersalesView.render(s,real);
+  assert.match(dueView,/ACCEPTED REFUND/);
+  assert.match(dueView,/without undue delay/);
 });
