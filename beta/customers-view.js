@@ -38,11 +38,19 @@
       '">CUSTOMER CHANGES MIND</button>';
     let body='';
     switch(c.status){
-      case 'enquiry':
-        body='<p>'+esc(c.name)+' has enquired about this car. They have not inspected or test driven it yet.'+
-          ' Book a viewing within 48 game-hours. No deposit means the vehicle remains for sale.</p>'+ 
+      case 'enquiry':{
+        const budget=state.financialScenario==='uk2026'?E.buyers(vehicle,state):null;
+        const indication=budget?
+          '<div class="sales-case-highlight"><strong>PRE-VIEWING PRICE INDICATION: '+cash(budget.cashOffer)+'</strong>'+
+          '<p>Buyer has asked about a price in this area. This is NOT a firm, accepted offer: inspection, test drive and final negotiation are still required. The buyer may decline or walk away.</p></div>':'';
+        body='<p>'+esc(c.name)+(c.channel==='ONLINE PRICE QUESTION'?
+          ' has asked whether you will negotiate on the advertised price.':
+          ' has enquired about this car.')+
+          ' They have not inspected or test driven it yet. Book a viewing within 48 game-hours. No deposit means the vehicle remains for sale.</p>'+indication+
           '<button type="button" class="trade-button" data-action="book-customer" data-id="'+id+
           '">BOOK VIEWING →</button> '+cancel;
+        break;
+      }
         break;
       case 'booked':
         body='<div class="sales-case-highlight"><strong>VIEWING WITHIN 48 GAME-HOURS · NO DEPOSIT</strong>'+ 
@@ -184,6 +192,17 @@
       window.MotorTradeRetailLiquidity.value(state,v).indicative:
       (v.profile?.likelySale??v.retail);
     const days=Math.max(0,state.day-v.listedDay);
+    const liquid=state.financialScenario==='uk2026'?window.MotorTradeRetailLiquidity:null;
+    const customerPrice=liquid?liquid.value(state,v):null;
+    const simulatedRate=liquid?liquid.enquiryPercent(state,v,
+      E.people.salesImpact(state,v.id).enquiryLift):null;
+    const premiumPct=customerPrice?Math.round(100*(v.asking/customerPrice.indicative-1)):null;
+    const marketFeedback=customerPrice?
+      '<p class="so-caveat"><strong>BUYER INTEREST / PRICE CHECK:</strong> Your asking price is '+
+      (premiumPct>0?premiumPct+'% above':premiumPct<0?Math.abs(premiumPct)+'% below':'in line with')+
+      ' the fictional achievable-price estimate ('+cash(customerPrice.indicative)+'). '+
+      'Modelled baseline chance of an enquiry or price question is '+simulatedRate+
+      '% per game day, not a sale probability. Buyers may offer substantially less than asking; a higher asking price still makes an agreement harder.</p>':'';
     return '<article class="so-file" aria-label="Selected sales case">'+
       '<header class="so-file-head"><div><small>RETAIL FILE · STOCK '+v.id+
       (c?' · '+esc(c.channel):' · ADVERTISED VEHICLE')+'</small>'+
@@ -204,7 +223,7 @@
         '<div class="so-figures-strong"><span>AGREED SALE PRICE</span><strong>'+cash(c.price)+'</strong></div>':'')+
       '</div><p class="so-caveat">Valuations are fictional'+
       (state.financialScenario==='uk2026'?' and include a deliberately conservative aged-stock sensitivity, not a validated transaction price':'')+
-      '. An agreed price is not a completed sale until handover.</p>'+
+      '. An agreed price is not a completed sale until handover.</p>'+marketFeedback+
       '</section><section class="so-customer"><div class="so-customer-heading">'+
       '<div><small>SALES CASE MANAGEMENT</small><h4>NEXT CUSTOMER ACTION</h4></div>'+
       (c?'<span>'+esc(c.name)+'</span>':'')+'</div>'+
