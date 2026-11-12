@@ -67,10 +67,12 @@ async function nav(page,key){
     key+' routes to correct page');
 }
 async function overflow(page,name){
+  const expected=page.viewportSize().width;
   const data=await page.evaluate(()=>{
     const w=innerWidth;
     return {viewport:w,root:document.documentElement.scrollWidth,
       body:document.body.scrollWidth,
+      visual:visualViewport?.width,client:document.documentElement.clientWidth,
       offenders:[...document.querySelectorAll('body *')].map(el=>{
         const r=el.getBoundingClientRect();
         return {tag:el.tagName,className:typeof el.className==='string'?el.className.slice(0,80):'',
@@ -78,8 +80,9 @@ async function overflow(page,name){
           width:Math.round(r.width)}
       }).filter(x=>x.right>w+8&&x.width>50).slice(0,12)};
   });
-  ok(data.root<=data.viewport+8,
-    name+' horizontal viewport overflow: '+JSON.stringify(data));
+  ok(data.root<=expected+4&&data.body<=expected+4&&data.viewport<=expected+4&&
+     data.client<=expected+4,
+    name+' horizontal viewport overflow vs requested '+expected+'px: '+JSON.stringify(data));
 }
 async function clickAction(page,action,sub=''){
   const target=page.locator('[data-panel]:not([hidden]) [data-action="'+action+'"]'+sub).first();
@@ -102,7 +105,12 @@ async function dayForward(page){
   throw Error('Unable to move the real UI past Deal Day / board meeting on day '+prev);
 }
 function windowIsMeeting(s){return (s.day-1)%30===0&&s.meetingHeldMonth!==(Math.floor((s.day-1)/30)+1);}
-async function capture(page,name){await page.screenshot({path:OUT+'/'+name+'.png',fullPage:true,animations:'disabled'});}
+async function capture(page,name){
+  const shot=await page.screenshot({path:OUT+'/'+name+'.png',fullPage:true,animations:'disabled'});
+  const actual=shot.readUInt32BE(16),expected=page.viewportSize().width;
+  ok(actual<=expected+4,
+    name+' full-page screenshot expanded horizontally from '+expected+'px to '+actual+'px');
+}
 
 const sizes=[
   {name:'desktop-1440',viewport:{width:1440,height:900}},
@@ -145,7 +153,6 @@ await run('desktop purchase/repair/advertise/retail/save/ledger',async()=>{
     let s=await state(page);
     const leads=await page.locator('#market-sellers [data-action="select-seller"]').count();
     ok(leads>0,'Real Buying Desk contains selectable owner leads');
-    const picked=s=>(window.CHECK ? 0 : s); // No game-state manipulation.
     const market=await page.evaluate(()=>{
       const s=JSON.parse(localStorage.getItem('the-motor-trade-career-v1'));
       return window.MotorTradeEngine.marketFor(s).sellers.map(x=>({id:x.id,ask:x.ask}));
