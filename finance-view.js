@@ -85,7 +85,8 @@
       '<button type="button" class="fin-text-button" data-page="workshop">WORKSHOP</button></div>'+
       line('Workshop cash earmarked',money(x.reserved))+
       line('Wages per game day',money(x.staffDaily))+
-      line('Premises per game day',money(x.premisesDaily))+
+      line(state.financialScenario==='uk2026'?'Core operating expense per day':'Premises per game day',money(x.premisesDaily))+
+      (state.financialScenario==='uk2026'?line('Cash overhead budget per 30 days',money(E.premises.costs(state).monthlyCashGuide)):'')+
       line('Outstanding bills',money(x.arrears),x.arrears?' fin-due':'')+
       notice+auctionNotice+
       '<p class="fin-detail">Repair reserves are still included in your cash balance. Daily costs are future expenses, not money deducted twice.</p>'+
@@ -99,8 +100,19 @@
       line('This month gross trade margin',money(r.grossMargin))+
       '<p class="fin-detail">Gross margin is not cash in the bank or net profit. Deposits are held outside dealership cash until handover.</p>'+
       '</section>';
+    const opening=state.startupAccounts;
+    const openingPanel=opening?'<section class="fin-panel"><div class="fin-panel-head"><div>'+
+      '<small>DAY-ZERO FUNDING</small><h3>HOW THIS BUSINESS WAS FUNDED</h3></div></div>'+
+      line('Owner contributed capital',money(opening.ownerCapital))+
+      line('Premises security deposit (asset)',money(opening.premisesDeposit))+
+      line('Annual insurance prepaid (asset)',money(opening.prepaidInsurance))+
+      line('Fixtures and equipment (asset)',money(opening.fixtures))+
+      line('One-off launch expense',money(opening.launchExpense))+
+      line('Opening bank cash',money(opening.openingBank))+
+      '<p class="fin-detail">These pre-opening transactions are held in the career opening balance sheet, not posted as Month 1 sales or recurring charges. Annual insurance is expensed gradually without paying it twice. Future tax and depreciation accounting remains simplified.</p>'+
+      '</section>':'';
     const footer='<p class="fin-disclosure">Simulation figures only. Operating contribution is not statutory net profit: VAT, tax, finance, depreciation, warranties and other consumer liabilities are not fully modelled.</p>';
-    return {snapshot:x,html:top+cashflow+'<div class="fin-secondary">'+
+    return {snapshot:x,html:top+openingPanel+cashflow+'<div class="fin-secondary">'+
       commitments+performance+'</div>'+footer};
   }
   function category(note){
