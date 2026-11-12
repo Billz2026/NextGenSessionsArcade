@@ -17,14 +17,25 @@
   const transactions=(ledger,start,end)=>ledger.filter(v=>v.day>=start&&v.day<=end);
   const targetFor=(score,days=PERIOD)=>{
     const tier=unitBase(score);
-    // Two-space independent forecourt: targets rise with trust, but never
-    // assume the player already owns a larger premises or workshop.
+    // Classic career volume targets preserve their original reputation ladder.
     const unitTarget=days<PERIOD?Math.max(1,Math.ceil(tier*days/PERIOD)):tier;
     const retailGuide=score>=80?8500:score>=60?7750:
       score>=40?7000:score>=20?6000:5250;
     return {unitTarget,turnoverTarget:money(unitTarget*retailGuide),
       marginTarget:money(unitTarget*(score>=60?850:score>=20?700:600))};
   };
+  function targetFor2026(score,capacity=4,days=PERIOD){
+    // The UK2026 start has four spaces, outsourced prep and real customer
+    // appointments. Reputation alone must not create a six-unit monthly
+    // target without enough forecourt capacity to turn that much stock.
+    // These are MANAGEMENT TARGETS, not forecasts of actual market demand.
+    const base=targetFor(score,days);
+    const sized=Math.min(unitBase(score),Math.max(2,Math.floor(capacity/2)+1));
+    const units=days<PERIOD?Math.max(1,Math.ceil(sized*days/PERIOD)):sized;
+    return {...base,unitTarget:units,
+      turnoverTarget:money(base.turnoverTarget/base.unitTarget*units),
+      marginTarget:money(base.marginTarget/base.unitTarget*units)};
+  }
   function staffTarget(plan,employee,day){
     if(employee.role!=='sales')return null;
     const first=Math.max(day+1,employee.startDay,plan.startDay);
@@ -45,7 +56,9 @@
     const start=migrating?state.day:dayStart(state.day);
     const end=dayStart(state.day)+PERIOD-1;
     const days=end-start+1;
-    const target=targetFor(state.reputationScore,days);
+    const target=state.financialScenario==='uk2026'?
+      targetFor2026(state.reputationScore,state.capacity,days):
+      targetFor(state.reputationScore,days);
     const next={
       month:monthOf(state.day),startDay:start,endDay:end,
       standardStartDay:dayStart(state.day),partial:start!==dayStart(state.day),
@@ -382,7 +395,7 @@
     return true;
   }
   window.MotorTradeMonthly=Object.freeze({
-    PERIOD,monthOf,dayStart,targetFor,initialize,onHire,
+    PERIOD,monthOf,dayStart,targetFor,targetFor2026,initialize,onHire,
     statement,close,next,restore,validPlan,validReport
   });
 })();
