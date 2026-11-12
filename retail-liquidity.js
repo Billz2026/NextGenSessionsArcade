@@ -49,14 +49,18 @@
     const claims=E.aftersales.pendingRefunds(state);
     const payroll=state.employmentScenario==='uk2026-payroll'?
       E.employment.liabilities(state).total:0;
-    const committed=pendingPrep+tax+claims+payroll;
+    // Phase 8B extends creditor protection to unpaid premises. Keep both
+    // Finance risk screens on the same accounting definition of free cash.
+    const solvency=window.MotorTradeCommercialControls?.status(state);
+    const committed=solvency?.commitments??
+      pendingPrep+tax+claims+payroll;
     const freeCash=Math.max(0,state.cash-committed);
     const monthlyOverhead=E.premises.costs(state).monthlyCashGuide;
     const staffMonthly=state.staff.reduce((n,e)=>n+(
       state.employmentScenario==='uk2026-payroll'?
       E.employment.monthlyQuote(E.employment.baseSalary(e,state.day),{
         allowanceRemaining:0}).employerCost:E.people.dailyCost(e)*30),0);
-    const monthlyBurn=monthlyOverhead+staffMonthly;
+    const monthlyBurn=solvency?.monthlyOperating??monthlyOverhead+staffMonthly;
     const stock=state.vehicles.map(v=>{
       const estimate=value(state,v);
       const paidRepairs=['in-progress','quality-check'].includes(v.workshop?.stage)?
