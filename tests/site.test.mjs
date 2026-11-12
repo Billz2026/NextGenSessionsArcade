@@ -6118,6 +6118,10 @@ test('2026 role-based salary and 40 hour contract are benchmarked; classic appli
   const budget=P.hireQuote(modern,modernSales);
   assert.equal(budget.coverDays,30);
   assert.ok(budget.monthlyEmployerCost>modernSales.monthlySalary);
+  assert.equal(budget.monthlyEmployerCost,
+    app.employment.monthlyQuote(modernSales.monthlySalary,
+      {allowanceRemaining:0}).employerCost,
+    'Hiring reserves gross employer NIC even where an allowance may reduce final liability');
   assert.ok(budget.required>modernSales.monthlySalary);
   assert.ok(P.hire(modern,modernSales.id).ok);
   assert.equal(modern.staff[0].monthlySalary,modernSales.monthlySalary);
