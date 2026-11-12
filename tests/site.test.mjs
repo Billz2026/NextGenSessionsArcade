@@ -7322,3 +7322,25 @@ test('Phase 8C: active 36 and 60 month careers preserve real cash, stock and unp
     }));
   }
 });
+
+
+test('Phase 8C: a sub-pound outstanding VAT rounding carry must not freeze a solvent dealer',()=>{
+  const app=browser(),E=app.productionEngine,V=app.vat,C=app.commercialControls;
+  const s=E.create('Vat Rounding Dealer',[],'uk2026');
+  const vat=V.record(10000,10100,1);
+  assert.ok(vat.outputPence>100&&vat.outputPence%100!==0);
+  s.sold.push({id:1,day:1,price:10100,acquisition:10000,prep:0,
+    profit:100,title:'Synthetic VAT accounting test unit',mode:'cash',vat});
+  s.day=vat.dueDay;
+  assert.ok(V.maturedPence(s)>100);
+  assert.equal(C.status(s).creditorHold,true,'Real unpaid whole pounds may trigger supplier hold');
+  const payment=E.vatDay(s);
+  assert.ok(payment.paid>0);
+  assert.ok(V.maturedPence(s)>0&&V.maturedPence(s)<100);
+  assert.equal(C.status(s).maturedVat,0);
+  assert.equal(C.status(s).creditorHold,false,
+    'VAT rounding residue under £1 cannot make a financially sound dealer permanently unable to buy');
+  assert.equal(C.status(s).vat,1,
+    'The carried VAT liability is still reserved and shown; it is not erased');
+  assert.equal(V.outstandingPence(s),V.maturedPence(s));
+});
