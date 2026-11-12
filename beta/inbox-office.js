@@ -151,7 +151,7 @@
           (budget?'PRE-VIEWING PRICE INDICATION: '+budget+' (NOT a firm or accepted offer).\n'+
             'This is an initial buyer budget question. Actual terms require inspection, a test drive and final negotiation.\n\n':'')+
           'Your buyer is waiting for a response. Open the Sales Office to book a viewing before game day '+
-          (c.createdDay+3)+'. The enquiry does not guarantee a purchase: the customer must attend, test drive and agree terms.'
+          (c.createdDay+3)+'. The enquiry does not guarantee a purchase: the customer must attend, test drive and agree terms.',
         linkPage:'sales',reference:'retail-enquiry:'+c.id
       })||changed;
     }
