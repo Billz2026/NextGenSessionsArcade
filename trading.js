@@ -506,6 +506,26 @@
       if(saved.version<15||!saved.startupAccounts||
          Object.keys(STANDARD_STARTUP).some(k=>saved.startupAccounts[k]!==STANDARD_STARTUP[k]))return null;
     }
+    if(standard){
+      // An auction transport invoice must match the modelled lot route and
+      // its separate hammer purchase. This also covers the classic-style
+      // direct auction purchase path, which has no Auction Hall result row.
+      const auctionPurchases=saved.ledger.filter(x=>x.note.startsWith('Auction purchase: '));
+      const deliveries=saved.ledger.filter(x=>x.note.startsWith('Auction transport: '));
+      if(auctionPurchases.length!==deliveries.length)return null;
+      const seenRoutes=new Set();
+      for(const row of deliveries){
+        const match=/^Auction transport: (.+) \(lot (A-\d+-\d+), simulated (\d+) miles\)$/.exec(row.note);
+        if(!match)return null;
+        const [,title,id,distanceText]=match;
+        const q=TRANSPORT.quote(id);
+        if(!q||q.routeMiles!==Number(distanceText)||
+           row.delta!==-q.gross||seenRoutes.has(id))return null;
+        seenRoutes.add(id);
+        if(!auctionPurchases.some(p=>p.day===row.day&&p.note.startsWith(
+          'Auction purchase: '+title+' (bid ')))return null;
+      }
+    }
     const balance = (standard?STANDARD_STARTUP.openingBank:STARTING_CASH) + sum(saved.ledger,'delta');
     if (balance !== saved.cash || balance < 0 || balance > 100000000) return null;
     const restored={
