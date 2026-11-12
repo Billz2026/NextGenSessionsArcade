@@ -6903,3 +6903,140 @@ test('Phase 8: a held vehicle does not generate phantom sales, cash or instant l
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
     'Unprofitable year and unsold stock must retain a restorable save');
 });
+
+
+test('Phase 8B: creditor commitments, due VAT and operating cash buffer are separate from apparent bank balance',()=>{
+  const app=browser(),E=app.productionEngine,C=app.commercialControls;
+  const s=E.create('Liquidity Gate Motors',[],'uk2026');
+  const x=C.status(s);
+  assert.equal(x.bankCash,50000);
+  assert.equal(x.commitments,0);
+  assert.equal(x.minimumBuffer,Math.ceil(x.monthlyOperating*14/30));
+  assert.ok(x.minimumBuffer>=1000);
+  assert.equal(x.tier,'operating');
+  assert.equal(C.buyingGate(s,48000,0),null);
+  const blocked=C.buyingGate(s,49500,0);
+  assert.equal(blocked.code,'cash');
+  assert.match(blocked.message,/14-day/);
+  assert.equal(s.cash,50000,'A declined bid must never move the bank ledger');
+  assert.equal(s.ledger.length,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
+    'New creditor controls must not require a new save field');
+});
+
+test('Phase 8B: overdue premises bills prohibit additional stock and expansion but permit creditor recovery',()=>{
+  const app=browser(),E=app.productionEngine,C=app.commercialControls;
+  const s=E.create('Creditor Hold Autos',[],'uk2026');
+  s.premises.arrears=250; // A simulated unpaid invoice; no purchase is made.
+  const x=C.status(s);
+  assert.equal(x.creditorHold,true);
+  assert.equal(x.overdue,250);
+  assert.equal(x.premises,250);
+  assert.equal(C.buyingGate(s,500,300).code,'creditor-hold');
+  assert.equal(E.upgradePremises(s,'forecourt').code,'creditor-hold');
+  const seller=E.marketFor(s).sellers[0];
+  assert.equal(E.acquireSeller(s,seller.id,seller.ask).code,'creditor-hold');
+  assert.equal(s.vehicles.length,0);
+  assert.equal(s.cash,50000);
+  s.day=2;
+  const due=E.premisesDay(s);
+  assert.ok(due.paid>250,'Routine settlement pays the creditor and the new bill');
+  assert.equal(s.premises.arrears,0);
+  assert.equal(C.status(s).creditorHold,false);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
+    'Paid premises arrears must not silently reappear after save restoration');
+});
+
+test('Phase 8B: four above-retail unverified wholesale guides are quarantined, not repriced with fictional sold hammers',()=>{
+  const app=browser(),E=app.productionEngine,M=app.market;
+  const flagged=Object.values(M.CATALOGUE).flat()
+    .map(row=>M.priceFor(row,'uk2026'))
+    .filter(row=>row.priceAudit?.buyingRisk);
+  assert.equal(flagged.length,4);
+  const titles=new Set(flagged.map(v=>v.title));
+  let checked=0;
+  for(let day=1;day<=240;day++){
+    const modern=E.market(day,80,0,'Quarantine Traders',80,130000,'uk2026');
+    for(const v of [...modern.auctions,...modern.sellers]){
+      checked++;
+      assert.ok(!titles.has(v.title),'Unsupported trade guide sourced: '+v.title);
+    }
+  }
+  assert.ok(checked>250,'Check normal auctions and private leads across many game days');
+  // Audit records remain intact for sourcing specialists to resolve later.
+  const q=flagged.find(x=>x.title.includes('Qashqai'));
+  assert.ok(q.guide>q.retail);
+  assert.match(q.priceAudit.tradeGuide,/not a verified auction result/);
+  const classic=E.market(35,80,0,'Quarantine Traders',80,130000,'classic');
+  assert.ok(classic.auctions.length+classic.sellers.length>0,
+    'Classic catalogue is not forced into the new price quarantine');
+});
+
+test('Phase 8B: repaired ready/listed stock can be liquidated at a fully costed loss without a phantom retail sale',()=>{
+  const app=browser(),E=app.productionEngine;
+  const s=E.create('Completed Stock Exit',[],'uk2026');
+  const seller=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const v=s.vehicles[0];
+  assert.ok(E.assessStock(s,v.id).ok);
+  assert.ok(E.startPrep(s,v.id,'external').ok);
+  assert.equal(E.disposeStock(s,v.id).code,'stage',
+    'A repair contract currently in progress is not a free cancellation');
+  for(let n=0;n<25&&v.status!=='prepared';n++){
+    if(v.workshop.stage==='in-progress'){
+      s.day++;E.advanceWorkshop(s);
+    }else if(v.workshop.stage==='quality-check'){
+      assert.ok(E.finishPrep(s,v.id).ok);
+    }else assert.fail('Unexpected repair stage '+v.workshop.stage);
+  }
+  assert.equal(v.status,'prepared');
+  assert.ok(v.prepSpent>0,'Actual reconditioning must be booked before disposal');
+  assert.ok(E.advertise(s,v.id,Math.round(v.retail/50)*50).ok);
+  const basis=v.cost+v.prepSpent;
+  const cashBefore=s.cash, ledgerCount=s.ledger.length;
+  const bid=E.wholesaleOffer(v,s);
+  assert.ok(bid<basis,'Distress exit must not guarantee a preparation profit');
+  // A real customer case, particularly a held deposit, must block liquidation.
+  s.customerCases[String(v.id)]={status:'reserved',held:250};
+  assert.equal(E.disposeStock(s,v.id).code,'customer');
+  assert.equal(s.cash,cashBefore);
+  assert.equal(s.ledger.length,ledgerCount);
+  delete s.customerCases[String(v.id)]; // Test fixture removes synthetic case.
+  assert.ok(E.disposeStock(s,v.id).ok);
+  assert.equal(s.cash,cashBefore+bid);
+  assert.equal(s.wholesale.length,1);
+  assert.equal(s.wholesale[0].basis,basis,'Paid repairs are included in actual loss');
+  assert.equal(s.wholesale[0].profit,bid-basis);
+  assert.equal(s.sold.length,0);
+  assert.equal(s.sales,0);
+  assert.equal(E.monthly.statement(s).wholesaleUnits,1);
+  assert.equal(E.monthly.statement(s).soldUnits,0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))),
+    'Costed liquidation and VAT records must survive the original save format');
+  assert.match(app.financeView.summary(s,E).html,/CREDITOR EXPOSURE/);
+});
+
+test('Phase 8B: creditor restrictions do not silently erase debts or create borrowings',()=>{
+  const app=browser(),E=app.productionEngine,C=app.commercialControls;
+  const s=E.create('No Invisible Lending',[],'uk2026');
+  const seller=E.marketFor(s).sellers[0];
+  assert.ok(E.acquireSeller(s,seller.id,seller.ask).ok);
+  const v=s.vehicles[0];
+  const bank=s.cash;
+  s.premises.arrears=bank+500;
+  const before=C.status(s);
+  assert.ok(before.shortfall>0);
+  assert.ok(before.creditorHold);
+  const rejected=E.acquireSeller(s,E.marketFor(s).sellers[1].id,
+    E.marketFor(s).sellers[1].ask);
+  assert.equal(rejected.code,'creditor-hold');
+  assert.equal(s.cash,bank);
+  const proceeds=E.wholesaleOffer(v,s);
+  assert.ok(E.disposeStock(s,v.id).ok,
+    'Trade disposal must remain available during financial distress');
+  assert.equal(s.cash,bank+proceeds);
+  assert.equal(s.premises.arrears,bank+500,'A sale is not automatically a payment to creditors');
+  assert.equal(C.status(s).creditorHold,true);
+  assert.ok(s.cash>=0);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
