@@ -365,6 +365,23 @@
     return reason+(money.retained?' £'+money.retained+' of the deposit retained against costs.':'')+
       (money.refunded?' £'+money.refunded+' refunded.':'');
   }
+  function queueEnquiries(state){
+    // Modern independent-dealer leads are real in-game customer cases, not
+    // transient screen-only prompts. Generate once on the actual new game
+    // day, never on page render/reload. No lead without advertised stock.
+    if(state.financialScenario!=='uk2026')return [];
+    const received=[];
+    for(const vehicle of state.vehicles){
+      if(vehicle.status!=='listed'||caseFor(state,vehicle.id)||!demand(state,vehicle))continue;
+      const result=open(state,vehicle.id);
+      if(result.ok){
+        const c=caseFor(state,vehicle.id);
+        received.push('NEW RETAIL ENQUIRY: '+c.name+' for stock '+vehicle.id+
+          '. Respond in the Sales Office within three game days.');
+      }
+    }
+    return received;
+  }
   function advanceDay(state){
     const notices=[];
     for(const c of Object.values(state.customerCases)){
@@ -388,12 +405,14 @@
       }else if(c.status==='collectable'&&state.day>c.collectionDay+5){
         notices.push(failCase(state,c,'deposit-refunded',
           'Customer withdrew after the collection grace period passed.'));
-      }else if(['enquiry','arrived','discussing','agreed'].includes(c.status)&&
-        c.createdDay<state.day){
+      }else if((c.status==='enquiry'&&state.day-c.createdDay>=3)||
+        (['arrived','discussing','agreed'].includes(c.status)&&
+        c.createdDay<state.day)){
         notices.push(failCase(state,c,'expired','Customer enquiry expired without a completed agreement.'));
         restoreBooked(state,c,notices);
       }
     }
+    notices.push(...queueEnquiries(state));
     return notices;
   }
   function nextSession(state){
@@ -501,6 +520,6 @@
   }
   window.MotorTradeCustomers=Object.freeze({
     caseFor,demand,open,book,competingInterest,serveCompeting,testDrive,negotiate,agree,deposit,cancel,
-    ready,complete,advanceDay,nextSession,stats,valid,heldDeposits,balanceDue,customerPrep
+    ready,complete,advanceDay,queueEnquiries,nextSession,stats,valid,heldDeposits,balanceDue,customerPrep
   });
 })();

@@ -45,8 +45,12 @@
     const stockPenalty=Math.min(3,Math.floor(x.advertisedDays/45));
     const reputation=Math.floor(clamp(state.reputationScore||0,0,100)/35);
     const salesperson=Math.round(clamp(salesLift,0,16)*0.25);
+    // A newly advertised, realistically priced car gets a modest initial
+    // marketing boost. This 2-point uplift is a game design assumption,
+    // not an independently measured UK customer conversion statistic.
+    const freshListing=x.advertisedDays<21?2:0;
     const fuelAdjustment=v.fuel==='Hybrid'?2:v.fuel==='Diesel'?-1:0;
-    return clamp(5+premium-gradePenalty-stockPenalty+reputation+
+    return clamp(5+freshListing+premium-gradePenalty-stockPenalty+reputation+
       salesperson+fuelAdjustment+marketAdjustment,1,40);
   }
   function snapshot(state,E){
