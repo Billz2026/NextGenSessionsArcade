@@ -140,8 +140,9 @@
     const fees=window.MotorTradeAuctionFees;
     const fee=source!=='auction'?0:published?
       (fees?.feeAtHammer(price)??null):Number(car.fee||0);
-    const feeQuoteRequired=published&&fee===null;
-    const total=feeQuoteRequired?null:price+fee+prep+inspection;
+    const transport=published?window.MotorTradeTransport?.quote(car.id)?.gross??null:0;
+    const feeQuoteRequired=published&&(fee===null||transport===null);
+    const total=feeQuoteRequired?null:price+fee+transport+prep+inspection;
     let maximumBid;
     if(published){
       // Fee bands increase with the hammer, so subtracting one fixed guide
@@ -149,14 +150,14 @@
       maximumBid=0;
       for(let candidate=25;candidate<=fees.MAX_PUBLISHED_HAMMER;candidate+=25){
         const charge=fees.feeAtHammer(candidate);
-        if(charge===null||candidate+charge+prep+inspection+p.targetMargin>p.likelySale)break;
+        if(charge===null||candidate+charge+transport+prep+inspection+p.targetMargin>p.likelySale)break;
         maximumBid=candidate;
       }
     }else{
       maximumBid=Math.max(0,moneyRound(p.likelySale-fee-prep-inspection-p.targetMargin));
     }
     return {likelySale:p.likelySale,trade:p.trade,retail:p.retail,
-      prep,fee,inspection,price,total,feeQuoteRequired,
+      prep,fee,transport,inspection,price,total,feeQuoteRequired,
       expectedMargin:feeQuoteRequired?null:p.likelySale-total,
       targetMargin:p.targetMargin,maxBid:maximumBid,
       riskUncertain:!inspected};
