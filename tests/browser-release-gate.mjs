@@ -106,6 +106,13 @@ async function dayForward(page){
 }
 function windowIsMeeting(s){return (s.day-1)%30===0&&s.meetingHeldMonth!==(Math.floor((s.day-1)/30)+1);}
 async function capture(page,name){
+  // Capture from the top. Full-page screenshots otherwise bake fixed-position
+  // elements (including the offscreen keyboard-only skip link) into the image
+  // at the current scroll offset, misrepresenting the visible player UI.
+  await page.evaluate(()=>{
+    document.documentElement.style.scrollBehavior='auto';
+    window.scrollTo(0,0);
+  });
   const shot=await page.screenshot({path:OUT+'/'+name+'.png',fullPage:true,animations:'disabled'});
   const actual=shot.readUInt32BE(16),expected=page.viewportSize().width;
   ok(actual<=expected+4,
