@@ -7072,7 +7072,7 @@ test('Phase 8B: every Finance screen reconciles uncommitted cash with creditor p
 function runActiveDealerCareer(E,name,days,policy='balanced'){
   const state=E.create(name,[],'uk2026'),C=E.customers;
   const values={balanced:{slots:3,margin:650,premium:125,drop:20,
-      releaseLossAfter:95,focus:'steady',deposits:false},
+      releaseLossAfter:95,focus:'sales',deposits:false},
     cautious:{slots:2,margin:1100,premium:50,drop:15,
       releaseLossAfter:90,focus:'buying',deposits:false},
     overpriced:{slots:3,margin:350,premium:2200,drop:0,
@@ -7080,7 +7080,7 @@ function runActiveDealerCareer(E,name,days,policy='balanced'){
     discount:{slots:4,margin:200,premium:-200,drop:35,
       releaseLossAfter:35,focus:'sales',deposits:true},
     inactive:{slots:0,margin:Infinity,premium:0,drop:0,
-      releaseLossAfter:1000,focus:'steady',deposits:false}};
+      releaseLossAfter:1000,focus:'sales',deposits:false}};
   const opts=values[policy];
   if(!opts)throw Error('Unknown dealer policy: '+policy);
   let attempts=0,purchased=0,blocked=0,prepared=0,
