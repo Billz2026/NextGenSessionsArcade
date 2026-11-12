@@ -23,7 +23,7 @@
       '<span class="people-salary">'+gbp(person.monthlySalary)+'<small>BASE / MONTH</small></span></div>';
   }
   const labels={
-    sales:'Creates more enquiries, gets buyers to view sooner and improves test-drive conversion and negotiations. Higher performers earn a larger share of positive gross margin.',
+    sales:'Handles enquiries, makes next-day callbacks, attempts to book viewings and improves test-drive conversion. Wages and employer costs continue even when no cars sell; commission applies only to completed profitable deals.',
     buyer:'Can secure more competitive private-seller agreements and provide auction rival-bid intelligence.',
     technician:'Runs one assigned in-house repair at a time. More technicians enable parallel preparation, but wages and parts still cost money.',
     supervisor:'Manages routine rota and morale check-ins automatically each week. Escalates costed staff-support proposals to you for approval or refusal. One supervisor maximum; salary continues daily.'
@@ -32,8 +32,8 @@
     if(person.role!=='sales')return '';
     const p=P.salesProfile(person);
     return '<div class="people-caption"><strong>SALES IMPACT:</strong> +'+p.enquiryLift+
-      ' percentage points to enquiry chance · +'+p.driveLift+
-      ' to drive conversion · '+(p.fastViewing?'NEXT-DAY VIEWINGS':'UP TO 48-HOUR VIEWINGS')+
+      ' lead-generation score (partly applied to the daily chance) · +'+p.driveLift+
+      ' test-drive boost · NEXT-DAY BUYER CALLBACKS · '+(p.fastViewing?'NEXT-DAY VIEWINGS':'UP TO 48-HOUR VIEWINGS')+
       ' · '+Math.round(p.commissionRate*100)+'% commission on positive gross margin.</div>';
   }
   function applicants(state,P){
@@ -86,7 +86,8 @@
       return '<article class="people-card">'+header(employee)+
         '<div class="people-meta"><span>'+esc(status)+'</span>'+
         '<span>MORALE '+employee.morale+'/100</span>'+
-        '<span>'+employee.deals+' DEALS · '+employee.workDone+' PREP JOBS</span></div>'+
+        '<span>'+employee.deals+' DEALS · '+employee.workDone+
+        (employee.role==='sales'?' CUSTOMER CONTACTS':' PREP JOBS')+'</span></div>'+
         '<div class="people-traits">'+traits[employee.role].map(([a,k])=>bar(a,employee.skills[k])).join('')+'</div>'+
         '<p class="people-caption">'+esc(labels[employee.role])+'</p>'+salesForecast(employee,P)+
         '<div class="people-card-footer"><span>DAILY WAGE PROVISION '+gbp(P.dailyCost(employee))+'</span>'+
@@ -315,7 +316,7 @@
       (state.employmentScenario==='uk2026-payroll'?'<p class="sd-fine">Contract: '+e.contractHours+' paid hours/week, '+e.ageBand+' adult rate; pension enrolled; paid holiday entitlement '+window.MotorTradeEmployment.LEAVE_DAYS+' days/year including bank holidays. Holiday and full-pay company sick leave reduce availability while salary continues.</p>':'')+
       '<div class="sd-person-detail"><div>'+skillSection(e,P)+
       '<div class="sd-performance"><div><small>RETAIL DEALS</small><strong>'+e.deals+
-      '</strong></div><div><small>PREPARATION JOBS</small><strong>'+e.workDone+
+      '</strong></div><div><small>'+(e.role==='sales'?'CUSTOMER CONTACTS':'PREPARATION JOBS')+'</small><strong>'+e.workDone+
       '</strong></div><div><small>HIRED DAY</small><strong>'+e.hiredDay+
       '</strong></div></div></div><div class="sd-control"><div class="sd-section-head">'+
       '<h4>EMPLOYEE DECISIONS</h4><span>CONFIRMED ACTIONS</span></div>'+
