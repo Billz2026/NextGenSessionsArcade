@@ -115,12 +115,20 @@
     for(const row of ledger)bucket[categorize(row.note)]+=row.delta;
     const saleCount=sales.length;
     const turnover=sum(sales,'price');
-    const returned=state.aftersalesScenario==='cra2015-2026'?
+    const settled=state.aftersalesScenario==='cra2015-2026'?
       state.aftersales.history.filter(x=>x.day>=p.startDay&&x.day<=p.endDay):[];
-    const refundTurnover=sum(returned,'refund');
+    const accepted=state.aftersalesScenario==='cra2015-2026'?
+      state.aftersales.cases.filter(x=>x.refundApprovedDay!==null&&
+        x.refundApprovedDay>=p.startDay&&x.refundApprovedDay<=p.endDay):[];
+    // Customer remedy is an accrued cost on the day liability is AGREED,
+    // not when the bank eventually pays. The vehicle's original cost
+    // returns to stock on physical recovery; the original sale margin is
+    // reversed exactly once. Collection is another operating expense.
+    const refundTurnover=sum(accepted,'refundAmount');
     const grossMargin=sum(sales,'profit')+sum(disposals,'profit')-
-      sum(returned,'originalProfit');
-    const aftercareCost=-(bucket.customerCollection+bucket.customerRepairs);
+      accepted.reduce((n,x)=>n+(x.remedy==='price-reduction'?
+        x.refundAmount:(state.sold.find(s=>s.id===x.saleId)?.profit||0)),0);
+    const aftercareCost=-bucket.customerRepairs+sum(accepted,'collectionCost');
     const premisesExpense=ledger.filter(x=>x.note.startsWith('Premises expense accrued: £'))
       .reduce((n,x)=>n+Number(/^Premises expense accrued: £(\d+)/.exec(x.note)?.[1]||0),0);
     const inflow=ledger.filter(x=>x.delta>0).reduce((n,x)=>n+x.delta,0);
@@ -165,7 +173,7 @@
     const operatingContribution=grossMargin-payrollCost-premisesExpense-aftercareCost;
     const vatOutputAccruedPence=state.financialScenario==='uk2026'?
       [...sales,...disposals].reduce((n,v)=>n+(v.vat?.outputPence||0),0)-
-      sum(returned,'creditedVatPence'):0;
+      sum(settled,'creditedVatPence'):0;
     // The game ledger is whole-pound cash. Show a conservative pound-rounded
     // expense bridge while retaining the underlying pence liability exactly.
     const operatingAfterVat=operatingContribution-
@@ -188,8 +196,8 @@
       grossAfterStaff:grossMargin-payrollCost,
       ...(state.aftersalesScenario==='cra2015-2026'?{
         aftercareCost,refundTurnover,
-        refundedUnits:returned.filter(x=>x.type!=='price-reduction').length,
-        priceReducedUnits:returned.filter(x=>x.type==='price-reduction').length,
+        refundedUnits:accepted.filter(x=>x.remedy!=='price-reduction').length,
+        priceReducedUnits:accepted.filter(x=>x.remedy==='price-reduction').length,
         netRetailTurnover:turnover-refundTurnover}:{}),
       premisesExpense,premisesPaid:-bucket.premisesPayments,
       premisesInvestment:-bucket.premisesInvestment,
