@@ -904,7 +904,8 @@
       note:'VAT output accrued: '+VAT.pence(vatRecord.outputPence)+' on margin sale '+v.title});
     if(px)addCar(state,px,'part-ex',agreedAllowance,'PX-'+c.agreedDay+'-'+v.id,agreedAllowance);
     state.stock=state.vehicles.length;state.sales=state.sold.length;
-    const review=P.sale(state,v,price,realised,c);
+    const review=P.sale(state,v,price,
+      realised-(vatRecord?Math.ceil(vatRecord.outputPence/100):0),c);
     state.reputation=P.tier(state.reputationScore);
     const completed=state.sold.at(-1);
     completed.reputationDelta=review.reputationDelta;
