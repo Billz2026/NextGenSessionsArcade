@@ -81,7 +81,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /monthly\.js\?v=13/);
   assert.match(html, /events\.js\?v=2/);
   assert.match(html, /workshop\.js\?v=5/);
-  assert.match(html, /retail-liquidity\.js\?v=1/);
+  assert.match(html, /retail-liquidity\.js\?v=2/);
   assert.match(html, /commercial-controls\.js\?v=1/);
   assert.match(html, /customers\.js\?v=7/);
   assert.match(html, /aftersales\.js\?v=2/);
@@ -96,7 +96,7 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /auction-hall-view\.js\?v=6/);
   assert.match(html, /buying-desk-view\.js\?v=3/);
   assert.match(html, /stock-view\.js\?v=2/);
-  assert.match(html, /finance-view\.js\?v=14/);
+  assert.match(html, /finance-view\.js\?v=15/);
   assert.match(html, /economics-stress\.js\?v=1/);
   assert.match(html, /styles\.css\?v=49/);
   assert.match(html, /simulator\.js\?v=39/);
@@ -4999,7 +4999,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/&quot;alert\(1\)&quot;/);
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
-  assert.match(html,/finance-view\.js\?v=14/);
+  assert.match(html,/finance-view\.js\?v=15/);
   assert.match(html,/styles\.css\?v=49/);
 });
 
@@ -7039,4 +7039,23 @@ test('Phase 8B: creditor restrictions do not silently erase debts or create borr
   assert.equal(C.status(s).creditorHold,true);
   assert.ok(s.cash>=0);
   assert.ok(E.normalize(JSON.parse(JSON.stringify(s))));
+});
+
+
+test('Phase 8B: every Finance screen reconciles uncommitted cash with creditor protection',()=>{
+  const app=browser(),E=app.productionEngine,C=app.commercialControls,
+    L=app.retailLiquidity,F=app.financeView;
+  const s=E.create('Uniform Protected Balance',[],'uk2026');
+  s.premises.arrears=425;
+  const solvent=C.status(s),stock=L.snapshot(s,E),finance=F.snapshot(s,E);
+  assert.equal(solvent.commitments,425);
+  assert.equal(stock.committed,solvent.commitments);
+  assert.equal(stock.freeCash,solvent.freeBank);
+  assert.equal(finance.afterReserve,s.cash-solvent.commitments);
+  assert.equal(stock.monthlyBurn,solvent.monthlyOperating);
+  const html=F.summary(s,E).html;
+  assert.match(html,/CREDITOR HOLD ACTIVE/);
+  assert.match(html,/Protected workshop, VAT, payroll, refunds & unpaid premises/);
+  assert.match(app.dashboard.snapshot(s,E).tasks[0].key,/creditor-hold|rent/,
+    'Management desk should surface an unpaid creditor situation');
 });
