@@ -21,7 +21,8 @@
   const VAT=window.MotorTradeVat,REPAIR=window.MotorTradeRepairPrices;
   if(!VAT||!REPAIR)throw Error('Load vat.js and repair-prices.js before aftersales.js');
   const MODE='cra2015-2026';
-  const STATUSES=Object.freeze(['open','repairing','repair-failed','resolved','refund-due','refunded']);
+  const STATUSES=Object.freeze(['open','repairing','repair-failed','resolved','refund-due','refunded',
+    'reduction-due','reduced']);
   const money=x=>Number.isSafeInteger(x)&&x>=0&&x<=10000000;
   const enabled=s=>s?.aftersalesScenario===MODE;
   const initial=()=>({nextCaseId:1,cases:[],history:[]});
@@ -82,7 +83,7 @@
       status:'open',repairDoneDay:null,refundApprovedDay:null,
       refundDueDay:null,refundAmount:0,collectionCost:0,
       returnedVehicleId:null,heldReturned:null,creditedVatPence:0,
-      cashEquivalentConsent:false};
+      cashEquivalentConsent:false,remedy:null};
     s.aftersales.cases.push(c);
     reputation(s,-1,'Inherent customer complaint reported after retail handover');
     return ok('Consumer complaint on '+sale.title+'. Assess repair or the customer’s appropriate statutory remedy.');
@@ -106,7 +107,8 @@
       return fail('stage','The claim is not ready for an accepted rejection or goodwill settlement.');
     const sale=saleFor(s,c.saleId);
     if(!sale)return fail('sale','Original sale cannot be verified.');
-    c.status='refund-due';c.refundApprovedDay=s.day;c.refundDueDay=s.day+14;
+    c.status='refund-due';c.remedy='rejection';
+    c.refundApprovedDay=s.day;c.refundDueDay=s.day+14;
     c.refundAmount=sale.price;c.collectionCost=collectionCost(sale);
     // For part exchange the customer expressly accepts cash-equivalent
     // consideration for the agreed allowance. Otherwise CRA s20(11)-(12)
@@ -116,6 +118,23 @@
       ' collection liability. Pay without undue delay (pilot latest Day '+c.refundDueDay+
       '). No automatic usage deduction. '+(c.cashEquivalentConsent?
         'Fictional customer has expressly agreed equivalent cash for the part-exchange vehicle.':''));
+  }
+  function reductionQuote(s,id){
+    const c=caseFor(s,id),sale=c?saleFor(s,c.saleId):null;
+    if(!sale||c.status!=='repair-failed')return null;
+    // Negotiated individual price reduction — never a legal fixed tariff.
+    return Math.min(sale.price,Math.max(200,
+      Math.round((c.quote+sale.price*.06)/25)*25));
+  }
+  function reduce(s,id){
+    const c=caseFor(s,id),offer=reductionQuote(s,id);
+    if(!enabled(s)||!c||offer===null)
+      return fail('stage','Price reduction is only available by consumer agreement after the repair fails.');
+    c.status='reduction-due';c.remedy='price-reduction';
+    c.refundApprovedDay=s.day;c.refundDueDay=s.day+14;
+    c.refundAmount=offer;c.collectionCost=0;
+    return ok('Customer agrees to keep the vehicle with a negotiated £'+offer+
+      ' price reduction. This is a simulated case agreement, not a statutory percentage.');
   }
   function returnVehicle(s,sale,c){
     const old=sale.vehicleSnapshot;
@@ -136,22 +155,30 @@
     if(!sale||!money(c.refundAmount)||!money(c.collectionCost))return false;
     const charge=c.refundAmount+c.collectionCost;
     if(s.cash<charge)return false;
+    const reduction=c.remedy==='price-reduction';
     s.cash-=charge;
     s.ledger.push({day:s.day,delta:-c.refundAmount,
-      note:'Aftersales refund: sale '+c.saleId+' ('+sale.title+')'});
-    s.ledger.push({day:s.day,delta:-c.collectionCost,
+      note:(reduction?'Aftersales price reduction: sale ':'Aftersales refund: sale ')+
+        c.saleId+' ('+sale.title+')'});
+    if(c.collectionCost)s.ledger.push({day:s.day,delta:-c.collectionCost,
       note:'Aftersales collection: sale '+c.saleId+' ('+sale.title+')'});
-    c.creditedVatPence=sale.vat?.outputPence||0;
+    c.creditedVatPence=reduction?
+      (sale.vat?.outputPence||0)-VAT.marginVatPence(
+        sale.price-c.refundAmount,sale.vat?.purchaseBasis??0):
+      sale.vat?.outputPence||0;
     if(c.creditedVatPence)s.ledger.push({day:s.day,delta:0,
       note:'VAT output reversal accrued: sale '+c.saleId+' ('+VAT.pence(c.creditedVatPence)+')'});
-    returnVehicle(s,sale,c);
-    c.status='refunded';
+    if(!reduction)returnVehicle(s,sale,c);
+    c.status=reduction?'reduced':'refunded';
     s.aftersales.history.push({day:s.day,saleId:c.saleId,refund:c.refundAmount,
       recovery:c.collectionCost,creditedVatPence:c.creditedVatPence,
       returnedVehicleId:c.returnedVehicleId,
-      originalProfit:sale.profit});
+      originalProfit:reduction?c.refundAmount:sale.profit,
+      type:reduction?'price-reduction':'rejection'});
     if(s.aftersales.history.length>2000)s.aftersales.history.shift();
-    reputation(s,-6,'Customer refund after confirmed non-conforming vehicle');
+    reputation(s,reduction?-2:-6,reduction?
+      'Customer accepted a price reduction after failed repair':
+      'Customer refund after confirmed non-conforming vehicle');
     return true;
   }
   function releaseReturned(s,id){
@@ -188,9 +215,10 @@
           notices.push('AFTERSALES REPAIRED: '+c.title+' returned to customer at no charge.');
         }
       }
-      if(c.status==='refund-due'){
+      if(c.status==='refund-due'||c.status==='reduction-due'){
+        const reduced=c.status==='reduction-due';
         const paid=settle(s,c);
-        if(paid)notices.push('CUSTOMER REFUND PAID: '+c.title+' — vehicle recovered, VAT adjusted.');
+        if(paid)notices.push(reduced?'CUSTOMER PRICE REDUCTION PAID: '+c.title+' — VAT adjusted.':'CUSTOMER REFUND PAID: '+c.title+' — vehicle recovered, VAT adjusted.');
         else if(s.day>c.refundDueDay&&
           (s.day===c.refundDueDay+1||(s.day-c.refundDueDay)%7===0)){
           reputation(s,-2,'Overdue legally accepted customer refund');
@@ -201,9 +229,9 @@
     return notices;
   }
   const creditsPence=s=>enabled(s)?s.aftersales.cases.reduce((n,c)=>
-    n+(c.status==='refunded'?c.creditedVatPence:0),0):0;
+    n+(['refunded','reduced'].includes(c.status)?c.creditedVatPence:0),0):0;
   const pendingRefunds=s=>enabled(s)?s.aftersales.cases.reduce((n,c)=>
-    n+(c.status==='refund-due'?c.refundAmount+c.collectionCost:0),0):0;
+    n+(['refund-due','reduction-due'].includes(c.status)?c.refundAmount+c.collectionCost:0),0):0;
   function valid(s){
     if(!enabled(s))return s?.aftersales===undefined&&s?.aftersalesScenario===undefined;
     const a=s.aftersales;
@@ -267,6 +295,6 @@
   const clone=a=>JSON.parse(JSON.stringify(a));
   window.MotorTradeAftersales=Object.freeze({MODE,STATUSES,initial,enabled,
     saleFor,caseFor,legalPhase,estimatedJob,plannedDay,willComplain,
-    report,repair,refund,releaseReturned,advance,creditsPence,
+    report,repair,refund,reduce,reductionQuote,releaseReturned,advance,creditsPence,
     pendingRefunds,valid,clone});
 })();
