@@ -186,6 +186,9 @@
       integer(r.total)&&r.total===r.hammer+r.fee&&
       typeof r.detail==='string'&&r.detail.length<=160;
     if(!history.every(validResult)||!h.results.every(validResult))return false;
+    if(state.financialScenario==='uk2026'&&
+       [...history,...h.results].some(r=>r.kind==='won'&&
+         r.fee!==AUCTION_FEES.feeAtHammer(r.hammer)))return false;
     if(h.results.some((r,i)=>r.day!==state.day||r.lotId!==lots[i]?.id||
       r.lotNumber!==lotNumber(i)))return false;
     if(h.phase==='bidding'&&h.leader==='player'&&
