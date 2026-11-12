@@ -77,6 +77,126 @@
   // Untouched rows are explicitly marked review-pending instead of masquerading
   // as live valuations. The classic career retains the original catalogue.
   const PRICING_2026=Object.freeze({
+    '2019 Kia Rio 2':{
+      retail:6200,sourcePrice:6299,sourceMiles:89805,
+      source:'https://www.pistonheads.com/buy/kia/rio/year/2019',
+      note:'Exact 1.25 2 manual 89,805mi £6,299; game 99,600mi + grade 3. Asking adjusted conservatively; not sold.',confidence:'medium'},
+    '2017 Toyota Yaris Icon':{
+      retail:6400,sourcePrice:6395,sourceMiles:92097,
+      source:'https://www.autouncle.co.uk/en-gb/used-cars/Toyota/Yaris/y-2017',
+      note:'2017 1.5 petrol Icon Tech manual 92,097mi £6,395, game Icon not Tech 96k; trim difference.',confidence:'low'},
+    '2016 Honda Jazz SE':{
+      retail:3500,sourcePrice:5495,sourceMiles:109000,
+      source:'https://askcar.co.uk/used-cars/honda/jazz/se/2016',
+      note:'2016 1.3 SE manual 109k £5,495; game 157,800mi substantially beyond observed comparisons, retaining lower £3,500 is a HIGH-risk extrapolation.',confidence:'low'},
+    '2021 Honda Jazz SE e:HEV':{
+      retail:12500,sourcePrice:12250,sourceMiles:50415,
+      source:'https://askcar.co.uk/used-cars/honda/jazz/2021',
+      note:'Exact 2021 SE hybrid automatic 50,415mi £12,250; game 46,100mi. 42,341mi £12,495 second listing.',confidence:'medium'},
+    '2022 Nissan Qashqai Acenta Premium':{
+      retail:10950,sourcePrice:10749,sourceMiles:62506,
+      source:'https://www.askcar.co.uk/used-cars/nissan/qashqai/acenta-premium/2022',
+      note:'Exact 1.3 DIG-T MHEV 138 manual 62,506mi £10,749; at 61k £10,995, 67k £10,495. Previous £16,550 materially overstated.',confidence:'high'},
+    '2021 Kia Rio 3 MHEV':{
+      retail:9250,sourcePrice:9400,sourceMiles:59083,
+      source:'https://www.pistonheads.com/buy/kia/rio/year/2021',
+      note:'2021 1.0 T-GDi 48V MHEV 3 manual 59,083mi £9,400; game 65,000mi, same powertrain and trim.',confidence:'medium'},
+    '2021 Vauxhall Corsa-e Elite Nav':{
+      retail:9250,sourcePrice:8790,sourceMiles:51128,
+      source:'https://askcar.co.uk/car/vauxhall-corsa-electric-2021-6a5901c386f9',
+      note:'Exact 2021 50kWh Elite NAV electric auto 51,128mi £8,790; £9,291 AskCar estimated asking value at Oct month-end.',confidence:'high'},
+    '2021 Volkswagen Golf Life':{
+      retail:12000,sourcePrice:11820,sourceMiles:65016,
+      source:'https://www.askcar.co.uk/used-cars/volkswagen/golf/life/2021',
+      note:'Exact 2021 1.5 TSI Life manual 65,016mi £11,820; 67,900mi 148bhp £12,195. Engine output differences.',confidence:'high'},
+    '2022 Volkswagen Polo Life':{
+      retail:12350,sourcePrice:11600,sourceMiles:49000,
+      source:'https://www.askcar.co.uk/used-cars/volkswagen/polo/life/2022',
+      note:'Exact 1.0 TSI Life 94bhp manual 49k £11,600; 44,442mi example £13,900, 40-60k cohort £12,500. Adjusted estimate £12,350.',confidence:'medium'},
+    '2021 Peugeot e-208 Allure':{
+      retail:9950,sourcePrice:10200,sourceMiles:46380,
+      source:'https://www.askcar.co.uk/used-cars/peugeot/e-208/2021',
+      note:'Closest 2021 e-208 Allure Premium 46,380mi £10,200; actual game Allure 53,500mi (different trim). Low exact-trim sample.',confidence:'low'},
+    '2022 Hyundai Tucson SE Connect':{
+      retail:16950,sourcePrice:16540,sourceMiles:56542,
+      source:'https://www.askcar.co.uk/used-cars/hyundai/tucson/se-connect/2022',
+      note:'Exact 1.6 full HEV SE Connect automatic 56,542mi £16,540, another 56,964mi £17,750. Original £21,500 overstated.',confidence:'high'},
+    '2022 Vauxhall Mokka-e Launch Edition':{
+      retail:11250,sourcePrice:11750,sourceMiles:49000,
+      source:'https://www.askcar.co.uk/car/vauxhall-mokka-electric-2022-d260fd92e754',
+      note:'2022 Mokka Electric 50kWh Elite Premium 49kmi £11,750; \'Launch Edition\' not matched to a verified UK trim. Model/trim validation pending.',confidence:'low'},
+    '2022 Tesla Model 3 RWD':{
+      retail:19000,sourcePrice:18799,sourceMiles:47775,
+      source:'https://askcar.co.uk/car/tesla-model-3-2022-f2de48627a72',
+      note:'2022 Model 3 RWD Auto 47,775mi advertised £18,799; 47,126mi Standard Range Plus £19,750 (battery/trim difference).',confidence:'high'},
+    '2022 BMW 320d M Sport':{
+      retail:24000,sourcePrice:23290,sourceMiles:51000,
+      source:'https://askcar.co.uk/car/bmw-3-series-2022-aae30f0f91c2',
+      note:'2022 320d MHT M Sport auto Touring RWD 51k £23,290; game body style unspecified; comparable estate/AWD variations matter.',confidence:'medium'},
+    '2022 Audi A3 Sportback 35 TFSI':{
+      retail:17600,sourcePrice:16990,sourceMiles:42000,
+      source:'https://www.monarchmotorco.co.uk/used-audi-a3-redditch-worcestershire-8287189',
+      note:'Exact engine 1.5 TFSI 35 Sport Sportback S tronic 42,000mi £16,990; S line with 38,010mi £18,990 (trim uplift).',confidence:'medium'},
+    '2022 Mercedes-Benz A200 AMG Line':{
+      retail:19000,sourcePrice:18995,sourceMiles:39000,
+      source:'https://askcar.co.uk/car/mercedes-benz-a-class-2022-3d2911015026',
+      note:'2022 A200 AMG Line Edition Executive DCT saloon 39,000mi £18,995; body/Edition not specified on game row.',confidence:'medium'},
+    '2022 Volvo XC40 Recharge':{
+      retail:18000,sourcePrice:17999,sourceMiles:52439,
+      source:'https://www.askcar.co.uk/car/volvo-xc40-2022-b638aba5e7f5',
+      note:'2022 69kWh single-motor Recharge Core 52,439mi £17,999; exact battery/motor, Core specification not in game name.',confidence:'high'},
+    '2023 Kia Sportage GT-Line HEV':{
+      retail:20800,sourcePrice:20789,sourceMiles:43716,
+      source:'https://www.askcar.co.uk/car/kia-sportage-2023-ef1fb931ced8',
+      note:'Exact 2023 1.6 HEV GT Line auto at 43,716mi £20,789; 43,371mi £20,640 / 44,515mi £20,695.',confidence:'high'},
+    '2021 Hyundai Ioniq 5 Premium':{
+      retail:15750,sourcePrice:14900,sourceMiles:63745,
+      source:'https://askcar.co.uk/car/hyundai-ioniq-5-2021-24ed90de9a20',
+      note:'Exact 2021 73kWh RWD Premium electric auto 63,745mi £14,900; game 59,300mi slight mileage premium, battery SOH unverified.',confidence:'medium'},
+    '2022 BMW 330e M Sport':{
+      retail:20950,sourcePrice:20995,sourceMiles:51000,
+      source:'https://www.askcar.co.uk/car/bmw-3-series-2022-672ab24a7013',
+      note:'Exact 2022 330e M Sport automatic RWD saloon 51,000mi £20,995; 50,790mi example £19,710.',confidence:'high'},
+    '2021 Audi Q5 40 TDI S line':{
+      retail:23000,sourcePrice:23136,sourceMiles:57327,
+      source:'https://askcar.co.uk/car/audi-q5-2021-96bee4cf3a71',
+      note:'Exact 2021 40 TDI S Line S tronic quattro 57,327mi £23,136; body ambiguity estate/SUV registration, 58k £20,399.',confidence:'high'},
+    '2022 Porsche Macan 2.0 PDK':{
+      retail:39500,sourcePrice:37994,sourceMiles:38664,
+      source:'https://www.askcar.co.uk/car/porsche-macan-2022-7205fb010429',
+      note:'Exact 2022 2.0 PDK 4WD 38,664mi £37,994; 36,897mi £39,840; example priced down £805 after 103 days.',confidence:'high'},
+    '2022 Range Rover Velar D200 R-Dynamic':{
+      retail:26300,sourcePrice:25984,sourceMiles:49877,
+      source:'https://askcar.co.uk/car/land-rover-range-rover-velar-2022-7669ebfbddcc',
+      note:'Exact 2022 D200 R Dynamic HSE 49,877mi £25,984; underlying R-Dynamic trim unspecified, HSE equipment affects price.',confidence:'medium'},
+    '2023 BMW X5 xDrive30d M Sport':{
+      retail:51500,sourcePrice:50998,sourceMiles:33160,
+      source:'https://www.askcar.co.uk/car/bmw-x5-2023-212040a6800e',
+      note:'2023 30d MHT M Sport Steptronic 4WD 33,160mi £50,998, corresponding derivative/engine/gearbox.',confidence:'high'},
+    '2023 Mercedes-Benz E300e AMG Line':{
+      retail:33500,sourcePrice:32850,sourceMiles:29000,
+      source:'https://www.askcar.co.uk/used-cars/mercedes-benz/e-class/plug-in-hybrid/in-london',
+      note:'2023 E300e AMG Line Night Edition Premium Plus saloon 29kmi £32,850; trim/package not exact; game 31,900mi.',confidence:'low'},
+    '2022 Audi e-tron 55 quattro':{
+      retail:21300,sourcePrice:22470,sourceMiles:36700,
+      source:'https://evguide.uk/guides/used-audi-e-tron-buyers-guide',
+      note:'2022 e-tron SUV 55 95kWh cohort median £22,470 at median 36,700mi; game 48,600mi, grade 3. Cohort not individual advert.',confidence:'low'},
+    '2021 Porsche Taycan 4S':{
+      retail:39000,sourcePrice:38941,sourceMiles:40479,
+      source:'https://askcar.co.uk/car/porsche-taycan-2021-08589fb714ba',
+      note:'2021 Taycan 4S 40,479mi £38,941; Performance Plus 42,950mi £41,990, battery option affects value.',confidence:'high'},
+    '2022 Mercedes-Benz S350d AMG Line':{
+      retail:59000,sourcePrice:59990,sourceMiles:47500,
+      source:'https://www.prestigemotorwarehouse.co.uk/cars/ad/22402-mercedes-benz-s-class-s350d-amg-line-black',
+      note:'2022 S350d AMG Line Premium G-Tronic diesel saloon 47,500mi asking £59,990; exact game AMG Line not Premium. Sparse stock.',confidence:'medium'},
+    '2023 Land Rover Defender 110 D250':{
+      retail:47500,sourcePrice:47400,sourceMiles:36568,
+      source:'https://askcar.co.uk/car/land-rover-defender-110-2023-23c5cc2cffc1',
+      note:'2023 D250 MHEV SE Auto 4WD 36,568mi £47,400; game trim unspecified; 36,800mi another £44,990.',confidence:'medium'},
+    '2023 Range Rover Sport P440e':{
+      retail:54000,sourcePrice:52510,sourceMiles:34043,
+      source:'https://www.askcar.co.uk/used-cars/land-rover/range-rover-sport/2023?page=3',
+      note:'2023 P440e Dynamic SE 34,043mi £52,510; 34,967mi £53,190, 34,720mi £53,230; unspecified in-game trim.',confidence:'high'},
     '2018 Toyota Yaris Icon Hybrid':{
       retail:7250,sourcePrice:8972,sourceMiles:87241,
       source:'https://askcar.co.uk/used-cars/toyota/yaris/icon/2018',
