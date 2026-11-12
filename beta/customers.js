@@ -96,6 +96,7 @@
     if(caseFor(state,id))return fail('existing','This car already has an active customer case.');
     const priceQuestion=source==='online-price-question'&&
       priceCheckCandidate(state)?.id===id;
+    const advertisedPriceCheck=source==='advert-price-check';
     if(!priceQuestion&&!demand(state,vehicle))return fail('no-enquiry',
       'No customer has enquired about this car this session. Try another day or review its price.');
     const key=leadKey(state,vehicle);
@@ -109,7 +110,7 @@
       vehicleId:id,createdDay:state.day,createdSession:slot(state),
       name:FIRST[hash('first|'+key)%FIRST.length]+' '+
         LAST[hash('last|'+key)%LAST.length],
-      channel:priceQuestion?'ONLINE PRICE QUESTION':
+      channel:priceQuestion||advertisedPriceCheck?'ONLINE PRICE QUESTION':
         walkIn?'MONTH-END WALK-IN':(hash('channel|'+key)%2?'ONLINE':'TELEPHONE'),
       status:walkIn?'arrived':'enquiry',preferredMode:preferPX?'part-ex':'cash',
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
@@ -119,6 +120,10 @@
     };
     state.customerCases[String(id)]=c;
     vehicle.cashOffer=null;
+    // This is a genuine inbound lead handled by the assigned active sales
+    // executive. It counts as work, not a completed deal or earned commission.
+    const assigned=P.salesRep(state,c);
+    if(assigned)assigned.workDone++;
     append(state,c,'enquiry',c.channel);
     return ok(c.name+' contacted the dealership about '+vehicle.title+
       (priceQuestion?'. They asked whether your asking price is negotiable. This is not a firm offer or a promised sale. Book a viewing if you want to progress.':
@@ -128,6 +133,15 @@
   function book(state,id){
     const c=caseFor(state,id);
     if(!c||c.status!=='enquiry')return fail('stage','A new enquiry is required to book a viewing.');
+    // Not every price-check is a buyer: initial questions should be useful
+    // interactions but cannot automatically become 100% viewing conversions.
+    if(state.financialScenario==='uk2026'&&c.channel==='ONLINE PRICE QUESTION'&&
+       !chance('price-check-qualified|'+c.id,
+         clamp(48+Math.floor(P.salesImpact(state,c).enquiryLift*.8),45,73))){
+      const message=failCase(state,c,'expired',
+        'The caller only wanted a price indication and is not ready to arrange a viewing.');
+      return {ok:false,changed:true,code:'unqualified',message};
+    }
     // A normal viewing must take place within 48 game-hours.
     c.appointmentDay=state.day+1+
       (P.salesImpact(state,c).fastViewing?0:hash('appointment|'+c.id)%2);
@@ -390,7 +404,12 @@
     const received=[];
     for(const vehicle of state.vehicles){
       if(vehicle.status!=='listed'||caseFor(state,vehicle.id)||!demand(state,vehicle))continue;
-      const result=open(state,vehicle.id);
+      // Some real advertising contacts are only asking about the price.
+      // Record them as such so more interaction does not turn directly into
+      // an implausibly high rate of completed sales.
+      const type=hash('intent|'+leadKey(state,vehicle))%100<40?
+        'advert-price-check':'normal';
+      const result=open(state,vehicle.id,type);
       if(result.ok){
         const c=caseFor(state,vehicle.id);
         received.push('NEW RETAIL ENQUIRY: '+c.name+' for stock '+vehicle.id+
@@ -411,9 +430,38 @@
     }
     return received;
   }
+  function salespersonCallback(state,c,notices){
+    if(state.financialScenario!=='uk2026'||c.status!=='enquiry'||
+      state.day!==c.createdDay+1)return;
+    const rep=P.salesRep(state,c);
+    if(!rep||state.customerHistory.some(h=>
+      h.type==='sales-follow-up'&&h.leadId===c.id))return;
+    // A paid representative calls back ONE time, the day after a lead.
+    // This is not a free buyer or automatic sale. The buyer can fail to
+    // answer, decline a viewing or still reject the car on a test drive.
+    rep.workDone++;
+    const chanceToReach=clamp(43+P.salesImpact(state,c).enquiryLift+
+      Math.floor(rep.skills.care/3),43,76);
+    if(chance('callback-connected|'+c.id,chanceToReach)){
+      const result=book(state,c.vehicleId);
+      append(state,c,'sales-follow-up',result.ok?
+        rep.name+' contacted buyer and booked a viewing':
+        rep.name+' spoke to a price-only caller who was not ready to view');
+      notices.push(result.ok?
+        'SALES CALLBACK: '+rep.name+' booked '+c.name+' to view stock '+c.vehicleId+
+          ' on day '+c.appointmentDay+'. No sale is agreed.':
+        'SALES CALLBACK: '+rep.name+' spoke to '+c.name+
+          '; buyer declined a viewing after discussing the price.');
+    }else{
+      append(state,c,'sales-follow-up',rep.name+' called but buyer did not answer');
+      notices.push('SALES CALLBACK: '+rep.name+' tried to reach '+c.name+
+        ' about stock '+c.vehicleId+'; the buyer has not responded.');
+    }
+  }
   function advanceDay(state){
     const notices=[];
     for(const c of Object.values(state.customerCases)){
+      salespersonCallback(state,c,notices);
       if(c.status==='lost'){
         if(!restoreBooked(state,c,notices)&&c.createdDay<state.day)
           delete state.customerCases[String(c.vehicleId)];
@@ -459,7 +507,8 @@
   function stats(state,startDay,endDay){
     const events=state.customerHistory.filter(x=>x.day>=startDay&&x.day<=endDay);
     const n=type=>events.filter(e=>e.type===type).length;
-    return {enquiries:n('enquiry'),appointments:n('appointment'),
+    return {enquiries:n('enquiry'),salesFollowUps:n('sales-follow-up'),
+      appointments:n('appointment'),
       attended:n('arrived'),noShows:n('no-show'),
       testDrives:n('test-drive-pass')+n('test-drive-reject'),
       declinedTestDrives:n('test-drive-reject'),
@@ -511,7 +560,7 @@
         !['booked','reserved','collectable'].includes(c.status)&&
         validCase([id,c.standby])));
     if(!Object.entries(cases).every(validCase))return false;
-    const types=['enquiry','appointment','appointment-restored','appointment-displaced',
+    const types=['enquiry','sales-follow-up','appointment','appointment-restored','appointment-displaced',
       'test-drive-pass','test-drive-reject',
       'counter-accepted','counter-rejected','agreement','deposit','deposit-refunded',
       'deposit-retained','cancelled','arrived','no-show','expired','collection-due','sale'];

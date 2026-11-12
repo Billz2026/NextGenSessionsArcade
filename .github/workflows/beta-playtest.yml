@@ -5,6 +5,7 @@ on:
       - 'beta/**'
       - 'tests/beta-site-smoke.mjs'
       - 'tests/beta-customer-enquiries.mjs'
+      - 'tests/beta-sales-team-activity.mjs'
       - '.github/workflows/beta-playtest.yml'
   push:
     branches: [main]
@@ -12,6 +13,7 @@ on:
       - 'beta/**'
       - 'tests/beta-site-smoke.mjs'
       - 'tests/beta-customer-enquiries.mjs'
+      - 'tests/beta-sales-team-activity.mjs'
       - '.github/workflows/beta-playtest.yml'
 permissions:
   contents: read
@@ -41,6 +43,8 @@ jobs:
         run: node tests/beta-site-smoke.mjs
       - name: Test genuine buyer enquiries across five active 30-day careers
         run: node tests/beta-customer-enquiries.mjs
+      - name: Compare paid sales executive and owner-only contact handling in five active careers
+        run: node tests/beta-sales-team-activity.mjs
       - name: Keep beta browser screenshots
         if: always()
         uses: actions/upload-artifact@v4

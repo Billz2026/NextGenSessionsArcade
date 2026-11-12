@@ -44,7 +44,7 @@
           '<div class="sales-case-highlight"><strong>PRE-VIEWING PRICE INDICATION: '+cash(budget.cashOffer)+'</strong>'+
           '<p>Buyer has asked about a price in this area. This is NOT a firm, accepted offer: inspection, test drive and final negotiation are still required. The buyer may decline or walk away.</p></div>':'';
         body='<p>'+esc(c.name)+(c.channel==='ONLINE PRICE QUESTION'?
-          ' has asked whether you will negotiate on the advertised price.':
+          ' has asked whether you will negotiate on the advertised price. This is a price-check, not yet a committed buyer.':
           ' has enquired about this car.')+
           ' They have not inspected or test driven it yet. Book a viewing within 48 game-hours. No deposit means the vehicle remains for sale.</p>'+indication+
           '<button type="button" class="trade-button" data-action="book-customer" data-id="'+id+
@@ -246,9 +246,13 @@
       ['ACTION REQUIRED',s.attention],['HELD DEPOSITS',cash(s.held)]
     ].map(([name,value])=>
       '<div><small>'+name+'</small><strong>'+value+'</strong></div>').join('')+'</div>'+
-      '<div class="so-activity">THIS MONTH · '+stats.enquiries+' RECORDED ENQUIRIES · '+
+      '<div class="so-activity">THIS MONTH · '+stats.enquiries+' BUYER CONTACTS · '+
+      stats.salesFollowUps+' SALES TEAM CALLBACKS · '+
       stats.appointments+' VIEWINGS BOOKED · '+stats.testDrives+' TEST DRIVES · '+
-      stats.completedSales+' COMPLETED HANDOVERS</div>';
+      stats.completedSales+' COMPLETED HANDOVERS. '+
+      (state.staff.some(e=>e.role==='sales')?
+        'Salaried sales staff can generate additional contacts and call buyers back, but cannot force sales.':
+        'OWNER-MANAGED: You arrange your own viewing bookings.')+'</div>';
     if(!s.rows.length)return {selectedId:null,html:top+
       '<div class="trade-empty so-empty"><h2>NO CARS ADVERTISED.</h2>'+
       '<p>Prepare a vehicle, pass workshop quality control, then set the retail price in Vehicle Stock.</p>'+
