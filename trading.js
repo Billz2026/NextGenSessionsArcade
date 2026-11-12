@@ -967,7 +967,9 @@
   }
   function totalMargin(state) { return sum(state.sold,'profit')+
     sum(state.wholesale,'profit')-
-    (AFT.enabled(state)?sum(state.aftersales.history,'originalProfit'):0); }
+    (AFT.enabled(state)?state.aftersales.cases.reduce((n,c)=>n+
+      (c.refundApprovedDay===null?0:c.remedy==='price-reduction'?
+        c.refundAmount:(state.sold.find(x=>x.id===c.saleId)?.profit||0)),0):0); }
   function premisesDay(state){
     const out=SITE.advance(state);
     state.reputation=P.tier(state.reputationScore);
