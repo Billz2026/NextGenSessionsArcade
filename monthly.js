@@ -84,6 +84,9 @@
        note.startsWith('Workshop quality rectification:'))return 'preparation';
     if(note.startsWith('Workshop assessment:'))return 'inspections';
     if(note.startsWith('Pre-purchase inspection:'))return 'inspections';
+    if(note.startsWith('Aftersales refund:'))return 'customerRefunds';
+    if(note.startsWith('Aftersales collection:'))return 'customerCollection';
+    if(note.startsWith('Aftersales repair:'))return 'customerRepairs';
     if(note.startsWith('Staff payroll monthly net wages settlement'))return 'payrollCash';
     if(note.startsWith('Staff HMRC PAYE and NI remittance'))return 'hmrcRemittance';
     if(note.startsWith('Staff workplace pension remittance'))return 'pensionRemittance';
@@ -100,7 +103,8 @@
   const categories=['retailReceipts','auctionPurchases','auctionTransport','sellerPurchases',
     'partExchangePurchases','preparation','inspections','payroll','commission',
     'recruitment','training','staffExit','other','premisesPayments','premisesInvestment','vatPayments',
-    'payrollCash','hmrcRemittance','pensionRemittance'];
+    'payrollCash','hmrcRemittance','pensionRemittance',
+    'customerRefunds','customerCollection','customerRepairs'];
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
@@ -110,7 +114,12 @@
     for(const row of ledger)bucket[categorize(row.note)]+=row.delta;
     const saleCount=sales.length;
     const turnover=sum(sales,'price');
-    const grossMargin=sum(sales,'profit')+sum(disposals,'profit');
+    const returned=state.aftersalesScenario==='cra2015-2026'?
+      state.aftersales.history.filter(x=>x.day>=p.startDay&&x.day<=p.endDay):[];
+    const refundTurnover=sum(returned,'refund');
+    const grossMargin=sum(sales,'profit')+sum(disposals,'profit')-
+      sum(returned,'originalProfit');
+    const aftercareCost=-(bucket.customerCollection+bucket.customerRepairs);
     const premisesExpense=ledger.filter(x=>x.note.startsWith('Premises expense accrued: £'))
       .reduce((n,x)=>n+Number(/^Premises expense accrued: £(\d+)/.exec(x.note)?.[1]||0),0);
     const inflow=ledger.filter(x=>x.delta>0).reduce((n,x)=>n+x.delta,0);
@@ -152,9 +161,10 @@
       workshopStage:v.workshop?.stage??'unknown',
       workshopDaysLeft:v.workshop?.remainingDays??0
     }));
-    const operatingContribution=grossMargin-payrollCost-premisesExpense;
+    const operatingContribution=grossMargin-payrollCost-premisesExpense-aftercareCost;
     const vatOutputAccruedPence=state.financialScenario==='uk2026'?
-      [...sales,...disposals].reduce((n,v)=>n+(v.vat?.outputPence||0),0):0;
+      [...sales,...disposals].reduce((n,v)=>n+(v.vat?.outputPence||0),0)-
+      sum(returned,'creditedVatPence'):0;
     // The game ledger is whole-pound cash. Show a conservative pound-rounded
     // expense bridge while retaining the underlying pence liability exactly.
     const operatingAfterVat=operatingContribution-
@@ -175,6 +185,9 @@
       targetMet:met,turnoverMet:turnover>=p.turnoverTarget,
       marginMet:grossMargin>=p.marginTarget,
       grossAfterStaff:grossMargin-payrollCost,
+      ...(state.aftersalesScenario==='cra2015-2026'?{
+        aftercareCost,refundTurnover,refundedUnits:returned.length,
+        netRetailTurnover:turnover-refundTurnover}:{}),
       premisesExpense,premisesPaid:-bucket.premisesPayments,
       premisesInvestment:-bucket.premisesInvestment,
       premisesArrears:state.premises?.arrears??0,
@@ -299,17 +312,21 @@
       !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
       !categories.every(k=>whole(r.ledgerBreakdown[k])||
         (['premisesPayments','premisesInvestment','auctionTransport','vatPayments',
-          'payrollCash','hmrcRemittance','pensionRemittance'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
+          'payrollCash','hmrcRemittance','pensionRemittance',
+          'customerRefunds','customerCollection','customerRepairs'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.premisesExpense!==undefined&&(
       !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
       !nonneg(r.premisesInvestment)||!nonneg(r.premisesArrears)||
       !whole(r.operatingContribution)||
-      r.operatingContribution!==r.grossAfterStaff-r.premisesExpense))return false;
+      r.operatingContribution!==r.grossAfterStaff-r.premisesExpense-(r.aftercareCost||0)))return false;
     if(r.payrollCashPaid!==undefined&&(
       !nonneg(r.payrollCashPaid)||!nonneg(r.payrollStatutoryDue)))return false;
+    if(r.aftercareCost!==undefined&&(
+      !nonneg(r.aftercareCost)||!nonneg(r.refundTurnover)||
+      !nonneg(r.refundedUnits)||!whole(r.netRetailTurnover)))return false;
     if(r.vatOutputAccruedPence!==undefined&&(
-      !nonneg(r.vatOutputAccruedPence)||!whole(r.operatingAfterVat)||
+      !whole(r.vatOutputAccruedPence)||!whole(r.operatingAfterVat)||
       !nonneg(r.vatPayments)))return false;
     if(r.customerHoldingAtClose!==undefined&&
       (!nonneg(r.customerHoldingAtClose)||r.customerHoldingAtClose>1000))return false;
