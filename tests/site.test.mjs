@@ -6533,3 +6533,59 @@ test('2026 one failed repair permits negotiated price reduction while customer k
   altered.aftersales.cases[0].refundAmount+=100;
   assert.equal(real.normalize(altered),null,'Price reduction must match agreed offer');
 });
+
+test('accepted refund immediately reverses trading profit even before cash can be paid',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales;
+  const s=E.create('Refund Accrual Dealer',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  const sale=s.sold[0],profit=real.totalMargin(s);
+  assert.ok(A.report(s,sale.id).ok);
+  const before=s.cash;
+  s.cash=0;s.ledger.push({day:s.day,delta:-before,
+    note:'Test fixture: emergency creditor repayment'});
+  const claim=s.aftersales.cases[0];
+  assert.ok(A.refund(s,claim.id).ok);
+  assert.equal(claim.status,'refund-due');
+  assert.equal(real.totalMargin(s),profit-sale.profit,
+    'Dealer cannot pretend the accepted return remains a realised profitable sale');
+  const r=real.monthly.statement(s);
+  assert.equal(r.refundTurnover,sale.price);
+  assert.equal(r.grossMargin,0);
+  assert.equal(r.aftercareCost,claim.collectionCost,
+    'Reasonable customer collection cost is accrued before cash payout');
+  assert.equal(A.pendingRefunds(s),sale.price+claim.collectionCost);
+  assert.equal(app.financeView.snapshot(s,real).refundLiability,
+    sale.price+claim.collectionCost);
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(s))));
+  s.day=2;
+  A.advance(s);
+  assert.equal(real.totalMargin(s),profit-sale.profit);
+  assert.equal(r.grossMargin,0);
+});
+
+test('recovered rejected vehicle may be sold on to the trade without invalidating earlier consumer remedy',()=>{
+  const app=browser(),E=app.engine,real=app.productionEngine,A=real.aftersales;
+  const s=E.create('Recovered Vehicle Dealer',[],'uk2026');
+  const lot=E.marketFor(s).auctions[0];
+  assert.ok(E.acquireAuction(s,lot.id,Math.max(lot.reserve,lot.rival)).ok);
+  const v=s.vehicles[0];assert.ok(E.prepare(s,v.id).ok);
+  assert.ok(E.advertise(s,v.id,v.retail).ok);
+  assert.ok(E.completeSale(s,v.id,'cash',null).ok);
+  assert.ok(A.report(s,s.sold[0].id).ok);
+  const c=s.aftersales.cases[0];
+  assert.ok(A.refund(s,c.id).ok);
+  A.advance(s);
+  assert.equal(c.status,'refunded');
+  const recovered=s.vehicles[0];
+  assert.equal(recovered.returnOf,c.saleId);
+  assert.ok(real.disposeStock(s,recovered.id).ok);
+  assert.equal(s.vehicles.length,0);
+  assert.equal(s.wholesale.at(-1).origin,'RETURN-'+c.saleId);
+  assert.equal(s.wholesale.at(-1).returnOf,c.saleId);
+  assert.ok(real.normalize(JSON.parse(JSON.stringify(s))),
+    'Historical refund and VAT credit survive onward vehicle disposal');
+});
