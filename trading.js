@@ -12,7 +12,7 @@
     premisesDeposit:3000,prepaidInsurance:3000,fixtures:2000,launchExpense:2000
   });
   const CAPACITY = 4;
-  const VERSION = 16;
+  const VERSION = 17;
   const PH = window.MotorTradePhotos;
   if(!PH)throw new Error('Load vehicle-photos.js before trading.js');
   const MARKET = window.MotorTradeMarket;
@@ -33,6 +33,8 @@
   if (!M) throw new Error('Load monthly.js before trading.js');
   const P = window.MotorTradePeople;
   if (!P) throw new Error('Load people.js before trading.js');
+  const EMP=window.MotorTradeEmployment;
+  if(!EMP)throw new Error('Load employment-2026.js before trading.js');
   const SITE = window.MotorTradePremises;
   if (!SITE) throw new Error('Load premises.js before trading.js');
   const I = window.MotorTradeIntel;
@@ -377,14 +379,15 @@
       customerCases:{},customerHistory:[],customerFunds:[],
       auctionHall:initialAuctionHall(1),auctionHistory:[],
       inboxLedgerCursor:0,
-      premises:SITE.initial(),...P.initial()
+      premises:SITE.initial(),...P.initial(),
+      ...(standard?{employmentScenario:'uk2026-payroll',payroll2026:EMP.initial()}: {})
     };
     M.initialize(state);
     Object.assign(state,D.initial());
     return state;
   }
   function normalize(saved) {
-    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,VERSION].includes(saved.version) ||
+    if (!saved || ![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,VERSION].includes(saved.version) ||
       typeof saved.name !== 'string' || saved.name.trim().length < 2 ||
       saved.name.trim().length > 36 || !integer(saved.day) ||
       saved.day < 1 || saved.day > MAX_DAY || !Array.isArray(saved.messages)) return null;
@@ -517,6 +520,8 @@
     if(standard){
       if(saved.version<15||!saved.startupAccounts||
          Object.keys(STANDARD_STARTUP).some(k=>saved.startupAccounts[k]!==STANDARD_STARTUP[k]))return null;
+      if(saved.version>=17&&saved.employmentScenario!=='uk2026-payroll')return null;
+      if(saved.version<=16&&saved.employmentScenario!==undefined)return null;
     }
     if(standard){
       // An auction transport invoice must match the modelled lot route and
@@ -977,7 +982,7 @@
   }
   window.MotorTradeEngine = Object.freeze({
     VERSION, STARTING_CASH, STANDARD_STARTUP, CAPACITY,people:P,staffDay,premises:SITE,premisesDay,
-    vat:VAT,vatDay,
+    employment:EMP,vat:VAT,vatDay,
     auctionDay,nextAuctionDay,auctionFee,auctionTransport,settleAuction,
     startAuction,bidLiveAuction,passAuction,nextAuctionLot,rollAuctionHall,
     auctionLot,lotNumber,auctionValid,
