@@ -63,7 +63,7 @@
   function market(day,reputationScore=0,session=0,dealershipName='',
     periodReputation=reputationScore,cash=STARTING_CASH,feeScenario='classic') {
     const tier=MARKET.tierFor(cash,reputationScore).key;
-    const dealSellers=MARKET.sellersForDealDay(cash,reputationScore);
+    const dealSellers=MARKET.sellersForDealDay(cash,reputationScore).map(x=>MARKET.priceFor(x,feeScenario));
     const special=D.customers(day,periodReputation,session,dealSellers,I.profile,dealershipName);
     if(special)return {auctions:[],sellers:special.sellers.map(x=>({...x,...PH.describe(x)}))};
     const auctionCount=auctionDay(day)?
@@ -76,7 +76,7 @@
     const usedAuction=new Set(),usedSeller=new Set();
     const starter=MARKET.CATALOGUE.starter;
     const auctions=Array.from({length:aCount},(_,i)=>{
-      const base=day===1?starter[i]:MARKET.pick('auction',tier,day,i,usedAuction);
+      const base=MARKET.priceFor(day===1?starter[i]:MARKET.pick('auction',tier,day,i,usedAuction),feeScenario);
       const offset=day===1?0:nearest25((sample(day,i,91)%851)-425);
       const guide=Math.max(850,base.guide+offset);
       const delta=guide-base.guide;
@@ -91,7 +91,7 @@
         id:'A-'+day+'-'+i,kind:'auction',day};
     });
     const sellers=Array.from({length:sellerCount},(_,i)=>{
-      const base=day===1?starter[3+i]:MARKET.pick('seller',tier,day,i,usedSeller);
+      const base=MARKET.priceFor(day===1?starter[3+i]:MARKET.pick('seller',tier,day,i,usedSeller),feeScenario);
       const offset=day===1?0:nearest25((sample(day,i,51)%601)-300);
       const ask=Math.max(950,base.ask+offset);
       const delta=ask-base.ask;
