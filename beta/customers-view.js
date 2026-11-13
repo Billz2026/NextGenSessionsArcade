@@ -41,7 +41,7 @@
       case 'enquiry':{
         const buyer=state.financialScenario==='uk2026'?E.buyers(vehicle,state):null;
         const indication=buyer?
-          '<div class="sales-case-highlight"><strong>BUYER INITIAL PRICE INDICATION: '+cash(buyer.cashOffer)+'</strong>'+
+          '<div class="sales-case-highlight"><strong>PRE-VIEWING PRICE INDICATION: '+cash(buyer.cashOffer)+'</strong>'+
           '<p>They may negotiate, decline or ask for a viewing. No sale or deposit is agreed.</p></div>':'';
         const priceTalk=buyer?
           '<section class="sales-offer-mode"><h4>RESPOND WITH YOUR PRICE</h4>'+
