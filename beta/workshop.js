@@ -67,7 +67,8 @@
     const tech=method==='internal'?P.availableTechnicians(state)[0]:null;
     const busyBays=state.vehicles.filter(v=>v.workshop?.method==='internal'&&
       ['in-progress','quality-check'].includes(v.workshop.stage)).length;
-    if(method==='internal'&&(!tech||busyBays>=(window.MotorTradePremises?.bays(state)??4)))return null;
+    if(method==='internal'&&(!tech||busyBays>=(window.MotorTradePremises?.bays(state)??4)||
+      vehicle.storageLocation==='offsite'||vehicle.storageLocation==='external'))return null;
     const base=vehicle.prepBudget;
     const saving=method==='internal'?P.labourSaving(state,vehicle,tech):0;
     // Modern job cards already include external-garage labour, parts and VAT.
@@ -98,6 +99,7 @@
         ' (£'+q.cost+'). Money needed for other unprepared stock is protected.');
     charge(state,q.cost,'Workshop repair booking: '+vehicle.title+
       ' ('+q.provider+')');
+    if(state.financialScenario==='uk2026'&&method==='external')vehicle.storageLocation='external';
     Object.assign(vehicle.workshop,{stage:'in-progress',method,
       repairCost:q.cost,remainingDays:q.duration,plannedDays:q.duration,
       partsDelay:q.partsDelay,startedDay:state.day,completedDay:null,
@@ -141,6 +143,7 @@
     charge(state,chargeAmount,'Workshop transfer to outside garage: '+v.title);
     j.repairCost+=chargeAmount;
     j.method='external';
+    if(state.financialScenario==='uk2026')v.storageLocation='external';
     j.technicianId=null;
     j.remainingDays=Math.max(2,j.remainingDays);
     j.plannedDays+=1;
@@ -179,6 +182,11 @@
     j.paused=false;
     v.prepSpent=j.repairCost;
     v.status='prepared';
+    if(state.financialScenario==='uk2026'&&v.storageLocation==='external'){
+      const onsite=state.vehicles.filter(other=>other.id!==v.id&&
+        (!other.storageLocation||other.storageLocation==='forecourt')).length;
+      v.storageLocation=onsite<state.capacity?'forecourt':'offsite';
+    }
     if(j.method==='internal')P.worked(state,j.technicianId);
     return ok(v.title+' passed final quality control. £'+j.repairCost+
       ' in repair costs recorded. It is now ready to advertise.');
