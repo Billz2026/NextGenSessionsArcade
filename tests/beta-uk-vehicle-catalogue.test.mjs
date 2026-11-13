@@ -77,7 +77,7 @@ test('classic template positions remain untouched and authentic UK breadth is pr
 });
 
 test('only exact manufacturer-backed specifications receive certified evidence',()=>{
-  assert.equal(UK.VERIFIED.length,31,'Six opening checks plus 25 Toyota/Nissan/VW/Audi checks');
+  assert.equal(UK.VERIFIED.length,56,'Six opening checks plus two independent 25-derivative verification batches');
   const counts={manufacturer:0,corroborated:0};
   const checkedTitles=new Set();
   for(const row of UK.VERIFIED){
@@ -93,8 +93,8 @@ test('only exact manufacturer-backed specifications receive certified evidence',
     assert.equal(A.lookup(car).checkedAt,'2026-11-13');
     counts[row[4]]++;
   }
-  assert.equal(counts.manufacturer,21);
-  assert.equal(counts.corroborated,10);
+  assert.equal(counts.manufacturer,31);
+  assert.equal(counts.corroborated,25);
   for(const title of [
     '2018 Toyota Aygo x-play','2017 Toyota Auris Icon Hybrid','2018 Toyota Prius Business Edition',
     '2018 Toyota C-HR Icon Hybrid','2022 Toyota Aygo X Pure','2020 Toyota Corolla Icon Hybrid',
@@ -108,13 +108,48 @@ test('only exact manufacturer-backed specifications receive certified evidence',
     '2019 Audi A3 Sportback 35 TFSI S line','2022 Audi S3 Sportback',
     '2020 Audi Q2 30 TFSI Sport','2021 Audi RS Q3 Sportback'
   ])assert.ok(checkedTitles.has(title),'Missing first-batch verification: '+title);
+  for(const title of [
+      "2018 Ford Fiesta Titanium",
+      "2018 Ford Focus ST-Line",
+      "2019 Ford Fiesta ST-2",
+      "2020 Ford Fiesta ST-Line",
+      "2021 Ford Kuga Titanium PHEV",
+      "2018 Vauxhall Astra SRi",
+      "2019 Vauxhall Crossland X SE",
+      "2021 Vauxhall Astra SRi",
+      "2021 Vauxhall Mokka SRi",
+      "2019 Kia Picanto 2",
+      "2020 Kia Niro 2 Hybrid",
+      "2021 Kia Ceed 2",
+      "2021 Kia e-Niro 3",
+      "2018 Hyundai i10 SE",
+      "2018 Hyundai i30 SE",
+      "2021 Hyundai i10 SE Connect",
+      "2021 Hyundai i20 Premium",
+      "2018 Skoda Fabia SE",
+      "2020 Skoda Superb SE Technology",
+      "2021 Skoda Kamiq SE L",
+      "2021 Skoda Octavia vRS",
+      "2018 SEAT Ibiza SE Technology",
+      "2020 SEAT Leon FR",
+      "2020 SEAT Arona FR",
+      "2021 SEAT Ateca SE Technology"
+  ]) {
+    assert.ok(checkedTitles.has(title),'Missing Ford/Vauxhall/Kia/Hyundai/Skoda/SEAT review: '+title);
+  }
+  // Changing a reviewed trim, powertrain or gearbox must demote evidence to pending.
+  for(const original of UK.VERIFIED){
+    const car=find(original[0]);
+    const mutated={...car,engineSpec:'AUDIT INVALID ENGINE SPEC'};
+    assert.equal(A.lookup(mutated).status,'pending','Stale evidence must fail closed: '+car.title);
+  }
   assert.equal(A.lookup(find('2017 Nissan Juke N-Connecta')).status,'pending');
   assert.equal(A.lookup(find('2023 BYD Atto 3 Design')).status,'pending');
   const totals=A.summary(M.CATALOGUE);
   assert.equal(totals.total,200);
-  assert.equal(totals.manufacturer,34);
-  assert.equal(totals.corroborated,15);
-  assert.equal(totals.pending,151);
+  assert.equal(totals.manufacturer,44);
+  assert.equal(totals.corroborated,30);
+  assert.equal(totals.pending,126);
 });
 
 test('new prices are transparently unverified and classic pricing is untouched',()=>{
