@@ -442,7 +442,7 @@
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       customerCases:{},customerHistory:[],customerFunds:[],
-      auctionHall:initialAuctionHall(1),auctionHistory:[],
+      auctionHall:initialAuctionHall(1),auctionHistory:[],auctionReminderDismissedDay:0,
       inboxLedgerCursor:0,
       premises:SITE.initial(),...P.initial(),
       ...(standard?{employmentScenario:'uk2026-payroll',payroll2026:EMP.initial(),
@@ -483,6 +483,8 @@
       return M.initialize(legacy,{migrating:true});
     }
     if(saved.version>=12&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
+    if(saved.auctionReminderDismissedDay!==undefined&&
+      (!integer(saved.auctionReminderDismissedDay)||saved.auctionReminderDismissedDay<0||saved.auctionReminderDismissedDay>saved.day))return null;
     // An untouched old catalogue can be refreshed after a day change without
     // losing any bid or payment. Never silently discard a live or decided lot.
     const staleEmptyHall=saved.version>=12&&saved.auctionHall?.day!==saved.day&&
@@ -625,6 +627,7 @@
         (saved.version>=12||saved.day===1)?
         JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
       auctionHistory:saved.version>=11?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
+      auctionReminderDismissedDay:saved.auctionReminderDismissedDay??0,
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
