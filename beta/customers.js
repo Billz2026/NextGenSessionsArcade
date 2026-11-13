@@ -132,6 +132,99 @@
         walkIn?'. The customer is here now for a viewing.':
         '. Book a viewing before proceeding to a test drive.'));
   }
+  function quote(state,id,asking,limit){
+    const c=caseFor(state,id),v=state.vehicles.find(v=>v.id===id);
+    if(state.financialScenario!=='uk2026'||!c||c.status!=='enquiry'||!v)
+      return fail('stage','An active 2026 customer enquiry is required to discuss a price.');
+    if(!ints(asking)||asking<500||asking>v.asking)
+      return fail('price','Quote a whole-pound price between £500 and your advertised asking price.');
+    if(!ints(limit)||limit<500||limit>100000)
+      return fail('budget','The customer budget is not available.');
+    if((c.quoteRounds||0)>=3)
+      return fail('limit','This customer will not consider another price quote.');
+    c.quoteRounds=(c.quoteRounds||0)+1;
+    if(asking>limit){
+      if(c.quoteRounds>=3){
+        c.status='lost';
+        c.reason='Customer walked away after repeated quotes above their budget.';
+        append(state,c,'price-walk',c.reason);
+        return {ok:false,changed:true,code:'walked',message:c.name+
+          ' ended the price discussion. No deposit or sale was taken.'};
+      }
+      c.quoteStatus='counter';
+      c.quotedPrice=limit;
+      append(state,c,'price-counter','Buyer budget £'+limit+' vs quote £'+asking);
+      return ok(c.name+' cannot pay £'+asking+'. They counter at £'+limit+
+        '. You can accept, quote another price, or book a viewing without agreeing the price.');
+    }
+    c.quoteStatus='accepted';c.quotedPrice=asking;
+    v.cashOffer=asking;
+    append(state,c,'price-agreed','Provisional pre-viewing price £'+asking);
+    return ok(c.name+' is happy with the proposed £'+asking+
+      ' subject to inspection. Next, book a viewing for tomorrow or offer a refundable £250 remote reservation. This is not a sale.');
+  }
+  function acceptPriceCounter(state,id){
+    const c=caseFor(state,id),v=state.vehicles.find(v=>v.id===id);
+    if(!c||c.status!=='enquiry'||c.quoteStatus!=='counter'||
+      !ints(c.quotedPrice)||!v)
+      return fail('stage','An active customer counteroffer is required.');
+    c.quoteStatus='accepted';
+    v.cashOffer=c.quotedPrice;
+    append(state,c,'price-agreed','Dealer accepted buyer budget £'+c.quotedPrice);
+    return ok('You accepted '+c.name+"'s £"+c.quotedPrice+
+      ' provisional price. The customer can book a next-day viewing or consider a refundable remote deposit.');
+  }
+  function remoteReserve(state,id){
+    const c=caseFor(state,id),v=state.vehicles.find(v=>v.id===id);
+    if(state.financialScenario!=='uk2026'||!c||!v||c.status!=='enquiry'||
+      c.quoteStatus!=='accepted'||!ints(c.quotedPrice))
+      return fail('stage','First agree a provisional price during the phone or online enquiry.');
+    if(c.remoteAttempted)
+      return fail('already','You have already invited this buyer to reserve remotely.');
+    const expense=customerPrep(state,c);
+    const outstanding=window.MotorTradeWorkshop?.reserved(state)??0;
+    if(state.cash-expense<outstanding)
+      return fail('cash','The dealership cannot fund the promised collection preparation.');
+    c.remoteAttempted=true;
+    const saving=(v.asking-c.quotedPrice)/Math.max(v.asking,1);
+    const interest=clamp((c.channel==='ONLINE PRICE QUESTION'?35:55)+
+      Math.round(Math.max(0,saving)*60),30,75);
+    if(!chance('remote-deposit-willing|'+c.id,interest)){
+      append(state,c,'reservation-declined','Buyer wants an inspection before paying');
+      return {ok:false,changed:true,code:'declined',message:c.name+
+        ' likes the price but will not leave a deposit before viewing the car. Offer a 24-hour appointment.'};
+    }
+    Object.assign(c,{status:'agreed',agreedDay:state.day,price:c.quotedPrice,
+      allowance:0,exchange:null,preferredMode:'cash',remote:true,
+      remoteInspected:false,terms:'distance-refundable'});
+    append(state,c,'agreement','Provisional remote reservation, subject to inspection');
+    const paid=deposit(state,id);
+    if(!paid.ok)throw new Error('Remote deposit preflight mismatch: '+paid.message);
+    return ok(c.name+' left a refundable £250 phone/online deposit. The remaining £'+
+      balanceDue(c)+' is due on arrival after collection inspection, day '+c.collectionDay+
+      '. Funds are held separately; the sale has not happened.');
+  }
+  function inspectRemote(state,id){
+    const c=caseFor(state,id);
+    if(!c||c.status!=='collectable'||!c.remote)
+      return fail('stage','A remote-reservation buyer must be due to collect the car.');
+    if(c.remoteInspected)return fail('already','The collection inspection has already passed.');
+    const grade=state.vehicles.find(v=>v.id===id)?.profile?.grade||3;
+    const happy=chance('remote-collection-inspection|'+c.id,
+      clamp(90-(grade>=4?16:grade===3?8:0),63,94));
+    if(!happy){
+      const amounts=settle(state,c,'dealer');
+      c.status='lost';c.reason='Buyer rejected the car on arrival.';
+      append(state,c,'collection-rejected','£'+amounts.refunded+' refunded');
+      return {ok:false,changed:true,code:'inspection-rejected',message:c.name+
+        ' declined the car after inspecting it. The full £'+amounts.refunded+
+        ' deposit was refunded. No further money or sale recorded.'};
+    }
+    c.remoteInspected=true;
+    append(state,c,'collection-inspected','Car accepted on arrival');
+    return ok(c.name+' accepted the car on collection. Collect the remaining £'+
+      balanceDue(c)+' and complete the handover. The £250 deposit applies exactly once.');
+  }
   function book(state,id){
     const c=caseFor(state,id);
     if(!c||c.status!=='enquiry')return fail('stage','A new enquiry is required to book a viewing.');
