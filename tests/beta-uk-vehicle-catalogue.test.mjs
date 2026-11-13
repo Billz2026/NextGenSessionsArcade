@@ -21,6 +21,14 @@ const all=Object.values(M.CATALOGUE).flat();
 const newRows=Object.values(UK.CATALOGUE).flat();
 const find=title=>all.find(x=>x.title===title);
 
+test('beta loads UK catalogue before its spec registry and the market engine',()=>{
+  const html=readFileSync(new URL('../beta/index.html',import.meta.url),'utf8');
+  const i=html.indexOf('uk-vehicle-catalogue.js');
+  const evidence=html.indexOf('vehicle-accuracy.js');
+  const market=html.indexOf('vehicle-market.js');
+  assert.ok(i>0&&evidence>i&&market>evidence,'Source and manufacturer evidence must load before use');
+});
+
 test('expanded UK beta contains 200 distinct vehicle derivatives in valid tiers',()=>{
   assert.equal(UK.added,145);
   assert.equal(newRows.length,145);
