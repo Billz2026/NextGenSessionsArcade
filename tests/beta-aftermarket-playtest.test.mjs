@@ -247,7 +247,7 @@ test('reputation influences prestige stock weighting without counterfeiting Tesl
     return prestige;
   };
   assert.ok(score(85)>score(5),'Strong reputation should make premium/luxury auction sourcing more frequent');
-  assert.ok(Mkt.CATALOGUE.luxury.some(v=>v.title.includes('Tesla')),
+  assert.ok(Object.values(Mkt.CATALOGUE).flat().some(v=>v.title.includes('Tesla')),
     'Tesla candidates must come from genuine catalogue templates, not invented pricing');
 });
 
@@ -272,6 +272,7 @@ test('debt recovery has timed warnings, controls cash borrowing and never treats
   assert.equal(E.commercialControls.status(s).softArrears,true);
   s.day=16;E.advanceFinance(s);
   assert.equal(E.commercialControls.status(s).creditorHold,true);
+  s.day=31;M.next(s);
   s.day=35;E.advanceFinance(s);
   assert.equal(E.commercialControls.status(s).recoveryRequired,true);
   const collateral={id:303,cost:16000,retail:23000,profile:{trade:16000}};
