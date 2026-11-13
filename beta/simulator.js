@@ -793,7 +793,7 @@
         if(career&&E.auctionDay(career.day)&&career.auctionHall?.phase==='catalogue'){
           // Decline each lot via the normal audit trail, without fees or bids.
           let safety=0;
-          while(career.auctionHall.phase==='catalogue'&&safety++<12){
+          while(career.auctionHall.phase==='catalogue'&&safety++<64){
             if(!E.passAuction(career).ok)break;
             if(!E.nextAuctionLot(career).ok)break;
           }
