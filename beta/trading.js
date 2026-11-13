@@ -58,6 +58,41 @@
     return (v ^ (v >>> 16)) >>> 0;
   };
   const nearest25 = n => Math.round(n / 25) * 25;
+  // The modern market lists genuine model-year/powertrain combinations,
+  // varying simulated VIN-level mileage without pretending an advertised
+  // comparable is a sold vehicle. Younger stock skews to fewer miles;
+  // ex-fleet and older stock can still travel a long way.
+  function varied2026(base,day,index,kind){
+    const year=Number(String(base.title).slice(0,4));
+    const bands=year>=2024?
+      [[3500,15000,40],[15000,30000,32],[30000,50000,19],[50000,80000,7],[80000,110000,2]]:
+      year>=2021?
+      [[9000,30000,25],[30000,50000,27],[50000,75000,28],[75000,105000,16],[105000,140000,4]]:
+      year>=2018?
+      [[15000,30000,12],[30000,50000,19],[50000,80000,27],[80000,115000,29],[115000,160000,13]]:
+      [[18000,30000,7],[30000,55000,15],[55000,85000,23],[85000,125000,32],[125000,185000,23]];
+    const group=kind==='auction'?411:577;
+    const bucket=sample(day,index,group)%100;
+    let cumulative=0;
+    const [lower,upper]=bands.find(b=>(cumulative+=b[2])>bucket)||bands.at(-1);
+    const miles=Math.round((lower+sample(day,index,group+17)%(upper-lower))/100)*100;
+    // Illustrative valuation sensitivity by mileage; no fabricated CAP
+    // value or sold auction hammer. Low-mileage cars COST MORE to acquire.
+    const per10k=120+base.retail*.017;
+    const retailOffset=nearest25(Math.max(-base.retail*.27,
+      Math.min(base.retail*.28,(base.miles-miles)/10000*per10k)));
+    const tradeOffset=nearest25(retailOffset*.66);
+    const guide=Math.max(850,base.guide+tradeOffset);
+    const delta=guide-base.guide;
+    const retail=Math.max(1000,base.retail+retailOffset);
+    return {...base,miles,guide,retail,ask:Math.max(950,base.ask+delta),
+      floor:Math.max(100,base.floor+delta),
+      reserve:Math.max(850,base.reserve+delta),rival:Math.max(850,base.rival+delta),
+      note:(base.note||'')+' Mileage and guide/asking changes are fictional market scenarios; inspect service records, MOT and condition.',
+      priceAudit:base.priceAudit?{...base.priceAudit,variantMileage:miles,
+        originalModelMiles:base.miles,simulatedPriceAdjustment:retailOffset,
+        note:base.priceAudit.note+' Mileage change and retail/guide adjustment are simulated, NOT an exact verified comparable or auction result.'}:undefined};
+  }
   // Game calendar starts Monday 9 November 2026. Normally Monday auction;
   // where Monday is month-end Deal Day, use Tuesday of the SAME game week.
   // This guarantees exactly one weekday auction per week, never weekends.
@@ -72,8 +107,12 @@
   }
   function market(day,reputationScore=0,session=0,dealershipName='',
     periodReputation=reputationScore,cash=STARTING_CASH,feeScenario='classic') {
-    const tier=MARKET.tierFor(cash,reputationScore).key;
-    const dealSellers=MARKET.sellersForDealDay(cash,reputationScore).map(x=>MARKET.priceFor(x,feeScenario));
+    const tier=feeScenario==='uk2026'?MARKET.sourcingTier2026(cash):
+      MARKET.tierFor(cash,reputationScore).key;
+    const dealSellers=(feeScenario==='uk2026'?
+      MARKET.pool('seller',tier).filter(v=>v.grade<=3):
+      MARKET.sellersForDealDay(cash,reputationScore))
+      .map(x=>MARKET.priceFor(x,feeScenario));
     const special=D.customers(day,periodReputation,session,dealSellers,I.profile,dealershipName);
     if(special)return {auctions:[],sellers:special.sellers
       .filter(x=>feeScenario!=='uk2026'||!x.priceAudit?.buyingRisk)
@@ -88,11 +127,13 @@
     const usedAuction=new Set(),usedSeller=new Set();
     const starter=MARKET.CATALOGUE.starter;
     const auctions=Array.from({length:aCount},(_,i)=>{
-      const base=MARKET.priceFor(day===1?starter[i]:MARKET.pick('auction',tier,day,i,usedAuction),feeScenario);
+      const original=MARKET.priceFor(day===1&&feeScenario!=='uk2026'?starter[i]:
+        MARKET.pick('auction',tier,day,i,usedAuction,feeScenario),feeScenario);
+      const base=feeScenario==='uk2026'?varied2026(original,day,i,'auction'):original;
       const offset=day===1?0:nearest25((sample(day,i,91)%851)-425);
       const guide=Math.max(850,base.guide+offset);
       const delta=guide-base.guide;
-      const miles=Math.max(3500,base.miles+
+      const miles=modern?base.miles:Math.max(3500,base.miles+
         (day===1?0:((sample(day,i,54)%250)-125)*100));
       const modern=feeScenario==='uk2026';
       const fee=modern?AUCTION_FEES.feeAtHammer(guide):
@@ -103,11 +144,13 @@
         id:'A-'+day+'-'+i,kind:'auction',day};
     });
     const sellers=Array.from({length:sellerCount},(_,i)=>{
-      const base=MARKET.priceFor(day===1?starter[3+i]:MARKET.pick('seller',tier,day,i,usedSeller),feeScenario);
+      const original=MARKET.priceFor(day===1&&feeScenario!=='uk2026'?starter[3+i]:
+        MARKET.pick('seller',tier,day,i,usedSeller,feeScenario),feeScenario);
+      const base=feeScenario==='uk2026'?varied2026(original,day,i,'seller'):original;
       const offset=day===1?0:nearest25((sample(day,i,51)%601)-300);
       const ask=Math.max(950,base.ask+offset);
       const delta=ask-base.ask;
-      const miles=Math.max(3500,base.miles+
+      const miles=feeScenario==='uk2026'?base.miles:Math.max(3500,base.miles+
         (day===1?0:((sample(day,i,44)%250)-125)*100));
       return {...base,ask,floor:Math.max(100,base.floor+delta),
         retail:base.retail+delta,miles,
@@ -131,6 +174,13 @@
     const todaysMovement=state.ledger.reduce((n,x)=>n+(x.day===state.day?x.delta:0),0);
     const openingCash=state.cash-todaysMovement;
     const periodRep=state.monthPlan?.startingReputation??state.reputationScore;
+    if(state.financialScenario==='uk2026'){
+      const key=MARKET.sourcingTier2026(openingCash);
+      const index=MARKET.TIERS.findIndex(t=>t.key===key);
+      return {current:MARKET.TIERS[index],
+        next:MARKET.TIERS[index+1]||null,
+        cashAccess:true};
+    }
     return MARKET.progress(openingCash,periodRep);
   }
   const marketFor=state=>{
