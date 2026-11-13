@@ -255,7 +255,14 @@
       cell('OPERATING CONTRIBUTION',money(contribution),'After staff and premises costs',
         contribution<0?'report-value-negative':'report-value-positive')+
       cell(isClosed?'CLOSING CASH':'CURRENT CASH',money(r.closingCash),'Opening '+money(r.openingCash))+
-      cell('CASH INVESTED IN STOCK',money(r.stockCapital),r.stockCount+' unsold vehicles')+'</div>'+
+      cell('CASH INVESTED IN STOCK',money(r.stockCapital),r.stockCount+' unsold vehicles')+
+      cell('DEALERSHIP REVENUE',money(companyRevenue),
+        'Monthly required '+money(r.targetTurnover))+
+      cell('RETAIL SALES',money(r.turnover),'Completed car handovers')+
+      (r.serviceTurnover===undefined?'':cell('SERVICE / SCRAP / MOT',money(r.serviceTurnover),
+        r.serviceUnits+' jobs completed'))+
+      cell('AFTER OUTPUT VAT',money(r.operatingAfterVat??r.operatingContribution),
+        'Modelled operating contribution after output VAT')+'</div>'+
       '<div class="mr-focus"><section class="mr-panel"><h3>ARE WE ON TARGET?</h3>'+
       progress(r.soldUnits,r.targetUnits,'Completed handovers')+
       progress(companyRevenue,r.targetTurnover,
@@ -264,16 +271,18 @@
       '<p>Company success requires enough handovers'+(r.combinedRevenue===undefined?'':', the revenue target')+
         ' and positive operating contribution.</p></section>'+
       '<section class="mr-panel"><h3>WHAT NEEDS ATTENTION?</h3>'+alerts+'</section></div>'+      '<div class="mr-mini"><div><small>GROSS TRADE MARGIN</small><strong>'+money(r.grossMargin)+'</strong></div>'+      '<div><small>STOCK AGED 14+ DAYS</small><strong>'+r.agedStock+'</strong></div>'+      '<div><small>RETAIL ENQUIRIES</small><strong>'+(r.customerJourney?r.customerJourney.enquiries:'NOT RECORDED')+'</strong></div>'+      '<div><small>REPUTATION</small><strong>'+r.closingReputation+'/100</strong></div></div></div>';
-    const detail=(title,body)=>'<details class="mr-detail"><summary>'+title+
-      ' · EXPAND</summary>'+body+'</details>';
+    const detail=(title,body)=>'<details class="mr-detail"'+(isClosed?' open':'')+
+      '><summary>'+title+(isClosed?' · FULL MONTH-END FIGURES':' · EXPAND')+
+      '</summary>'+body+'</details>';
     const detailsBody=detail('MONTHLY OBJECTIVES',targets)+detail('CASH FLOW & FINANCES',cash)+
       detail('SALES & PURCHASING',saleLine)+detail('STOCK & WORKING CAPITAL',inventory)+
       detail('SALES TEAM SCORECARDS',staff)+detail('RETAIL CUSTOMER JOURNEY',customerSection)+
       detail('CUSTOMER TRUST & RISKS',trust)+detail('DEAL DAY RESULTS',dealDaySection);
     return archivePicker(state,selected)+top+
-      '<details class="mr-records" aria-label="Detailed Management Records">'+
+      '<details class="mr-records" aria-label="Detailed Management Records"'+
+        (isClosed?' open':'')+'>'+
       '<summary class="mr-records-summary"><strong>DETAILED MANAGEMENT RECORDS</strong>'+
-      '<span>8 REPORTS · EXPAND</span></summary>'+
+      '<span>'+(isClosed?'8 SECTIONS · FULL MONTH-END BREAKDOWN':'8 SECTIONS · EXPAND')+'</span></summary>'+
       '<div class="mr-records-body"><p>Choose a report below to examine the supporting figures.</p>'+
       '<div class="mr-details">'+detailsBody+'</div></div></details>'+
       '<p class="mr-note">Fictional management figures only; not statutory UK accounts. VAT, tax and some liabilities are not modelled.</p>';
