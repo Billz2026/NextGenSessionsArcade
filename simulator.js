@@ -664,6 +664,10 @@
   }
 
   function startCareer() {
+    if(ACCOUNT?.isCloudMode()) {
+      window.alert('This account already has an active cloud career. Sign out to start a separate guest career; the account save will remain protected.');
+      return;
+    }
     const input = byId('dealership-name');
     const name = input.value.trim().replace(/\s+/g, ' ');
     if (name.length < 2 || name.length > 36) {
