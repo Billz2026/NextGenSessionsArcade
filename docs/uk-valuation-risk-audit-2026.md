@@ -76,6 +76,21 @@ Earlier research identified **four** modelled guide prices at or above their dat
 
 The model must not assume a fixed published auction fee above **£24,999**. E.g. 2022 Audi RS 3 Sportback, 2021 BMW M3 Competition, 2022 Porsche Macan 2.0 PDK, 2023 BMW X5 xDrive30d M Sport, 2023 Defender D250, 2023 Range Rover Sport P440e Dynamic SE, 2021 Taycan 4S and other premium vehicles appear as market candidates but cannot legitimately calculate a cash settlement from the limited BCA Blue Standard rate card. Obtain a contracted BCA account fee table or a directly requested individual quote and account/auction metadata before unlocking a settlement. Do **not** extrapolate the curve.
 
+## Public auction results / retail research added — 13 November 2026
+
+A first **source-linked** UK wholesale and retail evidence sample is now recorded in
+[UK observed auction and retail source audit](uk-public-market-evidence-2026.md).
+It contains eight Brightwells completed-sale lot prices, four independently
+advertised retail prices, and two tight same-derivative/different-car examples
+(2021 Toyota Aygo x-play, 2021 Ford Fiesta ST-2). These sample differences
+are **not realised dealer profits**, **not BCA trade sold-price data**, and
+**not an authorised 200-car pricing feed**.
+
+The beta now loads `market-evidence-2026.js`; each `priceAudit.wholesaleAudit`
+is explicitly `not-calibrated` with `priceToApply:null`. Regression tests
+compare all 200 trade and retail values against the baseline before public
+evidence loading. **All existing simulated price inputs remain unchanged.**
+
 ## Release gate (do not merge as UK-realistic yet)
 
 1. **True wholesale observations:** Gather consented/licensed completed hammer outcomes for a sample of each vehicle (make, derivative, year, actual mileage, auction date, grade, reserve, VAT scheme/account fee), not dealer asking prices or computer-generated 'trade guides'. For each observation, store as-of date, source permission and confidence.
