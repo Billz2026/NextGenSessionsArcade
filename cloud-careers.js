@@ -105,11 +105,14 @@
     if(error)throw error;
     return data || null;
   }
-  async function saveCareer(career,expectedRevision) {
+  async function saveCareer(career,expectedRevision,expectedUserId) {
     ensureReady();
+    if(!expectedUserId || !/^[a-f0-9-]{36}$/i.test(expectedUserId))
+      throw new Error('Account identifier required for cloud save.');
     if(!Number.isSafeInteger(expectedRevision) || expectedRevision<0)
       throw new Error('Invalid cloud save revision.');
     const {data,error}=await client.rpc('motor_trade_save_career',{
+      expected_user_id:expectedUserId,
       expected_revision:expectedRevision,
       new_career:career
     });
