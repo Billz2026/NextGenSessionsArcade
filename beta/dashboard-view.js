@@ -102,7 +102,7 @@
         'Manage booked viewings and any buyers ready for negotiation.',
         'sales','OPEN SALES','attention');
     if(pendingEnquiries)
-      add(2.6,'new-enquiries',pendingEnquiries+' customer +
+      add(2.6,'new-enquiries',pendingEnquiries+' customer '+
         (pendingEnquiries===1?'enquiry':'enquiries')+' awaiting your response',
         'A buyer has contacted your dealership about advertised stock. Book a viewing in the Sales Office before the enquiry expires.',
         'sales','RESPOND TO CUSTOMERS','attention');
