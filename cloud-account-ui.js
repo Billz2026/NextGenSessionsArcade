@@ -13,6 +13,8 @@
   let cloudReady = false;
   let serviceMessage = 'Checking the account service…';
   let record = null;
+  let localAccountCareer = null;
+  let localAccountRevision = null;
   let fetching = false;
   let activeAccount = null;
   let revision = 0;
@@ -33,6 +35,29 @@
       .slice(0, 300);
   }
   function showFeedback(message) {feedback=message;renderUI();}
+  const revKey = id => 'the-motor-trade-cloud-base-revision-' + id;
+  function savedRevision(id) {
+    try {
+      const raw=window.localStorage.getItem(revKey(id));
+      if(raw === null)return null;
+      const number=Number(raw);
+      return Number.isSafeInteger(number) && number>=0 ? number : null;
+    }catch(_) {return null;}
+  }
+  function rememberRevision(id,value) {
+    try{window.localStorage.setItem(revKey(id),String(value));}
+    catch(_) { /* Cloud saves still work without this optional local marker. */ }
+  }
+  function inspectAccountCache() {
+    if(!user || isCloudMode())return;
+    const previous=activeAccount;
+    SAVES.setNamespace(user.id);
+    const cache=SAVES.load(app.normalize);
+    localAccountCareer=cache.career;
+    localAccountRevision=savedRevision(user.id);
+    SAVES.setNamespace(previous);
+    SAVES.load(app.normalize);
+  }
   function isCloudMode() {return !!(activeAccount && user?.id === activeAccount);}
   function showAccountPanel() {
     open=true;
@@ -70,6 +95,8 @@
         record?'CLOUD: '+record.career.name+' · DAY '+record.career.day+
           ' · Saved '+new Date(record.updated_at).toLocaleString('en-GB'):
           'No cloud career saved yet. Start a guest career, then upload it to this account.';
+      $('cloud-resume-device').hidden=!localAccountCareer || isCloudMode();
+      $('cloud-resume-device').disabled=busy || fetching;
       $('cloud-load-career').hidden=!record;
       $('cloud-load-career').disabled=busy || fetching;
       $('cloud-load-career').textContent=isCloudMode()?'RELOAD CLOUD CAREER':'LOAD CLOUD CAREER';
@@ -106,6 +133,7 @@
       if(fetched && !app.normalize(fetched.career))
         throw new Error('The cloud career did not pass game integrity validation. It was not loaded.');
       record=fetched;
+      inspectAccountCache();
     }catch(error) {
       if(user?.id===identity) {
         feedback='Unable to read cloud career: '+errorText(error)+
@@ -115,7 +143,11 @@
   }
   async function signedIn(newUser) {
     if(!newUser)return;
-    if(user?.id!==newUser.id) record=null;
+    if(user?.id!==newUser.id) {
+      record=null;
+      localAccountCareer=null;
+      localAccountRevision=null;
+    }
     user=newUser;
     cloudReady=true;
     serviceMessage='Signed in. Cloud careers are stored against your account.';
@@ -137,6 +169,8 @@
   async function loggedOut() {
     user=null;
     record=null;
+    localAccountCareer=null;
+    localAccountRevision=null;
     recovery=false;
     if(activeAccount) returnToGuest('Signed out. Your guest save is available separately.');
     feedback='Signed out. Guest careers remain on this browser.';
@@ -232,6 +266,7 @@
       const saved=SAVES.save(career,app.normalize,{force:true,backupPrevious:true});
       activeAccount=user.id;
       revision=Number(live.revision);
+      rememberRevision(user.id,revision);
       record=live;
       queued=null;syncBlocked=false;conflict=false;
       syncMessage=saved.ok?'Cloud career loaded. Auto-save is active.':
@@ -239,6 +274,36 @@
       app.setCareer(career,'Loaded your account career. Progress will auto-save to cloud.');
     }catch(error){feedback=errorText(error);}
     finally{busy=false;renderUI();}
+  }
+  async function resumeAccountDevice() {
+    if(!user || busy || isCloudMode() || !localAccountCareer)return;
+    if(!window.confirm('Recover this device\'s account-only career? Its last cloud revision '+
+      'will be checked before upload. If another device has moved ahead, the server will reject the overwrite. '+
+      'Your existing guest save remains separate.'))return;
+    busy=true;feedback='';renderUI();
+    const previous=activeAccount;
+    try {
+      SAVES.setNamespace(user.id);
+      const loaded=SAVES.load(app.normalize);
+      const recovered=loaded.career && app.normalize(loaded.career);
+      if(!recovered)throw new Error('The account-local recovery is damaged. Nothing was loaded.');
+      const baseline=savedRevision(user.id);
+      activeAccount=user.id;
+      revision=baseline===null?0:baseline;
+      queued=null;
+      syncBlocked=baseline===null;
+      conflict=baseline===null;
+      syncMessage=baseline===null
+        ? 'Device career recovered, but its verified cloud revision is unavailable. Export it as JSON; automatic upload is blocked to protect the account.'
+        : 'Device career restored. Checking whether the cloud still accepts this revision…';
+      app.setCareer(recovered,'Recovered the account-only device career. Your guest career remains separate.');
+      if(baseline!==null)notifyCareerSaved(recovered);
+    }catch(error) {
+      SAVES.setNamespace(previous);
+      SAVES.load(app.normalize);
+      activeAccount=previous;
+      feedback=errorText(error);
+    }finally{busy=false;renderUI();}
   }
   async function uploadGuest() {
     if(!user || busy || isCloudMode())return;
@@ -262,6 +327,7 @@
       const stored=SAVES.save(career,app.normalize,{force:true,backupPrevious:true});
       activeAccount=user.id;
       revision=written.revision;
+      rememberRevision(user.id,revision);
       queued=null;syncBlocked=false;conflict=false;
       syncMessage=stored.ok?'Career uploaded. Automatic cloud saving is now active.':
         'Career uploaded to cloud, but device backup failed: '+stored.message;
@@ -298,6 +364,7 @@
           const updated=await CLOUD.saveCareer(snapshot,revision,identity);
           if(activeAccount!==identity)return;
           revision=updated.revision;
+          rememberRevision(identity,revision);
           record={career:snapshot,revision,updated_at:updated.updatedAt};
           syncMessage='Cloud saved · '+new Date(updated.updatedAt).toLocaleTimeString('en-GB');
         }catch(error) {
@@ -375,6 +442,7 @@
       else if(action==='signup-mode')switchAuthMode('signup');
       else if(action==='forgot-password')switchAuthMode(authMode==='reset'?'signin':'reset');
       else if(action==='load-cloud')void loadCloud();
+      else if(action==='resume-device')void resumeAccountDevice();
       else if(action==='upload-guest')void uploadGuest();
       else if(action==='signout')void signOut();
       else if(action==='retry-cloud')void retryCloud();
