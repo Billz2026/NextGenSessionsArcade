@@ -35,6 +35,7 @@
   <script src="./monthly.js?v=14" defer></script>
   <script src="./events.js?v=2" defer></script>
   <script src="./workshop.js?v=5" defer></script>
+  <script src="./customer-services.js?v=1" defer></script>
   <script src="./retail-liquidity.js?v=6" defer></script>
   <script src="./customers.js?v=12" defer></script>
   <script src="./aftersales.js?v=2" defer></script>
@@ -46,6 +47,7 @@
   <script src="./monthly-view.js?v=13" defer></script>
   <script src="./events-view.js?v=6" defer></script>
   <script src="./workshop-view.js?v=8" defer></script>
+  <script src="./customer-services-view.js?v=1" defer></script>
   <script src="./customers-view.js?v=12" defer></script>
   <script src="./aftersales-view.js?v=2" defer></script>
   <script src="./premises-view.js?v=4" defer></script>
@@ -138,6 +140,7 @@
             <button type="button" data-page="auctions"><span class="nav-icon">◆</span> Buying Desk</button>
             <button type="button" data-page="stock"><span class="nav-icon">▤</span> Vehicle Stock</button>
             <button type="button" data-page="workshop"><span class="nav-icon">⚒</span> Workshop</button>
+            <button type="button" data-page="services"><span class="nav-icon">◉</span> Customer Services</button>
             <button type="button" data-page="sales"><span class="nav-icon">♧</span> Sales Office</button>
             <button type="button" data-page="finance"><span class="nav-icon">£</span> Finances</button>
             <button type="button" data-page="reports"><span class="nav-icon">▦</span> Management Reports</button>
@@ -278,6 +281,14 @@
             <section class="career-panel" data-panel="workshop" hidden aria-labelledby="workshop-title">
               <div class="page-heading"><div><p class="section-overline">OPERATIONS / VEHICLE PREPARATION</p><h1 id="workshop-title">WORKSHOP <em>OPERATIONS.</em></h1><p>Diagnose faults, approve in-house or external repair jobs, wait for work to finish and pass quality control before advertising.</p></div><span class="career-chip">REAL GAME-DAY TURNAROUND</span></div>
               <div id="workshop-board" class="ws-control" aria-live="polite"></div>
+            </section>
+
+            <section class="career-panel" data-panel="services" hidden aria-labelledby="services-title">
+              <div class="page-heading"><div><p class="section-overline">AFTERMARKET / CUSTOMER BOOKINGS</p>
+                <h1 id="services-title">CUSTOMER <em>SERVICES.</em></h1>
+                <p>Take service, repair, MOT booking and scrap referrals even with a full forecourt. Work is subcontracted and jobs take game days; customer satisfaction follows timeliness and quality.</p></div>
+                <span class="career-chip">EXTERNAL PROVIDER NETWORK</span></div>
+              <div id="services-board" aria-live="polite"></div>
             </section>
 
             <section class="career-panel sales-control" data-panel="sales" hidden aria-labelledby="sales-title">
