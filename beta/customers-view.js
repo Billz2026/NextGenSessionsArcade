@@ -74,7 +74,7 @@
       }
       case 'booked':
         body='<div class="sales-case-highlight"><strong>'+
-          (state.financialScenario==='uk2026'?'NEXT-DAY VIEWING (24 HOURS)':'BOOKED VIEWING')+
+          (state.financialScenario==='uk2026'&&c.appointmentDay<=state.day+1?'NEXT-DAY VIEWING (24 HOURS)':'BOOKED VIEWING')+
           ' · NO DEPOSIT</strong>'+ 
           '<p>'+esc(c.name)+' is due on <strong>GAME DAY '+c.appointmentDay+
           '</strong>. This is an appointment, not a reservation: the car stays for sale until someone pays a deposit or completes handover.</p>'+ 
@@ -149,7 +149,8 @@
           '<span>Part-exchange allowance</span><strong>'+cash(c.allowance||0)+'</strong>'+
           '<span>Deposit already paid</span><strong>'+cash(c.held)+'</strong>'+
           '<span>BALANCE TO COLLECT TODAY</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
-          '<p><strong>COLLECTION DUE: DAY '+c.collectionDay+'</strong> · Complete handover within five game days. Collect only the outstanding balance; the held deposit is applied once.</p>'+
+          '<p><strong>COLLECTION DUE: DAY '+c.collectionDay+'</strong> · Complete handover within five game days. Collect only the outstanding balance; the held deposit is applied once. '+
+          (c.remote?'Online/telephone reservation: full pre-collection cancellation refund, including rejection after inspection.':'')+'</p>'+ 
           (c.remote&&!c.remoteInspected?
             '<p><strong>ARRIVAL CHECK REQUIRED:</strong> The remote buyer has not inspected the car. Do not collect the final balance or hand over yet. They may accept or reject it.</p>'+
             '<button type="button" class="trade-button" data-action="inspect-remote-customer" data-id="'+id+'">CUSTOMER ARRIVES / INSPECTS CAR</button>':
