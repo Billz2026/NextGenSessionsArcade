@@ -108,6 +108,10 @@
     if(note.startsWith('Off-site relocation:')||
        note.startsWith('Off-site viewing transfer:'))return 'preparation';
     if(note.startsWith('Monthly management investment:'))return 'managementSpend';
+    if(note.startsWith('Financing advance:'))return 'financeAdvances';
+    if(note.startsWith('Financing arrangement fee:'))return 'financeFees';
+    if(note.startsWith('Financing repayment:'))return 'financeRepayments';
+    if(note.startsWith('Financing interest accrued:'))return 'financeInterest';
     if(note.startsWith('Staff payroll monthly net wages settlement'))return 'payrollCash';
     if(note.startsWith('Staff HMRC PAYE and NI remittance'))return 'hmrcRemittance';
     if(note.startsWith('Staff workplace pension remittance'))return 'pensionRemittance';
@@ -126,7 +130,8 @@
     'recruitment','training','staffExit','other','premisesPayments','premisesInvestment','vatPayments',
     'payrollCash','hmrcRemittance','pensionRemittance',
     'customerRefunds','customerCollection','customerRepairs','customerAdjustments',
-    'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions','managementSpend'];
+    'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions',
+    'managementSpend','financeAdvances','financeFees','financeRepayments','financeInterest'];
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
@@ -214,10 +219,15 @@
     const operatingAfterVat=operatingContribution-
       Math.ceil(vatOutputAccruedPence/100);
     const vatPayments=-bucket.vatPayments;
+    const interestAccrued=ledger.filter(x=>x.note.startsWith('Financing interest accrued: £'))
+      .reduce((n,x)=>n+Number(/^Financing interest accrued: £(\d+)/.exec(x.note)?.[1]||0),0);
+    const financingExpense=-bucket.financeFees+interestAccrued;
+    const afterFinance=operatingAfterVat-financingExpense;
+    const loanOutstanding=window.MotorTradeCommercialControls?.status(state).bridgeOutstanding||0;
     const met=saleCount>=p.unitTarget &&
       (state.financialScenario!=='uk2026'||combinedRevenue>=p.turnoverTarget)&&
       grossMargin+serviceProfit>0&&
-      (state.financialScenario==='uk2026'?operatingAfterVat:operatingContribution)>0;
+      (state.financialScenario==='uk2026'?afterFinance:operatingContribution)>0;
     const report={
       month:p.month,monthLabel:'MONTH '+p.month,
       startDay:p.startDay,endDay:p.endDay,partial:p.partial,
@@ -242,6 +252,7 @@
       premisesInvestment:-bucket.premisesInvestment,
       premisesArrears:state.premises?.arrears??0,
       operatingContribution,operatingAfterVat,vatOutputAccruedPence,vatPayments,
+      ...(state.financialScenario==='uk2026'?{financingExpense,afterFinance,loanOutstanding}:{}),
       openingCash:p.openingCash,closingCash:state.cash,
       cashIn:inflow,cashOut:outflow,netCashChange:inflow-outflow,
       totalAcquisitions:acquisitions,prepCost,staffCosts:payrollCost,
@@ -366,7 +377,8 @@
         (['premisesPayments','premisesInvestment','auctionTransport','vatPayments',
           'payrollCash','hmrcRemittance','pensionRemittance',
           'customerRefunds','customerCollection','customerRepairs','customerAdjustments',
-          'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions','managementSpend'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
+          'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions',
+          'managementSpend','financeAdvances','financeFees','financeRepayments','financeInterest'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.premisesExpense!==undefined&&(
       !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
@@ -386,6 +398,10 @@
     if(r.vatOutputAccruedPence!==undefined&&(
       !whole(r.vatOutputAccruedPence)||!whole(r.operatingAfterVat)||
       !nonneg(r.vatPayments)))return false;
+    if(r.afterFinance!==undefined&&(
+      !nonneg(r.financingExpense)||!whole(r.afterFinance)||
+      !nonneg(r.loanOutstanding)||
+      r.afterFinance!==r.operatingAfterVat-r.financingExpense))return false;
     if(r.customerHoldingAtClose!==undefined&&
       (!nonneg(r.customerHoldingAtClose)||r.customerHoldingAtClose>1000))return false;
     if(r.customerPreparationExpense!==undefined&&
