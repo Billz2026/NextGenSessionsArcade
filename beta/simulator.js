@@ -562,7 +562,7 @@
     if(closed) {
       M.next(career);
       selectedMonth=String(closed.month);
-      currentPage='events'; // Show the first-day management meeting.
+      currentPage='reports'; // Mandatory financial review immediately after closing month.
     } else if(enteringDealDay){
       currentPage='events'; // Surface the special event automatically.
     }
@@ -658,7 +658,7 @@
         '. Unsold stock '+closed.stockCount+' cars, including '+
         closed.agedStock+' aged 14+ days.\n\nVisit Management Reports for the full financial statement, individual salesperson targets, stock position and reputation review.',
         'reports'));
-      eventNotice='Month '+closed.month+' management review ready — company sales target '+
+      eventNotice='MONTH CLOSED · YOUR FULL FINANCIAL REPORT IS OPEN. Review revenue, costs, tax liabilities, cash, stock, margins and target result before the next management meeting. Month '+closed.month+' target '+
         status+'. Open MANAGEMENT REPORTS or your inbox for the full results. '+
         eventNotice;
     }
