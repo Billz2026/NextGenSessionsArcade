@@ -315,9 +315,14 @@
   const MARKET_2026_REVIEW_DATE='2026-11-12';
   function priceFor(base,scenario='classic'){
     if(scenario!=='uk2026')return base;
+    // Market evidence is NOT a price feed. The researched public lots are
+    // Brightwells results, not verified BCA Blue account settlements, and no
+    // dealer asking price is an achieved retail transaction.
+    const wholesaleAudit=window.MotorTradeObservedMarket?.snapshotFor(base)||
+      {status:'not-calibrated',eligibleBcaSoldPrices:0,priceToApply:null};
     const evidence=PRICING_2026[base.title];
     if(!evidence)return {...base,repairScenario:'uk2026',priceAudit:{
-      status:'unverified',asOf:MARKET_2026_REVIEW_DATE,
+      status:'unverified',asOf:MARKET_2026_REVIEW_DATE,wholesaleAudit,
       note:'Illustrative game guide/asking prices awaiting derivative, mileage and condition benchmarking.'}};
     const guide=Number.isSafeInteger(evidence.tradeGuide)?evidence.tradeGuide:base.guide;
     return {...base,guide,retail:evidence.retail,repairScenario:'uk2026',
@@ -326,7 +331,7 @@
       ask:guide+Math.max(300,Math.round(guide*.08/25)*25),
       floor:guide-125,
       priceAudit:{
-        status:'retail-comparable',asOf:MARKET_2026_REVIEW_DATE,
+        status:'retail-comparable',asOf:MARKET_2026_REVIEW_DATE,wholesaleAudit,
         confidence:evidence.confidence,source:evidence.source,
         comparisonAsk:evidence.sourcePrice,comparisonMiles:evidence.sourceMiles,
         note:evidence.note,
