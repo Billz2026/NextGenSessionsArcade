@@ -56,9 +56,16 @@
   }
   const entries=state=>[...(state?.sold||[]),...(state?.wholesale||[])]
     .filter(x=>x?.vat?.scheme==='assumed-eligible-margin');
-  const outputPence=state=>entries(state).reduce((n,x)=>n+x.vat.outputPence,0);
+  const serviceEntries=state=>(state?.serviceDesk?.jobs||[])
+    .filter(j=>j.status==='completed'&&Number.isSafeInteger(j.taxOutputPence));
+  const serviceOutputPence=state=>serviceEntries(state)
+    .reduce((n,x)=>n+x.taxOutputPence,0);
+  const outputPence=state=>entries(state).reduce((n,x)=>n+x.vat.outputPence,0)+serviceOutputPence(state);
+  const REMITTANCES=Object.freeze([
+    'VAT remittance: output VAT on eligible used-car margins',
+    'VAT remittance: output VAT on used-car margins and taxable services']);
   const paidPence=state=>(state?.ledger||[])
-    .filter(x=>x.note==='VAT remittance: output VAT on eligible used-car margins')
+    .filter(x=>REMITTANCES.includes(x.note))
     .reduce((n,x)=>n-x.delta*100,0);
   const creditPence=state=>state.aftersalesScenario==='cra2015-2026'?
     (state.aftersales?.cases||[]).reduce((n,c)=>n+
@@ -69,7 +76,9 @@
     paidPence(state)+creditPence(state)-outputPence(state));
   const maturedPence=(state,day=state.day)=>Math.max(0,
     entries(state).filter(x=>x.vat.dueDay<=day)
-      .reduce((n,x)=>n+x.vat.outputPence,0)-
+      .reduce((n,x)=>n+x.vat.outputPence,0)+
+    serviceEntries(state).filter(j=>dueDayForSale(j.doneDay)<=day)
+      .reduce((n,j)=>n+j.taxOutputPence,0)-
     creditPence(state)-paidPence(state));
   const rollingTurnover=(state,day=state.day)=>{
     const from=day-364;
@@ -82,7 +91,9 @@
       n+(s.day>=from&&s.day<=day?
         Math.max(0,s.price-(credits.get(s.id)||0)):0),0)+
       (state.wholesale||[]).reduce((n,s)=>
-        n+(s.day>=from&&s.day<=day?s.proceeds:0),0));
+        n+(s.day>=from&&s.day<=day?s.proceeds:0),0)+
+      serviceEntries(state).reduce((n,j)=>
+        n+(j.doneDay>=from&&j.doneDay<=day?j.gross:0),0));
   };
   function advance(state){
     if(!enabled(state))return {paid:0,duePence:0,outputPence:0};
@@ -91,7 +102,9 @@
     if(amount){
       state.cash-=amount;
       state.ledger.push({day:state.day,delta:-amount,
-        note:'VAT remittance: output VAT on eligible used-car margins'});
+        note:serviceEntries(state).length?
+          'VAT remittance: output VAT on used-car margins and taxable services':
+          'VAT remittance: output VAT on eligible used-car margins'});
     }
     return {paid:amount,duePence:maturedPence(state),
       outputPence:outstandingPence(state)};
@@ -111,18 +124,21 @@
       if(!expected||Object.keys(expected).some(k=>expected[k]!==x.vat[k]))return false;
     }
     const remits=state.ledger.filter(x=>x.note.startsWith('VAT remittance:'));
-    if(remits.some(r=>r.note!=='VAT remittance: output VAT on eligible used-car margins'||
+    if(remits.some(r=>!REMITTANCES.includes(r.note)||
       !Number.isSafeInteger(r.delta)||r.delta>=0||r.day<1))return false;
     if(paidPence(state)>outputPence(state))return false;
     // The VAT cash payment should not occur before the earliest eligible tax
     // return. In this simplified game it cannot be paid in advance.
-    const first=entries(state).filter(x=>x.vat.outputPence>0)
-      .reduce((day,x)=>Math.min(day,x.vat.dueDay),Infinity);
+    const first=Math.min(
+      entries(state).filter(x=>x.vat.outputPence>0)
+        .reduce((day,x)=>Math.min(day,x.vat.dueDay),Infinity),
+      serviceEntries(state).filter(x=>x.taxOutputPence>0)
+        .reduce((day,x)=>Math.min(day,dueDayForSale(x.doneDay)),Infinity));
     if(remits.some(x=>x.day<first))return false;
     return true;
   }
   window.MotorTradeVat=Object.freeze({THRESHOLD,START,
     dateForDay,dayForDate,periodForDay,dueDayForSale,marginVatPence,record,
-    enabled,entries,outputPence,paidPence,creditPence,creditBalancePence,outstandingPence,maturedPence,
+    enabled,entries,serviceEntries,serviceOutputPence,outputPence,paidPence,creditPence,creditBalancePence,outstandingPence,maturedPence,
     rollingTurnover,advance,valid,pence});
 })();
