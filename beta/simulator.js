@@ -289,7 +289,7 @@
   }
   const prepReserved = () => W.reserved(career);
   function purchaseWarning(cost) {
-    if (career.vehicles.length >= career.capacity)
+    if (career.financialScenario!=='uk2026'&&career.vehicles.length>=career.capacity)
       return 'FORECOURT FULL — finish a sale in Vehicle Stock / Sales Office.';
     if (career.cash < cost + prepReserved())
       return 'NOT ENOUGH CASH — preserve funds for all vehicle preparation.';
@@ -452,7 +452,7 @@
       'INDEPENDENT MOTOR TRADER · STARTING CAPITAL £12,500';
     bindText('cash', money.format(career.cash));
     bindText('customer-deposits',money.format(C.heldDeposits(career)));
-    bindText('stock', career.stock + ' / ' + career.capacity);
+    bindText('stock', E.forecourtCount(career) + ' / ' + career.capacity);
     bindText('forecourt-capacity',career.capacity+' vehicles');
     bindText('workshop-bays',String(SITE.bays(career)));
     bindText('premises-daily',money.format(SITE.costs(career).total)+'/day');
@@ -827,6 +827,9 @@
           workshopFilter=button.dataset.filter;selectedWorkshopId=null;
           currentPage='workshop';render();
         }
+        break;
+      case 'move-stock-forecourt':
+        if(career)saveResult(E.moveStockToForecourt(career,Number(button.dataset.id)));
         break;
       case 'assess-workshop':
         if(career)saveResult(E.assessStock(career,Number(button.dataset.id)));
