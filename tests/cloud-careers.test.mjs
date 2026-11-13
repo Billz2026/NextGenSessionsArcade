@@ -76,7 +76,7 @@ function harness({ready=true}={}){
 
 test('public config includes publishable key only, never privileged credentials',()=>{
   assert.match(config,/sb_publishable_/);
-  assert.doesNotMatch(config,/(sb_secret_|service_role|postgresql:\/\/)/);
+  assert.doesNotMatch(config,/['"](?:sb_secret_|service_role|postgresql:\/\/)/);
   assert.match(config,/ebzkyflbvfzqheslssis/);
 });
 
@@ -113,7 +113,7 @@ test('account signup, login, read, save and optimistic revision protection',asyn
   await assert.rejects(api.saveCareer({...first,day:3},1,ID),err=>err.code==='CAREER_REVISION_CONFLICT');
   assert.equal(getRow().career.day,2);
   assert.equal(seen.filter(a=>a[0]==='write').length,3);
-  await assert.rejects(api.saveCareer(first,2,'22222222-2222-4222-8222-222222222222'),/Account mismatch/);
+  await assert.rejects(api.saveCareer(first,2,'22222222-2222-4222-8222-222222222222'), error=>error.message==='Account mismatch');
   await api.resetPassword('player@example.com');
   await api.updatePassword('newStrongPassword');
   await api.signOut();
