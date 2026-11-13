@@ -44,6 +44,9 @@ test('the first save and subsequent save create a validated previous-state backu
   assert.equal(api.save(validCareer(2),normalize).ok,true);
   assert.equal(JSON.parse(values.get(KEY)).day,2);
   assert.equal(JSON.parse(values.get(BACKUP)).day,1);
+  // A same-day save must not overwrite the more useful prior-day recovery.
+  assert.equal(api.save({...validCareer(2),note:'inbox opened'},normalize).ok,true);
+  assert.equal(JSON.parse(values.get(BACKUP)).day,1);
   const recovered=api.recover(normalize);
   assert.equal(recovered.ok,true);
   assert.equal(recovered.career.day,1);
