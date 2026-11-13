@@ -178,7 +178,8 @@ try{
 
   await p1.locator('[data-cloud-action="open-account"]').click();
   await p1.locator('#cloud-signout').click();
-  await p1.locator('#cloud-auth-guest').waitFor({state:'visible'});
+  await p1.locator('#screen-career').waitFor({state:'visible'});
+  await p1.waitForFunction(()=>document.getElementById('cloud-auth-user').hidden);
   assert.equal(await p1.evaluate(k=>JSON.parse(localStorage.getItem(k)).day,guestKey),1,
     'Signing out returns the original guest career');
   assert.equal(server.careers.get(ID).career.day,3);
