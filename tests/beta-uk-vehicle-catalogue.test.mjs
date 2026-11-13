@@ -6,6 +6,7 @@ import vm from 'node:vm';
 const ctx=vm.createContext({window:{}});
 for(const filename of [
   'uk-vehicle-catalogue.js',
+  'uk-original-verification.js',
   'vehicle-market.js',
   'vehicle-accuracy.js',
   'vehicle-photos.js'
@@ -14,6 +15,7 @@ for(const filename of [
   new vm.Script(src,{filename}).runInContext(ctx);
 }
 const UK=ctx.window.MotorTradeUKCatalogue;
+const ORIGINAL=ctx.window.MotorTradeOriginalVerification;
 const M=ctx.window.MotorTradeMarket;
 const A=ctx.window.MotorTradeAccuracy;
 const PH=ctx.window.MotorTradePhotos;
@@ -24,9 +26,11 @@ const find=title=>all.find(x=>x.title===title);
 test('beta loads UK catalogue before its spec registry and the market engine',()=>{
   const html=readFileSync(new URL('../beta/index.html',import.meta.url),'utf8');
   const i=html.indexOf('uk-vehicle-catalogue.js');
+  const legacy=html.indexOf('uk-original-verification.js');
   const evidence=html.indexOf('vehicle-accuracy.js');
   const market=html.indexOf('vehicle-market.js');
-  assert.ok(i>0&&evidence>i&&market>evidence,'Source and manufacturer evidence must load before use');
+  assert.ok(i>0&&legacy>i&&evidence>legacy&&market>evidence,
+    'New and original evidence must load before the game accuracy register and market');
 });
 
 test('expanded UK beta contains 200 distinct vehicle derivatives in valid tiers',()=>{
@@ -239,8 +243,20 @@ test('only exact manufacturer-backed specifications receive certified evidence',
     'Every reviewed new derivative needs an explicit UK source URL');
   const legacy=all.filter(x=>!newRows.some(row=>row[0]===x.title));
   assert.equal(legacy.length,55);
-  assert.equal(legacy.filter(x=>A.lookup(x).status==='pending').length,37,
-    'Unreviewed original vehicles must remain labelled pending rather than auto-certified');
+  assert.equal(legacy.filter(x=>A.lookup(x).status==='pending').length,0,
+    'All 55 original vehicles must have source evidence without falsely certifying every trim');
+  assert.equal(ORIGINAL.VERIFIED.length,37,'37 original pending variants audited');
+  assert.equal(new Set(ORIGINAL.VERIFIED.map(x=>x[0])).size,37);
+  assert.equal(ORIGINAL.VERIFIED.filter(x=>x[4]==='manufacturer').length,18);
+  assert.equal(ORIGINAL.VERIFIED.filter(x=>x[4]==='corroborated').length,19);
+  for(const row of ORIGINAL.VERIFIED){
+    const car=find(row[0]);
+    assert.ok(car,'Original audited car missing '+row[0]);
+    assert.equal(A.lookup(car).status,row[4]);
+    assert.equal(A.lookup(car).url,row[5]);
+    assert.equal(A.lookup(car).checkedAt,'2026-11-13');
+    assert.equal(A.lookup({...car,engineSpec:'FALSE TEST ENGINE'}).status,'pending');
+  }
   // Changing a reviewed trim, powertrain or gearbox must demote evidence to pending.
   for(const original of UK.VERIFIED){
     const car=find(original[0]);
@@ -251,9 +267,32 @@ test('only exact manufacturer-backed specifications receive certified evidence',
   assert.equal(A.lookup(find('2023 BYD Atto 3 Design')).status,'manufacturer');
   const totals=A.summary(M.CATALOGUE);
   assert.equal(totals.total,200);
-  assert.equal(totals.manufacturer,64);
-  assert.equal(totals.corroborated,99);
-  assert.equal(totals.pending,37);
+  assert.equal(totals.manufacturer,82);
+  assert.equal(totals.corroborated,118);
+  assert.equal(totals.pending,0);
+});
+
+test('three corrected original UK trims preserve original template identity',()=>{
+  const corrected=[
+    ['2021 Vauxhall Mokka-e Launch Edition','2022 Vauxhall Mokka-e Launch Edition','modern-15'],
+    ['2022 Range Rover Velar D200 R-Dynamic HSE','2022 Range Rover Velar D200 R-Dynamic','luxury-1'],
+    ['2023 Range Rover Sport P440e Dynamic SE','2023 Range Rover Sport P440e','luxury-8']
+  ];
+  for(const [realTitle,obsolete,templateId] of corrected){
+    assert.equal(find(realTitle).templateId,templateId);
+    assert.equal(find(obsolete),undefined,'Old misleading UK derivative must not exist: '+obsolete);
+    assert.notEqual(A.lookup(find(realTitle)).status,'pending');
+  }
+  assert.match(M.priceFor(find('2021 Vauxhall Mokka-e Launch Edition'),'uk2026').priceAudit.source,/2021/);
+  assert.equal(M.priceFor(find('2022 Range Rover Velar D200 R-Dynamic HSE'),'uk2026').priceAudit.buyingRisk.includes('wholesale guide'),true);
+});
+
+test('auction loss and below-target messages are explicit and do not invent buyer fees',()=>{
+  const view=readFileSync(new URL('../beta/auction-hall-view.js',import.meta.url),'utf8');
+  assert.match(view,/PROJECTED LOSS BEFORE OVERHEADS/);
+  assert.match(view,/BELOW TARGET CONTRIBUTION/);
+  assert.match(view,/feeUnknown/);
+  assert.match(view,/profitWarning/);
 });
 
 test('new prices are transparently unverified and classic pricing is untouched',()=>{
