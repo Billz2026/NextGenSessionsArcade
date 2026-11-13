@@ -44,7 +44,7 @@
         return '<article class="auction-catalogue-item '+(active?'auction-catalogue-active':'')+
           (r?' auction-catalogue-done':'')+'"><span>LOT '+E.lotNumber(i)+'</span>'+
           '<strong>'+esc(lot.title)+'</strong>'+
-          '<small>'+esc(lot.fuel)+' · '+esc(lot.gearbox)+' · GRADE '+lot.profile.grade+
+          '<small>'+esc(lot.fuel)+' · '+esc(lot.gearbox)+' · '+new Intl.NumberFormat('en-GB').format(lot.miles)+' MILES · GRADE '+lot.profile.grade+
           ' · GUIDE '+money(lot.guide)+'</small><b>'+ (r?status[r.kind]:active?'ON THE ROSTRUM':spent?'ALREADY OWNED':'UPCOMING')+
           '</b><button type="button" class="auction-catalogue-review" data-action="preview-auction" data-id="'+
           esc(lot.id)+'">VIEW LOT REPORT</button></article>';
