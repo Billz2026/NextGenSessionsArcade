@@ -62,7 +62,11 @@
     serviceReceipts:'Customer servicing and repair receipts',
     motCommissions:'Approved MOT centre referral commissions',
     scrapCommissions:'Licensed ATF scrap referral commissions',
-    managementSpend:'Management meeting initiatives / campaigns'
+    managementSpend:'Management meeting initiatives / campaigns',
+    financeAdvances:'Secured bridge principal received (NOT SALES)',
+    financeFees:'Financing arrangement charges',
+    financeRepayments:'Bridge capital and interest paid',
+    financeInterest:'Non-cash bridge interest accrual'
   };
   function renderReport(state,M,selected='current'){
     const historical=String(selected)!=='current';
@@ -125,6 +129,10 @@
       amount('Total cash paid',-r.cashOut)+
       amount('Net cash movement',r.netCashChange)+
       amount('Closing cash',r.closingCash,true)+
+      (r.financingExpense===undefined?'':amount('Financing cost this month',
+        -r.financingExpense)+amount('Loan outstanding at report date',r.loanOutstanding))+
+      (r.afterFinance===undefined?'':amount('Operating result after VAT & finance',
+        r.afterFinance,true))+
       '<hr/>'+amount('Retail sales proceeds',source.retailReceipts,true)+
       Object.entries(nameByCategory).map(([key,label])=>
         amount(label,source[key]??0)).join('')+
@@ -263,7 +271,11 @@
       (r.serviceTurnover===undefined?'':cell('SERVICE / SCRAP / MOT',money(r.serviceTurnover),
         r.serviceUnits+' jobs completed'))+
       cell('AFTER OUTPUT VAT',money(r.operatingAfterVat??r.operatingContribution),
-        'Modelled operating contribution after output VAT')+'</div>'+
+        'Modelled operating contribution after output VAT')+
+      (r.afterFinance===undefined?'':cell('AFTER FINANCING',money(r.afterFinance),
+        'Interest and finance fee impact; BEFORE income taxes')+
+        cell('LOAN PAYABLE',money(r.loanOutstanding),'Principal plus accrued interest'))+
+        '</div>'+
       '<div class="mr-focus"><section class="mr-panel"><h3>ARE WE ON TARGET?</h3>'+
       progress(r.soldUnits,r.targetUnits,'Completed handovers')+
       progress(companyRevenue,r.targetTurnover,
