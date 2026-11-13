@@ -77,16 +77,44 @@ test('classic template positions remain untouched and authentic UK breadth is pr
 });
 
 test('only exact manufacturer-backed specifications receive certified evidence',()=>{
-  assert.equal(UK.VERIFIED.length,6);
+  assert.equal(UK.VERIFIED.length,31,'Six opening checks plus 25 Toyota/Nissan/VW/Audi checks');
+  const counts={manufacturer:0,corroborated:0};
+  const checkedTitles=new Set();
   for(const row of UK.VERIFIED){
     const car=find(row[0]);
-    assert.ok(car,'Missing verified UK derivative '+row[0]);
-    assert.equal(A.lookup(car).status,'manufacturer');
+    assert.ok(car,'Missing reviewed UK derivative '+row[0]);
+    assert.ok(!checkedTitles.has(row[0]),'Duplicate evidence: '+row[0]);
+    checkedTitles.add(row[0]);
+    assert.ok(['manufacturer','corroborated'].includes(row[4]));
+    assert.ok(row[5].startsWith('https://'),'Missing source URL for '+row[0]);
+    assert.ok(row[6].length>25,'Missing source qualification for '+row[0]);
+    assert.equal(A.lookup(car).status,row[4]);
     assert.equal(A.lookup(car).url,row[5]);
+    assert.equal(A.lookup(car).checkedAt,'2026-11-13');
+    counts[row[4]]++;
   }
+  assert.equal(counts.manufacturer,21);
+  assert.equal(counts.corroborated,10);
+  for(const title of [
+    '2018 Toyota Aygo x-play','2017 Toyota Auris Icon Hybrid','2018 Toyota Prius Business Edition',
+    '2018 Toyota C-HR Icon Hybrid','2022 Toyota Aygo X Pure','2020 Toyota Corolla Icon Hybrid',
+    '2021 Toyota C-HR Design Hybrid','2020 Toyota Prius Business Edition',
+    '2018 Nissan Micra Acenta','2016 Nissan Note Acenta','2017 Nissan X-Trail Acenta',
+    '2019 Nissan Qashqai N-Connecta','2023 Nissan Juke Tekna Hybrid',
+    '2023 Nissan Qashqai N-Connecta e-POWER',
+    '2019 Volkswagen Golf GTD','2021 Volkswagen T-Cross SE','2019 Volkswagen T-Roc SE',
+    '2020 Volkswagen Tiguan Match','2021 Volkswagen ID.3 Life Pro Performance',
+    '2022 Volkswagen Golf GTI','2022 Volkswagen ID.4 Life Pro Performance',
+    '2019 Audi A3 Sportback 35 TFSI S line','2022 Audi S3 Sportback',
+    '2020 Audi Q2 30 TFSI Sport','2021 Audi RS Q3 Sportback'
+  ])assert.ok(checkedTitles.has(title),'Missing first-batch verification: '+title);
   assert.equal(A.lookup(find('2017 Nissan Juke N-Connecta')).status,'pending');
   assert.equal(A.lookup(find('2023 BYD Atto 3 Design')).status,'pending');
-  assert.equal(A.summary(M.CATALOGUE).total,200);
+  const totals=A.summary(M.CATALOGUE);
+  assert.equal(totals.total,200);
+  assert.equal(totals.manufacturer,34);
+  assert.equal(totals.corroborated,15);
+  assert.equal(totals.pending,151);
 });
 
 test('new prices are transparently unverified and classic pricing is untouched',()=>{
