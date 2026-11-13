@@ -30,9 +30,9 @@
   if(!VC)throw new Error('Load vehicle-cards.js before simulator.js');
   const MARKET = window.MotorTradeMarket;
   if(!MARKET)throw new Error('Load vehicle-market.js before simulator.js');
-  const STORAGE_KEY = 'the-motor-trade-career-v1';
+  const SAVES = window.MotorTradeCareerStorage;
+  if(!SAVES)throw new Error('Load career-storage.js before simulator.js');
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
-  const SAVE_VERSION = E.VERSION;
   const STARTING_CASH = 12500;
   const CAPACITY = E.CAPACITY;
   const START_DATE_UTC = Date.UTC(2026, 10, 9);
@@ -122,28 +122,19 @@
     try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(display)); }
     catch (_) { /* Keep settings active for this visit. */ }
   }
-  let storageAvailable = true;
-  function loadCareer() {
-    let raw;
-    try { raw = localStorage.getItem(STORAGE_KEY); }
-    catch (_) { storageAvailable = false; return null; }
-    if (!raw) return null;
-    try { return E.normalize(JSON.parse(raw)); }
-    catch (_) { return null; }
-  }
+  const loadedCareer = SAVES.load(E.normalize);
+  let career = loadedCareer.career;
+  let saveWarningText = loadedCareer.available ? '' :
+    'Browser storage is unavailable. Export a career file before leaving.';
+  let saveToolsMessage = '';
+
   function persistCareer() {
     if (!career) return false;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(career));
-      storageAvailable = true;
-      return true;
-    } catch (_) {
-      storageAvailable = false;
-      return false;
-    }
+    const result = SAVES.save(career, E.normalize);
+    saveWarningText = result.ok ? '' : result.message;
+    return result.ok;
   }
 
-  let career = loadCareer();
   let screen = 'menu'; // The cinematic main menu is the entry point for all careers.
   let currentPage = 'dashboard';
   let selectedMessageId = null;
@@ -432,6 +423,23 @@
     byId('menu-continue').hidden = !career;
     byId('menu-continue').className = 'action-btn action-btn-primary';
     byId('menu-new-career').className = career ? 'action-btn action-btn-secondary' : 'action-btn action-btn-primary';
+    const saveStatus = SAVES.status(E.normalize);
+    const menuWarning = byId('menu-save-warning');
+    const warning = saveWarningText ||
+      (saveStatus.primaryDamaged
+        ? 'The saved career failed its integrity check and has NOT been overwritten. ' +
+          (saveStatus.backupAvailable
+            ? 'Open CAREER SAVES and restore your previous local backup.'
+            : 'Try importing a career backup before starting a new game.')
+        : (!saveStatus.hasPrimary && saveStatus.backupAvailable
+          ? 'Your current save is missing, but a previous local backup is available. Open CAREER SAVES to restore it.'
+          : (!saveStatus.available ? 'Browser storage is unavailable. You can still import or export a career file.' : '')));
+    menuWarning.hidden = !warning;
+    menuWarning.textContent = warning;
+    byId('career-export').disabled = !career;
+    byId('career-restore').hidden = !saveStatus.backupAvailable;
+    byId('career-tools-message').hidden = !saveToolsMessage;
+    byId('career-tools-message').textContent = saveToolsMessage;
     if (career) {
       byId('menu-resume-description').textContent =
         career.name + ' / Day ' + String(career.day).padStart(2, '0');
@@ -478,7 +486,8 @@
     byId('continue-day').disabled = career.day >= MAX_DAY;
     byId('continue-label').textContent=D.isDealDay(career.day)?
       (career.deadlineSession>=D.PHASES.length-1?'CLOSE MONTH':'NEXT SESSION'):'CONTINUE';
-    byId('save-warning').hidden = storageAvailable;
+    byId('save-warning').hidden = !saveWarningText;
+    byId('save-warning').textContent = saveWarningText;
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;
     const toast = byId('trade-feedback-toast');
@@ -619,17 +628,7 @@
     persistCareer();
     render();
   }
-  function startCareer() {
-    const input = byId('dealership-name');
-    const name = input.value.trim().replace(/\s+/g, ' ');
-    if (name.length < 2 || name.length > 36) {
-      input.setCustomValidity('Enter a name between 2 and 36 characters.');
-      input.reportValidity();
-      return;
-    }
-    input.setCustomValidity('');
-    if (career && !window.confirm('Replace your existing career? This will overwrite your saved dealership and inbox history.')) return;
-    career = E.create(name, welcomeMessages());
+  function resetWorkspace() {
     selectedMessageId = null;
     inboxFilter='all';
     lastTradeResult = null;
@@ -650,11 +649,111 @@
     staffDeskSelectedId=null;
     screen = 'career';
     currentPage = 'dashboard';
-    const saved = persistCareer();
-    eventNotice = saved
-      ? 'Career created and saved on this device. Welcome to your new dealership.'
-      : 'Career created, but this browser blocked saving. Progress may be lost when you close the page.';
+  }
+
+  function openRecoveredCareer(restored, message) {
+    career = restored;
+    saveWarningText = '';
+    saveToolsMessage = '';
+    resetWorkspace();
+    eventNotice = message;
     render();
+  }
+
+  function startCareer() {
+    const input = byId('dealership-name');
+    const name = input.value.trim().replace(/\s+/g, ' ');
+    if (name.length < 2 || name.length > 36) {
+      input.setCustomValidity('Enter a name between 2 and 36 characters.');
+      input.reportValidity();
+      return;
+    }
+    input.setCustomValidity('');
+    const existing = SAVES.status(E.normalize);
+    if ((career || existing.hasPrimary) &&
+      !window.confirm('Replace the saved dealership? This overwrites the current browser career. ' +
+        'Use CAREER SAVES to export it first. A recent valid save may be recoverable locally.')) return;
+    const newCareer = E.create(name, welcomeMessages());
+    const result = SAVES.save(newCareer, E.normalize, {force:true});
+    if (!result.ok) {
+      saveToolsMessage = result.message;
+      window.alert(result.message + ' Your previous save has not been replaced.');
+      render();
+      return;
+    }
+    openRecoveredCareer(newCareer, 'Career created and saved on this device. Use CAREER SAVES to export an independent backup.');
+  }
+
+  function downloadCareer() {
+    if(!career)return;
+    let url;
+    try {
+      const text = SAVES.exportText(career, E.normalize);
+      const safeName = career.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,36) || 'dealership';
+      const filename = 'the-motor-trade-' + safeName + '-day-' + String(career.day).padStart(4,'0') + '.json';
+      const blob = new Blob([text], {type:'application/json'});
+      url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+      saveToolsMessage = 'Backup download requested: ' + filename + '. Keep the JSON file somewhere safe.';
+    } catch(error) {
+      if (url) URL.revokeObjectURL(url);
+      saveToolsMessage = error.message || 'Could not export career backup.';
+    }
+    render();
+  }
+
+  async function importCareerFile(file) {
+    if (!file) return;
+    if (file.size > SAVES.MAX_IMPORT_BYTES) {
+      window.alert('Backup file is too large to import.');
+      return;
+    }
+    let result;
+    try { result = SAVES.importText(await file.text(), E.normalize); }
+    catch (_) { result = {ok:false, message:'Unable to read the selected backup file.'}; }
+    if (!result.ok) {
+      saveToolsMessage = result.message;
+      window.alert(result.message);
+      render();
+      return;
+    }
+    const restored = result.career;
+    if (!window.confirm('Import dealership "' + restored.name + '" from day ' + restored.day +
+      ' with ' + money.format(restored.cash) + '? This replaces the active browser career. ' +
+      'If you want to keep it, export the current career first.')) return;
+    const written = SAVES.save(restored, E.normalize, {force:true});
+    if (!written.ok) {
+      saveToolsMessage = written.message;
+      window.alert(written.message + ' Your current browser save remains unchanged.');
+      render();
+      return;
+    }
+    openRecoveredCareer(restored, 'Career imported and saved. The previous valid browser save is retained as a local backup when storage capacity allows.');
+  }
+
+  function restorePreviousSave() {
+    const saveStatus = SAVES.status(E.normalize);
+    if (!saveStatus.backupAvailable) {
+      saveToolsMessage = 'No valid previous save exists in this browser.';
+      render();
+      return;
+    }
+    if (!window.confirm('Restore the previous valid browser save? This can undo recent progress ' +
+      'and will replace the current browser career. Export your current career first if you want to keep it.')) return;
+    const result = SAVES.recover(E.normalize);
+    if (!result.ok) {
+      saveToolsMessage = result.message;
+      window.alert(result.message);
+      render();
+      return;
+    }
+    openRecoveredCareer(result.career, 'Previous valid local career restored and saved. Export a JSON backup for longer-term protection.');
   }
 
   byId('career-form').addEventListener('submit', event => {
@@ -662,6 +761,11 @@
     startCareer();
   });
   byId('dealership-name').addEventListener('input', event => event.target.setCustomValidity(''));
+  byId('career-import-file').addEventListener('change', async event => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    await importCareerFile(file);
+  });
   document.addEventListener('input', event => {
     if(!career||!event.target?.id)return;
     const match=/^(auction-bid-|seller-offer-)([AS]-[0-9]+-[0-9]+)$/.exec(event.target.id);
@@ -733,6 +837,26 @@
     switch (button.dataset.action) {
       case 'new-career':
         show('setup');
+        break;
+      case 'toggle-career-tools': {
+        const panel = byId('career-tools');
+        panel.hidden = !panel.hidden;
+        button.setAttribute('aria-expanded', String(!panel.hidden));
+        break;
+      }
+      case 'open-career-tools':
+        show('menu');
+        byId('career-tools').hidden = false;
+        document.querySelector('[data-action="toggle-career-tools"]').setAttribute('aria-expanded','true');
+        break;
+      case 'export-career':
+        downloadCareer();
+        break;
+      case 'choose-import':
+        byId('career-import-file').click();
+        break;
+      case 'restore-career':
+        restorePreviousSave();
         break;
       case 'resume':
         if (career) show('dashboard');
