@@ -14,7 +14,7 @@
     return Math.max(100,Math.min(car.ask,Math.round((car.ask-discount)/25)*25));
   }
   function fundingWarning(state,model){
-    if(state.vehicles.length>=state.capacity)
+    if(state.financialScenario!=='uk2026'&&state.vehicles.length>=state.capacity)
       return 'FORECOURT FULL — sell stock before buying again.';
     if(!model.affordable)
       return 'INSUFFICIENT CASH — required workshop funding exceeds available cash. Reduce your offer or release stock.';
@@ -50,8 +50,9 @@
     const cards=[
       ['PRIVATE SELLER LEADS',sellers.length,'AVAILABLE '+available],
       ['ACTIVE COUNTEROFFERS',negotiating,negotiating?'DECISION NEEDED':'NO OPEN COUNTERS'],
-      ['FORECOURT SPACES',state.capacity-state.vehicles.length,
-        state.vehicles.length+' / '+state.capacity+' OCCUPIED'],
+      ['FORECOURT SPACES',Math.max(0,state.capacity-state.vehicles.filter(v=>
+          !v.storageLocation||v.storageLocation==='forecourt').length),
+        'NEW OVERFLOW STOCK STORED OFF SITE AT £12 PER CAR/DAY'],
       ['WORKING CASH',money(Math.max(0,state.cash-reserved)),
         reserved?'REPAIRS RESERVED '+money(reserved):'NO REPAIR CASH COMMITTED']
     ];
