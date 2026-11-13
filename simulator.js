@@ -32,6 +32,7 @@
   if(!MARKET)throw new Error('Load vehicle-market.js before simulator.js');
   const SAVES = window.MotorTradeCareerStorage;
   if(!SAVES)throw new Error('Load career-storage.js before simulator.js');
+  const ACCOUNT = window.MotorTradeAccountUI;
   const DISPLAY_KEY = 'the-motor-trade-display-v1';
   const STARTING_CASH = 12500;
   const CAPACITY = E.CAPACITY;
@@ -132,6 +133,7 @@
     if (!career) return false;
     const result = SAVES.save(career, E.normalize);
     saveWarningText = result.ok ? '' : result.message;
+    if(result.ok || ACCOUNT?.isCloudMode()) ACCOUNT?.notifyCareerSaved(career);
     return result.ok;
   }
 
@@ -423,6 +425,7 @@
     byId('menu-continue').hidden = !career;
     byId('menu-continue').className = 'action-btn action-btn-primary';
     byId('menu-new-career').className = career ? 'action-btn action-btn-secondary' : 'action-btn action-btn-primary';
+    ACCOUNT?.renderUI();
     const saveStatus = SAVES.status(E.normalize);
     const menuWarning = byId('menu-save-warning');
     const warning = saveWarningText ||
@@ -673,9 +676,12 @@
     if ((career || existing.hasPrimary) &&
       !window.confirm('Replace the saved dealership? This overwrites the current browser career. ' +
         'Use CAREER SAVES to export it first. A recent valid save may be recoverable locally.')) return;
+    const previousAccount=ACCOUNT?.activeAccount || null;
+    if(ACCOUNT && !ACCOUNT.startGuestMode())return;
     const newCareer = E.create(name, welcomeMessages());
     const result = SAVES.save(newCareer, E.normalize, {force:true, backupPrevious:true});
     if (!result.ok) {
+      if(previousAccount)ACCOUNT.restoreAccountMode(previousAccount);
       saveToolsMessage = result.message;
       window.alert(result.message + ' Your previous save has not been replaced.');
       render();
@@ -710,6 +716,10 @@
 
   async function importCareerFile(file) {
     if (!file) return;
+    if(ACCOUNT?.isCloudMode()){
+      window.alert('Import a JSON career while playing as a guest. This prevents silently replacing an account-linked career. Sign out first, then import or export your device save.');
+      return;
+    }
     if (file.size > SAVES.MAX_IMPORT_BYTES) {
       window.alert('Backup file is too large to import.');
       return;
@@ -754,6 +764,7 @@
       return;
     }
     openRecoveredCareer(result.career, 'Previous valid local career restored and saved. Export a JSON backup for longer-term protection.');
+    ACCOUNT?.notifyCareerSaved(result.career);
   }
 
   byId('career-form').addEventListener('submit', event => {
@@ -1247,13 +1258,24 @@
       case 'save':
         if (!career) break;
         eventNotice = persistCareer()
-          ? 'Your career was saved in this browser.'
+          ? (ACCOUNT?.isCloudMode() ?
+              'Career backed up locally. Cloud synchronisation is queued.' :
+              'Your career was saved in this browser.')
           : 'Unable to save your career. Browser storage is unavailable.';
         render();
         break;
       default:
         break;
     }
+  });
+  if(ACCOUNT)void ACCOUNT.boot({
+    normalize:E.normalize,
+    getCareer:()=>career,
+    setCareer:(next,message)=>{
+      if(next)openRecoveredCareer(next,message);
+      else {career=null;screen='menu';currentPage='dashboard';eventNotice='';render();}
+    },
+    showMenu:()=>show('menu')
   });
   render();
 })();
