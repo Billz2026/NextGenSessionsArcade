@@ -134,7 +134,7 @@
     const starter=MARKET.CATALOGUE.starter;
     const auctions=Array.from({length:aCount},(_,i)=>{
       const original=MARKET.priceFor(day===1&&feeScenario!=='uk2026'?starter[i]:
-        MARKET.pick('auction',tier,day,i,usedAuction,feeScenario),feeScenario);
+        MARKET.pick('auction',tier,day,i,usedAuction,feeScenario,reputationScore),feeScenario);
       const base=feeScenario==='uk2026'?varied2026(original,day,i,'auction'):original;
       // Buyer competition can affect hammer pricing, but must not drown
       // out the much larger valuation effect of 40k additional mileage.
@@ -154,7 +154,7 @@
     });
     const sellers=Array.from({length:sellerCount},(_,i)=>{
       const original=MARKET.priceFor(day===1&&feeScenario!=='uk2026'?starter[3+i]:
-        MARKET.pick('seller',tier,day,i,usedSeller,feeScenario),feeScenario);
+        MARKET.pick('seller',tier,day,i,usedSeller,feeScenario,reputationScore),feeScenario);
       const base=feeScenario==='uk2026'?varied2026(original,day,i,'seller'):original;
       const offset=day===1?0:nearest25(feeScenario==='uk2026'?
         (sample(day,i,51)%251)-125:(sample(day,i,51)%601)-300);
