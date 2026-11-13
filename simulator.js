@@ -674,7 +674,7 @@
       !window.confirm('Replace the saved dealership? This overwrites the current browser career. ' +
         'Use CAREER SAVES to export it first. A recent valid save may be recoverable locally.')) return;
     const newCareer = E.create(name, welcomeMessages());
-    const result = SAVES.save(newCareer, E.normalize, {force:true});
+    const result = SAVES.save(newCareer, E.normalize, {force:true, backupPrevious:true});
     if (!result.ok) {
       saveToolsMessage = result.message;
       window.alert(result.message + ' Your previous save has not been replaced.');
@@ -727,7 +727,7 @@
     if (!window.confirm('Import dealership "' + restored.name + '" from day ' + restored.day +
       ' with ' + money.format(restored.cash) + '? This replaces the active browser career. ' +
       'If you want to keep it, export the current career first.')) return;
-    const written = SAVES.save(restored, E.normalize, {force:true});
+    const written = SAVES.save(restored, E.normalize, {force:true, backupPrevious:true});
     if (!written.ok) {
       saveToolsMessage = written.message;
       window.alert(written.message + ' Your current browser save remains unchanged.');
