@@ -13,6 +13,7 @@ on:
       - 'inbox-office.js'
       - 'dashboard-view.js'
       - 'simulator.js'
+      - 'career-storage.js'
       - 'trading.js'
       - 'vehicle-photos.js'
       - 'vehicle-market.js'
@@ -45,6 +46,7 @@ on:
       - 'stock-view.js'
       - 'finance-view.js'
       - 'simulator.js'
+      - 'career-storage.js'
       - 'trading.js'
       - 'vehicle-photos.js'
       - 'vehicle-market.js'
@@ -80,6 +82,6 @@ jobs:
         with:
           node-version: '22'
       - name: Check game JavaScript syntax
-        run: node --check vehicle-intel.js && node --check vehicle-photos.js && node --check vehicle-accuracy.js && node --check vehicle-market.js && node --check vehicle-cards.js && node --check vehicle-view.js && node --check premises.js && node --check premises-view.js && node --check people.js && node --check people-view.js && node --check monthly.js && node --check monthly-view.js && node --check events.js && node --check events-view.js && node --check workshop.js && node --check workshop-view.js && node --check customers.js && node --check customers-view.js && node --check trading.js && node --check auction-hall-view.js && node --check buying-desk-view.js && node --check stock-view.js && node --check finance-view.js && node --check dashboard-view.js && node --check inbox-office.js && node --check simulator.js
+        run: node --check vehicle-intel.js && node --check vehicle-photos.js && node --check vehicle-accuracy.js && node --check vehicle-market.js && node --check vehicle-cards.js && node --check vehicle-view.js && node --check premises.js && node --check premises-view.js && node --check people.js && node --check people-view.js && node --check monthly.js && node --check monthly-view.js && node --check events.js && node --check events-view.js && node --check workshop.js && node --check workshop-view.js && node --check customers.js && node --check customers-view.js && node --check trading.js && node --check auction-hall-view.js && node --check buying-desk-view.js && node --check stock-view.js && node --check finance-view.js && node --check dashboard-view.js && node --check inbox-office.js && node --check career-storage.js && node --check simulator.js
       - name: Validate full career and trading interactions
-        run: node --test tests/site.test.mjs
+        run: node --test tests/site.test.mjs tests/career-storage.test.mjs
