@@ -70,13 +70,14 @@
       L.enquiryPercent(state,vehicle,P.salesImpact(state,vehicle.id).enquiryLift):
       65-Math.round(overpriced*100)-(grade>=4?12:0)+
         Math.floor(state.reputationScore/8)+P.salesImpact(state,vehicle.id).enquiryLift;
+    if(modern&&state.meetingFocus==='sales')percent+=8;
     if(D.isDealDay(state.day)){
       const c=D.outlook(state);
       percent+=c.type==='quiet'?-13:c.type==='subdued'?-5:
         c.type==='busy'?9:c.type==='exceptional'?13:0;
     }
     // These are scenario probabilities, not measured independent-dealer lead rates.
-    return chance('buyer|'+leadKey(state,vehicle),clamp(percent,modern?1:8,modern?48:91));
+    return chance('buyer|'+leadKey(state,vehicle),clamp(percent,modern?1:8,modern?58:91));
   }
   function priceCheckCandidate(state){
     // After a genuinely silent fortnight the fictional online listing can
