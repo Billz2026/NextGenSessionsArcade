@@ -44,6 +44,7 @@ auth delivery/rate limits. Do not turn off confirmation as a workaround.
 - **Second device**: sign in with the same email/password, click
   **LOAD CLOUD CAREER**. The game then uses a per-account local cache and
   automatically syncs new actions to Supabase.
+- **Interrupted uploads**: after signing in, **RESUME DEVICE ACCOUNT COPY** can recover an account-local save that is newer than the server (for example, after a network failure or reload). A recorded baseline revision is checked before sync; if another device has advanced, the cloud rejects the stale upload. If no trusted baseline exists, recovery is local/export-only, not a forced server overwrite.
 - **Conflicts/offline**: the database uses an atomic revision check. A stale
   device receives an explicit warning and its local copy remains intact; it
   cannot silently replace newer cloud progress. Players may export JSON,
