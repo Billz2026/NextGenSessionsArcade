@@ -77,7 +77,7 @@ test('classic template positions remain untouched and authentic UK breadth is pr
 });
 
 test('only exact manufacturer-backed specifications receive certified evidence',()=>{
-  assert.equal(UK.VERIFIED.length,56,'Six opening checks plus two independent 25-derivative verification batches');
+  assert.equal(UK.VERIFIED.length,81,'Six opening checks and three 25-derivative UK evidence batches');
   const counts={manufacturer:0,corroborated:0};
   const checkedTitles=new Set();
   for(const row of UK.VERIFIED){
@@ -93,8 +93,8 @@ test('only exact manufacturer-backed specifications receive certified evidence',
     assert.equal(A.lookup(car).checkedAt,'2026-11-13');
     counts[row[4]]++;
   }
-  assert.equal(counts.manufacturer,31);
-  assert.equal(counts.corroborated,25);
+  assert.equal(counts.manufacturer,36);
+  assert.equal(counts.corroborated,45);
   for(const title of [
     '2018 Toyota Aygo x-play','2017 Toyota Auris Icon Hybrid','2018 Toyota Prius Business Edition',
     '2018 Toyota C-HR Icon Hybrid','2022 Toyota Aygo X Pure','2020 Toyota Corolla Icon Hybrid',
@@ -137,6 +137,39 @@ test('only exact manufacturer-backed specifications receive certified evidence',
   ]) {
     assert.ok(checkedTitles.has(title),'Missing Ford/Vauxhall/Kia/Hyundai/Skoda/SEAT review: '+title);
   }
+  for(const title of [
+  "2018 Peugeot 108 Active",
+  "2018 Peugeot 2008 Allure",
+  "2021 Peugeot 2008 Allure",
+  "2021 Peugeot 3008 Allure",
+  "2021 Peugeot 5008 Allure",
+  "2018 Citroen C1 Feel",
+  "2019 Citroen C3 Feel",
+  "2021 Citroen C3 Aircross Shine",
+  "2021 Citroen C5 Aircross Shine",
+  "2018 Renault Clio Dynamique Nav",
+  "2018 Renault Kadjar Dynamique Nav",
+  "2022 Renault Clio Iconic",
+  "2021 Renault Captur Iconic",
+  "2020 Renault Zoe GT Line R135",
+  "2018 Dacia Sandero Ambiance",
+  "2018 Dacia Duster Comfort",
+  "2022 Dacia Sandero Stepway Comfort",
+  "2023 Dacia Jogger Expression",
+  "2018 Suzuki Swift SZ3",
+  "2019 Suzuki Ignis SZ3",
+  "2020 Suzuki Vitara SZ-T",
+  "2020 Suzuki Swift Sport",
+  "2020 MG MG3 Excite",
+  "2021 MG ZS Exclusive",
+  "2022 MG HS Excite"
+]) {
+    assert.ok(checkedTitles.has(title),'Missing third-batch UK evidence: '+title);
+  }
+  assert.equal(batchThirdManufacturerCount(),5);
+  function batchThirdManufacturerCount(){
+    return UK.VERIFIED.slice(56).filter(x=>x[4]==='manufacturer').length;
+  }
   // Changing a reviewed trim, powertrain or gearbox must demote evidence to pending.
   for(const original of UK.VERIFIED){
     const car=find(original[0]);
@@ -147,9 +180,9 @@ test('only exact manufacturer-backed specifications receive certified evidence',
   assert.equal(A.lookup(find('2023 BYD Atto 3 Design')).status,'pending');
   const totals=A.summary(M.CATALOGUE);
   assert.equal(totals.total,200);
-  assert.equal(totals.manufacturer,44);
-  assert.equal(totals.corroborated,30);
-  assert.equal(totals.pending,126);
+  assert.equal(totals.manufacturer,49);
+  assert.equal(totals.corroborated,50);
+  assert.equal(totals.pending,101);
 });
 
 test('new prices are transparently unverified and classic pricing is untouched',()=>{
