@@ -27,6 +27,8 @@
   if(!C)throw new Error('Load customers.js before trading.js');
   const W = window.MotorTradeWorkshop;
   if (!W) throw new Error('Load workshop.js before trading.js');
+  const SERVICES=window.MotorTradeServiceDesk;
+  if(!SERVICES)throw Error('Load customer-services.js before trading.js');
   const D = window.MotorTradeEvents;
   if (!D) throw new Error('Load events.js before trading.js');
   const M = window.MotorTradeMonthly;
@@ -446,7 +448,8 @@
       inboxLedgerCursor:0,
       premises:SITE.initial(),...P.initial(),
       ...(standard?{employmentScenario:'uk2026-payroll',payroll2026:EMP.initial(),
-        aftersalesScenario:AFT.MODE,aftersales:AFT.initial()}: {})
+        aftersalesScenario:AFT.MODE,aftersales:AFT.initial(),
+        serviceDesk:SERVICES.initial()}: {})
     };
     M.initialize(state);
     Object.assign(state,D.initial());
@@ -483,6 +486,7 @@
       return M.initialize(legacy,{migrating:true});
     }
     if(saved.version>=12&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
+    if(saved.serviceDesk!==undefined&&!SERVICES.valid(saved))return null;
     if(saved.auctionReminderDismissedDay!==undefined&&
       (!integer(saved.auctionReminderDismissedDay)||saved.auctionReminderDismissedDay<0||saved.auctionReminderDismissedDay>saved.day))return null;
     // An untouched old catalogue can be refreshed after a day change without
@@ -637,6 +641,8 @@
         JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
       auctionHistory:saved.version>=11?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
       auctionReminderDismissedDay:saved.auctionReminderDismissedDay??0,
+      ...(standard?{serviceDesk:saved.serviceDesk?
+        SERVICES.clone(saved.serviceDesk):SERVICES.initial()}:{}),
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
@@ -662,6 +668,7 @@
     if(!M.restore(restored,saved))return null;
     if(!D.restore(restored,saved))return null;
     if(!C.valid(restored,saved))return null;
+    if(!SERVICES.valid(restored))return null;
     if(!VAT.valid(restored))return null;
     if(!AFT.valid(restored))return null;
     if(!auctionValid(restored))return null;
@@ -1141,7 +1148,7 @@
     customers:C,openCustomer,bookCustomer,quoteCustomer,acceptPriceCounterCustomer,
     remoteReserveCustomer,inspectRemoteCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
-    workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
+    workshop:W,services:SERVICES,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
     wholesaleOffer,disposeStock,moveStockToForecourt,forecourtCount,
     commercialControls:CREDIT,hireStaff,decideStaffMorale,
     market,marketFor,marketStatus,sellerApproach,create,normalize,acquireAuction,acquireSeller,walkSeller,
