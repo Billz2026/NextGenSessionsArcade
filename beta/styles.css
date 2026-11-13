@@ -2899,3 +2899,20 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
   .hq-upgrade-headline-costs{grid-template-columns:repeat(2,minmax(0,1fr))}
   .hq-upgrade-headline-costs>.hq-cost-line strong{font-size:15px}
 }
+
+/* Weekly auction alert: opt-in, skip without bidding */
+.auction-flash[hidden]{display:none!important}
+.auction-flash{display:flex;align-items:center;justify-content:space-between;
+ gap:18px;padding:16px 20px;margin:0 0 14px;background:linear-gradient(115deg,#442011,#231913);
+ color:#fff;border:2px solid #e7a548;border-radius:12px;box-shadow:0 7px 25px rgba(0,0,0,.24)}
+.auction-flash>div:first-child{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.auction-flash strong{font:800 18px 'Barlow Condensed',sans-serif;letter-spacing:.7px}
+.auction-flash small{width:100%;color:#f0d9c5;margin-left:24px}
+.auction-flash-pulse{color:#ffbf5e;animation:auction-flash-pulse 1.4s infinite}
+@keyframes auction-flash-pulse{50%{opacity:.25}}
+.auction-flash-actions{display:flex;gap:8px;flex-wrap:wrap}
+.auction-flash-actions button{cursor:pointer;border-radius:7px;padding:10px 15px;font-weight:800;
+ border:1px solid #f1bb75;background:#f6bd63;color:#281405}
+.auction-flash-actions button+button{background:transparent;color:#f4dec3;border-color:#ae9072}
+@media(max-width:800px){.auction-flash{align-items:stretch;flex-direction:column}
+ .auction-flash-actions button{flex:1}}
