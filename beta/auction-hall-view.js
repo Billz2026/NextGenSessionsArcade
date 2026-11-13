@@ -105,7 +105,7 @@
       '<button type="button" class="trade-button auction-primary" data-action="next-auction-lot">'+
       (h.index+1>=lots.length?'FINISH SESSION & VIEW RESULTS':'NEXT LOT '+E.lotNumber(h.index+1))+
       '</button>';
-    const cashWarning=paymentDue?'':state.vehicles.length>=state.capacity?
+    const cashWarning=paymentDue?'':state.financialScenario!=='uk2026'&&state.vehicles.length>=state.capacity?
       '<p class="auction-risk">YOUR FORECOURT IS FULL. You cannot bid again until you sell stock.</p>':
       feeUnknown?'<p class="auction-risk">PUBLISHED BUYER FEE UNAVAILABLE ABOVE £24,999. Obtain an individual auctioneer quotation before bidding.</p>':
       E.workshop.reserved(state)+expectedNext+q.fee+q.transport+
