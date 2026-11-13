@@ -9,7 +9,7 @@
  * https://www.smmt.co.uk/used-car-market-records-second-quarter-of-growth-with-one-in-20-drivers-going-electric/
  */
 (() => {
-  const rows = Object.freeze({
+  const BASE_ROWS = Object.freeze({
     // Starter: older, higher-mileage runabouts plus affordable newer stock.
     starter: [
       ['2016 Ford Focus Zetec',118300,'Diesel','Manual','1.5 TDCi',1950,4250,450,4,'Partial'],
@@ -78,6 +78,13 @@
       ['2023 Range Rover Sport P440e',33800,'Plug-in Hybrid','Automatic','3.0 petrol PHEV',50800,66000,1625,2,'Full']
     ]
   });
+  // Append new derivatives after each legacy band. Historical template IDs
+  // remain unchanged; future generated leads use the expanded UK catalogue.
+  const UK_EXTENSION=window.MotorTradeUKCatalogue;
+  if(!UK_EXTENSION)throw new Error('Load uk-vehicle-catalogue.js before vehicle-market.js');
+  const rows=Object.freeze(Object.fromEntries(Object.entries(BASE_ROWS).map(
+    ([tier,original])=>[tier,Object.freeze([...original,...UK_EXTENSION.CATALOGUE[tier]])]
+  )));
   // Only the audited 2026 scenario uses these dated asking-price anchors.
   // These ARE UK retail advertisements, NOT auction hammer or CAP trade values.
   // The trade guides below remain transparent, illustrative game assumptions.
@@ -401,8 +408,14 @@
     // because several catalogue templates happen to be electric. These are
     // explicit GAME supply mix assumptions, not SMMT powertrain shares.
     const fuelRoll=hash(group+'|fuel|'+day+'|'+index)%100;
-    const chosenFuel=fuelRoll<48?'Petrol':fuelRoll<68?'Diesel':
-      fuelRoll<85?'Hybrid':fuelRoll<97?'Electric':'Plug-in Hybrid';
+    // Q3 2026 SMMT used transactions: mostly petrol/diesel, with smaller
+    // hybrid/EV/PHEV shares. The rounded bands are simulation weights, not
+    // a claim to exact vehicle-model frequencies or stock availability.
+    const chosenFuel=scenario==='uk2026'?
+      (fuelRoll<56?'Petrol':fuelRoll<87?'Diesel':
+        fuelRoll<94?'Hybrid':fuelRoll<99?'Electric':'Plug-in Hybrid'):
+      (fuelRoll<48?'Petrol':fuelRoll<68?'Diesel':
+        fuelRoll<85?'Hybrid':fuelRoll<97?'Electric':'Plug-in Hybrid');
     const directFuel=candidates.filter(v=>v.fuel===chosenFuel);
     const unlockedFuel=fallback.filter(v=>v.fuel===chosenFuel);
     const list=scenario==='uk2026'?(directFuel.length?directFuel:
