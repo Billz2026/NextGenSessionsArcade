@@ -83,6 +83,231 @@
     "manufacturer",
     "https://www.hyundai.news/uk/articles/press-releases/hyundai-motor-uk-announces-i30-n-pricing-and-specifications.html",
     "Hyundai UK confirms 2.0 T-GDi 275 PS i30 N Performance manual"
+  ],
+  [
+    "2018 Toyota Aygo x-play",
+    "Petrol",
+    "Manual",
+    "1.0 VVT-i",
+    "manufacturer",
+    "https://media.toyota.co.uk/fresh-looks-and-more-fun-from-the-new-toyota-aygo/",
+    "Toyota UK 2018 Aygo facelift confirms x-play grade and 1.0 petrol manual; model-year grade, not invented trim."
+  ],
+  [
+    "2017 Toyota Auris Icon Hybrid",
+    "Hybrid",
+    "Automatic",
+    "1.8 VVT-i hybrid e-CVT",
+    "corroborated",
+    "https://media.toyota.co.uk/new-year-gains-toyotas-2017-verso-auris/",
+    "Toyota UK 2017 Auris Icon grade; Toyota 2018 Auris line-up separately confirms 1.8 hybrid. Exact 2017 powertrain/grade combination corroborated, not on one 2017 chart."
+  ],
+  [
+    "2018 Toyota Prius Business Edition",
+    "Hybrid",
+    "Automatic",
+    "1.8 VVT-i hybrid e-CVT",
+    "manufacturer",
+    "https://media.toyota.co.uk/toyotas-prius-trio-add-new-features-new-performance-data-2018/",
+    "Toyota UK 2018 Prius Business Edition explicitly listed; 1.8 hybrid automatic is the fourth-generation UK Prius drivetrain."
+  ],
+  [
+    "2018 Toyota C-HR Icon Hybrid",
+    "Hybrid",
+    "Automatic",
+    "1.8 VVT-i hybrid e-CVT",
+    "manufacturer",
+    "https://media.toyota.co.uk/toyota-c-hr-uk-headline-pricing-and-equipment-grades-announced-for-new-crossover-range/",
+    "Toyota UK C-HR Icon offered with 1.8 petrol-electric hybrid e-CVT; UK launch 2017, continued 2018."
+  ],
+  [
+    "2022 Toyota Aygo X Pure",
+    "Petrol",
+    "Manual",
+    "1.0 VVT-i",
+    "manufacturer",
+    "https://media.toyota.co.uk/ready-steady-aygo-x/",
+    "Toyota UK 2022 Aygo X Pure model explicitly sold with 71bhp 1.0 petrol and five-speed manual."
+  ],
+  [
+    "2020 Toyota Corolla Icon Hybrid",
+    "Hybrid",
+    "Automatic",
+    "1.8 VVT-i hybrid e-CVT",
+    "manufacturer",
+    "https://media.toyota.co.uk/wp-content/uploads/sites/5/2021/03/1614602906210301MCorolla.pdf",
+    "Toyota UK 2020 Corolla published grade/powertrain table: Icon 1.8 VVT-i hybrid 122hp automatic hatchback."
+  ],
+  [
+    "2021 Toyota C-HR Design Hybrid",
+    "Hybrid",
+    "Automatic",
+    "1.8 VVT-i hybrid e-CVT",
+    "manufacturer",
+    "https://media.toyota.co.uk/toyota-announces-specifications-and-prices-for-its-new-all-hybrid-c-hr-crossover/",
+    "Toyota UK 2020-on C-HR Design 1.8 hybrid e-CVT variant; 2021 continuation, distinct from optional 2.0 hybrid Design."
+  ],
+  [
+    "2020 Toyota Prius Business Edition",
+    "Hybrid",
+    "Automatic",
+    "1.8 VVT-i hybrid e-CVT",
+    "manufacturer",
+    "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/210701-Prius-1.pdf",
+    "Toyota UK 2020 Prius price list explicitly identifies Business Edition 1.8 VVT-i hybrid automatic 122hp."
+  ],
+  [
+    "2018 Nissan Micra Acenta",
+    "Petrol",
+    "Manual",
+    "0.9 IG-T 90",
+    "manufacturer",
+    "https://uk.nissannews.com/en-GB/releases/nissan-updates-and-extends-switch-scheme-with-increased-2-000-support-and-attractive-new-year-pcp-offers-on-micra-qashqai-x-trail",
+    "Nissan UK January 2018 confirms IG-T 90 on Acenta-based limited edition. Standard Acenta equipment differs from Limited Edition; engine and trim family supported."
+  ],
+  [
+    "2016 Nissan Note Acenta",
+    "Petrol",
+    "Manual",
+    "1.2 80",
+    "corroborated",
+    "https://uk.nissannews.com/en-GB/releases/deliveries-begin-of-new-nissan-note",
+    "Nissan UK launch specifies Acenta and 1.2 80PS petrol manual; 2016 model-year continuation corroborated by used UK examples, not a dated 2016 factory price guide."
+  ],
+  [
+    "2017 Nissan X-Trail Acenta",
+    "Diesel",
+    "Manual",
+    "1.6 dCi 130",
+    "corroborated",
+    "https://www.nissan-cdn.net/content/dam/Nissan/gb/vehicles/Motability/Motability-Docs/MotobilityPL.pdf",
+    "Nissan UK dated list includes 2017 X-Trail Acenta SVP 1.6 dCi 130 manual; check specific standard Acenta/SVP equipment on registration."
+  ],
+  [
+    "2019 Nissan Qashqai N-Connecta",
+    "Petrol",
+    "Manual",
+    "1.3 DIG-T 140",
+    "manufacturer",
+    "https://uk.nissannews.com/en-GB/releases/a-new-era-of-control-nissan-introduces-propilot-technology-to-the-full-qashqai-range",
+    "Nissan UK 2019 table explicitly includes Qashqai N-Connecta 1.3 DIG-T 140 six-speed manual."
+  ],
+  [
+    "2023 Nissan Juke Tekna Hybrid",
+    "Hybrid",
+    "Automatic",
+    "1.6 hybrid 143",
+    "manufacturer",
+    "https://uk.nissannews.com/en-GB/releases/nissan-juke-new-advanced-powertrain-offers-efficiency-and-responsive-performance",
+    "Nissan UK 2022-on Juke Tekna 143PS 1.6 petrol full hybrid automatic; available into 2023."
+  ],
+  [
+    "2023 Nissan Qashqai N-Connecta e-POWER",
+    "Hybrid",
+    "Automatic",
+    "1.5 e-POWER",
+    "manufacturer",
+    "https://uk.nissannews.com/en-GB/releases/release-6560de8c993be941e3d683276a170d6c-qashqai-e-power-nissans-unique-electrified-powertrain-in-segment-defining-crossover",
+    "Nissan UK e-POWER 190 N-Connecta automatic offered 2022 onward; 1.5 petrol generator drives electric motor, not a plug-in EV."
+  ],
+  [
+    "2019 Volkswagen Golf GTD",
+    "Diesel",
+    "Automatic",
+    "2.0 TDI 184 DSG",
+    "manufacturer",
+    "https://www.volkswagen.co.uk/idhub/content/dam/onehub_pkw/importers/gb/downloads/brochures/used-cars/golf-vii-pa/vw_golf_2017-present_jul_2017.pdf",
+    "UK Golf Mk7.5 brochure documents GTD 2.0 TDI 184PS and seven-speed DSG; continuation to 2019."
+  ],
+  [
+    "2021 Volkswagen T-Cross SE",
+    "Petrol",
+    "Manual",
+    "1.0 TSI 110",
+    "corroborated",
+    "https://www.honestjohn.co.uk/used-prices/Volkswagen/T-Cross/SUV/2021/?q=21+reg+Manual+SE+TSI",
+    "2021 UK T-Cross 1.0 TSI 110 SE manual examples. Secondary used-car records; manufacturer specification chart pending."
+  ],
+  [
+    "2019 Volkswagen T-Roc SE",
+    "Petrol",
+    "Automatic",
+    "1.5 TSI 150 DSG",
+    "corroborated",
+    "https://www.honestjohn.co.uk/used-prices/Volkswagen/T-Roc/2019/?q=SE",
+    "2019 UK T-Roc SE 1.5 TSI EVO 150 seven-speed DSG examples; trim and gearbox corroborated by UK used stock."
+  ],
+  [
+    "2020 Volkswagen Tiguan Match",
+    "Diesel",
+    "Automatic",
+    "2.0 TDI 150 DSG",
+    "corroborated",
+    "https://www.honestjohn.co.uk/used-prices/Volkswagen/Tiguan/2020/?q=2.0+Diesel+Match",
+    "2020 UK Tiguan Match 2.0 TDI 150 DSG listed; two-wheel and 4MOTION exist, drive configuration still unspecified in game."
+  ],
+  [
+    "2021 Volkswagen ID.3 Life Pro Performance",
+    "Electric",
+    "Automatic",
+    "58 kWh EV",
+    "manufacturer",
+    "https://www.volkswagen.co.uk/idhub/content/dam/onehub_pkw/importers/gb/downloads/brochures/used-cars/id-3/id-3-brochure-pricelist-dec-20.pdf",
+    "VW UK Dec 2020 spec table explicitly lists ID.3 Life Pro Performance 58kWh, 204PS, single-speed auto."
+  ],
+  [
+    "2022 Volkswagen Golf GTI",
+    "Petrol",
+    "Automatic",
+    "2.0 TSI 245 PS DSG",
+    "manufacturer",
+    "https://www.volkswagen.co.uk/idhub/content/dam/onehub_pkw/importers/gb/downloads/brochures/used-cars/golf-8-%282020---present%29/golf-8-brochure-pricelist-p11d.pdf",
+    "UK 2021-on Golf 8 GTI 2.0 TSI 245PS seven-speed DSG, appropriate to 2022 model year. Not the 300PS Clubsport or Golf R."
+  ],
+  [
+    "2022 Volkswagen ID.4 Life Pro Performance",
+    "Electric",
+    "Automatic",
+    "77 kWh EV",
+    "manufacturer",
+    "https://www.volkswagen.co.uk/idhub/content/dam/onehub_pkw/importers/gb/downloads/brochures/used-cars/id-4/id4-brochure-pricelist-april-21.pdf",
+    "VW UK April 2021 model introduction confirms ID.4 Life Pro Performance 77kWh, 204PS single-speed auto, continued 2022."
+  ],
+  [
+    "2019 Audi A3 Sportback 35 TFSI S line",
+    "Petrol",
+    "Automatic",
+    "1.5 TFSI 150 S tronic",
+    "corroborated",
+    "https://www.lookers.co.uk/audi/used-car/audi/a3/35-tfsi-s-line-5dr-s-tronic/id/321748",
+    "2019 UK Audi franchise-listed 5-door Sportback S line 35 TFSI 1.5 petrol S tronic. A3 S line is not Audi S3."
+  ],
+  [
+    "2022 Audi S3 Sportback",
+    "Petrol",
+    "Automatic",
+    "2.0 TFSI quattro S tronic",
+    "corroborated",
+    "https://www.autotrader.co.uk/cars/used/audi/hatchback/s3/2022",
+    "2022 UK stock includes S3 Sportback 2.0 TFSI quattro S tronic; exact year/gearbox corroborated by UK listings."
+  ],
+  [
+    "2020 Audi Q2 30 TFSI Sport",
+    "Petrol",
+    "Manual",
+    "1.0 TFSI 116",
+    "corroborated",
+    "https://www.harwoods.co.uk/car/audi/q2/02iQ4000007iLxZIAU",
+    "Audi UK franchised listing records 2020 Q2 30 TFSI Sport 1.0 petrol manual 116PS, exact trim and gearbox."
+  ],
+  [
+    "2021 Audi RS Q3 Sportback",
+    "Petrol",
+    "Automatic",
+    "2.5 TFSI 400 quattro S tronic",
+    "corroborated",
+    "https://www.audi.co.uk/en/models/q3/rs-q3-sportback/",
+    "Audi UK confirms RS Q3 Sportback 2.5 five-cylinder 400PS; independent 2021 UK used listings confirm quattro S tronic model-year."
   ]
 ]);
   const all=Object.values(CATALOGUE).flat();
