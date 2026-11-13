@@ -6,6 +6,7 @@ on:
       - 'tests/beta-site-smoke.mjs'
       - 'tests/beta-customer-enquiries.mjs'
       - 'tests/beta-sales-team-activity.mjs'
+      - 'tests/beta-market-variety.mjs'
       - '.github/workflows/beta-playtest.yml'
   push:
     branches: [main]
@@ -14,6 +15,7 @@ on:
       - 'tests/beta-site-smoke.mjs'
       - 'tests/beta-customer-enquiries.mjs'
       - 'tests/beta-sales-team-activity.mjs'
+      - 'tests/beta-market-variety.mjs'
       - '.github/workflows/beta-playtest.yml'
 permissions:
   contents: read
@@ -45,6 +47,8 @@ jobs:
         run: node tests/beta-customer-enquiries.mjs
       - name: Compare paid sales executive and owner-only contact handling in five active careers
         run: node tests/beta-sales-team-activity.mjs
+      - name: Audit 90 days of 2026 petrol diesel hybrid and electric supply with low-mileage stock
+        run: node tests/beta-market-variety.mjs
       - name: Keep beta browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
