@@ -533,6 +533,231 @@
     "corroborated",
     "https://www.autouncle.co.uk/en-gb/used-cars/Seat/Ateca/y-2021",
     "2021 UK Ateca SE Technology 1.5 TSI EVO 150PS manual adverts, compatible with SEAT UK 2020 new Ateca engine sheet. SE Technology trim evidence is UK secondary stock."
+  ],
+  [
+    "2018 Peugeot 108 Active",
+    "Petrol",
+    "Manual",
+    "1.0 VTi 68",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/used-cars/Peugeot/108/y-2018",
+    "UK 2018 dealer stock identifies Peugeot 108 Active 1.0 petrol 68PS five-speed manual. 68PS must not be conflated with the 72PS facelift 1.0 VTi."
+  ],
+  [
+    "2018 Peugeot 2008 Allure",
+    "Petrol",
+    "Manual",
+    "1.2 PureTech 110",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44473027-used-2018-peugeot-2008-allure-110-bhp",
+    "UK registered 2018 2008 Allure 1.2 PureTech 110PS manual listed as exact derivative; different from 130PS and EAT6 alternatives."
+  ],
+  [
+    "2021 Peugeot 2008 Allure",
+    "Petrol",
+    "Manual",
+    "1.2 PureTech 130",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44565065-used-2021-peugeot-2008-allure",
+    "UK 2021 2008 Allure 1.2 PureTech 130 manual advertisement corroborates exact engine and gearbox, not the 130 EAT8 or 100PS engine."
+  ],
+  [
+    "2021 Peugeot 3008 Allure",
+    "Diesel",
+    "Automatic",
+    "1.5 BlueHDi 130 EAT8",
+    "manufacturer",
+    "https://www.media.stellantis.com/uk-en/peugeot/press/peugeot-reveals-updated-3008-and-5008-models",
+    "Peugeot UK 3008 facelift 2021 model-year published pricing table explicitly lists Allure 1.5 BlueHDi 130 eight-speed EAT8 automatic."
+  ],
+  [
+    "2021 Peugeot 5008 Allure",
+    "Diesel",
+    "Automatic",
+    "1.5 BlueHDi 130 EAT8",
+    "manufacturer",
+    "https://www.media.stellantis.com/uk-en/peugeot/press/peugeot-reveals-updated-3008-and-5008-models",
+    "Peugeot UK 5008 facelift pricing table lists Allure 1.5 BlueHDi 130 eight-speed EAT8 automatic, distinct from manual diesel or 7-seat petrol."
+  ],
+  [
+    "2018 Citroen C1 Feel",
+    "Petrol",
+    "Manual",
+    "1.0 VTi 68",
+    "corroborated",
+    "https://www.pistonheads.com/buy/citroen/c1/year/2018",
+    "UK 2018 C1 Feel 1.0 VTi 68PS manual listed; same registration year also contains updated 72PS cars: game template is specifically the 68PS earlier engine."
+  ],
+  [
+    "2019 Citroen C3 Feel",
+    "Petrol",
+    "Manual",
+    "1.2 PureTech 82",
+    "corroborated",
+    "https://www.lookers.co.uk/used-car/citroen/c3/1-2-puretech-82-feel-5dr/id/528065",
+    "Lookers UK registration NJ19MBX: 2019 Citroën C3 Feel 1.2 PureTech 82PS petrol manual. Separate from 83PS later homologation."
+  ],
+  [
+    "2021 Citroen C3 Aircross Shine",
+    "Petrol",
+    "Manual",
+    "1.2 PureTech 110",
+    "manufacturer",
+    "https://www.media.stellantis.com/uk-en/citroen/press/citroen-uk-confirms-pricing-and-specifications-for-new-c3-aircross-suv-as-order-books-open",
+    "Citroën UK 2021 UK price/trim/powertrain table explicitly lists Shine 1.2 PureTech 110 six-speed manual."
+  ],
+  [
+    "2021 Citroen C5 Aircross Shine",
+    "Diesel",
+    "Automatic",
+    "1.5 BlueHDi 130 EAT8",
+    "manufacturer",
+    "https://www.media.stellantis.com/uk-en/citroen/press/citroen-uk-confirms-new-trim-and-pricing-details-for-its-key-models",
+    "Citroën UK range listing late 2020/2021 shows Shine 1.5 BlueHDi 130 eight-speed EAT8 automatic; do not confuse with Shine manual or Shine Plus."
+  ],
+  [
+    "2018 Renault Clio Dynamique Nav",
+    "Petrol",
+    "Manual",
+    "0.9 TCe 90",
+    "corroborated",
+    "https://www.cinch.co.uk/used-cars/renault/clio/details/25b64ed9-a7a9-46e4-8b36-41d5bbf1b61e",
+    "UK 2018 Renault Clio Dynamique Nav 0.9 TCe 90PS petrol manual listed by cinch with exact registration year; previous fourth-generation Clio."
+  ],
+  [
+    "2018 Renault Kadjar Dynamique Nav",
+    "Diesel",
+    "Manual",
+    "1.5 dCi 110",
+    "manufacturer",
+    "https://www.press.renault.co.uk/releases/216",
+    "Renault UK factory Kadjar launch specification explicitly lists Dynamique Nav dCi 110 diesel manual; 2018 UK registered exact-trim example independently listed by Lookers."
+  ],
+  [
+    "2022 Renault Clio Iconic",
+    "Petrol",
+    "Manual",
+    "1.0 TCe 90",
+    "corroborated",
+    "https://www.honestjohn.co.uk/used-prices/Renault/Clio/2022/?q=Iconic+Manual+TCe",
+    "UK 2022 TCe 90 manual Clio stock often advertised as Iconic Edition: the game title currently abbreviates it to Iconic. Exact 2022 build-badge should be cross-checked before upgrading to manufacturer."
+  ],
+  [
+    "2021 Renault Captur Iconic",
+    "Petrol",
+    "Manual",
+    "1.0 TCe 100",
+    "corroborated",
+    "https://www.lookers.co.uk/used-car/renault/captur/1-0-tce-iconic-suv-5dr-petrol-manual-euro-6--s/s---100-ps-/id/855262",
+    "Renault franchise 2021 registered Captur 1.0 TCe 100PS Iconic manual exists, although other 2021 batches were TCe 90: do not assume 100PS for every 2021 Captur."
+  ],
+  [
+    "2020 Renault Zoe GT Line R135",
+    "Electric",
+    "Automatic",
+    "52 kWh EV",
+    "corroborated",
+    "https://www.askcar.co.uk/car/renault-zoe-2020-c8cfc0f8c4c8",
+    "Registered UK 2020 Renault Zoe R135 GT Line 52kWh usable battery automatic. Different battery lease and charging options require individual checks."
+  ],
+  [
+    "2018 Dacia Sandero Ambiance",
+    "Petrol",
+    "Manual",
+    "1.0 SCe 75",
+    "corroborated",
+    "https://www.pistonheads.com/buy/dacia/sandero/year/2018",
+    "UK 2018 Sandero 1.0 SCe 75PS Ambiance five-door petrol manual listings; SCe naturally aspirated, not 0.9 TCe."
+  ],
+  [
+    "2018 Dacia Duster Comfort",
+    "Petrol",
+    "Manual",
+    "1.6 SCe 115",
+    "corroborated",
+    "https://askcar.co.uk/used-cars/dacia/duster/comfort/2018",
+    "UK 2018 Duster second-generation Comfort 1.6 SCe 115PS petrol manual multiple dealer adverts. First-generation Duster trims differ."
+  ],
+  [
+    "2022 Dacia Sandero Stepway Comfort",
+    "Petrol",
+    "Manual",
+    "1.0 TCe 90",
+    "corroborated",
+    "https://www.honestjohn.co.uk/used-prices/Dacia/Sandero--Stepway/SUV/2022/?q=Comfort+TCe",
+    "UK 2022 Sandero Stepway Comfort 1.0 TCe 90 petrol manual; separate from Bi-Fuel ECO-G Comfort."
+  ],
+  [
+    "2023 Dacia Jogger Expression",
+    "Petrol",
+    "Manual",
+    "1.0 TCe 110",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44566306-used-2023-dacia-jogger-expression-110-bhp",
+    "2023 UK Jogger Expression 1.0 TCe 110PS petrol manual; seven-seat MPV, not Duster SUV, e.g. Cazoo advert indexed by AutoUncle."
+  ],
+  [
+    "2018 Suzuki Swift SZ3",
+    "Petrol",
+    "Manual",
+    "1.2 Dualjet",
+    "corroborated",
+    "https://www.lookers.co.uk/used-car/suzuki/swift/1-2-dualjet-sz3-5dr/id/859656",
+    "Lookers UK registered DW18GMO Swift SZ3 1.2 Dualjet K12C 90PS five-speed manual. Not Swift Sport Boosterjet."
+  ],
+  [
+    "2019 Suzuki Ignis SZ3",
+    "Petrol",
+    "Manual",
+    "1.2 Dualjet",
+    "corroborated",
+    "https://askcar.co.uk/car/suzuki-ignis-2019-babcb1c3c2b8",
+    "UK 2019 Ignis SZ3 1.2 Dualjet petrol manual 2WD, not the separate SHVS mild-hybrid SZ3."
+  ],
+  [
+    "2020 Suzuki Vitara SZ-T",
+    "Petrol",
+    "Manual",
+    "1.4 Boosterjet MHEV",
+    "corroborated",
+    "https://www.askcar.co.uk/car/suzuki-vitara-2020-624df18742a6",
+    "2020 UK Vitara SZ-T 1.4 Boosterjet 48V mild-hybrid manual FWD. Game fuel 'Petrol' includes mild hybrids, engine annotation identifies MHEV."
+  ],
+  [
+    "2020 Suzuki Swift Sport",
+    "Petrol",
+    "Manual",
+    "1.4 Boosterjet MHEV",
+    "corroborated",
+    "https://www.lookers.co.uk/used-car/suzuki/swift/1-4-boosterjet-48v-hybrid-sport-5dr/id/605216",
+    "UK 2020 Swift Sport 1.4 Boosterjet K14D 48V MHEV 129PS 6-speed manual; distinct from 2018 non-hybrid 140PS Sport."
+  ],
+  [
+    "2020 MG MG3 Excite",
+    "Petrol",
+    "Manual",
+    "1.5 VTi-TECH 106",
+    "corroborated",
+    "https://www.richardsonsoflincoln.co.uk/used-mg-mg3-lincoln-lincolnshire-8327175",
+    "UK 2020 MG3 Excite 1.5 VTi-TECH 106PS petrol five-speed manual, 70-plate example from independent dealer."
+  ],
+  [
+    "2021 MG ZS Exclusive",
+    "Petrol",
+    "Manual",
+    "1.5 VTi-TECH 106",
+    "corroborated",
+    "https://www.lookers.co.uk/used-car/mg-motor-uk/zs/1-5-vti-tech-exclusive-5dr/id/750199",
+    "Lookers MG UK Brighton registered 2021 ZS Exclusive 1.5 VTi-TECH 106PS petrol manual; not 1.0 T-GDI 111PS automatic."
+  ],
+  [
+    "2022 MG HS Excite",
+    "Petrol",
+    "Manual",
+    "1.5 T-GDI 162",
+    "corroborated",
+    "https://www.lookers.co.uk/used-car/mg-motor-uk/hs/1-5-t-gdi-excite-suv-5dr-petrol-manual-euro-6--s/s---162-ps-/id/787160",
+    "Lookers UK registered 2022 MG HS Excite 1.5 T-GDI 162PS petrol manual; different from PHEV HS and automatic Excite."
   ]
 ]);
   const all=Object.values(CATALOGUE).flat();
