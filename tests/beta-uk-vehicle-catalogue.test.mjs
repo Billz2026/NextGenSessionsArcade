@@ -77,7 +77,7 @@ test('classic template positions remain untouched and authentic UK breadth is pr
 });
 
 test('only exact manufacturer-backed specifications receive certified evidence',()=>{
-  assert.equal(UK.VERIFIED.length,81,'Six opening checks and three 25-derivative UK evidence batches');
+  assert.equal(UK.VERIFIED.length,106,'Opening six and four 25-derivative UK evidence batches');
   const counts={manufacturer:0,corroborated:0};
   const checkedTitles=new Set();
   for(const row of UK.VERIFIED){
@@ -93,8 +93,8 @@ test('only exact manufacturer-backed specifications receive certified evidence',
     assert.equal(A.lookup(car).checkedAt,'2026-11-13');
     counts[row[4]]++;
   }
-  assert.equal(counts.manufacturer,36);
-  assert.equal(counts.corroborated,45);
+  assert.equal(counts.manufacturer,45);
+  assert.equal(counts.corroborated,61);
   for(const title of [
     '2018 Toyota Aygo x-play','2017 Toyota Auris Icon Hybrid','2018 Toyota Prius Business Edition',
     '2018 Toyota C-HR Icon Hybrid','2022 Toyota Aygo X Pure','2020 Toyota Corolla Icon Hybrid',
@@ -170,6 +170,43 @@ test('only exact manufacturer-backed specifications receive certified evidence',
   function batchThirdManufacturerCount(){
     return UK.VERIFIED.slice(56).filter(x=>x[4]==='manufacturer').length;
   }
+  for(const title of [
+  "2018 Honda Civic SE",
+  "2021 Honda Civic Sport",
+  "2022 Honda HR-V Advance e:HEV",
+  "2018 Mazda Mazda2 SE-L",
+  "2020 Mazda Mazda3 SE-L",
+  "2020 Mazda CX-5 SE-L",
+  "2021 BMW 118i M Sport",
+  "2019 BMW M140i Shadow Edition",
+  "2022 BMW M135i xDrive",
+  "2020 BMW X1 sDrive18i Sport",
+  "2019 BMW 520d M Sport",
+  "2022 BMW i4 eDrive40",
+  "2021 BMW M3 Competition",
+  "2021 Mercedes-AMG A35 4MATIC",
+  "2019 Mercedes-Benz C220d AMG Line",
+  "2021 Mercedes-Benz GLA200 AMG Line",
+  "2021 Mercedes-AMG A45 S 4MATIC+",
+  "2018 Volvo V40 D2 Momentum",
+  "2021 Volvo V60 Momentum B4",
+  "2020 Volvo XC60 D4 Momentum",
+  "2020 Jaguar XE R-Dynamic S D180",
+  "2021 Jaguar F-Type P300 R-Dynamic",
+  "2019 Land Rover Discovery Sport SE TD4",
+  "2022 Range Rover Evoque D200 R-Dynamic S",
+  "2021 Land Rover Discovery D250 S"
+]) {
+    assert.ok(checkedTitles.has(title),'Missing Honda/Mazda/BMW/Mercedes/Volvo/JLR audit: '+title);
+  }
+  assert.equal(UK.VERIFIED.slice(81).filter(x=>x[4]==='manufacturer').length,9,
+    'Fourth batch must maintain evidence classification');
+  assert.equal(A.lookup(find('2020 Volvo XC60 D4 Momentum')).engine,
+    '2.0 D4 Geartronic','Do not claim AWD without exact UK proof');
+  assert.match(A.lookup(find('2022 BMW i4 eDrive40')).note,/GROSS.*NET/,
+    'Electric vehicle usable battery must not be confused with gross capacity');
+  assert.match(A.lookup(find('2021 BMW M3 Competition')).note,/NOT assumed/,
+    'M3 rear-drive and optional xDrive require distinct records');
   // Changing a reviewed trim, powertrain or gearbox must demote evidence to pending.
   for(const original of UK.VERIFIED){
     const car=find(original[0]);
@@ -180,9 +217,9 @@ test('only exact manufacturer-backed specifications receive certified evidence',
   assert.equal(A.lookup(find('2023 BYD Atto 3 Design')).status,'pending');
   const totals=A.summary(M.CATALOGUE);
   assert.equal(totals.total,200);
-  assert.equal(totals.manufacturer,49);
-  assert.equal(totals.corroborated,50);
-  assert.equal(totals.pending,101);
+  assert.equal(totals.manufacturer,58);
+  assert.equal(totals.corroborated,66);
+  assert.equal(totals.pending,76);
 });
 
 test('new prices are transparently unverified and classic pricing is untouched',()=>{
