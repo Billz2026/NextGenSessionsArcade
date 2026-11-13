@@ -80,7 +80,13 @@
       // the old primary remains intact. A failed backup never blocks saving.
       if (previous !== raw) storage.setItem(KEY, raw);
       lastSeenRaw = raw;
-      if (previous !== raw && decode(previous, normalize)) {
+      const previousCareer = previous !== raw ? decode(previous, normalize) : null;
+      const existingBackup = previousCareer ? decode(storage.getItem(BACKUP_KEY), normalize) : null;
+      // Retain a meaningful restore point: do not replace the previous game
+      // day's backup on every same-day inbox read, approval or render.
+      // Explicit replacement/import/restore may always back up the old career.
+      if (previousCareer && (options.backupPrevious ||
+        !existingBackup || previousCareer.day !== career.day)) {
         try { storage.setItem(BACKUP_KEY, previous); }
         catch (_) { /* Keep the successfully written primary. */ }
       }
@@ -97,7 +103,7 @@
     try {
       const career = decode(storage.getItem(BACKUP_KEY), normalize);
       if (!career) return {ok:false, message:'No valid local backup is available.'};
-      const result = save(career, normalize, {force:true});
+      const result = save(career, normalize, {force:true, backupPrevious:true});
       return {...result, career:result.ok ? career : null};
     } catch (_) {
       return {ok:false, message:'Unable to read or restore the backup.'};
