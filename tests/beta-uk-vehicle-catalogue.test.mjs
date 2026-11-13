@@ -44,7 +44,8 @@ test('expanded UK beta contains 200 distinct vehicle derivatives in valid tiers'
       assert.ok(car.guide>0&&car.retail>0);
       // Four legacy 2026 trade assumptions exceed observed retail guides.
       // The buying engine already quarantines them pending real wholesale evidence.
-      if(!car.priceAudit?.buyingRisk)assert.ok(car.retail>car.guide,
+      if(!M.priceFor(car,'uk2026').priceAudit?.buyingRisk)
+        assert.ok(M.priceFor(car,'uk2026').retail>car.guide,
         'Unquarantined guide must remain below retail: '+car.title);
       assert.ok(car.miles>0&&car.grade>=1&&car.grade<=5);
     }
