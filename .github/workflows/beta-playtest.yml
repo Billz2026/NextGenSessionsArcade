@@ -7,6 +7,7 @@ on:
       - 'tests/beta-customer-enquiries.mjs'
       - 'tests/beta-sales-team-activity.mjs'
       - 'tests/beta-market-variety.mjs'
+      - 'tests/beta-customer-sales-paths.mjs'
       - '.github/workflows/beta-playtest.yml'
   push:
     branches: [main]
@@ -16,6 +17,7 @@ on:
       - 'tests/beta-customer-enquiries.mjs'
       - 'tests/beta-sales-team-activity.mjs'
       - 'tests/beta-market-variety.mjs'
+      - 'tests/beta-customer-sales-paths.mjs'
       - '.github/workflows/beta-playtest.yml'
 permissions:
   contents: read
@@ -49,6 +51,8 @@ jobs:
         run: node tests/beta-sales-team-activity.mjs
       - name: Audit 90 days of 2026 petrol diesel hybrid and electric supply with low-mileage stock
         run: node tests/beta-market-variety.mjs
+      - name: Check quoted prices, 24-hour viewing, remote refundable deposits and final balance
+        run: node tests/beta-customer-sales-paths.mjs
       - name: Keep beta browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
