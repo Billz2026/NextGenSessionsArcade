@@ -174,7 +174,13 @@
     const year=Number(title.slice(0,4));
     const spec=RANGES.find(x=>(x.aliases||[x.model]).some(name=>title.includes(name))&&
       year>=x.from&&year<=x.to);
-    return {model:spec?.model??'Unknown',generation:spec?.name??'Unknown',year:Number.isInteger(year)?year:0};
+    // New UK models without an individually checked generation retain their
+    // truthful name and a visible unverified-generation status. Never invent a
+    // Mk code or select a similar-looking photograph for these vehicles.
+    const namedModel=title.replace(/^\\d{4}\\s+/,'').trim()||'Unspecified vehicle';
+    return {model:spec?.model??namedModel,
+      generation:spec?.name??'Generation not yet verified',
+      year:Number.isInteger(year)?year:0};
   }
   function describe(car){
     const id=identity(car);
