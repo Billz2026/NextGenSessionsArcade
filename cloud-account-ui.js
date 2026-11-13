@@ -402,12 +402,6 @@
       if((queued || syncing || syncBlocked) &&
         !window.confirm('Unsynced cloud changes may exist. Starting a separate guest career will '+
           'not upload these changes. Export the current account save before continuing.'))return false;
-      activeAccount=null;
-      revision=0;
-      queued=null;
-      syncBlocked=false;
-      conflict=false;
-      syncMessage='';
     }
     SAVES.setNamespace(null);
     const guest=SAVES.load(app.normalize);
@@ -416,8 +410,15 @@
         'Starting a NEW guest career will replace that device-only save. Export the old guest career first if needed. Continue?')) {
       SAVES.setNamespace(previousAccount);
       SAVES.load(app.normalize);
-      activeAccount=previousAccount;
       return false;
+    }
+    if(previousAccount) {
+      activeAccount=null;
+      revision=0;
+      queued=null;
+      syncBlocked=false;
+      conflict=false;
+      syncMessage='';
     }
     renderUI();
     return true;
