@@ -705,7 +705,8 @@
     return true;
   }
   window.MotorTradeCustomers=Object.freeze({
-    caseFor,demand,open,book,competingInterest,serveCompeting,testDrive,negotiate,agree,deposit,cancel,
+    caseFor,demand,open,quote,acceptPriceCounter,remoteReserve,inspectRemote,
+    book,competingInterest,serveCompeting,testDrive,negotiate,agree,deposit,cancel,
     ready,complete,advanceDay,queueEnquiries,nextSession,stats,valid,heldDeposits,balanceDue,customerPrep
   });
 })();
