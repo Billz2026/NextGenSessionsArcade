@@ -387,6 +387,17 @@
       money.format(d.reserved)+' earmarked for repairs':'Before future operating bills');
     bindText('dashboard-stock-note',d.listed+' listed · '+d.awaitingPrep+' awaiting prep');
     bindText('dashboard-monthly-sales',d.report.soldUnits+' / '+d.report.targetUnits);
+    const revenue=d.report.combinedRevenue??d.report.turnover;
+    const highlight=byId('dashboard-monthly-highlight');
+    highlight.innerHTML='<div><small>MONTH '+d.report.month+' · GAME DAY '+career.day+
+      '</small><strong>MONTHLY DEALERSHIP PERFORMANCE</strong>'+
+      '<span>Sales: '+d.report.soldUnits+' / '+d.report.targetUnits+
+      ' · Revenue: '+money.format(revenue)+' / '+money.format(d.report.targetTurnover)+
+      '</span></div><div><small>OPERATING CONTRIBUTION</small><strong>'+
+      money.format(d.report.operatingContribution)+'</strong>'+
+      '<span>Cash: '+money.format(career.cash)+' · '+d.daysToGo+
+      ' day(s) to month end</span></div>'+
+      '<button type="button" data-page="reports">OPEN FULL FIGURES</button>';
     const sales=DV.salesProgress(d.report,d.daysToGo);
     bindText('dashboard-sales-note',sales.text);
     for(const node of all('[data-bind="dashboard-sales-note"]'))
