@@ -277,8 +277,8 @@
   {
     "auctionId": "BW-2026-11-05-62",
     "retailId": "TF-2026-11-13-ST2",
-    "status": "matched-derivative-unadjusted",
-    "note": "2021 ST-2 5dr manual same powertrain; 12,910-mile difference and possible equipment variation; less strong than the 32k-mile retail listing."
+    "status": "mileage-outside-strict-band",
+    "note": "2021 ST-2 5dr manual same powertrain, but 12,910-mile difference exceeds strict 30%/5k selection band; illustrative only, not an approved matched pair."
   },
   {
     "auctionId": "BW-2026-11-05-08",
@@ -308,20 +308,17 @@
      includesFees:false,retailSaleConfirmed:false});
  };
  const snapshotFor=template=>{
-   // Strict by design: BCA-settled simulated lots have NO verified,
-   // account-specific BCA wholesale sold data in this public Brightwells
-   // source sample. Cross-auctioneer fees/condition must NOT be substituted.
-   // We also require >=3 exact independent sold-price observations and
-   // >=3 retail listings from compatible mileage, before even reviewing a
-   // prospective source-based game guide. No auto price changes.
-   const exact=AUCTION.filter(x=>x.make+' '+x.model+' '+x.trim===
-      String(template?.title||'').replace(/^\\d{4}\\s+/,'') &&
-      x.year===Number(String(template.title).slice(0,4)) &&
-      x.fuel===template.fuel&&x.gearbox===template.gearbox);
-   return Object.freeze({status:'not-calibrated',templateTitle:template?.title||'',
-      directlyComparablePublicSales:exact.length,requiredIndependentSales:3,
-      eligibleBcaSoldPrices:0,priceToApply:null,
-      note:'Brightwells sale results and dealer retail asks are different evidence types; BCA tariff, condition and exact UK derivative comparability are unproven. Do not reprice this model.'});
+   // BCA-sourced dealer gameplay needs BCA fee and condition comparability.
+   // Brightwells sale results are REAL OBSERVATIONS but cannot be silently
+   // transplanted as a BCA trade/hammer valuation or a realised retail sale.
+   const title=String(template?.title||'');
+   const sameFamily=AUCTION.filter(x=>title.startsWith(String(x.year)+' ' + x.make+' '+x.model+' ') ||
+      title.includes(x.make+' '+x.model+' '));
+   return Object.freeze({status:'not-calibrated',templateTitle:title,
+      sameFamilyIllustrativeAuctionLots:sameFamily.length,
+      eligibleBcaSoldPrices:0,requiredIndependentBcaSoldPrices:3,
+      retailAskEvidenceRequired:3,priceToApply:null,
+      note:'Public auction house observations are not BCA settlement benchmarks. Do not transfer a reported result, buyers premium, or dealer asking price into an invented trade guide.'});
  };
  if(AUCTION.length!==8||RETAIL.length!==4||PAIRS.length!==4||
     new Set(AUCTION.map(x=>x.id)).size!==AUCTION.length||
