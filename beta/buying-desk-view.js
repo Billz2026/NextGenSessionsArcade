@@ -88,7 +88,9 @@
           '<div class="buy-lead-bottom"><span>OWNER ASKS</span><b>'+money(car.ask)+'</b></div>'+
           '</button>';
       }).join('')+'</div>'+
-      '<p class="buy-leads-tip">These are fictional customer leads, not live classified adverts. Selecting a vehicle does not reserve it.</p>'+
+      '<p class="buy-leads-tip">'+(state.financialScenario==='uk2026'?
+        'Daily offers now mix older and newer petrol, diesel, hybrid and EV stock across low and high mileage. Less-used cars normally command a higher buying price; financing still depends on available cash. ':'')+
+        'These are fictional customer leads, not live classified adverts. Selecting a vehicle does not reserve it.</p>'+ 
     '</aside>';
   }
   function pricing(car,state,E,offer){

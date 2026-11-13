@@ -27,7 +27,8 @@
       ['2018 Volkswagen Golf SE',131100,'Diesel','Manual','1.6 TDI',4400,7600,535,4,'Partial'],
       ['2017 Toyota Yaris Icon',96000,'Petrol','Manual','1.5 VVT-iE',3600,6000,310,3,'Full'],
       // Older part-ex and low-budget auction stock can still be serviceable.
-      ['2016 Honda Jazz SE',157800,'Petrol','Manual','1.3 i-VTEC',1450,3500,250,3,'Partial']
+      ['2016 Honda Jazz SE',157800,'Petrol','Manual','1.3 i-VTEC',1450,3500,250,3,'Partial'],
+      ['2019 Ford Focus Zetec 1.5 EcoBlue',71300,'Diesel','Manual','1.5 EcoBlue 120',4550,7275,520,3,'Partial']
     ],
     modern: [
       ['2021 Vauxhall Corsa SE Premium',57100,'Petrol','Manual','1.2 Turbo 100',6350,10350,385,2,'Full'],
@@ -45,7 +46,13 @@
       ['2021 Nissan Leaf N-Connecta',49300,'Electric','Automatic','40 kWh EV',5450,8550,575,2,'Full'],
       ['2021 Peugeot e-208 Allure',53500,'Electric','Automatic','50 kWh EV',7150,11250,615,2,'Partial'],
       ['2022 Hyundai Tucson SE Connect',57500,'Hybrid','Automatic','1.6 T-GDi hybrid',15600,21500,555,2,'Full'],
-      ['2022 Vauxhall Mokka-e Launch Edition',51000,'Electric','Automatic','50 kWh EV',8850,13350,585,3,'Partial']
+      ['2022 Vauxhall Mokka-e Launch Edition',51000,'Electric','Automatic','50 kWh EV',8850,13350,585,3,'Partial'],
+      // Later, low-mileage mainstream models. Retail asks below are dated
+      // comparable advertisements; all wholesale guides are game estimates.
+      ['2024 Toyota Yaris Icon Hybrid',15000,'Hybrid','Automatic','1.5 VVT-i hybrid e-CVT',12000,16800,385,2,'Full'],
+      ['2024 MG4 EV SE Standard Range',18000,'Electric','Automatic','51 kWh EV',9850,13700,585,2,'Full'],
+      ['2024 Kia Ceed 2',19000,'Petrol','Manual','1.5 T-GDi',11200,16300,410,2,'Full'],
+      ['2025 Vauxhall Corsa Design',8000,'Petrol','Manual','1.2 Turbo 100',9950,13800,390,2,'Full']
     ],
     premium: [
       ['2022 Tesla Model 3 RWD',47000,'Electric','Automatic','Rear-wheel-drive EV',14600,20500,725,2,'Full'],
@@ -93,6 +100,26 @@
       retail:12500,sourcePrice:12250,sourceMiles:50415,
       source:'https://askcar.co.uk/used-cars/honda/jazz/2021',
       note:'Exact 2021 SE hybrid automatic 50,415mi £12,250; game 46,100mi. 42,341mi £12,495 second listing.',confidence:'medium'},
+    '2019 Ford Focus Zetec 1.5 EcoBlue':{
+      retail:7275,sourcePrice:7270,sourceMiles:71337,
+      source:'https://www.askcar.co.uk/used-cars/ford/focus/zetec/2019',
+      note:'2026 listing 2019 Ford Focus 1.5 EcoBlue Zetec diesel manual estate 71,337mi £7,270 asking. Vehicle body style and MOT must be checked; wholesale figure is simulated.',confidence:'medium'},
+    '2024 Toyota Yaris Icon Hybrid':{
+      retail:16800,sourcePrice:16799,sourceMiles:13712,
+      source:'https://www.askcar.co.uk/used-cars/toyota/yaris/icon/2024',
+      note:'November 2026 2024 1.5 VVT-h Icon automatic cohort and advertised 13,712mi £16,799 example. 15,000mi stock is a fictional derivative-matched case, not the real car.',confidence:'medium'},
+    '2024 MG4 EV SE Standard Range':{
+      retail:13700,sourcePrice:13700,sourceMiles:18000,
+      source:'https://www.askcar.co.uk/used-cars/mg/mg4/se/2024',
+      note:'November 2026 MG4 SE 2024 asking-price median at approx 18,000mi £13,700; battery and exact standard-range option not individually checked. Illustrated trade guide, not a hammer.',confidence:'low'},
+    '2024 Kia Ceed 2':{
+      retail:16300,sourcePrice:16299,sourceMiles:17176,
+      source:'https://www.askcar.co.uk/used-cars/kia/ceed/2024',
+      note:'November 2026 2024 Ceed 1.5 T-GDi 2 manual estate advertised 17,176mi £16,299; game model body unspecified. Retail asking only, not sold or trade.',confidence:'medium'},
+    '2025 Vauxhall Corsa Design':{
+      retail:13800,sourcePrice:13800,sourceMiles:5000,
+      source:'https://www.askcar.co.uk/used-cars/vauxhall/corsa/design',
+      note:'November 2026 2025 Corsa Design cohort median asking £13,800 at typical 5,000mi; game 8,000mi illustrative, turbo/manual specification may affect actual asking.',confidence:'low'},
     '2022 Nissan Qashqai Acenta Premium':{
       retail:10950,sourcePrice:10749,sourceMiles:62506,
       source:'https://www.askcar.co.uk/used-cars/nissan/qashqai/acenta-premium/2022',
@@ -328,6 +355,13 @@
       marketTier:tier,templateId:tier+'-'+i});
   };
   const CATALOGUE=Object.freeze(Object.fromEntries(KEYS.map(k=>[k,Object.freeze(rows[k].map((row,i)=>source(row,i,k)))])));
+  // Modern independent dealers can inspect all financially plausible stock
+  // without an arbitrary reputation gate. Prestige models remain infrequent
+  // and purchasing still requires genuine unrestricted operating cash.
+  function sourcingTier2026(cash){
+    return cash>=95000?'luxury':cash>=37000?'premium':
+      cash>=14500?'modern':'starter';
+  }
   function tierFor(cash=12500,reputation=5){
     const current=TIERS.filter(t=>cash>=t.minCash&&reputation>=t.minRep).at(-1);
     return current||TIERS[0];
@@ -342,11 +376,16 @@
     if(group==='seller')return accessible.flatMap(k=>CATALOGUE[k]);
     return accessible.flatMap(k=>CATALOGUE[k]);
   }
-  function pick(group,tier,day,index,seen=new Set()){
+  function pick(group,tier,day,index,seen=new Set(),scenario='classic'){
     const accessible=pool(group,tier);
     // Mix all unlocked bands. The highest band appears more often without
     // erasing affordable stock or forcing unaffordable expensive lots.
-    const weighting=tier==='starter'?['starter']:
+    const weighting=scenario==='uk2026'?
+      tier==='starter'?['starter']:
+      tier==='modern'?['starter','starter','modern','modern','modern']:
+      tier==='premium'?['starter','starter','modern','modern','modern','modern','premium']:
+      ['starter','modern','modern','premium','premium','luxury','luxury']:
+      tier==='starter'?['starter']:
       tier==='modern'?['starter','modern','modern','modern']:
       tier==='premium'?['starter','modern','modern','premium','premium','premium']:
       ['modern','premium','premium','luxury','luxury','luxury'];
@@ -357,7 +396,18 @@
     const suitable=v=>!seen.has(v.title)&&(group!=='seller'||v.grade<=3);
     const candidates=CATALOGUE[desired].filter(suitable);
     const fallback=accessible.filter(suitable);
-    const list=candidates.length?candidates:fallback;
+    // Within the financially unlocked years/grades, sample credible fuel
+    // diversity without flooding a small dealer with EV-only stock simply
+    // because several catalogue templates happen to be electric. These are
+    // explicit GAME supply mix assumptions, not SMMT powertrain shares.
+    const fuelRoll=hash(group+'|fuel|'+day+'|'+index)%100;
+    const chosenFuel=fuelRoll<48?'Petrol':fuelRoll<68?'Diesel':
+      fuelRoll<85?'Hybrid':fuelRoll<97?'Electric':'Plug-in Hybrid';
+    const directFuel=candidates.filter(v=>v.fuel===chosenFuel);
+    const unlockedFuel=fallback.filter(v=>v.fuel===chosenFuel);
+    const list=scenario==='uk2026'?(directFuel.length?directFuel:
+      unlockedFuel.length?unlockedFuel:candidates.length?candidates:fallback):
+      candidates.length?candidates:fallback;
     if(!list.length)return null;
     const chosen=list[hash(group+'|'+day+'|slot|'+index)%list.length];
     seen.add(chosen.title);
@@ -382,5 +432,6 @@
     const id=Number(vehicle.id)||0;
     return affordable[hash('part-ex|'+vehicle.origin+'|'+id)%affordable.length];
   }
-  window.MotorTradeMarket=Object.freeze({TIERS,CATALOGUE,PRICING_2026,MARKET_2026_REVIEW_DATE,priceFor,tierFor,progress,pool,pick,sellersForDealDay,exchangeFor});
+  window.MotorTradeMarket=Object.freeze({TIERS,CATALOGUE,PRICING_2026,MARKET_2026_REVIEW_DATE,
+    priceFor,tierFor,sourcingTier2026,progress,pool,pick,sellersForDealDay,exchangeFor});
 })();

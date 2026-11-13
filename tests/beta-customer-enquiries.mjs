@@ -225,8 +225,9 @@ assert.ok(active,'Snapshot must preserve unbooked live lead');
 await page.evaluate(s=>localStorage.setItem('the-motor-trade-career-beta-v1',JSON.stringify(s)),sample);
 await page.reload({waitUntil:'domcontentloaded'});
 await page.locator('#menu-continue').click();
-assert.ok((await page.locator('#dashboard-priorities').innerText()).includes('customer enquiry'),
-  'Dashboard should flag genuinely waiting customers before they expire');
+assert.match(await page.locator('#dashboard-priorities').innerText(),
+  /customer enquir(?:y|ies)/i,
+  'Dashboard should flag one or several genuinely waiting customers before they expire');
 await page.locator('.career-nav [data-page="inbox"]').click();
 const mails=await page.locator('#inbox-list').innerText();
 assert.ok(mails.includes('NEW CUSTOMER ENQUIRY'),'Inbox must show an enquiry without manually opening Sales Office');
