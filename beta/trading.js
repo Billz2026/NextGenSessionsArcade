@@ -542,12 +542,15 @@
         (v.profile.hiddenFault?.cost || 0)) &&
       (saved.version<7 || W.valid(v,saved.day)) &&
       (saved.version<10 || validLook(v))&&
-      (v.storageLocation===undefined||['forecourt','offsite','external'].includes(v.storageLocation))&&
+      (v.storageLocation===undefined||['forecourt','offsite','external','viewing'].includes(v.storageLocation))&&
+      (v.viewingArriveDay===undefined||
+        (integer(v.viewingArriveDay)&&v.viewingArriveDay>=v.acquiredDay&&
+         v.viewingArriveDay<=saved.day+10&&v.storageLocation==='offsite'))&&
       (v.storageLocation!=='external'||
         (v.workshop?.method==='external'&&
           ['in-progress','quality-check'].includes(v.workshop.stage)))&&
-      (saved.financialScenario!=='uk2026'||
-        v.status!=='listed'||v.storageLocation===undefined||v.storageLocation==='forecourt')&&
+      (saved.financialScenario!=='uk2026'||v.status!=='listed'||
+        v.storageLocation!=='external')&&
       (v.vatPurchasePrice===undefined||cashValue(v.vatPurchasePrice));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
@@ -894,8 +897,10 @@
     const vehicle = own(state.vehicles,id);
     if (!vehicle) return fail('missing','Vehicle not found in your stock.');
     if (vehicle.status === 'acquired') return fail('prep','Workshop repairs and a passed final quality check are required before retail advertising.');
-    if(state.financialScenario==='uk2026'&&vehicle.storageLocation!=='forecourt')
-      return fail('offsite','Car is held externally or in off-site storage. Move to a vacant forecourt space before advertising.');
+    if(state.financialScenario==='uk2026'&&vehicle.storageLocation==='external')
+      return fail('external','The car is still with the repairer. Complete preparation and QC before advertising.');
+    // Online advertising does not require a physical showroom position.
+    // Offsite viewings are chargeable and require 48-hour collection notice.
     if (!integer(asking) || asking < 500 || asking > 75000)
       return fail('price','Enter a retail price between £500 and £75,000.');
     if (asking < Math.floor(vehicle.retail * .5) || asking > Math.ceil(vehicle.retail * 1.8))
