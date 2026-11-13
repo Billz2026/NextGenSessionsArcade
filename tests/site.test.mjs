@@ -7,6 +7,7 @@ const root = new URL('../', import.meta.url);
 const html = readFileSync(new URL('index.html', root), 'utf8');
 const css = readFileSync(new URL('styles.css', root), 'utf8');
 const js = readFileSync(new URL('simulator.js', root), 'utf8');
+const careerStorage = readFileSync(new URL('career-storage.js', root), 'utf8');
 const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
 const photos = readFileSync(new URL('vehicle-photos.js', root), 'utf8');
@@ -46,6 +47,9 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
   assert.match(html, /trade-wordmark-hero/);
   assert.doesNotMatch(html, /menu-aside|menu-footer|feature-line/);
   assert.match(html, /id="career-form"/);
+  for (const id of ['career-tools','career-export','career-restore','career-import-file','menu-save-warning'])
+    assert.match(html, new RegExp('id="' + id + '"'));
+  assert.match(html, /data-action="open-career-tools"/);
   assert.match(html, /id="dealership-name"/);
   assert.ok(existsSync(new URL('assets/nextgen-header-wordmark-2026.webp', root)));
   assert.ok(existsSync(new URL('assets/hatchback-study.svg', root)));
@@ -77,8 +81,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=49/);
-  assert.match(html, /simulator\.js\?v=32/);
+  assert.match(html, /styles\.css\?v=50/);
+  assert.match(html, /career-storage\.js\?v=1/);
+  assert.match(html, /simulator\.js\?v=33/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=3/);
   assert.match(html, /id="premises-view"/);
@@ -114,7 +119,7 @@ test('responsive dashboard supports mobile and reduced motion', () => {
 });
 
 test('v0.9.2 photo matching, image failure fallback and capacity labels', () => {
-  assert.match(html, /PRE-ALPHA · v0\.9\.35/);
+  assert.match(html, /PRE-ALPHA · v0\.9\.36/);
   assert.match(html, /<small>FORECOURT<\/small><strong data-bind="forecourt-capacity">4 vehicles<\/strong>/);
   assert.match(engine, /const CAPACITY = 4/);
   assert.match(css, /\.vehicle-photo-missing\[hidden\]/);
@@ -206,6 +211,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
       return [];
     },
     createElement: () => new Node(),
+    querySelector: () => new Node(),
     addEventListener: (type, handler) => { listeners[type] = handler; }
   };
   const localStorage = {
@@ -218,7 +224,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
       storageData.set(key, value);
     }
   };
-  const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
+  const context = { document, localStorage, window: { localStorage, confirm: () => true, alert: () => {}, scrollTo: () => {} }, Intl, Date };
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
   vm.runInNewContext(photos, context, { timeout: 1500 });
   vm.runInNewContext(accuracyData, context, { timeout: 1500 });
@@ -311,6 +317,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(financeView, context, { timeout: 1500 });
   vm.runInNewContext(dashboardView, context, { timeout: 1500 });
   vm.runInNewContext(inboxOffice, context, { timeout: 1500 });
+  vm.runInNewContext(careerStorage, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const send=(a,extra)=> {
@@ -554,8 +561,10 @@ test('invalid saves are ignored and storage failure is clearly reported', () => 
   const noStorage = browser(new Map(), { denyStorage: true });
   noStorage.click('new-career');
   noStorage.submitCareer('Local Only');
-  assert.equal(noStorage.nodes.get('screen-career').hidden, false);
-  assert.equal(noStorage.nodes.get('save-warning').hidden, false);
+  // With storage unavailable, do not pretend a new career has been saved.
+  assert.equal(noStorage.nodes.get('screen-setup').hidden, false);
+  assert.equal(noStorage.nodes.get('screen-career').hidden, true);
+  assert.equal(noStorage.storageData.has(STORAGE_KEY), false);
 });
 
 test('new career name remains plain text even if it contains markup', () => {
@@ -597,7 +606,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=49/);
+  assert.match(html, /styles\.css\?v=50/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4442,7 +4451,7 @@ test('v0.9.18 empty forecourt displays direct sourcing actions',()=>{
 
 
 test('v0.9.19 compact Vehicle Stock is scoped to desktop and retains full report access',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.35/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.36/);
   assert.match(css,/@media\(min-width:981px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="stock"\]:not\(\[hidden\]\)\)/);
   assert.match(css,/\.stock-dossier-vehicle \.vehicle-photo-frame\{[\s\S]*?height:125px/);
@@ -4511,7 +4520,7 @@ test('v0.9.20 workshop bookable quotes and hidden defects follow engine truth',(
 
 
 test('v0.9.21 compact Workshop hides non-urgent calendar banner only at desktop width',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.35/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.36/);
   assert.match(css,/@media\(min-width:1021px\)/);
   assert.match(css,/\.career-content:has\(\[data-panel="workshop"\]:not\(\[hidden\]\)\)>#events-banner:has\(\.event-neutral-banner\)/);
   assert.match(css,/#events-banner:has\(\.event-deadline-banner\)/);
@@ -4969,7 +4978,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/styles\.css\?v=50/);
 });
 
 
@@ -5304,8 +5313,8 @@ test('v0.9.32 staff and recruitment preserve readable skills while collapsing se
 });
 
 test('v0.9.32 compact Staff & Recruitment desktop styles retain labels and responsive grid',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.35/);
-  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.36/);
+  assert.match(html,/styles\.css\?v=50/);
   assert.match(html,/people-view\.js\?v=7/);
   assert.match(css,/\.career-main:has\(\[data-panel="staff"\]:not\(\[hidden\]\)\) \.career-topbar/);
   assert.match(css,/\.sd-kpis>div\{min-height:56px/);
@@ -5420,7 +5429,7 @@ test('v0.9.33 Reputation uses compact responsive layout without removing complet
   assert.match(css,/\.rep-main-grid\{display:grid/);
   assert.match(css,/\.rep-history-preview\{display:grid/);
   assert.match(css,/@media\(max-width:760px\)/);
-  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/styles\.css\?v=50/);
   assert.match(html,/people-view\.js\?v=7/);
 });
 
@@ -5604,8 +5613,8 @@ test('v0.9.35 blocked and maximum upgrades still retain accurate eligibility',()
 });
 
 test('v0.9.35 one-page desktop polish is scoped to My Dealership and retains mobile layout',()=>{
-  assert.match(html,/PRE-ALPHA · v0\.9\.35/);
-  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/PRE-ALPHA · v0\.9\.36/);
+  assert.match(html,/styles\.css\?v=50/);
   assert.match(html,/premises-view\.js\?v=3/);
   assert.match(css,/v0\.9\.35 — Final My Dealership single-screen desktop polish/);
   assert.match(css,/\.career-layout:has\(\[data-panel="business"\]:not\(\[hidden\]\)\) \.career-topbar/);

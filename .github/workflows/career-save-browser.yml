@@ -1,0 +1,43 @@
+name: Career save browser regression
+on:
+  pull_request:
+    paths:
+      - 'career-storage.js'
+      - 'simulator.js'
+      - 'index.html'
+      - 'styles.css'
+      - 'tests/career-save-browser.mjs'
+      - '.github/workflows/career-save-browser.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'career-storage.js'
+      - 'simulator.js'
+      - 'index.html'
+      - 'styles.css'
+      - 'tests/career-save-browser.mjs'
+      - '.github/workflows/career-save-browser.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate browser test syntax
+        run: node --check tests/career-save-browser.mjs
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Serve game
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/motortrade-backup-server.log 2>&1 &
+          sleep 2
+          curl --fail --silent http://127.0.0.1:4173/ >/dev/null
+      - name: Exercise real save import export and recovery
+        run: node tests/career-save-browser.mjs

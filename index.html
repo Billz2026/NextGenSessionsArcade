@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=49">
+  <link rel="stylesheet" href="./styles.css?v=50">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -42,7 +42,8 @@
   <script src="./buying-desk-view.js?v=2" defer></script>
   <script src="./stock-view.js?v=1" defer></script>
   <script src="./finance-view.js?v=2" defer></script>
-  <script src="./simulator.js?v=32" defer></script>
+  <script src="./career-storage.js?v=1" defer></script>
+  <script src="./simulator.js?v=33" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -50,7 +51,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.35</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.36</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -61,7 +62,20 @@
             <button type="button" class="action-btn action-btn-primary" id="menu-continue" data-action="resume" hidden><span class="button-mark" aria-hidden="true">▶</span><span><strong>CONTINUE</strong><small id="menu-resume-description" class="menu-visually-hidden">Resume your dealership</small></span><span class="arrow" aria-hidden="true">›</span></button>
             <button type="button" class="action-btn action-btn-primary" id="menu-new-career" data-action="new-career"><span class="button-mark" aria-hidden="true">＋</span><span><strong>NEW CAREER</strong></span><span class="arrow" aria-hidden="true">›</span></button>
             <button type="button" class="action-btn action-btn-muted" data-action="toggle-settings" aria-controls="menu-guide" aria-expanded="false"><span class="button-mark" aria-hidden="true">⚙</span><span><strong>SETTINGS</strong></span><span class="arrow" aria-hidden="true">›</span></button>
+            <button type="button" class="action-btn action-btn-muted" data-action="toggle-career-tools" aria-controls="career-tools" aria-expanded="false"><span class="button-mark" aria-hidden="true">▣</span><span><strong>CAREER SAVES</strong></span><span class="arrow" aria-hidden="true">›</span></button>
           </nav>
+          <div class="menu-save-warning" id="menu-save-warning" role="alert" hidden></div>
+          <div id="career-tools" class="career-tools" hidden aria-label="Career save and recovery options">
+            <strong>SAVE & RECOVERY</strong>
+            <p>Careers save automatically in this browser. Export a JSON backup to keep a copy outside this device or transfer it to another browser.</p>
+            <div class="career-tools-actions">
+              <button type="button" id="career-export" data-action="export-career">EXPORT CAREER</button>
+              <button type="button" data-action="choose-import">IMPORT BACKUP</button>
+              <button type="button" id="career-restore" data-action="restore-career" hidden>RESTORE PREVIOUS SAVE</button>
+            </div>
+            <p id="career-tools-message" role="status" hidden></p>
+          </div>
+          <input id="career-import-file" type="file" accept=".json,application/json" hidden aria-label="Import The Motor Trade career backup">
           <div class="menu-guide" id="menu-guide" hidden aria-label="Display settings">
             <div class="menu-setting-row"><span>SHOWROOM BACKGROUND</span><button type="button" id="menu-setting-bg" data-action="toggle-showroom" aria-pressed="true">ON</button></div>
             <div class="menu-setting-row"><span>MENU ANIMATION</span><button type="button" id="menu-setting-motion" data-action="toggle-motion" aria-pressed="true">ON</button></div>
@@ -94,7 +108,7 @@
               <div><span>CAREER TYPE</span><strong>Independent trader</strong></div>
               <div><span>STARTING STOCK</span><strong>None</strong></div>
             </div>
-            <p class="notice-box">Trade in a fictional UK market: auction bids, walk-in sellers, stock preparation, retail enquiries and part-exchanges. Prices and margins are illustrative; VAT, taxes, overheads and consumer claims are not yet modelled.</p>
+            <p class="notice-box">Trade in a fictional UK market: auction bids, walk-in sellers, stock preparation, retail enquiries and part-exchanges. Prices and margins are illustrative; VAT, taxes and consumer claims are not yet modelled; staff and premises overheads are included in management results.</p>
             <button class="primary-button setup-submit" type="submit">BEGIN CAREER <span aria-hidden="true">→</span></button>
           </form>
         </div>
@@ -132,6 +146,7 @@
               <strong data-bind="company">FIRST LOT MOTORS</strong>
               <small>INDEPENDENT MOTOR TRADER</small>
             </div>
+            <button type="button" class="sidebar-save-tools" data-action="open-career-tools">SAVE & BACKUP</button>
             <button type="button" class="sidebar-exit" data-action="menu">← MAIN MENU</button>
           </div>
         </aside>
@@ -144,7 +159,7 @@
               <button type="button" id="continue-day" class="continue-button" data-action="continue"><span id="continue-label">CONTINUE</span><b aria-hidden="true">▶</b></button>
             </div>
           </header>
-          <div class="game-notice" id="save-warning" role="status" hidden>Browser storage is unavailable. This career is playable in this tab, but progress may not be saved after you leave.</div>
+          <div class="game-notice" id="save-warning" role="alert" hidden>Could not save your career. Export a backup before leaving.</div>
           <div class="game-notice game-event" id="event-notice" role="status" hidden></div>
           <button type="button" id="trade-feedback-toast" class="trade-feedback-toast" data-action="dismiss-feedback" role="status" aria-live="polite" aria-label="Trading result, click to dismiss" hidden></button>
 
