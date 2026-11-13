@@ -210,6 +210,7 @@
     busy=true;feedback='';renderUI();
     const prior=activeAccount;
     try {
+      if(isCloudMode() && syncPromise) await syncPromise;
       const live=await CLOUD.getCareer();
       if(!live)throw new Error('No cloud career exists for this account.');
       const career=app.normalize(live.career);
@@ -342,7 +343,15 @@
       syncMessage='';
     }
     SAVES.setNamespace(null);
-    SAVES.load(app.normalize);
+    const guest=SAVES.load(app.normalize);
+    if(previousAccount && guest.career &&
+      !window.confirm('There is also a saved guest dealership ("'+guest.career.name+'"). '+
+        'Starting a NEW guest career will replace that device-only save. Export the old guest career first if needed. Continue?')) {
+      SAVES.setNamespace(previousAccount);
+      SAVES.load(app.normalize);
+      activeAccount=previousAccount;
+      return false;
+    }
     renderUI();
     return true;
   }
