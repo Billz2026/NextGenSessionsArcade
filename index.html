@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=50">
+  <link rel="stylesheet" href="./styles.css?v=51">
   <script src="./vehicle-intel.js?v=2" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
   <script src="./vehicle-accuracy.js?v=1" defer></script>
@@ -42,8 +42,12 @@
   <script src="./buying-desk-view.js?v=2" defer></script>
   <script src="./stock-view.js?v=1" defer></script>
   <script src="./finance-view.js?v=2" defer></script>
-  <script src="./career-storage.js?v=1" defer></script>
-  <script src="./simulator.js?v=33" defer></script>
+  <script src="./career-storage.js?v=2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js" defer></script>
+  <script src="./cloud-config.js?v=1" defer></script>
+  <script src="./cloud-careers.js?v=1" defer></script>
+  <script src="./cloud-account-ui.js?v=1" defer></script>
+  <script src="./simulator.js?v=34" defer></script>
   <title>The Motor Trade | UK Car Dealer Simulator</title>
 </head>
 <body>
@@ -51,7 +55,7 @@
   <div class="top-stripe" aria-hidden="true"></div>
   <div id="app" role="main">
     <section class="menu-screen" id="screen-menu" aria-labelledby="menu-title">
-      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.36</span></header>
+      <header class="menu-top"><span class="menu-status">PRE-ALPHA · v0.9.37</span></header>
       <div class="menu-layout">
         <div class="menu-lead">
           <div class="brand-lockup brand-lockup-large">
@@ -63,7 +67,52 @@
             <button type="button" class="action-btn action-btn-primary" id="menu-new-career" data-action="new-career"><span class="button-mark" aria-hidden="true">＋</span><span><strong>NEW CAREER</strong></span><span class="arrow" aria-hidden="true">›</span></button>
             <button type="button" class="action-btn action-btn-muted" data-action="toggle-settings" aria-controls="menu-guide" aria-expanded="false"><span class="button-mark" aria-hidden="true">⚙</span><span><strong>SETTINGS</strong></span><span class="arrow" aria-hidden="true">›</span></button>
             <button type="button" class="action-btn action-btn-muted" data-action="toggle-career-tools" aria-controls="career-tools" aria-expanded="false"><span class="button-mark" aria-hidden="true">▣</span><span><strong>CAREER SAVES</strong></span><span class="arrow" aria-hidden="true">›</span></button>
+            <button type="button" class="action-btn action-btn-muted menu-account-button" id="menu-account-toggle" data-cloud-action="toggle-account" aria-controls="cloud-account-panel" aria-expanded="false"><span class="button-mark" aria-hidden="true">♟</span><span><strong>PLAYER ACCOUNT</strong><small>OPTIONAL CLOUD SAVES</small></span><span class="arrow" aria-hidden="true">›</span></button>
           </nav>
+          <section class="cloud-account-panel" id="cloud-account-panel" hidden aria-label="Player account and cloud saves">
+            <div class="cloud-account-heading"><strong>YOUR PLAYER ACCOUNT</strong><span>SECURE CLOUD SAVE</span></div>
+            <p id="cloud-service-message" role="status">Checking cloud service. Guest careers remain available.</p>
+            <div id="cloud-auth-guest" hidden>
+              <div class="cloud-auth-modes">
+                <button type="button" id="cloud-mode-signin" data-cloud-action="signin-mode" aria-pressed="true">SIGN IN</button>
+                <button type="button" id="cloud-mode-signup" data-cloud-action="signup-mode" aria-pressed="false">CREATE ACCOUNT</button>
+              </div>
+              <form id="cloud-auth-form">
+                <div id="cloud-username-field" hidden>
+                  <label for="cloud-username">PLAYER USERNAME</label>
+                  <input id="cloud-username" type="text" minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]{3,20}" autocomplete="username" placeholder="Your player name">
+                </div>
+                <label for="cloud-email">EMAIL ADDRESS</label>
+                <input id="cloud-email" type="email" autocomplete="email" maxlength="254" placeholder="player@example.com" required>
+                <div id="cloud-password-field">
+                  <label for="cloud-password">PASSWORD</label>
+                  <input id="cloud-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
+                </div>
+                <button class="cloud-main-button" id="cloud-auth-submit" type="submit">SIGN IN</button>
+              </form>
+              <button type="button" class="cloud-link-button" id="cloud-forgot" data-cloud-action="forgot-password">Forgot password?</button>
+              <p class="cloud-help">Your email is used for signing in. Your username is your display name. Passwords are managed by Supabase, not stored in the game.</p>
+            </div>
+            <div id="cloud-password-recovery" hidden>
+              <form id="cloud-recovery-form">
+                <label for="cloud-new-password">NEW PASSWORD</label>
+                <input id="cloud-new-password" type="password" minlength="8" autocomplete="new-password" required>
+                <button class="cloud-main-button" type="submit">UPDATE PASSWORD</button>
+              </form>
+            </div>
+            <div id="cloud-auth-user" hidden>
+              <p class="cloud-welcome">SIGNED IN AS <strong id="cloud-user-display"></strong></p>
+              <p id="cloud-career-summary">Checking for your saved dealership…</p>
+              <div class="cloud-actions">
+                <button type="button" id="cloud-load-career" data-cloud-action="load-cloud" hidden>LOAD CLOUD CAREER</button>
+                <button type="button" id="cloud-upload-career" data-cloud-action="upload-guest" hidden>UPLOAD DEVICE CAREER</button>
+                <button type="button" id="cloud-signout" data-cloud-action="signout">SIGN OUT</button>
+              </div>
+              <p id="cloud-save-status" role="status" aria-live="polite"></p>
+              <p class="cloud-help">Cloud saves use your account. Existing guest careers stay separate until you explicitly upload them.</p>
+            </div>
+            <p id="cloud-account-feedback" role="status" aria-live="polite" hidden></p>
+          </section>
           <div class="menu-save-warning" id="menu-save-warning" role="alert" hidden></div>
           <div id="career-tools" class="career-tools" hidden aria-label="Career save and recovery options">
             <strong>SAVE & RECOVERY</strong>
@@ -146,6 +195,7 @@
               <strong data-bind="company">FIRST LOT MOTORS</strong>
               <small>INDEPENDENT MOTOR TRADER</small>
             </div>
+            <button type="button" class="sidebar-save-tools" data-cloud-action="open-account">ACCOUNT & CLOUD</button>
             <button type="button" class="sidebar-save-tools" data-action="open-career-tools">SAVE & BACKUP</button>
             <button type="button" class="sidebar-exit" data-action="menu">← MAIN MENU</button>
           </div>
@@ -160,6 +210,7 @@
             </div>
           </header>
           <div class="game-notice" id="save-warning" role="alert" hidden>Could not save your career. Export a backup before leaving.</div>
+          <div class="game-notice" id="cloud-career-warning" role="status" hidden></div>
           <div class="game-notice game-event" id="event-notice" role="status" hidden></div>
           <button type="button" id="trade-feedback-toast" class="trade-feedback-toast" data-action="dismiss-feedback" role="status" aria-live="polite" aria-label="Trading result, click to dismiss" hidden></button>
 
