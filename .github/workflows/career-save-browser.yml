@@ -40,6 +40,8 @@ jobs:
           node-version: '22'
       - name: Validate browser test syntax
         run: node --check tests/career-save-browser.mjs && node --check tests/cloud-account-browser.mjs
+      - name: Verify pinned public Supabase browser SDK URL
+        run: curl --fail --location --silent --show-error --max-time 25 -o /dev/null 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js'
       - name: Install browser
         run: |
           npm install --no-save playwright@1.58.2
