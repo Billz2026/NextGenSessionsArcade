@@ -170,6 +170,18 @@ try{
     'Out-of-date device did not overwrite newer cloud revision');
   assert.equal(server.careers.get(ID).career.day,3);
 
+  // Reload after a rejected upload: the account-only device recovery stays
+  // available, but it still cannot bypass the server revision check.
+  await p1.reload({waitUntil:'domcontentloaded'});
+  await p1.locator('#menu-account-toggle').click();
+  await p1.locator('#cloud-resume-device').waitFor({state:'visible'});
+  await p1.locator('#cloud-resume-device').click();
+  await p1.locator('#screen-career').waitFor({state:'visible'});
+  await p1.waitForFunction(()=>document.getElementById('cloud-career-warning')
+    .textContent.includes('CLOUD CONFLICT'));
+  assert.equal(server.careers.get(ID).revision,serverRevision);
+  assert.equal(server.careers.get(ID).career.day,3);
+
   await p2.locator('[data-cloud-action="open-account"]').click();
   await p2.locator('#cloud-signout').click();
   await p2.locator('#cloud-auth-guest').waitFor({state:'visible'});
