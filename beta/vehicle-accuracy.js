@@ -1,6 +1,6 @@
 'use strict';
 /*
- * Motor Trade UK specification evidence — source reviewed 10 November 2026.
+ * Motor Trade UK specification evidence — sources reviewed 10–13 November 2026.
  *
  * This is NOT a registration lookup or valuation service. Only the listed
  * title+fuel+gearbox+powertrain tuples are backed by the linked material.
@@ -13,8 +13,8 @@
  * independently rechecked. Unlisted catalogue records remain 'pending'.
  */
 (() => {
-  // These six exact UK derivatives have manufacturer source evidence.
-  // Every other new variant remains pending, never auto-certified by brand.
+  // Sourced UK extension rows are manufacturer-backed or corroborated.
+  // All unlisted new variants remain pending; never auto-certify by brand.
   const expanded=window.MotorTradeUKCatalogue?.VERIFIED||[];
   const reviewed=[
     ...expanded,
@@ -74,7 +74,7 @@
       '2022 UK single motor electric variant and gross 69kWh; secondary source']
   ];
   const CHECKED=Object.freeze(Object.fromEntries(reviewed.map(([title,fuel,gearbox,engine,status,url,note])=>[
-    title,Object.freeze({title,fuel,gearbox,engine,status,url,note,checkedAt:'2026-11-10'})
+    title,Object.freeze({title,fuel,gearbox,engine,status,url,note,checkedAt:expanded.some(row=>row[0]===title)?'2026-11-13':'2026-11-10'})
   ])));
   const STATUS=Object.freeze(['manufacturer','corroborated','pending']);
   function lookup(vehicle){
