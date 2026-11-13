@@ -116,6 +116,8 @@
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
       collectionDay:null,held:0,counters:0,reason:'',
       terms:'in-person',prepCost:0,exchange:null,
+      quotedPrice:null,quoteStatus:'none',quoteRounds:0,
+      remote:false,remoteInspected:false,remoteAttempted:false,
       salespersonId:P.salesRep(state,id)?.id??null
     };
     state.customerCases[String(id)]=c;
@@ -136,19 +138,20 @@
     // Not every price-check is a buyer: initial questions should be useful
     // interactions but cannot automatically become 100% viewing conversions.
     if(state.financialScenario==='uk2026'&&c.channel==='ONLINE PRICE QUESTION'&&
-       !chance('price-check-qualified|'+c.id,
+       c.quoteStatus!=='accepted'&&!chance('price-check-qualified|'+c.id,
          clamp(48+Math.floor(P.salesImpact(state,c).enquiryLift*.8),45,73))){
       const message=failCase(state,c,'expired',
         'The caller only wanted a price indication and is not ready to arrange a viewing.');
       return {ok:false,changed:true,code:'unqualified',message};
     }
     // A normal viewing must take place within 48 game-hours.
-    c.appointmentDay=state.day+1+
-      (P.salesImpact(state,c).fastViewing?0:hash('appointment|'+c.id)%2);
+    c.appointmentDay=state.financialScenario==='uk2026'?state.day+1:
+      state.day+1+(P.salesImpact(state,c).fastViewing?0:hash('appointment|'+c.id)%2);
     c.status='booked';
     append(state,c,'appointment','Day '+c.appointmentDay);
     return ok(c.name+' has booked a viewing for day '+c.appointmentDay+
-      ' (within 48 game-hours). No deposit was paid: the vehicle stays advertised and available to other buyers.');
+      (state.financialScenario==='uk2026'?' (next game day / 24 hours).':' (within 48 game-hours).')+
+      ' No deposit was paid: the vehicle stays advertised and available to other buyers.');
   }
   function competingInterest(state,id){
     const c=caseFor(state,id),vehicle=state.vehicles.find(v=>v.id===id);
@@ -180,7 +183,7 @@
         P.salesImpact(state,c).arrivalLift,90,99));
     if(turnsUp){
       c.status='arrived';
-      append(state,c,'arrived','Attended appointment within 48 game-hours');
+      append(state,c,'arrived','Attended scheduled viewing on day '+state.day);
       if(notices)notices.push(c.name+' arrived for the viewing of stock '+c.vehicleId+'.');
     }else{
       const detail=failCase(state,c,'no-show','Customer failed to attend their appointment.');
@@ -216,6 +219,8 @@
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
       collectionDay:null,held:0,counters:0,reason:'',
       terms:'in-person',prepCost:0,exchange:null,
+      quotedPrice:null,quoteStatus:'none',quoteRounds:0,
+      remote:false,remoteInspected:false,remoteAttempted:false,
       salespersonId:P.salesRep(state,id+1)?.id??null,
       standby:{...booked,standby:null}
     };
@@ -311,9 +316,9 @@
     // The customer pays £250 into a virtual segregated account; that money
     // is not spendable business cash and is not a vehicle sale.
     c.held=250;
-    c.terms='in-person';
+    if(c.terms!=='distance-refundable')c.terms='in-person';
     c.prepCost=expense;
-    c.collectionDay=state.day+1+(hash('collection|'+c.id)%2);
+    c.collectionDay=state.day+1+(c.remote?0:hash('collection|'+c.id)%2);
     if(c.standby){
       append(state,c.standby,'appointment-displaced',
         'Car secured by another buyer paying a deposit; no deposit on original viewing.');
@@ -328,7 +333,8 @@
     return ok('£250 deposit taken and held separately for '+c.name+
       '. Collection day '+c.collectionDay+'. Customer owes '+balanceDue(c)+
       ' at handover. You paid £'+expense+' in customer-specific preparation. '+
-      'If the customer withdraws, retention is limited to demonstrable direct costs; dealer-fault cancellations receive a full refund.');
+      (c.remote?'Phone/online reservation: full refund if buyer cancels before collection.':
+      'In-person buyer withdrawal: any retained amount is limited to recorded direct costs; dealer fault receives a full refund.'));
   }
   function settle(state,c,reason='buyer'){
     const held=c.held||0;
@@ -368,7 +374,8 @@
   function ready(state,id){
     const c=caseFor(state,id);
     return c&&['agreed','collectable'].includes(c.status)&&
-      (c.status!=='agreed'||c.agreedDay===state.day);
+      (c.status!=='agreed'||c.agreedDay===state.day)&&
+      (!c.remote||c.remoteInspected===true);
   }
   function complete(state,id){
     const c=caseFor(state,id);
@@ -544,6 +551,12 @@
       ['price','allowance'].every(k=>c[k]===null||no(c[k]))&&
       no(c.held,250)&&[0,250].includes(c.held)&&
       no(c.counters,2)&&typeof c.reason==='string'&&c.reason.length<200&&
+      (c.quotedPrice==null||no(c.quotedPrice))&&
+      (c.quoteStatus==null||['none','counter','accepted'].includes(c.quoteStatus))&&
+      (c.quoteRounds==null||no(c.quoteRounds,3))&&
+      (c.remote==null||typeof c.remote==='boolean')&&
+      (c.remoteInspected==null||typeof c.remoteInspected==='boolean')&&
+      (c.remoteAttempted==null||typeof c.remoteAttempted==='boolean')&&
       (c.exchange===null||(c.exchange&&typeof c.exchange==='object'&&
         typeof c.exchange.title==='string'&&no(c.exchange.ask)&&no(c.exchange.floor)))&&
       (!['reserved','collectable'].includes(c.status)||c.held===250)&&
@@ -560,7 +573,9 @@
         !['booked','reserved','collectable'].includes(c.status)&&
         validCase([id,c.standby])));
     if(!Object.entries(cases).every(validCase))return false;
-    const types=['enquiry','sales-follow-up','appointment','appointment-restored','appointment-displaced',
+    const types=['enquiry','sales-follow-up','price-counter','price-agreed','price-walk',
+      'reservation-declined','collection-inspected','collection-rejected',
+      'appointment','appointment-restored','appointment-displaced',
       'test-drive-pass','test-drive-reject',
       'counter-accepted','counter-rejected','agreement','deposit','deposit-refunded',
       'deposit-retained','cancelled','arrived','no-show','expired','collection-due','sale'];
@@ -584,7 +599,7 @@
     if(existingFunds.reduce((n,x)=>n+x.delta,0)!==Object.values(cases)
       .reduce((n,c)=>n+(c.held||0),0))return false;
     if(saved.version>=9&&!Object.values(cases).every(c=>
-      ['in-person','legacy-refundable'].includes(c.terms)&&
+      ['in-person','legacy-refundable','distance-refundable'].includes(c.terms)&&
       no(c.prepCost,250)&&
       (c.held===0||c.terms==='legacy-refundable'||c.prepCost>=75)))return false;
     state.customerCases=Object.fromEntries(Object.entries(cases).map(([key,c])=>
