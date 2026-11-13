@@ -25,7 +25,7 @@ create policy "Players read only their own careers"
 -- sole write path and derives user_id from their verified auth JWT, never input.
 -- This enforces atomic compare-and-swap revisions across browsers/devices.
 create or replace function public.motor_trade_save_career(
-  expected_revision bigint, new_career jsonb
+  expected_user_id uuid, expected_revision bigint, new_career jsonb
 ) returns table (revision bigint, updated_at timestamptz)
 language plpgsql
 security definer
@@ -36,6 +36,9 @@ declare
 begin
   if actor is null then
     raise exception 'Authentication required' using errcode='42501';
+  end if;
+  if expected_user_id is distinct from actor then
+    raise exception 'Account session changed' using errcode='42501';
   end if;
   if expected_revision is null or expected_revision < 0 then
     raise exception 'Invalid expected revision' using errcode='22023';
@@ -59,9 +62,9 @@ begin
 end;
 $$;
 
-revoke all on function public.motor_trade_save_career(bigint,jsonb)
+revoke all on function public.motor_trade_save_career(uuid,bigint,jsonb)
   from public, anon, authenticated;
-grant execute on function public.motor_trade_save_career(bigint,jsonb)
+grant execute on function public.motor_trade_save_career(uuid,bigint,jsonb)
   to authenticated;
 
 -- A read-only readiness probe tells the static website whether its database
