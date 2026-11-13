@@ -13,7 +13,11 @@
  * independently rechecked. Unlisted catalogue records remain 'pending'.
  */
 (() => {
+  // These six exact UK derivatives have manufacturer source evidence.
+  // Every other new variant remains pending, never auto-certified by brand.
+  const expanded=window.MotorTradeUKCatalogue?.VERIFIED||[];
   const reviewed=[
+    ...expanded,
     ['2017 Toyota Yaris Icon','Petrol','Manual','1.5 VVT-iE','manufacturer',
       'https://media.toyota.co.uk/toyota-announces-new-yaris-specifications-prices/',
       '2017 facelift Icon, 1.5 petrol manual; replaces old 1.33'],
