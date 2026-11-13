@@ -177,7 +177,7 @@
     // New UK models without an individually checked generation retain their
     // truthful name and a visible unverified-generation status. Never invent a
     // Mk code or select a similar-looking photograph for these vehicles.
-    const namedModel=title.replace(/^\\d{4}\\s+/,'').trim()||'Unspecified vehicle';
+    const namedModel=title.replace(/^\d{4}\s+/,'').trim()||'Unspecified vehicle';
     return {model:spec?.model??namedModel,
       generation:spec?.name??'Generation not yet verified',
       year:Number.isInteger(year)?year:0};
