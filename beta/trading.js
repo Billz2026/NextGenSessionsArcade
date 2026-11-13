@@ -507,7 +507,10 @@
     if ((saved.version>=10?saved.capacity!==expectedCapacity:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
       !Array.isArray(saved.sold) || !Array.isArray(saved.ledger) ||
       !integer(saved.nextId) || saved.nextId < 1 ||
-      !cashValue(saved.cash) || saved.vehicles.length > expectedCapacity ||
+      !cashValue(saved.cash) ||
+      (saved.financialScenario!=='uk2026'?
+        saved.vehicles.length>expectedCapacity:
+        saved.vehicles.filter(v=>!v.storageLocation||v.storageLocation==='forecourt').length>expectedCapacity)||
       saved.vehicles.length > 250 || saved.sold.length > 20000 ||
       saved.ledger.length > 60000 ||
       (saved.version>=12&&(!Array.isArray(saved.wholesale)||saved.wholesale.length>20000)))return null;
@@ -531,6 +534,12 @@
         (v.profile.hiddenFault?.cost || 0)) &&
       (saved.version<7 || W.valid(v,saved.day)) &&
       (saved.version<10 || validLook(v))&&
+      (v.storageLocation===undefined||['forecourt','offsite','external'].includes(v.storageLocation))&&
+      (v.storageLocation!=='external'||
+        (v.workshop?.method==='external'&&
+          ['in-progress','quality-check'].includes(v.workshop.stage)))&&
+      (saved.financialScenario!=='uk2026'||
+        v.status!=='listed'||v.storageLocation===undefined||v.storageLocation==='forecourt')&&
       (v.vatPurchasePrice===undefined||cashValue(v.vatPurchasePrice));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
@@ -680,6 +689,9 @@
       profile,prepBudget:p.basePrep+(p.hiddenFault?.cost||0),
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
       listedDay:null,
+      ...(state.financialScenario==='uk2026'?{
+        storageLocation:forecourtCount(state)<state.capacity?'forecourt':'offsite'
+      }:{}),
       color:template.color||PH.describe({...template,origin:ref}).color,
       generation:template.generation||PH.identity(template).generation
     };
@@ -688,8 +700,12 @@
     state.stock = state.vehicles.length;
     return v;
   }
+  const forecourtCount=state=>state.vehicles.filter(v=>
+    !v.storageLocation||v.storageLocation==='forecourt').length;
   function canBuy(state, cost, preparation, options={}) {
-    if (state.vehicles.length >= state.capacity) return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
+    if(state.financialScenario!=='uk2026'&&state.vehicles.length>=state.capacity)
+      return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
+    // 2026 off-site stock uses paid compound storage and remains cash gated.
     // Modern sourcing protects creditor cash plus a small operating buffer.
     // An existing hammered invoice still requires payment but is exempt from
     // imposing a discretionary NEW buying buffer after the hammer.
@@ -848,12 +864,27 @@
     const v=own(state.vehicles,id);
     return v?W.quote(state,v,method):null;
   }
+  function moveStockToForecourt(state,id){
+    if(state.financialScenario!=='uk2026')return fail('mode','Off-site holding applies only to the 2026 career.');
+    const v=own(state.vehicles,id);
+    if(!v)return fail('missing','Vehicle not found.');
+    if(v.storageLocation!=='offsite')return fail('stage','Only cars in off-site storage can be moved.');
+    if(forecourtCount(state)>=state.capacity)return fail('capacity','All display spaces are occupied. Sell a car first.');
+    const charge=35;
+    if(state.cash<W.reserved(state)+charge)return fail('cash','Insufficient unreserved cash for the £35 transfer.');
+    pay(state,-charge,'Off-site relocation: '+v.title);
+    v.cost+=charge;
+    v.storageLocation='forecourt';
+    return success(v.title+' moved to the forecourt for £35.');
+  }
   // Previous prepare() was instant. Intentionally do not expose it as a
   // shortcut: game progress must now pass through workshop time and QC.
   function advertise(state, id, asking) {
     const vehicle = own(state.vehicles,id);
     if (!vehicle) return fail('missing','Vehicle not found in your stock.');
     if (vehicle.status === 'acquired') return fail('prep','Workshop repairs and a passed final quality check are required before retail advertising.');
+    if(state.financialScenario==='uk2026'&&vehicle.storageLocation!=='forecourt')
+      return fail('offsite','Car is held externally or in off-site storage. Move to a vacant forecourt space before advertising.');
     if (!integer(asking) || asking < 500 || asking > 75000)
       return fail('price','Enter a retail price between £500 and £75,000.');
     if (asking < Math.floor(vehicle.retail * .5) || asking > Math.ceil(vehicle.retail * 1.8))
@@ -1111,7 +1142,8 @@
     remoteReserveCustomer,inspectRemoteCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
-    wholesaleOffer,disposeStock,commercialControls:CREDIT,hireStaff,decideStaffMorale,
+    wholesaleOffer,disposeStock,moveStockToForecourt,forecourtCount,
+    commercialControls:CREDIT,hireStaff,decideStaffMorale,
     market,marketFor,marketStatus,sellerApproach,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     advertise,buyers,counter,completeSale,totalMargin
