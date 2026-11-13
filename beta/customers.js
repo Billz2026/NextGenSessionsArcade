@@ -593,6 +593,16 @@
   }
   function advanceDay(state){
     const notices=[];
+    // Supplier transports off-site advertised cars for *booked* viewings or
+    // paid remote reservations. No instantaneous test drive of a stored car.
+    for(const v of state.vehicles){
+      if(v.storageLocation==='offsite'&&v.viewingArriveDay!==undefined&&
+         v.viewingArriveDay<=state.day){
+        v.storageLocation='viewing';
+        delete v.viewingArriveDay;
+        notices.push(v.title+' delivered to the separate appointment bay for customer presentation.');
+      }
+    }
     for(const c of Object.values(state.customerCases)){
       salespersonCallback(state,c,notices);
       if(c.status==='lost'){
@@ -620,6 +630,16 @@
         c.createdDay<state.day)){
         notices.push(failCase(state,c,'expired','Customer enquiry expired without a completed agreement.'));
         restoreBooked(state,c,notices);
+      }
+    }
+    // Empty viewing bays do not become a hidden fifth permanent showroom.
+    // Return to paid storage when the customer appointment/reservation ends.
+    for(const v of state.vehicles){
+      if(v.storageLocation!=='viewing')continue;
+      const c=state.customerCases[String(v.id)];
+      if(!c||c.status==='lost'){
+        v.storageLocation='offsite';
+        notices.push(v.title+' returned to its charged off-site compound after customer presentation.');
       }
     }
     notices.push(...queueEnquiries(state));
