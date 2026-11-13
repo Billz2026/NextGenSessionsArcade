@@ -111,6 +111,19 @@
       E.workshop.reserved(state)+expectedNext+q.fee+q.transport+
         lot.profile.basePrep+(lot.profile.hiddenFault?.cost||0)>state.cash?
       '<p class="auction-risk">The next £100 bid may exceed available cash after buyer fees and reserved preparation. Consider passing.</p>':'';
+    // Do not imply that guide < retail guarantees profit: this is the
+    // AFTER-FEES, delivery, repair-risk and provisional margin-VAT signal.
+    // Warn clearly, but allow a player to knowingly make a bad trade.
+    // A missing published buyer tariff is *not* a zero-cost profitable deal.
+    const profitWarning=state.financialScenario==='uk2026'&&!feeUnknown&&
+      Number.isFinite(q.expectedMargin)?
+      q.expectedMargin<0?
+        '<p class="auction-risk"><strong>PROJECTED LOSS BEFORE OVERHEADS: '+
+        money(-q.expectedMargin)+'.</strong> This bid exceeds the vehicle\\'s likely sale proceeds after buyer fees, simulated delivery, preparation and provisional output VAT. Suggested maximum '+money(q.maxBid)+
+        '. All wholesale and sale estimates are simulated — inspect the car and bid accordingly.</p>':
+      expectedNext>q.maxBid?
+        '<p class="auction-risk"><strong>BELOW TARGET CONTRIBUTION.</strong> Bid exceeds the game\\'s suggested maximum by '+
+        money(expectedNext-q.maxBid)+'. Forecast is not a real UK auction valuation.</p>':'':'';
     const log=h.feed.length?'<div class="auction-feed" aria-live="polite">'+
       h.feed.slice(-12).map(x=>'<p>'+esc(x)+'</p>').join('')+'</div>':
       '<div class="auction-feed"><p>Inspect the lot before opening the bidding. When you bid, competitors respond immediately.</p></div>';
@@ -144,7 +157,7 @@
       (intelligence?'<div class="people-bid-intel">VEHICLE BUYER INTELLIGENCE: COMPETITOR BID RANGE '+
         money(intelligence.lower)+'–'+money(intelligence.upper)+
         '. Forecast only — not the actual reserve or final bid.</div>':'')+
-      settlement+resolved+cashWarning+
+      settlement+resolved+cashWarning+profitWarning+
       '<div class="auction-controls">'+controls+'</div>'+
       '<div class="auction-activity"><h3>AUCTIONEER ACTIVITY</h3>'+log+'</div></aside></div>';
     const results=h.results.length?'<div class="panel-card auction-results"><h3>TODAY\'S HAMMER HISTORY</h3>'+
