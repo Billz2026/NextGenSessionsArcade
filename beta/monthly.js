@@ -105,7 +105,9 @@
     if(note.startsWith('Customer services receipt:'))return 'serviceReceipts';
     if(note.startsWith('Approved MOT referral commission:'))return 'motCommissions';
     if(note.startsWith('ATF scrap referral commission:'))return 'scrapCommissions';
-    if(note.startsWith('Off-site relocation:'))return 'preparation';
+    if(note.startsWith('Off-site relocation:')||
+       note.startsWith('Off-site viewing transfer:'))return 'preparation';
+    if(note.startsWith('Monthly management investment:'))return 'managementSpend';
     if(note.startsWith('Staff payroll monthly net wages settlement'))return 'payrollCash';
     if(note.startsWith('Staff HMRC PAYE and NI remittance'))return 'hmrcRemittance';
     if(note.startsWith('Staff workplace pension remittance'))return 'pensionRemittance';
@@ -124,7 +126,7 @@
     'recruitment','training','staffExit','other','premisesPayments','premisesInvestment','vatPayments',
     'payrollCash','hmrcRemittance','pensionRemittance',
     'customerRefunds','customerCollection','customerRepairs','customerAdjustments',
-    'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions'];
+    'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions','managementSpend'];
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
@@ -200,7 +202,9 @@
       workshopStage:v.workshop?.stage??'unknown',
       workshopDaysLeft:v.workshop?.remainingDays??0
     }));
-    const operatingContribution=grossMargin+serviceProfit-payrollCost-premisesExpense-aftercareCost;
+    const managementSpend=-bucket.managementSpend;
+    const operatingContribution=grossMargin+serviceProfit-payrollCost-
+      premisesExpense-aftercareCost-managementSpend;
     const vatOutputAccruedPence=state.financialScenario==='uk2026'?
       [...sales,...disposals].reduce((n,v)=>n+(v.vat?.outputPence||0),0)+
       serviceCompleted.reduce((n,j)=>n+j.taxOutputPence,0)-
@@ -234,7 +238,7 @@
         refundedUnits:accepted.filter(x=>x.remedy!=='price-reduction').length,
         priceReducedUnits:accepted.filter(x=>x.remedy==='price-reduction').length,
         netRetailTurnover:turnover-refundTurnover}:{}),
-      premisesExpense,premisesPaid:-bucket.premisesPayments,
+      premisesExpense,managementSpend,premisesPaid:-bucket.premisesPayments,
       premisesInvestment:-bucket.premisesInvestment,
       premisesArrears:state.premises?.arrears??0,
       operatingContribution,operatingAfterVat,vatOutputAccruedPence,vatPayments,
@@ -362,13 +366,14 @@
         (['premisesPayments','premisesInvestment','auctionTransport','vatPayments',
           'payrollCash','hmrcRemittance','pensionRemittance',
           'customerRefunds','customerCollection','customerRepairs','customerAdjustments',
-          'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
+          'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions','managementSpend'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.premisesExpense!==undefined&&(
       !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
       !nonneg(r.premisesInvestment)||!nonneg(r.premisesArrears)||
       !whole(r.operatingContribution)||
-      r.operatingContribution!==r.grossAfterStaff-r.premisesExpense-(r.aftercareCost||0)))return false;
+      r.operatingContribution!==r.grossAfterStaff-r.premisesExpense-
+        (r.aftercareCost||0)-(r.managementSpend||0)))return false;
     if(r.serviceTurnover!==undefined&&(
       !nonneg(r.serviceTurnover)||!whole(r.serviceProfit)||!nonneg(r.serviceUnits)||
       !nonneg(r.combinedRevenue)||r.combinedRevenue!==r.turnover+r.serviceTurnover))return false;
