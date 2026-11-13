@@ -449,6 +449,7 @@
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       customerCases:{},customerHistory:[],customerFunds:[],
       auctionHall:initialAuctionHall(1),auctionHistory:[],auctionReminderDismissedDay:0,
+      ...(standard?{debtSinceDay:0,financeBridge:null}:{}),
       inboxLedgerCursor:0,
       premises:SITE.initial(),...P.initial(),
       ...(standard?{employmentScenario:'uk2026-payroll',payroll2026:EMP.initial(),
@@ -491,6 +492,7 @@
     }
     if(saved.version>=12&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
     if(saved.serviceDesk!==undefined&&!SERVICES.valid(saved))return null;
+    if(saved.financeBridge!==undefined&&!CREDIT.valid(saved))return null;
     if(saved.auctionReminderDismissedDay!==undefined&&
       (!integer(saved.auctionReminderDismissedDay)||saved.auctionReminderDismissedDay<0||saved.auctionReminderDismissedDay>saved.day))return null;
     // An untouched old catalogue can be refreshed after a day change without
@@ -648,6 +650,8 @@
         JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
       auctionHistory:saved.version>=11?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
       auctionReminderDismissedDay:saved.auctionReminderDismissedDay??0,
+      ...(standard?{debtSinceDay:saved.debtSinceDay??0,
+        financeBridge:saved.financeBridge?{...saved.financeBridge}:null}:{}),
       ...(standard?{serviceDesk:saved.serviceDesk?
         SERVICES.clone(saved.serviceDesk):SERVICES.initial()}:{}),
       stock:saved.vehicles.length,sales:saved.sold.length,
@@ -676,6 +680,7 @@
     if(!D.restore(restored,saved))return null;
     if(!C.valid(restored,saved))return null;
     if(!SERVICES.valid(restored))return null;
+    if(!CREDIT.valid(restored))return null;
     if(!VAT.valid(restored))return null;
     if(!AFT.valid(restored))return null;
     if(!auctionValid(restored))return null;
@@ -1159,7 +1164,9 @@
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,services:SERVICES,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
     wholesaleOffer,disposeStock,moveStockToForecourt,forecourtCount,
-    commercialControls:CREDIT,hireStaff,decideStaffMorale,
+    commercialControls:CREDIT,financeQuote:CREDIT.financeQuote,
+    borrowFinance:CREDIT.borrow,repayFinance:CREDIT.repay,advanceFinance:CREDIT.advance,
+    hireStaff,decideStaffMorale,
     market,marketFor,marketStatus,sellerApproach,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     advertise,buyers,counter,completeSale,totalMargin
