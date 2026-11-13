@@ -7,7 +7,7 @@
 - New UK variety additions: **145** derivatives.
 - Resulting beta inventory: **200 distinct derivatives** across starter, modern, premium and luxury.
 - The original tier rows are kept in the same order to preserve existing template IDs.
-- **All 145 added derivatives** now have individual UK source records tied to exact title/fuel/gearbox/engine tuples: **51 manufacturer-backed and 94 UK-market corroborated**. **No newly added derivative is marked pending**, although corroborated does not mean factory-certified and 37 of the 55 original entries remain pending.; verification of original 55 entries remains unchanged.
+- **All 145 added derivatives** now have individual UK source records tied to exact title/fuel/gearbox/engine tuples: **51 manufacturer-backed and 94 UK-market corroborated**. **No newly added derivative remains pending**. In the final original-catalogue audit, the previously outstanding 37 records were also source-reviewed: the full catalogue now has **82 manufacturer-backed, 118 UK-market corroborated, and 0 pending evidence statuses**. These categories establish model/derivative source support, NOT VIN, condition, retail value or actual wholesale.
 - **All 145 new retail and guide prices are unverified, illustrative game values.** No new purchase price is being claimed as a real BCA hammer, CAP HPI valuation or confirmed retail completion.
 
 These are **candidate UK-market derivatives** suitable for beta playtesting; catalogue inclusion is not a guarantee of complete year/trim/engine validation. Do **not** merge as a certified 200-car dataset.
@@ -263,6 +263,22 @@ These changes retain the existing **tier row positions and template IDs**, so hi
 
 **Evidence classification limitations:** Manufacturer-backed means a documented UK manufacturer offering of the specified family, with noted year-continuation caveats; corroborated means a UK vehicle-stock or technical record supporting the derivative. Neither establishes the advertised car's identity, mileage, MOT, VIN, service history, mechanical condition, auction buyer fees, or actual 2026 trade/retail price. Do not count 145 verified names as 145 audited valuations. The 37 original pending entries remain pending.
 
+## Final original-catalogue verification and economic audit — 13 November 2026
+
+**Current status supersedes the historical per-batch snapshots in the sections above.** All 145 additions have source records; the original 37 previously pending derivatives have now been separately reviewed (**18 manufacturer-backed, 19 UK market corroborated**), in addition to the originally checked 18. In total, **200 / 200 car templates have source evidence: 82 manufacturer-backed and 118 corroborated**, **0 pending**. The full 37-row original UK-source list is stored in `beta/uk-original-verification.js`.
+
+Three source discrepancies were repaired in the original 55 models while preserving template positions:
+
+- 2022 Vauxhall Mokka-e Launch Edition → **2021 Mokka-e Launch Edition**; revised 2021 launch-trim retail asking comparator instead of mismatched 2022 Elite Premium
+- 2022 Range Rover Velar D200 R-Dynamic → **2022 D200 R-Dynamic HSE**; still quarantined for guide-above-retail risk
+- 2023 Range Rover Sport P440e → **2023 P440e Dynamic SE**; matching UK grade and previous asking comparator
+
+**Do not conflate specification support with valuations.** The original 55 have dated retail *asking* comparator records (varying match confidence), but no confirmed wholesale auction sale prices. The 145 additions still have neither individual retail comparator records nor independent wholesale sold values. Price uncertainty remains explicit in the in-game records.
+
+The separate [200-vehicle UK2026 guide-price and margin stress report](uk-valuation-risk-audit-2026.md) found **24 projected after-fee / prep / provisional-VAT guide-price losses out of 182 quoteable units**. **130 of 182** were below the game's target per-unit contribution. **18 high-value units** lack a published BCA Blue buyer-fee quote and cannot be safely assumed zero or extrapolated. The auction bid screen now displays projected-loss/below-target warnings while keeping the deliberate decision to bid with the player.
+
+**Final merge gates:** independently validate market retail and *wholesale sold* values, preserve known 4 source-quarantined inconsistent wholesale guides, obtain high-value fee schedules, correct missing photos, and run full 12-month trading/cash stress. Keep this PR draft.
+
 ## Used UK supply weighting
 
 SMMT Q3 2026 UK used-car transaction mix is heavily petrol and diesel, with smaller hybrid/EV shares. The beta changes the source fuel selection weights for the 2026 career to rounded **56% petrol, 31% diesel, 7% hybrid, 5% electric, 1% PHEV**. These are *game sampling guides*, not promises of the exact resulting mix, because the available band/type pool may lack a matching car.
@@ -273,7 +289,7 @@ An accurate future phase should use **model-level** transaction/parc frequency, 
 
 ## Known realism limits / merge gate
 
-1. Complete specification verification of **37 pending original-catalogue derivatives**. Upgrade the 94 newly-added corroborated records only with stronger dated UK manufacturer evidence where obtainable, and recheck any sourced listing whose exact trim/powertrain is ambiguous. Correct or remove any combination that cannot be substantiated.
+1. **All 200 derivative tuples now have source evidence (82 manufacturer-backed; 118 corroborated).** This is not VIN certification. Upgrade corroborated records using stronger UK model-year factory/approved registration records, and remove unsupported trim/body claims on re-check. Keep evidence quality distinct from price confidence.
 2. Collect exact UK retail comparable records **and separate actual wholesale benchmark evidence**. Do not reverse-engineer trade values simply to ensure profits.
 3. Existing BCA Blue auction fees have no published rate above **£24,999**; high-value cars can appear in the catalogue but the auction cannot settle without a supported quote. Do not invent fee tariffs. Consider custom high-value account quotes before releasing prestige sourcing.
 4. The original curated vehicle-photo library does not cover most new models. The beta deliberately shows **photo unavailable** for unmatched make/generation/colour, instead of reusing incorrect copyrighted photos. Unsupported generation labels are disclosed as not verified.
