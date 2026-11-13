@@ -145,3 +145,25 @@ test('unavailable browser storage is reported, never mistaken for an empty valid
   assert.equal(api.status(normalize).available,false);
   assert.equal(api.save(validCareer(),normalize).ok,false);
 });
+
+test('cloud account local saves remain isolated from guest saves and other players',()=>{
+  const guest=JSON.stringify(validCareer(4));
+  const a='11111111-1111-4111-8111-111111111111';
+  const b='22222222-2222-4222-8222-222222222222';
+  const {api,values}=harness({[KEY]:guest});
+  api.load(normalize);
+  api.setNamespace(a);
+  api.load(normalize);
+  assert.equal(api.save(validCareer(12),normalize).ok,true);
+  api.setNamespace(b);
+  assert.equal(api.load(normalize).career,null);
+  assert.equal(api.save(validCareer(6),normalize).ok,true);
+  api.setNamespace(null);
+  assert.equal(api.load(normalize).career.day,4);
+  assert.equal(values.get(KEY),guest);
+  api.setNamespace(a);
+  assert.equal(api.load(normalize).career.day,12);
+  api.setNamespace(b);
+  assert.equal(api.load(normalize).career.day,6);
+  assert.throws(()=>api.setNamespace('untrusted/path'),/Invalid account/);
+});
