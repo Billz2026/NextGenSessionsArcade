@@ -592,6 +592,7 @@
     const premisesEvent=E.premisesDay(career);
     const aftersalesEvents=E.aftersalesDay(career);
     const vatEvent=E.vatDay(career);
+    const financeEvent=E.advanceFinance(career);
     const workshopEvents=E.advanceWorkshop(career);
     const customerEvents=E.advanceCustomers(career);
     lastTradeResult = null;
@@ -648,6 +649,11 @@
         ' owed on the simplified eligible used-vehicle margin scheme.';
     if(workshopEvents.length)
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
+    if(financeEvent.debtDays>=14)
+      eventNotice+=' CREDITORS: '+financeEvent.debtDays+
+        ' game days in arrears. Review the 30-day recovery deadline in Finances.';
+    if(financeEvent.loanOverdue)
+      eventNotice+=' BRIDGE LOAN OVERDUE: existing stock sales and recovery continue but new purchasing is on creditor hold.';
     if(serviceEvents.length)
       eventNotice+=' CUSTOMER SERVICES: '+serviceEvents.join(' ');
     if(customerEvents.length)
@@ -848,6 +854,15 @@
           workshopFilter=button.dataset.filter;selectedWorkshopId=null;
           currentPage='workshop';render();
         }
+        break;
+      case 'draw-bridge-finance':
+        if(career&&window.confirm('Take this fictional 60-day secured facility? The arrangement charge is deducted now, interest accrues daily, and full repayment is required. This is NOT a real credit or insolvency safe harbour.')){
+          saveResult(E.borrowFinance(career,Number(button.dataset.amount)));
+        }
+        break;
+      case 'repay-bridge-finance':
+        if(career&&window.confirm('Repay the ENTIRE outstanding loan principal and accrued interest using unreserved cash?'))
+          saveResult(E.repayFinance(career));
         break;
       case 'book-service-lead':
         if(career&&typeof button.dataset.lead==='string')
