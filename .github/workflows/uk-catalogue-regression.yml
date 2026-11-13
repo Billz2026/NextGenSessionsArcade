@@ -4,6 +4,7 @@ on:
     paths:
       - 'beta/**'
       - 'tests/beta-uk-vehicle-catalogue.test.mjs'
+      - 'tests/beta-valuation-risk.test.mjs'
       - '.github/workflows/uk-catalogue-regression.yml'
   workflow_dispatch:
 jobs:
@@ -15,4 +16,4 @@ jobs:
         with:
           node-version: '22'
       - name: Verify UK beta derivatives, prices and stable IDs
-        run: node --test tests/beta-uk-vehicle-catalogue.test.mjs
+        run: node --test tests/beta-uk-vehicle-catalogue.test.mjs tests/beta-valuation-risk.test.mjs
