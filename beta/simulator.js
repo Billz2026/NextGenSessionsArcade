@@ -1055,8 +1055,13 @@
           saveResult(E.cancelCustomer(career,Number(button.dataset.id),'dealer'));
         break;
       case 'customer-withdrawal':
-        if(career&&window.confirm('The customer has changed their mind. Only real customer-specific costs already recorded can be retained from their £250 deposit; the rest is refunded. Record the withdrawal?'))
-          saveResult(E.cancelCustomer(career,Number(button.dataset.id),'buyer'));
+        if(career){
+          const caseData=E.customers.caseFor(career,Number(button.dataset.id));
+          const notice=caseData?.remote?
+            'The phone/online customer is withdrawing before collection. Refund the FULL £250 from the segregated holding account? The dealership bears its own preparation expense.':
+            'The buyer is withdrawing. For an in-person £250 reservation, only recorded customer-specific direct costs may be retained, with the remainder refunded. Record the withdrawal?';
+          if(window.confirm(notice))saveResult(E.cancelCustomer(career,Number(button.dataset.id),'buyer'));
+        }
         break;
       case 'handover-customer':
         if(career)saveResult(E.completeSale(career,Number(button.dataset.id),button.dataset.mode,null));
