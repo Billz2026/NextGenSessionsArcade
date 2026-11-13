@@ -104,7 +104,8 @@ const metrics=await page.evaluate(()=>{
     firstDay:firstDay.map(({title,miles,fuel,guide})=>({title,miles,fuel,guide})),
     sampleDays:perDay.slice(0,6),pricePairs:pricePairs.length,
     invalidPricePairs:wrongPrice.slice(0,10),staticCatalogSize:
-      Object.values(M.CATALOGUE).reduce((n,x)=>n+x.length,0)};
+      Object.values(M.CATALOGUE).reduce((n,x)=>n+x.length,0),
+    catalogueHas2025:Object.values(M.CATALOGUE).flat().some(x=>x.title.startsWith('2025 '))};
 });
 console.log('BETA_MARKET_MIX_90D '+JSON.stringify(metrics));
 assert.ok(metrics.total>=150,'90 days should offer a real range of buying opportunities');
@@ -126,7 +127,7 @@ assert.ok(metrics.firstMonth.newer>=2,
   'Recently used 2024-25 stock should appear in the first trading month');
 assert.ok(metrics.years['2024']>0||metrics.years['2025']>0,
   'The 90-day market must expose genuinely newer model years');
-assert.ok(Object.values(M.CATALOGUE).flat().some(x=>x.title.startsWith('2025 ')),
+assert.ok(metrics.catalogueHas2025,
   'The catalogue must retain authentic 2025 model-year options');
 assert.ok(metrics.pricePairs>10,'Repeated models need meaningful mileage-price tradeoffs');
 assert.deepEqual(metrics.invalidPricePairs,[],
