@@ -168,7 +168,7 @@ test('only exact manufacturer-backed specifications receive certified evidence',
   }
   assert.equal(batchThirdManufacturerCount(),5);
   function batchThirdManufacturerCount(){
-    return UK.VERIFIED.slice(56).filter(x=>x[4]==='manufacturer').length;
+    return UK.VERIFIED.slice(56,81).filter(x=>x[4]==='manufacturer').length;
   }
   for(const title of [
   "2018 Honda Civic SE",
