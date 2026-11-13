@@ -202,10 +202,37 @@
       (solvency.creditorHold?'<p class="fin-warning">CREDITOR HOLD ACTIVE: New vehicle buying is restricted until overdue bills and accepted refund commitments are addressed. Selling owned stock, collecting contracted sales, refunding customers and settling binding auction invoices remain possible.</p>':'')+
       (solvency.shortfall?'<p class="fin-warning">Cash already falls short of recognised protected commitments by '+money(solvency.shortfall)+'. No invented borrowing is recorded.</p>':'')+
       '<p class="fin-detail">This is a simplified operational control, not a UK legal insolvency determination, director-liability assessment, credit score or statutory balance sheet. A creditor hold prevents voluntary new buying but does not terminate a career or erase creditors. A 14-day buffer is an explicitly hypothetical game risk rule.</p></section>':'';
+    const fundingPanel=solvency?'<section class="fin-panel"><div class="fin-panel-head"><div>'+
+      '<small>UK2026 · CREDIT CONTROL</small><h3>DEBT RECOVERY & SECURED BRIDGE</h3></div>'+
+      '<button type="button" class="fin-text-button" data-page="reports">VIEW MONTHLY FINANCES</button></div>'+
+      line('Unpaid creditor exposure, including overdue bridge',money(solvency.overdue))+
+      line('Continuous overdue exposure',solvency.debtDays+' GAME DAYS')+
+      line('Business-owned stock collateral sensitivity',money(solvency.pledgedValue))+
+      line('Active bridge amount owed',money(solvency.bridgeOutstanding))+
+      (solvency.bridgeDueDay!==null?line('Bridge scheduled repayment','GAME DAY '+solvency.bridgeDueDay):'')+
+      '<p class="fin-detail">Fictional policy: early warnings in days 1–14, a purchasing restriction where serious obligations are overdue, and full escalation after 30 continuously overdue game days. Selling existing stock and performing properly funded customer service can continue. This is not a statutory insolvency grace period. Directors must consider creditors immediately where insolvent.</p>'+
+      (solvency.debtDays>=30?'<p class="fin-warning">30-DAY RECOVERY THRESHOLD EXCEEDED. New buying remains blocked while due obligations persist. Sell stock, reduce overheads or repay creditors rather than borrowing indefinitely.</p>':
+        solvency.debtDays>=7?'<p class="fin-warning">CREDITOR WARNING: '+solvency.debtDays+
+          ' days of unresolved debt exposure. Review affordable rescue finance before debt escalates.</p>':'')+
+      (solvency.bridgeOutstanding?
+        '<button type="button" class="trade-button" data-action="repay-bridge-finance">REPAY WHOLE BRIDGE · '+
+          money(solvency.bridgeOutstanding)+'</button>':
+        '<div class="fin-bridge-options">'+CREDIT.BRIDGE_AMOUNTS.map(amount=>{
+          const q=CREDIT.financeQuote(state,amount);
+          return '<div class="fin-bridge-offer"><strong>'+money(amount)+' SECURED BRIDGE</strong>'+
+            '<small>'+(q.ok?
+              'Net advance '+money(q.net)+' · arrangement '+money(q.fee)+
+              ' · approx 60-day interest '+money(q.expectedInterest)+' · due day '+q.dueDay:
+              q.message)+'</small>'+
+            '<button type="button" data-action="draw-bridge-finance" data-amount="'+amount+
+            '"'+(q.ok?'':' disabled')+'>'+ (q.ok?'ACCEPT FICTIONAL FUNDING':'NOT ELIGIBLE')+
+            '</button></div>';
+        }).join('')+'</div>')+
+      '<p class="fin-detail">At most one live facility, with a 180-day repeat cooldown. Loan advances are liabilities, not sales or profit. A 3% setup fee and 16% annual simple interest (22% after maturity) are illustrative stress assumptions, not an actual lender quote. All owned stock and future cash remain at risk.</p></section>':'';
     const STRESS=window.MotorTradeCashStress;
     const stressPanel=is2026&&STRESS?
       '<details class="fin-panel"><summary>12 / 36 / 60-MONTH CASH-FLOW STRESS SENSITIVITIES</summary>'+
-      '<p class="fin-detail">Illustrative sensitivity, NOT a business forecast. The per-sale contribution assumption already deducts vehicle buying, auction fees, repair, transport and provisional VAT. Each vehicle is assumed bought and sold within the same month: this omits working capital tied in stock, delays, finance and unsold vehicles. No loan/overdraft is invented. Existing tax, repair and accepted refund liabilities reduce available cash at the outset.</p>'+
+      '<p class="fin-detail">Illustrative sensitivity, NOT a business forecast. The per-sale contribution assumption already deducts vehicle buying, auction fees, repair, transport and provisional VAT. Each vehicle is assumed bought and sold within the same month: this omits working capital tied in stock, delays, finance and unsold vehicles. Any booked bridge loan is a real game cash liability, but new borrowing is not assumed in this stress projection. Existing tax, repair and accepted refund liabilities reduce available cash at the outset.</p>'+
       [12,36,60].map(months=>{
         const low=STRESS.project(state,E,{months,unitsPerMonth:1,
           contributionPerSale:700,annualClaimCost:2500});
@@ -226,7 +253,7 @@
       '<p class="fin-detail">Your scenario uses the current forecourt overhead budget and conservative full employer payroll before NI relief. Insurance renewal is charged every 360 game days. Unpaid commitments are not hidden as borrowing or negative bank cash. Never rely on these outcomes as guaranteed profits or actual future sales.</p>'+
       '</details>':'';
     const footer='<p class="fin-disclosure">Simulation figures only. The 2026 output VAT model is provisional and not statutory net profit or a statutory VAT return. Owner salary/drawings are NOT modelled: apparent dealer contribution does not represent take-home pay. Employer taxes, reclaimable input VAT, aftersales liabilities, corporation tax and depreciation require further implementation.</p>';
-    return {snapshot:x,html:top+openingPanel+liquidityPanel+solvencyPanel+vatPanel+stressPanel+cashflow+'<div class="fin-secondary">'+
+    return {snapshot:x,html:top+openingPanel+liquidityPanel+solvencyPanel+fundingPanel+vatPanel+stressPanel+cashflow+'<div class="fin-secondary">'+
       commitments+performance+'</div>'+footer};
   }
   function category(note){
@@ -237,6 +264,7 @@
     if(/^VAT (output|remittance)/.test(note))return 'TAX / VAT';
     if(/^Aftersales /.test(note))return 'CUSTOMER REMEDIES';
     if(/^Premises /.test(note))return 'PREMISES';
+    if(/^(Financing |Monthly management investment)/.test(note))return 'FINANCING / STRATEGY';
     return 'OTHER';
   }
   function rows(state,filter){

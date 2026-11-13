@@ -156,6 +156,7 @@
         '" data-action="hold-meeting" data-focus="'+id+'"'+(done?' disabled':'')+
         ' aria-pressed="'+String(isSelected)+'">'+
         '<strong>'+esc(focus.label)+'</strong><span>'+esc(focus.description)+'</span>'+
+        '<small>BUDGET '+money(state.financialScenario==='uk2026'?focus.cost:0)+'</small>'+
         '<small>'+(isSelected?'SELECTED PRIORITY':done?'NOT SELECTED':'CHOOSE THIS PRIORITY')+'</small></button>';
     }).join('');
     const staff=previous?.sellers.length?previous.sellers.map(x=>
@@ -176,6 +177,7 @@
       '<div class="eo-kpis">'+cards+'</div>'+
       (done?'<div class="eo-confirm"><strong>MEETING COMPLETED.</strong> '+
         'Your monthly priority is '+esc(selectedFocus?.label||'Routine operations')+
+         '. Budget charged: '+money(state.meetings.at(-1)?.budget??0)+
         '. This decision is recorded in your career.</div>':
         '<div class="eo-meeting-warning"><strong>ACTION REQUIRED</strong>'+
         '<span>Agree one management priority before advancing beyond the first game day.</span></div>')+
@@ -186,7 +188,7 @@
       '<p>Each priority has a modest, defined effect. It does not create free money or guarantee a sale.</p></section>'+
       '<div class="eo-meeting-sub"><div><small>THIS MONTH’S UNIT TARGET</small>'+
       '<strong>'+state.monthPlan.unitTarget+' COMPLETED HANDOVERS</strong></div>'+
-      '<div><small>TURNOVER GUIDANCE</small><strong>'+
+      '<div><small>REQUIRED MONTHLY REVENUE</small><strong>'+
       money(state.monthPlan.turnoverTarget)+'</strong></div>'+
       '<div><small>REPUTATION</small><strong>'+state.reputationScore+' / 100</strong></div></div>'+
       '<details class="eo-details"><summary>MANAGEMENT DISCUSSION & PREVIOUS RESULTS</summary>'+
@@ -197,7 +199,8 @@
       '<section><h3>SALES TEAM REVIEW</h3>'+staff+
       '<h3>NEW MONTH’S TARGETS</h3><p>Dealership target: '+state.monthPlan.unitTarget+
       ' handovers with positive operating contribution after staff and premises costs. '+
-      'Turnover guidance: '+money(state.monthPlan.turnoverTarget)+'.</p>'+
+      'Combined vehicle and service revenue required: '+money(state.monthPlan.turnoverTarget)+
+        '. Meeting investment is recorded and affects commercial activity.</p>'+
       '</section></div></details>'+
       (record?'<details class="eo-details"><summary>RECENT MEETING MINUTES</summary>'+
         '<div class="eo-minute-list">'+record+'</div></details>':'')+

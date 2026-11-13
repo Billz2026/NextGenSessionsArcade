@@ -14,7 +14,7 @@
     return Math.max(100,Math.min(car.ask,Math.round((car.ask-discount)/25)*25));
   }
   function fundingWarning(state,model){
-    if(state.vehicles.length>=state.capacity)
+    if(state.financialScenario!=='uk2026'&&state.vehicles.length>=state.capacity)
       return 'FORECOURT FULL — sell stock before buying again.';
     if(!model.affordable)
       return 'INSUFFICIENT CASH — required workshop funding exceeds available cash. Reduce your offer or release stock.';
@@ -50,8 +50,9 @@
     const cards=[
       ['PRIVATE SELLER LEADS',sellers.length,'AVAILABLE '+available],
       ['ACTIVE COUNTEROFFERS',negotiating,negotiating?'DECISION NEEDED':'NO OPEN COUNTERS'],
-      ['FORECOURT SPACES',state.capacity-state.vehicles.length,
-        state.vehicles.length+' / '+state.capacity+' OCCUPIED'],
+      ['FORECOURT SPACES',Math.max(0,state.capacity-state.vehicles.filter(v=>
+          !v.storageLocation||v.storageLocation==='forecourt').length),
+        'NEW OVERFLOW STOCK STORED OFF SITE AT £12 PER CAR/DAY'],
       ['WORKING CASH',money(Math.max(0,state.cash-reserved)),
         reserved?'REPAIRS RESERVED '+money(reserved):'NO REPAIR CASH COMMITTED']
     ];
@@ -135,7 +136,7 @@
         '<p>The owner has not accepted your offer. Accept the counter, revise your offer, or walk away. No money has changed hands.</p></div>':'';
     const notices=kind==='done'?
       '<div class="trade-inline-feedback trade-feedback-success">PURCHASED — vehicle is now in Vehicle Stock. Assess and prepare it before listing.</div>':
-      kind==='closed'?'<div class="trade-inline-feedback trade-feedback-warning">OWNER WALKED AWAY — this lead is closed for today.</div>':'';
+      kind==='closed'?'<div class="trade-inline-feedback trade-feedback-warning">YOU DECLINED THIS CAR — no charge. This lead is closed for today.</div>':'';
     const controls=closed?
       '<button type="button" class="trade-button" disabled>ENQUIRY CLOSED</button>'+
       (kind==='done'?'<button type="button" class="trade-button trade-button-secondary" data-page="stock">VIEW VEHICLE STOCK</button>':''):
@@ -148,7 +149,8 @@
       '<p class="buy-opening-hint">SUGGESTED OPENING OFFER '+money(openingOffer(car))+' · Editable — use the appraisal to set your own price.</p>'+
       (deal?.status==='counter'?
         '<div class="buy-counter-actions"><button type="button" class="trade-button trade-button-secondary" data-action="accept-seller-counter" data-id="'+esc(car.id)+'">ACCEPT '+money(deal.counter)+'</button>'+
-        '<button type="button" class="trade-button trade-button-outline" data-action="walk-seller" data-id="'+esc(car.id)+'">WALK AWAY</button></div>':'');
+        '</div>':'')+
+      '<button type="button" class="trade-button trade-button-outline" data-action="walk-seller" data-id="'+esc(car.id)+'">DECLINE THIS CAR · NO COST</button>';
     return '<div class="buy-trading">'+
       '<div class="buy-seller-story"><span>SELLER POSITION · '+esc(approach.label)+'</span>'+
         '<p>'+esc(approach.description)+'</p></div>'+

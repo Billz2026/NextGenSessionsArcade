@@ -1,0 +1,325 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+
+const ctx=vm.createContext({window:{}});
+for(const filename of [
+  'uk-vehicle-catalogue.js',
+  'uk-original-verification.js',
+  'vehicle-market.js',
+  'vehicle-accuracy.js',
+  'vehicle-photos.js'
+]){
+  const src=readFileSync(new URL('../beta/'+filename,import.meta.url),'utf8');
+  new vm.Script(src,{filename}).runInContext(ctx);
+}
+const UK=ctx.window.MotorTradeUKCatalogue;
+const ORIGINAL=ctx.window.MotorTradeOriginalVerification;
+const M=ctx.window.MotorTradeMarket;
+const A=ctx.window.MotorTradeAccuracy;
+const PH=ctx.window.MotorTradePhotos;
+const all=Object.values(M.CATALOGUE).flat();
+const newRows=Object.values(UK.CATALOGUE).flat();
+const find=title=>all.find(x=>x.title===title);
+
+test('beta loads UK catalogue before its spec registry and the market engine',()=>{
+  const html=readFileSync(new URL('../beta/index.html',import.meta.url),'utf8');
+  const i=html.indexOf('uk-vehicle-catalogue.js');
+  const legacy=html.indexOf('uk-original-verification.js');
+  const evidence=html.indexOf('vehicle-accuracy.js');
+  const market=html.indexOf('vehicle-market.js');
+  assert.ok(i>0&&legacy>i&&evidence>legacy&&market>evidence,
+    'New and original evidence must load before the game accuracy register and market');
+});
+
+test('expanded UK beta contains 200 distinct vehicle derivatives in valid tiers',()=>{
+  assert.equal(UK.added,145);
+  assert.equal(newRows.length,145);
+  assert.equal(all.length,200);
+  assert.equal(new Set(all.map(v=>v.title)).size,200);
+  assert.deepEqual(Object.keys(M.CATALOGUE),['starter','modern','premium','luxury']);
+  for(const tier of Object.values(M.CATALOGUE)){
+    for(const car of tier){
+      assert.match(car.title,/^20\d\d /);
+      assert.ok(['Petrol','Diesel','Hybrid','Electric','Plug-in Hybrid'].includes(car.fuel));
+      assert.ok(['Manual','Automatic'].includes(car.gearbox));
+      assert.ok(Number.isSafeInteger(car.guide)&&Number.isSafeInteger(car.retail));
+      assert.ok(car.guide>0&&car.retail>0);
+      // Four legacy 2026 trade assumptions exceed observed retail guides.
+      // The buying engine already quarantines them pending real wholesale evidence.
+      if(!M.priceFor(car,'uk2026').priceAudit?.buyingRisk)
+        assert.ok(M.priceFor(car,'uk2026').retail>car.guide,
+        'Unquarantined guide must remain below retail: '+car.title);
+      assert.ok(car.miles>0&&car.grade>=1&&car.grade<=5);
+    }
+  }
+});
+
+test('classic template positions remain untouched and authentic UK breadth is present',()=>{
+  assert.equal(find('2016 Ford Focus Zetec').templateId,'starter-0');
+  assert.equal(find('2021 Vauxhall Corsa SE Premium').templateId,'modern-0');
+  assert.equal(find('2022 Tesla Model 3 RWD').templateId,'premium-0');
+  assert.equal(find('2022 Porsche Macan 2.0 PDK').templateId,'luxury-0');
+  for(const title of [
+    '2018 Toyota Aygo x-play',
+    '2017 Toyota Auris Icon Hybrid',
+    '2019 Toyota RAV4 Design Hybrid',
+    '2018 Nissan Micra Acenta',
+    '2021 Nissan Juke N-Connecta',
+    '2023 Nissan Qashqai N-Connecta e-POWER',
+    '2018 Volkswagen Golf GTI Performance',
+    '2018 Volkswagen Golf R',
+    '2022 Audi S3 Sportback',
+    '2022 Audi RS 3 Sportback',
+    '2021 Skoda Kamiq SE L',
+    '2020 SEAT Leon FR',
+    '2021 Volvo V60 Momentum B4',
+    '2020 Jaguar XE R-Dynamic S D180',
+    '2023 BYD Atto 3 Design',
+  ])assert.ok(find(title),'Missing genuine UK model '+title);
+});
+
+test('only exact manufacturer-backed specifications receive certified evidence',()=>{
+  assert.equal(UK.VERIFIED.length,145,'All 145 new UK entries have individual source records');
+  const counts={manufacturer:0,corroborated:0};
+  const checkedTitles=new Set();
+  for(const row of UK.VERIFIED){
+    const car=find(row[0]);
+    assert.ok(car,'Missing reviewed UK derivative '+row[0]);
+    assert.ok(!checkedTitles.has(row[0]),'Duplicate evidence: '+row[0]);
+    checkedTitles.add(row[0]);
+    assert.ok(['manufacturer','corroborated'].includes(row[4]));
+    assert.ok(row[5].startsWith('https://'),'Missing source URL for '+row[0]);
+    assert.ok(row[6].length>25,'Missing source qualification for '+row[0]);
+    assert.equal(A.lookup(car).status,row[4]);
+    assert.equal(A.lookup(car).url,row[5]);
+    assert.equal(A.lookup(car).checkedAt,'2026-11-13');
+    counts[row[4]]++;
+  }
+  assert.equal(counts.manufacturer,51);
+  assert.equal(counts.corroborated,94);
+  for(const title of [
+    '2018 Toyota Aygo x-play','2017 Toyota Auris Icon Hybrid','2018 Toyota Prius Business Edition',
+    '2018 Toyota C-HR Icon Hybrid','2022 Toyota Aygo X Pure','2020 Toyota Corolla Icon Hybrid',
+    '2021 Toyota C-HR Design Hybrid','2020 Toyota Prius Business Edition',
+    '2018 Nissan Micra Acenta','2016 Nissan Note Acenta','2017 Nissan X-Trail Acenta',
+    '2019 Nissan Qashqai N-Connecta','2023 Nissan Juke Tekna Hybrid',
+    '2023 Nissan Qashqai N-Connecta e-POWER',
+    '2019 Volkswagen Golf GTD','2021 Volkswagen T-Cross SE','2019 Volkswagen T-Roc SE',
+    '2020 Volkswagen Tiguan Match','2021 Volkswagen ID.3 Life Pro Performance',
+    '2022 Volkswagen Golf GTI','2022 Volkswagen ID.4 Life Pro Performance',
+    '2019 Audi A3 Sportback 35 TFSI S line','2022 Audi S3 Sportback',
+    '2020 Audi Q2 30 TFSI Sport','2021 Audi RS Q3 Sportback'
+  ])assert.ok(checkedTitles.has(title),'Missing first-batch verification: '+title);
+  for(const title of [
+      "2018 Ford Fiesta Titanium",
+      "2018 Ford Focus ST-Line",
+      "2019 Ford Fiesta ST-2",
+      "2020 Ford Fiesta ST-Line",
+      "2021 Ford Kuga Titanium PHEV",
+      "2018 Vauxhall Astra SRi",
+      "2019 Vauxhall Crossland X SE",
+      "2021 Vauxhall Astra SRi",
+      "2021 Vauxhall Mokka SRi",
+      "2019 Kia Picanto 2",
+      "2020 Kia Niro 2 Hybrid",
+      "2021 Kia Ceed 2",
+      "2021 Kia e-Niro 3",
+      "2018 Hyundai i10 SE",
+      "2018 Hyundai i30 SE",
+      "2021 Hyundai i10 SE Connect",
+      "2021 Hyundai i20 Premium",
+      "2018 Skoda Fabia SE",
+      "2020 Skoda Superb SE Technology",
+      "2021 Skoda Kamiq SE L",
+      "2021 Skoda Octavia vRS",
+      "2018 SEAT Ibiza SE Technology",
+      "2020 SEAT Leon FR",
+      "2020 SEAT Arona FR",
+      "2021 SEAT Ateca SE Technology"
+  ]) {
+    assert.ok(checkedTitles.has(title),'Missing Ford/Vauxhall/Kia/Hyundai/Skoda/SEAT review: '+title);
+  }
+  for(const title of [
+  "2018 Peugeot 108 Active",
+  "2018 Peugeot 2008 Allure",
+  "2021 Peugeot 2008 Allure",
+  "2021 Peugeot 3008 Allure",
+  "2021 Peugeot 5008 Allure",
+  "2018 Citroen C1 Feel",
+  "2019 Citroen C3 Feel",
+  "2021 Citroen C3 Aircross Shine",
+  "2021 Citroen C5 Aircross Shine",
+  "2018 Renault Clio Dynamique Nav",
+  "2018 Renault Kadjar Dynamique Nav",
+  "2022 Renault Clio Iconic",
+  "2021 Renault Captur Iconic",
+  "2020 Renault Zoe GT Line R135",
+  "2018 Dacia Sandero Ambiance",
+  "2018 Dacia Duster Comfort",
+  "2022 Dacia Sandero Stepway Comfort",
+  "2023 Dacia Jogger Expression",
+  "2018 Suzuki Swift SZ3",
+  "2019 Suzuki Ignis SZ3",
+  "2020 Suzuki Vitara SZ-T",
+  "2020 Suzuki Swift Sport",
+  "2020 MG MG3 Excite",
+  "2021 MG ZS Exclusive",
+  "2022 MG HS Excite"
+]) {
+    assert.ok(checkedTitles.has(title),'Missing third-batch UK evidence: '+title);
+  }
+  assert.equal(batchThirdManufacturerCount(),5);
+  function batchThirdManufacturerCount(){
+    return UK.VERIFIED.slice(56,81).filter(x=>x[4]==='manufacturer').length;
+  }
+  for(const title of [
+  "2018 Honda Civic SE",
+  "2021 Honda Civic Sport",
+  "2022 Honda HR-V Advance e:HEV",
+  "2018 Mazda Mazda2 SE-L",
+  "2020 Mazda Mazda3 SE-L",
+  "2020 Mazda CX-5 SE-L",
+  "2021 BMW 118i M Sport",
+  "2019 BMW M140i Shadow Edition",
+  "2022 BMW M135i xDrive",
+  "2020 BMW X1 sDrive18i Sport",
+  "2019 BMW 520d M Sport",
+  "2022 BMW i4 eDrive40",
+  "2021 BMW M3 Competition",
+  "2021 Mercedes-AMG A35 4MATIC",
+  "2019 Mercedes-Benz C220d AMG Line",
+  "2021 Mercedes-Benz GLA200 AMG Line",
+  "2021 Mercedes-AMG A45 S 4MATIC+",
+  "2018 Volvo V40 D2 Momentum",
+  "2021 Volvo V60 Momentum B4",
+  "2020 Volvo XC60 D4 Momentum",
+  "2020 Jaguar XE R-Dynamic S D180",
+  "2021 Jaguar F-Type P300 R-Dynamic",
+  "2019 Land Rover Discovery Sport SE TD4",
+  "2022 Range Rover Evoque D200 R-Dynamic S",
+  "2021 Land Rover Discovery D250 S"
+]) {
+    assert.ok(checkedTitles.has(title),'Missing Honda/Mazda/BMW/Mercedes/Volvo/JLR audit: '+title);
+  }
+  assert.equal(UK.VERIFIED.slice(81,106).filter(x=>x[4]==='manufacturer').length,9,
+    'Fourth batch must maintain evidence classification');
+  assert.equal(A.lookup(find('2020 Volvo XC60 D4 Momentum')).engine,
+    '2.0 D4 Geartronic','Do not claim AWD without exact UK proof');
+  assert.match(A.lookup(find('2022 BMW i4 eDrive40')).note,/GROSS.*NET/,
+    'Electric vehicle usable battery must not be confused with gross capacity');
+  assert.match(A.lookup(find('2021 BMW M3 Competition')).note,/NOT assumed/,
+    'M3 rear-drive and optional xDrive require distinct records');
+  const finalBatch=UK.VERIFIED.slice(106);
+  assert.equal(finalBatch.length,39,'Final source-review batch should cover every remaining added derivative');
+  assert.equal(finalBatch.filter(x=>x[4]==='manufacturer').length,6);
+  assert.equal(finalBatch.filter(x=>x[4]==='corroborated').length,33);
+  assert.equal(new Set(UK.VERIFIED.map(x=>x[0])).size,145,'New UK evidence must have unique derivative titles');
+  assert.equal(newRows.filter(x=>A.lookup(find(x[0])).status==='pending').length,0,
+    'All new records must have at least UK corroborating sources');
+  for(const title of [
+    '2020 Skoda Octavia SE First Edition',
+    '2021 Range Rover Evoque D200 S',
+    '2021 Kia Stonic GT-Line S MHEV',
+    '2021 DS 7 Crossback E-Tense 225',
+    '2021 Ford Focus Titanium Edition MHEV',
+    '2020 Vauxhall Insignia SRi Vx-Line Nav',
+    '2018 Mazda Mazda6 SE-L Nav+'
+  ])assert.ok(checkedTitles.has(title),'Corrected UK derivative missing from source review: '+title);
+  for(const incorrectTitle of [
+    '2020 Skoda Octavia SE',
+    '2021 Range Rover Evoque D180 S',
+    '2021 Kia Stonic 3',
+    '2021 DS DS 7 Crossback E-Tense 225',
+    '2021 Ford Focus Titanium',
+    '2020 Vauxhall Insignia SRi Nav',
+    '2018 Mazda Mazda6 SE-L Nav'
+  ])assert.equal(find(incorrectTitle),undefined,
+    'Unsupported old trim must not coexist with its replacement: '+incorrectTitle);
+  assert.equal(find('2021 Range Rover Evoque D200 S').engineSpec,'2.0 D200 MHEV AWD automatic');
+  assert.equal(find('2021 Kia Stonic GT-Line S MHEV').engineSpec,'1.0 T-GDi 118 MHEV');
+  assert.equal(UK.VERIFIED.filter(x=>!x[5]?.startsWith('https://')).length,0,
+    'Every reviewed new derivative needs an explicit UK source URL');
+  const legacy=all.filter(x=>!newRows.some(row=>row[0]===x.title));
+  assert.equal(legacy.length,55);
+  assert.equal(legacy.filter(x=>A.lookup(x).status==='pending').length,0,
+    'All 55 original vehicles must have source evidence without falsely certifying every trim');
+  assert.equal(ORIGINAL.VERIFIED.length,37,'37 original pending variants audited');
+  assert.equal(new Set(ORIGINAL.VERIFIED.map(x=>x[0])).size,37);
+  assert.equal(ORIGINAL.VERIFIED.filter(x=>x[4]==='manufacturer').length,18);
+  assert.equal(ORIGINAL.VERIFIED.filter(x=>x[4]==='corroborated').length,19);
+  for(const row of ORIGINAL.VERIFIED){
+    const car=find(row[0]);
+    assert.ok(car,'Original audited car missing '+row[0]);
+    assert.equal(A.lookup(car).status,row[4]);
+    assert.equal(A.lookup(car).url,row[5]);
+    assert.equal(A.lookup(car).checkedAt,'2026-11-13');
+    assert.equal(A.lookup({...car,engineSpec:'FALSE TEST ENGINE'}).status,'pending');
+  }
+  // Changing a reviewed trim, powertrain or gearbox must demote evidence to pending.
+  for(const original of UK.VERIFIED){
+    const car=find(original[0]);
+    const mutated={...car,engineSpec:'AUDIT INVALID ENGINE SPEC'};
+    assert.equal(A.lookup(mutated).status,'pending','Stale evidence must fail closed: '+car.title);
+  }
+  assert.equal(A.lookup(find('2017 Nissan Juke N-Connecta')).status,'corroborated');
+  assert.equal(A.lookup(find('2023 BYD Atto 3 Design')).status,'manufacturer');
+  const totals=A.summary(M.CATALOGUE);
+  assert.equal(totals.total,200);
+  assert.equal(totals.manufacturer,82);
+  assert.equal(totals.corroborated,118);
+  assert.equal(totals.pending,0);
+});
+
+test('three corrected original UK trims preserve original template identity',()=>{
+  const corrected=[
+    ['2021 Vauxhall Mokka-e Launch Edition','2022 Vauxhall Mokka-e Launch Edition','modern-15'],
+    ['2022 Range Rover Velar D200 R-Dynamic HSE','2022 Range Rover Velar D200 R-Dynamic','luxury-1'],
+    ['2023 Range Rover Sport P440e Dynamic SE','2023 Range Rover Sport P440e','luxury-8']
+  ];
+  for(const [realTitle,obsolete,templateId] of corrected){
+    assert.equal(find(realTitle).templateId,templateId);
+    assert.equal(find(obsolete),undefined,'Old misleading UK derivative must not exist: '+obsolete);
+    assert.notEqual(A.lookup(find(realTitle)).status,'pending');
+  }
+  assert.match(M.priceFor(find('2021 Vauxhall Mokka-e Launch Edition'),'uk2026').priceAudit.source,/2021/);
+  assert.equal(M.priceFor(find('2022 Range Rover Velar D200 R-Dynamic HSE'),'uk2026').priceAudit.buyingRisk.includes('wholesale guide'),true);
+});
+
+test('auction loss and below-target messages are explicit and do not invent buyer fees',()=>{
+  const view=readFileSync(new URL('../beta/auction-hall-view.js',import.meta.url),'utf8');
+  assert.match(view,/PROJECTED LOSS BEFORE OVERHEADS/);
+  assert.match(view,/BELOW TARGET CONTRIBUTION/);
+  assert.match(view,/feeUnknown/);
+  assert.match(view,/profitWarning/);
+});
+
+test('new prices are transparently unverified and classic pricing is untouched',()=>{
+  for(const car of newRows){
+    const base=find(car[0]);
+    assert.equal(M.priceFor(base,'uk2026').priceAudit.status,'unverified',base.title);
+    assert.equal(M.priceFor(base,'classic'),base);
+  }
+  assert.equal(M.priceFor(find('2022 Nissan Qashqai Acenta Premium'),'uk2026').priceAudit.status,'retail-comparable');
+});
+
+test('2026 market selection remains deterministic and respects unlocked tiers',()=>{
+  for(const tier of ['starter','modern','premium','luxury']){
+    for(let day=2;day<=100;day++){
+      const a=M.pick('auction',tier,day,1,new Set(),'uk2026');
+      const b=M.pick('auction',tier,day,1,new Set(),'uk2026');
+      assert.equal(a?.title,b?.title);
+      assert.ok(a&&a.retail>0&&a.guide>0);
+    }
+  }
+});
+
+test('unknown photo generation is disclosed rather than misrepresented',()=>{
+  const base=find('2022 Audi RS 3 Sportback');
+  const car={...base,...PH.describe(base)};
+  assert.equal(car.model,'Audi RS 3 Sportback');
+  assert.equal(car.generation,'Generation not yet verified');
+  assert.equal(PH.select(car),null);
+  assert.equal(PH.identity(find('2018 Volkswagen Golf R')).generation,'Mk7');
+});

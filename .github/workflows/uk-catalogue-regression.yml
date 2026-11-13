@@ -1,0 +1,21 @@
+name: UK beta vehicle catalogue regression
+on:
+  pull_request:
+    paths:
+      - 'beta/**'
+      - 'tests/beta-uk-vehicle-catalogue.test.mjs'
+      - 'tests/beta-valuation-risk.test.mjs'
+      - 'tests/beta-market-evidence.test.mjs'
+      - 'tests/beta-aftermarket-playtest.test.mjs'
+      - '.github/workflows/uk-catalogue-regression.yml'
+  workflow_dispatch:
+jobs:
+  catalogue-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify UK beta derivatives, prices and stable IDs
+        run: node --test tests/beta-uk-vehicle-catalogue.test.mjs tests/beta-valuation-risk.test.mjs tests/beta-market-evidence.test.mjs tests/beta-aftermarket-playtest.test.mjs

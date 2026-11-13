@@ -43,7 +43,11 @@
   }
   function summary(state){
     const vehicles=state.vehicles;
-    return {count:vehicles.length,spaces:Math.max(0,state.capacity-vehicles.length),
+    const onSite=vehicles.filter(v=>!v.storageLocation||v.storageLocation==='forecourt').length;
+    const offsite=vehicles.filter(v=>v.storageLocation==='offsite').length;
+    const external=vehicles.filter(v=>v.storageLocation==='external').length;
+    return {count:vehicles.length,onSite,offsite,external,
+      spaces:Math.max(0,state.capacity-onSite),
       prep:vehicles.filter(v=>group(v)==='prep').length,
       ready:vehicles.filter(v=>group(v)==='ready').length,
       listed:vehicles.filter(v=>group(v)==='listed').length,
@@ -60,6 +64,9 @@
         '<span class="stock-unit-kicker">STOCK '+v.id+' · '+esc(labelSource[v.source]||v.source.toUpperCase())+'</span>'+
         '<strong>'+esc(v.title)+'</strong>'+
         '<small>'+mileage(v.miles)+' · '+esc(v.fuel)+' · '+esc(v.gearbox)+'</small>'+
+        (v.storageLocation&&v.storageLocation!=='forecourt'?
+          '<small>'+esc(v.storageLocation==='external'?'AT EXTERNAL REPAIRER':
+            v.storageLocation==='viewing'?'CUSTOMER VIEWING BAY':'PAID OFF-SITE STORAGE')+'</small>':'')+
         '<span class="stock-unit-bottom"><span class="stock-status stock-status-'+p.tone+'">'+p.label+'</span>'+
         '<b class="'+ageClass+'">'+age+' DAYS</b></span>'+
         '<span class="stock-unit-cost">INVESTED '+money(f.invested)+'</span>'+
@@ -71,6 +78,9 @@
   }
   function controls(v,state){
     const p=phase(v),stage=v.workshop?.stage;
+    // A fully prepared off-site car may be listed online without consuming
+    // showroom space. Booking the first appointment carries a paid transfer
+    // and a 48-hour delay, never an instant on-site test drive.
     if(v.status==='acquired'){
       const guidance=stage==='in-progress'?
         (v.workshop.paused?'Repairs paused — review staffing or transfer the job.':
@@ -88,8 +98,14 @@
       ['agreed','reserved','collectable'].includes(caseRecord.status);
     const price=Number.isSafeInteger(v.asking)?v.asking:v.retail;
     return '<div class="stock-action-box"><h4>NEXT DECISION · '+p.next+'</h4>'+
-      (v.status==='listed'?'<p>Advertising is live. Buyer interest and agreements are managed in the Sales Office.</p>':
-        '<p>Quality control has passed. Set your asking price to advertise the car.</p>')+
+      (v.status==='listed'?'<p>Advertising is live. '+
+        (v.storageLocation==='offsite'?
+          'This car is OFF-SITE: customer viewings require a paid £35 presentation transfer and 48 hours. No permanent forecourt space is needed.':
+          v.storageLocation==='viewing'?'The vehicle is temporarily at the customer appointment bay.':
+          'Buyer interest and agreements are managed in the Sales Office.')+'</p>':
+        '<p>Quality control has passed. '+(v.storageLocation==='offsite'?
+          'You can advertise from the paid off-site compound. Viewing requires 48-hour logistics and £35 booking transfer.':
+          'Set your asking price to advertise the car.')+'</p>')+
       (locked?'<p class="stock-lock-note">PRICING LOCKED · An active customer agreement must be resolved in the Sales Office.</p>':'')+
       '<div class="stock-price-action"><label for="stock-price-'+v.id+
       '">RETAIL ASKING PRICE (£)<input class="trade-input" id="stock-price-'+v.id+
@@ -129,6 +145,9 @@
       '<div class="stock-facts"><div><small>ACQUIRED</small><strong>GAME DAY '+v.acquiredDay+'</strong></div>'+
       '<div><small>DAYS HELD</small><strong class="'+(age>=30?'stock-age-warning':'')+'">'+age+'</strong></div>'+
       '<div><small>SOURCE</small><strong>'+esc(source)+'</strong></div>'+
+      '<div><small>LOCATION</small><strong>'+esc(v.storageLocation==='external'?'OUTSIDE REPAIRER':
+          v.storageLocation==='offsite'?'PAID STORAGE':
+          v.storageLocation==='viewing'?'CUSTOMER VIEWING BAY':'FORECOURT')+'</strong></div>'+
       '<div><small>CONDITION</small><strong>GRADE '+grade+' / 5</strong></div></div>'+
       (risk?'<div class="stock-aged-alert">'+risk+'</div>':'')+
       priceReview+
@@ -156,11 +175,11 @@
     const value=FILTERS.includes(filter)?filter:'all';
     const stats=summary(state);
     const metrics=[
-      ['VEHICLES',stats.count,'CAPACITY '+state.capacity],
+      ['VEHICLES OWNED',stats.count,'FORECOURT '+stats.onSite+'/'+state.capacity],
       ['CASH INVESTED',money(stats.invested),'IN EXISTING STOCK'],
       ['UNSPENT PREP',money(stats.reserved),'WORKSHOP FUNDING'],
       ['ADVERTISED',stats.listed,'RETAIL MARKET'],
-      ['FREE SPACES',stats.spaces,'READY FOR PURCHASE']
+      ['DISPLAY SPACES FREE',stats.spaces,'STORED '+stats.offsite+' · AT GARAGE '+stats.external]
     ];
     const head='<div class="stock-kpi-strip">'+metrics.map(([label,number,note])=>
       '<div class="stock-kpi"><small>'+label+'</small><strong>'+number+
@@ -173,7 +192,7 @@
     const filters=[['all','ALL STOCK',stats.count],['prep','IN PREPARATION',stats.prep],
       ['ready','RETAIL READY',stats.ready],['listed','ADVERTISED',stats.listed]];
     const toolbar='<div class="stock-toolbar"><div><small>LIVE FORECOURT REGISTER</small>'+
-      '<strong>'+state.vehicles.length+' ACTIVE UNITS</strong></div>'+
+      '<strong>'+state.vehicles.length+' ACTIVE UNITS · '+stats.offsite+' IN OFF-SITE STORAGE</strong></div>'+
       '<div class="stock-filters" role="group" aria-label="Filter stock">'+
       filters.map(([name,label,count])=>'<button type="button" data-action="filter-stock" data-filter="'+name+
         '" aria-pressed="'+(value===name)+'">'+label+' <b>'+count+'</b></button>').join('')+'</div></div>';

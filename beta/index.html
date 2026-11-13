@@ -23,8 +23,11 @@
   <script src="./employment-2026.js?v=3" defer></script>
   <script src="./vehicle-intel.js?v=7" defer></script>
   <script src="./vehicle-photos.js?v=5" defer></script>
-  <script src="./vehicle-accuracy.js?v=1" defer></script>
-  <script src="./vehicle-market.js?v=8" defer></script>
+  <script src="./uk-vehicle-catalogue.js?v=1" defer></script>
+  <script src="./uk-original-verification.js?v=1" defer></script>
+  <script src="./market-evidence-2026.js?v=1" defer></script>
+  <script src="./vehicle-accuracy.js?v=3" defer></script>
+  <script src="./vehicle-market.js?v=9" defer></script>
   <script src="./auction-fees.js?v=1" defer></script>
   <script src="./auction-transport.js?v=1" defer></script>
   <script src="./premises.js?v=2" defer></script>
@@ -32,6 +35,7 @@
   <script src="./monthly.js?v=14" defer></script>
   <script src="./events.js?v=2" defer></script>
   <script src="./workshop.js?v=5" defer></script>
+  <script src="./customer-services.js?v=1" defer></script>
   <script src="./retail-liquidity.js?v=6" defer></script>
   <script src="./customers.js?v=12" defer></script>
   <script src="./aftersales.js?v=2" defer></script>
@@ -43,6 +47,7 @@
   <script src="./monthly-view.js?v=13" defer></script>
   <script src="./events-view.js?v=6" defer></script>
   <script src="./workshop-view.js?v=8" defer></script>
+  <script src="./customer-services-view.js?v=1" defer></script>
   <script src="./customers-view.js?v=12" defer></script>
   <script src="./aftersales-view.js?v=2" defer></script>
   <script src="./premises-view.js?v=4" defer></script>
@@ -111,7 +116,7 @@
               <div><span>CAREER TYPE</span><strong id="career-type-fact">2026 independent</strong></div>
               <div><span>STARTING STOCK</span><strong>None</strong></div>
             </div>
-            <p class="notice-box">Trade in a fictional UK market: auction bids, sellers, workshop preparation, enquiries and part-exchanges. The 2026 pilot models published BCA Blue buyer-fee bands, provisional margin-scheme output VAT, assumed operating costs, repair job cards and simulated delivery. All 50 retail vehicle prices now have dated asking-price comparisons, but 14 have low match confidence and four commercially contradictory, unverified wholesale guides are excluded from new 2026 sourcing pending evidence. Actual wholesale sold data, invoice-specific VAT eligibility, input VAT recovery, exact HMRC payroll and full consumer-rights case handling are not yet verified.</p>
+            <p class="notice-box">Trade in a fictional UK market: auction bids, sellers, workshop preparation, enquiries and part-exchanges. The 2026 pilot models published BCA Blue buyer-fee bands, provisional margin-scheme output VAT, assumed operating costs, repair job cards and simulated delivery. The original 55 catalogue variants retain their dated retail-comparable audit; 145 additional UK-market derivatives broaden the simulated stock pool. Their individual trade and retail prices remain unverified gameplay estimates until separately benchmarked. Four contradictory original wholesale guides remain excluded from new 2026 sourcing pending evidence. Actual wholesale sold data, invoice-specific VAT eligibility, input VAT recovery, exact HMRC payroll and full consumer-rights case handling are not yet verified.</p>
             <button class="primary-button setup-submit" type="submit">BEGIN CAREER <span aria-hidden="true">→</span></button>
           </form>
         </div>
@@ -135,6 +140,7 @@
             <button type="button" data-page="auctions"><span class="nav-icon">◆</span> Buying Desk</button>
             <button type="button" data-page="stock"><span class="nav-icon">▤</span> Vehicle Stock</button>
             <button type="button" data-page="workshop"><span class="nav-icon">⚒</span> Workshop</button>
+            <button type="button" data-page="services"><span class="nav-icon">◉</span> Customer Services</button>
             <button type="button" data-page="sales"><span class="nav-icon">♧</span> Sales Office</button>
             <button type="button" data-page="finance"><span class="nav-icon">£</span> Finances</button>
             <button type="button" data-page="reports"><span class="nav-icon">▦</span> Management Reports</button>
@@ -163,6 +169,15 @@
           </header>
           <div class="game-notice" id="save-warning" role="status" hidden>Browser storage is unavailable. This career is playable in this tab, but progress may not be saved after you leave.</div>
           <div class="game-notice game-event" id="event-notice" role="status" hidden></div>
+          <aside id="auction-flash" class="auction-flash" role="status" aria-live="polite" hidden>
+            <div><span class="auction-flash-pulse" aria-hidden="true">●</span>
+              <strong>WEEKLY MOTOR AUCTION IS ON TODAY</strong>
+              <small>Numbered lots are on the rostrum. Attend or decline this week's auction.</small></div>
+            <div class="auction-flash-actions">
+              <button type="button" data-action="enter-weekly-auction">ENTER AUCTION HALL</button>
+              <button type="button" data-action="skip-weekly-auction">SKIP THIS WEEK</button>
+            </div>
+          </aside>
           <button type="button" id="trade-feedback-toast" class="trade-feedback-toast" data-action="dismiss-feedback" role="status" aria-live="polite" aria-label="Trading result, click to dismiss" hidden></button>
 
           <div class="career-content">
@@ -201,6 +216,8 @@
               </div>
 
               <div id="dashboard-operating-strip" class="dashboard-operating-strip" aria-label="Stock, customers and operating commitments"></div>
+              <section id="dashboard-monthly-highlight" class="dashboard-monthly-highlight"
+                aria-label="Live monthly financial targets"></section>
 
               <div class="dashboard-grid dashboard-command-grid">
                 <section class="panel-card priorities dashboard-task-panel" aria-labelledby="priorities-title">
@@ -216,19 +233,19 @@
               <details class="dashboard-detail-drawer">
                 <summary><span>MONTHLY PERFORMANCE & CAREER DETAILS</span><span class="dashboard-career-summary">CAREER SOLD <strong data-bind="sales">0</strong> · GROSS TRADE MARGIN <strong data-bind="trade-profit">£0</strong></span></summary>
                 <div id="monthly-dashboard-target" class="monthly-dashboard-target" aria-live="polite"></div>
-                <p>Operating contribution reflects recorded vehicle margin, staff costs and accrued premises expenses. It is not net profit and excludes unmodelled tax, finance and depreciation.</p>
+                <p>Operating contribution includes completed vehicle and customer-service results less recorded staffing and premises costs. It is not statutory net profit and excludes unmodelled tax, finance and depreciation.</p>
               </details>
             </section>
 
             <section class="career-panel inbox-control" data-panel="inbox" hidden aria-labelledby="inbox-title">
               <header class="inbox-heading">
-                <div><p class="section-overline">YOUR BUSINESS / OWNER COMMUNICATIONS</p><h1 id="inbox-title">OWNER'S <em>INBOX.</em></h1><p>Messages from your team, approval requests, customer updates and payment confirmations.</p></div>
+                <div><p class="section-overline">YOUR BUSINESS / COMMUNICATIONS</p><h1 id="inbox-title">INBOX<em>.</em></h1><p>Decisions, customer updates, invoices and business notifications in one place.</p></div>
                 <button type="button" class="secondary-button" data-action="mark-all-read">MARK ALL READ</button>
               </header>
               <div class="inbox-stat-strip" aria-label="Inbox status">
                 <div><span>REQUIRES YOUR DECISION</span><strong id="inbox-action-count">0</strong></div>
                 <div><span>UNREAD MESSAGES</span><strong id="inbox-unread-summary">0</strong></div>
-                <div><span>PAID TRANSACTION COPIES</span><strong id="inbox-paid-count">0</strong></div>
+                <div><span>INVOICES & RECEIPTS</span><strong id="inbox-paid-count">0</strong></div>
               </div>
               <nav id="inbox-filter-buttons" class="inbox-filters" aria-label="Filter dealership communications"></nav>
               <div class="inbox-layout panel-card">
@@ -268,6 +285,14 @@
               <div id="workshop-board" class="ws-control" aria-live="polite"></div>
             </section>
 
+            <section class="career-panel" data-panel="services" hidden aria-labelledby="services-title">
+              <div class="page-heading"><div><p class="section-overline">AFTERMARKET / CUSTOMER BOOKINGS</p>
+                <h1 id="services-title">CUSTOMER <em>SERVICES.</em></h1>
+                <p>Take service, repair, MOT booking and scrap referrals even with a full forecourt. Work is subcontracted and jobs take game days; customer satisfaction follows timeliness and quality.</p></div>
+                <span class="career-chip">EXTERNAL PROVIDER NETWORK</span></div>
+              <div id="services-board" aria-live="polite"></div>
+            </section>
+
             <section class="career-panel sales-control" data-panel="sales" hidden aria-labelledby="sales-title">
               <div class="page-heading"><div><p class="section-overline">RETAIL PIPELINE / CUSTOMER AGREEMENTS</p><h1 id="sales-title">SALES <em>OFFICE.</em></h1><p>Buyers automatically enquire about prepared, advertised cars. New leads appear here and in your Inbox and remain available for three game days. Book their viewing before they move on; actual sales are not guaranteed.</p></div><span class="career-chip">LIVE RETAIL CASES</span></div>
               <div id="sales-list" class="so-control" aria-live="polite"></div>
@@ -288,9 +313,9 @@
             </section>
 
             <section class="career-panel" data-panel="reports" hidden aria-labelledby="reports-title">
-              <div class="page-heading"><div><p class="section-overline">PERFORMANCE / MONTHLY BOARD REVIEW</p><h1 id="reports-title">MANAGEMENT <em>REPORTS.</em></h1><p>Understand the dealership's sales, operating performance, stock and priorities at a glance.</p></div><span class="career-chip">30-DAY REPORTS</span></div>
+              <div class="page-heading"><div><p class="section-overline">PERFORMANCE / MONTHLY BOARD REVIEW</p><h1 id="reports-title">MANAGEMENT <em>REPORTS.</em></h1><p>Month-end closes into this full financial statement automatically. Review all income, expenses, VAT, commitments, stock and targets before your next board meeting.</p></div><span class="career-chip">30-DAY REPORTS</span></div>
               <div id="monthly-report-view" class="mr-control" aria-live="polite"></div>
-              <details class="mr-guide"><summary>HOW MONTHLY TARGETS AND ARCHIVED REPORTS WORK</summary><p>Sales targets are set at the start of each 30-day game month. Success requires the unit sales target and positive operating contribution after staff and premises costs. Salesperson targets adjust for tenure. Completed reports remain archived in your saved career, and are not recalculated from the live business.</p></details>
+              <details class="mr-guide"><summary>HOW MONTHLY TARGETS AND ARCHIVED REPORTS WORK</summary><p>Sales targets are set at the start of each 30-day game month. UK2026 success requires the vehicle sales target, dealership revenue target (including completed services), and positive operating contribution after costs and modelled output VAT. Salesperson targets adjust for tenure. Completed reports remain archived in your saved career, and are not recalculated from the live business.</p></details>
             </section>
 
             <section class="career-panel" data-panel="staff" hidden aria-labelledby="staff-title">

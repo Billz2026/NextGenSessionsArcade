@@ -103,9 +103,16 @@
   }
   function advance(state){
     const due=costs(state);
+    // Owned vehicles at a third-party compound are not displayed for free.
+    // Independent garage repairs already carry supplier costs and do not
+    // attract this distinct storage charge while at the repairer.
+    const offsite=state.financialScenario==='uk2026'?
+      state.vehicles.filter(v=>v.storageLocation==='offsite').length:0;
+    const storageDue=offsite*12; // illustrative £12 per car/game day
+    const fullExpense=due.total+storageDue;
     state.ledger.push({day:state.day,delta:0,
-      note:'Premises expense accrued: £'+due.total+' (rent £'+due.rent+
-        ', utilities £'+due.utilities+')'});
+      note:'Premises expense accrued: £'+fullExpense+' (rent £'+due.rent+
+        ', utilities £'+due.utilities+', off-site storage £'+storageDue+')'});
     // Prepaid policy renewal occurs after each completed 360-day policy term.
     // The new policy cash charge does not increase this month's insurance
     // expense, which is recognised separately at £250 per 30 days.
@@ -113,7 +120,7 @@
       state.day>1&&(state.day-1)%360===0?3000:0;
     if(insuranceRenewal)state.ledger.push({day:state.day,delta:0,
       note:'Motor-trade insurance annual renewal liability: £3000'});
-    const cashDue=due.cashDue+insuranceRenewal;
+    const cashDue=due.cashDue+insuranceRenewal+storageDue;
     state.premises.arrears+=cashDue;
     const repairReserve=window.MotorTradeWorkshop?.reserved(state)??0;
     const available=Math.max(0,state.cash-repairReserve);
@@ -126,7 +133,7 @@
     // A missed rent bill is not free money. An extended unpaid balance hurts
     // reputation, but one difficult trading day will not ruin a new business.
     let reputationDelta=0;
-    if(state.premises.arrears>due.total*7&&state.day%7===0){
+    if(state.premises.arrears>fullExpense*7&&state.day%7===0){
       const before=state.reputationScore;
       state.reputationScore=clamp(before-1,0,100);
       reputationDelta=state.reputationScore-before;
@@ -136,7 +143,8 @@
         if(state.reputationHistory.length>90)state.reputationHistory.shift();
       }
     }
-    return {due:cashDue,expense:due.total,paid,arrears:state.premises.arrears,reputationDelta};
+    return {due:cashDue,expense:fullExpense,offsiteStorageDue:storageDue,
+      offsiteUnits:offsite,paid,arrears:state.premises.arrears,reputationDelta};
   }
   function valid(record){
     return !!record&&typeof record==='object'&&!Array.isArray(record)&&

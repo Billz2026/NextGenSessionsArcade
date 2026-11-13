@@ -27,6 +27,8 @@
   if(!C)throw new Error('Load customers.js before trading.js');
   const W = window.MotorTradeWorkshop;
   if (!W) throw new Error('Load workshop.js before trading.js');
+  const SERVICES=window.MotorTradeServiceDesk;
+  if(!SERVICES)throw Error('Load customer-services.js before trading.js');
   const D = window.MotorTradeEvents;
   if (!D) throw new Error('Load events.js before trading.js');
   const M = window.MotorTradeMonthly;
@@ -118,7 +120,11 @@
       .filter(x=>feeScenario!=='uk2026'||!x.priceAudit?.buyingRisk)
       .map(x=>({...x,...PH.describe(x)}))};
     const auctionCount=auctionDay(day)?
-      (day===1?3:3+(sample(day,1,29)%3)):0;
+      (feeScenario==='uk2026'?
+        // Proper weekly catalogue, not a three-car sale. Browser roster
+        // and bid state are deterministic, with a 30+ lot session.
+        30+(sample(day,1,29)%7):
+        (day===1?3:3+(sample(day,1,29)%3))):0;
     const baselineSellers=day===1?2:
       (sample(day,0,31)%5===0?0:1+(sample(day,1,37)%3));
     const sellerCount=Math.min(4,baselineSellers+
@@ -128,7 +134,7 @@
     const starter=MARKET.CATALOGUE.starter;
     const auctions=Array.from({length:aCount},(_,i)=>{
       const original=MARKET.priceFor(day===1&&feeScenario!=='uk2026'?starter[i]:
-        MARKET.pick('auction',tier,day,i,usedAuction,feeScenario),feeScenario);
+        MARKET.pick('auction',tier,day,i,usedAuction,feeScenario,reputationScore),feeScenario);
       const base=feeScenario==='uk2026'?varied2026(original,day,i,'auction'):original;
       // Buyer competition can affect hammer pricing, but must not drown
       // out the much larger valuation effect of 40k additional mileage.
@@ -148,7 +154,7 @@
     });
     const sellers=Array.from({length:sellerCount},(_,i)=>{
       const original=MARKET.priceFor(day===1&&feeScenario!=='uk2026'?starter[3+i]:
-        MARKET.pick('seller',tier,day,i,usedSeller,feeScenario),feeScenario);
+        MARKET.pick('seller',tier,day,i,usedSeller,feeScenario,reputationScore),feeScenario);
       const base=feeScenario==='uk2026'?varied2026(original,day,i,'seller'):original;
       const offset=day===1?0:nearest25(feeScenario==='uk2026'?
         (sample(day,i,51)%251)-125:(sample(day,i,51)%601)-300);
@@ -235,7 +241,7 @@
        !integer(h.rounds)||h.rounds<0||h.rounds>250||
        !Array.isArray(h.feed)||h.feed.length>65||
        !h.feed.every(entry=>typeof entry==='string'&&entry.length<=160)||
-       !Array.isArray(h.results)||h.results.length>20)return false;
+       !Array.isArray(h.results)||h.results.length>48)return false;
     const lots=marketFor(state).auctions;
     if(h.index>lots.length||
        (h.phase==='finished'&&h.index!==lots.length)||
@@ -442,11 +448,13 @@
       stock:0,sales:0,reputation:P.tier(5),messages,
       vehicles:[],sold:[],wholesale:[],ledger:[],nextId:1,negotiations:{},auctionBids:{},reports:{},
       customerCases:{},customerHistory:[],customerFunds:[],
-      auctionHall:initialAuctionHall(1),auctionHistory:[],
+      auctionHall:initialAuctionHall(1),auctionHistory:[],auctionReminderDismissedDay:0,
+      ...(standard?{debtSinceDay:0,financeBridge:null}:{}),
       inboxLedgerCursor:0,
       premises:SITE.initial(),...P.initial(),
       ...(standard?{employmentScenario:'uk2026-payroll',payroll2026:EMP.initial(),
-        aftersalesScenario:AFT.MODE,aftersales:AFT.initial()}: {})
+        aftersalesScenario:AFT.MODE,aftersales:AFT.initial(),
+        serviceDesk:SERVICES.initial()}: {})
     };
     M.initialize(state);
     Object.assign(state,D.initial());
@@ -483,6 +491,10 @@
       return M.initialize(legacy,{migrating:true});
     }
     if(saved.version>=12&&(!saved.auctionHall||!Array.isArray(saved.auctionHistory)))return null;
+    if(saved.serviceDesk!==undefined&&!SERVICES.valid(saved))return null;
+    if(saved.financeBridge!==undefined&&!CREDIT.valid(saved))return null;
+    if(saved.auctionReminderDismissedDay!==undefined&&
+      (!integer(saved.auctionReminderDismissedDay)||saved.auctionReminderDismissedDay<0||saved.auctionReminderDismissedDay>saved.day))return null;
     // An untouched old catalogue can be refreshed after a day change without
     // losing any bid or payment. Never silently discard a live or decided lot.
     const staleEmptyHall=saved.version>=12&&saved.auctionHall?.day!==saved.day&&
@@ -505,7 +517,10 @@
     if ((saved.version>=10?saved.capacity!==expectedCapacity:![2,CAPACITY].includes(saved.capacity)) || !Array.isArray(saved.vehicles) ||
       !Array.isArray(saved.sold) || !Array.isArray(saved.ledger) ||
       !integer(saved.nextId) || saved.nextId < 1 ||
-      !cashValue(saved.cash) || saved.vehicles.length > expectedCapacity ||
+      !cashValue(saved.cash) ||
+      (saved.financialScenario!=='uk2026'?
+        saved.vehicles.length>expectedCapacity:
+        saved.vehicles.filter(v=>!v.storageLocation||v.storageLocation==='forecourt').length>expectedCapacity)||
       saved.vehicles.length > 250 || saved.sold.length > 20000 ||
       saved.ledger.length > 60000 ||
       (saved.version>=12&&(!Array.isArray(saved.wholesale)||saved.wholesale.length>20000)))return null;
@@ -529,6 +544,15 @@
         (v.profile.hiddenFault?.cost || 0)) &&
       (saved.version<7 || W.valid(v,saved.day)) &&
       (saved.version<10 || validLook(v))&&
+      (v.storageLocation===undefined||['forecourt','offsite','external','viewing'].includes(v.storageLocation))&&
+      (v.viewingArriveDay===undefined||
+        (integer(v.viewingArriveDay)&&v.viewingArriveDay>=v.acquiredDay&&
+         v.viewingArriveDay<=saved.day+10&&v.storageLocation==='offsite'))&&
+      (v.storageLocation!=='external'||
+        (v.workshop?.method==='external'&&
+          ['in-progress','quality-check'].includes(v.workshop.stage)))&&
+      (saved.financialScenario!=='uk2026'||v.status!=='listed'||
+        v.storageLocation!=='external')&&
       (v.vatPurchasePrice===undefined||cashValue(v.vatPurchasePrice));
     const goodSold = s => s && integer(s.id) && typeof s.title === 'string' &&
       integer(s.day) && s.day >= 1 && s.day <= saved.day &&
@@ -625,6 +649,11 @@
         (saved.version>=12||saved.day===1)?
         JSON.parse(JSON.stringify(saved.auctionHall)):initialAuctionHall(saved.day),
       auctionHistory:saved.version>=11?JSON.parse(JSON.stringify(saved.auctionHistory)):[],
+      auctionReminderDismissedDay:saved.auctionReminderDismissedDay??0,
+      ...(standard?{debtSinceDay:saved.debtSinceDay??0,
+        financeBridge:saved.financeBridge?{...saved.financeBridge}:null}:{}),
+      ...(standard?{serviceDesk:saved.serviceDesk?
+        SERVICES.clone(saved.serviceDesk):SERVICES.initial()}:{}),
       stock:saved.vehicles.length,sales:saved.sold.length,
       reputation:P.tier(workforce.reputationScore),messages,
       vehicles:saved.vehicles.map(v => ({
@@ -650,6 +679,8 @@
     if(!M.restore(restored,saved))return null;
     if(!D.restore(restored,saved))return null;
     if(!C.valid(restored,saved))return null;
+    if(!SERVICES.valid(restored))return null;
+    if(!CREDIT.valid(restored))return null;
     if(!VAT.valid(restored))return null;
     if(!AFT.valid(restored))return null;
     if(!auctionValid(restored))return null;
@@ -677,6 +708,9 @@
       profile,prepBudget:p.basePrep+(p.hiddenFault?.cost||0),
       prepSpent:0,status:'acquired',asking:null,cashOffer:null,acquiredDay:state.day,
       listedDay:null,
+      ...(state.financialScenario==='uk2026'?{
+        storageLocation:forecourtCount(state)<state.capacity?'forecourt':'offsite'
+      }:{}),
       color:template.color||PH.describe({...template,origin:ref}).color,
       generation:template.generation||PH.identity(template).generation
     };
@@ -685,8 +719,12 @@
     state.stock = state.vehicles.length;
     return v;
   }
+  const forecourtCount=state=>state.vehicles.filter(v=>
+    !v.storageLocation||v.storageLocation==='forecourt').length;
   function canBuy(state, cost, preparation, options={}) {
-    if (state.vehicles.length >= state.capacity) return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
+    if(state.financialScenario!=='uk2026'&&state.vehicles.length>=state.capacity)
+      return fail('capacity','Your forecourt is full. Sell a vehicle before buying another.');
+    // 2026 off-site stock uses paid compound storage and remains cash gated.
     // Modern sourcing protects creditor cash plus a small operating buffer.
     // An existing hammered invoice still requires payment but is exempt from
     // imposing a discretionary NEW buying buffer after the hammer.
@@ -796,7 +834,7 @@
     const previous = (state.negotiations ??= {})[id];
     state.negotiations[id]={status:'walked',counter:0,
       rounds:Math.max(1,Math.min(3,previous?.rounds ?? 1)),lastOffer:previous?.lastOffer ?? 0};
-    return {...success('You walked away from '+car.title+'. No cash was spent.'),changed:true};
+    return {...success('You declined '+car.title+'. The seller lead is closed without charge.'),changed:true};
   }
 
   function inspectLead(state,kind,id) {
@@ -845,12 +883,29 @@
     const v=own(state.vehicles,id);
     return v?W.quote(state,v,method):null;
   }
+  function moveStockToForecourt(state,id){
+    if(state.financialScenario!=='uk2026')return fail('mode','Off-site holding applies only to the 2026 career.');
+    const v=own(state.vehicles,id);
+    if(!v)return fail('missing','Vehicle not found.');
+    if(v.storageLocation!=='offsite')return fail('stage','Only cars in off-site storage can be moved.');
+    if(forecourtCount(state)>=state.capacity)return fail('capacity','All display spaces are occupied. Sell a car first.');
+    const charge=35;
+    if(state.cash<W.reserved(state)+charge)return fail('cash','Insufficient unreserved cash for the £35 transfer.');
+    pay(state,-charge,'Off-site relocation: '+v.title);
+    v.cost+=charge;
+    v.storageLocation='forecourt';
+    return success(v.title+' moved to the forecourt for £35.');
+  }
   // Previous prepare() was instant. Intentionally do not expose it as a
   // shortcut: game progress must now pass through workshop time and QC.
   function advertise(state, id, asking) {
     const vehicle = own(state.vehicles,id);
     if (!vehicle) return fail('missing','Vehicle not found in your stock.');
     if (vehicle.status === 'acquired') return fail('prep','Workshop repairs and a passed final quality check are required before retail advertising.');
+    if(state.financialScenario==='uk2026'&&vehicle.storageLocation==='external')
+      return fail('external','The car is still with the repairer. Complete preparation and QC before advertising.');
+    // Online advertising does not require a physical showroom position.
+    // Offsite viewings are chargeable and require 48-hour collection notice.
     if (!integer(asking) || asking < 500 || asking > 75000)
       return fail('price','Enter a retail price between £500 and £75,000.');
     if (asking < Math.floor(vehicle.retail * .5) || asking > Math.ceil(vehicle.retail * 1.8))
@@ -1107,8 +1162,11 @@
     customers:C,openCustomer,bookCustomer,quoteCustomer,acceptPriceCounterCustomer,
     remoteReserveCustomer,inspectRemoteCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
-    workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
-    wholesaleOffer,disposeStock,commercialControls:CREDIT,hireStaff,decideStaffMorale,
+    workshop:W,services:SERVICES,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
+    wholesaleOffer,disposeStock,moveStockToForecourt,forecourtCount,
+    commercialControls:CREDIT,financeQuote:CREDIT.financeQuote,
+    borrowFinance:CREDIT.borrow,repayFinance:CREDIT.repay,advanceFinance:CREDIT.advance,
+    hireStaff,decideStaffMorale,
     market,marketFor,marketStatus,sellerApproach,create,normalize,acquireAuction,acquireSeller,walkSeller,
     inspectLead,reportFor,quote:I.quote,
     advertise,buyers,counter,completeSale,totalMargin

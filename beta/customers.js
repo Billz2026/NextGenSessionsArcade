@@ -70,13 +70,14 @@
       L.enquiryPercent(state,vehicle,P.salesImpact(state,vehicle.id).enquiryLift):
       65-Math.round(overpriced*100)-(grade>=4?12:0)+
         Math.floor(state.reputationScore/8)+P.salesImpact(state,vehicle.id).enquiryLift;
+    if(modern&&state.meetingFocus==='sales')percent+=8;
     if(D.isDealDay(state.day)){
       const c=D.outlook(state);
       percent+=c.type==='quiet'?-13:c.type==='subdued'?-5:
         c.type==='busy'?9:c.type==='exceptional'?13:0;
     }
     // These are scenario probabilities, not measured independent-dealer lead rates.
-    return chance('buyer|'+leadKey(state,vehicle),clamp(percent,modern?1:8,modern?48:91));
+    return chance('buyer|'+leadKey(state,vehicle),clamp(percent,modern?1:8,modern?58:91));
   }
   function priceCheckCandidate(state){
     // After a genuinely silent fortnight the fictional online listing can
@@ -183,8 +184,9 @@
       return fail('already','You have already invited this buyer to reserve remotely.');
     const expense=customerPrep(state,c);
     const outstanding=window.MotorTradeWorkshop?.reserved(state)??0;
-    if(state.cash-expense<outstanding)
-      return fail('cash','The dealership cannot fund the promised collection preparation.');
+    const transfer=state.financialScenario==='uk2026'&&v.storageLocation==='offsite'?35:0;
+    if(state.cash-expense-transfer<outstanding)
+      return fail('cash','The dealership cannot fund promised preparation and off-site presentation transfer.');
     c.remoteAttempted=true;
     const saving=(v.asking-c.quotedPrice)/Math.max(v.asking,1);
     const interest=clamp((c.channel==='ONLINE PRICE QUESTION'?35:55)+
@@ -237,14 +239,30 @@
         'The caller only wanted a price indication and is not ready to arrange a viewing.');
       return {ok:false,changed:true,code:'unqualified',message};
     }
-    // New realistic appointments are tomorrow (24 game-hours); classic
-    // careers and previously booked visits keep their existing times.
-    c.appointmentDay=state.financialScenario==='uk2026'?state.day+1:
+    // Off-site advertised vehicles need a booked 48-hour viewing transfer.
+    // £35 is an illustrative round-trip contractor fee, paid only when a
+    // genuine appointment is accepted, even if the buyer ultimately no-shows.
+    const vehicle=state.vehicles.find(v=>v.id===id);
+    const offsite=state.financialScenario==='uk2026'&&
+      vehicle?.storageLocation==='offsite';
+    if(offsite){
+      const fee=35,reserve=window.MotorTradeWorkshop?.reserved(state)||0;
+      if(state.cash<reserve+fee)return fail('cash',
+        'The £35 external vehicle presentation transfer needs unreserved cash.');
+      state.cash-=fee;
+      state.ledger.push({day:state.day,delta:-fee,note:'Off-site viewing transfer: '+vehicle.title});
+      vehicle.cost+=fee;
+      vehicle.viewingArriveDay=state.day+2;
+    }
+    c.appointmentDay=state.financialScenario==='uk2026'?
+      state.day+(offsite?2:1):
       state.day+1+(P.salesImpact(state,c).fastViewing?0:hash('appointment|'+c.id)%2);
     c.status='booked';
     append(state,c,'appointment','Day '+c.appointmentDay);
     return ok(c.name+' has booked a viewing for day '+c.appointmentDay+
-      (state.financialScenario==='uk2026'?' (next game day / 24 hours).':' (within 48 game-hours).')+
+      (state.financialScenario==='uk2026'?
+        (offsite?' (48 hours; vehicle transfer booked and £35 paid).':
+          ' (next game day / 24 hours).'):' (within 48 game-hours).')+
       ' No deposit was paid: the vehicle stays advertised and available to other buyers.');
   }
   function competingInterest(state,id){
@@ -407,12 +425,27 @@
     if(state.cash-expense<reserved)
       return fail('cash','Insufficient unreserved dealership cash for the '+expense+
         ' customer-specific collection preparation cost. Do not accept a reservation you cannot service.');
-    // The customer pays £250 into a virtual segregated account; that money
-    // is not spendable business cash and is not a vehicle sale.
+    const vehicle=state.vehicles.find(v=>v.id===id);
+    const remoteOffsite=c.remote&&state.financialScenario==='uk2026'&&
+      vehicle?.storageLocation==='offsite';
+    if(remoteOffsite&&state.cash<reserved+expense+35)
+      return fail('cash','Insufficient unreserved cash for off-site collection logistics.');
+    // The held £250 customer deposit is not spendable dealer cash.
     c.held=250;
     if(c.terms!=='distance-refundable')c.terms='in-person';
     c.prepCost=expense;
-    c.collectionDay=state.day+1+(c.remote?0:hash('collection|'+c.id)%2);
+    c.collectionDay=state.day+(remoteOffsite?2:
+      1+(c.remote?0:hash('collection|'+c.id)%2));
+    if(remoteOffsite){
+      // The £35 collection transfer is a dealership expense at the point of
+      // confirmed reservation. It is not paid from the held customer deposit.
+      const transferFee=35;
+      state.cash-=transferFee;
+      state.ledger.push({day:state.day,delta:-transferFee,
+        note:'Off-site viewing transfer: '+vehicle.title});
+      vehicle.cost+=transferFee;
+      vehicle.viewingArriveDay=c.collectionDay;
+    }
     if(c.standby){
       append(state,c.standby,'appointment-displaced',
         'Car secured by another buyer paying a deposit; no deposit on original viewing.');
@@ -561,6 +594,16 @@
   }
   function advanceDay(state){
     const notices=[];
+    // Supplier transports off-site advertised cars for *booked* viewings or
+    // paid remote reservations. No instantaneous test drive of a stored car.
+    for(const v of state.vehicles){
+      if(v.storageLocation==='offsite'&&v.viewingArriveDay!==undefined&&
+         v.viewingArriveDay<=state.day){
+        v.storageLocation='viewing';
+        delete v.viewingArriveDay;
+        notices.push(v.title+' delivered to the separate appointment bay for customer presentation.');
+      }
+    }
     for(const c of Object.values(state.customerCases)){
       salespersonCallback(state,c,notices);
       if(c.status==='lost'){
@@ -588,6 +631,16 @@
         c.createdDay<state.day)){
         notices.push(failCase(state,c,'expired','Customer enquiry expired without a completed agreement.'));
         restoreBooked(state,c,notices);
+      }
+    }
+    // Empty viewing bays do not become a hidden fifth permanent showroom.
+    // Return to paid storage when the customer appointment/reservation ends.
+    for(const v of state.vehicles){
+      if(v.storageLocation!=='viewing')continue;
+      const c=state.customerCases[String(v.id)];
+      if(!c||c.status==='lost'){
+        v.storageLocation='offsite';
+        notices.push(v.title+' returned to its charged off-site compound after customer presentation.');
       }
     }
     notices.push(...queueEnquiries(state));
@@ -628,7 +681,8 @@
     const cases=saved.customerCases,history=saved.customerHistory;
     if(!cases||typeof cases!=='object'||Array.isArray(cases)||
       !Array.isArray(history)||history.length>2000||
-      Object.keys(cases).length>state.capacity)return false;
+      Object.keys(cases).length>(state.financialScenario==='uk2026'?
+        Math.min(250,state.vehicles.length):state.capacity))return false;
     const no=(x,max=100000000)=>ints(x)&&x>=0&&x<=max;
     const validCase=([id,c])=>/^\d+$/.test(id)&&c&&
       c.vehicleId===Number(id)&&state.vehicles.some(v=>v.id===c.vehicleId&&v.status==='listed')&&

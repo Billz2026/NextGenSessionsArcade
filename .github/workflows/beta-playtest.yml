@@ -8,6 +8,7 @@ on:
       - 'tests/beta-sales-team-activity.mjs'
       - 'tests/beta-market-variety.mjs'
       - 'tests/beta-customer-sales-paths.mjs'
+      - 'tests/beta-aftermarket-ui.mjs'
       - '.github/workflows/beta-playtest.yml'
   push:
     branches: [main]
@@ -53,6 +54,8 @@ jobs:
         run: node tests/beta-market-variety.mjs
       - name: Check quoted prices, 24-hour viewing, remote refundable deposits and final balance
         run: node tests/beta-customer-sales-paths.mjs
+      - name: Playtest auction flash, service booking, save/reload, customer rating and mobile UI
+        run: node tests/beta-aftermarket-ui.mjs
       - name: Keep beta browser screenshots
         if: always()
         uses: actions/upload-artifact@v4

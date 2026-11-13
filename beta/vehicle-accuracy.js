@@ -1,6 +1,6 @@
 'use strict';
 /*
- * Motor Trade UK specification evidence — source reviewed 10 November 2026.
+ * Motor Trade UK specification evidence — sources reviewed 10–13 November 2026.
  *
  * This is NOT a registration lookup or valuation service. Only the listed
  * title+fuel+gearbox+powertrain tuples are backed by the linked material.
@@ -13,7 +13,12 @@
  * independently rechecked. Unlisted catalogue records remain 'pending'.
  */
 (() => {
+  // Sourced UK extension rows are manufacturer-backed or corroborated.
+  // All unlisted new variants remain pending; never auto-certify by brand.
+  const expanded=window.MotorTradeUKCatalogue?.VERIFIED||[];
+  const originalReviewed=window.MotorTradeOriginalVerification?.VERIFIED||[];
   const reviewed=[
+    ...expanded,...originalReviewed,
     ['2017 Toyota Yaris Icon','Petrol','Manual','1.5 VVT-iE','manufacturer',
       'https://media.toyota.co.uk/toyota-announces-new-yaris-specifications-prices/',
       '2017 facelift Icon, 1.5 petrol manual; replaces old 1.33'],
@@ -70,7 +75,8 @@
       '2022 UK single motor electric variant and gross 69kWh; secondary source']
   ];
   const CHECKED=Object.freeze(Object.fromEntries(reviewed.map(([title,fuel,gearbox,engine,status,url,note])=>[
-    title,Object.freeze({title,fuel,gearbox,engine,status,url,note,checkedAt:'2026-11-10'})
+    title,Object.freeze({title,fuel,gearbox,engine,status,url,note,checkedAt:(expanded.some(row=>row[0]===title)||
+      originalReviewed.some(row=>row[0]===title))?'2026-11-13':'2026-11-10'})
   ])));
   const STATUS=Object.freeze(['manufacturer','corroborated','pending']);
   function lookup(vehicle){

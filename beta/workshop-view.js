@@ -51,7 +51,7 @@
   }
   function items(v){
     const p=v.profile||{};
-    const seen=v.workshop.stage!=='unassessed'||!!p.inspected;
+    const seen=(v.workshop.stage!=='unassessed'&&v.workshop.visualAssessment!==true)||!!p.inspected;
     const rows=(p.knownRepairs||[]).map(x=>'<div class="ws-repair"><span>'+
       esc(x.item)+'</span><strong>'+cash(x.cost)+'</strong></div>').join('');
     const extra=seen&&p.hiddenFault?
@@ -59,7 +59,7 @@
       ' · diagnosed defect</span><strong>'+cash(p.hiddenFault.cost)+'</strong></div>':'';
     return '<section><h4>REPAIR REQUIREMENTS</h4>'+rows+extra+
       (!rows?'<p>No itemised information available.</p>':'')+
-      (!seen?'<p class="ws-caveat">Further defects may be identified at assessment.</p>':'')+'</section>';
+      (!seen?'<p class="ws-caveat">Hidden faults may emerge despite a basic visual review. Only a paid inspection or subsequent repair may identify them.</p>':'')+'</section>';
   }
   function costs(v){
     const job=v.workshop;
@@ -80,8 +80,8 @@
         'Booked repair totals can differ from the diagnosed budget because of provider pricing, transfer fees or paid QC rectification.')+
       '</p>':'';
     return '<div class="ws-costs">'+
-      '<div><span>ACQUISITION / ASSESSMENT PAID</span><strong>'+cash(v.cost)+'</strong></div>'+
-      '<div><span>DIAGNOSED REPAIR REQUIREMENT</span><strong>'+
+      '<div><span>ACQUISITION / PAID INSPECTIONS</span><strong>'+cash(v.cost)+'</strong></div>'+
+      '<div><span>PROVISIONAL REPAIR ALLOWANCE</span><strong>'+
       (diagnosed?cash(v.prepBudget):'NOT YET ASSESSED')+'</strong></div>'+
       variance+
       '<div><span>REPAIRS PAID / BOOKED</span><strong>'+cash(spent)+'</strong></div>'+
@@ -90,10 +90,8 @@
   }
   function quote(s,W,v,mode){
     const q=W.quote(s,v,mode);
-    const occupied=mode==='external'&&s.vehicles.filter(x=>x.id!==v.id&&
-      x.workshop?.stage==='in-progress'&&x.workshop.method==='external').length>=2;
-    const cannot=!q||occupied||q.cost>s.cash-W.reserved(s,v.id);
-    const reason=!q?'No free technician or bay':occupied?'Both external slots occupied':
+    const cannot=!q||q.cost>s.cash-W.reserved(s,v.id);
+    const reason=!q?'No technician or available bay':
       q.cost>s.cash-W.reserved(s,v.id)?'Insufficient unreserved cash':'';
     return '<div class="ws-quote"><div class="ws-quote-head"><strong>'+
       (mode==='internal'?'IN-HOUSE TECHNICIAN':'EXTERNAL GARAGE')+'</strong><b>'+
@@ -110,16 +108,16 @@
   function actions(s,W,v){
     const j=v.workshop,phase=j.stage;
     if(phase==='unassessed'){
-      const fee=s.financialScenario==='uk2026'?
-        (P.active(s,'technician')?65:80):
-        (P.active(s,'technician')?30:55);
+      const visual=s.financialScenario==='uk2026';
+      const fee=visual?0:(P.active(s,'technician')?30:55);
       const can=s.cash>=W.reserved(s)+fee;
-      return '<div class="ws-action"><h4>NEXT / ASSESS VEHICLE</h4>'+
-        '<p>Confirm the repair requirement. The assessment costs '+cash(fee)+
-        ' and is added to the acquisition cost.</p>'+
+      return '<div class="ws-action"><h4>'+(visual?'BASIC VISUAL REVIEW':'NEXT / ASSESS VEHICLE')+'</h4>'+
+        '<p>'+(visual?
+          'Included in dealer operating costs — no extra assessment charge. This is not a paid diagnostic, MOT or hidden-fault inspection. Garage repair booking is charged separately.':
+          'A paid diagnostic costs '+cash(fee)+' and is added to the vehicle acquisition cost.')+'</p>'+
         (!can?'<p class="ws-issue">Insufficient unreserved cash for assessment.</p>':'')+
         '<button type="button" class="trade-button" data-action="assess-workshop" data-id="'+v.id+
-        '"'+(!can?' disabled':'')+'>AUTHORISE ASSESSMENT · '+cash(fee)+'</button></div>';
+        '"'+(!can?' disabled':'')+'>'+(visual?'COMPLETE FREE VISUAL REVIEW':'AUTHORISE ASSESSMENT · '+cash(fee))+'</button></div>';
     }
     if(phase==='quoted')return '<div class="ws-action"><h4>NEXT / APPROVE REPAIRS</h4>'+
       '<p>Choose a provider. Booking charges cash now and repairs take game days.</p>'+
@@ -135,14 +133,11 @@
         '<p>'+(j.paused?'Assigned technician unavailable. Return them to duty or transfer this job.':
           'Advance game days for repairs to finish. Quality control is mandatory afterward.')+'</p>'+
         (j.method==='internal'?(()=>{
-          const outside=s.vehicles.filter(x=>x.id!==v.id&&
-            x.workshop?.stage==='in-progress'&&x.workshop.method==='external').length;
-          const full=outside>=2,affordable=s.cash>=W.reserved(s)+125;
-          return (full?'<p class="ws-issue">EXTERNAL GARAGES FULL (2/2). WAIT FOR A SLOT.</p>':'')+
-            (!full&&!affordable?'<p class="ws-issue">INSUFFICIENT UNRESERVED CASH FOR £125 TRANSFER.</p>':'')+
+          const affordable=s.cash>=W.reserved(s)+125;
+          return (!affordable?'<p class="ws-issue">INSUFFICIENT CASH FOR £125 TRANSFER.</p>':'')+
             '<button type="button" class="trade-button trade-button-secondary" '+
             'data-action="outsource-workshop" data-id="'+v.id+'"'+
-            (full||!affordable?' disabled':'')+'>TRANSFER TO EXTERNAL GARAGE · £125</button>';
+            (!affordable?' disabled':'')+'>TRANSFER TO EXTERNAL GARAGE · £125</button>';
         })():'')+'</div>';
     }
     if(phase==='quality-check')return '<div class="ws-action"><h4>NEXT / FINAL QUALITY CHECK</h4>'+
@@ -190,7 +185,7 @@
       ['QUALITY CHECK DUE',q.qc],['READY TO ADVERTISE',q.ready],['ON SALE',q.listed]
     ].map(([name,num])=>'<div><small>'+name+'</small><strong>'+num+'</strong></div>').join('')+
       '</div><div class="ws-capacity"><span>TECHNICIANS '+q.tech+' ACTIVE / '+q.free+' FREE · IN-HOUSE '+
-      q.inHouse+'/'+q.bays+' BAYS</span><span>EXTERNAL GARAGES '+q.external+'/2</span>'+
+      q.inHouse+'/'+q.bays+' BAYS</span><span>EXTERNAL REPAIR JOBS '+q.external+' ACTIVE · NO FIXED LIMIT</span>'+
       '<span>REPAIR FUNDS RESERVED '+cash(q.reserve)+'</span></div>';
     if(!s.vehicles.length)return {selectedId:null,html:kpi+
       '<div class="trade-empty ws-empty"><h2>NO VEHICLES TO PREPARE.</h2>'+

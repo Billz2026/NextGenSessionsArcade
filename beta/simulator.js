@@ -10,6 +10,7 @@
   const MV = window.MotorTradeMonthlyView;
   const EV = window.MotorTradeEventsView;
   const WV = window.MotorTradeWorkshopView;
+  const SView=window.MotorTradeServiceDeskView;
   const CV = window.MotorTradeCustomersView;
   const AFTV=window.MotorTradeAftersalesView;
   const AV = window.MotorTradeAuctionHallView;
@@ -25,6 +26,7 @@
   const M = E.monthly;
   const D = E.events;
   const W = E.workshop;
+  const SERVICES=E.services;
   const C = E.customers;
   const SITE = E.premises;
   const VC = window.MotorTradeCards;
@@ -46,6 +48,7 @@
     auctionHall: 'AUCTION HALL',
     stock: 'VEHICLE STOCK',
     workshop: 'WORKSHOP OPERATIONS',
+    services: 'CUSTOMER SERVICES',
     sales: 'SALES OFFICE',
     finance: 'FINANCES',
     reports: 'MANAGEMENT REPORTS',
@@ -289,7 +292,7 @@
   }
   const prepReserved = () => W.reserved(career);
   function purchaseWarning(cost) {
-    if (career.vehicles.length >= career.capacity)
+    if (career.financialScenario!=='uk2026'&&career.vehicles.length>=career.capacity)
       return 'FORECOURT FULL — finish a sale in Vehicle Stock / Sales Office.';
     if (career.cash < cost + prepReserved())
       return 'NOT ENOUGH CASH — preserve funds for all vehicle preparation.';
@@ -350,6 +353,9 @@
     selectedStockId=view.selectedId;
     byId('stock-list').innerHTML=view.html;
   }
+  function renderServices(){
+    byId('services-board').innerHTML=SView.render(career);
+  }
   function renderWorkshop() {
     const view=WV.render(career,W,{selectedId:selectedWorkshopId,filter:workshopFilter});
     selectedWorkshopId=view.selectedId;
@@ -381,6 +387,17 @@
       money.format(d.reserved)+' earmarked for repairs':'Before future operating bills');
     bindText('dashboard-stock-note',d.listed+' listed · '+d.awaitingPrep+' awaiting prep');
     bindText('dashboard-monthly-sales',d.report.soldUnits+' / '+d.report.targetUnits);
+    const revenue=d.report.combinedRevenue??d.report.turnover;
+    const highlight=byId('dashboard-monthly-highlight');
+    highlight.innerHTML='<div><small>MONTH '+d.report.month+' · GAME DAY '+career.day+
+      '</small><strong>MONTHLY DEALERSHIP PERFORMANCE</strong>'+
+      '<span>Sales: '+d.report.soldUnits+' / '+d.report.targetUnits+
+      ' · Revenue: '+money.format(revenue)+' / '+money.format(d.report.targetTurnover)+
+      '</span></div><div><small>OPERATING CONTRIBUTION</small><strong>'+
+      money.format(d.report.operatingContribution)+'</strong>'+
+      '<span>Cash: '+money.format(career.cash)+' · '+d.daysToGo+
+      ' day(s) to month end</span></div>'+
+      '<button type="button" data-page="reports">OPEN FULL FIGURES</button>';
     const sales=DV.salesProgress(d.report,d.daysToGo);
     bindText('dashboard-sales-note',sales.text);
     for(const node of all('[data-bind="dashboard-sales-note"]'))
@@ -413,6 +430,7 @@
     renderAuctionHall();
     renderStock();
     renderWorkshop();
+    renderServices();
     renderSales();
     renderFinances();
     renderPeople();
@@ -452,7 +470,7 @@
       'INDEPENDENT MOTOR TRADER · STARTING CAPITAL £12,500';
     bindText('cash', money.format(career.cash));
     bindText('customer-deposits',money.format(C.heldDeposits(career)));
-    bindText('stock', career.stock + ' / ' + career.capacity);
+    bindText('stock', E.forecourtCount(career) + ' / ' + career.capacity);
     bindText('forecourt-capacity',career.capacity+' vehicles');
     bindText('workshop-bays',String(SITE.bays(career)));
     bindText('premises-daily',money.format(SITE.costs(career).total)+'/day');
@@ -486,6 +504,9 @@
     byId('continue-label').textContent=D.isDealDay(career.day)?
       (career.deadlineSession>=D.PHASES.length-1?'CLOSE MONTH':'NEXT SESSION'):'CONTINUE';
     byId('save-warning').hidden = storageAvailable;
+    byId('auction-flash').hidden=!(career.financialScenario==='uk2026'&&
+      E.auctionDay(career.day)&&career.auctionHall?.phase==='catalogue'&&
+      career.auctionReminderDismissedDay!==career.day);
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;
     const toast = byId('trade-feedback-toast');
@@ -545,13 +566,14 @@
     // This keeps reports internally reconcilable with recorded ledger dates.
     const closed=career.day===career.monthPlan.endDay?M.close(career):null;
     career.day += 1;
+    const serviceEvents=SERVICES.advance(career);
     E.rollAuctionHall(career);
     auctionPreviewId=null;
     career.deadlineSession=0;
     if(closed) {
       M.next(career);
       selectedMonth=String(closed.month);
-      currentPage='events'; // Show the first-day management meeting.
+      currentPage='reports'; // Mandatory financial review immediately after closing month.
     } else if(enteringDealDay){
       currentPage='events'; // Surface the special event automatically.
     }
@@ -570,6 +592,7 @@
     const premisesEvent=E.premisesDay(career);
     const aftersalesEvents=E.aftersalesDay(career);
     const vatEvent=E.vatDay(career);
+    const financeEvent=E.advanceFinance(career);
     const workshopEvents=E.advanceWorkshop(career);
     const customerEvents=E.advanceCustomers(career);
     lastTradeResult = null;
@@ -626,6 +649,13 @@
         ' owed on the simplified eligible used-vehicle margin scheme.';
     if(workshopEvents.length)
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
+    if(financeEvent.debtDays>=14)
+      eventNotice+=' CREDITORS: '+financeEvent.debtDays+
+        ' game days in arrears. Review the 30-day recovery deadline in Finances.';
+    if(financeEvent.loanOverdue)
+      eventNotice+=' BRIDGE LOAN OVERDUE: existing stock sales and recovery continue but new purchasing is on creditor hold.';
+    if(serviceEvents.length)
+      eventNotice+=' CUSTOMER SERVICES: '+serviceEvents.join(' ');
     if(customerEvents.length)
       eventNotice+=' CUSTOMERS: '+customerEvents.join(' ');
     if(aftersalesEvents.length)
@@ -645,7 +675,7 @@
         '. Unsold stock '+closed.stockCount+' cars, including '+
         closed.agedStock+' aged 14+ days.\n\nVisit Management Reports for the full financial statement, individual salesperson targets, stock position and reputation review.',
         'reports'));
-      eventNotice='Month '+closed.month+' management review ready — company sales target '+
+      eventNotice='MONTH CLOSED · YOUR FULL FINANCIAL REPORT IS OPEN. Review revenue, costs, tax liabilities, cash, stock, margins and target result before the next management meeting. Month '+closed.month+' target '+
         status+'. Open MANAGEMENT REPORTS or your inbox for the full results. '+
         eventNotice;
     }
@@ -770,6 +800,25 @@
       return;
     }
     switch (button.dataset.action) {
+      case 'enter-weekly-auction':
+        if(career&&E.auctionDay(career.day)&&career.auctionHall?.phase==='catalogue'){
+          career.auctionReminderDismissedDay=career.day;
+          persistCareer();show('auctionHall');
+        }
+        break;
+      case 'skip-weekly-auction':
+        if(career&&E.auctionDay(career.day)&&career.auctionHall?.phase==='catalogue'){
+          // Decline each lot via the normal audit trail, without fees or bids.
+          let safety=0;
+          while(career.auctionHall.phase==='catalogue'&&safety++<64){
+            if(!E.passAuction(career).ok)break;
+            if(!E.nextAuctionLot(career).ok)break;
+          }
+          career.auctionReminderDismissedDay=career.day;
+          eventNotice="You declined this week's auction. No fee was charged. The next auction will be announced.";
+          persistCareer();render();
+        }
+        break;
       case 'new-career':
         show('setup');
         break;
@@ -805,6 +854,22 @@
           workshopFilter=button.dataset.filter;selectedWorkshopId=null;
           currentPage='workshop';render();
         }
+        break;
+      case 'draw-bridge-finance':
+        if(career&&window.confirm('Take this fictional 60-day secured facility? The arrangement charge is deducted now, interest accrues daily, and full repayment is required. This is NOT a real credit or insolvency safe harbour.')){
+          saveResult(E.borrowFinance(career,Number(button.dataset.amount)));
+        }
+        break;
+      case 'repay-bridge-finance':
+        if(career&&window.confirm('Repay the ENTIRE outstanding loan principal and accrued interest using unreserved cash?'))
+          saveResult(E.repayFinance(career));
+        break;
+      case 'book-service-lead':
+        if(career&&typeof button.dataset.lead==='string')
+          saveResult(SERVICES.book(career,button.dataset.lead));
+        break;
+      case 'move-stock-forecourt':
+        if(career)saveResult(E.moveStockToForecourt(career,Number(button.dataset.id)));
         break;
       case 'assess-workshop':
         if(career)saveResult(E.assessStock(career,Number(button.dataset.id)));

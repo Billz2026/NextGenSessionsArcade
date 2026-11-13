@@ -12,9 +12,16 @@
     {time:'17:00',name:'FINAL HOUR',detail:'Last chance to complete customer transactions before the month closes.'}
   ]);
   const FOCI=Object.freeze({
-    sales:{label:'Improve retail conversions',description:'Customer offers improve modestly when negotiating listed stock.'},
-    buying:{label:'Protect buying margins',description:'The purchasing team works harder to secure a better direct-seller deal.'},
-    care:{label:'Prioritise customer care',description:'Good-condition, fairly priced sales earn an extra point of customer trust.'}
+    sales:{label:'Retail marketing and conversions',cost:250,
+      description:'£250 marketing: +8 points to retail enquiry probability and +£125 negotiated offer improvement.'},
+    buying:{label:'Improve purchase margins',cost:150,
+      description:'£150 sourcing programme: up to £150 more negotiating advantage on direct purchases.'},
+    care:{label:'Customer quality and loyalty',cost:125,
+      description:'£125 quality programme: up to +2 customer trust on reliable fair-price car handovers and better service checks.'},
+    aftermarket:{label:'Grow service bookings',cost:200,
+      description:'£200 local outreach: one additional daily external service, MOT or licensed ATF referral enquiry.'},
+    recovery:{label:'Stabilise cash and creditors',cost:0,
+      description:'£0 cash preservation: focus on funding, existing commitments and collecting receivables. No artificial earnings.'}
   });
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const monthOf=day=>Math.floor((day-1)/30)+1;
@@ -145,14 +152,14 @@
     return 25+25*(mix(key+'|value')%3)+state.deadlineSession*5;
   }
   function meetingBonus(state,kind){
-    if(kind==='sales'&&state.meetingFocus==='sales')return 55;
-    if(kind==='buying'&&state.meetingFocus==='buying')return 45;
+    if(kind==='sales'&&state.meetingFocus==='sales')return 125;
+    if(kind==='buying'&&state.meetingFocus==='buying')return 150;
     return 0;
   }
   function careBonus(state,car,achievedPrice){
     const grade=car.profile?.grade??3;
     const fair=car.profile?.likelySale??achievedPrice;
-    return state.meetingFocus==='care'&&grade<=3&&achievedPrice<=fair+250?1:0;
+    return state.meetingFocus==='care'&&grade<=3&&achievedPrice<=fair+250?2:0;
   }
   function holdMeeting(state,focus){
     if(!isMeetingDay(state.day))
@@ -162,6 +169,16 @@
       return {ok:false,message:'This month\'s meeting is already complete.'};
     if(!Object.prototype.hasOwnProperty.call(FOCI,focus))
       return {ok:false,message:'Choose a valid management priority.'};
+    const investment=state.financialScenario==='uk2026'?FOCI[focus].cost:0;
+    const reserved=window.MotorTradeWorkshop?.reserved(state)??0;
+    if(investment&&state.cash<investment+reserved)
+      return {ok:false,code:'cash',message:'The £'+investment+
+        ' strategy budget is not affordable after protecting existing repair commitments. Choose cash recovery or rebuild cash.'};
+    if(investment){
+      state.cash-=investment;
+      state.ledger.push({day:state.day,delta:-investment,
+        note:'Monthly management investment: '+FOCI[focus].label});
+    }
     const previous=state.monthlyReports.at(-1)||null;
     const minute={
       month,day:state.day,focus,
@@ -172,7 +189,8 @@
       agedStock:previous?.agedStock??0,
       staffCosts:previous?.staffCosts??0,
       cash:state.cash,
-      reputation:state.reputationScore
+      reputation:state.reputationScore,
+      budget:investment
     };
     state.meetingHeldMonth=month;
     state.meetingFocus=focus;
@@ -180,7 +198,8 @@
     if(state.meetings.length>120)state.meetings.shift();
     return {ok:true,changed:true,message:
       'Month '+month+' management meeting completed. Priority: '+
-      FOCI[focus].label+'. Review the new monthly targets and act on your decisions.'};
+      FOCI[focus].label+'. '+(investment?'£'+investment+' campaign investment charged. ':'No investment charged. ')+
+       'The focus applies through this game month.'};
   }
   function restore(state,saved){
     if(saved.version<6){
@@ -203,7 +222,9 @@
       typeof m.focus==='string'&&Object.hasOwn(FOCI,m.focus)&&
       (m.previousMonth===null||Number.isSafeInteger(m.previousMonth))&&
       ['sold','target','grossMargin','agedStock','staffCosts','cash','reputation'].every(k=>
-        Number.isSafeInteger(m[k]))))return false;
+        Number.isSafeInteger(m[k]))&&
+      (m.budget===undefined||
+        (Number.isSafeInteger(m.budget)&&m.budget>=0&&m.budget<=1000))))return false;
     if(p.meetings.length){
       const last=p.meetings.at(-1);
       if(last.month>p.meetingHeldMonth||

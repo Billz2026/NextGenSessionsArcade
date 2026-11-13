@@ -29,10 +29,12 @@
     const r=M.statement(state);
     const remaining=Math.max(0,state.monthPlan.endDay-state.day);
     const toGo=Math.max(0,r.targetUnits-r.soldUnits);
+    const companyRevenue=r.combinedRevenue??r.turnover;
     return '<div class="report-teaser"><div><small>MONTH '+r.month+' · '+remaining+
       ' DAYS REMAINING</small><h3>MONTHLY SALES TARGET</h3>'+
       '<p>'+r.soldUnits+' / '+r.targetUnits+' units completed · '+toGo+
-      ' still required</p></div><div class="report-teaser-side"><strong>'+
+      ' still required'+(r.combinedRevenue===undefined?'':' · REVENUE '+money(companyRevenue)+' / '+money(r.targetTurnover))+
+      '</p></div><div class="report-teaser-side"><strong>'+
       Math.round(r.soldUnits/Math.max(1,r.targetUnits)*100)+'%</strong>'+
       '<button type="button" data-page="reports" class="secondary-button">OPEN MONTHLY REPORT ↗</button></div></div>';
   }
@@ -55,12 +57,22 @@
     customerRefunds:'Customer refunds on rejected vehicles',
     customerCollection:'Vehicle collection after rejection',
     customerRepairs:'Dealer-funded consumer repairs',
-    customerAdjustments:'Negotiated partial retail price refunds'
+    customerAdjustments:'Negotiated partial retail price refunds',
+    serviceSuppliers:'External customer work / supplier invoices',
+    serviceReceipts:'Customer servicing and repair receipts',
+    motCommissions:'Approved MOT centre referral commissions',
+    scrapCommissions:'Licensed ATF scrap referral commissions',
+    managementSpend:'Management meeting initiatives / campaigns',
+    financeAdvances:'Secured bridge principal received (NOT SALES)',
+    financeFees:'Financing arrangement charges',
+    financeRepayments:'Bridge capital and interest paid',
+    financeInterest:'Non-cash bridge interest accrual'
   };
   function renderReport(state,M,selected='current'){
     const historical=String(selected)!=='current';
     const chosen=historical?state.monthlyReports.find(x=>String(x.month)===String(selected)):null;
     const r=chosen||M.statement(state);
+    const companyRevenue=r.combinedRevenue??r.turnover;
     const isClosed=!!chosen;
     const currentPlan=state.monthPlan;
     const remaining=isClosed?0:Math.max(0,currentPlan.endDay-state.day);
@@ -83,7 +95,10 @@
     const badges='<div class="report-metric-grid">'+
       cell('VEHICLES SOLD',String(r.soldUnits),'Target: '+r.targetUnits+' vehicles',
         gap<=0?'report-value-positive':'')+
-      cell('RETAIL SALES TURNOVER',money(r.turnover),'Planning guide: '+money(r.targetTurnover))+
+      cell('TOTAL DEALERSHIP REVENUE',money(companyRevenue),
+        (r.combinedRevenue===undefined?'Planning guide: ':'Mandatory revenue target: ')+money(r.targetTurnover))+
+      (r.combinedRevenue===undefined?'':cell('CUSTOMER SERVICES & REFERRALS',
+        money(r.serviceTurnover),'Completed jobs: '+r.serviceUnits))+
       cell('GROSS TRADE MARGIN',money(r.grossMargin),
         'Planning guide: '+money(r.targetMargin),r.grossMargin<0?'report-value-negative':'')+
       cell('AFTER STAFF COSTS',money(r.grossAfterStaff),
@@ -97,11 +112,14 @@
       '</div>';
     const targets='<section class="panel-card report-section"><h3>MONTHLY OBJECTIVES</h3>'+
       progress(r.soldUnits,r.targetUnits,'Mandatory dealership unit target')+
-      progress(r.turnover,r.targetTurnover,'Sales turnover guidance')+
+      progress(companyRevenue,r.targetTurnover,
+        r.combinedRevenue===undefined?'Sales turnover guidance':'MANDATORY dealership revenue target',true)+
       progress(Math.max(0,r.grossMargin),r.targetMargin,'Gross trading margin guidance')+
       (companyWarning?'<p class="report-alert">'+companyWarning+'</p>':'')+
       '<p class="report-muted">Target outcome requires the unit count AND a positive operating contribution after staff and premises charges. '+
-      'Turnover and margin figures are secondary benchmarks, not additional mandatory gates. '+
+      (r.combinedRevenue===undefined?
+        'Turnover and margin figures are secondary benchmarks, not additional mandatory gates. ':
+        'Both the unit target and combined vehicle-plus-service revenue target are required, with positive operating contribution after costs and provisional VAT. Services do not count as vehicle handovers. ')+
       (isClosed?'This target was set at the start of the period.':
       'Targets change for the next month if reputation changes.')+'</p></section>';
     const source=r.ledgerBreakdown;
@@ -111,6 +129,10 @@
       amount('Total cash paid',-r.cashOut)+
       amount('Net cash movement',r.netCashChange)+
       amount('Closing cash',r.closingCash,true)+
+      (r.financingExpense===undefined?'':amount('Financing cost this month',
+        -r.financingExpense)+amount('Loan outstanding at report date',r.loanOutstanding))+
+      (r.afterFinance===undefined?'':amount('Operating result after VAT & finance',
+        r.afterFinance,true))+
       '<hr/>'+amount('Retail sales proceeds',source.retailReceipts,true)+
       Object.entries(nameByCategory).map(([key,label])=>
         amount(label,source[key]??0)).join('')+
@@ -242,23 +264,38 @@
       cell('OPERATING CONTRIBUTION',money(contribution),'After staff and premises costs',
         contribution<0?'report-value-negative':'report-value-positive')+
       cell(isClosed?'CLOSING CASH':'CURRENT CASH',money(r.closingCash),'Opening '+money(r.openingCash))+
-      cell('CASH INVESTED IN STOCK',money(r.stockCapital),r.stockCount+' unsold vehicles')+'</div>'+
+      cell('CASH INVESTED IN STOCK',money(r.stockCapital),r.stockCount+' unsold vehicles')+
+      cell('DEALERSHIP REVENUE',money(companyRevenue),
+        'Monthly required '+money(r.targetTurnover))+
+      cell('RETAIL SALES',money(r.turnover),'Completed car handovers')+
+      (r.serviceTurnover===undefined?'':cell('SERVICE / SCRAP / MOT',money(r.serviceTurnover),
+        r.serviceUnits+' jobs completed'))+
+      cell('AFTER OUTPUT VAT',money(r.operatingAfterVat??r.operatingContribution),
+        'Modelled operating contribution after output VAT')+
+      (r.afterFinance===undefined?'':cell('AFTER FINANCING',money(r.afterFinance),
+        'Interest and finance fee impact; BEFORE income taxes')+
+        cell('LOAN PAYABLE',money(r.loanOutstanding),'Principal plus accrued interest'))+
+        '</div>'+
       '<div class="mr-focus"><section class="mr-panel"><h3>ARE WE ON TARGET?</h3>'+
       progress(r.soldUnits,r.targetUnits,'Completed handovers')+
-      progress(r.turnover,r.targetTurnover,'Turnover guide',true)+
+      progress(companyRevenue,r.targetTurnover,
+        r.combinedRevenue===undefined?'Turnover guide':'REQUIRED dealership revenue',true)+
       progress(Math.max(0,r.grossMargin),r.targetMargin,'Gross margin guide',true)+
-      '<p>Company success requires enough handovers and positive operating contribution.</p></section>'+
+      '<p>Company success requires enough handovers'+(r.combinedRevenue===undefined?'':', the revenue target')+
+        ' and positive operating contribution.</p></section>'+
       '<section class="mr-panel"><h3>WHAT NEEDS ATTENTION?</h3>'+alerts+'</section></div>'+      '<div class="mr-mini"><div><small>GROSS TRADE MARGIN</small><strong>'+money(r.grossMargin)+'</strong></div>'+      '<div><small>STOCK AGED 14+ DAYS</small><strong>'+r.agedStock+'</strong></div>'+      '<div><small>RETAIL ENQUIRIES</small><strong>'+(r.customerJourney?r.customerJourney.enquiries:'NOT RECORDED')+'</strong></div>'+      '<div><small>REPUTATION</small><strong>'+r.closingReputation+'/100</strong></div></div></div>';
-    const detail=(title,body)=>'<details class="mr-detail"><summary>'+title+
-      ' · EXPAND</summary>'+body+'</details>';
+    const detail=(title,body)=>'<details class="mr-detail"'+(isClosed?' open':'')+
+      '><summary>'+title+(isClosed?' · FULL MONTH-END FIGURES':' · EXPAND')+
+      '</summary>'+body+'</details>';
     const detailsBody=detail('MONTHLY OBJECTIVES',targets)+detail('CASH FLOW & FINANCES',cash)+
       detail('SALES & PURCHASING',saleLine)+detail('STOCK & WORKING CAPITAL',inventory)+
       detail('SALES TEAM SCORECARDS',staff)+detail('RETAIL CUSTOMER JOURNEY',customerSection)+
       detail('CUSTOMER TRUST & RISKS',trust)+detail('DEAL DAY RESULTS',dealDaySection);
     return archivePicker(state,selected)+top+
-      '<details class="mr-records" aria-label="Detailed Management Records">'+
+      '<details class="mr-records" aria-label="Detailed Management Records"'+
+        (isClosed?' open':'')+'>'+
       '<summary class="mr-records-summary"><strong>DETAILED MANAGEMENT RECORDS</strong>'+
-      '<span>8 REPORTS · EXPAND</span></summary>'+
+      '<span>'+(isClosed?'8 SECTIONS · FULL MONTH-END BREAKDOWN':'8 SECTIONS · EXPAND')+'</span></summary>'+
       '<div class="mr-records-body"><p>Choose a report below to examine the supporting figures.</p>'+
       '<div class="mr-details">'+detailsBody+'</div></div></details>'+
       '<p class="mr-note">Fictional management figures only; not statutory UK accounts. VAT, tax and some liabilities are not modelled.</p>';
