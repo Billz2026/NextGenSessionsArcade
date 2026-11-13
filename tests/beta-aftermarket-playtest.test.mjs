@@ -178,3 +178,130 @@ test('taxable service income is not vehicle-margin VAT and MOT/ATF are referrals
   assert.match(kinds.mot.description,/approved third-party/i);
   assert.match(kinds.scrap.description,/licensed ATF/i);
 });
+
+test('fully funded 2026 dealer can hire multiple sales employees without arbitrary role limits',()=>{
+  const state=E.create('Expanded Team QA',[],'uk2026');
+  assert.equal(E.people.roleLimit(state,'sales'),Infinity);
+  assert.equal(E.people.roleLimit(state,'technician'),Infinity);
+  const candidates=E.people.applicants(state.day,state).filter(c=>c.role==='sales');
+  assert.ok(candidates.length>=3);
+  for(const c of candidates.slice(0,3)){
+    const q=E.people.hireQuote(state,c);
+    assert.equal(q.shortfall,0);
+    assert.equal(E.hireStaff(state,c.id).ok,true);
+  }
+  assert.equal(state.staff.filter(x=>x.role==='sales').length,3);
+  assert.equal(E.people.valid(state,state.day),true);
+  assert.ok(state.cash<50000,'Real recruitment fees must be paid');
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))),
+    'Three sales staff must not invalidate a saved career');
+});
+
+test('private seller lead can be declined without making an offer or paying cash',()=>{
+  const state=E.create('Declined Lead QA',[],'uk2026');
+  const lead=E.marketFor(state).sellers[0];
+  assert.ok(lead);
+  assert.equal(E.walkSeller(state,lead.id).ok,true);
+  assert.equal(state.cash,50000);
+  assert.equal(state.ledger.length,0);
+  assert.equal(state.negotiations[lead.id].status,'walked');
+  assert.equal(E.acquireSeller(state,lead.id,lead.ask).ok,false);
+  const view=readFileSync(new URL('../beta/buying-desk-view.js',import.meta.url),'utf8');
+  assert.match(view,/DECLINE THIS CAR · NO COST/);
+});
+
+test('offsite prepared vehicle can advertise online and incurs paid 48-hour customer presentation',()=>{
+  const state=E.create('Remote Stock QA',[],'uk2026');
+  const v={id:111,title:'2018 Toyota Aygo x-play',source:'seller',
+    status:'prepared',cost:2000,prepBudget:450,prepSpent:450,
+    retail:4800,asking:null,acquiredDay:1,origin:'S-1-1',
+    miles:19000,fuel:'Petrol',gearbox:'Manual',
+    storageLocation:'offsite',profile:{grade:2,likelySale:4800}};
+  v.workshop=W.initial(v);state.vehicles.push(v);
+  assert.equal(E.advertise(state,v.id,4750).ok,true);
+  assert.equal(v.status,'listed');assert.equal(v.storageLocation,'offsite');
+  const opened=E.openCustomer(state,v.id);
+  assert.equal(opened.ok,true);
+  const originalCash=state.cash;
+  const appointment=E.bookCustomer(state,v.id);
+  assert.equal(appointment.ok,true,appointment.message);
+  const c=E.customers.caseFor(state,v.id);
+  assert.equal(c.appointmentDay,3);
+  assert.equal(state.cash,originalCash-35);
+  assert.equal(v.viewingArriveDay,3);
+  assert.equal(v.storageLocation,'offsite');
+  state.day=3;
+  E.advanceCustomers(state);
+  assert.ok(['viewing','offsite'].includes(v.storageLocation));
+  assert.equal(v.viewingArriveDay,undefined);
+});
+
+test('reputation influences prestige stock weighting without counterfeiting Tesla valuations',()=>{
+  const Mkt=w.MotorTradeMarket;
+  const score=rep=>{
+    let prestige=0;
+    for(let d=1;d<=100;d++)for(let i=0;i<7;i++){
+      const v=Mkt.pick('auction','luxury',d,i,new Set(),'uk2026',rep);
+      if(['premium','luxury'].includes(v.marketTier))prestige++;
+    }
+    return prestige;
+  };
+  assert.ok(score(85)>score(5),'Strong reputation should make premium/luxury auction sourcing more frequent');
+  assert.ok(Mkt.CATALOGUE.luxury.some(v=>v.title.includes('Tesla')),
+    'Tesla candidates must come from genuine catalogue templates, not invented pricing');
+});
+
+test('funded board meeting has a real expense and one additional customer service lead',()=>{
+  const state=E.create('Management QA',[],'uk2026');
+  const before=S.leads(state).length;
+  const result=E.events.holdMeeting(state,'aftermarket');
+  assert.equal(result.ok,true);
+  assert.equal(state.cash,49800);
+  assert.equal(state.meetings.at(-1).budget,200);
+  assert.equal(S.leads(state).length,before+1);
+  assert.equal(M.statement(state).managementSpend,200);
+  assert.ok(E.normalize(JSON.parse(JSON.stringify(state))));
+});
+
+test('debt recovery has timed warnings, controls cash borrowing and never treats bridge as sales',()=>{
+  const s=E.create('Recovery QA',[],'uk2026');
+  s.premises.arrears=700;
+  for(let day=2;day<=14;day++){s.day=day;E.advanceFinance(s)}
+  assert.equal(s.debtSinceDay,2);
+  assert.equal(E.commercialControls.status(s).debtDays,13);
+  assert.equal(E.commercialControls.status(s).softArrears,true);
+  s.day=16;E.advanceFinance(s);
+  assert.equal(E.commercialControls.status(s).creditorHold,true);
+  s.day=35;E.advanceFinance(s);
+  assert.equal(E.commercialControls.status(s).recoveryRequired,true);
+  const collateral={id:303,cost:16000,retail:23000,profile:{trade:16000}};
+  s.vehicles.push(collateral);
+  const quote=E.financeQuote(s,5000);
+  assert.equal(quote.ok,true,quote.message);
+  const cash=s.cash;
+  assert.equal(E.borrowFinance(s,5000).ok,true);
+  assert.equal(s.cash,cash+4850);
+  assert.equal(E.financeQuote(s,5000).ok,false,'Only one active facility');
+  assert.equal(M.statement(s).turnover,0,'Lending cash must NOT be sales revenue');
+  assert.equal(M.statement(s).financingExpense,150,'Arrangement fee is financing cost');
+  s.day=36;E.advanceFinance(s);
+  assert.ok(s.financeBridge.interestAccrued>0);
+  assert.equal(E.commercialControls.status(s).bridgeOutstanding,
+    5000+s.financeBridge.interestAccrued);
+  s.premises.arrears=0;
+  assert.equal(E.repayFinance(s).ok,true);
+  assert.equal(s.financeBridge.principalOutstanding,0);
+  assert.equal(s.financeBridge.closedDay,36);
+  assert.equal(E.financeQuote(s,5000).ok,false,'180-day repeat cooldown blocks loan cycling');
+});
+
+test('month-end reports immediately open archived detail and debt financing appears separately',()=>{
+  const sim=readFileSync(new URL('../beta/simulator.js',import.meta.url),'utf8');
+  const view=readFileSync(new URL('../beta/monthly-view.js',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../beta/index.html',import.meta.url),'utf8');
+  assert.match(sim,/currentPage='reports'; \/\/ Mandatory financial review/);
+  assert.match(view,/isClosed\?' open':'/);
+  assert.match(view,/AFTER FINANCING/);
+  assert.match(html,/id="dashboard-monthly-highlight"/);
+  assert.match(html,/>INBOX<em>\.<\/em>/);
+});
