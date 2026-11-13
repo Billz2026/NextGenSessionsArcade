@@ -486,6 +486,9 @@
     byId('continue-label').textContent=D.isDealDay(career.day)?
       (career.deadlineSession>=D.PHASES.length-1?'CLOSE MONTH':'NEXT SESSION'):'CONTINUE';
     byId('save-warning').hidden = storageAvailable;
+    byId('auction-flash').hidden=!(career.financialScenario==='uk2026'&&
+      E.auctionDay(career.day)&&career.auctionHall?.phase==='catalogue'&&
+      career.auctionReminderDismissedDay!==career.day);
     byId('event-notice').hidden = !eventNotice;
     byId('event-notice').textContent = eventNotice;
     const toast = byId('trade-feedback-toast');
@@ -770,6 +773,25 @@
       return;
     }
     switch (button.dataset.action) {
+      case 'enter-weekly-auction':
+        if(career&&E.auctionDay(career.day)&&career.auctionHall?.phase==='catalogue'){
+          career.auctionReminderDismissedDay=career.day;
+          persistCareer();show('auctionHall');
+        }
+        break;
+      case 'skip-weekly-auction':
+        if(career&&E.auctionDay(career.day)&&career.auctionHall?.phase==='catalogue'){
+          // Decline each lot via the normal audit trail, without fees or bids.
+          let safety=0;
+          while(career.auctionHall.phase==='catalogue'&&safety++<12){
+            if(!E.passAuction(career).ok)break;
+            if(!E.nextAuctionLot(career).ok)break;
+          }
+          career.auctionReminderDismissedDay=career.day;
+          eventNotice="You declined this week's auction. No fee was charged. The next auction will be announced.";
+          persistCareer();render();
+        }
+        break;
       case 'new-career':
         show('setup');
         break;
