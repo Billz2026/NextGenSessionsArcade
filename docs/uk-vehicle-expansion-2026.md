@@ -7,7 +7,7 @@
 - New UK variety additions: **145** derivatives.
 - Resulting beta inventory: **200 distinct derivatives** across starter, modern, premium and luxury.
 - The original tier rows are kept in the same order to preserve existing template IDs.
-- **56 of the 145 new derivatives** have documented evidence tied to their exact title/fuel/gearbox/engine tuple: **31 manufacturer-backed and 25 UK-market corroborated**. **89 new derivatives remain pending**; verification of original 55 entries remains unchanged.
+- **81 of the 145 new derivatives** have documented evidence tied to their exact title/fuel/gearbox/engine tuple: **36 manufacturer-backed and 45 UK-market corroborated**. **64 new derivatives remain pending**; verification of original 55 entries remains unchanged.
 - **All 145 new retail and guide prices are unverified, illustrative game values.** No new purchase price is being claimed as a real BCA hammer, CAP HPI valuation or confirmed retail completion.
 
 These are **candidate UK-market derivatives** suitable for beta playtesting; catalogue inclusion is not a guarantee of complete year/trim/engine validation. Do **not** merge as a certified 200-car dataset.
@@ -115,6 +115,48 @@ Added another **25 exact model-year/trim/powertrain/gearbox evidence records**: 
 - **SEAT:** 2020 Leon FR 1.5 TSI manual is not the eTSI DSG, 2020 Arona FR 115PS is not 2021-on facelift 110PS. Year-specific badge distinctions must be preserved.
 - **Valuation unchanged:** retail and trade prices for all 145 additions are still *unverified simulation figures*. This batch establishes names/specifications only; no valuation was recalibrated from manufacturer **new-car** OTR prices.
 
+## Batch 3: Peugeot, Citroën, Renault, Dacia, Suzuki and MG — 13 November 2026
+
+Added 25 year/trim/powertrain evidence records: Peugeot (5), Citroën (4), Renault (5), Dacia (4), Suzuki (4) and MG (3). **Five are manufacturer-backed; 20 are UK dealer/market corroborated.** Total new additions reviewed: **81 / 145**, leaving **64** new entries for further checking. Whole catalogue status: **49 manufacturer-backed, 50 corroborated, 101 pending**.
+
+| # | Added UK derivative | Engine and transmission | Status | Evidence | Limits and important distinctions |
+|---:|---|---|---|---|---|
+| 1 | 2018 Peugeot 108 Active | 1.0 VTi 68, Manual | corroborated | [Evidence](https://www.autouncle.co.uk/en-gb/used-cars/Peugeot/108/y-2018) | UK 2018 dealer stock identifies Peugeot 108 Active 1.0 petrol 68PS five-speed manual. 68PS must not be conflated with the 72PS facelift 1.0 VTi. |
+| 2 | 2018 Peugeot 2008 Allure | 1.2 PureTech 110, Manual | corroborated | [Evidence](https://www.autouncle.co.uk/en-gb/d/44473027-used-2018-peugeot-2008-allure-110-bhp) | UK registered 2018 2008 Allure 1.2 PureTech 110PS manual listed as exact derivative; different from 130PS and EAT6 alternatives. |
+| 3 | 2021 Peugeot 2008 Allure | 1.2 PureTech 130, Manual | corroborated | [Evidence](https://www.autouncle.co.uk/en-gb/d/44565065-used-2021-peugeot-2008-allure) | UK 2021 2008 Allure 1.2 PureTech 130 manual advertisement corroborates exact engine and gearbox, not the 130 EAT8 or 100PS engine. |
+| 4 | 2021 Peugeot 3008 Allure | 1.5 BlueHDi 130 EAT8, Automatic | manufacturer | [Evidence](https://www.media.stellantis.com/uk-en/peugeot/press/peugeot-reveals-updated-3008-and-5008-models) | Peugeot UK 3008 facelift 2021 model-year published pricing table explicitly lists Allure 1.5 BlueHDi 130 eight-speed EAT8 automatic. |
+| 5 | 2021 Peugeot 5008 Allure | 1.5 BlueHDi 130 EAT8, Automatic | manufacturer | [Evidence](https://www.media.stellantis.com/uk-en/peugeot/press/peugeot-reveals-updated-3008-and-5008-models) | Peugeot UK 5008 facelift pricing table lists Allure 1.5 BlueHDi 130 eight-speed EAT8 automatic, distinct from manual diesel or 7-seat petrol. |
+| 6 | 2018 Citroen C1 Feel | 1.0 VTi 68, Manual | corroborated | [Evidence](https://www.pistonheads.com/buy/citroen/c1/year/2018) | UK 2018 C1 Feel 1.0 VTi 68PS manual listed; same registration year also contains updated 72PS cars: game template is specifically the 68PS earlier engine. |
+| 7 | 2019 Citroen C3 Feel | 1.2 PureTech 82, Manual | corroborated | [Evidence](https://www.lookers.co.uk/used-car/citroen/c3/1-2-puretech-82-feel-5dr/id/528065) | Lookers UK registration NJ19MBX: 2019 Citroën C3 Feel 1.2 PureTech 82PS petrol manual. Separate from 83PS later homologation. |
+| 8 | 2021 Citroen C3 Aircross Shine | 1.2 PureTech 110, Manual | manufacturer | [Evidence](https://www.media.stellantis.com/uk-en/citroen/press/citroen-uk-confirms-pricing-and-specifications-for-new-c3-aircross-suv-as-order-books-open) | Citroën UK 2021 UK price/trim/powertrain table explicitly lists Shine 1.2 PureTech 110 six-speed manual. |
+| 9 | 2021 Citroen C5 Aircross Shine | 1.5 BlueHDi 130 EAT8, Automatic | manufacturer | [Evidence](https://www.media.stellantis.com/uk-en/citroen/press/citroen-uk-confirms-new-trim-and-pricing-details-for-its-key-models) | Citroën UK range listing late 2020/2021 shows Shine 1.5 BlueHDi 130 eight-speed EAT8 automatic; do not confuse with Shine manual or Shine Plus. |
+| 10 | 2018 Renault Clio Dynamique Nav | 0.9 TCe 90, Manual | corroborated | [Evidence](https://www.cinch.co.uk/used-cars/renault/clio/details/25b64ed9-a7a9-46e4-8b36-41d5bbf1b61e) | UK 2018 Renault Clio Dynamique Nav 0.9 TCe 90PS petrol manual listed by cinch with exact registration year; previous fourth-generation Clio. |
+| 11 | 2018 Renault Kadjar Dynamique Nav | 1.5 dCi 110, Manual | manufacturer | [Evidence](https://www.press.renault.co.uk/releases/216) | Renault UK factory Kadjar launch specification explicitly lists Dynamique Nav dCi 110 diesel manual; 2018 UK registered exact-trim example independently listed by Lookers. |
+| 12 | 2022 Renault Clio Iconic | 1.0 TCe 90, Manual | corroborated | [Evidence](https://www.honestjohn.co.uk/used-prices/Renault/Clio/2022/?q=Iconic+Manual+TCe) | UK 2022 TCe 90 manual Clio stock often advertised as Iconic Edition: the game title currently abbreviates it to Iconic. Exact 2022 build-badge should be cross-checked before upgrading to manufacturer. |
+| 13 | 2021 Renault Captur Iconic | 1.0 TCe 100, Manual | corroborated | [Evidence](https://www.lookers.co.uk/used-car/renault/captur/1-0-tce-iconic-suv-5dr-petrol-manual-euro-6--s/s---100-ps-/id/855262) | Renault franchise 2021 registered Captur 1.0 TCe 100PS Iconic manual exists, although other 2021 batches were TCe 90: do not assume 100PS for every 2021 Captur. |
+| 14 | 2020 Renault Zoe GT Line R135 | 52 kWh EV, Automatic | corroborated | [Evidence](https://www.askcar.co.uk/car/renault-zoe-2020-c8cfc0f8c4c8) | Registered UK 2020 Renault Zoe R135 GT Line 52kWh usable battery automatic. Different battery lease and charging options require individual checks. |
+| 15 | 2018 Dacia Sandero Ambiance | 1.0 SCe 75, Manual | corroborated | [Evidence](https://www.pistonheads.com/buy/dacia/sandero/year/2018) | UK 2018 Sandero 1.0 SCe 75PS Ambiance five-door petrol manual listings; SCe naturally aspirated, not 0.9 TCe. |
+| 16 | 2018 Dacia Duster Comfort | 1.6 SCe 115, Manual | corroborated | [Evidence](https://askcar.co.uk/used-cars/dacia/duster/comfort/2018) | UK 2018 Duster second-generation Comfort 1.6 SCe 115PS petrol manual multiple dealer adverts. First-generation Duster trims differ. |
+| 17 | 2022 Dacia Sandero Stepway Comfort | 1.0 TCe 90, Manual | corroborated | [Evidence](https://www.honestjohn.co.uk/used-prices/Dacia/Sandero--Stepway/SUV/2022/?q=Comfort+TCe) | UK 2022 Sandero Stepway Comfort 1.0 TCe 90 petrol manual; separate from Bi-Fuel ECO-G Comfort. |
+| 18 | 2023 Dacia Jogger Expression | 1.0 TCe 110, Manual | corroborated | [Evidence](https://www.autouncle.co.uk/en-gb/d/44566306-used-2023-dacia-jogger-expression-110-bhp) | 2023 UK Jogger Expression 1.0 TCe 110PS petrol manual; seven-seat MPV, not Duster SUV, e.g. Cazoo advert indexed by AutoUncle. |
+| 19 | 2018 Suzuki Swift SZ3 | 1.2 Dualjet, Manual | corroborated | [Evidence](https://www.lookers.co.uk/used-car/suzuki/swift/1-2-dualjet-sz3-5dr/id/859656) | Lookers UK registered DW18GMO Swift SZ3 1.2 Dualjet K12C 90PS five-speed manual. Not Swift Sport Boosterjet. |
+| 20 | 2019 Suzuki Ignis SZ3 | 1.2 Dualjet, Manual | corroborated | [Evidence](https://askcar.co.uk/car/suzuki-ignis-2019-babcb1c3c2b8) | UK 2019 Ignis SZ3 1.2 Dualjet petrol manual 2WD, not the separate SHVS mild-hybrid SZ3. |
+| 21 | 2020 Suzuki Vitara SZ-T | 1.4 Boosterjet MHEV, Manual | corroborated | [Evidence](https://www.askcar.co.uk/car/suzuki-vitara-2020-624df18742a6) | 2020 UK Vitara SZ-T 1.4 Boosterjet 48V mild-hybrid manual FWD. Game fuel 'Petrol' includes mild hybrids, engine annotation identifies MHEV. |
+| 22 | 2020 Suzuki Swift Sport | 1.4 Boosterjet MHEV, Manual | corroborated | [Evidence](https://www.lookers.co.uk/used-car/suzuki/swift/1-4-boosterjet-48v-hybrid-sport-5dr/id/605216) | UK 2020 Swift Sport 1.4 Boosterjet K14D 48V MHEV 129PS 6-speed manual; distinct from 2018 non-hybrid 140PS Sport. |
+| 23 | 2020 MG MG3 Excite | 1.5 VTi-TECH 106, Manual | corroborated | [Evidence](https://www.richardsonsoflincoln.co.uk/used-mg-mg3-lincoln-lincolnshire-8327175) | UK 2020 MG3 Excite 1.5 VTi-TECH 106PS petrol five-speed manual, 70-plate example from independent dealer. |
+| 24 | 2021 MG ZS Exclusive | 1.5 VTi-TECH 106, Manual | corroborated | [Evidence](https://www.lookers.co.uk/used-car/mg-motor-uk/zs/1-5-vti-tech-exclusive-5dr/id/750199) | Lookers MG UK Brighton registered 2021 ZS Exclusive 1.5 VTi-TECH 106PS petrol manual; not 1.0 T-GDI 111PS automatic. |
+| 25 | 2022 MG HS Excite | 1.5 T-GDI 162, Manual | corroborated | [Evidence](https://www.lookers.co.uk/used-car/mg-motor-uk/hs/1-5-t-gdi-excite-suv-5dr-petrol-manual-euro-6--s/s---162-ps-/id/787160) | Lookers UK registered 2022 MG HS Excite 1.5 T-GDI 162PS petrol manual; different from PHEV HS and automatic Excite. |
+
+### Batch 3 findings
+
+- **PS differences must be recorded, not erased:** UK 2018 Citroën C1 1.0 VTi **68PS** stock coexists with later **72PS** models; similarly the 2020 mild-hybrid Swift Sport 1.4 Boosterjet is **129PS**, not the earlier non-hybrid 140PS version.
+- **Renault Captur 2021 TCe100 exists** as an exact 2021 UK registered example but many other 2021 Iconic cars are 90PS. Keep engine by specific derivative, never assign a single engine to every year and trim.
+- **Renault Kadjar Dynamique Nav is genuine:** Renault UK factory model table lists dCi110 manual and a registered 2018 car matches it. Distinguish from Dynamique S Nav.
+- **2022 Clio 'Iconic'** may be more precisely named 'Iconic Edition' on some 2022 registered vehicles. This is noted on the corroborated record, not upgraded to direct manufacturer status until exact order guide is found.
+- **Mild hybrid taxonomy:** Suzuki Vitara 2020 1.4 Boosterjet MHEV and Swift Sport 48V MHEV show `Petrol` as fuel in game while recording the MHEV powertrain in engine. Source data should eventually separate propulsion category from mild-hybrid technology.
+- **MG ZS 1.5** must not be confused with MG ZS EV or 1.0 T-GDI automatic; MG HS 1.5 T-GDI 162 manual is not the HS plug-in hybrid.
+- **Prices not yet audited:** observed 2026 advertisements were used to validate that variants are offered in the UK, *not* to claim real wholesale sold prices or to overwrite the game's illustrative retail/auction assumptions.
+
 ## Used UK supply weighting
 
 SMMT Q3 2026 UK used-car transaction mix is heavily petrol and diesel, with smaller hybrid/EV shares. The beta changes the source fuel selection weights for the 2026 career to rounded **56% petrol, 31% diesel, 7% hybrid, 5% electric, 1% PHEV**. These are *game sampling guides*, not promises of the exact resulting mix, because the available band/type pool may lack a matching car.
@@ -125,7 +167,7 @@ An accurate future phase should use **model-level** transaction/parc frequency, 
 
 ## Known realism limits / merge gate
 
-1. Independently verify **the remaining 89 new derivative tuples**, using dated UK manufacturer brochures or reliable official used inventory. Correct or remove any combination that cannot be substantiated.
+1. Independently verify **the remaining 64 new derivative tuples**, using dated UK manufacturer brochures or reliable official used inventory. Correct or remove any combination that cannot be substantiated.
 2. Collect exact UK retail comparable records **and separate actual wholesale benchmark evidence**. Do not reverse-engineer trade values simply to ensure profits.
 3. Existing BCA Blue auction fees have no published rate above **£24,999**; high-value cars can appear in the catalogue but the auction cannot settle without a supported quote. Do not invent fee tariffs. Consider custom high-value account quotes before releasing prestige sourcing.
 4. The original curated vehicle-photo library does not cover most new models. The beta deliberately shows **photo unavailable** for unmatched make/generation/colour, instead of reusing incorrect copyrighted photos. Unsupported generation labels are disclosed as not verified.
