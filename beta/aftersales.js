@@ -146,7 +146,14 @@
       cost:sale.acquisition+sale.prep,prepSpent:0,
       workshop:window.MotorTradeWorkshop.initial(copy)};
     c.returnedVehicleId=v.id;
-    if(s.vehicles.length<s.capacity){
+    if(s.financialScenario==='uk2026'){
+      // A refunded car is owned inventory: bring it into paid off-site storage
+      // when all four retail display positions are full; do not lose it or
+      // leave customer liabilities stranded in a hidden forecourt queue.
+      const onsite=s.vehicles.filter(x=>!x.storageLocation||x.storageLocation==='forecourt').length;
+      v.storageLocation=onsite<s.capacity?'forecourt':'offsite';
+      s.vehicles.push(v);s.stock=s.vehicles.length;
+    }else if(s.vehicles.length<s.capacity){
       s.vehicles.push(v);s.stock=s.vehicles.length;
     }else c.heldReturned=v;
   }
@@ -185,11 +192,17 @@
     const c=caseFor(s,id);
     if(!c||c.status!=='refunded'||!c.heldReturned)
       return fail('stock','No recovered vehicle is waiting at offsite storage.');
-    if(s.vehicles.length>=s.capacity)
+    if(s.financialScenario==='uk2026'){
+      const onsite=s.vehicles.filter(x=>!x.storageLocation||x.storageLocation==='forecourt').length;
+      c.heldReturned.storageLocation=onsite<s.capacity?'forecourt':'offsite';
+    }else if(s.vehicles.length>=s.capacity){
       return fail('capacity','Forecourt is full. The returned vehicle remains held offsite.');
+    }
     s.vehicles.push(c.heldReturned);c.heldReturned=null;
     s.stock=s.vehicles.length;
-    return ok('Recovered vehicle placed into workshop queue for re-assessment; its original stock cost is preserved.');
+    return ok('Recovered vehicle placed into the workshop queue'+
+      (s.financialScenario==='uk2026'?' or paid external compound':'')+
+      '; its original stock cost is preserved.');
   }
   function advance(s){
     if(!enabled(s))return [];
