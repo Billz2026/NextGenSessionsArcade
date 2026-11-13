@@ -166,6 +166,15 @@
           </header>
           <div class="game-notice" id="save-warning" role="status" hidden>Browser storage is unavailable. This career is playable in this tab, but progress may not be saved after you leave.</div>
           <div class="game-notice game-event" id="event-notice" role="status" hidden></div>
+          <aside id="auction-flash" class="auction-flash" role="status" aria-live="polite" hidden>
+            <div><span class="auction-flash-pulse" aria-hidden="true">●</span>
+              <strong>WEEKLY MOTOR AUCTION IS ON TODAY</strong>
+              <small>Numbered lots are on the rostrum. Attend or decline this week's auction.</small></div>
+            <div class="auction-flash-actions">
+              <button type="button" data-action="enter-weekly-auction">ENTER AUCTION HALL</button>
+              <button type="button" data-action="skip-weekly-auction">SKIP THIS WEEK</button>
+            </div>
+          </aside>
           <button type="button" id="trade-feedback-toast" class="trade-feedback-toast" data-action="dismiss-feedback" role="status" aria-live="polite" aria-label="Trading result, click to dismiss" hidden></button>
 
           <div class="career-content">
