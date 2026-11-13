@@ -46,6 +46,9 @@ test('homepage uses real NextGen Sessions logo and separates three views', () =>
   assert.match(html, /trade-wordmark-hero/);
   assert.doesNotMatch(html, /menu-aside|menu-footer|feature-line/);
   assert.match(html, /id="career-form"/);
+  for (const id of ['career-tools','career-export','career-restore','career-import-file','menu-save-warning'])
+    assert.match(html, new RegExp('id="' + id + '"'));
+  assert.match(html, /data-action="open-career-tools"/);
   assert.match(html, /id="dealership-name"/);
   assert.ok(existsSync(new URL('assets/nextgen-header-wordmark-2026.webp', root)));
   assert.ok(existsSync(new URL('assets/hatchback-study.svg', root)));
@@ -77,8 +80,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /buying-desk-view\.js\?v=2/);
   assert.match(html, /stock-view\.js\?v=1/);
   assert.match(html, /finance-view\.js\?v=2/);
-  assert.match(html, /styles\.css\?v=49/);
-  assert.match(html, /simulator\.js\?v=32/);
+  assert.match(html, /styles\.css\?v=50/);
+  assert.match(html, /career-storage\.js\?v=1/);
+  assert.match(html, /simulator\.js\?v=33/);
   assert.match(html, /premises\.js\?v=1/);
   assert.match(html, /premises-view\.js\?v=3/);
   assert.match(html, /id="premises-view"/);
@@ -597,7 +601,7 @@ test('homepage uses the original NextGen wordmark and standalone vector Motor Tr
   assert.match(svg, /<path d="/);
   assert.match(html, /src="\.\/assets\/nextgen-header-wordmark-2026\.webp"/);
   assert.match(html, /src="\.\/assets\/the-motor-trade-premium\.svg"/);
-  assert.match(html, /styles\.css\?v=49/);
+  assert.match(html, /styles\.css\?v=50/);
 });
 test('the title has no black plaque or clipping-prone CSS text gradient', () => {
   const titleStyles = css.match(/#screen-menu \.trade-wordmark-hero \{([\s\S]*?)\}/)?.[1] ?? '';
@@ -4969,7 +4973,7 @@ test('v0.9.27 ledger HTML escapes special punctuation',()=>{
   assert.match(result,/Bob&#39;s ledger/);
   assert.doesNotMatch(result,/<span onclick/);
   assert.match(html,/finance-view\.js\?v=2/);
-  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/styles\.css\?v=50/);
 });
 
 
@@ -5305,7 +5309,7 @@ test('v0.9.32 staff and recruitment preserve readable skills while collapsing se
 
 test('v0.9.32 compact Staff & Recruitment desktop styles retain labels and responsive grid',()=>{
   assert.match(html,/PRE-ALPHA · v0\.9\.35/);
-  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/styles\.css\?v=50/);
   assert.match(html,/people-view\.js\?v=7/);
   assert.match(css,/\.career-main:has\(\[data-panel="staff"\]:not\(\[hidden\]\)\) \.career-topbar/);
   assert.match(css,/\.sd-kpis>div\{min-height:56px/);
@@ -5420,7 +5424,7 @@ test('v0.9.33 Reputation uses compact responsive layout without removing complet
   assert.match(css,/\.rep-main-grid\{display:grid/);
   assert.match(css,/\.rep-history-preview\{display:grid/);
   assert.match(css,/@media\(max-width:760px\)/);
-  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/styles\.css\?v=50/);
   assert.match(html,/people-view\.js\?v=7/);
 });
 
@@ -5605,7 +5609,7 @@ test('v0.9.35 blocked and maximum upgrades still retain accurate eligibility',()
 
 test('v0.9.35 one-page desktop polish is scoped to My Dealership and retains mobile layout',()=>{
   assert.match(html,/PRE-ALPHA · v0\.9\.35/);
-  assert.match(html,/styles\.css\?v=49/);
+  assert.match(html,/styles\.css\?v=50/);
   assert.match(html,/premises-view\.js\?v=3/);
   assert.match(css,/v0\.9\.35 — Final My Dealership single-screen desktop polish/);
   assert.match(css,/\.career-layout:has\(\[data-panel="business"\]:not\(\[hidden\]\)\) \.career-topbar/);
