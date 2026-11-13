@@ -65,7 +65,8 @@
         '<strong>'+esc(v.title)+'</strong>'+
         '<small>'+mileage(v.miles)+' · '+esc(v.fuel)+' · '+esc(v.gearbox)+'</small>'+
         (v.storageLocation&&v.storageLocation!=='forecourt'?
-          '<small>'+esc(v.storageLocation==='external'?'AT EXTERNAL REPAIRER':'PAID OFF-SITE STORAGE')+'</small>':'')+
+          '<small>'+esc(v.storageLocation==='external'?'AT EXTERNAL REPAIRER':
+            v.storageLocation==='viewing'?'CUSTOMER VIEWING BAY':'PAID OFF-SITE STORAGE')+'</small>':'')+
         '<span class="stock-unit-bottom"><span class="stock-status stock-status-'+p.tone+'">'+p.label+'</span>'+
         '<b class="'+ageClass+'">'+age+' DAYS</b></span>'+
         '<span class="stock-unit-cost">INVESTED '+money(f.invested)+'</span>'+
@@ -77,14 +78,9 @@
   }
   function controls(v,state){
     const p=phase(v),stage=v.workshop?.stage;
-    if(v.storageLocation==='offsite'&&v.status==='prepared'){
-      const count=state.vehicles.filter(x=>!x.storageLocation||x.storageLocation==='forecourt').length;
-      const space=count<state.capacity;
-      return '<div class="stock-action-box"><h4>OFF-SITE HOLDING · £12 / GAME DAY</h4>'+
-        '<p>This vehicle is fully prepared but is not on display. A £35 relocation to an empty forecourt space is required before advertising.</p>'+
-        (space?'<button type="button" class="trade-button" data-action="move-stock-forecourt" data-id="'+v.id+'">MOVE TO FORECOURT · £35</button>':
-          '<p class="stock-lock-note">ALL DISPLAY SPACES OCCUPIED. Free a space first.</p>')+'</div>';
-    }
+    // A fully prepared off-site car may be listed online without consuming
+    // showroom space. Booking the first appointment carries a paid transfer
+    // and a 48-hour delay, never an instant on-site test drive.
     if(v.status==='acquired'){
       const guidance=stage==='in-progress'?
         (v.workshop.paused?'Repairs paused — review staffing or transfer the job.':
@@ -102,8 +98,14 @@
       ['agreed','reserved','collectable'].includes(caseRecord.status);
     const price=Number.isSafeInteger(v.asking)?v.asking:v.retail;
     return '<div class="stock-action-box"><h4>NEXT DECISION · '+p.next+'</h4>'+
-      (v.status==='listed'?'<p>Advertising is live. Buyer interest and agreements are managed in the Sales Office.</p>':
-        '<p>Quality control has passed. Set your asking price to advertise the car.</p>')+
+      (v.status==='listed'?'<p>Advertising is live. '+
+        (v.storageLocation==='offsite'?
+          'This car is OFF-SITE: customer viewings require a paid £35 presentation transfer and 48 hours. No permanent forecourt space is needed.':
+          v.storageLocation==='viewing'?'The vehicle is temporarily at the customer appointment bay.':
+          'Buyer interest and agreements are managed in the Sales Office.')+'</p>':
+        '<p>Quality control has passed. '+(v.storageLocation==='offsite'?
+          'You can advertise from the paid off-site compound. Viewing requires 48-hour logistics and £35 booking transfer.':
+          'Set your asking price to advertise the car.')+'</p>')+
       (locked?'<p class="stock-lock-note">PRICING LOCKED · An active customer agreement must be resolved in the Sales Office.</p>':'')+
       '<div class="stock-price-action"><label for="stock-price-'+v.id+
       '">RETAIL ASKING PRICE (£)<input class="trade-input" id="stock-price-'+v.id+
@@ -143,7 +145,9 @@
       '<div class="stock-facts"><div><small>ACQUIRED</small><strong>GAME DAY '+v.acquiredDay+'</strong></div>'+
       '<div><small>DAYS HELD</small><strong class="'+(age>=30?'stock-age-warning':'')+'">'+age+'</strong></div>'+
       '<div><small>SOURCE</small><strong>'+esc(source)+'</strong></div>'+
-      '<div><small>LOCATION</small><strong>'+esc(v.storageLocation==='external'?'OUTSIDE REPAIRER':v.storageLocation==='offsite'?'PAID STORAGE':'FORECOURT')+'</strong></div>'+
+      '<div><small>LOCATION</small><strong>'+esc(v.storageLocation==='external'?'OUTSIDE REPAIRER':
+          v.storageLocation==='offsite'?'PAID STORAGE':
+          v.storageLocation==='viewing'?'CUSTOMER VIEWING BAY':'FORECOURT')+'</strong></div>'+
       '<div><small>CONDITION</small><strong>GRADE '+grade+' / 5</strong></div></div>'+
       (risk?'<div class="stock-aged-alert">'+risk+'</div>':'')+
       priceReview+
