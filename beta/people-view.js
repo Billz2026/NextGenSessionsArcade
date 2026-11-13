@@ -256,7 +256,7 @@
     return {name:'AVAILABLE',tone:'available'};
   }
   function recruitStatus(state,P,c){
-    const hired=state.staff.some(e=>e.name===c.name);
+    const hired=state.staff.some(e=>e.candidateId===c.id);
     const roleFull=state.staff.filter(e=>e.role===c.role).length>=P.roleLimit(state,c.role);
     const teamFull=state.staff.length>=P.staffLimit(state);
     const quote=P.hireQuote(state,c);
@@ -350,7 +350,8 @@
       '<div><small>'+(state.employmentScenario==='uk2026-payroll'?'DAILY BASE ACCRUAL':'DAILY PAYROLL ADDED')+'</small><strong>'+gbp(staffDaily)+'</strong></div>'+
       '<div><small>EXPERIENCE</small><strong>'+c.experience+' YEARS</strong></div>'+
       '<div><small>ROLE CAPACITY</small><strong>'+
-      state.staff.filter(e=>e.role===c.role).length+' / '+P.roleLimit(state,c.role)+
+      state.staff.filter(e=>e.role===c.role).length+' / '+
+       (Number.isFinite(P.roleLimit(state,c.role))?P.roleLimit(state,c.role):'OPEN')+
       '</strong></div></div>'+
       '<div class="sd-person-detail"><div>'+skillSection(c,P)+
       '</div><div class="sd-control"><div class="sd-section-head"><h4>HIRING DECISION</h4>'+
@@ -374,7 +375,7 @@
       esc(c.id)+'"'+(info.canHire?'':' disabled')+'>'+
       (info.canHire?'HIRE '+esc(c.name.toUpperCase())+' · '+gbp(P.HIRING_FEE):
         'CANNOT HIRE · '+esc(info.reason))+'</button>'+
-      '<p class="sd-fine">'+(state.employmentScenario==='uk2026-payroll'? 'Joining fee now; full base salary accrues after starting. Net wages settle on calendar-month payday, then PAYE/NI and pension contributions are remitted. Hiring requires a month of total employment cost including NI and pension before any Employment Allowance offset, with outstanding stock and tax reserves protected.':'Hiring charges only the onboarding fee now. '+gbp(staffDaily)+' daily wages begin thereafter. Cash is reserved for three days of total payroll, existing arrears and outstanding vehicle preparation.')+'</p>'+
+      '<p class="sd-fine">'+(state.employmentScenario==='uk2026-payroll'? 'No artificial UK2026 team size or role cap: hiring is limited by real candidate availability, employment cash buffer and future payroll. Joining fee now; full base salary accrues after starting. Net wages settle on calendar-month payday, then PAYE/NI and pension contributions are remitted. Hiring requires a month of total employment cost including NI and pension before any Employment Allowance offset, with outstanding stock and tax reserves protected.':'Hiring charges only the onboarding fee now. '+gbp(staffDaily)+' daily wages begin thereafter. Cash is reserved for three days of total payroll, existing arrears and outstanding vehicle preparation.')+'</p>'+
       '</div></div></div>';
   }
   function staffDesk(state,P,{mode=null,role='all',selectedId=null}={}){
@@ -390,7 +391,8 @@
     const week=Math.floor((state.day-1)/7);
     const nextRefresh=(week+1)*7+1;
     const quick='<div class="sd-kpis">'+[
-      ['EMPLOYEES HIRED',counts.employed+' / '+counts.rolesTotal],
+      ['EMPLOYEES HIRED',counts.employed+
+        (Number.isFinite(counts.rolesTotal)?' / '+counts.rolesTotal:' · NO FIXED CAP')],
       ['ACTIVE TODAY',String(counts.active)],
       [state.employmentScenario==='uk2026-payroll'?'DAILY SALARY ACCRUAL':'DAILY WAGE BILL',gbp(counts.daily)],
       ['CANDIDATES ON MARKET',String(counts.candidates)]
