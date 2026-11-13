@@ -828,7 +828,8 @@
     // workshops, payroll decisions or time progression to spend its funds.
     if(career?.auctionHall?.phase==='payment'&&
        !['settle-auction','toggle-report','preview-auction','close-auction-preview',
-         'menu','resume','dashboard','new-career','select-report'].includes(button.dataset.action)){
+         'menu','resume','dashboard','new-career','select-report',
+          'toggle-career-tools','open-career-tools','export-career','choose-import','restore-career'].includes(button.dataset.action)){
       currentPage='auctionHall';
       eventNotice='Auction invoice outstanding. Pay the hammer plus buyer fee before other dealership decisions.';
       render();
