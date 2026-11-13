@@ -2916,3 +2916,31 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
 .auction-flash-actions button+button{background:transparent;color:#f4dec3;border-color:#ae9072}
 @media(max-width:800px){.auction-flash{align-items:stretch;flex-direction:column}
  .auction-flash-actions button{flex:1}}
+
+/* Independent customer aftermarket: revenue and satisfaction, no tied forecourt slots */
+.service-desk{display:grid;gap:17px}
+.service-desk section{background:var(--surface,#14202a);border:1px solid rgba(255,255,255,.13);
+ border-radius:12px;padding:17px;display:grid;gap:10px}
+.service-desk h2{font:800 23px 'Barlow Condensed',sans-serif;margin:0;letter-spacing:.5px}
+.service-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.service-metrics>div{background:rgba(143,166,183,.09);border:1px solid rgba(255,255,255,.12);
+ border-radius:9px;padding:14px;display:grid;gap:5px}
+.service-metrics small,.service-offer small{font-size:10px;letter-spacing:.6px;color:#a9b9c3}
+.service-metrics strong{font-size:21px;color:#fafafa}
+.service-offer{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.13);
+ border-radius:10px;padding:14px;display:flex;justify-content:space-between;gap:16px}
+.service-offer h3{margin:4px 0;font:800 21px 'Barlow Condensed',sans-serif}
+.service-offer p{margin:5px 0;color:#c5ced6;font-size:13px}
+.service-offer .service-legal{font-size:11px;color:#edc389}
+.service-price{display:grid;gap:7px;align-content:center;min-width:200px}
+.service-price span{font-weight:800;color:#f1c07e;font-size:14px}
+.service-price button{cursor:pointer;background:#d6944d;color:#161c20;border:0;border-radius:6px;
+ font-weight:800;padding:11px}
+.service-price button:disabled{opacity:.35;cursor:not-allowed}
+.service-job{display:flex;justify-content:space-between;align-items:center;gap:12px;
+ padding:11px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+.service-job strong{font-size:12px}.service-job span{font-size:11px;color:#a9b9c3}
+.service-explain,.service-empty{color:#afc0c9;font-size:12px;line-height:1.6;margin:0}
+@media(max-width:980px){.service-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .service-offer{flex-direction:column}.service-job{flex-direction:column;align-items:flex-start}}
+@media(max-width:480px){.service-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
