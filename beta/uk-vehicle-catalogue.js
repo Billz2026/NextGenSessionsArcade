@@ -983,6 +983,357 @@
     "corroborated",
     "https://www.southgrovemotorcompany.co.uk/used-land-rover-discovery-bolton-lancashire-7432351",
     "UK 2021 full-size Land Rover Discovery D250 MHEV S 3.0 six-cylinder 250PS diesel automatic 4WD registered dealer example; distinct from Discovery Sport and D300."
+  ],
+  [
+    "2017 Nissan Juke N-Connecta",
+    "Petrol",
+    "Manual",
+    "1.2 DIG-T 115",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44723401-used-2017-nissan-juke-n-connecta-115-bhp",
+    "UK 2017 registered Juke N-Connecta 1.2 DIG-T 115PS manual example; not the 1.5 dCi or later 1.0 DIG-T."
+  ],
+  [
+    "2017 Ford Mondeo Zetec",
+    "Diesel",
+    "Manual",
+    "2.0 TDCi 150",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44633288-used-2017-ford-mondeo-zetec-150-bhp",
+    "Registered UK 2017 Mondeo Zetec 2.0 TDCi 150PS diesel manual hatchback; estate body style should be stored separately."
+  ],
+  [
+    "2017 Vauxhall Insignia SRi Nav",
+    "Diesel",
+    "Manual",
+    "1.6 CDTi 136",
+    "corroborated",
+    "https://askcar.co.uk/used-cars/vauxhall/insignia/sri-nav/2017",
+    "UK 2017 Insignia SRi Nav 1.6 CDTi 136PS diesel manual exists; do not confuse with SRi Vx-Line Nav or later 1.6 Turbo D 136."
+  ],
+  [
+    "2018 Kia Sportage 1",
+    "Petrol",
+    "Manual",
+    "1.6 GDi",
+    "corroborated",
+    "https://www.honestjohn.co.uk/used-prices/Kia/Sportage/2018/?q=1+GDi+Manual",
+    "UK 2018 Sportage entry-grade 1, 1.6 GDi petrol manual identified by exact grade/engine/gearbox used pricing filters; unlike grade 2 and GT-Line."
+  ],
+  [
+    "2017 Fiat 500 Lounge",
+    "Petrol",
+    "Manual",
+    "1.2 69",
+    "manufacturer",
+    "https://www.media.stellantis.com/uk-en/fiat/press/new-fiat-500-uk-pricing-and-specifications-announced",
+    "Fiat UK Lounge 1.2 69hp five-speed manual present in official 2015 launch table and continued to 2017; ordinary 500 hatch, not 500C."
+  ],
+  [
+    "2017 Mitsubishi ASX 3",
+    "Petrol",
+    "Manual",
+    "1.6 MIVEC",
+    "corroborated",
+    "https://www.whatcar.com/used-cars/mitsubishi/asx",
+    "UK 2017 1.6 petrol 3 manual Euro 6 used example; MIVEC is naturally aspirated, not 1.6 diesel or 4WD automatic."
+  ],
+  [
+    "2018 Jeep Renegade Longitude",
+    "Diesel",
+    "Manual",
+    "1.6 MultiJet II 120",
+    "corroborated",
+    "https://www.cazoo.co.uk/cars/jeep/renegade/longitude/2018/",
+    "UK 2018 Renegade Longitude 1.6 MultiJet II 120PS diesel manual listings; not 1.6 E-torQ petrol Longitude."
+  ],
+  [
+    "2017 Fiat Tipo Easy",
+    "Petrol",
+    "Manual",
+    "1.4 95",
+    "corroborated",
+    "https://www.media.stellantis.com/uk-en/fiat/press/new-sport-model-joins-refreshed-fiat-tipo-range",
+    "Fiat UK historic Easy trim with 1.4 naturally aspirated 95hp six-speed manual documented in range; this 2019 release supports continuing powertrain, but exact 2017 build sheet not supplied."
+  ],
+  [
+    "2018 Mazda Mazda6 SE-L Nav+",
+    "Diesel",
+    "Manual",
+    "2.2 Skyactiv-D 150",
+    "corroborated",
+    "https://www.pistonheads.com/buy/mazda/mazda6/year/2018",
+    "UK registered 2018 Mazda6 SE-L Nav+ 2.2 SKYACTIV-D 150PS diesel manual examples; updated badge Nav+ rather than assuming SE-L Nav."
+  ],
+  [
+    "2021 Nissan X-Trail N-Connecta",
+    "Diesel",
+    "Manual",
+    "1.7 dCi 150",
+    "corroborated",
+    "https://www.pistonheads.com/buy/nissan/x-trail/year/2021",
+    "2021 UK X-Trail N-Connecta 1.7 dCi 150PS diesel manual advertised; distinct from Qashqai and 1.3 DIG-T DCT."
+  ],
+  [
+    "2021 Ford Focus Titanium Edition MHEV",
+    "Petrol",
+    "Manual",
+    "1.0 EcoBoost 125 MHEV",
+    "corroborated",
+    "https://cars.rac.co.uk/cars/used/ford/focus/titanium-edition/petrol/manual",
+    "UK 2021 Focus Titanium Edition 1.0 EcoBoost 125PS MHEV manual listings; corrected earlier generic Titanium to exact Edition MHEV badge."
+  ],
+  [
+    "2021 Vauxhall Grandland X Elite",
+    "Petrol",
+    "Automatic",
+    "1.2 Turbo 130 EAT8",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44718373-used-2021-vauxhall-grandland-x-elite-130-bhp",
+    "2021 Grandland X Elite 1.2 turbo petrol 130PS eight-speed automatic UK example, often badged Elite Nav; not PHEV Grandland."
+  ],
+  [
+    "2020 Vauxhall Insignia SRi Vx-Line Nav",
+    "Petrol",
+    "Manual",
+    "1.5 Turbo 165",
+    "corroborated",
+    "https://www.lookers.co.uk/vauxhall/used-car/vauxhall/insignia/1-5t-sri-vx-line-nav-5dr/id/868400",
+    "Lookers Vauxhall 2020 registered 1.5T SRi Vx-Line Nav 165PS six-speed manual confirms precise trim; corrected game from generic SRi Nav."
+  ],
+  [
+    "2020 Skoda Octavia SE First Edition",
+    "Petrol",
+    "Manual",
+    "1.5 TSI 150",
+    "manufacturer",
+    "https://www.skoda.co.uk/news/details/uk-pricing-and-specifications-announced-for-all-new-skoda-octavia",
+    "Škoda UK 4 May 2020 all-new fourth-generation SE First Edition 1.5 TSI 150PS six-speed manual hatch listed explicitly; corrected original ambiguous SE badge."
+  ],
+  [
+    "2020 Skoda Karoq SE",
+    "Petrol",
+    "Manual",
+    "1.5 TSI 150",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44391239-used-2020-skoda-karoq-se-150-bhp",
+    "UK 2020 Karoq SE 1.5 TSI 150PS petrol manual registered car example, not SE L, SE Drive or DSG."
+  ],
+  [
+    "2020 Hyundai Ioniq Premium Hybrid",
+    "Hybrid",
+    "Automatic",
+    "1.6 GDi hybrid DCT",
+    "corroborated",
+    "https://drive.co.uk/cars/used/hyundai/ioniq/hybrid/automatic?from=heycar-uk",
+    "UK Ioniq 1.6 GDi full hybrid Premium automatic DCT trim and 2020 examples; exclude separately marketed PHEV, EV and Premium SE."
+  ],
+  [
+    "2021 Kia Stonic GT-Line S MHEV",
+    "Petrol",
+    "Manual",
+    "1.0 T-GDi 118 MHEV",
+    "corroborated",
+    "https://askcar.co.uk/car/kia-stonic-2021-642e8174f1ec",
+    "2021 UK Kia Stonic GT-Line S 1.0 T-GDi 48V MHEV 118bhp manual FWD; corrected mislabelled grade 3 with this evidenced 118PS manual combination."
+  ],
+  [
+    "2019 MINI Hatch Cooper",
+    "Petrol",
+    "Manual",
+    "1.5 TwinPower Turbo",
+    "corroborated",
+    "https://www.hplmotors.co.uk/used/cars/mini/hatch/1-5-cooper-classic-hatchback-5dr-petrol-manual-euro-6-s-s-136-ps-26628",
+    "UK registered 2019 MINI Hatch Cooper 1.5 petrol 136PS manual, Classic example; 3/5-door body and subtrim not yet encoded."
+  ],
+  [
+    "2020 MINI Clubman Cooper",
+    "Petrol",
+    "Manual",
+    "1.5 TwinPower Turbo",
+    "corroborated",
+    "https://www.pistonheads.com/buy/mini/clubman-cooper/year/2020",
+    "2020 MINI Clubman Cooper 1.5 petrol 136PS six-speed manual UK estate listings; not Cooper S 2.0 or Cooper D diesel."
+  ],
+  [
+    "2019 Lexus CT 200h",
+    "Hybrid",
+    "Automatic",
+    "1.8 hybrid e-CVT",
+    "manufacturer",
+    "https://media.lexus.co.uk/lexus-releases-the-new-2019-ct-200h/",
+    "Lexus UK official 1 November 2018 2019 CT200h 1.8 self-charging hybrid 134bhp E-CVT; not CT F Sport variant unless separately specified."
+  ],
+  [
+    "2020 Jaguar F-Pace Prestige D180",
+    "Diesel",
+    "Automatic",
+    "2.0 D180 AWD automatic",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44646039-used-2020-jaguar-f-pace-prestige-179-bhp",
+    "Registered UK 2020 F-Pace Prestige 2.0 D180 diesel auto all-wheel-drive case; contemporary 2020 tax listings also include RWD D180 auto, so this template selects AWD specifically."
+  ],
+  [
+    "2021 Mitsubishi Outlander PHEV Dynamic",
+    "Plug-in Hybrid",
+    "Automatic",
+    "2.4 PHEV AWD",
+    "corroborated",
+    "https://www.cazoo.co.uk/cars/mitsubishi/outlander/dynamic/2021/",
+    "UK 2021 Outlander Dynamic 2.4 petrol PHEV automatic 4WD with twin-motor electric drive; not 2.2 diesel or non-PHEV."
+  ],
+  [
+    "2020 Jeep Compass Limited",
+    "Petrol",
+    "Manual",
+    "1.4 MultiAir 140",
+    "corroborated",
+    "https://www.cazoo.co.uk/cars/jeep/compass/limited/2020/",
+    "2020 UK Compass Limited 1.4 MultiAir II 140PS petrol manual documented by trade listings; not automatic 4WD variant."
+  ],
+  [
+    "2020 Subaru Forester XE e-BOXER",
+    "Hybrid",
+    "Automatic",
+    "2.0 e-BOXER Lineartronic",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44618242-used-2020-subaru-forester-xe-147-bhp",
+    "2020 Forester XE 2.0i e-BOXER petrol hybrid 147PS Lineartronic automatic UK record; Subaru symmetric AWD in this generation."
+  ],
+  [
+    "2020 Subaru XV SE Premium e-BOXER",
+    "Hybrid",
+    "Automatic",
+    "2.0 e-BOXER Lineartronic",
+    "corroborated",
+    "https://www.autotrader.co.uk/cars/used/subaru/xv/2020",
+    "UK 2020 XV SE Premium 2.0i e-BOXER hybrid Lineartronic AWD registered car listings; distinct from petrol 1.6i SE Premium."
+  ],
+  [
+    "2020 Audi Q3 35 TFSI S line",
+    "Petrol",
+    "Automatic",
+    "1.5 TFSI 150 S tronic",
+    "corroborated",
+    "https://citygate.co.uk/cars/used/audi/q3/wj20chx/",
+    "UK reg WJ20CHX 2020 Audi Q3 S line 35 TFSI 150PS 1.5 petrol S tronic; Sportback also sold, exact body needs separate schema."
+  ],
+  [
+    "2020 Audi A4 35 TDI S line",
+    "Diesel",
+    "Automatic",
+    "2.0 TDI S tronic",
+    "corroborated",
+    "https://www.autotrader.co.uk/cars/used/audi/saloon/a4/2020",
+    "UK 2020 Audi A4 saloon 35 TDI 2.0 diesel S line S tronic listed explicitly; saloon and Avant variants differ in body only, not assumed engine change."
+  ],
+  [
+    "2020 Mercedes-Benz GLC220d AMG Line",
+    "Diesel",
+    "Automatic",
+    "2.0 diesel 4MATIC 9G-Tronic",
+    "corroborated",
+    "https://www.cinch.co.uk/used-cars/mercedes-benz/glc/details/6621ed8c-3859-408a-b98c-a5d0efe3c283",
+    "UK registered 2020 GLC 220d 4MATIC AMG Line diesel automatic 9G-Tronic exact trim example; do not equate styling AMG Line with Mercedes-AMG performance engine."
+  ],
+  [
+    "2022 Kia EV6 GT-Line RWD",
+    "Electric",
+    "Automatic",
+    "77.4 kWh RWD EV",
+    "manufacturer",
+    "https://www.kia.com/content/dam/kwcms/kme/uk/en/assets/cv/EV6_grades_equipment_050521.pdf",
+    "Kia UK 2021 launch equipment and model guide specifies EV6 GT-Line RWD 77.4 kWh 168kW single-speed automatic; 2022 variant distinct from later 84kWh facelift and EV6 GT."
+  ],
+  [
+    "2022 CUPRA Formentor VZ2 310",
+    "Petrol",
+    "Automatic",
+    "2.0 TSI 310 4Drive DSG",
+    "manufacturer",
+    "https://www.cupra.com/en-gb/brand/news/cars/cupra-formentor/formentor-prices-specifications-announced",
+    "CUPRA UK 1 October 2020 launch explicitly lists Formentor VZ2 310PS 2.0 TSI 4Drive DSG; UK 2022 continuation, separate from 245PS plug-in hybrid VZ2."
+  ],
+  [
+    "2021 Lexus UX 250h F Sport",
+    "Hybrid",
+    "Automatic",
+    "2.0 hybrid e-CVT",
+    "corroborated",
+    "https://www.pistonheads.com/buy/lexus/ux/year/2021",
+    "UK 2021 Lexus UX250h F Sport 2.0 petrol-electric 184PS e-CVT registrations; F Sport styling unlike UX300e electric and UX250h standard."
+  ],
+  [
+    "2022 Polestar 2 Long Range Single Motor",
+    "Electric",
+    "Automatic",
+    "78 kWh EV",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/used-cars/Polestar/2/t-Long%20Range%20Single%20Motor",
+    "UK 2022 Polestar 2 Long Range Single Motor 78kWh gross battery, 169kW front-drive auto listings; do not apply 2023 82kWh 299PS rear-drive refresh."
+  ],
+  [
+    "2023 BYD Atto 3 Design",
+    "Electric",
+    "Automatic",
+    "60.48 kWh EV",
+    "manufacturer",
+    "https://www.byd.com/eu/news-list/The_All-New_BYD_ATTO_3_Debuts_in_the_UK0",
+    "BYD official UK 8 March 2023 ATTO 3 60.48kWh Blade Battery electric automatic model; Design trim one of UK 2023 launch grades, front-wheel drive."
+  ],
+  [
+    "2022 Tesla Model 3 Long Range AWD",
+    "Electric",
+    "Automatic",
+    "Dual-motor AWD EV",
+    "corroborated",
+    "https://www.monmotors.com/approved/used-cars/2022-tesla-model-3-dual-motor-long-range-auto-4wde-4-door",
+    "UK 2022 registered Tesla Model 3 Long Range Dual Motor AWD electric automatic listed by franchise dealer; battery health, range and horsepower are not fixed by this catalogue record."
+  ],
+  [
+    "2021 Range Rover Evoque D200 S",
+    "Diesel",
+    "Automatic",
+    "2.0 D200 MHEV AWD automatic",
+    "corroborated",
+    "https://www.lloydmotorgroup.com/UsedCars/Land-Rover/LAND-ROVER-RANGE-ROVER-EVOQUE-2-0-D200-S-5dr-Auto/139474",
+    "Land Rover approved dealer 2021 registered Evoque D200 S 2.0 diesel MHEV automatic 4WD 204PS; corrected unsupported 2021 D180 S combination."
+  ],
+  [
+    "2021 DS 7 Crossback E-Tense 225",
+    "Plug-in Hybrid",
+    "Automatic",
+    "1.6 petrol PHEV EAT8",
+    "corroborated",
+    "https://comcar.co.uk/companycar/tax/history/DS/DS%207%20Crossback/71",
+    "UK historic 2021 DS7 Crossback E-TENSE 225 (1.6 petrol FWD plug-in hybrid EAT8) sold in Opera, Rivoli and Performance Line derivatives from Sep 2021; game currently leaves grade unspecified, and this is NOT 4x4 300."
+  ],
+  [
+    "2019 Porsche 718 Cayman 2.0 PDK",
+    "Petrol",
+    "Automatic",
+    "2.0 turbo PDK",
+    "corroborated",
+    "https://www.autotrader.co.uk/cars/used/porsche/718-cayman/2019",
+    "UK 2019 718 Cayman base 2.0 turbo 300PS rear-drive dual-clutch PDK examples; avoid 2.5 Cayman S/GTS and 2.0 manual."
+  ],
+  [
+    "2021 Lexus RX 450h F Sport",
+    "Hybrid",
+    "Automatic",
+    "3.5 V6 hybrid e-CVT",
+    "corroborated",
+    "https://askcar.co.uk/used-cars/lexus/rx/2021",
+    "UK Lexus dealers advertise 2021 RX 450h F Sport 3.5 V6 hybrid e-CVT 4WD; separate from 2023-on 2.5 RX 350h and non-F Sport versions."
+  ],
+  [
+    "2022 Volkswagen Touareg R-Line V6 TDI",
+    "Diesel",
+    "Automatic",
+    "3.0 V6 TDI 4MOTION Tiptronic",
+    "corroborated",
+    "https://www.cargurus.co.uk/Cars/l-Used-2022-Volkswagen-Touareg-R-Line-ev676385",
+    "UK 2022 Touareg R-Line 3.0 V6 TDI 4MOTION eight-speed Tiptronic confirmed in UK registered examples; 231PS and 286PS outputs both existed, game must not imply one until specified."
   ]
 ]);
   const all=Object.values(CATALOGUE).flat();
