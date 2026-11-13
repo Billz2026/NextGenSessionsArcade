@@ -183,8 +183,9 @@
       return fail('already','You have already invited this buyer to reserve remotely.');
     const expense=customerPrep(state,c);
     const outstanding=window.MotorTradeWorkshop?.reserved(state)??0;
-    if(state.cash-expense<outstanding)
-      return fail('cash','The dealership cannot fund the promised collection preparation.');
+    const transfer=state.financialScenario==='uk2026'&&v.storageLocation==='offsite'?35:0;
+    if(state.cash-expense-transfer<outstanding)
+      return fail('cash','The dealership cannot fund promised preparation and off-site presentation transfer.');
     c.remoteAttempted=true;
     const saving=(v.asking-c.quotedPrice)/Math.max(v.asking,1);
     const interest=clamp((c.channel==='ONLINE PRICE QUESTION'?35:55)+
