@@ -1017,6 +1017,20 @@
       case 'open-customer':
         if(career)saveResult(E.openCustomer(career,Number(button.dataset.id)));
         break;
+      case 'quote-customer':
+        if(career)saveResult(E.quoteCustomer(career,Number(button.dataset.id),
+          inputNumber('prequote-'+button.dataset.id)));
+        break;
+      case 'accept-buyer-counter':
+        if(career)saveResult(E.acceptPriceCounterCustomer(career,Number(button.dataset.id)));
+        break;
+      case 'remote-reserve-customer':
+        if(career&&window.confirm('Ask this customer to leave a £250 online/telephone reservation deposit? The customer can decline. If paid, it stays in the separate holding account and can be fully refunded before collection. Final vehicle inspection and balance payment remain due.'))
+          saveResult(E.remoteReserveCustomer(career,Number(button.dataset.id)));
+        break;
+      case 'inspect-remote-customer':
+        if(career)saveResult(E.inspectRemoteCustomer(career,Number(button.dataset.id)));
+        break;
       case 'book-customer':
         if(career)saveResult(E.bookCustomer(career,Number(button.dataset.id)));
         break;
