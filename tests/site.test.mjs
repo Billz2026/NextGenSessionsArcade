@@ -83,9 +83,9 @@ test('dashboard has inbox, calendar and navigable management areas', () => {
   assert.match(html, /finance-view\.js\?v=2/);
   assert.match(html, /styles\.css\?v=51/);
   assert.match(html, /career-storage\.js\?v=2/);
-  assert.match(html, /cloud-config\\.js\\?v=1/);
-  assert.match(html, /cloud-careers\\.js\\?v=1/);
-  assert.match(html, /cloud-account-ui\\.js\\?v=1/);
+  assert.match(html, /cloud-config\.js\?v=1/);
+  assert.match(html, /cloud-careers\.js\?v=1/);
+  assert.match(html, /cloud-account-ui\.js\?v=1/);
   for (const id of ['menu-account-toggle','cloud-account-panel','cloud-auth-form',
     'cloud-user-display','cloud-load-career','cloud-upload-career','cloud-career-warning']) {
     assert.match(html, new RegExp('id="' + id + '"'));
