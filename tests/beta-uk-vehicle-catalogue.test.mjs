@@ -77,7 +77,7 @@ test('classic template positions remain untouched and authentic UK breadth is pr
 });
 
 test('only exact manufacturer-backed specifications receive certified evidence',()=>{
-  assert.equal(UK.VERIFIED.length,106,'Opening six and four 25-derivative UK evidence batches');
+  assert.equal(UK.VERIFIED.length,145,'All 145 new UK entries have individual source records');
   const counts={manufacturer:0,corroborated:0};
   const checkedTitles=new Set();
   for(const row of UK.VERIFIED){
@@ -93,8 +93,8 @@ test('only exact manufacturer-backed specifications receive certified evidence',
     assert.equal(A.lookup(car).checkedAt,'2026-11-13');
     counts[row[4]]++;
   }
-  assert.equal(counts.manufacturer,45);
-  assert.equal(counts.corroborated,61);
+  assert.equal(counts.manufacturer,51);
+  assert.equal(counts.corroborated,94);
   for(const title of [
     '2018 Toyota Aygo x-play','2017 Toyota Auris Icon Hybrid','2018 Toyota Prius Business Edition',
     '2018 Toyota C-HR Icon Hybrid','2022 Toyota Aygo X Pure','2020 Toyota Corolla Icon Hybrid',
@@ -199,7 +199,7 @@ test('only exact manufacturer-backed specifications receive certified evidence',
 ]) {
     assert.ok(checkedTitles.has(title),'Missing Honda/Mazda/BMW/Mercedes/Volvo/JLR audit: '+title);
   }
-  assert.equal(UK.VERIFIED.slice(81).filter(x=>x[4]==='manufacturer').length,9,
+  assert.equal(UK.VERIFIED.slice(81,106).filter(x=>x[4]==='manufacturer').length,9,
     'Fourth batch must maintain evidence classification');
   assert.equal(A.lookup(find('2020 Volvo XC60 D4 Momentum')).engine,
     '2.0 D4 Geartronic','Do not claim AWD without exact UK proof');
@@ -207,19 +207,53 @@ test('only exact manufacturer-backed specifications receive certified evidence',
     'Electric vehicle usable battery must not be confused with gross capacity');
   assert.match(A.lookup(find('2021 BMW M3 Competition')).note,/NOT assumed/,
     'M3 rear-drive and optional xDrive require distinct records');
+  const finalBatch=UK.VERIFIED.slice(106);
+  assert.equal(finalBatch.length,39,'Final source-review batch should cover every remaining added derivative');
+  assert.equal(finalBatch.filter(x=>x[4]==='manufacturer').length,6);
+  assert.equal(finalBatch.filter(x=>x[4]==='corroborated').length,33);
+  assert.equal(new Set(UK.VERIFIED.map(x=>x[0])).size,145,'New UK evidence must have unique derivative titles');
+  assert.equal(newRows.filter(x=>A.lookup(find(x[0])).status==='pending').length,0,
+    'All new records must have at least UK corroborating sources');
+  for(const title of [
+    '2020 Skoda Octavia SE First Edition',
+    '2021 Range Rover Evoque D200 S',
+    '2021 Kia Stonic GT-Line S MHEV',
+    '2021 DS 7 Crossback E-Tense 225',
+    '2021 Ford Focus Titanium Edition MHEV',
+    '2020 Vauxhall Insignia SRi Vx-Line Nav',
+    '2018 Mazda Mazda6 SE-L Nav+'
+  ])assert.ok(checkedTitles.has(title),'Corrected UK derivative missing from source review: '+title);
+  for(const incorrectTitle of [
+    '2020 Skoda Octavia SE',
+    '2021 Range Rover Evoque D180 S',
+    '2021 Kia Stonic 3',
+    '2021 DS DS 7 Crossback E-Tense 225',
+    '2021 Ford Focus Titanium',
+    '2020 Vauxhall Insignia SRi Nav',
+    '2018 Mazda Mazda6 SE-L Nav'
+  ])assert.equal(find(incorrectTitle),undefined,
+    'Unsupported old trim must not coexist with its replacement: '+incorrectTitle);
+  assert.equal(find('2021 Range Rover Evoque D200 S').engineSpec,'2.0 D200 MHEV AWD automatic');
+  assert.equal(find('2021 Kia Stonic GT-Line S MHEV').engineSpec,'1.0 T-GDi 118 MHEV');
+  assert.equal(UK.VERIFIED.filter(x=>!x[5]?.startsWith('https://')).length,0,
+    'Every reviewed new derivative needs an explicit UK source URL');
+  const legacy=all.filter(x=>!newRows.some(row=>row[0]===x.title));
+  assert.equal(legacy.length,55);
+  assert.equal(legacy.filter(x=>A.lookup(x).status==='pending').length,37,
+    'Unreviewed original vehicles must remain labelled pending rather than auto-certified');
   // Changing a reviewed trim, powertrain or gearbox must demote evidence to pending.
   for(const original of UK.VERIFIED){
     const car=find(original[0]);
     const mutated={...car,engineSpec:'AUDIT INVALID ENGINE SPEC'};
     assert.equal(A.lookup(mutated).status,'pending','Stale evidence must fail closed: '+car.title);
   }
-  assert.equal(A.lookup(find('2017 Nissan Juke N-Connecta')).status,'pending');
-  assert.equal(A.lookup(find('2023 BYD Atto 3 Design')).status,'pending');
+  assert.equal(A.lookup(find('2017 Nissan Juke N-Connecta')).status,'corroborated');
+  assert.equal(A.lookup(find('2023 BYD Atto 3 Design')).status,'manufacturer');
   const totals=A.summary(M.CATALOGUE);
   assert.equal(totals.total,200);
-  assert.equal(totals.manufacturer,58);
-  assert.equal(totals.corroborated,66);
-  assert.equal(totals.pending,76);
+  assert.equal(totals.manufacturer,64);
+  assert.equal(totals.corroborated,99);
+  assert.equal(totals.pending,37);
 });
 
 test('new prices are transparently unverified and classic pricing is untouched',()=>{
