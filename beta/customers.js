@@ -237,7 +237,8 @@
         'The caller only wanted a price indication and is not ready to arrange a viewing.');
       return {ok:false,changed:true,code:'unqualified',message};
     }
-    // A normal viewing must take place within 48 game-hours.
+    // New realistic appointments are tomorrow (24 game-hours); classic
+    // careers and previously booked visits keep their existing times.
     c.appointmentDay=state.financialScenario==='uk2026'?state.day+1:
       state.day+1+(P.salesImpact(state,c).fastViewing?0:hash('appointment|'+c.id)%2);
     c.status='booked';
