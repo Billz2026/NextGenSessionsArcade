@@ -133,9 +133,9 @@
       const offset=day===1?0:nearest25((sample(day,i,91)%851)-425);
       const guide=Math.max(850,base.guide+offset);
       const delta=guide-base.guide;
+      const modern=feeScenario==='uk2026';
       const miles=modern?base.miles:Math.max(3500,base.miles+
         (day===1?0:((sample(day,i,54)%250)-125)*100));
-      const modern=feeScenario==='uk2026';
       const fee=modern?AUCTION_FEES.feeAtHammer(guide):
         base.fee+(day===1?0:25*((sample(day,i,82)%3)-1));
       return {...base,guide,reserve:base.reserve+delta,rival:base.rival+delta,
