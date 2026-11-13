@@ -124,9 +124,10 @@
     state.reputationScore>=40?6:4,window.MotorTradePremises?.bays(state)??4);
   const salesLimit=state=>state.reputationScore>=80?3:
     state.reputationScore>=40?2:1;
-  const staffLimit=state=>2+salesLimit(state)+technicianLimit(state);
-  const roleLimit=(state,role)=>role==='technician'?technicianLimit(state):
-    role==='sales'?salesLimit(state):1;
+  const staffLimit=state=>EMP.is2026(state)?Infinity:
+    2+salesLimit(state)+technicianLimit(state);
+  const roleLimit=(state,role)=>EMP.is2026(state)?Infinity:
+    role==='technician'?technicianLimit(state):role==='sales'?salesLimit(state):1;
   const isActive=(state,employee)=>!!employee&&state.payrollArrears===0&&
     state.day>=employee.startDay&&
     (employee.trainingUntil===null||state.day>=employee.trainingUntil)&&
@@ -233,15 +234,19 @@
   function hire(state,id){
     const candidate=applicants(state.day,state).find(c=>c.id===id);
     if(!candidate)return failure('expired','That applicant is no longer available this week.');
-    if(state.staff.some(s=>s.name===candidate.name))
+    if(state.staff.some(s=>s.candidateId===candidate.id))
       return failure('duplicate','That applicant is already on your payroll.');
     const inRole=state.staff.filter(s=>s.role===candidate.role).length;
     if(inRole>=roleLimit(state,candidate.role))
       return failure('role',candidate.role==='technician'?
         'Technician places are full. Reputation AND an upgraded workshop are required for more repair bays.':
         'You already employ somebody in that role at this dealership.');
-    if(state.staff.length>=staffLimit(state)||state.staff.length>=MAX_STAFF)
+    if(!EMP.is2026(state)&&
+      (state.staff.length>=staffLimit(state)||state.staff.length>=MAX_STAFF))
       return failure('capacity','You have reached your current dealership staffing limit.');
+    // The 2026 dealership has no arbitrary role or headcount ceiling.
+    // A technically finite save guard remains for malicious/corrupted saves;
+    // actual hiring is constrained by candidates, cash and wage liabilities.
     const quote=hireQuote(state,candidate);
     if(quote.shortfall)return failure('cash','Need £'+quote.required.toLocaleString('en-GB')+
       ' total cash (£'+quote.shortfall.toLocaleString('en-GB')+
@@ -430,7 +435,8 @@
   function valid(state,day){
     if(!EMP.valid(state))return false;
     if(!integer(state.reputationScore)||state.reputationScore<0||state.reputationScore>100||
-       !Array.isArray(state.staff)||state.staff.length>MAX_STAFF||
+       !Array.isArray(state.staff)||
+        state.staff.length>(EMP.is2026(state)?2000:MAX_STAFF)||
        !integer(state.nextStaffId)||state.nextStaffId<1||
        !integer(state.payrollArrears)||state.payrollArrears<0||
        state.payrollArrears>10000000||
@@ -438,7 +444,7 @@
     const keys=new Set(),names=new Set(),roleCounts={sales:0,buyer:0,technician:0,supervisor:0};
     for(const s of state.staff){
       if(!s||!integer(s.id)||s.id<1||s.id>=state.nextStaffId||keys.has(s.id)||
-         !ROLES.includes(s.role)||names.has(s.name)||
+         !ROLES.includes(s.role)||(!EMP.is2026(state)&&names.has(s.name))||
          typeof s.name!=='string'||s.name.length<2||s.name.length>60||
          typeof s.candidateId!=='string'&&typeof s.candidateId!=='undefined'||
          !integer(s.monthlySalary)||s.monthlySalary<1000||s.monthlySalary>7000||
@@ -458,7 +464,8 @@
         s.monthlySalary<EMP.minimumMonthly(s.contractHours,day)))return false;
       keys.add(s.id);names.add(s.name);roleCounts[s.role]++;
     }
-    if(roleCounts.sales>3||roleCounts.buyer>1||roleCounts.technician>8||roleCounts.supervisor>1)return false;
+    if(!EMP.is2026(state)&&
+      (roleCounts.sales>3||roleCounts.buyer>1||roleCounts.technician>8||roleCounts.supervisor>1))return false;
     return state.reputationHistory.every(x=>x&&integer(x.day)&&x.day>=1&&x.day<=day&&
       integer(x.delta)&&x.delta>=-10&&x.delta<=10&&
       typeof x.reason==='string'&&x.reason.length<=160);
