@@ -79,8 +79,8 @@
     // Illustrative valuation sensitivity by mileage; no fabricated CAP
     // value or sold auction hammer. Low-mileage cars COST MORE to acquire.
     const per10k=120+base.retail*.017;
-    const retailOffset=nearest25(Math.max(-base.retail*.27,
-      Math.min(base.retail*.28,(base.miles-miles)/10000*per10k)));
+    const retailOffset=nearest25(Math.max(-base.retail*.30,
+      Math.min(base.retail*.45,(base.miles-miles)/10000*per10k)));
     const tradeOffset=nearest25(retailOffset*.66);
     const guide=Math.max(850,base.guide+tradeOffset);
     const delta=guide-base.guide;
@@ -130,7 +130,10 @@
       const original=MARKET.priceFor(day===1&&feeScenario!=='uk2026'?starter[i]:
         MARKET.pick('auction',tier,day,i,usedAuction,feeScenario),feeScenario);
       const base=feeScenario==='uk2026'?varied2026(original,day,i,'auction'):original;
-      const offset=day===1?0:nearest25((sample(day,i,91)%851)-425);
+      // Buyer competition can affect hammer pricing, but must not drown
+      // out the much larger valuation effect of 40k additional mileage.
+      const offset=day===1?0:nearest25(feeScenario==='uk2026'?
+        (sample(day,i,91)%251)-125:(sample(day,i,91)%851)-425);
       const guide=Math.max(850,base.guide+offset);
       const delta=guide-base.guide;
       const modern=feeScenario==='uk2026';
@@ -147,7 +150,8 @@
       const original=MARKET.priceFor(day===1&&feeScenario!=='uk2026'?starter[3+i]:
         MARKET.pick('seller',tier,day,i,usedSeller,feeScenario),feeScenario);
       const base=feeScenario==='uk2026'?varied2026(original,day,i,'seller'):original;
-      const offset=day===1?0:nearest25((sample(day,i,51)%601)-300);
+      const offset=day===1?0:nearest25(feeScenario==='uk2026'?
+        (sample(day,i,51)%251)-125:(sample(day,i,51)%601)-300);
       const ask=Math.max(950,base.ask+offset);
       const delta=ask-base.ask;
       const miles=feeScenario==='uk2026'?base.miles:Math.max(3500,base.miles+
