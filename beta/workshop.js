@@ -44,13 +44,18 @@
     if(vehicle.status!=='acquired'||job.stage!=='unassessed')
       return fail('already','Assessment is only available for newly acquired, unassessed stock.');
     const technician=P.active(state,'technician');
-    const fee=state.financialScenario==='uk2026'?(technician?65:80):(technician?30:55);
-    if(state.cash<reserved(state)+fee)
-      return fail('cash','Insufficient unreserved cash for the £'+fee+' assessment. Preparation reserves are protected.');
-    charge(state,fee,'Workshop assessment: '+vehicle.title);
-    vehicle.cost+=fee; // The diagnostic fee stays in the car's real acquisition basis.
+    const visual=state.financialScenario==='uk2026';
+    // An initial visual condition review is included in dealership overhead,
+    // not a paid in-house diagnosis for a dealer with no own repair workshop.
+    const fee=visual?0:(technician?30:55);
+    if(fee>0&&state.cash<reserved(state)+fee)
+      return fail('cash','Insufficient unreserved cash for assessment.');
+    if(fee>0){charge(state,fee,'Workshop assessment: '+vehicle.title);vehicle.cost+=fee;}
     job.assessmentFee=fee;
+    job.visualAssessment=visual;
     job.stage='quoted';
+    if(visual)return ok('Free visual appraisal completed for '+vehicle.title+
+      '. No full diagnostic has been performed; hidden faults can emerge during paid repairs.');
     const extra=vehicle.profile?.hiddenFault;
     const detail=extra?' Additional repair identified: '+extra.item+' (£'+extra.cost+').':
       ' No further defect identified beyond known work.';
@@ -88,9 +93,6 @@
     if(!q)return method==='internal'&&P.activeTeam(state,'technician').length?
       fail('busy','All available technicians are assigned to repair or quality-check jobs. Finish a job or outsource this one.'):
       fail('staff','An available prep technician is required for internal repairs. Use an external garage instead.');
-    if(method==='external'&&state.vehicles.filter(v=>v.id!==id&&
-       v.workshop?.stage==='in-progress'&&v.workshop.method==='external').length>=2)
-      return fail('busy','External garage capacity is full. Try again when a job is completed.');
     if(q.cost>state.cash-reserved(state,id))
       return fail('cash','Insufficient cash for '+q.provider+
         ' (£'+q.cost+'). Money needed for other unprepared stock is protected.');
@@ -131,12 +133,8 @@
     const j=v.workshop;
     if(j?.stage!=='in-progress'||j.method!=='internal')
       return fail('stage','Only an active in-house repair can be transferred externally.');
-    // The same two-slot limit applies to transfers as to new bookings.
-    // Check before debiting the £125 fee or changing the assignment.
-    const outside=state.vehicles.filter(x=>x.id!==id&&
-      x.workshop?.stage==='in-progress'&&x.workshop.method==='external').length;
-    if(outside>=2)
-      return fail('busy','Both external garage slots are occupied. Wait for a job to finish before transferring.');
+    // External contracted repair work has no artificial two-car slot cap.
+    // Each job still reserves real cash, incurs repair costs and takes days.
     const chargeAmount=125;
     if(chargeAmount>state.cash-reserved(state))
       return fail('cash','Insufficient cash to transfer repair work to a garage (£125).');
@@ -192,6 +190,7 @@
     if(!stages.includes(j.stage)||!num(j.assessmentFee,200)||
        !num(j.repairCost)||!num(j.remainingDays,12)||!num(j.plannedDays,20)||
        !num(j.partsDelay,3)||!num(j.reworks,1)||
+       (j.visualAssessment!==undefined&&typeof j.visualAssessment!=='boolean')||
        typeof j.paused!=='boolean'||
        (j.startedDay!==null&&(!num(j.startedDay,36500)||j.startedDay>day))||
        (j.completedDay!==null&&(!num(j.completedDay,36500)||j.completedDay>day))||
@@ -200,9 +199,9 @@
     if(vehicle.status==='acquired'&&j.stage==='ready')return false;
     if(vehicle.status!=='acquired'&&j.stage!=='ready')return false;
     if(j.stage==='unassessed'&&(j.assessmentFee!==0||j.repairCost!==0||j.method!==null))return false;
-    if(j.stage==='quoted'&&(j.assessmentFee===0||j.repairCost!==0||j.method!==null))return false;
+    if(j.stage==='quoted'&&((j.assessmentFee===0&&j.visualAssessment!==true)||j.repairCost!==0||j.method!==null))return false;
     if(['in-progress','quality-check'].includes(j.stage)&&
-       (j.assessmentFee===0||!methods.includes(j.method)||j.repairCost<=0||
+       ((j.assessmentFee===0&&j.visualAssessment!==true)||!methods.includes(j.method)||j.repairCost<=0||
         j.startedDay===null||j.plannedDays<1))return false;
     if(j.stage==='quality-check'&&j.remainingDays!==0)return false;
     if(j.stage==='ready'&&(vehicle.prepSpent!==j.repairCost||
