@@ -388,15 +388,19 @@
     if(group==='seller')return accessible.flatMap(k=>CATALOGUE[k]);
     return accessible.flatMap(k=>CATALOGUE[k]);
   }
-  function pick(group,tier,day,index,seen=new Set(),scenario='classic'){
+  function pick(group,tier,day,index,seen=new Set(),scenario='classic',reputation=5){
     const accessible=pool(group,tier);
     // Mix all unlocked bands. The highest band appears more often without
     // erasing affordable stock or forcing unaffordable expensive lots.
     const weighting=scenario==='uk2026'?
       tier==='starter'?['starter']:
       tier==='modern'?['starter','starter','modern','modern','modern']:
-      tier==='premium'?['starter','starter','modern','modern','modern','modern','premium']:
-      ['starter','modern','modern','premium','premium','luxury','luxury']:
+      tier==='premium'?(reputation>=40?
+        ['starter','modern','modern','premium','premium','premium','premium']:
+        ['starter','starter','modern','modern','modern','modern','premium']):
+      reputation>=75?['starter','modern','premium','premium','luxury','luxury','luxury','luxury']:
+      reputation>=45?['starter','modern','modern','premium','premium','luxury','luxury']:
+        ['starter','modern','modern','premium','premium','luxury']:
       tier==='starter'?['starter']:
       tier==='modern'?['starter','modern','modern','modern']:
       tier==='premium'?['starter','modern','modern','premium','premium','premium']:
