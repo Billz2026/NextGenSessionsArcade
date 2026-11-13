@@ -144,8 +144,8 @@
     "Automatic",
     "1.8 VVT-i hybrid e-CVT",
     "manufacturer",
-    "https://media.toyota.co.uk/toyota-announces-specifications-and-prices-for-its-new-all-hybrid-c-hr-crossover/",
-    "Toyota UK 2020-on C-HR Design 1.8 hybrid e-CVT variant; 2021 continuation, distinct from optional 2.0 hybrid Design."
+    "https://media.toyota.co.uk/wp-content/uploads/sites/5/pdf/Range-Price-List-edited.pdf",
+    "Toyota UK price list effective 1 April 2021 explicitly lists C-HR Design 1.8 VVT-i hybrid 122hp automatic; separate from 2.0 Design."
   ],
   [
     "2020 Toyota Prius Business Edition",
