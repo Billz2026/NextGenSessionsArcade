@@ -68,6 +68,7 @@ const data=await page.evaluate(()=>{
   }
   const conversations=[];
   let remoteSuccess=null,remoteRejected=0,remoteCancelled=0,remoteInspected=0;
+  let inPersonCompleted=0,inPersonBuyerWalked=0;
   let priceCounterCase=null;
   for(let i=0;i<18;i++){
     const {s,v,c}=lead('Sales Dialogue Test '+i);
@@ -88,6 +89,40 @@ const data=await page.evaluate(()=>{
       remoteRejected++;
       if(c.held!==0||s.sold.length)throw Error('Declined remote reservation created money or free sale');
       normalized(s,'declined remote reservation');
+      // A refused remote deposit does not mean the buyer abandons the car.
+      // They may attend tomorrow, inspect/test-drive, agree and deposit.
+      const onSite=E.normalize(clone(s));
+      const booking=E.bookCustomer(onSite,v.id);
+      if(!booking.ok||C.caseFor(onSite,v.id).appointmentDay!==onSite.day+1)
+        throw Error('Remote deposit refusal must preserve the 24h viewing route');
+      tick(onSite);
+      const arrived=C.caseFor(onSite,v.id);
+      if(arrived?.status==='arrived'){
+        const driven=E.testDrive(onSite,v.id);
+        if(driven.ok){
+          const agreed=E.agreeCustomer(onSite,v.id,'cash',null);
+          if(!agreed.ok)throw Error('In-person buyer unable to agree cash: '+agreed.message);
+          const deposit=E.depositCustomer(onSite,v.id);
+          if(!deposit.ok||arrived.held!==250||arrived.remote===true||
+             arrived.terms!=='in-person')
+            throw Error('In-person buyer should be able to leave a £250 collection deposit');
+          normalized(onSite,'in-person deposit');
+          for(let days=0;days<3&&arrived.status==='reserved';days++)tick(onSite);
+          if(arrived.status==='collectable'){
+            const price=arrived.price;
+            const done=E.completeSale(onSite,v.id,'cash',null);
+            if(!done.ok)throw Error('In-person customer unable to pay remaining balance: '+done.message);
+            const sold=onSite.sold.at(-1);
+            if(sold.depositApplied!==250||sold.customerBalancePaid!==price-250)
+              throw Error('In-person deposit was counted twice or customer was charged wrong balance');
+            normalized(onSite,'in-person cash balance and completed sale');
+            inPersonCompleted++;
+          }else if(arrived.status==='lost'){
+            normalized(onSite,'buyer changed mind before in-person collection');
+            inPersonBuyerWalked++;
+          }else throw Error('In-person collection was never resolved');
+        }
+      }
       conversations.push({id:c.id,remote:false,price:b.cashLimit});
       continue;
     }
@@ -137,6 +172,7 @@ const data=await page.evaluate(()=>{
     normalized(collection,'remote handover and margin-scheme record');
     conversations.push({id:c.id,remote:true,price,paidBalance:sold.customerBalancePaid});
   }
+  if(inPersonCompleted<1)throw Error('No in-person £250 deposit and later balance collection completed');
   if(!remoteSuccess||remoteCancelled<1||remoteInspected<1||remoteRejected<1)
     throw Error('Unexercised remote scenario: '+JSON.stringify({remoteSuccess:!!remoteSuccess,
       remoteCancelled,remoteInspected,remoteRejected}));
@@ -158,11 +194,13 @@ const data=await page.evaluate(()=>{
   // Capture the first booked and price counter as real production save snapshots.
   return {firstPriceCounter:priceCounterCase,remoteSuccess,booked,
     total:conversations.length+remoteRejected,remoteRejected,remoteCancelled,
-    remoteInspected,examples:conversations.slice(0,8)};
+    remoteInspected,inPersonCompleted,inPersonBuyerWalked,
+    examples:conversations.slice(0,8)};
 });
 console.log('BETA_CUSTOMER_PATHS '+JSON.stringify({
   total:data.total,remoteRejected:data.remoteRejected,
   remoteCancelled:data.remoteCancelled,remoteInspected:data.remoteInspected,
+  inPersonCompleted:data.inPersonCompleted,inPersonBuyerWalked:data.inPersonBuyerWalked,
   examples:data.examples
 }));
 assert.ok(data.remoteCancelled>=1&&data.remoteInspected>=1);
