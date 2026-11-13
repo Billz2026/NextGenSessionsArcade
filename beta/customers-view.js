@@ -39,20 +39,43 @@
     let body='';
     switch(c.status){
       case 'enquiry':{
-        const budget=state.financialScenario==='uk2026'?E.buyers(vehicle,state):null;
-        const indication=budget?
-          '<div class="sales-case-highlight"><strong>PRE-VIEWING PRICE INDICATION: '+cash(budget.cashOffer)+'</strong>'+
-          '<p>Buyer has asked about a price in this area. This is NOT a firm, accepted offer: inspection, test drive and final negotiation are still required. The buyer may decline or walk away.</p></div>':'';
+        const buyer=state.financialScenario==='uk2026'?E.buyers(vehicle,state):null;
+        const indication=buyer?
+          '<div class="sales-case-highlight"><strong>PRE-VIEWING PRICE INDICATION: '+cash(buyer.cashOffer)+'</strong>'+
+          '<p>They may negotiate, decline or ask for a viewing. No sale or deposit is agreed.</p></div>':'';
+        const priceTalk=buyer?
+          '<section class="sales-offer-mode"><h4>RESPOND WITH YOUR PRICE</h4>'+
+          '<p>Offer the customer a price BEFORE booking any visit. If it is above their budget, they may counter. Repeated unrealistic quotes can lose the lead.</p>'+
+          '<label for="prequote-'+id+'">YOUR PROPOSED PRICE (£)</label>'+
+          '<input id="prequote-'+id+'" class="trade-input" type="number" inputmode="numeric" min="500" max="'+
+          vehicle.asking+'" step="25" value="'+(c.quotedPrice??vehicle.asking)+'">'+
+          '<button type="button" class="trade-button trade-button-secondary" data-action="quote-customer" data-id="'+id+
+          '">SEND PRICE TO BUYER</button>'+
+          (c.quoteStatus==='counter'?
+            '<div class="sales-case-highlight"><strong>BUYER COUNTER: '+cash(c.quotedPrice)+'</strong>'+
+            '<p>The buyer says your quoted price is too high. Accept their budget, propose a different price or book a viewing.</p>'+
+            '<button type="button" class="trade-button" data-action="accept-buyer-counter" data-id="'+id+
+            '">ACCEPT BUYER PRICE</button></div>':'')+
+          (c.quoteStatus==='accepted'?
+            '<div class="sales-case-highlight"><strong>PROVISIONAL PRICE AGREED: '+cash(c.quotedPrice)+'</strong>'+
+            '<p>Subject to inspection. Book tomorrow’s viewing or ask whether the buyer will pay a refundable £250 phone/online deposit to hold this car until collection.</p>'+
+            (c.remoteAttempted?'<p>Remote deposit offer already discussed. You can still book a viewing.</p>':
+              '<button type="button" class="trade-button trade-button-secondary" data-action="remote-reserve-customer" data-id="'+id+
+              '">OFFER £250 REFUNDABLE REMOTE RESERVATION</button>')+'</div>':'')+
+          '</section>':'';
         body='<p>'+esc(c.name)+(c.channel==='ONLINE PRICE QUESTION'?
-          ' has asked whether you will negotiate on the advertised price. This is a price-check, not yet a committed buyer.':
-          ' has enquired about this car.')+
-          ' They have not inspected or test driven it yet. Book a viewing within 48 game-hours. No deposit means the vehicle remains for sale.</p>'+indication+
+          ' wants to discuss the advertised price before travelling.':
+          ' has enquired about the car.')+
+          ' You can quote, negotiate and then book a viewing for the next game day (24 hours). No deposit means the car remains on sale.</p>'+
+          indication+priceTalk+
           '<button type="button" class="trade-button" data-action="book-customer" data-id="'+id+
-          '">BOOK VIEWING →</button> '+cancel;
+          '">BOOK NEXT-DAY VIEWING (24 HOURS)</button> '+cancel;
         break;
       }
       case 'booked':
-        body='<div class="sales-case-highlight"><strong>VIEWING WITHIN 48 GAME-HOURS · NO DEPOSIT</strong>'+ 
+        body='<div class="sales-case-highlight"><strong>'+
+          (state.financialScenario==='uk2026'&&c.appointmentDay<=state.day+1?'NEXT-DAY VIEWING (24 HOURS)':'BOOKED VIEWING')+
+          ' · NO DEPOSIT</strong>'+ 
           '<p>'+esc(c.name)+' is due on <strong>GAME DAY '+c.appointmentDay+
           '</strong>. This is an appointment, not a reservation: the car stays for sale until someone pays a deposit or completes handover.</p>'+ 
           (C.competingInterest(state,id)?'<button type="button" class="trade-button" data-action="competing-customer" data-id="'+id+
@@ -114,7 +137,10 @@
           '<span>Already paid</span><strong>'+cash(c.held)+'</strong>'+
           '<span>BALANCE DUE AT COLLECTION</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
           '<p><strong>COLLECTION: GAME DAY '+c.collectionDay+'</strong> · Customer-specific preparation charged: '+cash(c.prepCost||0)+'.</p>'+
-          '<p>The £250 deposit is held separately, not recognised as a vehicle sale. Buyer withdrawal can incur fair retention for recorded costs; dealership fault requires a refund.</p></div>'+buyerWithdraw+' '+cancel;
+          '<p>The £250 deposit is held separately, not recognised as a vehicle sale. '+
+          (c.remote?'Phone/online reservation: cancellation before collection returns the full £250. Final inspection and outstanding balance are due on arrival.':
+            'In-person order: buyer withdrawal may incur recorded direct costs; dealer cancellation receives a full refund.')+
+          '</p></div>'+buyerWithdraw+' '+cancel;
         break;
       case 'collectable':
         body='<div class="sales-case-highlight"><h4>CUSTOMER READY TO COLLECT</h4>'+
@@ -123,9 +149,13 @@
           '<span>Part-exchange allowance</span><strong>'+cash(c.allowance||0)+'</strong>'+
           '<span>Deposit already paid</span><strong>'+cash(c.held)+'</strong>'+
           '<span>BALANCE TO COLLECT TODAY</span><strong>'+cash(C.balanceDue(c))+'</strong></div>'+
-          '<p><strong>COLLECTION DUE: DAY '+c.collectionDay+'</strong> · Complete handover within five game days. Collect only the outstanding balance; the held deposit is applied once.</p>'+
-          '<button type="button" class="trade-button" data-action="handover-customer" data-mode="'+
-          c.preferredMode+'" data-id="'+id+'">COLLECT '+cash(C.balanceDue(c))+' / HANDOVER</button></div>'+
+          '<p><strong>COLLECTION DUE: DAY '+c.collectionDay+'</strong> · Complete handover within five game days. Collect only the outstanding balance; the held deposit is applied once. '+
+          (c.remote?'Online/telephone reservation: full pre-collection cancellation refund, including rejection after inspection.':'')+'</p>'+ 
+          (c.remote&&!c.remoteInspected?
+            '<p><strong>ARRIVAL CHECK REQUIRED:</strong> The remote buyer has not inspected the car. Do not collect the final balance or hand over yet. They may accept or reject it.</p>'+
+            '<button type="button" class="trade-button" data-action="inspect-remote-customer" data-id="'+id+'">CUSTOMER ARRIVES / INSPECTS CAR</button>':
+            '<button type="button" class="trade-button" data-action="handover-customer" data-mode="'+
+            c.preferredMode+'" data-id="'+id+'">COLLECT '+cash(C.balanceDue(c))+' / HANDOVER</button>')+'</div>'+
           buyerWithdraw+' '+cancel;
         break;
       case 'lost':

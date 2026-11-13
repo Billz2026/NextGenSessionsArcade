@@ -116,6 +116,8 @@
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
       collectionDay:null,held:0,counters:0,reason:'',
       terms:'in-person',prepCost:0,exchange:null,
+      quotedPrice:null,quoteStatus:'none',quoteRounds:0,
+      remote:false,remoteInspected:false,remoteAttempted:false,
       salespersonId:P.salesRep(state,id)?.id??null
     };
     state.customerCases[String(id)]=c;
@@ -130,25 +132,120 @@
         walkIn?'. The customer is here now for a viewing.':
         '. Book a viewing before proceeding to a test drive.'));
   }
+  function quote(state,id,asking,limit){
+    const c=caseFor(state,id),v=state.vehicles.find(v=>v.id===id);
+    if(state.financialScenario!=='uk2026'||!c||c.status!=='enquiry'||!v)
+      return fail('stage','An active 2026 customer enquiry is required to discuss a price.');
+    if(!ints(asking)||asking<500||asking>v.asking)
+      return fail('price','Quote a whole-pound price between £500 and your advertised asking price.');
+    if(!ints(limit)||limit<500||limit>100000)
+      return fail('budget','The customer budget is not available.');
+    if((c.quoteRounds||0)>=3)
+      return fail('limit','This customer will not consider another price quote.');
+    c.quoteRounds=(c.quoteRounds||0)+1;
+    if(asking>limit){
+      if(c.quoteRounds>=3){
+        c.status='lost';
+        c.reason='Customer walked away after repeated quotes above their budget.';
+        append(state,c,'price-walk',c.reason);
+        return {ok:false,changed:true,code:'walked',message:c.name+
+          ' ended the price discussion. No deposit or sale was taken.'};
+      }
+      c.quoteStatus='counter';
+      c.quotedPrice=limit;
+      append(state,c,'price-counter','Buyer budget £'+limit+' vs quote £'+asking);
+      return ok(c.name+' cannot pay £'+asking+'. They counter at £'+limit+
+        '. You can accept, quote another price, or book a viewing without agreeing the price.');
+    }
+    c.quoteStatus='accepted';c.quotedPrice=asking;
+    v.cashOffer=asking;
+    append(state,c,'price-agreed','Provisional pre-viewing price £'+asking);
+    return ok(c.name+' is happy with the proposed £'+asking+
+      ' subject to inspection. Next, book a viewing for tomorrow or offer a refundable £250 remote reservation. This is not a sale.');
+  }
+  function acceptPriceCounter(state,id){
+    const c=caseFor(state,id),v=state.vehicles.find(v=>v.id===id);
+    if(!c||c.status!=='enquiry'||c.quoteStatus!=='counter'||
+      !ints(c.quotedPrice)||!v)
+      return fail('stage','An active customer counteroffer is required.');
+    c.quoteStatus='accepted';
+    v.cashOffer=c.quotedPrice;
+    append(state,c,'price-agreed','Dealer accepted buyer budget £'+c.quotedPrice);
+    return ok('You accepted '+c.name+"'s £"+c.quotedPrice+
+      ' provisional price. The customer can book a next-day viewing or consider a refundable remote deposit.');
+  }
+  function remoteReserve(state,id){
+    const c=caseFor(state,id),v=state.vehicles.find(v=>v.id===id);
+    if(state.financialScenario!=='uk2026'||!c||!v||c.status!=='enquiry'||
+      c.quoteStatus!=='accepted'||!ints(c.quotedPrice))
+      return fail('stage','First agree a provisional price during the phone or online enquiry.');
+    if(c.remoteAttempted)
+      return fail('already','You have already invited this buyer to reserve remotely.');
+    const expense=customerPrep(state,c);
+    const outstanding=window.MotorTradeWorkshop?.reserved(state)??0;
+    if(state.cash-expense<outstanding)
+      return fail('cash','The dealership cannot fund the promised collection preparation.');
+    c.remoteAttempted=true;
+    const saving=(v.asking-c.quotedPrice)/Math.max(v.asking,1);
+    const interest=clamp((c.channel==='ONLINE PRICE QUESTION'?35:55)+
+      Math.round(Math.max(0,saving)*60),30,75);
+    if(!chance('remote-deposit-willing|'+c.id,interest)){
+      append(state,c,'reservation-declined','Buyer wants an inspection before paying');
+      return {ok:false,changed:true,code:'declined',message:c.name+
+        ' likes the price but will not leave a deposit before viewing the car. Offer a 24-hour appointment.'};
+    }
+    Object.assign(c,{status:'agreed',agreedDay:state.day,price:c.quotedPrice,
+      allowance:0,exchange:null,preferredMode:'cash',remote:true,
+      remoteInspected:false,terms:'distance-refundable'});
+    append(state,c,'agreement','Provisional remote reservation, subject to inspection');
+    const paid=deposit(state,id);
+    if(!paid.ok)throw new Error('Remote deposit preflight mismatch: '+paid.message);
+    return ok(c.name+' left a refundable £250 phone/online deposit. The remaining £'+
+      balanceDue(c)+' is due on arrival after collection inspection, day '+c.collectionDay+
+      '. Funds are held separately; the sale has not happened.');
+  }
+  function inspectRemote(state,id){
+    const c=caseFor(state,id);
+    if(!c||c.status!=='collectable'||!c.remote)
+      return fail('stage','A remote-reservation buyer must be due to collect the car.');
+    if(c.remoteInspected)return fail('already','The collection inspection has already passed.');
+    const grade=state.vehicles.find(v=>v.id===id)?.profile?.grade||3;
+    const happy=chance('remote-collection-inspection|'+c.id,
+      clamp(90-(grade>=4?16:grade===3?8:0),63,94));
+    if(!happy){
+      const amounts=settle(state,c,'dealer');
+      c.status='lost';c.reason='Buyer rejected the car on arrival.';
+      append(state,c,'collection-rejected','£'+amounts.refunded+' refunded');
+      return {ok:false,changed:true,code:'inspection-rejected',message:c.name+
+        ' declined the car after inspecting it. The full £'+amounts.refunded+
+        ' deposit was refunded. No further money or sale recorded.'};
+    }
+    c.remoteInspected=true;
+    append(state,c,'collection-inspected','Car accepted on arrival');
+    return ok(c.name+' accepted the car on collection. Collect the remaining £'+
+      balanceDue(c)+' and complete the handover. The £250 deposit applies exactly once.');
+  }
   function book(state,id){
     const c=caseFor(state,id);
     if(!c||c.status!=='enquiry')return fail('stage','A new enquiry is required to book a viewing.');
     // Not every price-check is a buyer: initial questions should be useful
     // interactions but cannot automatically become 100% viewing conversions.
     if(state.financialScenario==='uk2026'&&c.channel==='ONLINE PRICE QUESTION'&&
-       !chance('price-check-qualified|'+c.id,
+       c.quoteStatus!=='accepted'&&!chance('price-check-qualified|'+c.id,
          clamp(48+Math.floor(P.salesImpact(state,c).enquiryLift*.8),45,73))){
       const message=failCase(state,c,'expired',
         'The caller only wanted a price indication and is not ready to arrange a viewing.');
       return {ok:false,changed:true,code:'unqualified',message};
     }
-    // A normal viewing must take place within 48 game-hours.
-    c.appointmentDay=state.day+1+
-      (P.salesImpact(state,c).fastViewing?0:hash('appointment|'+c.id)%2);
+    // New realistic appointments are tomorrow (24 game-hours); classic
+    // careers and previously booked visits keep their existing times.
+    c.appointmentDay=state.financialScenario==='uk2026'?state.day+1:
+      state.day+1+(P.salesImpact(state,c).fastViewing?0:hash('appointment|'+c.id)%2);
     c.status='booked';
     append(state,c,'appointment','Day '+c.appointmentDay);
     return ok(c.name+' has booked a viewing for day '+c.appointmentDay+
-      ' (within 48 game-hours). No deposit was paid: the vehicle stays advertised and available to other buyers.');
+      (state.financialScenario==='uk2026'?' (next game day / 24 hours).':' (within 48 game-hours).')+
+      ' No deposit was paid: the vehicle stays advertised and available to other buyers.');
   }
   function competingInterest(state,id){
     const c=caseFor(state,id),vehicle=state.vehicles.find(v=>v.id===id);
@@ -180,7 +277,7 @@
         P.salesImpact(state,c).arrivalLift,90,99));
     if(turnsUp){
       c.status='arrived';
-      append(state,c,'arrived','Attended appointment within 48 game-hours');
+      append(state,c,'arrived','Attended scheduled viewing on day '+state.day);
       if(notices)notices.push(c.name+' arrived for the viewing of stock '+c.vehicleId+'.');
     }else{
       const detail=failCase(state,c,'no-show','Customer failed to attend their appointment.');
@@ -216,6 +313,8 @@
       appointmentDay:null,agreedDay:null,price:null,allowance:null,
       collectionDay:null,held:0,counters:0,reason:'',
       terms:'in-person',prepCost:0,exchange:null,
+      quotedPrice:null,quoteStatus:'none',quoteRounds:0,
+      remote:false,remoteInspected:false,remoteAttempted:false,
       salespersonId:P.salesRep(state,id+1)?.id??null,
       standby:{...booked,standby:null}
     };
@@ -311,9 +410,9 @@
     // The customer pays £250 into a virtual segregated account; that money
     // is not spendable business cash and is not a vehicle sale.
     c.held=250;
-    c.terms='in-person';
+    if(c.terms!=='distance-refundable')c.terms='in-person';
     c.prepCost=expense;
-    c.collectionDay=state.day+1+(hash('collection|'+c.id)%2);
+    c.collectionDay=state.day+1+(c.remote?0:hash('collection|'+c.id)%2);
     if(c.standby){
       append(state,c.standby,'appointment-displaced',
         'Car secured by another buyer paying a deposit; no deposit on original viewing.');
@@ -328,7 +427,8 @@
     return ok('£250 deposit taken and held separately for '+c.name+
       '. Collection day '+c.collectionDay+'. Customer owes '+balanceDue(c)+
       ' at handover. You paid £'+expense+' in customer-specific preparation. '+
-      'If the customer withdraws, retention is limited to demonstrable direct costs; dealer-fault cancellations receive a full refund.');
+      (c.remote?'Phone/online reservation: full refund if buyer cancels before collection.':
+      'In-person buyer withdrawal: any retained amount is limited to recorded direct costs; dealer fault receives a full refund.'));
   }
   function settle(state,c,reason='buyer'){
     const held=c.held||0;
@@ -368,7 +468,8 @@
   function ready(state,id){
     const c=caseFor(state,id);
     return c&&['agreed','collectable'].includes(c.status)&&
-      (c.status!=='agreed'||c.agreedDay===state.day);
+      (c.status!=='agreed'||c.agreedDay===state.day)&&
+      (!c.remote||c.remoteInspected===true);
   }
   function complete(state,id){
     const c=caseFor(state,id);
@@ -544,6 +645,12 @@
       ['price','allowance'].every(k=>c[k]===null||no(c[k]))&&
       no(c.held,250)&&[0,250].includes(c.held)&&
       no(c.counters,2)&&typeof c.reason==='string'&&c.reason.length<200&&
+      (c.quotedPrice==null||no(c.quotedPrice))&&
+      (c.quoteStatus==null||['none','counter','accepted'].includes(c.quoteStatus))&&
+      (c.quoteRounds==null||no(c.quoteRounds,3))&&
+      (c.remote==null||typeof c.remote==='boolean')&&
+      (c.remoteInspected==null||typeof c.remoteInspected==='boolean')&&
+      (c.remoteAttempted==null||typeof c.remoteAttempted==='boolean')&&
       (c.exchange===null||(c.exchange&&typeof c.exchange==='object'&&
         typeof c.exchange.title==='string'&&no(c.exchange.ask)&&no(c.exchange.floor)))&&
       (!['reserved','collectable'].includes(c.status)||c.held===250)&&
@@ -560,7 +667,9 @@
         !['booked','reserved','collectable'].includes(c.status)&&
         validCase([id,c.standby])));
     if(!Object.entries(cases).every(validCase))return false;
-    const types=['enquiry','sales-follow-up','appointment','appointment-restored','appointment-displaced',
+    const types=['enquiry','sales-follow-up','price-counter','price-agreed','price-walk',
+      'reservation-declined','collection-inspected','collection-rejected',
+      'appointment','appointment-restored','appointment-displaced',
       'test-drive-pass','test-drive-reject',
       'counter-accepted','counter-rejected','agreement','deposit','deposit-refunded',
       'deposit-retained','cancelled','arrived','no-show','expired','collection-due','sale'];
@@ -584,7 +693,7 @@
     if(existingFunds.reduce((n,x)=>n+x.delta,0)!==Object.values(cases)
       .reduce((n,c)=>n+(c.held||0),0))return false;
     if(saved.version>=9&&!Object.values(cases).every(c=>
-      ['in-person','legacy-refundable'].includes(c.terms)&&
+      ['in-person','legacy-refundable','distance-refundable'].includes(c.terms)&&
       no(c.prepCost,250)&&
       (c.held===0||c.terms==='legacy-refundable'||c.prepCost>=75)))return false;
     state.customerCases=Object.fromEntries(Object.entries(cases).map(([key,c])=>
@@ -597,7 +706,8 @@
     return true;
   }
   window.MotorTradeCustomers=Object.freeze({
-    caseFor,demand,open,book,competingInterest,serveCompeting,testDrive,negotiate,agree,deposit,cancel,
+    caseFor,demand,open,quote,acceptPriceCounter,remoteReserve,inspectRemote,
+    book,competingInterest,serveCompeting,testDrive,negotiate,agree,deposit,cancel,
     ready,complete,advanceDay,queueEnquiries,nextSession,stats,valid,heldDeposits,balanceDue,customerPrep
   });
 })();

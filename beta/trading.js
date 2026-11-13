@@ -921,6 +921,16 @@
   }
   const openCustomer=(state,id)=>C.open(state,id);
   const bookCustomer=(state,id)=>C.book(state,id);
+  const quoteCustomer=(state,id,price)=>{
+    const vehicle=own(state.vehicles,id);
+    if(!vehicle||vehicle.status!=='listed')return fail('stock','Vehicle must be on sale to negotiate.');
+    const budget=buyers(vehicle,state);
+    if(!budget)return fail('budget','The customer budget could not be calculated.');
+    return C.quote(state,id,price,budget.cashLimit);
+  };
+  const acceptPriceCounterCustomer=(state,id)=>C.acceptPriceCounter(state,id);
+  const remoteReserveCustomer=(state,id)=>C.remoteReserve(state,id);
+  const inspectRemoteCustomer=(state,id)=>C.inspectRemote(state,id);
   const competingCustomer=(state,id)=>C.serveCompeting(state,id);
   const testDrive=(state,id)=>C.testDrive(state,id);
   const depositCustomer=(state,id)=>C.deposit(state,id);
@@ -1094,7 +1104,8 @@
     startAuction,bidLiveAuction,passAuction,nextAuctionLot,rollAuctionHall,
     auctionLot,lotNumber,auctionValid,
     upgradePremises,monthly:M,events:D,
-    customers:C,openCustomer,bookCustomer,competingCustomer,testDrive,depositCustomer,
+    customers:C,openCustomer,bookCustomer,quoteCustomer,acceptPriceCounterCustomer,
+    remoteReserveCustomer,inspectRemoteCustomer,competingCustomer,testDrive,depositCustomer,
     cancelCustomer,advanceCustomers,nextCustomerSession,agreeCustomer,
     workshop:W,assessStock,startPrep,finishPrep,transferPrep,advanceWorkshop,prepQuote,
     wholesaleOffer,disposeStock,commercialControls:CREDIT,hireStaff,decideStaffMorale,
