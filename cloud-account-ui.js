@@ -76,6 +76,8 @@
       $('cloud-upload-career').hidden=!!record || !app.getCareer() || isCloudMode();
       $('cloud-upload-career').disabled=busy || fetching;
       $('cloud-signout').disabled=busy;
+      $('cloud-retry-save').hidden=!isCloudMode() || !syncBlocked || conflict;
+      $('cloud-retry-save').disabled=busy || syncing;
       $('cloud-save-status').textContent=isCloudMode()
         ? (syncMessage || 'Cloud career active. Changes save automatically to your account.')
         : 'Guest mode is active. This device\'s career is not yet linked to cloud saves.';
@@ -252,7 +254,7 @@
         throw new Error('This account already has a cloud career. No overwrite was performed. '+
           'Load your cloud career or export the guest save first.');
       }
-      const written=await CLOUD.saveCareer(career,0);
+      const written=await CLOUD.saveCareer(career,0,user.id);
       record={career,revision:written.revision,updated_at:written.updatedAt};
       SAVES.setNamespace(user.id);
       SAVES.load(app.normalize);
@@ -292,7 +294,7 @@
         queued=null;
         syncMessage='Saving to cloud…';renderUI();
         try {
-          const updated=await CLOUD.saveCareer(snapshot,revision);
+          const updated=await CLOUD.saveCareer(snapshot,revision,identity);
           if(activeAccount!==identity)return;
           revision=updated.revision;
           record={career:snapshot,revision,updated_at:updated.updatedAt};
