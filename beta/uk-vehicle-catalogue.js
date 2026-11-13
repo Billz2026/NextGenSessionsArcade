@@ -308,6 +308,231 @@
     "corroborated",
     "https://www.audi.co.uk/en/models/q3/rs-q3-sportback/",
     "Audi UK confirms RS Q3 Sportback 2.5 five-cylinder 400PS; independent 2021 UK used listings confirm quattro S tronic model-year."
+  ],
+  [
+    "2018 Ford Fiesta Titanium",
+    "Petrol",
+    "Manual",
+    "1.0 EcoBoost 100",
+    "manufacturer",
+    "https://www.ford.co.uk/content/dam/guxeu/uk/documents/brochures/personal-finance/BRO-All-New_Fiesta_Promotions.pdf",
+    "Ford UK original Mk8 Fiesta offer states Titanium 1.0 EcoBoost 100PS; manual shown in the ordinary Fiesta 100PS UK drivetrain; exact 2018 registration not a VIN check."
+  ],
+  [
+    "2018 Ford Focus ST-Line",
+    "Petrol",
+    "Manual",
+    "1.0 EcoBoost 125",
+    "corroborated",
+    "https://www.lookers.co.uk/ford/used-car/focus/1-0-ecoboost-125-st-line-5dr/id/742153",
+    "Lookers Ford 2018 registered BG68OBF matches Mk4 Focus ST-Line, 1.0 EcoBoost 125, manual; distinguishes ST-Line from actual Focus ST."
+  ],
+  [
+    "2019 Ford Fiesta ST-2",
+    "Petrol",
+    "Manual",
+    "1.5 EcoBoost 200",
+    "corroborated",
+    "https://www.graingermotorgroup.com/mazda/used-cars/fiesta/st-2/15t-ecoboost-st-2-hatchback-3dr-petrol-manual-euro-6-ss-200-ps/14468",
+    "2019 registered UK Fiesta ST-2 1.5 EcoBoost 200PS six-speed manual dealer example; consistent with Ford 2018 ST factory technical specification, ST-2 is not ST-Line."
+  ],
+  [
+    "2020 Ford Fiesta ST-Line",
+    "Petrol",
+    "Manual",
+    "1.0 EcoBoost 125",
+    "corroborated",
+    "https://www.honestjohn.co.uk/used-prices/Ford/Fiesta/2020/?q=1.0+Manual+Petrol+ST-Line",
+    "UK 2020 Fiesta ST-Line 1.0 EcoBoost 125 manual advertised examples; ST-Line cosmetic/sports suspension trim, not ST 200PS."
+  ],
+  [
+    "2021 Ford Kuga Titanium PHEV",
+    "Plug-in Hybrid",
+    "Automatic",
+    "2.5 Duratec PHEV eCVT",
+    "corroborated",
+    "https://www.honestjohn.co.uk/used-prices/Ford/Kuga/2021/?q=2.5+PHEV+Plug-in+Hybrid+Titanium",
+    "2021 UK Titanium 2.5 PHEV CVT derivative corroborated; note Ford later offered Titanium Edition, so exact build-date/trim distinction remains an inspection item."
+  ],
+  [
+    "2018 Vauxhall Astra SRi",
+    "Petrol",
+    "Manual",
+    "1.4 Turbo 150",
+    "manufacturer",
+    "https://www.vauxhall.co.uk/content/dam/vauxhall/Home/PDFs/Cars/astra/price_guides/C1105-10922016_ASTRA_Spec_PG_16_February_2018-1518782860.pdf",
+    "Vauxhall UK February 2018 model-year 2018.5 table confirms Astra SRi 1.4 Turbo 150PS MANUAL; not the 1.4 150PS automatic."
+  ],
+  [
+    "2019 Vauxhall Crossland X SE",
+    "Petrol",
+    "Manual",
+    "1.2 83",
+    "manufacturer",
+    "https://www.vauxhall.co.uk/content/dam/vauxhall/Home/e-brochures/range/cars/19my/brochures/1_April_2019.pdf",
+    "Vauxhall UK April 2019 range guide specifically lists Crossland X SE 1.2 83PS; ordinary naturally aspirated five-speed manual, not 110PS Turbo."
+  ],
+  [
+    "2021 Vauxhall Astra SRi",
+    "Petrol",
+    "Manual",
+    "1.2 Turbo 145",
+    "corroborated",
+    "https://www.exchangeandmart.co.uk/used-cars-for-sale/vauxhall/astra/year-2021",
+    "2021 Astra SRi 1.2 Turbo 145PS manual corroborated by UK registered examples; Vauxhall 2019 launch table separately confirms the 145PS 1.2 manual in SRi; do not confuse with 2018 1.4 150PS."
+  ],
+  [
+    "2021 Vauxhall Mokka SRi",
+    "Petrol",
+    "Automatic",
+    "1.2 Turbo 130 EAT8",
+    "manufacturer",
+    "https://www.media.stellantis.com/uk-en/vauxhall/press/vauxhall-mokka-press-kit",
+    "Official 2021 UK Mokka table directly lists SRi 1.2 Turbo 130PS AT8; distinct from 100PS manual and Mokka-e EV."
+  ],
+  [
+    "2019 Kia Picanto 2",
+    "Petrol",
+    "Manual",
+    "1.0 MPI",
+    "corroborated",
+    "https://used-uk.kia.com/used-car-details/used-kia-picanto-10-mpi-2-silver-frost-manual-petrol/id-6038/",
+    "Kia UK dealer network advert for registered 2019 Picanto grade 2 1.0 MPi petrol manual; exact PS not encoded in game's engine field."
+  ],
+  [
+    "2020 Kia Niro 2 Hybrid",
+    "Hybrid",
+    "Automatic",
+    "1.6 GDi hybrid DCT",
+    "corroborated",
+    "https://used-uk.kia.com/used-car-details/used-kia-niro-16-gdi-2-suv-graphite-automatic-hybrid/id-202609035694673/",
+    "Kia UK Assured 2020 Niro 2 1.6 GDi self-charging hybrid auto; 1.6 hybrid uses DCT, not e-CVT and not the separately marketed Niro PHEV."
+  ],
+  [
+    "2021 Kia Ceed 2",
+    "Petrol",
+    "Manual",
+    "1.0 T-GDi 120",
+    "corroborated",
+    "https://used-uk.kia.com/used-car-details/used-kia-ceed-10-t-gdi-isg-2-hatchback-copper-stone-manual-petrol/id-4873/",
+    "Kia UK Assured 2021 Ceed 1.0 T-GDi ISG 2 petrol manual. Engine's 120PS is rounded manufacturer designation; advert title alone does not independently state PS."
+  ],
+  [
+    "2021 Kia e-Niro 3",
+    "Electric",
+    "Automatic",
+    "64 kWh EV",
+    "corroborated",
+    "https://used-uk.kia.com/used-car-details/used-kia-e-niro-64-kwh-3-suv-interstellar-grey-automatic-electric/id-5644/",
+    "Kia UK Assured 2021 e-Niro 3 electric automatic and marketed 64 kWh battery; advertisements inconsistently show nominal versus gross kWh, game refers to nominal 64."
+  ],
+  [
+    "2018 Hyundai i10 SE",
+    "Petrol",
+    "Manual",
+    "1.0 MPI",
+    "manufacturer",
+    "https://www.hyundai.news/newsroom/dam/uk/press-kits/20181001_i10/hyundai_i10_press_kit_november2018_technical_data.pdf",
+    "Hyundai Motor UK November 2018 i10 spec table lists SE 1.0 petrol 67PS five-speed manual (game 1.0 MPI); generation predates 2020 all-new i10."
+  ],
+  [
+    "2018 Hyundai i30 SE",
+    "Petrol",
+    "Manual",
+    "1.0 T-GDi 120",
+    "manufacturer",
+    "https://www.hyundai.news/newsroom/dam/uk/press-kits/20181001_i30/hyundai_i30_fivedoor_and_tourer_press_kit_november2018_technical_specifications.pdf",
+    "Hyundai Motor UK 2018 technical table lists i30 SE 1.0 T-GDi 120PS six-speed manual; trim SE, not N Performance."
+  ],
+  [
+    "2021 Hyundai i10 SE Connect",
+    "Petrol",
+    "Manual",
+    "1.0 MPI 67",
+    "manufacturer",
+    "https://www.hyundai.news/newsroom/dam/eu/uk/20200113_new_i10/hyundai_uk_i10_technical_data.pdf",
+    "Hyundai Motor UK 2020 launch UK table confirms second-generation all-new i10 SE Connect 1.0 MPi 67PS five-speed manual, offered into 2021."
+  ],
+  [
+    "2021 Hyundai i20 Premium",
+    "Petrol",
+    "Manual",
+    "1.0 T-GDi 100 MHEV",
+    "manufacturer",
+    "https://www.hyundai.news/newsroom/dam/eu/uk/20201021_new_i20_1020/hyundai_new_i20_pricing_spec_tech.pdf",
+    "Hyundai UK October 2020 price/spec table confirms i20 Premium 1.0 T-GDi 100PS 48V MHEV six-speed intelligent manual (iMT), distinct from DCT; carried into 2021."
+  ],
+  [
+    "2018 Skoda Fabia SE",
+    "Petrol",
+    "Manual",
+    "1.0 TSI 95",
+    "corroborated",
+    "https://www.lookers.co.uk/used-car/skoda/fabia/1-0-tsi-se-5dr/id/530011",
+    "UK Lookers technical listing shows 2018 Fabia SE 1.0 TSI 95PS petrol five-speed manual; source is dealer rather than an archived MY2018 Škoda factory price guide."
+  ],
+  [
+    "2020 Skoda Superb SE Technology",
+    "Diesel",
+    "Automatic",
+    "2.0 TDI 150 DSG",
+    "corroborated",
+    "https://www.pistonheads.com/buy/skoda/superb/year/2020",
+    "2020 UK Superb 2.0 TDI SE Technology automatic is listed in used stock; secondary corroboration for 150PS DSG; separate current Škoda engine page cannot validate the 2020 build."
+  ],
+  [
+    "2021 Skoda Kamiq SE L",
+    "Petrol",
+    "Manual",
+    "1.0 TSI 110",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44549703-used-2021-skoda-kamiq-se-l-110-bhp",
+    "UK registered 2021 Kamiq SE L 1.0 TSI 110PS six-speed manual stock example; model-year manufacturer spec remains to be sourced."
+  ],
+  [
+    "2021 Skoda Octavia vRS",
+    "Petrol",
+    "Automatic",
+    "2.0 TSI 245 DSG",
+    "manufacturer",
+    "https://www.skoda.co.uk/news/details/uk-prices-and-specifications-for-fourth-generation-skoda-octavai-vrs",
+    "Škoda UK October 2020 launch explicitly details Octavia Mk4 vRS 2.0 TSI 245PS front-wheel-drive 7-speed DSG, first registrations 2020 onward; not vRS iV PHEV."
+  ],
+  [
+    "2018 SEAT Ibiza SE Technology",
+    "Petrol",
+    "Manual",
+    "1.0 TSI 95",
+    "corroborated",
+    "https://www.cargurus.co.uk/Cars/l-Used-2018-Seat-Ibiza-SE-Technology-ev140359",
+    "UK 2018 Ibiza SE Technology 1.0 TSI 95 manual car examples; distinct from the 1.0 MPI non-turbo SE Technology."
+  ],
+  [
+    "2020 SEAT Leon FR",
+    "Petrol",
+    "Manual",
+    "1.5 TSI 150",
+    "manufacturer",
+    "https://www.seat.co.uk/content/dam/public/seat-website/car-shopping-tools/brochure-download/brochures/new-seat-leon/cars-models-specsbrochure-newleonall-NA-may-2020.pdf",
+    "SEAT UK hosted May 2020 new Leon 5-door technical range lists FR 1.5 TSI 150PS 6-speed manual; not 1.5 eTSI DSG hybrid."
+  ],
+  [
+    "2020 SEAT Arona FR",
+    "Petrol",
+    "Manual",
+    "1.0 TSI 115",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44392931-used-2020-seat-arona-fr-115-bhp",
+    "UK registered 2020 SEAT Arona FR 1.0 TSI 115PS manual listing; not the 2021-on facelift 110PS manual."
+  ],
+  [
+    "2021 SEAT Ateca SE Technology",
+    "Petrol",
+    "Manual",
+    "1.5 TSI 150",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/used-cars/Seat/Ateca/y-2021",
+    "2021 UK Ateca SE Technology 1.5 TSI EVO 150PS manual adverts, compatible with SEAT UK 2020 new Ateca engine sheet. SE Technology trim evidence is UK secondary stock."
   ]
 ]);
   const all=Object.values(CATALOGUE).flat();
