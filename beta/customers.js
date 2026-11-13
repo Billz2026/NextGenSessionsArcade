@@ -423,22 +423,21 @@
     if(state.cash-expense<reserved)
       return fail('cash','Insufficient unreserved dealership cash for the '+expense+
         ' customer-specific collection preparation cost. Do not accept a reservation you cannot service.');
-    // The customer pays £250 into a virtual segregated account; that money
-    // is not spendable business cash and is not a vehicle sale.
-    c.held=250;
-    if(c.terms!=='distance-refundable')c.terms='in-person';
-    c.prepCost=expense;
     const vehicle=state.vehicles.find(v=>v.id===id);
     const remoteOffsite=c.remote&&state.financialScenario==='uk2026'&&
       vehicle?.storageLocation==='offsite';
+    if(remoteOffsite&&state.cash<reserved+expense+35)
+      return fail('cash','Insufficient unreserved cash for off-site collection logistics.');
+    // The held £250 customer deposit is not spendable dealer cash.
+    c.held=250;
+    if(c.terms!=='distance-refundable')c.terms='in-person';
+    c.prepCost=expense;
     c.collectionDay=state.day+(remoteOffsite?2:
       1+(c.remote?0:hash('collection|'+c.id)%2));
     if(remoteOffsite){
       // The £35 collection transfer is a dealership expense at the point of
       // confirmed reservation. It is not paid from the held customer deposit.
       const transferFee=35;
-      if(state.cash<reserved+expense+transferFee)
-        return fail('cash','Insufficient unreserved cash for off-site collection logistics.');
       state.cash-=transferFee;
       state.ledger.push({day:state.day,delta:-transferFee,
         note:'Off-site viewing transfer: '+vehicle.title});
