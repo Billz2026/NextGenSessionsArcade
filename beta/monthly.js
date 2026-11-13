@@ -101,6 +101,11 @@
     if(note.startsWith('Aftersales price reduction:'))return 'customerAdjustments';
     if(note.startsWith('Aftersales collection:'))return 'customerCollection';
     if(note.startsWith('Aftersales repair:'))return 'customerRepairs';
+    if(note.startsWith('Customer services subcontractor:'))return 'serviceSuppliers';
+    if(note.startsWith('Customer services receipt:'))return 'serviceReceipts';
+    if(note.startsWith('Approved MOT referral commission:'))return 'motCommissions';
+    if(note.startsWith('ATF scrap referral commission:'))return 'scrapCommissions';
+    if(note.startsWith('Off-site relocation:'))return 'preparation';
     if(note.startsWith('Staff payroll monthly net wages settlement'))return 'payrollCash';
     if(note.startsWith('Staff HMRC PAYE and NI remittance'))return 'hmrcRemittance';
     if(note.startsWith('Staff workplace pension remittance'))return 'pensionRemittance';
@@ -118,7 +123,8 @@
     'partExchangePurchases','preparation','inspections','payroll','commission',
     'recruitment','training','staffExit','other','premisesPayments','premisesInvestment','vatPayments',
     'payrollCash','hmrcRemittance','pensionRemittance',
-    'customerRefunds','customerCollection','customerRepairs','customerAdjustments'];
+    'customerRefunds','customerCollection','customerRepairs','customerAdjustments',
+    'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions'];
   function statement(state){
     const p=state.monthPlan;
     const sales=completed(state.sold,p.startDay,p.endDay);
@@ -128,6 +134,17 @@
     for(const row of ledger)bucket[categorize(row.note)]+=row.delta;
     const saleCount=sales.length;
     const turnover=sum(sales,'price');
+    // Third-party servicing is a separate income line, not another used-car
+    // handover. Revenue/cost recognised at final completion, while the cash
+    // ledger records subcontractor invoices at booking.
+    const serviceFinished=(state.serviceDesk?.jobs||[]).filter(j=>
+      j.doneDay!==null&&j.doneDay>=p.startDay&&j.doneDay<=p.endDay);
+    const serviceCompleted=serviceFinished.filter(j=>j.status==='completed');
+    const serviceTurnover=sum(serviceCompleted,'gross');
+    const serviceProfit=serviceFinished.reduce((n,j)=>
+      n+(j.status==='completed'?j.gross:0)-j.supplier,0);
+    const serviceUnits=serviceCompleted.length;
+    const combinedRevenue=turnover+serviceTurnover;
     const settled=state.aftersalesScenario==='cra2015-2026'?
       state.aftersales.history.filter(x=>x.day>=p.startDay&&x.day<=p.endDay):[];
     const accepted=state.aftersalesScenario==='cra2015-2026'?
@@ -183,16 +200,19 @@
       workshopStage:v.workshop?.stage??'unknown',
       workshopDaysLeft:v.workshop?.remainingDays??0
     }));
-    const operatingContribution=grossMargin-payrollCost-premisesExpense-aftercareCost;
+    const operatingContribution=grossMargin+serviceProfit-payrollCost-premisesExpense-aftercareCost;
     const vatOutputAccruedPence=state.financialScenario==='uk2026'?
-      [...sales,...disposals].reduce((n,v)=>n+(v.vat?.outputPence||0),0)-
+      [...sales,...disposals].reduce((n,v)=>n+(v.vat?.outputPence||0),0)+
+      serviceCompleted.reduce((n,j)=>n+j.taxOutputPence,0)-
       sum(settled,'creditedVatPence'):0;
     // The game ledger is whole-pound cash. Show a conservative pound-rounded
     // expense bridge while retaining the underlying pence liability exactly.
     const operatingAfterVat=operatingContribution-
       Math.ceil(vatOutputAccruedPence/100);
     const vatPayments=-bucket.vatPayments;
-    const met=saleCount>=p.unitTarget && grossMargin>0&&
+    const met=saleCount>=p.unitTarget &&
+      (state.financialScenario!=='uk2026'||combinedRevenue>=p.turnoverTarget)&&
+      grossMargin+serviceProfit>0&&
       (state.financialScenario==='uk2026'?operatingAfterVat:operatingContribution)>0;
     const report={
       month:p.month,monthLabel:'MONTH '+p.month,
@@ -202,11 +222,13 @@
       targetUnits:p.unitTarget,targetTurnover:p.turnoverTarget,
       targetMargin:p.marginTarget,
       soldUnits:saleCount,turnover,grossMargin,
+      ...(state.financialScenario==='uk2026'?{
+        serviceTurnover,serviceProfit,serviceUnits,combinedRevenue}:{}),
       wholesaleUnits:disposals.length,wholesaleProfit:sum(disposals,'profit'),
       averageMargin:saleCount?Math.round(grossMargin/saleCount):0,
-      targetMet:met,turnoverMet:turnover>=p.turnoverTarget,
-      marginMet:grossMargin>=p.marginTarget,
-      grossAfterStaff:grossMargin-payrollCost,
+      targetMet:met,turnoverMet:combinedRevenue>=p.turnoverTarget,
+      marginMet:grossMargin+serviceProfit>=p.marginTarget,
+      grossAfterStaff:grossMargin+serviceProfit-payrollCost,
       ...(state.aftersalesScenario==='cra2015-2026'?{
         aftercareCost,refundTurnover,
         refundedUnits:accepted.filter(x=>x.remedy!=='price-reduction').length,
@@ -289,7 +311,9 @@
     r.reputationChange=r.closingReputation-r.startingReputation;
     r.staffOutcomes=staffConsequences;
     r.managementComment=r.targetMet?
-      'Company sales target achieved with a positive operating contribution after recurring premises costs.':
+      'Monthly unit AND revenue goals achieved with positive operating contribution after recurring costs.':
+      !r.turnoverMet&&state.financialScenario==='uk2026'?
+        'Company revenue target missed. Improve stock turnover and add profitable service bookings, without accepting unviable work.':
       r.soldUnits>=r.targetUnits?
         'Volume reached, but costs consumed the trading margin. Review buying, staffing and premises overheads.':
         'Sales target missed. Review stock age, sales performance and operating costs.';
@@ -330,20 +354,24 @@
       !whole(r.averageMargin)||typeof r.targetMet!=='boolean'||
       !whole(r.openingCash)||!whole(r.closingCash)||
       !nonneg(r.cashIn)||!nonneg(r.cashOut)||!whole(r.netCashChange)||
-      !Array.isArray(r.stock)||r.stock.length>100||
+      !Array.isArray(r.stock)||r.stock.length>250||
       !Array.isArray(r.sellers)||r.sellers.length>100||
       !Array.isArray(r.customerTrustEvents)||r.customerTrustEvents.length>200||
       !r.ledgerBreakdown||typeof r.ledgerBreakdown!=='object'||
       !categories.every(k=>whole(r.ledgerBreakdown[k])||
         (['premisesPayments','premisesInvestment','auctionTransport','vatPayments',
           'payrollCash','hmrcRemittance','pensionRemittance',
-          'customerRefunds','customerCollection','customerRepairs','customerAdjustments'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
+          'customerRefunds','customerCollection','customerRepairs','customerAdjustments',
+          'serviceSuppliers','serviceReceipts','motCommissions','scrapCommissions'].includes(k)&&r.ledgerBreakdown[k]===undefined))||
       !whole(r.staffCosts)||!whole(r.payrollArrears))return false;
     if(r.premisesExpense!==undefined&&(
       !nonneg(r.premisesExpense)||!nonneg(r.premisesPaid)||
       !nonneg(r.premisesInvestment)||!nonneg(r.premisesArrears)||
       !whole(r.operatingContribution)||
       r.operatingContribution!==r.grossAfterStaff-r.premisesExpense-(r.aftercareCost||0)))return false;
+    if(r.serviceTurnover!==undefined&&(
+      !nonneg(r.serviceTurnover)||!whole(r.serviceProfit)||!nonneg(r.serviceUnits)||
+      !nonneg(r.combinedRevenue)||r.combinedRevenue!==r.turnover+r.serviceTurnover))return false;
     if(r.payrollCashPaid!==undefined&&(
       !nonneg(r.payrollCashPaid)||!nonneg(r.payrollStatutoryDue)))return false;
     if(r.aftercareCost!==undefined&&(
