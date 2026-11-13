@@ -46,7 +46,7 @@
       ['2021 Nissan Leaf N-Connecta',49300,'Electric','Automatic','40 kWh EV',5450,8550,575,2,'Full'],
       ['2021 Peugeot e-208 Allure',53500,'Electric','Automatic','50 kWh EV',7150,11250,615,2,'Partial'],
       ['2022 Hyundai Tucson SE Connect',57500,'Hybrid','Automatic','1.6 T-GDi hybrid',15600,21500,555,2,'Full'],
-      ['2022 Vauxhall Mokka-e Launch Edition',51000,'Electric','Automatic','50 kWh EV',8850,13350,585,3,'Partial'],
+      ['2021 Vauxhall Mokka-e Launch Edition',51000,'Electric','Automatic','50 kWh EV',8850,13350,585,3,'Partial'],
       // Later, low-mileage mainstream models. Retail asks below are dated
       // comparable advertisements; all wholesale guides are game estimates.
       ['2024 Toyota Yaris Icon Hybrid',15000,'Hybrid','Automatic','1.5 VVT-i hybrid e-CVT',12000,16800,385,2,'Full'],
@@ -68,14 +68,14 @@
     ],
     luxury: [
       ['2022 Porsche Macan 2.0 PDK',38200,'Petrol','Automatic','2.0 turbo PDK',32600,42000,950,2,'Full'],
-      ['2022 Range Rover Velar D200 R-Dynamic',49100,'Diesel','Automatic','2.0 D200 AWD',29800,40000,1250,3,'Partial'],
+      ['2022 Range Rover Velar D200 R-Dynamic HSE',49100,'Diesel','Automatic','2.0 D200 AWD',29800,40000,1250,3,'Partial'],
       ['2023 BMW X5 xDrive30d M Sport',33500,'Diesel','Automatic','3.0 xDrive30d',43400,55000,1050,2,'Full'],
       ['2023 Mercedes-Benz E300e AMG Line',31900,'Plug-in Hybrid','Automatic','2.0 petrol PHEV',31350,41750,925,2,'Full'],
       ['2022 Audi e-tron 55 quattro',48600,'Electric','Automatic','95 kWh EV',22400,30850,1175,3,'Full'],
       ['2021 Porsche Taycan 4S',42600,'Electric','Automatic','Dual-motor EV',37600,49350,1350,3,'Full'],
       ['2022 Mercedes-Benz S350d AMG Line',42100,'Diesel','Automatic','2.9 S350d',50500,65000,1450,2,'Full'],
       ['2023 Land Rover Defender 110 D250',36200,'Diesel','Automatic','3.0 D250 MHEV',48600,62500,1475,2,'Full'],
-      ['2023 Range Rover Sport P440e',33800,'Plug-in Hybrid','Automatic','3.0 petrol PHEV',50800,66000,1625,2,'Full']
+      ['2023 Range Rover Sport P440e Dynamic SE',33800,'Plug-in Hybrid','Automatic','3.0 petrol PHEV',50800,66000,1625,2,'Full']
     ]
   });
   // Append new derivatives after each legacy band. Historical template IDs
@@ -155,10 +155,10 @@
       retail:16950,sourcePrice:16540,sourceMiles:56542,
       source:'https://www.askcar.co.uk/used-cars/hyundai/tucson/se-connect/2022',
       note:'Exact 1.6 full HEV SE Connect automatic 56,542mi £16,540, another 56,964mi £17,750. Original £21,500 overstated.',confidence:'high'},
-    '2022 Vauxhall Mokka-e Launch Edition':{
+    '2021 Vauxhall Mokka-e Launch Edition':{
       retail:11250,sourcePrice:11750,sourceMiles:49000,
-      source:'https://www.askcar.co.uk/car/vauxhall-mokka-electric-2022-d260fd92e754',
-      note:'2022 Mokka Electric 50kWh Elite Premium 49kmi £11,750; \'Launch Edition\' not matched to a verified UK trim. Model/trim validation pending.',confidence:'low'},
+      source:'https://askcar.co.uk/car/vauxhall-mokka-electric-2021-ba3ccf97edab',
+      note:'2021 Mokka-e Launch Edition 50kWh registered UK vehicle 47,000mi advertised £11,750. The former 2022 Elite Premium comparison was the wrong trim and has been replaced; 52,300-mile game example and condition remain simulated.',confidence:'medium'},
     '2022 Tesla Model 3 RWD':{
       retail:19000,sourcePrice:18799,sourceMiles:47775,
       source:'https://askcar.co.uk/car/tesla-model-3-2022-f2de48627a72',
@@ -199,10 +199,10 @@
       retail:39500,sourcePrice:37994,sourceMiles:38664,
       source:'https://www.askcar.co.uk/car/porsche-macan-2022-7205fb010429',
       note:'Exact 2022 2.0 PDK 4WD 38,664mi £37,994; 36,897mi £39,840; example priced down £805 after 103 days.',confidence:'high'},
-    '2022 Range Rover Velar D200 R-Dynamic':{
+    '2022 Range Rover Velar D200 R-Dynamic HSE':{
       retail:26300,sourcePrice:25984,sourceMiles:49877,
       source:'https://askcar.co.uk/car/land-rover-range-rover-velar-2022-7669ebfbddcc',
-      note:'Exact 2022 D200 R Dynamic HSE 49,877mi £25,984; underlying R-Dynamic trim unspecified, HSE equipment affects price.',confidence:'medium'},
+      note:'2022 D200 R-Dynamic HSE 49,877mi £25,984; game derivative corrected to exact HSE trim, but auction trade guide remains unverified and above this retail ask.',confidence:'medium'},
     '2023 BMW X5 xDrive30d M Sport':{
       retail:51500,sourcePrice:50998,sourceMiles:33160,
       source:'https://www.askcar.co.uk/car/bmw-x5-2023-212040a6800e',
@@ -227,10 +227,10 @@
       retail:47500,sourcePrice:47400,sourceMiles:36568,
       source:'https://askcar.co.uk/car/land-rover-defender-110-2023-23c5cc2cffc1',
       note:'2023 D250 MHEV SE Auto 4WD 36,568mi £47,400; game trim unspecified; 36,800mi another £44,990.',confidence:'medium'},
-    '2023 Range Rover Sport P440e':{
+    '2023 Range Rover Sport P440e Dynamic SE':{
       retail:54000,sourcePrice:52510,sourceMiles:34043,
       source:'https://www.askcar.co.uk/used-cars/land-rover/range-rover-sport/2023?page=3',
-      note:'2023 P440e Dynamic SE 34,043mi £52,510; 34,967mi £53,190, 34,720mi £53,230; unspecified in-game trim.',confidence:'high'},
+      note:'2023 P440e Dynamic SE 34,043mi £52,510; 34,967mi £53,190, 34,720mi £53,230; game now names the Dynamic SE trim; sale prices not observed.',confidence:'high'},
     '2018 Toyota Yaris Icon Hybrid':{
       retail:7250,sourcePrice:8972,sourceMiles:87241,
       source:'https://askcar.co.uk/used-cars/toyota/yaris/icon/2018',
