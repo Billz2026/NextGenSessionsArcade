@@ -61,7 +61,8 @@
     serviceSuppliers:'External customer work / supplier invoices',
     serviceReceipts:'Customer servicing and repair receipts',
     motCommissions:'Approved MOT centre referral commissions',
-    scrapCommissions:'Licensed ATF scrap referral commissions'
+    scrapCommissions:'Licensed ATF scrap referral commissions',
+    managementSpend:'Management meeting initiatives / campaigns'
   };
   function renderReport(state,M,selected='current'){
     const historical=String(selected)!=='current';
