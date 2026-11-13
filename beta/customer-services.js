@@ -34,7 +34,8 @@
   const currency=n=>'£'+Number(n).toLocaleString('en-GB');
   function leads(s){
     if(s.financialScenario!=='uk2026')return [];
-    const max=s.reputationScore>=65?3:s.reputationScore>=25?2:1;
+    const max=(s.reputationScore>=65?3:s.reputationScore>=25?2:1)+
+      (s.meetingFocus==='aftermarket'?1:0);
     const out=[];
     for(let i=0;i<max;i++){
       const key=keys[(s.day+i+hash(s.name+'|'+s.day+'|'+i))%keys.length];
@@ -58,7 +59,9 @@
     // external garage bookings, but overload worsens real-world turnaround.
     const queue=Math.min(5,Math.floor(active(s)/5));
     const duration=lead.days+queue,providerFailure=hash('quality|'+s.name+'|'+id)%100;
-    const quality=Math.max(50,Math.min(100,74+hash('service-quality|'+s.name+'|'+id)%27));
+    const quality=Math.max(50,Math.min(100,74+
+      hash('service-quality|'+s.name+'|'+id)%27+
+      (s.meetingFocus==='care'?6:0)));
     const delay=hash('service-delay|'+s.name+'|'+id)%7===0?2:0;
     const j={id:s.serviceDesk.nextId++,leadId:id,kind:lead.kind,
       label:lead.label,day:s.day,dueDay:s.day+duration,
