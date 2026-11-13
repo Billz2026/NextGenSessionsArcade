@@ -4,6 +4,14 @@
 
 **Play:** https://billz2026.github.io/TheMotorTrade/
 
+### v0.9.37 — Optional player accounts and cloud careers (13 November 2026)
+
+- Account registration, email/password sign-in, email verification and password reset using Supabase Auth (player username is a display name, not a sign-in identity).
+- Optional account-owned cloud career: upload an existing guest career explicitly, sign in from another device, then load it. Account-local and guest browser saves remain separate.
+- Automatically syncs completed career actions with atomic revision protection. A conflicting later save cannot be silently replaced by an older open tab/device. Failed or offline writes show a clear status and leave the local backup available.
+- The database is guarded by Row Level Security and a restricted account-bound RPC. No service-role credential is present in browser code. **This feature requires a one-time Supabase SQL and Authentication URL configuration** by the project owner; before setup the account form remains disabled and guest mode works normally.
+- Full installation, security and limitations: [Cloud Accounts Setup](docs/cloud-accounts-setup.md). One career per account in v1; no trusted anti-cheat/leaderboard economy yet.
+
 ### v0.9.36 — Career saves, local recovery and portable backups (13 November 2026)
 
 - **Original career preserved:** Existing careers continue to load from `the-motor-trade-career-v1` with the unchanged v14 game-state schema. New code validates a save before accepting or writing it. A damaged save is never silently treated as a fresh, disposable career.

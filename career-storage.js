@@ -10,6 +10,15 @@
   const EXPORT_FORMAT = 1;
   const MAX_IMPORT_BYTES = 12 * 1024 * 1024;
   let lastSeenRaw = null;
+  let activeKey = KEY;
+  let activeBackupKey = BACKUP_KEY;
+  function setNamespace(userId) {
+    if (userId !== null && !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(userId))
+      throw new Error('Invalid account identifier.');
+    activeKey = userId === null ? KEY : 'the-motor-trade-account-' + userId.toLowerCase() + '-v1';
+    activeBackupKey = userId === null ? BACKUP_KEY : 'the-motor-trade-account-backup-' + userId.toLowerCase() + '-v1';
+    lastSeenRaw = null;
+  }
 
   function store() {
     try { return window.localStorage; }
@@ -36,8 +45,8 @@
     if (!storage) return {available:false, hasPrimary:false,
       primaryDamaged:false, backupAvailable:false};
     try {
-      const raw = storage.getItem(KEY);
-      const backup = storage.getItem(BACKUP_KEY);
+      const raw = storage.getItem(activeKey);
+      const backup = storage.getItem(activeBackupKey);
       return {available:true, hasPrimary:raw !== null,
         primaryDamaged:raw !== null && !decode(raw, normalize),
         backupAvailable:!!decode(backup, normalize)};
@@ -52,10 +61,10 @@
     if (!storage) return {career:null, available:false,
       primaryDamaged:false, backupAvailable:false};
     try {
-      const raw = storage.getItem(KEY);
+      const raw = storage.getItem(activeKey);
       lastSeenRaw = raw;
       const career = decode(raw, normalize);
-      const backupAvailable = !!decode(storage.getItem(BACKUP_KEY), normalize);
+      const backupAvailable = !!decode(storage.getItem(activeBackupKey), normalize);
       return {career, available:true, primaryDamaged:raw !== null && !career,
         backupAvailable, backupOnly:raw === null && backupAvailable};
     } catch (_) {
@@ -73,21 +82,21 @@
       raw = JSON.stringify(career);
       if (!decode(raw, normalize)) return {ok:false,
         message:'Career integrity check failed. Nothing was written. Export your career before leaving.'};
-      const previous = storage.getItem(KEY);
+      const previous = storage.getItem(activeKey);
       if (!options.force && previous !== lastSeenRaw && previous !== raw)
         return {ok:false, message:'This career was changed in another tab. No save was overwritten. Export this tab, then reload to choose which career to keep.'};
       // Writing the valid new state FIRST makes a quota/write error harmless:
       // the old primary remains intact. A failed backup never blocks saving.
-      if (previous !== raw) storage.setItem(KEY, raw);
+      if (previous !== raw) storage.setItem(activeKey, raw);
       lastSeenRaw = raw;
       const previousCareer = previous !== raw ? decode(previous, normalize) : null;
-      const existingBackup = previousCareer ? decode(storage.getItem(BACKUP_KEY), normalize) : null;
+      const existingBackup = previousCareer ? decode(storage.getItem(activeBackupKey), normalize) : null;
       // Retain a meaningful restore point: do not replace the previous game
       // day's backup on every same-day inbox read, approval or render.
       // Explicit replacement/import/restore may always back up the old career.
       if (previousCareer && (options.backupPrevious ||
         !existingBackup || previousCareer.day !== career.day)) {
-        try { storage.setItem(BACKUP_KEY, previous); }
+        try { storage.setItem(activeBackupKey, previous); }
         catch (_) { /* Keep the successfully written primary. */ }
       }
       return {ok:true};
@@ -101,7 +110,7 @@
     const storage = store();
     if (!storage) return {ok:false, message:'Browser storage is unavailable.'};
     try {
-      const career = decode(storage.getItem(BACKUP_KEY), normalize);
+      const career = decode(storage.getItem(activeBackupKey), normalize);
       if (!career) return {ok:false, message:'No valid local backup is available.'};
       const result = save(career, normalize, {force:true, backupPrevious:true});
       return {...result, career:result.ok ? career : null};
@@ -139,6 +148,6 @@
 
   window.MotorTradeCareerStorage = Object.freeze({
     KEY, BACKUP_KEY, MAX_IMPORT_BYTES, load, status, save, recover,
-    exportText, importText
+    exportText, importText, setNamespace
   });
 })();

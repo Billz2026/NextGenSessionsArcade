@@ -2974,3 +2974,88 @@ display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap
   #screen-menu .career-tools-actions button {font-size:11px}
   #screen-menu .menu-actions .action-btn:last-child {min-height:58px}
 }
+
+/* Optional account and cloud-save controls — matches the premium showroom menu. */
+#screen-menu .menu-account-button {min-height:58px;border-color:#58737c}
+#screen-menu .menu-account-button strong {font-size:20px;letter-spacing:.06em}
+#screen-menu .menu-account-button small {font-size:9px}
+#screen-menu .cloud-account-panel {
+  width:min(425px,100%);
+  margin:12px 0 0;
+  padding:16px;
+  border:1px solid #927953;
+  border-radius:9px;
+  background:linear-gradient(165deg,#0d1e26f9,#0b121af9);
+  text-align:left;
+  color:#e5e8e9;
+  box-shadow:0 12px 30px #0009;
+}
+#screen-menu .cloud-account-panel[hidden],
+#screen-menu #cloud-auth-guest[hidden],
+#screen-menu #cloud-auth-user[hidden],
+#screen-menu #cloud-password-recovery[hidden],
+#screen-menu #cloud-password-field[hidden],
+#screen-menu #cloud-username-field[hidden],
+#screen-menu .cloud-account-panel button[hidden],
+#screen-menu .cloud-account-panel p[hidden] {display:none!important}
+#screen-menu .cloud-account-heading {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;
+}
+#screen-menu .cloud-account-heading strong {font:800 20px/1 var(--title);color:#f3d8a5;letter-spacing:.05em}
+#screen-menu .cloud-account-heading span {font:700 9px/1 var(--body);color:#97b7c0;white-space:nowrap}
+#screen-menu .cloud-account-panel p {font:500 12px/1.55 var(--body);margin:8px 0;color:#c5d0d4}
+#screen-menu #cloud-service-message {color:#e0d3af}
+#screen-menu .cloud-auth-modes {display:flex;gap:8px;margin:12px 0}
+#screen-menu .cloud-auth-modes button {
+  flex:1;min-height:38px;color:#b8c6cb;border:1px solid #435a64;
+  border-radius:5px;background:#152630;font:800 12px/1 var(--body);cursor:pointer;
+}
+#screen-menu .cloud-auth-modes button[aria-pressed="true"] {
+  color:#172028;background:#e1bb7a;border-color:#f3d69d
+}
+#screen-menu #cloud-auth-form,
+#screen-menu #cloud-recovery-form {display:grid;gap:7px}
+#screen-menu .cloud-account-panel label {
+  display:block;font:700 10px/1.2 var(--body);letter-spacing:.09em;color:#d9d3c3;margin:6px 0 0;
+}
+#screen-menu .cloud-account-panel input {
+  display:block;box-sizing:border-box;width:100%;min-height:42px;background:#08131a;
+  border:1px solid #47606b;border-radius:5px;padding:10px 12px;
+  color:#fff;font:500 13px/1.4 var(--body);
+}
+#screen-menu .cloud-account-panel input:focus-visible {
+  outline:2px solid #e6be7b;outline-offset:2px
+}
+#screen-menu .cloud-main-button {
+  min-height:43px;border:1px solid #edc57c;border-radius:5px;margin-top:10px;
+  background:linear-gradient(170deg,#ebcd92,#b98a47);color:#141b21;
+  font:800 13px/1.2 var(--body);cursor:pointer
+}
+#screen-menu .cloud-link-button {
+  display:inline-block;margin-top:9px;border:0;background:transparent;
+  color:#f1d49e;font:600 12px/1.4 var(--body);text-decoration:underline;cursor:pointer
+}
+#screen-menu .cloud-help {color:#93a7af!important;font-size:11px!important}
+#screen-menu .cloud-welcome strong {display:block;margin-top:4px;color:#f5dfa8;overflow-wrap:anywhere}
+#screen-menu .cloud-actions {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+#screen-menu .cloud-actions button {
+  min-height:42px;background:#1c3039;color:#f5deb8;border:1px solid #ac8a55;
+  border-radius:5px;padding:8px 10px;font:700 11px/1.3 var(--body);cursor:pointer
+}
+#screen-menu .cloud-actions button:first-child {grid-column:1/-1}
+#screen-menu .cloud-actions button:hover {background:#304550}
+#screen-menu .cloud-actions button:disabled,
+#screen-menu .cloud-main-button:disabled {opacity:.5;cursor:wait}
+#screen-menu #cloud-account-feedback {
+  border-left:2px solid #d8b879;padding:7px 10px;
+  background:#101e25;color:#f0d9b4;overflow-wrap:anywhere
+}
+#screen-menu #cloud-save-status {color:#e7c78e;overflow-wrap:anywhere}
+#cloud-career-warning {border-left:3px solid #e1b66d}
+@media(max-width:570px) {
+  #screen-menu .menu-account-button {min-height:54px}
+  #screen-menu .menu-account-button strong {font-size:18px}
+  #screen-menu .cloud-account-panel {padding:13px}
+  #screen-menu .cloud-actions {grid-template-columns:1fr}
+  #screen-menu .cloud-actions button:first-child {grid-column:auto}
+}
