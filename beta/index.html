@@ -216,6 +216,8 @@
               </div>
 
               <div id="dashboard-operating-strip" class="dashboard-operating-strip" aria-label="Stock, customers and operating commitments"></div>
+              <section id="dashboard-monthly-highlight" class="dashboard-monthly-highlight"
+                aria-label="Live monthly financial targets"></section>
 
               <div class="dashboard-grid dashboard-command-grid">
                 <section class="panel-card priorities dashboard-task-panel" aria-labelledby="priorities-title">
@@ -231,19 +233,19 @@
               <details class="dashboard-detail-drawer">
                 <summary><span>MONTHLY PERFORMANCE & CAREER DETAILS</span><span class="dashboard-career-summary">CAREER SOLD <strong data-bind="sales">0</strong> · GROSS TRADE MARGIN <strong data-bind="trade-profit">£0</strong></span></summary>
                 <div id="monthly-dashboard-target" class="monthly-dashboard-target" aria-live="polite"></div>
-                <p>Operating contribution reflects recorded vehicle margin, staff costs and accrued premises expenses. It is not net profit and excludes unmodelled tax, finance and depreciation.</p>
+                <p>Operating contribution includes completed vehicle and customer-service results less recorded staffing and premises costs. It is not statutory net profit and excludes unmodelled tax, finance and depreciation.</p>
               </details>
             </section>
 
             <section class="career-panel inbox-control" data-panel="inbox" hidden aria-labelledby="inbox-title">
               <header class="inbox-heading">
-                <div><p class="section-overline">YOUR BUSINESS / OWNER COMMUNICATIONS</p><h1 id="inbox-title">OWNER'S <em>INBOX.</em></h1><p>Messages from your team, approval requests, customer updates and payment confirmations.</p></div>
+                <div><p class="section-overline">YOUR BUSINESS / COMMUNICATIONS</p><h1 id="inbox-title">INBOX<em>.</em></h1><p>Decisions, customer updates, invoices and business notifications in one place.</p></div>
                 <button type="button" class="secondary-button" data-action="mark-all-read">MARK ALL READ</button>
               </header>
               <div class="inbox-stat-strip" aria-label="Inbox status">
                 <div><span>REQUIRES YOUR DECISION</span><strong id="inbox-action-count">0</strong></div>
                 <div><span>UNREAD MESSAGES</span><strong id="inbox-unread-summary">0</strong></div>
-                <div><span>PAID TRANSACTION COPIES</span><strong id="inbox-paid-count">0</strong></div>
+                <div><span>INVOICES & RECEIPTS</span><strong id="inbox-paid-count">0</strong></div>
               </div>
               <nav id="inbox-filter-buttons" class="inbox-filters" aria-label="Filter dealership communications"></nav>
               <div class="inbox-layout panel-card">
@@ -311,9 +313,9 @@
             </section>
 
             <section class="career-panel" data-panel="reports" hidden aria-labelledby="reports-title">
-              <div class="page-heading"><div><p class="section-overline">PERFORMANCE / MONTHLY BOARD REVIEW</p><h1 id="reports-title">MANAGEMENT <em>REPORTS.</em></h1><p>Understand the dealership's sales, operating performance, stock and priorities at a glance.</p></div><span class="career-chip">30-DAY REPORTS</span></div>
+              <div class="page-heading"><div><p class="section-overline">PERFORMANCE / MONTHLY BOARD REVIEW</p><h1 id="reports-title">MANAGEMENT <em>REPORTS.</em></h1><p>Month-end closes into this full financial statement automatically. Review all income, expenses, VAT, commitments, stock and targets before your next board meeting.</p></div><span class="career-chip">30-DAY REPORTS</span></div>
               <div id="monthly-report-view" class="mr-control" aria-live="polite"></div>
-              <details class="mr-guide"><summary>HOW MONTHLY TARGETS AND ARCHIVED REPORTS WORK</summary><p>Sales targets are set at the start of each 30-day game month. Success requires the unit sales target and positive operating contribution after staff and premises costs. Salesperson targets adjust for tenure. Completed reports remain archived in your saved career, and are not recalculated from the live business.</p></details>
+              <details class="mr-guide"><summary>HOW MONTHLY TARGETS AND ARCHIVED REPORTS WORK</summary><p>Sales targets are set at the start of each 30-day game month. UK2026 success requires the vehicle sales target, dealership revenue target (including completed services), and positive operating contribution after costs and modelled output VAT. Salesperson targets adjust for tenure. Completed reports remain archived in your saved career, and are not recalculated from the live business.</p></details>
             </section>
 
             <section class="career-panel" data-panel="staff" hidden aria-labelledby="staff-title">
