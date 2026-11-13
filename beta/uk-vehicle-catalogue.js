@@ -758,6 +758,231 @@
     "corroborated",
     "https://www.lookers.co.uk/used-car/mg-motor-uk/hs/1-5-t-gdi-excite-suv-5dr-petrol-manual-euro-6--s/s---162-ps-/id/787160",
     "Lookers UK registered 2022 MG HS Excite 1.5 T-GDI 162PS petrol manual; different from PHEV HS and automatic Excite."
+  ],
+  [
+    "2018 Honda Civic SE",
+    "Petrol",
+    "Manual",
+    "1.0 VTEC Turbo 129",
+    "manufacturer",
+    "https://hondanews.eu/gb/en/cars/media/pressreleases/101342/residual-values-and-pricing-announced-for-all-new-honda-civic",
+    "Honda UK January 2017 tenth-generation Civic price table explicitly identifies 1.0 129PS VTEC Turbo SE six-speed manual. Continuation to 2018; hatchback versus saloon not encoded in game title."
+  ],
+  [
+    "2021 Honda Civic Sport",
+    "Petrol",
+    "Manual",
+    "1.5 VTEC Turbo 182",
+    "manufacturer",
+    "https://hondanews.eu/eu/en/cars/media/pressreleases/327918/2021-honda-civic",
+    "Honda official 2021 Civic publication documents 1.5 VTEC Turbo 182PS six-speed manual and UK Sport specification family; distinguish from 1.0 SE 126PS and CVT Sport."
+  ],
+  [
+    "2022 Honda HR-V Advance e:HEV",
+    "Hybrid",
+    "Automatic",
+    "1.5 i-MMD hybrid e-CVT",
+    "manufacturer",
+    "https://hondanews.eu/eu/el/cars/media/pressreleases/345249/honda-confirms-pricing-for-all-new-hr-v-ehev",
+    "Honda UK pricing release confirms 2022-model HR-V Advance 1.5 full hybrid e:HEV and electronically managed automatic driveline; not the prior-generation non-hybrid HR-V."
+  ],
+  [
+    "2018 Mazda Mazda2 SE-L",
+    "Petrol",
+    "Manual",
+    "1.5 Skyactiv-G 90",
+    "corroborated",
+    "https://uk.mazda-press.com/news/2017/new-tech-edition-model-joins-updated-mazda2-range/",
+    "Mazda UK 2017 range table includes SE-L 1.5 Skyactiv-G 90PS five-speed manual, whose SE-L 90PS pricing includes navigation. Exact 2018 equipment/badge (SE-L vs SE-L Nav/Nav+) still needs build-period corroboration."
+  ],
+  [
+    "2020 Mazda Mazda3 SE-L",
+    "Petrol",
+    "Manual",
+    "2.0 Skyactiv-G MHEV",
+    "manufacturer",
+    "https://uk.mazda-press.com/news/2020/mazda3-named-as-2020-world-car-design-of-the-year/?year=2020",
+    "Mazda UK 2020 announcement: 2.0 Skyactiv-G 122PS petrol 24V M Hybrid is available as SE-L hatchback with manual transmission. Not the 180PS Skyactiv-X."
+  ],
+  [
+    "2020 Mazda CX-5 SE-L",
+    "Petrol",
+    "Manual",
+    "2.0 Skyactiv-G",
+    "manufacturer",
+    "https://uk.mazda-press.com/news/2020/2020-mazda-cx-5-continues-winning-formula/",
+    "Mazda UK March 2020 14-model CX-5 range lists SE-L trim and 2.0 Skyactiv-G 165PS manual with cylinder deactivation. Body assumed second-generation SUV, drivetrain FWD in this engine configuration."
+  ],
+  [
+    "2021 BMW 118i M Sport",
+    "Petrol",
+    "Automatic",
+    "1.5 TwinPower Turbo DCT",
+    "corroborated",
+    "https://www.lloydmotorgroup.com/UsedCars/BMW/BMW-1-SERIES-118i-136-M-Sport-5dr-Step-Auto/156140",
+    "BMW UK franchise dealer lists 2021 118i 1.5 petrol M Sport automatic dual-clutch DCT. Note late 2021 136PS variants also exist; title does not claim a fixed PS."
+  ],
+  [
+    "2019 BMW M140i Shadow Edition",
+    "Petrol",
+    "Automatic",
+    "3.0 turbo straight-six ZF8",
+    "corroborated",
+    "https://acgmotors.co.uk/model/m140ishadow/",
+    "UK specialist registered 2019 3.0 M140i Shadow Edition petrol 8-speed automatic stock. GPF and modification status vary; do not confuse with F40 M135i xDrive 2.0 four-cylinder."
+  ],
+  [
+    "2022 BMW M135i xDrive",
+    "Petrol",
+    "Automatic",
+    "2.0 turbo xDrive Steptronic",
+    "manufacturer",
+    "https://www.press.bmwgroup.com/united-kingdom/article/detail/T0296393EN_GB/the-all-new-bmw-1-series?language=en_GB",
+    "BMW UK F40 1 Series product release documents M135i xDrive 2.0 four-cylinder 306hp, all-wheel drive, eight-speed Sport automatic. Continued into 2022; LCI changes do not make this an M140i."
+  ],
+  [
+    "2020 BMW X1 sDrive18i Sport",
+    "Petrol",
+    "Manual",
+    "1.5 TwinPower Turbo",
+    "corroborated",
+    "https://www.hodgsoncarsales.co.uk/used-car-details/used-bmw-x1-15-18i-sport-suv-5dr-petrol-m-suv-mineral-grey-manual-petrol/id-1740/",
+    "UK 2020 registered BMW X1 sDrive18i Sport 1.5 petrol 140PS front-drive six-speed manual matching the model/trim/gearbox; not xDrive or Steptronic."
+  ],
+  [
+    "2019 BMW 520d M Sport",
+    "Diesel",
+    "Automatic",
+    "2.0 diesel Steptronic",
+    "corroborated",
+    "https://www.cinch.co.uk/used-cars/bmw/5-series/details/333398ce-8c9b-4d18-b996-1680697442c8?financeType=any",
+    "UK 2019 registered 520d M Sport 2.0 diesel automatic rear-wheel drive listed by cinch. Most use BMW ZF eight-speed Steptronic; body is a saloon in this example, Touring also existed."
+  ],
+  [
+    "2022 BMW i4 eDrive40",
+    "Electric",
+    "Automatic",
+    "83.9 kWh RWD EV",
+    "manufacturer",
+    "https://www.press.bmwgroup.com/global/article/attachment/T0442767EN/617124",
+    "BMW factory eDrive40 engineering sheet specifies RWD electric 340hp, single-speed drive, 83.9kWh GROSS and 81.3kWh NET battery. The game's 83.9 kWh string must be read as gross; source from later spec period supports model technical battery architecture, not VIN-level battery health."
+  ],
+  [
+    "2021 BMW M3 Competition",
+    "Petrol",
+    "Automatic",
+    "3.0 twin-turbo straight-six ZF8",
+    "manufacturer",
+    "https://www.press.bmwgroup.com/united-kingdom/article/detail/T0327319EN_GB/the-new-bmw-m3-competition-saloon-and-bmw-m4-competition-coup%C3%A9",
+    "BMW UK March 2021 G80 M3 Competition saloon confirms 3.0 straight-six twin turbo 510hp rear-drive with eight-speed M Steptronic. Optional M xDrive launched mid-2021 and is NOT assumed by title."
+  ],
+  [
+    "2021 Mercedes-AMG A35 4MATIC",
+    "Petrol",
+    "Automatic",
+    "2.0 turbo 306 PS DCT",
+    "corroborated",
+    "https://www.motors.co.uk/mercedes-benz/a-class/trim/amg/year/2021/used-cars/",
+    "2021 UK AMG A35 4MATIC 2.0 petrol 306PS seven-speed AMG 7G-DCT documented in registered A-Class adverts; not Mercedes A200 AMG Line styling."
+  ],
+  [
+    "2019 Mercedes-Benz C220d AMG Line",
+    "Diesel",
+    "Automatic",
+    "2.0 diesel 9G-Tronic",
+    "manufacturer",
+    "https://tax.mercedes-benz.co.uk/companycar/tax/history/Mercedes-Benz/C-Class%20Saloon/19",
+    "Mercedes-Benz historical UK company-car table lists 2019 C220 d AMG Line 9G-TRONIC PLUS diesel. Game title does not specify saloon vs estate; evidence covers saloon 2.0 diesel automatic."
+  ],
+  [
+    "2021 Mercedes-Benz GLA200 AMG Line",
+    "Petrol",
+    "Automatic",
+    "1.3 turbo DCT",
+    "corroborated",
+    "https://www.theaa.com/used-cars/mercedes/gla/2021",
+    "2021 UK GLA200 AMG Line 1.3 petrol 163PS automatic 7G-DCT advert confirms badge/engine/transmission. Not GLA 35 AMG, and 2021 4MATIC should not be assumed."
+  ],
+  [
+    "2021 Mercedes-AMG A45 S 4MATIC+",
+    "Petrol",
+    "Automatic",
+    "2.0 turbo 421 PS DCT",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/used-cars/Mercedes/A45%20AMG/y-2021",
+    "2021 UK AMG A45 S 4MATIC+ 2.0 turbo petrol 421PS automatic registered hatch examples. Eight-speed DCT detail from model specification; not regular A45 381PS or A35 306PS."
+  ],
+  [
+    "2018 Volvo V40 D2 Momentum",
+    "Diesel",
+    "Manual",
+    "2.0 D2 120",
+    "corroborated",
+    "https://www.autotrader.co.uk/cars/used/volvo/v40/2018",
+    "2018 UK Volvo V40 D2 2.0 diesel 120PS manual Momentum Nav Plus and Momentum Edition stock. Basic title simplifies package; precise 2018 Momentum badge/navigation pack needs source-by-vehicle."
+  ],
+  [
+    "2021 Volvo V60 Momentum B4",
+    "Petrol",
+    "Automatic",
+    "2.0 B4 MHEV automatic",
+    "corroborated",
+    "https://comcar.co.uk/companycar/tax/history/Volvo/V60/21",
+    "Historic 2021 UK V60 B4 (P) Momentum 197hp FWD automatic is 48V mild hybrid petrol. Game fuel Petrol is broad combustion category, not a pure non-electrified petrol; actual UK tax source categorises hybrid petrol/electric."
+  ],
+  [
+    "2020 Volvo XC60 D4 Momentum",
+    "Diesel",
+    "Automatic",
+    "2.0 D4 AWD automatic",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44625995-used-2020-volvo-xc60-momentum-190-bhp",
+    "UK 2020 Volvo XC60 Momentum D4 2.0 diesel 190PS eight-speed Geartronic auto listing; exact AWD specification requires full registration check as title does not encode drivetrain."
+  ],
+  [
+    "2020 Jaguar XE R-Dynamic S D180",
+    "Diesel",
+    "Automatic",
+    "2.0 D180 automatic",
+    "corroborated",
+    "https://www.wheelerschippingnorton.co.uk/vehicle-details/used-jaguar-xe-d180-r-dynamic-s-for-sale-car-sales-u16288/",
+    "Dealer-listed UK 2020 Jaguar XE R-Dynamic S 2.0 D180 diesel 180PS automatic saloon, with engine code AJ20-D4M in technical spec. AWD and RWD both existed; game title does not assert either."
+  ],
+  [
+    "2021 Jaguar F-Type P300 R-Dynamic",
+    "Petrol",
+    "Automatic",
+    "2.0 turbo 300 automatic",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44574243-used-2021-jaguar-f-type-r-dynamic-300-bhp",
+    "UK 2021 F-Type 2.0 P300 R-Dynamic 300PS two-door automatic coupé listing. Roadster also exists; body type absent from game title."
+  ],
+  [
+    "2019 Land Rover Discovery Sport SE TD4",
+    "Diesel",
+    "Automatic",
+    "2.0 TD4 180 AWD automatic",
+    "corroborated",
+    "https://www.autouncle.co.uk/en-gb/d/44526533-used-2019-land-rover-discovery-sport-se-180-bhp",
+    "UK 2019 Discovery Sport 2.0 TD4 180 SE diesel automatic 4WD exact year/trim/engine record; other 2019 TD4 SE Tech, HSE and facelift D180 have different badges."
+  ],
+  [
+    "2022 Range Rover Evoque D200 R-Dynamic S",
+    "Diesel",
+    "Automatic",
+    "2.0 D200 MHEV 4WD automatic",
+    "corroborated",
+    "https://askcar.co.uk/car/land-rover-range-rover-evoque-2022-fb79f4ea0b8e",
+    "UK 2022 Range Rover Evoque 2.0 D200 MHEV R-Dynamic S automatic AWD exact derivative/registration listing. D200 204PS mild-hybrid not D180 180PS."
+  ],
+  [
+    "2021 Land Rover Discovery D250 S",
+    "Diesel",
+    "Automatic",
+    "3.0 D250 MHEV AWD automatic",
+    "corroborated",
+    "https://www.southgrovemotorcompany.co.uk/used-land-rover-discovery-bolton-lancashire-7432351",
+    "UK 2021 full-size Land Rover Discovery D250 MHEV S 3.0 six-cylinder 250PS diesel automatic 4WD registered dealer example; distinct from Discovery Sport and D300."
   ]
 ]);
   const all=Object.values(CATALOGUE).flat();
