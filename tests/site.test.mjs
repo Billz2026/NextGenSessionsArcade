@@ -7,6 +7,7 @@ const root = new URL('../', import.meta.url);
 const html = readFileSync(new URL('index.html', root), 'utf8');
 const css = readFileSync(new URL('styles.css', root), 'utf8');
 const js = readFileSync(new URL('simulator.js', root), 'utf8');
+const careerStorage = readFileSync(new URL('career-storage.js', root), 'utf8');
 const engine = readFileSync(new URL('trading.js', root), 'utf8');
 const intelligence = readFileSync(new URL('vehicle-intel.js', root), 'utf8');
 const photos = readFileSync(new URL('vehicle-photos.js', root), 'utf8');
@@ -210,6 +211,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
       return [];
     },
     createElement: () => new Node(),
+    querySelector: () => new Node(),
     addEventListener: (type, handler) => { listeners[type] = handler; }
   };
   const localStorage = {
@@ -222,7 +224,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
       storageData.set(key, value);
     }
   };
-  const context = { document, localStorage, window: { confirm: () => true, scrollTo: () => {} }, Intl, Date };
+  const context = { document, localStorage, window: { localStorage, confirm: () => true, alert: () => {}, scrollTo: () => {} }, Intl, Date };
   vm.runInNewContext(intelligence, context, { timeout: 1500 });
   vm.runInNewContext(photos, context, { timeout: 1500 });
   vm.runInNewContext(accuracyData, context, { timeout: 1500 });
@@ -315,6 +317,7 @@ function browser(storageData = new Map(), { denyStorage = false } = {}) {
   vm.runInNewContext(financeView, context, { timeout: 1500 });
   vm.runInNewContext(dashboardView, context, { timeout: 1500 });
   vm.runInNewContext(inboxOffice, context, { timeout: 1500 });
+  vm.runInNewContext(careerStorage, context, { timeout: 1500 });
   vm.runInNewContext(js, context, { timeout: 1500 });
   function click(action, extras = {}) {
     const send=(a,extra)=> {
