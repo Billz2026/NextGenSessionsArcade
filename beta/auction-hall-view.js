@@ -119,10 +119,10 @@
       Number.isFinite(q.expectedMargin)?
       q.expectedMargin<0?
         '<p class="auction-risk"><strong>PROJECTED LOSS BEFORE OVERHEADS: '+
-        money(-q.expectedMargin)+'.</strong> This bid exceeds the vehicle\\'s likely sale proceeds after buyer fees, simulated delivery, preparation and provisional output VAT. Suggested maximum '+money(q.maxBid)+
+        money(-q.expectedMargin)+'.</strong> This bid exceeds the vehicle\'s likely sale proceeds after buyer fees, simulated delivery, preparation and provisional output VAT. Suggested maximum '+money(q.maxBid)+
         '. All wholesale and sale estimates are simulated — inspect the car and bid accordingly.</p>':
       expectedNext>q.maxBid?
-        '<p class="auction-risk"><strong>BELOW TARGET CONTRIBUTION.</strong> Bid exceeds the game\\'s suggested maximum by '+
+        '<p class="auction-risk"><strong>BELOW TARGET CONTRIBUTION.</strong> Bid exceeds the game\'s suggested maximum by '+
         money(expectedNext-q.maxBid)+'. Forecast is not a real UK auction valuation.</p>':'':'';
     const log=h.feed.length?'<div class="auction-feed" aria-live="polite">'+
       h.feed.slice(-12).map(x=>'<p>'+esc(x)+'</p>').join('')+'</div>':
