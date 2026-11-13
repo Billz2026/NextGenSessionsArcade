@@ -10,6 +10,7 @@
   const MV = window.MotorTradeMonthlyView;
   const EV = window.MotorTradeEventsView;
   const WV = window.MotorTradeWorkshopView;
+  const SView=window.MotorTradeServiceDeskView;
   const CV = window.MotorTradeCustomersView;
   const AFTV=window.MotorTradeAftersalesView;
   const AV = window.MotorTradeAuctionHallView;
@@ -25,6 +26,7 @@
   const M = E.monthly;
   const D = E.events;
   const W = E.workshop;
+  const SERVICES=E.services;
   const C = E.customers;
   const SITE = E.premises;
   const VC = window.MotorTradeCards;
@@ -46,6 +48,7 @@
     auctionHall: 'AUCTION HALL',
     stock: 'VEHICLE STOCK',
     workshop: 'WORKSHOP OPERATIONS',
+    services: 'CUSTOMER SERVICES',
     sales: 'SALES OFFICE',
     finance: 'FINANCES',
     reports: 'MANAGEMENT REPORTS',
@@ -350,6 +353,9 @@
     selectedStockId=view.selectedId;
     byId('stock-list').innerHTML=view.html;
   }
+  function renderServices(){
+    byId('services-board').innerHTML=SView.render(career);
+  }
   function renderWorkshop() {
     const view=WV.render(career,W,{selectedId:selectedWorkshopId,filter:workshopFilter});
     selectedWorkshopId=view.selectedId;
@@ -413,6 +419,7 @@
     renderAuctionHall();
     renderStock();
     renderWorkshop();
+    renderServices();
     renderSales();
     renderFinances();
     renderPeople();
@@ -548,6 +555,7 @@
     // This keeps reports internally reconcilable with recorded ledger dates.
     const closed=career.day===career.monthPlan.endDay?M.close(career):null;
     career.day += 1;
+    const serviceEvents=SERVICES.advance(career);
     E.rollAuctionHall(career);
     auctionPreviewId=null;
     career.deadlineSession=0;
@@ -629,6 +637,8 @@
         ' owed on the simplified eligible used-vehicle margin scheme.';
     if(workshopEvents.length)
       eventNotice+=' WORKSHOP: '+workshopEvents.join(' ');
+    if(serviceEvents.length)
+      eventNotice+=' CUSTOMER SERVICES: '+serviceEvents.join(' ');
     if(customerEvents.length)
       eventNotice+=' CUSTOMERS: '+customerEvents.join(' ');
     if(aftersalesEvents.length)
@@ -827,6 +837,10 @@
           workshopFilter=button.dataset.filter;selectedWorkshopId=null;
           currentPage='workshop';render();
         }
+        break;
+      case 'book-service-lead':
+        if(career&&typeof button.dataset.lead==='string')
+          saveResult(SERVICES.book(career,button.dataset.lead));
         break;
       case 'move-stock-forecourt':
         if(career)saveResult(E.moveStockToForecourt(career,Number(button.dataset.id)));
