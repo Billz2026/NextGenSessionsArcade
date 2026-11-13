@@ -146,12 +146,12 @@ test('auction flash can decline each game-day lot with normal sold/lost/pass out
   assert.equal(s.auctionHall.phase,'catalogue');
   assert.ok(E.marketFor(s).auctions.length>=1);
   let count=0;
-  while(s.auctionHall.phase==='catalogue'&&count<12){
+  while(s.auctionHall.phase==='catalogue'&&count<64){
     assert.equal(E.passAuction(s).ok,true);
     assert.equal(E.nextAuctionLot(s).ok,true);
     count++;
   }
-  assert.ok(count>=1);
+  assert.ok(count>=30&&count<=36,'UK weekly sale must include 30+ lots');
   assert.equal(s.auctionHall.phase,'finished');
   assert.equal(s.cash,50000);
   assert.ok(s.auctionHistory.every(x=>x.kind!=='won'));
