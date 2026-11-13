@@ -120,7 +120,11 @@
       .filter(x=>feeScenario!=='uk2026'||!x.priceAudit?.buyingRisk)
       .map(x=>({...x,...PH.describe(x)}))};
     const auctionCount=auctionDay(day)?
-      (day===1?3:3+(sample(day,1,29)%3)):0;
+      (feeScenario==='uk2026'?
+        // Proper weekly catalogue, not a three-car sale. Browser roster
+        // and bid state are deterministic, with a 30+ lot session.
+        30+(sample(day,1,29)%7):
+        (day===1?3:3+(sample(day,1,29)%3))):0;
     const baselineSellers=day===1?2:
       (sample(day,0,31)%5===0?0:1+(sample(day,1,37)%3));
     const sellerCount=Math.min(4,baselineSellers+
@@ -237,7 +241,7 @@
        !integer(h.rounds)||h.rounds<0||h.rounds>250||
        !Array.isArray(h.feed)||h.feed.length>65||
        !h.feed.every(entry=>typeof entry==='string'&&entry.length<=160)||
-       !Array.isArray(h.results)||h.results.length>20)return false;
+       !Array.isArray(h.results)||h.results.length>48)return false;
     const lots=marketFor(state).auctions;
     if(h.index>lots.length||
        (h.phase==='finished'&&h.index!==lots.length)||
@@ -822,7 +826,7 @@
     const previous = (state.negotiations ??= {})[id];
     state.negotiations[id]={status:'walked',counter:0,
       rounds:Math.max(1,Math.min(3,previous?.rounds ?? 1)),lastOffer:previous?.lastOffer ?? 0};
-    return {...success('You walked away from '+car.title+'. No cash was spent.'),changed:true};
+    return {...success('You declined '+car.title+'. The seller lead is closed without charge.'),changed:true};
   }
 
   function inspectLead(state,kind,id) {
