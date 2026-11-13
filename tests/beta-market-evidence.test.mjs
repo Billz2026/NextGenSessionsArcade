@@ -12,6 +12,12 @@ for(const name of ['uk-vehicle-catalogue.js','market-evidence-2026.js','vehicle-
 }
 const E=window.MotorTradeObservedMarket,M=window.MotorTradeMarket;
 const all=Object.values(M.CATALOGUE).flat();
+const baselineWindow={};
+const baselineContext=vm.createContext({window:baselineWindow});
+for(const name of ['uk-vehicle-catalogue.js','vehicle-market.js']){
+  new vm.Script(readFileSync(new URL('../beta/'+name,import.meta.url),'utf8'),{filename:name}).runInContext(baselineContext);
+}
+const baselineMarket=baselineWindow.MotorTradeMarket;
 
 test('only dated, sourced UK auction SOLD-LOT observations and retail asking adverts are stored',()=>{
   assert.equal(E.AUCTION.length,8);
@@ -83,8 +89,12 @@ test('BCA-settled simulated stock cannot inherit Brightwells observed prices or 
     assert.equal(q.eligibleBcaSoldPrices,0);
     assert.equal(base.priceAudit.wholesaleAudit.status,'not-calibrated');
     assert.equal(base.priceAudit.wholesaleAudit.priceToApply,null);
-    assert.equal(base.guide,row.guide==='nonexistent'?null:base.guide,
-      'Game guide remains independently modelled and unchanged');
+    const previously=baselineMarket.priceFor(row,'uk2026');
+    assert.equal(base.guide,previously.guide,
+      'Observed Brightwells result must never change game BCA wholesale guide');
+    assert.equal(base.retail,previously.retail,
+      'Public retail asking observation must never replace game retail estimate');
+    assert.equal(base.priceAudit.status,previously.priceAudit.status);
     assert.ok(!('auctionSoldPrice' in base.priceAudit),
       'One Brightwells lot cannot become purported BCA wholesale provenance');
   }
